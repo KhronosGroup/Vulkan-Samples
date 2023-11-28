@@ -319,7 +319,7 @@ void DynamicState3MultisampleRasterization::draw_ui(VkCommandBuffer &cmd_buffer)
 	if (gui)
 	{
 		auto &scale    = to_scale_ui(sample_count);
-		auto &viewport = vkb::initializers::viewport(static_cast<float>(width) * scale.x, static_cast<float>(height) * scale.y, 0.0f, 1.0f);
+		auto viewport = vkb::initializers::viewport(static_cast<float>(width) * scale.x, static_cast<float>(height) * scale.y, 0.0f, 1.0f);
 		vkCmdSetViewport(cmd_buffer, 0, 1, &viewport);
 		auto draw_data = ImGui::GetDrawData();
 
