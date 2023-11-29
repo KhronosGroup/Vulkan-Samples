@@ -309,7 +309,7 @@ A new folder will be created in the root directory at `build\android_gradle`
 https://d.android.com/reference/tools/gradle-api[Android Gradle Plugin] (used by Android Studio) may not auto install dependencies.
 You will need to install them if they have not been installed:
 
-* Find the configured versions in `build/android_gradle/app/build.gradle`, or its template file https://github.com/KhronosGroup/Vulkan-Samples/blob/main/bldsys/cmake/template/gradle/app.build.gradle.in[`bldsys/camke/template/gradle/app.build.gradle.in`]
+* Find the configured versions in `build/android_gradle/app/build.gradle`, or its template file https://github.com/KhronosGroup/Vulkan-Samples/blob/main/bldsys/cmake/template/gradle/app.build.gradle.in[`bldsys/cmake/template/gradle/app.build.gradle.in`]
 * https://d.android.com/studio/projects/install-ndk[Install them with Android Studio] or https://d.android.com/studio/projects/configure-agp-ndk?language=agp4-1#command-line[sdkmanager command line tool].
 For example, to install AGP port CMake 3.22.1 and NDK version 25.1.8937393 on Linux, do the following:
 +
