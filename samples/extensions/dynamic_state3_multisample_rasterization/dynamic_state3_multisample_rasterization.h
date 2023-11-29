@@ -82,27 +82,18 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 
 	} push_const_block;
 
-	struct FrameBufferAttachment
-	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
-		VkFormat       format;
-		void           destroy(VkDevice device)
-		{
-			vkDestroyImageView(device, view, nullptr);
-			vkDestroyImage(device, image, nullptr);
-			vkFreeMemory(device, mem, nullptr);
-		}
-	};
-
 	struct GUI_settings
 	{
 		int                      gui_sample_count = 0;
 		std::vector<std::string> sample_counts;
 	} gui_settings;
 
-	std::vector<std::unique_ptr<FrameBufferAttachment>> framebuffer_attachments;
+	struct
+	{
+		VkImage        image;
+		VkDeviceMemory mem;
+		VkImageView    view;
+	} color_attachment;
 
 	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT  extended_dynamic_state_features{};
 	VkPhysicalDeviceExtendedDynamicState2FeaturesEXT extended_dynamic_state_2_features{};
@@ -118,6 +109,9 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	virtual void render(float delta_time) override;
 	virtual void setup_framebuffer() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	virtual bool resize(const uint32_t _width, const uint32_t _height) override;
+	virtual void setup_depth_stencil() override;
+	virtual void create_command_pool() override;
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
@@ -127,8 +121,7 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	void         update_uniform_buffers();
 	void         draw();
 	void         prepare_supported_sample_count_list();
-	void         create_color_attachment(VkFormat format, FrameBufferAttachment *attachment);
-	void         create_depth_attachment(VkFormat format, FrameBufferAttachment *attachment);
+	void         setup_color_attachment();
 	void         draw_ui(VkCommandBuffer &);
 	void         update_resources();
 };

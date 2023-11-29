@@ -147,48 +147,21 @@ void DynamicState3MultisampleRasterization::prepare_supported_sample_count_list(
 	}
 }
 
+void DynamicState3MultisampleRasterization::create_command_pool()
+{
+	VkCommandPoolCreateInfo command_pool_info = {};
+	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	command_pool_info.queueFamilyIndex        = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
+	command_pool_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	VK_CHECK(vkCreateCommandPool(device->get_handle(), &command_pool_info, nullptr, &cmd_pool));
+}
+
 bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(options))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
-
-	depth_format = vkb::get_suitable_depth_format(device->get_gpu().get_handle());
-
-	// Create synchronization objects
-	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
-	// Create a semaphore used to synchronize image presentation
-	// Ensures that the current swapchain render target has completed presentation and has been released by the presentation engine, ready for rendering
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &semaphores.acquired_image_ready));
-	// Create a semaphore used to synchronize command submission
-	// Ensures that the image is not presented until all commands have been sumbitted and executed
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &semaphores.render_complete));
-
-	// Set up submit info structure
-	// Semaphores will stay the same during application lifetime
-	// Command buffer submission info is set by each example
-	submit_info                   = vkb::initializers::submit_info();
-	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
-
-	if (window->get_window_mode() != vkb::Window::Mode::Headless)
-	{
-		submit_info.waitSemaphoreCount   = 1;
-		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
-		submit_info.signalSemaphoreCount = 1;
-		submit_info.pSignalSemaphores    = &semaphores.render_complete;
-	}
-
-	queue = device->get_suitable_graphics_queue().get_handle();
-
-	create_swapchain_buffers();
-	create_command_pool();
-	create_command_buffers();
-	create_synchronization_primitives();
-	create_pipeline_cache();
-
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
 
 	prepare_supported_sample_count_list();
 
@@ -199,16 +172,14 @@ bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOption
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 	load_assets();
-	setup_render_pass();
-	setup_framebuffer();
+
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
 	setup_descriptor_pool();
 	setup_descriptor_sets();
-	build_command_buffers();
 
-	prepare_gui();
+	update_resources();
 
 	prepared = true;
 	return true;
@@ -429,11 +400,6 @@ void DynamicState3MultisampleRasterization::setup_descriptor_sets()
 
 void DynamicState3MultisampleRasterization::setup_render_pass()
 {
-	if (render_pass != VK_NULL_HANDLE)
-	{
-		vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
-	}
-
 	VkPhysicalDeviceProperties gpu_properties;
 	vkGetPhysicalDeviceProperties(get_device().get_gpu().get_handle(), &gpu_properties);
 
@@ -441,15 +407,6 @@ void DynamicState3MultisampleRasterization::setup_render_pass()
 	assert((gpu_properties.limits.framebufferColorSampleCounts >= sample_count) && (gpu_properties.limits.framebufferDepthSampleCounts >= sample_count));
 
 	bool msaa_enabled = sample_count != VK_SAMPLE_COUNT_1_BIT;
-
-	std::unique_ptr<FrameBufferAttachment> color_attachment = std::make_unique<FrameBufferAttachment>();
-	std::unique_ptr<FrameBufferAttachment> depth_attachment = std::make_unique<FrameBufferAttachment>();
-
-	create_color_attachment(render_context->get_format(), color_attachment.get());
-	framebuffer_attachments.push_back(std::move(color_attachment));
-
-	create_depth_attachment(depth_format, depth_attachment.get());
-	framebuffer_attachments.push_back(std::move(depth_attachment));
 
 	std::array<VkAttachmentDescription, 3> attachments = {};
 	// Color attachment
@@ -538,51 +495,54 @@ void DynamicState3MultisampleRasterization::setup_render_pass()
 }
 
 // Create attachment that will be used in a framebuffer.
-void DynamicState3MultisampleRasterization::create_color_attachment(VkFormat format, FrameBufferAttachment *attachment)
-{
-	attachment->format = format;
-
-	VkImageCreateInfo image = vkb::initializers::image_create_info();
-	image.imageType         = VK_IMAGE_TYPE_2D;
-	image.format            = format;
-	image.extent.width      = get_render_context().get_surface_extent().width;
-	image.extent.height     = get_render_context().get_surface_extent().height;
-	image.extent.depth      = 1;
-	image.mipLevels         = 1;
-	image.arrayLayers       = 1;
-	image.samples           = sample_count;
-	image.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-
-	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	VkMemoryRequirements memory_requirements;
-
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
-	vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
-	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->mem));
-	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->mem, 0));
-
-	VkImageViewCreateInfo image_view_create_info           = vkb::initializers::image_view_create_info();
-	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	image_view_create_info.format                          = format;
-	image_view_create_info.subresourceRange                = {};
-	image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	image_view_create_info.subresourceRange.baseMipLevel   = 0;
-	image_view_create_info.subresourceRange.levelCount     = 1;
-	image_view_create_info.subresourceRange.baseArrayLayer = 0;
-	image_view_create_info.subresourceRange.layerCount     = 1;
-	image_view_create_info.image                           = attachment->image;
-	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
-}
-
-void DynamicState3MultisampleRasterization::create_depth_attachment(VkFormat format, FrameBufferAttachment *attachment)
+void DynamicState3MultisampleRasterization::setup_color_attachment()
 {
 	VkImageCreateInfo image_create_info{};
 	image_create_info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image_create_info.imageType   = VK_IMAGE_TYPE_2D;
-	image_create_info.format      = format;
+	image_create_info.format      = render_context->get_format();
+	image_create_info.extent      = {get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1};
+	image_create_info.mipLevels   = 1;
+	image_create_info.arrayLayers = 1;
+	image_create_info.samples     = sample_count;
+	image_create_info.tiling      = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.usage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+
+	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &color_attachment.image));
+	VkMemoryRequirements memReqs{};
+	vkGetImageMemoryRequirements(device->get_handle(), color_attachment.image, &memReqs);
+
+	VkMemoryAllocateInfo memory_allocation{};
+	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memory_allocation.allocationSize  = memReqs.size;
+	memory_allocation.memoryTypeIndex = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocation, nullptr, &color_attachment.mem));
+	VK_CHECK(vkBindImageMemory(device->get_handle(), color_attachment.image, color_attachment.mem, 0));
+
+	VkImageViewCreateInfo image_view_create_info{};
+	image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+	image_view_create_info.image                           = color_attachment.image;
+	image_view_create_info.format                          = render_context->get_format();
+	image_view_create_info.subresourceRange.baseMipLevel   = 0;
+	image_view_create_info.subresourceRange.levelCount     = 1;
+	image_view_create_info.subresourceRange.baseArrayLayer = 0;
+	image_view_create_info.subresourceRange.layerCount     = 1;
+	image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	// Stencil aspect should only be set on depth + stencil formats (VK_FORMAT_D16_UNORM_S8_UINT..VK_FORMAT_D32_SFLOAT_S8_UINT
+	if (depth_format >= VK_FORMAT_D16_UNORM_S8_UINT)
+	{
+		image_view_create_info.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+	}
+	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &color_attachment.view));
+}
+
+void DynamicState3MultisampleRasterization::setup_depth_stencil()
+{
+	VkImageCreateInfo image_create_info{};
+	image_create_info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	image_create_info.imageType   = VK_IMAGE_TYPE_2D;
+	image_create_info.format      = depth_format;
 	image_create_info.extent      = {get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1};
 	image_create_info.mipLevels   = 1;
 	image_create_info.arrayLayers = 1;
@@ -590,22 +550,22 @@ void DynamicState3MultisampleRasterization::create_depth_attachment(VkFormat for
 	image_create_info.tiling      = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.usage       = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
-	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &(attachment->image)));
+	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &depth_stencil.image));
 	VkMemoryRequirements memReqs{};
-	vkGetImageMemoryRequirements(device->get_handle(), attachment->image, &memReqs);
+	vkGetImageMemoryRequirements(device->get_handle(), depth_stencil.image, &memReqs);
 
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
 	memory_allocation.memoryTypeIndex = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocation, nullptr, &(attachment->mem)));
-	VK_CHECK(vkBindImageMemory(device->get_handle(), attachment->image, attachment->mem, 0));
+	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
+	VK_CHECK(vkBindImageMemory(device->get_handle(), depth_stencil.image, depth_stencil.mem, 0));
 
 	VkImageViewCreateInfo image_view_create_info{};
 	image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	image_view_create_info.image                           = attachment->image;
-	image_view_create_info.format                          = format;
+	image_view_create_info.image                           = depth_stencil.image;
+	image_view_create_info.format                          = depth_format;
 	image_view_create_info.subresourceRange.baseMipLevel   = 0;
 	image_view_create_info.subresourceRange.levelCount     = 1;
 	image_view_create_info.subresourceRange.baseArrayLayer = 0;
@@ -616,16 +576,19 @@ void DynamicState3MultisampleRasterization::create_depth_attachment(VkFormat for
 	{
 		image_view_create_info.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
-	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &(attachment->view)));
+	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &depth_stencil.view));
 }
 
 void DynamicState3MultisampleRasterization::setup_framebuffer()
 {
+	setup_color_attachment();
+	setup_depth_stencil();
+
 	VkImageView attachments[3];
 
 	// Depth/Stencil attachment is the same for all frame buffers
-	attachments[0] = framebuffer_attachments[0]->view;
-	attachments[2] = framebuffer_attachments[1]->view;
+	attachments[0] = color_attachment.view;
+	attachments[2] = depth_stencil.view;
 
 	VkFramebufferCreateInfo framebuffer_create_info = {};
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -660,11 +623,6 @@ void DynamicState3MultisampleRasterization::setup_framebuffer()
 
 void DynamicState3MultisampleRasterization::prepare_pipelines()
 {
-	if (pipeline != VK_NULL_HANDLE)
-	{
-		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
-	}
-
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
 	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -810,6 +768,7 @@ void DynamicState3MultisampleRasterization::render(float delta_time)
 		return;
 	}
 	draw();
+
 	if (camera.updated)
 	{
 		update_uniform_buffers();
@@ -818,38 +777,40 @@ void DynamicState3MultisampleRasterization::render(float delta_time)
 
 void DynamicState3MultisampleRasterization::update_resources()
 {
+	prepared = false;
+
 	if (device)
 	{
 		device->wait_idle();
 
-		// destroy framebuffer attachments:
-		for (auto &att : framebuffer_attachments)
+		// Destroy color attachment
+		vkDestroyImageView(get_device().get_handle(), depth_stencil.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), depth_stencil.image, nullptr);
+		vkFreeMemory(get_device().get_handle(), depth_stencil.mem, nullptr);
+		depth_stencil.view = VK_NULL_HANDLE;
+		depth_stencil.image = VK_NULL_HANDLE;
+		depth_stencil.mem   = VK_NULL_HANDLE;
+
+		// Destroy depth/stencil attachment
+		vkDestroyImageView(get_device().get_handle(), color_attachment.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), color_attachment.image, nullptr);
+		vkFreeMemory(get_device().get_handle(), color_attachment.mem, nullptr);
+		color_attachment.view = VK_NULL_HANDLE;
+		color_attachment.image = VK_NULL_HANDLE;
+		color_attachment.mem   = VK_NULL_HANDLE;
+
+		if (render_pass != VK_NULL_HANDLE)
 		{
-			att->destroy(get_device().get_handle());
+			vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
+			render_pass = VK_NULL_HANDLE;
 		}
 
-		framebuffer_attachments.clear();
-
-		std::unique_ptr<FrameBufferAttachment> color_attachment = std::make_unique<FrameBufferAttachment>();
-		std::unique_ptr<FrameBufferAttachment> depth_attachment = std::make_unique<FrameBufferAttachment>();
-
-		create_color_attachment(render_context->get_format(), color_attachment.get());
-		framebuffer_attachments.push_back(std::move(color_attachment));
-
-		create_depth_attachment(depth_format, depth_attachment.get());
-		framebuffer_attachments.push_back(std::move(depth_attachment));
-
-		width  = get_render_context().get_surface_extent().width;
-		height = get_render_context().get_surface_extent().height;
-
-		camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
-
-		// All resources are recreated during setup
 		setup_render_pass();
 		setup_framebuffer();
-		prepare_pipelines();
-		build_command_buffers();
+		rebuild_command_buffers();
 	}
+
+	prepared = true;
 }
 
 void DynamicState3MultisampleRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -864,6 +825,20 @@ void DynamicState3MultisampleRasterization::on_update_ui_overlay(vkb::Drawer &dr
 		}
 	}
 }
+
+bool DynamicState3MultisampleRasterization::resize(const uint32_t _width, const uint32_t _height)
+{
+	if (!ApiVulkanSample::resize(_width, _height))
+		return false;
+
+	prepared = false;
+
+	update_resources();
+
+	prepared = true;
+	return true;
+}
+
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_state3_multisample_rasterization()
 {

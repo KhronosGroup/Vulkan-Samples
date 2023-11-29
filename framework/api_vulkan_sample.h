@@ -287,7 +287,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	/**
 	 * @brief Creates a new (graphics) command pool object storing command buffers
 	 */
-	void create_command_pool();
+	virtual void create_command_pool();
 
 	/**
 	 * @brief Setup default depth and stencil views
