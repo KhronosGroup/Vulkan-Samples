@@ -1,4 +1,3 @@
-#version 460
 /* 
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,33 +24,28 @@
  * built for WebGL)
  * Contributor: (Qualcomm) Rodrigo Holztrattner - quic_rholztra@quicinc.com
  */
+#version 460
 
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec2 texCoord;
-layout(location = 2) in vec3 posOffset;
+layout(location = 0) in vec2 texCoord_frag;
+layout(location = 1) in vec3 rayDirectionIn;
 
-layout(binding = 2) uniform GlobalUniform
-{
-	mat4x4 model;
-	mat4x4 view;
-	mat4x4 proj;
-    vec3 camera_position;
-    vec3 camera_side;
-    vec3 camera_up;
-    vec3 camera_lookat;
-    vec2 img_dim;
-}
-global_uniform;
+layout(location = 0) out vec4 o_color_0;
+layout(location = 1) out vec4 o_color_1;
+layout(location = 2) out vec4 rayDirectionOut;
 
-layout(location = 0) out vec2 texCoord_frag;
-layout(location = 1) out vec3 rayDirection;
+
+layout(binding = 0) uniform sampler2D textureInput_0;
+layout(binding = 1) uniform sampler2D textureInput_1;
 
 void main(void)
 {
-	texCoord_frag = texCoord;
+    vec2 flipped = vec2( texCoord_frag.x, 1.0 - texCoord_frag.y );
+	vec4 pixel_0 = texture(textureInput_0, flipped);
+	if (pixel_0.r == 0.0) discard;
+	vec4 pixel_1 = texture(textureInput_1, flipped);
+	o_color_0 = pixel_0;
+	o_color_1 = pixel_1;
 	
-	vec3 pos = position + posOffset;
-
-	gl_Position = global_uniform.proj * global_uniform.view * global_uniform.model * vec4(pos.x, -pos.y, pos.z, 1.0);
-	rayDirection = pos - vec3(global_uniform.camera_position.x, -global_uniform.camera_position.y, global_uniform.camera_position.z);
+	rayDirectionOut.rgb = normalize(rayDirectionIn);
+	rayDirectionOut.a = 1.0f;
 }

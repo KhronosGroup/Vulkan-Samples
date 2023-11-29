@@ -35,14 +35,15 @@ class Camera;
 }        // namespace sg
 }        // namespace vkb
 
-class MobileNerf : public ApiVulkanSample
+class Nerf : public ApiVulkanSample
 {
   public:
-	MobileNerf();
-	~MobileNerf() override;
+	Nerf();
+	~Nerf() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
+	bool resize(const uint32_t width, const uint32_t height) override;
 
   private:
 	struct GlobalUniform
@@ -77,11 +78,11 @@ class MobileNerf : public ApiVulkanSample
 	struct Vertex
 	{
 		alignas(4) glm::vec3 position;
-		alignas(4) glm::vec2 texCoord;
+		alignas(4) glm::vec2 tex_coord;
 
 		bool operator==(const Vertex &other) const
 		{
-			return position == other.position && texCoord == other.texCoord;
+			return position == other.position && tex_coord == other.tex_coord;
 		}
 	};
 
@@ -90,7 +91,7 @@ class MobileNerf : public ApiVulkanSample
 		size_t operator()(Vertex const &vertex) const
 		{
 			return std::hash<glm::vec3>()(vertex.position) ^
-			       (std::hash<glm::vec2>()(vertex.texCoord) << 1);
+			       (std::hash<glm::vec2>()(vertex.tex_coord) << 1);
 		}
 	};
 
@@ -164,8 +165,6 @@ class MobileNerf : public ApiVulkanSample
 	// buffer to store instance data
 	std::unique_ptr<vkb::core::Buffer> instance_buffer{nullptr};
 
-	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
-
 	//Common
 	void read_json_map();
 	void load_shaders();
@@ -203,16 +202,16 @@ class MobileNerf : public ApiVulkanSample
 	};
 
 	std::vector<Attachments_baseline> frameAttachments;
-	std::vector<VkFramebuffer> nerf_framebuffers;
-	VkRenderPass	      	   render_pass_nerf{VK_NULL_HANDLE};
+	std::vector<VkFramebuffer>        nerf_framebuffers;
+	VkRenderPass	      	          render_pass_nerf{VK_NULL_HANDLE};
 
 	// For the baseline (mlp in frag shader) second pass
-	VkPipeline            pipeline_baseline{VK_NULL_HANDLE};
-	VkPipelineLayout      pipeline_layout_baseline{VK_NULL_HANDLE};
-	VkDescriptorSetLayout descriptor_set_layout_baseline{VK_NULL_HANDLE};
+	VkPipeline                   pipeline_baseline{VK_NULL_HANDLE};
+	VkPipelineLayout             pipeline_layout_baseline{VK_NULL_HANDLE};
+	VkDescriptorSetLayout        descriptor_set_layout_baseline{VK_NULL_HANDLE};
 	std::vector<VkDescriptorSet> descriptor_set_baseline{VK_NULL_HANDLE};
 
-	void update_render_pass_mobile_nerf_baseline();
+	void update_render_pass_nerf_baseline();
 	void create_pipeline_layout_baseline();
 	void create_descriptor_sets_baseline();
 	void setup_nerf_framebuffer_baseline();
@@ -220,15 +219,15 @@ class MobileNerf : public ApiVulkanSample
 	void build_command_buffers_baseline();
 
 	// For creating the forward mode rendepass
-	void update_render_pass_mobile_nerf_forward();
+	void update_render_pass_nerf_forward();
 
-	// For loading mobile nerf assets map
-	json asset_map;
+	// For loading nerf assets map
+	json                     asset_map;
 	std::vector<std::string> model_path;
-	bool combo_mode;
-	std::vector<bool> using_original_nerf_models;
-	bool use_deferred;
-	bool do_rotation;
+	bool                     combo_mode;
+	std::vector<bool>        using_original_nerf_models;
+	bool                     use_deferred;
+	bool                     do_rotation;
 
 	glm::vec3 camera_pos = glm::vec3(-2.2f, 2.2f, 2.2f);
 
@@ -239,7 +238,7 @@ class MobileNerf : public ApiVulkanSample
 	float    fov = 60.0f;
 	uint32_t view_port_width;
 	uint32_t view_port_height;
-	bool	useNativeScreenSize = false;
+	bool	 use_native_screen_size = false;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_mobile_nerf();
+std::unique_ptr<vkb::VulkanSample> create_nerf();

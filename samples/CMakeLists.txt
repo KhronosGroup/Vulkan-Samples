@@ -87,7 +87,6 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
-    "mobile_nerf"
 
     #Performance Samples
     "swapchain_images"
@@ -128,7 +127,10 @@ set(ORDER_LIST
 	
     #HPP Performance Samples
     "hpp_pipeline_cache"
-    "hpp_swapchain_images")
+    "hpp_swapchain_images"
+    
+    #General Samples
+    "nerf")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

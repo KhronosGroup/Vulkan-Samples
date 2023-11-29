@@ -1,4 +1,3 @@
-#version 460
 /* 
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,31 +24,34 @@
  * built for WebGL)
  * Contributor: (Qualcomm) Rodrigo Holztrattner - quic_rholztra@quicinc.com
  */
+#version 460
 
-#extension GL_EXT_ray_query : enable
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texCoord;
+layout(location = 2) in vec3 posOffset;
 
-layout(binding = 0, set = 0, rgba8) uniform image2D image;
-
-layout(binding = 1, set = 0) uniform sampler2D inputFeature_0;
-
-layout(binding = 2, set = 0) uniform sampler2D inputFeature_1;
-
-// TODO should add mlp weight in here
-//layout(set = 0, binding = 2) uniform mlp_weights....
-
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
-
-void main() 
+layout(binding = 2) uniform GlobalUniform
 {
-	const uvec3 globalSize = gl_NumWorkGroups * gl_WorkGroupSize;
-	const vec2 pixelCenter = vec2(gl_GlobalInvocationID.xy) + vec2(0.5);
-	const vec2 inUV = pixelCenter/vec2(globalSize);
-
-	vec4 feature_0 = texture(inputFeature_0, inUV);
-	vec4 feature_1 = texture(inputFeature_1, inUV);
-
-	vec4 o_color = vec4(((feature_0 + feature_1) / 2.0f).rgb, 1.0f);
-
-	imageStore(image, ivec2(gl_GlobalInvocationID.xy), o_color);
+	mat4x4 model;
+	mat4x4 view;
+	mat4x4 proj;
+    vec3 camera_position;
+    vec3 camera_side;
+    vec3 camera_up;
+    vec3 camera_lookat;
+    vec2 img_dim;
 }
+global_uniform;
 
+layout(location = 0) out vec2 texCoord_frag;
+layout(location = 1) out vec3 rayDirection;
+
+void main(void)
+{
+	texCoord_frag = texCoord;
+	
+	vec3 pos = position + posOffset;
+
+	gl_Position = global_uniform.proj * global_uniform.view * global_uniform.model * vec4(pos.x, -pos.y, pos.z, 1.0);
+	rayDirection = pos - vec3(global_uniform.camera_position.x, -global_uniform.camera_position.y, global_uniform.camera_position.z);
+}

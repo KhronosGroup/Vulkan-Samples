@@ -1,4 +1,3 @@
-#version 460
 /* 
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,6 +24,7 @@
  * built for WebGL)
  * Contributor: (Qualcomm) Rodrigo Holztrattner - quic_rholztra@quicinc.com
  */
+#version 460
 
 layout (input_attachment_index = 0, binding = 0) uniform subpassInput inputFeature_0;
 layout (input_attachment_index = 1, binding = 1) uniform subpassInput inputFeature_1;

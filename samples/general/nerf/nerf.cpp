@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "mobile_nerf.h"
+#include "nerf.h"
 #include "gltf_loader.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
@@ -23,8 +23,8 @@
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/perspective_camera.h"
-#include "third_party/stb/stb_image.h"
 #include "glm/gtx/matrix_decompose.hpp"
+#include "stb_image.h"
 
 namespace
 {
@@ -91,18 +91,17 @@ void camera_set_look_at(vkb::Camera& camera, const glm::vec3 look, const glm::ve
 
 }        // namespace
 
-MobileNerf::MobileNerf()
+Nerf::Nerf()
 {
-	title = "Mobile Nerf";
+	title = "NeRF";
 	// SPIRV 1.4 requires Vulkan 1.1
 	set_api_version(VK_API_VERSION_1_1);
-	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	// Required by VK_KHR_spirv_1_4
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 }
 
-MobileNerf::~MobileNerf()
+Nerf::~Nerf()
 {
 	if (device)
 	{
@@ -170,28 +169,28 @@ MobileNerf::~MobileNerf()
 	}
 }
 
-void MobileNerf::read_json_map()
+void Nerf::read_json_map()
 {
 	std::string assetBase = vkb::fs::path::get(vkb::fs::path::Type::Assets);
 	LOGI("Base assets path: {}", assetBase);
 
-#if defined(MOBILE_NERF_JSON_FILE)
-	const std::string mobile_nerf_obj_map = assetBase + "scenes/mobile_nerf_models.json";
+#if defined(NERF_JSON_FILE)
+	const std::string nerf_obj_map = assetBase + "scenes/mobile_nerf_models.json";
 
-	std::ifstream f(mobile_nerf_obj_map);
+	std::ifstream f(nerf_obj_map);
 
 	if (!f)
 	{
-		LOGE("Failed to open mobile nerf obj map data");
+		LOGE("Failed to open nerf obj map data");
 		assert(0);
 	}
 
-	LOGI("Parsing mobile nerf obj map data {}", mobile_nerf_obj_map);
+	LOGI("Parsing nerf obj map data {}", nerf_obj_map);
 
 	json raw_asset_map = json::parse(f);
 #else
     
-	const std::string mobile_nerf_obj_json =
+	const std::string nerf_obj_json =
 	    R"V0G0N(
         {
             "width": 0, 
@@ -264,7 +263,7 @@ void MobileNerf::read_json_map()
         }
         )V0G0N";
 
-    json raw_asset_map = json::parse(mobile_nerf_obj_json);
+    json raw_asset_map = json::parse(nerf_obj_json);
 
 #endif
 
@@ -356,31 +355,31 @@ void MobileNerf::read_json_map()
 	}
 }
 
-void MobileNerf::load_shaders(){
+void Nerf::load_shaders(){
 
 	// Loading first pass shaders
 	if(use_deferred){
 		// Loading first pass shaders
-		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages_first_pass[0] = load_shader("nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_first_pass[1] = load_shader(
-			using_original_nerf_models[0] ? "mobile_nerf/raster.frag" : "mobile_nerf/raster_morpheus.frag", 
+			using_original_nerf_models[0] ? "nerf/raster.frag" : "nerf/raster_morpheus.frag", 
 			VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Loading second pass shaders
-		shader_stages_second_pass[0] = load_shader("mobile_nerf/quad.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages_second_pass[0] = load_shader("nerf/quad.vert", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_second_pass[1] = load_shader(
-			using_original_nerf_models[0] ? "mobile_nerf/mlp.frag" : "mobile_nerf/mlp_morpheus.frag", 
+			using_original_nerf_models[0] ? "nerf/mlp.frag" : "nerf/mlp_morpheus.frag", 
 			VK_SHADER_STAGE_FRAGMENT_BIT);
 	}else{
 		// Loading one pass shaders
-		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages_first_pass[0] = load_shader("nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_first_pass[1] = load_shader(
-			using_original_nerf_models[0] ? "mobile_nerf/merged.frag" : "mobile_nerf/merged_morpheus.frag", 
+			using_original_nerf_models[0] ? "nerf/merged.frag" : "nerf/merged_morpheus.frag", 
 			VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 }
 
-bool MobileNerf::prepare(const vkb::ApplicationOptions &options)
+bool Nerf::prepare(const vkb::ApplicationOptions &options)
 {
 	read_json_map();
 
@@ -399,16 +398,16 @@ bool MobileNerf::prepare(const vkb::ApplicationOptions &options)
 	if(view_port_width == 0 || view_port_height == 0){
 		view_port_width = width;
 		view_port_height = height;
-		useNativeScreenSize = true;
+		use_native_screen_size = true;
 	}
 	
 	load_shaders();
 
 	if(use_deferred){
-		update_render_pass_mobile_nerf_baseline();
+		update_render_pass_nerf_baseline();
 	}
 	else{
-		update_render_pass_mobile_nerf_forward();
+		update_render_pass_nerf_forward();
 	}
 
 	setup_nerf_framebuffer_baseline();
@@ -416,11 +415,12 @@ bool MobileNerf::prepare(const vkb::ApplicationOptions &options)
 	// clear out the written color attachment
 	update_render_pass_flags(RenderPassCreateFlags::ColorAttachmentLoad);
 
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.01f, 200.0f);        // 0.1, 512
-	camera.type = vkb::CameraType::LookAt;
+    camera.type = vkb::CameraType::LookAt;
 	camera_pos.y = -camera_pos.y; // flip y to keep consistency of the init pos between rayquery and rasterization
     camera.set_position(camera_pos);
 	camera_set_look_at(camera, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    camera.set_perspective(60.0f, (float) width / (float) height, 0.01f, 256.0f);
 
 	int models_entry = 0;
 
@@ -460,11 +460,18 @@ bool MobileNerf::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void MobileNerf::request_gpu_features(vkb::PhysicalDevice &gpu)
+bool Nerf::resize(const uint32_t width, const uint32_t height)
+{
+	ApiVulkanSample::resize(width, height);
+	rebuild_command_buffers();
+	return true;
+}
+
+void Nerf::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 }
 
-void MobileNerf::render(float delta_time)
+void Nerf::render(float delta_time)
 {
 	if (!prepared)
 	{
@@ -479,7 +486,7 @@ inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
-void MobileNerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment& attachment){
+void Nerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment& attachment){
 	
 	if (attachment.image != VK_NULL_HANDLE)
 	{
@@ -567,7 +574,7 @@ void MobileNerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, Fram
 
 }
 
-void MobileNerf::setup_nerf_framebuffer_baseline()
+void Nerf::setup_nerf_framebuffer_baseline()
 {
 	/*
 		Create texture output image
@@ -642,7 +649,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 	}
 }
 
-void MobileNerf::update_descriptor_sets_baseline()
+void Nerf::update_descriptor_sets_baseline()
 {
 	for (int i = 0; i < nerf_framebuffers.size(); i++)
 	{
@@ -674,16 +681,16 @@ void MobileNerf::update_descriptor_sets_baseline()
 	}
 }
 
-void MobileNerf::build_command_buffers(){
+void Nerf::build_command_buffers(){
 
-	if(useNativeScreenSize){
+	if(use_native_screen_size){
 		view_port_height = height;
 		view_port_width = width;
 	}
 	build_command_buffers_baseline();
 }
 
-void MobileNerf::build_command_buffers_baseline()
+void Nerf::build_command_buffers_baseline()
 {
 	//In case the screen is resized, need to update the storage image size and descriptor set
 	//Note that the texture_rendered image has already been recreated at this point
@@ -750,7 +757,9 @@ void MobileNerf::build_command_buffers_baseline()
 		*/
 
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		const auto scissor  = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		auto &ii = instancing_info;
 		for (auto &model : models)
@@ -797,7 +806,7 @@ void MobileNerf::build_command_buffers_baseline()
 	}
 }
 
-void MobileNerf::load_scene(int model_index, int sub_model_index, int models_entry)
+void Nerf::load_scene(int model_index, int sub_model_index, int models_entry)
 {
 	Model& model = models[models_entry];
 	vkb::GLTFLoader loader{*device};
@@ -811,7 +820,7 @@ void MobileNerf::load_scene(int model_index, int sub_model_index, int models_ent
 		else 
 			inputfile += (".gltf");
 		
-		LOGI("Parsing mobile nerf obj {}", inputfile);
+		LOGI("Parsing nerf obj {}", inputfile);
 
 		auto scene = loader.read_scene_from_file(inputfile);
 
@@ -829,7 +838,7 @@ void MobileNerf::load_scene(int model_index, int sub_model_index, int models_ent
 					for (size_t i = 0; i < pts_.size(); ++i)
 					{
 						model.vertices[vertex_start_index + i].position = pts_[i];
-						model.vertices[vertex_start_index + i].texCoord = glm::vec2(texcoord_[i].x, 1.0f - texcoord_[i].y) ;
+						model.vertices[vertex_start_index + i].tex_coord = glm::vec2(texcoord_[i].x, 1.0f - texcoord_[i].y) ;
 					}
 				}
 
@@ -860,7 +869,7 @@ void MobileNerf::load_scene(int model_index, int sub_model_index, int models_ent
 	}
 }
 
-void MobileNerf::create_descriptor_pool()
+void Nerf::create_descriptor_pool()
 {
 	if(use_deferred){
 		std::vector<VkDescriptorPoolSize> pool_sizes = {
@@ -888,7 +897,7 @@ void MobileNerf::create_descriptor_pool()
 	}
 }
 
-void MobileNerf::create_pipeline_layout_fist_pass(){
+void Nerf::create_pipeline_layout_fist_pass(){
 	/*
 		First Pass Descriptor set and layout
 	*/
@@ -916,7 +925,7 @@ void MobileNerf::create_pipeline_layout_fist_pass(){
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_first_pass_layout));
 }
 
-void MobileNerf::create_pipeline_layout_baseline(){
+void Nerf::create_pipeline_layout_baseline(){
 	/*
 		Second Pass Descriptor set and layout
 	*/
@@ -941,7 +950,7 @@ void MobileNerf::create_pipeline_layout_baseline(){
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout_baseline));
 }
 
-void MobileNerf::create_descriptor_sets_first_pass(Model &model)
+void Nerf::create_descriptor_sets_first_pass(Model &model)
 {
 	int numDescriptorPerModel = use_deferred? 1 : nerf_framebuffers.size();
 	model.descriptor_set_first_pass.resize(numDescriptorPerModel);
@@ -991,7 +1000,7 @@ void MobileNerf::create_descriptor_sets_first_pass(Model &model)
 	}
 }
 
-void MobileNerf::create_descriptor_sets_baseline()
+void Nerf::create_descriptor_sets_baseline()
 {
 	descriptor_set_baseline.resize(nerf_framebuffers.size());
 
@@ -1034,7 +1043,7 @@ void MobileNerf::create_descriptor_sets_baseline()
 	}
 }
 
-void MobileNerf::prepare_pipelines()
+void Nerf::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
@@ -1056,11 +1065,10 @@ void MobileNerf::prepare_pipelines()
 	depth_stencil_state.maxDepthBounds = 1.f;
 
 	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-	const auto                        scissor        = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
-	viewport_state.pScissors                         = &scissor;
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT};
+	    VK_DYNAMIC_STATE_VIEWPORT, 
+        VK_DYNAMIC_STATE_SCISSOR};
 		
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(
@@ -1077,7 +1085,7 @@ void MobileNerf::prepare_pipelines()
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)),
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, texCoord)),
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, tex_coord)),
 		vkb::initializers::vertex_input_attribute_description(1, 2, VK_FORMAT_R32G32B32_SFLOAT, 0),
 	};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
@@ -1130,7 +1138,7 @@ void MobileNerf::prepare_pipelines()
 	}
 }
 
-void MobileNerf::create_static_object_buffers(int model_index, int sub_model_index, int models_entry)
+void Nerf::create_static_object_buffers(int model_index, int sub_model_index, int models_entry)
 {
 	LOGI("Creating static object buffers");
 	Model &model              = models[models_entry];
@@ -1173,7 +1181,7 @@ void MobileNerf::create_static_object_buffers(int model_index, int sub_model_ind
 	LOGI("Done Creating static object buffers");
 }
 
-void MobileNerf::create_uniforms()
+void Nerf::create_uniforms()
 {
 	uniform_buffers.resize(model_path.size());
 	weights_buffers.resize(model_path.size());
@@ -1201,7 +1209,7 @@ void MobileNerf::create_uniforms()
 	update_uniform_buffers();
 }
 
-void MobileNerf::initialize_mlp_uniform_buffers(int model_index)
+void Nerf::initialize_mlp_uniform_buffers(int model_index)
 {
 	std::string assetBase = vkb::fs::path::get(vkb::fs::path::Type::Assets);
 	std::string mlpJsonPath = assetBase + model_path[model_index] + "mlp.json";
@@ -1334,23 +1342,12 @@ void MobileNerf::initialize_mlp_uniform_buffers(int model_index)
 	}
 }
 
-void MobileNerf::update_uniform_buffers()
+void Nerf::update_uniform_buffers()
 {
 	assert(uniform_buffers[0]);
 
-	camera.set_perspective(fov, (float) width / (float) height, 0.01f, 200.0f);        // 0.1, 512
 	const float tan_half_fov = tan(0.5 * fov / 180.0f * 3.141592653589793f);
 
-	if (do_rotation)
-	{
-		const float t    = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_time).count()) / 1000.f;
-		auto        cpos = camera.position;
-		auto        r    = sqrt(cpos.x * cpos.x + cpos.z * cpos.z);
-		const float p    = 2.f * 3.141592653589793f / 5000.f * 1.5f;
-		camera.set_position(glm::vec3(r * cosf(t * p), cpos.y, r * sinf(t * p)));
-		camera_set_look_at(camera, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	}
-	
 	global_uniform.proj            = camera.matrices.perspective;
 	global_uniform.view            = camera.matrices.view;
 	global_uniform.camera_position = camera.position;
@@ -1371,7 +1368,7 @@ void MobileNerf::update_uniform_buffers()
 	}
 }
 
-void MobileNerf::prepare_instance_data()
+void Nerf::prepare_instance_data()
 {
 	std::vector<InstanceData> instance_data;
 	auto &                    ii = instancing_info;
@@ -1428,7 +1425,7 @@ void MobileNerf::prepare_instance_data()
 	device->get_fence_pool().wait();
 }
 
-void MobileNerf::draw()
+void Nerf::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
@@ -1445,7 +1442,7 @@ void MobileNerf::draw()
 /*
 	Set up the input texture image
 */
-void MobileNerf::create_texture(int model_index, int sub_model_index, int models_entry) {
+void Nerf::create_texture(int model_index, int sub_model_index, int models_entry) {
 	// TODO should load different scenes's feature map from command line
 	std::string assetBase = vkb::fs::path::get(vkb::fs::path::Type::Assets);
 	std::string feature_0_path = assetBase + model_path[model_index] + "shape" + std::to_string(sub_model_index) + ".pngfeat0.png";
@@ -1460,7 +1457,7 @@ void MobileNerf::create_texture(int model_index, int sub_model_index, int models
 	LOGI("Done Creating feature texture 0");
 }
 
-void MobileNerf::create_texture_helper(std::string texturePath, Texture_Input& texture_input) {
+void Nerf::create_texture_helper(std::string texturePath, Texture_Input& texture_input) {
 	// Copy data to an optimal tiled image
 	// This loads the texture data into a host local buffer that is copied to the optimal tiled image on the device
 
@@ -1580,7 +1577,7 @@ void MobileNerf::create_texture_helper(std::string texturePath, Texture_Input& t
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &samplerCreateInfo, 0, &texture_input.sampler));
 }
 
-void MobileNerf::update_render_pass_mobile_nerf_forward()
+void Nerf::update_render_pass_nerf_forward()
 {
 	// For merged shaders, we need 2 attachments (as opposed to 5)
 	// 0: Depth attachment
@@ -1634,7 +1631,7 @@ void MobileNerf::update_render_pass_mobile_nerf_forward()
 	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
 }
 
-void MobileNerf::update_render_pass_mobile_nerf_baseline ()
+void Nerf::update_render_pass_nerf_baseline ()
 {
 	std::array<VkAttachmentDescription, 5> attachments = {};
 	// Color attachment 1
@@ -1772,7 +1769,7 @@ void MobileNerf::update_render_pass_mobile_nerf_baseline ()
 	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
 }
 
-std::unique_ptr<vkb::VulkanSample> create_mobile_nerf()
+std::unique_ptr<vkb::VulkanSample> create_nerf()
 {
-	return std::make_unique<MobileNerf>();
+	return std::make_unique<Nerf>();
 }

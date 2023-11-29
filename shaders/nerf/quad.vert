@@ -1,4 +1,3 @@
-#version 460
 /* 
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,27 +24,14 @@
  * built for WebGL)
  * Contributor: (Qualcomm) Rodrigo Holztrattner - quic_rholztra@quicinc.com
  */
+#version 460
 
-layout(location = 0) in vec2 texCoord_frag;
-layout(location = 1) in vec3 rayDirectionIn;
+out gl_PerVertex {
+	vec4 gl_Position;
+};
 
-layout(location = 0) out vec4 o_color_0;
-layout(location = 1) out vec4 o_color_1;
-layout(location = 2) out vec4 rayDirectionOut;
-
-
-layout(binding = 0) uniform sampler2D textureInput_0;
-layout(binding = 1) uniform sampler2D textureInput_1;
-
-void main(void)
+void main() 
 {
-    vec2 flipped = vec2( texCoord_frag.x, 1.0 - texCoord_frag.y );
-	vec4 pixel_0 = texture(textureInput_0, flipped);
-	if (pixel_0.r == 0.0) discard;
-	vec4 pixel_1 = texture(textureInput_1, flipped);
-	o_color_0 = pixel_0;
-	o_color_1 = pixel_1;
-	
-	rayDirectionOut.rgb = normalize(rayDirectionIn);
-	rayDirectionOut.a = 1.0f;
+	vec2 outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
 }

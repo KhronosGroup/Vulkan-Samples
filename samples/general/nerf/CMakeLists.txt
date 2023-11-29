@@ -23,6 +23,6 @@ add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Qualcomm"
-    NAME "Mobile NeRF"
+    NAME "NeRF"
     DESCRIPTION "A Neural Radiance Field synthesizer sample, based on textured polygons"
 )

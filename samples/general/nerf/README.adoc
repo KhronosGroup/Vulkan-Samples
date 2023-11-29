@@ -17,10 +17,10 @@
 -
 ////
 
-= Mobile Nerf
+= NeRF
 
 ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/mobile_nerf[Khronos Vulkan samples github repository].
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/general/nerf[Khronos Vulkan samples github repository].
 endif::[]
 
 This sample is a modified version of the https://mobile-nerf.github.io/[Mobile Nerf] developed by Google. 

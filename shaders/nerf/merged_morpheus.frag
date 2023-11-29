@@ -1,4 +1,3 @@
-#version 460
 /* 
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,6 +24,7 @@
  * built for WebGL)
  * Contributor: (Qualcomm) Rodrigo Holztrattner - quic_rholztra@quicinc.com
  */
+#version 460
 
 layout(location = 0) in vec2 texCoord_frag;
 layout(location = 1) in vec3 rayDirectionIn;
