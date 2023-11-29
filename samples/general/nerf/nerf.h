@@ -58,21 +58,20 @@ class Nerf : public ApiVulkanSample
 		alignas(8) glm::vec2 img_dim;
 		alignas(4) float tan_half_fov;
 	} global_uniform;
-	
-	#define WEIGHTS_0_COUNT (176)
-	#define WEIGHTS_1_COUNT (256)
-	// The third layer weights' size is changed from 48 to 64 to make sure a 16 bytes alignement
-	//#define WEIGHTS_2_COUNT (48)
-	#define WEIGHTS_2_COUNT (64)
-	#define BIAS_0_COUNT (16)
-	#define BIAS_1_COUNT (16)
-	// The third layer bias' size is changed from 3 to 4 to make sure a 16 bytes alignement
-	#define BIAS_2_COUNT (4)
+
+#define WEIGHTS_0_COUNT (176)
+#define WEIGHTS_1_COUNT (256)
+// The third layer weights' size is changed from 48 to 64 to make sure a 16 bytes alignement
+#define WEIGHTS_2_COUNT (64)
+#define BIAS_0_COUNT (16)
+#define BIAS_1_COUNT (16)
+// The third layer bias' size is changed from 3 to 4 to make sure a 16 bytes alignement
+#define BIAS_2_COUNT (4)
 
 	struct MLP_Weights
 	{
-		float data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT + 
-		BIAS_0_COUNT + BIAS_1_COUNT + BIAS_2_COUNT];        // Array of floats
+		float data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT +
+		           BIAS_0_COUNT + BIAS_1_COUNT + BIAS_2_COUNT];        // Array of floats
 	};
 
 	struct Vertex
@@ -109,7 +108,7 @@ class Nerf : public ApiVulkanSample
 	struct InstancingInfo
 	{
 		glm::ivec3 dim;
-		glm::vec3 interval;
+		glm::vec3  interval;
 	};
 
 	struct InstanceData
@@ -135,19 +134,19 @@ class Nerf : public ApiVulkanSample
 
 		Texture_Input texture_input_0, texture_input_1;
 
-		// Vulkan Buffers for each model 
+		// Vulkan Buffers for each model
 		std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
 		std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
 
 		// Each model will have its own pipeline and descriptor set
-		VkPipeline            pipeline_first_pass{VK_NULL_HANDLE};
+		VkPipeline pipeline_first_pass{VK_NULL_HANDLE};
 		// We make the descriptor set a vector for the forward mode
 		// Deferred mode will only have one set of descriptor per model
 		std::vector<VkDescriptorSet> descriptor_set_first_pass{VK_NULL_HANDLE};
 
 		// Stores references to each models mlp weights and uniform buffers
-		std::unique_ptr<vkb::core::Buffer>* weights_buffer_ref;
-		std::unique_ptr<vkb::core::Buffer>* uniform_buffer_ref;
+		std::unique_ptr<vkb::core::Buffer> *weights_buffer_ref;
+		std::unique_ptr<vkb::core::Buffer> *uniform_buffer_ref;
 
 		int sub_model_num;
 		int model_index;
@@ -165,7 +164,7 @@ class Nerf : public ApiVulkanSample
 	// buffer to store instance data
 	std::unique_ptr<vkb::core::Buffer> instance_buffer{nullptr};
 
-	//Common
+	// Common
 	void read_json_map();
 	void load_shaders();
 	void build_command_buffers() override;
@@ -176,34 +175,34 @@ class Nerf : public ApiVulkanSample
 	void initialize_mlp_uniform_buffers(int model_index);
 	void update_uniform_buffers();
 
-	void create_texture(int model_index, int sub_model_index, int models_entry);
-	void create_texture_helper(std::string texturePath, Texture_Input& texture);
+	void     create_texture(int model_index, int sub_model_index, int models_entry);
+	void     create_texture_helper(std::string texturePath, Texture_Input &texture);
 	VkFormat feature_map_format = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 	// Helper function
-	void setup_attachment(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment& attachment);
-	// void create_storage_image();
+	void setup_attachment(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment &attachment);
 
 	void draw();
 
-	//first pass
-	VkDescriptorSetLayout descriptor_set_first_pass_layout{VK_NULL_HANDLE};
-	VkPipelineLayout      pipeline_first_pass_layout{VK_NULL_HANDLE};
+	// First pass
+	VkDescriptorSetLayout                          descriptor_set_first_pass_layout{VK_NULL_HANDLE};
+	VkPipelineLayout                               pipeline_first_pass_layout{VK_NULL_HANDLE};
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages_first_pass;
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages_second_pass;
 
 	void create_descriptor_pool();
 	void create_pipeline_layout_fist_pass();
-	void create_descriptor_sets_first_pass(Model& model);
+	void create_descriptor_sets_first_pass(Model &model);
 	void prepare_pipelines();
 
-	struct Attachments_baseline {
+	struct Attachments_baseline
+	{
 		FrameBufferAttachment feature_0, feature_1, feature_2;
 	};
 
 	std::vector<Attachments_baseline> frameAttachments;
 	std::vector<VkFramebuffer>        nerf_framebuffers;
-	VkRenderPass	      	          render_pass_nerf{VK_NULL_HANDLE};
+	VkRenderPass                      render_pass_nerf{VK_NULL_HANDLE};
 
 	// For the baseline (mlp in frag shader) second pass
 	VkPipeline                   pipeline_baseline{VK_NULL_HANDLE};
@@ -238,7 +237,7 @@ class Nerf : public ApiVulkanSample
 	float    fov = 60.0f;
 	uint32_t view_port_width;
 	uint32_t view_port_height;
-	bool	 use_native_screen_size = false;
+	bool     use_native_screen_size = false;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_nerf();
