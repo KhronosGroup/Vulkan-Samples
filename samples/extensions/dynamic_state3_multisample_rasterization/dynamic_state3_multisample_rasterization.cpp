@@ -290,7 +290,7 @@ void DynamicState3MultisampleRasterization::draw_ui(VkCommandBuffer &cmd_buffer)
 	if (gui)
 	{
 		auto &scale    = to_scale_ui(sample_count);
-		auto viewport = vkb::initializers::viewport(static_cast<float>(width) * scale.x, static_cast<float>(height) * scale.y, 0.0f, 1.0f);
+		auto  viewport = vkb::initializers::viewport(static_cast<float>(width) * scale.x, static_cast<float>(height) * scale.y, 0.0f, 1.0f);
 		vkCmdSetViewport(cmd_buffer, 0, 1, &viewport);
 		auto draw_data = ImGui::GetDrawData();
 
@@ -787,7 +787,7 @@ void DynamicState3MultisampleRasterization::update_resources()
 		vkDestroyImageView(get_device().get_handle(), depth_stencil.view, nullptr);
 		vkDestroyImage(get_device().get_handle(), depth_stencil.image, nullptr);
 		vkFreeMemory(get_device().get_handle(), depth_stencil.mem, nullptr);
-		depth_stencil.view = VK_NULL_HANDLE;
+		depth_stencil.view  = VK_NULL_HANDLE;
 		depth_stencil.image = VK_NULL_HANDLE;
 		depth_stencil.mem   = VK_NULL_HANDLE;
 
@@ -795,7 +795,7 @@ void DynamicState3MultisampleRasterization::update_resources()
 		vkDestroyImageView(get_device().get_handle(), color_attachment.view, nullptr);
 		vkDestroyImage(get_device().get_handle(), color_attachment.image, nullptr);
 		vkFreeMemory(get_device().get_handle(), color_attachment.mem, nullptr);
-		color_attachment.view = VK_NULL_HANDLE;
+		color_attachment.view  = VK_NULL_HANDLE;
 		color_attachment.image = VK_NULL_HANDLE;
 		color_attachment.mem   = VK_NULL_HANDLE;
 
@@ -838,7 +838,6 @@ bool DynamicState3MultisampleRasterization::resize(const uint32_t _width, const 
 	prepared = true;
 	return true;
 }
-
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_state3_multisample_rasterization()
 {
