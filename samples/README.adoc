@@ -507,3 +507,11 @@ The goal of these samples is to demonstrate usage of tooling functions and libra
 
 Use the https://github.com/KhronosGroup/Vulkan-Profiles[Vulkan Profiles library] to simplify instance and device setup.
 The library defines a common baseline of features, extensions, etc.
+
+== General Samples
+
+The goal of these samples is to demonstrate different techniques or showcase complex scenarios that doesn't necessarily fit any of the main categories.
+
+=== xref:./general/nerf/README.adoc[NeRF]
+
+A Neural Radiance Field synthesizer sample, based on textured polygons.
