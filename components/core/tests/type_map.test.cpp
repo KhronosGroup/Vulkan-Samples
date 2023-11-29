@@ -6,38 +6,36 @@ using namespace vkb;
 
 TEST_CASE("TypeMap", "[containers]")
 {
-	SECTION("find_or_emplace")
+	SECTION("find_or_insert")
 	{
 		vkb::TypeMap<int> map;
 
 		int value = 0;
 
-		auto it = map.find_or_emplace<int>([&]() { return value++; });
+		auto it = map.find_or_insert<int>([&]() { return value++; });
 
 		REQUIRE(it->second == 0);
 
-		it = map.find_or_emplace<int>([&]() { return value++; });
+		it = map.find_or_insert<int>([&]() { return value++; });
 
 		REQUIRE(it->second == 0);
 
-		it = map.find_or_emplace<float>([&]() { return value++; });
+		it = map.find_or_insert<float>([&]() { return value++; });
 
 		REQUIRE(it->second == 1);
 	}
 
-	SECTION("replace")
+	SECTION("replace_emplace")
 	{
 		vkb::TypeMap<int> map;
 
-		int value = 0;
-
-		auto it = map.replace<int>(value++);
-
+		auto it = map.replace_emplace<int>(0);
 		REQUIRE(it->second == 0);
 
-		it = map.replace<int>(value++);
-
+		it = map.replace_emplace<int>(1);
 		REQUIRE(it->second == 1);
+
+		REQUIRE(map.find<int>()->second == 1);
 	}
 
 	SECTION("find")
@@ -46,7 +44,7 @@ TEST_CASE("TypeMap", "[containers]")
 
 		int value = 0;
 
-		map.replace<int>(value++);
+		map.replace_emplace<int>(value++);
 
 		auto it = map.find<int>();
 
@@ -63,7 +61,7 @@ TEST_CASE("TypeMap", "[containers]")
 
 		int value = 0;
 
-		map.replace<int>(value++);
+		map.replace_emplace<int>(value++);
 
 		auto it = map.find<int>();
 
@@ -80,7 +78,7 @@ TEST_CASE("TypeMap", "[containers]")
 
 		int value = 0;
 
-		map.replace<int>(value++);
+		map.replace_emplace<int>(value++);
 
 		REQUIRE(map.contains<int>() == true);
 		REQUIRE(map.contains<float>() == false);

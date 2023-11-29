@@ -86,7 +86,10 @@ struct HPPRasterizationState
 };
 
 class HPPSpecializationConstantState : private vkb::SpecializationConstantState
-{};
+{
+  public:
+	using vkb::SpecializationConstantState::get_specialization_constant_state;
+};
 
 struct HPPStencilOpState
 {
@@ -112,7 +115,13 @@ class HPPPipelineState : private vkb::PipelineState
 {
   public:
 	using vkb::PipelineState::clear_dirty;
+	using vkb::PipelineState::get_depth_stencil_state;
+	using vkb::PipelineState::get_input_assembly_state;
+	using vkb::PipelineState::get_multisample_state;
+	using vkb::PipelineState::get_rasterization_state;
 	using vkb::PipelineState::get_subpass_index;
+	using vkb::PipelineState::get_vertex_input_state;
+	using vkb::PipelineState::get_viewport_state;
 	using vkb::PipelineState::is_dirty;
 	using vkb::PipelineState::reset;
 	using vkb::PipelineState::set_specialization_constant;

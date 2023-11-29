@@ -44,12 +44,6 @@ HPPRenderFrame::HPPRenderFrame(vkb::core::HPPDevice &device, std::unique_ptr<vkb
 			buffer_pools_it->second.push_back(std::make_pair(vkb::HPPBufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024 * usage_it.second, usage_it.first}, nullptr));
 		}
 	}
-
-	for (size_t i = 0; i < thread_count; ++i)
-	{
-		descriptor_pools.push_back(std::make_unique<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>>());
-		descriptor_sets.push_back(std::make_unique<std::unordered_map<std::size_t, vkb::core::HPPDescriptorSet>>());
-	}
 }
 
 vkb::HPPBufferAllocation HPPRenderFrame::allocate_buffer(const vk::BufferUsageFlags usage, const vk::DeviceSize size, size_t thread_index)
@@ -84,15 +78,12 @@ void HPPRenderFrame::clear_descriptors()
 {
 	for (auto &desc_sets_per_thread : descriptor_sets)
 	{
-		desc_sets_per_thread->clear();
+		desc_sets_per_thread.second->clear();
 	}
 
 	for (auto &desc_pools_per_thread : descriptor_pools)
 	{
-		for (auto &desc_pool : *desc_pools_per_thread)
-		{
-			desc_pool.second.reset();
-		}
+		desc_pools_per_thread.second->clear();
 	}
 }
 
@@ -210,7 +201,18 @@ vk::DescriptorSet HPPRenderFrame::request_descriptor_set(const vkb::core::HPPDes
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
 	assert(thread_index < descriptor_pools.size());
-	auto &descriptor_pool = vkb::common::request_resource(device, nullptr, *descriptor_pools[thread_index], descriptor_set_layout);
+
+	// Cache descriptor pools against thread index
+	auto pool_cache_it = descriptor_pools.find_or_insert(thread_index, []() -> std::unique_ptr<CacheMap<std::size_t, core::HPPDescriptorPool>> {
+		return std::make_unique<CacheMap<std::size_t, core::HPPDescriptorPool>>();
+	});
+
+	auto descriptor_pool_it = pool_cache_it->second->find_or_insert(inline_hash_param(descriptor_set_layout), [&]() -> core::HPPDescriptorPool {
+		return core::HPPDescriptorPool{device, descriptor_set_layout};
+	});
+	// Cache end;
+
+	auto &descriptor_pool = descriptor_pool_it->second;
 	if (descriptor_management_strategy == DescriptorManagementStrategy::StoreInCache)
 	{
 		// The bindings we want to update before binding, if empty we update all bindings
@@ -223,8 +225,18 @@ vk::DescriptorSet HPPRenderFrame::request_descriptor_set(const vkb::core::HPPDes
 
 		// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
 		assert(thread_index < descriptor_sets.size());
-		auto &descriptor_set =
-		    vkb::common::request_resource(device, nullptr, *descriptor_sets[thread_index], descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+
+		// Cache descriptor sets against thread index
+		auto descriptor_set_cache_it = descriptor_sets.find_or_insert(thread_index, []() -> std::unique_ptr<CacheMap<std::size_t, core::HPPDescriptorSet>> {
+			return std::make_unique<CacheMap<std::size_t, core::HPPDescriptorSet>>();
+		});
+
+		auto descriptor_set_it = descriptor_set_cache_it->second->find_or_insert(inline_hash_param(descriptor_set_layout, descriptor_pool, buffer_infos, image_infos), [&]() -> core::HPPDescriptorSet {
+			return core::HPPDescriptorSet{device, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos};
+		});
+		// Cache end
+
+		auto &descriptor_set = descriptor_set_it->second;
 		descriptor_set.update(bindings_to_update);
 		return descriptor_set.get_handle();
 	}
@@ -296,8 +308,15 @@ void HPPRenderFrame::set_descriptor_management_strategy(DescriptorManagementStra
 void HPPRenderFrame::update_descriptor_sets(size_t thread_index)
 {
 	assert(thread_index < descriptor_sets.size());
-	auto &thread_descriptor_sets = *descriptor_sets[thread_index];
-	for (auto &descriptor_set_it : thread_descriptor_sets)
+
+	auto cache_it = descriptor_sets.find(thread_index);
+	if (cache_it == descriptor_sets.end())
+	{
+		return;
+	}
+
+	auto &cache = *cache_it->second;
+	for (auto &descriptor_set_it : cache)
 	{
 		descriptor_set_it.second.update();
 	}

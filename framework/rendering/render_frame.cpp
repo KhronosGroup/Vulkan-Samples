@@ -44,12 +44,6 @@ RenderFrame::RenderFrame(Device &device, std::unique_ptr<RenderTarget> &&render_
 			throw std::runtime_error("Failed to insert buffer pool");
 		}
 	}
-
-	for (size_t i = 0; i < thread_count; ++i)
-	{
-		descriptor_pools.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorPool>>());
-		descriptor_sets.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorSet>>());
-	}
 }
 
 Device &RenderFrame::get_device()
@@ -209,7 +203,18 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
 	assert(thread_index < descriptor_pools.size());
-	auto &descriptor_pool = request_resource(device, nullptr, *descriptor_pools[thread_index], descriptor_set_layout);
+
+	// Cache descriptor pools against thread index
+	auto pool_cache_it = descriptor_pools.find_or_insert(thread_index, []() -> std::unique_ptr<CacheMap<std::size_t, DescriptorPool>> {
+		return std::make_unique<CacheMap<std::size_t, DescriptorPool>>();
+	});
+
+	auto descriptor_pool_it = pool_cache_it->second->find_or_insert(inline_hash_param(descriptor_set_layout), [&]() -> DescriptorPool {
+		return DescriptorPool{device, descriptor_set_layout};
+	});
+	// Cache end
+
+	auto &descriptor_pool = descriptor_pool_it->second;
 	if (descriptor_management_strategy == DescriptorManagementStrategy::StoreInCache)
 	{
 		// The bindings we want to update before binding, if empty we update all bindings
@@ -222,7 +227,18 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 
 		// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
 		assert(thread_index < descriptor_sets.size());
-		auto &descriptor_set = request_resource(device, nullptr, *descriptor_sets[thread_index], descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+
+		// Cache descriptor sets against thread index
+		auto descriptor_set_cache_it = descriptor_sets.find_or_insert(thread_index, []() -> std::unique_ptr<CacheMap<std::size_t, DescriptorSet>> {
+			return std::make_unique<CacheMap<std::size_t, DescriptorSet>>();
+		});
+
+		auto descriptor_set_it = descriptor_set_cache_it->second->find_or_insert(inline_hash_param(descriptor_set_layout, descriptor_pool, buffer_infos, image_infos), [&]() -> DescriptorSet {
+			return DescriptorSet{device, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos};
+		});
+		// Cache end
+
+		auto &descriptor_set = descriptor_set_it->second;
 		descriptor_set.update(bindings_to_update);
 		return descriptor_set.get_handle();
 	}
@@ -238,10 +254,16 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 void RenderFrame::update_descriptor_sets(size_t thread_index)
 {
 	assert(thread_index < descriptor_sets.size());
-	auto &thread_descriptor_sets = *descriptor_sets[thread_index];
-	for (auto &descriptor_set_it : thread_descriptor_sets)
+
+	auto it = descriptor_sets.find(thread_index);
+	if (it == descriptor_sets.end())
 	{
-		descriptor_set_it.second.update();
+		return;
+	}
+
+	for (auto &set : *it->second)
+	{
+		set.second.update();
 	}
 }
 
@@ -249,12 +271,12 @@ void RenderFrame::clear_descriptors()
 {
 	for (auto &desc_sets_per_thread : descriptor_sets)
 	{
-		desc_sets_per_thread->clear();
+		desc_sets_per_thread.second->clear();
 	}
 
-	for (auto &desc_pools_per_thread : descriptor_pools)
+	for (auto &it : descriptor_pools)
 	{
-		for (auto &desc_pool : *desc_pools_per_thread)
+		for (auto &desc_pool : *it.second)
 		{
 			desc_pool.second.reset();
 		}

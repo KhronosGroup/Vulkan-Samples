@@ -654,6 +654,16 @@ inline void hash_param(size_t &seed, const T &first_arg, const Args &...args)
 	hash_param(seed, args...);
 }
 
+template <typename... Args>
+inline size_t inline_hash_param(const Args &...args)
+{
+	size_t seed = 0;
+
+	hash_param(seed, args...);
+
+	return seed;
+}
+
 template <class T, class... A>
 struct RecordHelper
 {

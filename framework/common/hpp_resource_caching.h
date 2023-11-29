@@ -186,24 +186,6 @@ struct hash<vkb::core::HPPShaderResource>
 };
 
 template <>
-struct hash<vkb::core::HPPShaderSource>
-{
-	size_t operator()(const vkb::core::HPPShaderSource &shader_source) const
-	{
-		return std::hash<vkb::ShaderSource>()(reinterpret_cast<vkb::ShaderSource const &>(shader_source));
-	}
-};
-
-template <>
-struct hash<vkb::core::HPPShaderVariant>
-{
-	size_t operator()(const vkb::core::HPPShaderVariant &shader_variant) const
-	{
-		return std::hash<vkb::ShaderVariant>()(reinterpret_cast<vkb::ShaderVariant const &>(shader_variant));
-	}
-};
-
-template <>
 struct hash<vkb::core::HPPSubpassInfo>
 {
 	size_t operator()(vkb::core::HPPSubpassInfo const &subpass_info) const
@@ -271,84 +253,3 @@ struct hash<vkb::rendering::HPPRenderTarget>
 };
 
 }        // namespace std
-
-namespace vkb
-{
-namespace common
-{
-/**
- * @brief facade helper functions and structs around the functions and structs in common/resource_caching, providing a vulkan.hpp-based interface
- */
-
-namespace
-{
-template <class T, class... A>
-struct HPPRecordHelper
-{
-	size_t record(HPPResourceRecord & /*recorder*/, A &.../*args*/)
-	{
-		return 0;
-	}
-
-	void index(HPPResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
-	{}
-};
-
-template <class... A>
-struct HPPRecordHelper<vkb::core::HPPShaderModule, A...>
-{
-	size_t record(HPPResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_shader_module(args...);
-	}
-
-	void index(HPPResourceRecord &recorder, size_t index, vkb::core::HPPShaderModule &shader_module)
-	{
-		recorder.set_shader_module(index, shader_module);
-	}
-};
-
-template <class... A>
-struct HPPRecordHelper<vkb::core::HPPPipelineLayout, A...>
-{
-	size_t record(HPPResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_pipeline_layout(args...);
-	}
-
-	void index(HPPResourceRecord &recorder, size_t index, vkb::core::HPPPipelineLayout &pipeline_layout)
-	{
-		recorder.set_pipeline_layout(index, pipeline_layout);
-	}
-};
-
-template <class... A>
-struct HPPRecordHelper<vkb::core::HPPRenderPass, A...>
-{
-	size_t record(HPPResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_render_pass(args...);
-	}
-
-	void index(HPPResourceRecord &recorder, size_t index, vkb::core::HPPRenderPass &render_pass)
-	{
-		recorder.set_render_pass(index, render_pass);
-	}
-};
-
-template <class... A>
-struct HPPRecordHelper<vkb::core::HPPGraphicsPipeline, A...>
-{
-	size_t record(HPPResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_graphics_pipeline(args...);
-	}
-
-	void index(HPPResourceRecord &recorder, size_t index, vkb::core::HPPGraphicsPipeline &graphics_pipeline)
-	{
-		recorder.set_graphics_pipeline(index, graphics_pipeline);
-	}
-};
-}        // namespace
-}        // namespace common
-}        // namespace vkb

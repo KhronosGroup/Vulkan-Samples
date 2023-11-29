@@ -18,38 +18,47 @@ class TypeMap : public CacheMap<std::type_index, Value, Container>
 	TypeMap()          = default;
 	virtual ~TypeMap() = default;
 
+	using Wrapper = CacheMap<std::type_index, Value, Container>;
+
+	// Finds the value at key, or inserts a new value if it doesn't exist.
 	template <typename T>
-	iterator find_or_emplace(std::function<Value()> create)
+	iterator find_or_insert(std::function<Value()> &&create)
 	{
-		return CacheMap<std::type_index, Value, Container>::find_or_emplace(typeid(T), create);
+		return Wrapper::find_or_insert(typeid(T), std::move(create));
 	}
 
+	// Replaces the value at key with the given value.
 	template <typename T>
-	iterator replace(const Value &value)
+	iterator replace_emplace(Value &&value)
 	{
-		return CacheMap<std::type_index, Value, Container>::replace(typeid(T), value);
+		return Wrapper::replace_emplace(typeid(T), std::move(value));
 	}
 
 	template <typename T>
 	iterator find()
 	{
-		return CacheMap<std::type_index, Value, Container>::find(typeid(T));
+		return Wrapper::find(typeid(T));
 	}
 
 	template <typename T>
 	const_iterator find() const
 	{
-		return CacheMap<std::type_index, Value, Container>::find(typeid(T));
+		return Wrapper::find(typeid(T));
 	}
 
 	template <typename T>
 	bool contains() const
 	{
-		return CacheMap<std::type_index, Value, Container>::contains(typeid(T));
+		return Wrapper::contains(typeid(T));
 	}
 
+	using Wrapper::begin;
+	using Wrapper::clear;
+	using Wrapper::empty;
+	using Wrapper::end;
+
   protected:
-	using CacheMap<std::type_index, Value, Container>::container;
+	using Wrapper::container;
 };
 
 };        // namespace vkb

@@ -21,20 +21,47 @@ class CacheMap : public ContainerWrapper<Key, Value, Container>
 	CacheMap &operator=(const CacheMap &) = delete;
 	CacheMap &operator=(CacheMap &&)      = default;
 
-	virtual iterator find_or_emplace(const Key &key, std::function<Value()> create)
+	// Finds the value at key, or inserts a new value if it doesn't exist.
+	virtual iterator find_or_insert(const Key &key, std::function<Value()> &&create)
 	{
 		auto it = container.find(key);
 		if (it == container.end())
 		{
-			it = container.emplace(key, create()).first;
+			it = container.emplace(key, std::move(create())).first;
 		}
 		return it;
 	}
 
-	virtual iterator replace(const Key &key, const Value &value)
+	// Replaces the value at key with the given value.
+	// The value must be move assignable or move constructible.
+	virtual iterator replace_emplace(const Key &key, Value &&value)
 	{
-		return container.emplace(key, std::forward(value)).first;
+		auto it = container.find(key);
+		if (it == container.end())
+		{
+			return container.emplace(key, std::move(value)).first;
+		}
+
+		if constexpr (std::is_move_assignable_v<Value>)
+		{
+			it->second = std::move(value);
+			return it;
+		}
+		else if constexpr (std::is_move_constructible_v<Value>)
+		{
+			container.erase(it);
+			return container.emplace(key, std::move(value)).first;
+		}
+
+		static_assert(std::is_move_assignable_v<Value> || std::is_move_constructible_v<Value>,
+		              "Value must be move assignable or move constructible");
 	}
+
+	using Wrapper = ContainerWrapper<Key, Value, Container>;
+	using Wrapper::begin;
+	using Wrapper::clear;
+	using Wrapper::empty;
+	using Wrapper::end;
 
   protected:
 	using ContainerWrapper<Key, Value, Container>::container;

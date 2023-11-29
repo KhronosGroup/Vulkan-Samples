@@ -86,17 +86,6 @@ TEST_CASE("ContainerWrapper", "[containers]")
 		REQUIRE(!map.contains(1));
 	}
 
-	SECTION("operator[]")
-	{
-		TestContainer<int, int> map;
-
-		int value = 0;
-
-		map.add(0, value++);
-
-		REQUIRE(map[0] == 0);
-	}
-
 	SECTION("erase")
 	{
 		TestContainer<int, int> map;

@@ -62,12 +62,6 @@ class ContainerWrapper
 	}
 
 	// Wrappers for container functionality
-	virtual Value &operator[](const Key &key)
-	{
-		return container[key];
-	}
-
-	// Wrappers for container functionality
 	virtual void clear()
 	{
 		container.clear();

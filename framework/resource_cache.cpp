@@ -30,13 +30,13 @@ T &request_resource(Device &device, CacheMap<std::size_t, T> &resources, A &...a
 	std::size_t hash{0U};
 	hash_param(hash, args...);
 
-	auto it = resources.find_or_emplace(hash, [&]() {
+	auto it = resources.find_or_insert(hash, [&]() -> T {
 		// If we do not have it already, create and cache it
 		const char *res_type = typeid(T).name();
 		size_t      res_id   = resources.size();
 
 		LOGD("Building #{} cache object ({})", res_id, res_type);
-		return T(device, args...);
+		return T{device, args...};
 	});
 
 	return it->second;
@@ -180,7 +180,7 @@ void ResourceCache::update_descriptor_sets(const std::vector<core::ImageView> &o
 		hash_param(new_key, descriptor_set.get_layout(), descriptor_set.get_buffer_infos(), descriptor_set.get_image_infos());
 
 		// Add (key, resource) to the cache
-		state.descriptor_sets.replace(new_key, std::move(descriptor_set));
+		state.descriptor_sets.replace_emplace(new_key, std::move(descriptor_set));
 	}
 }
 

@@ -31,14 +31,14 @@ T &request_resource(vkb::core::HPPDevice &device, CacheMap<size_t, T> &resources
 	size_t hash{0U};
 	hash_param(hash, args...);
 
-	auto it = resources.find_or_emplace(hash, [&]() {
+	auto it = resources.find_or_insert(hash, [&]() -> T {
 		// If we do not have it already, create and cache it
 		const char *res_type = typeid(T).name();
 		size_t      res_id   = resources.size();
 
 		LOGD("Building #{} cache object ({})", res_id, res_type);
 
-		return T(device, args...);
+		return T{device, args...};
 	});
 
 	return it->second;
@@ -103,7 +103,7 @@ vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vecto
 	return request_resource(device, state.render_passes, attachments, load_store_infos, subpasses);
 }
 
-vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source, const vkb::core::HPPShaderVariant &shader_variant)
+vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant)
 {
 	std::string entry_point{"main"};
 	return request_resource(device, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
@@ -178,7 +178,7 @@ void HPPResourceCache::update_descriptor_sets(const std::vector<vkb::core::HPPIm
 		size_t new_key = std::hash<vkb::core::HPPDescriptorSet>()(descriptor_set);
 
 		// Add (key, resource) to the cache
-		state.descriptor_sets.replace(new_key, std::move(descriptor_set));
+		state.descriptor_sets.replace_emplace(new_key, std::move(descriptor_set));
 	}
 }
 

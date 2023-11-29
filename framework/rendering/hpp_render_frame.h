@@ -157,10 +157,10 @@ class HPPRenderFrame
 	std::map<uint32_t, std::vector<std::unique_ptr<vkb::core::HPPCommandPool>>> command_pools;
 
 	/// Descriptor pools for the frame
-	std::vector<std::unique_ptr<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>>> descriptor_pools;
+	CacheMap<size_t, std::unique_ptr<CacheMap<size_t, vkb::core::HPPDescriptorPool>>> descriptor_pools;
 
 	/// Descriptor sets for the frame
-	std::vector<std::unique_ptr<std::unordered_map<std::size_t, vkb::core::HPPDescriptorSet>>> descriptor_sets;
+	CacheMap<size_t, std::unique_ptr<CacheMap<size_t, vkb::core::HPPDescriptorSet>>> descriptor_sets;
 
 	vkb::HPPFencePool fence_pool;
 

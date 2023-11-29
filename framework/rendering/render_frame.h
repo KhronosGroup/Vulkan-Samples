@@ -32,6 +32,8 @@
 #include "rendering/render_target.h"
 #include "semaphore_pool.h"
 
+#include <core/containers/cache_map.hpp>
+
 namespace vkb
 {
 enum BufferAllocationStrategy
@@ -118,14 +120,14 @@ class RenderFrame
 	 * @param thread_index Selects the thread's command pool used to manage the buffer
 	 * @return A command buffer related to the current active frame
 	 */
-	CommandBuffer &request_command_buffer(const Queue &            queue,
+	CommandBuffer &request_command_buffer(const Queue             &queue,
 	                                      CommandBuffer::ResetMode reset_mode   = CommandBuffer::ResetMode::ResetPool,
 	                                      VkCommandBufferLevel     level        = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 	                                      size_t                   thread_index = 0);
 
-	VkDescriptorSet request_descriptor_set(const DescriptorSetLayout &               descriptor_set_layout,
+	VkDescriptorSet request_descriptor_set(const DescriptorSetLayout                &descriptor_set_layout,
 	                                       const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-	                                       const BindingMap<VkDescriptorImageInfo> & image_infos,
+	                                       const BindingMap<VkDescriptorImageInfo>  &image_infos,
 	                                       bool                                      update_after_bind,
 	                                       size_t                                    thread_index = 0);
 
@@ -172,10 +174,10 @@ class RenderFrame
 	std::map<uint32_t, std::vector<std::unique_ptr<CommandPool>>> command_pools;
 
 	/// Descriptor pools for the frame
-	std::vector<std::unique_ptr<std::unordered_map<std::size_t, DescriptorPool>>> descriptor_pools;
+	CacheMap<size_t, std::unique_ptr<CacheMap<size_t, DescriptorPool>>> descriptor_pools;
 
 	/// Descriptor sets for the frame
-	std::vector<std::unique_ptr<std::unordered_map<std::size_t, DescriptorSet>>> descriptor_sets;
+	CacheMap<size_t, std::unique_ptr<CacheMap<size_t, DescriptorSet>>> descriptor_sets;
 
 	FencePool fence_pool;
 
