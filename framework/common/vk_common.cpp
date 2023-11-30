@@ -18,7 +18,7 @@
 
 #include "vk_common.h"
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"

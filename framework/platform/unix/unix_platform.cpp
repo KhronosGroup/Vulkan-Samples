@@ -17,15 +17,8 @@
 
 #include "unix_platform.h"
 
-#include "common/error.h"
-
 #include "platform/glfw_window.h"
 #include "platform/headless_window.h"
-
-VKBP_DISABLE_WARNINGS()
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-VKBP_ENABLE_WARNINGS()
 
 #ifndef VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"

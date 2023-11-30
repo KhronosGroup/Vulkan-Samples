@@ -335,9 +335,14 @@ if(NOT ANDROID)
     endif()
 endif()
 
+# fmt
+add_subdirectory(fmt)
+set_property(TARGET fmt PROPERTY FOLDER "ThirdParty")
+
 # spdlog
+set(SPDLOG_FMT_EXTERNAL ON)
 add_subdirectory(spdlog)
-set_property(TARGET spdlog_headers_for_ide PROPERTY FOLDER "ThirdParty")
+set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
 
 # ctpl
 add_library(ctpl INTERFACE)
