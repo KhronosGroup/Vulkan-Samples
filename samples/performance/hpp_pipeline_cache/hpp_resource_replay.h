@@ -17,10 +17,11 @@
 
 #pragma once
 
+#include "hpp_resource_record.h"
+
 namespace vkb
 {
 class HPPResourceCache;
-class HPPResourceRecord;
 
 namespace core
 {
@@ -30,7 +31,7 @@ class HPPRenderPass;
 class HPPGraphicsPipeline;
 }        // namespace core
 
-enum class ResourceType
+enum class HPPResourceType
 {
 	ShaderModule,
 	PipelineLayout,
@@ -51,7 +52,7 @@ class HPPResourceReplay
 
   private:
 	using ResourceFunc = std::function<void(HPPResourceCache &, std::istringstream &)>;
-	std::unordered_map<ResourceType, ResourceFunc> stream_resources;
+	std::unordered_map<HPPResourceType, ResourceFunc> stream_resources;
 
 	std::vector<core::HPPShaderModule *>           shader_modules;
 	std::vector<core::HPPPipelineLayout *>         pipeline_layouts;

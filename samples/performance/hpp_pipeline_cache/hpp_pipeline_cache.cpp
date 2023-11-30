@@ -17,9 +17,169 @@
 
 #include "hpp_pipeline_cache.h"
 
+#include "common/hpp_resource_caching.h"
 #include "common/hpp_utils.h"
 #include "hpp_gui.h"
 #include "rendering/subpasses/hpp_forward_subpass.h"
+
+#include "hpp_resource_cache.h"
+
+#include "hpp_resource_record.h"
+#include "hpp_resource_replay.h"
+
+namespace
+{
+template <class T, class... A>
+struct HPPRecordHelper
+{
+	size_t record(vkb::HPPResourceRecord & /*recorder*/, A &.../*args*/)
+	{
+		return 0;
+	}
+
+	void index(vkb::HPPResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
+	{}
+};
+
+template <class... A>
+struct HPPRecordHelper<vkb::core::HPPShaderModule, A...>
+{
+	size_t record(vkb::HPPResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_shader_module(args...);
+	}
+
+	void index(vkb::HPPResourceRecord &recorder, size_t index, vkb::core::HPPShaderModule &shader_module)
+	{
+		recorder.set_shader_module(index, shader_module);
+	}
+};
+
+template <class... A>
+struct HPPRecordHelper<vkb::core::HPPPipelineLayout, A...>
+{
+	size_t record(vkb::HPPResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_pipeline_layout(args...);
+	}
+
+	void index(vkb::HPPResourceRecord &recorder, size_t index, vkb::core::HPPPipelineLayout &pipeline_layout)
+	{
+		recorder.set_pipeline_layout(index, pipeline_layout);
+	}
+};
+
+template <class... A>
+struct HPPRecordHelper<vkb::core::HPPRenderPass, A...>
+{
+	size_t record(vkb::HPPResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_render_pass(args...);
+	}
+
+	void index(vkb::HPPResourceRecord &recorder, size_t index, vkb::core::HPPRenderPass &render_pass)
+	{
+		recorder.set_render_pass(index, render_pass);
+	}
+};
+
+template <class... A>
+struct HPPRecordHelper<vkb::core::HPPGraphicsPipeline, A...>
+{
+	size_t record(vkb::HPPResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_graphics_pipeline(args...);
+	}
+
+	void index(vkb::HPPResourceRecord &recorder, size_t index, vkb::core::HPPGraphicsPipeline &graphics_pipeline)
+	{
+		recorder.set_graphics_pipeline(index, graphics_pipeline);
+	}
+};
+
+template <class T, class... A>
+T &request_resource(vkb::core::HPPDevice &device, vkb::HPPResourceRecord &recorder, vkb::CacheMap<std::size_t, T> &resources, A &...args)
+{
+	auto it = resources.find_or_insert(vkb::inline_hash_param(args...), [&device, &recorder, &resources, &args...]() {
+		T resource{device, args...};
+
+		HPPRecordHelper<T, A...> helper;
+		helper.index(recorder, resources.size(), resource);
+
+		return resource;
+	});
+	return it->second;
+}
+}        // namespace
+
+// A cache which hydrates its resources from an external source
+class HPPPipelineCacheResourceCache : public vkb::HPPResourceCache
+{
+  public:
+	explicit HPPPipelineCacheResourceCache(vkb::core::HPPDevice &device) :
+	    vkb::HPPResourceCache(device)
+	{}
+
+	vkb::core::HPPComputePipeline &request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state) override
+	{
+		return request_resource(device, recorder, state.compute_pipelines, pipeline_cache, pipeline_state);
+	}
+	vkb::core::HPPDescriptorSet &request_descriptor_set(vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, const BindingMap<vk::DescriptorBufferInfo> &buffer_infos, const BindingMap<vk::DescriptorImageInfo> &image_infos) override
+	{
+		auto &descriptor_pool = request_resource(device, recorder, state.descriptor_pools, descriptor_set_layout);
+		return request_resource(device, recorder, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+	}
+	vkb::core::HPPDescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::core::HPPShaderModule *> &shader_modules, const std::vector<vkb::core::HPPShaderResource> &set_resources) override
+	{
+		return request_resource(device, recorder, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
+	}
+	vkb::core::HPPFramebuffer &request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass) override
+	{
+		return request_resource(device, recorder, state.framebuffers, render_target, render_pass);
+	}
+	vkb::core::HPPGraphicsPipeline &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state) override
+	{
+		return request_resource(device, recorder, state.graphics_pipelines, pipeline_cache, pipeline_state);
+	}
+	vkb::core::HPPPipelineLayout &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules) override
+	{
+		return request_resource(device, recorder, state.pipeline_layouts, shader_modules);
+	}
+	vkb::core::HPPRenderPass &request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments, const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos, const std::vector<vkb::core::HPPSubpassInfo> &subpasses) override
+	{
+		return request_resource(device, recorder, state.render_passes, attachments, load_store_infos, subpasses);
+	}
+	vkb::core::HPPShaderModule &request_shader_module(vk::ShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant) override
+	{
+		std::string entry_point{"main"};
+		return request_resource(device, recorder, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
+	}
+	void clear_pipelines()
+	{
+		state.compute_pipelines.clear();
+		state.graphics_pipelines.clear();
+	}
+	void set_pipeline_cache(vk::PipelineCache pipeline_cache)
+	{
+		this->pipeline_cache = pipeline_cache;
+	}
+	void warmup(std::vector<uint8_t> &&data)
+	{
+		recorder.set_data(std::move(data));
+		replayer.play(*this, recorder);
+	}
+	std::vector<uint8_t> serialize() const
+	{
+		return recorder.get_data();
+	}
+
+  private:
+	vk::PipelineCache pipeline_cache{VK_NULL_HANDLE};
+
+	vkb::HPPResourceRecord recorder;
+
+	vkb::HPPResourceReplay replayer;
+};
 
 HPPPipelineCache::HPPPipelineCache()
 {
@@ -53,7 +213,7 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	device->override_resource_cache(std::make_unique<HPPPipelineCacheResourceCache>());
+	device->override_resource_cache(std::make_unique<HPPPipelineCacheResourceCache>(*device));
 
 	/* Try to read pipeline cache file if exists */
 	std::vector<uint8_t> pipeline_data;

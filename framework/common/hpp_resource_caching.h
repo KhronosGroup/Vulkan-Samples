@@ -19,6 +19,7 @@
 
 #include "resource_caching.h"
 #include <core/hpp_device.h>
+#include <core/hpp_shader_module.h>
 #include <vulkan/vulkan_hash.hpp>
 
 namespace std

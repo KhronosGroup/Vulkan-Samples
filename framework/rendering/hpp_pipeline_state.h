@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "core/hpp_render_pass.h"
 #include "pipeline_state.h"
 #include <vulkan/vulkan.hpp>
 

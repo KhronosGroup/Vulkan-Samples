@@ -17,29 +17,20 @@
 
 #pragma once
 
-#include <core/hpp_descriptor_set.h>
-#include <core/hpp_framebuffer.h>
-#include <core/hpp_pipeline.h>
-#include <core/hpp_pipeline_layout.h>
-#include <core/hpp_render_pass.h>
-#include <vulkan/vulkan.hpp>
+#include "core/hpp_descriptor_pool.h"
+#include "core/hpp_descriptor_set.h"
+#include "core/hpp_descriptor_set_layout.h"
+#include "core/hpp_framebuffer.h"
+#include "core/hpp_pipeline.h"
+#include "core/hpp_pipeline_layout.h"
+#include "core/hpp_render_pass.h"
+#include "core/hpp_shader_module.h"
+#include "rendering/hpp_render_target.h"
 
 #include <core/containers/cache_map.hpp>
 
 namespace vkb
 {
-namespace core
-{
-class HPPDescriptorPool;
-class HPPDescriptorSetLayout;
-class HPPImageView;
-}        // namespace core
-
-namespace rendering
-{
-class HPPRenderTarget;
-}
-
 /**
  * @brief Struct to hold the internal state of the Resource Cache
  *
@@ -89,7 +80,7 @@ class HPPResourceCache
 	/// @param new_views New image views to be referred
 	void update_descriptor_sets(const std::vector<vkb::core::HPPImageView> &old_views, const std::vector<vkb::core::HPPImageView> &new_views);
 
-  private:
+  protected:
 	vkb::core::HPPDevice &device;
 
 	HPPResourceCacheState state;

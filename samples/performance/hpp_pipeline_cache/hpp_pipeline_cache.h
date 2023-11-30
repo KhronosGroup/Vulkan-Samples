@@ -22,36 +22,6 @@
 #include "imgui.h"
 #include "scene_graph/components/camera.h"
 
-#include "hpp_resource_cache.h"
-#include "hpp_resource_record.h"
-#include "hpp_resource_replay.h"
-
-// A cache which hydrates its resources from an external source
-class HPPPipelineCacheResourceCache : public vkb::HPPResourceCache
-{
-  public:
-	vkb::core::HPPComputePipeline     &request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state) override;
-	vkb::core::HPPDescriptorSet       &request_descriptor_set(vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, const BindingMap<vk::DescriptorBufferInfo> &buffer_infos, const BindingMap<vk::DescriptorImageInfo> &image_infos) override;
-	vkb::core::HPPDescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::core::HPPShaderModule *> &shader_modules, const std::vector<vkb::core::HPPShaderResource> &set_resources) override;
-	vkb::core::HPPFramebuffer         &request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass) override;
-	vkb::core::HPPGraphicsPipeline    &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state) override;
-	vkb::core::HPPPipelineLayout      &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules) override;
-	vkb::core::HPPRenderPass          &request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments, const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos, const std::vector<vkb::core::HPPSubpassInfo> &subpasses) override;
-	vkb::core::HPPShaderModule        &request_shader_module(vk::ShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant = {}) override;
-
-	void                 clear_pipelines();
-	void                 set_pipeline_cache(vk::PipelineCache pipeline_cache);
-	void                 warmup(std::vector<uint8_t> &&data);
-	std::vector<uint8_t> serialize() const;
-
-  private:
-	vk::PipelineCache pipeline_cache{VK_NULL_HANDLE};
-
-	vkb::HPPResourceRecord recorder;
-
-	vkb::HPPResourceReplay replayer;
-};
-
 /**
  * @brief Pipeline creation and caching
  */

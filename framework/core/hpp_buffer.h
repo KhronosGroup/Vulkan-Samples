@@ -19,7 +19,6 @@
 
 #include "hpp_vulkan_resource.h"
 
-#include <unordered_map>
 #include <vk_mem_alloc.h>
 
 namespace vkb

@@ -27,4 +27,9 @@ add_sample(
     DESCRIPTION "Pipeline creation and caching, using Vulkan-Hpp."
     SHADER_FILES_GLSL
         "base.vert"
-        "base.frag")
+        "base.frag"
+    FILES
+        hpp_resource_record.cpp
+        hpp_resource_record.h
+        hpp_resource_replay.cpp
+        hpp_resource_replay.h)

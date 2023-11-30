@@ -22,6 +22,7 @@
 #include "common/logging.h"
 #include "hpp_resource_cache.h"
 #include "rendering/hpp_pipeline_state.h"
+#include <core/hpp_pipeline.h>
 
 namespace vkb
 {
@@ -53,10 +54,10 @@ inline void read_processes(std::istringstream &is, std::vector<std::string> &val
 
 HPPResourceReplay::HPPResourceReplay()
 {
-	stream_resources[ResourceType::ShaderModule]     = std::bind(&HPPResourceReplay::create_shader_module, this, std::placeholders::_1, std::placeholders::_2);
-	stream_resources[ResourceType::PipelineLayout]   = std::bind(&HPPResourceReplay::create_pipeline_layout, this, std::placeholders::_1, std::placeholders::_2);
-	stream_resources[ResourceType::RenderPass]       = std::bind(&HPPResourceReplay::create_render_pass, this, std::placeholders::_1, std::placeholders::_2);
-	stream_resources[ResourceType::GraphicsPipeline] = std::bind(&HPPResourceReplay::create_graphics_pipeline, this, std::placeholders::_1, std::placeholders::_2);
+	stream_resources[HPPResourceType::ShaderModule]     = std::bind(&HPPResourceReplay::create_shader_module, this, std::placeholders::_1, std::placeholders::_2);
+	stream_resources[HPPResourceType::PipelineLayout]   = std::bind(&HPPResourceReplay::create_pipeline_layout, this, std::placeholders::_1, std::placeholders::_2);
+	stream_resources[HPPResourceType::RenderPass]       = std::bind(&HPPResourceReplay::create_render_pass, this, std::placeholders::_1, std::placeholders::_2);
+	stream_resources[HPPResourceType::GraphicsPipeline] = std::bind(&HPPResourceReplay::create_graphics_pipeline, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 void HPPResourceReplay::play(HPPResourceCache &resource_cache, HPPResourceRecord &recorder)
@@ -66,7 +67,7 @@ void HPPResourceReplay::play(HPPResourceCache &resource_cache, HPPResourceRecord
 	while (true)
 	{
 		// Read command id
-		ResourceType resource_type;
+		HPPResourceType resource_type;
 		read(stream, resource_type);
 
 		if (stream.eof())

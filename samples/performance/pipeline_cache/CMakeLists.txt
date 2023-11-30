@@ -27,4 +27,9 @@ add_sample(
     DESCRIPTION "Pipeline creation and caching."
     SHADER_FILES_GLSL
         "base.vert"
-        "base.frag")
+        "base.frag"
+    FILES
+        resource_record.cpp
+        resource_record.h
+        resource_replay.cpp
+        resource_replay.h)

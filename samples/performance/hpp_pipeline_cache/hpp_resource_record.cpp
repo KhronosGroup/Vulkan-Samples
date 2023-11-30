@@ -136,7 +136,7 @@ void HPPResourceRecord::set_data(const std::vector<uint8_t> &data)
 	stream.str(std::string{data.begin(), data.end()});
 }
 
-std::vector<uint8_t> HPPResourceRecord::get_data()
+std::vector<uint8_t> HPPResourceRecord::get_data() const
 {
 	std::string str = stream.str();
 

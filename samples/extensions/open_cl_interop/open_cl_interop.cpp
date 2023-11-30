@@ -244,7 +244,7 @@ void OpenCLInterop::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
@@ -450,7 +450,7 @@ void OpenCLInterop::prepare_uniform_buffers()
 
 void OpenCLInterop::update_uniform_buffers()
 {
-	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height, 0.001f, 256.0f);
+	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), static_cast<float>(width) / static_cast<float>(height), 0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
 	ubo_vs.model          = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
 	ubo_vs.model          = glm::rotate(ubo_vs.model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -572,7 +572,7 @@ void OpenCLInterop::prepare_shared_image()
 	sampler_create_info.magFilter   = VK_FILTER_LINEAR;
 	sampler_create_info.minFilter   = VK_FILTER_LINEAR;
 	sampler_create_info.mipmapMode  = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	sampler_create_info.maxLod      = (float) 1;
+	sampler_create_info.maxLod      = static_cast<float>(1);
 	sampler_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	vkCreateSampler(device_handle, &sampler_create_info, nullptr, &shared_image.sampler);
 
@@ -620,12 +620,12 @@ void OpenCLInterop::prepare_shared_image()
 	mem_properties.push_back((cl_mem_properties) handle);
 #else
 	int fd = get_vulkan_memory_handle(shared_image.memory);
-	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
-	mem_properties.push_back((cl_mem_properties) fd);
+	mem_properties.push_back(static_cast<cl_mem_properties>(CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR));
+	mem_properties.push_back(static_cast<cl_mem_properties>(fd));
 #endif
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
+	mem_properties.push_back(static_cast<cl_mem_properties>(CL_DEVICE_HANDLE_LIST_KHR));
 	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
+	mem_properties.push_back(static_cast<cl_mem_properties>(CL_DEVICE_HANDLE_LIST_END_KHR));
 	mem_properties.push_back(0);
 
 	cl_image_format cl_img_fmt{};
@@ -683,11 +683,11 @@ void OpenCLInterop::prepare_sync_objects()
 
 	// Import the Vulkan sempahores into OpenCL
 	std::vector<cl_semaphore_properties_khr> semaphore_properties{
-	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
-	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+	    static_cast<cl_semaphore_properties_khr>(CL_SEMAPHORE_TYPE_KHR),
+	    static_cast<cl_semaphore_properties_khr>(CL_SEMAPHORE_TYPE_BINARY_KHR),
+	    static_cast<cl_semaphore_properties_khr>(CL_DEVICE_HANDLE_LIST_KHR),
 	    (cl_semaphore_properties_khr) opencl_objects.device_id,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+	    static_cast<cl_semaphore_properties_khr>(CL_DEVICE_HANDLE_LIST_END_KHR),
 	};
 
 	// CL to VK semaphore
@@ -697,9 +697,9 @@ void OpenCLInterop::prepare_sync_objects()
 	HANDLE handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
 	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
 #else
-	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR);
+	semaphore_properties.push_back(static_cast<cl_semaphore_properties_khr>(CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR));
 	int fd = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
+	semaphore_properties.push_back(static_cast<cl_semaphore_properties_khr>(fd));
 #endif
 	semaphore_properties.push_back(0);
 
@@ -718,7 +718,7 @@ void OpenCLInterop::prepare_sync_objects()
 	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
 #else
 	fd = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
+	semaphore_properties.push_back(static_cast<cl_semaphore_properties_khr>(fd));
 #endif
 	semaphore_properties.push_back(0);
 

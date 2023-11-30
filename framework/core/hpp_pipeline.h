@@ -19,6 +19,8 @@
 
 #include "core/pipeline.h"
 
+#include "core/hpp_device.h"
+
 namespace vkb
 {
 namespace rendering

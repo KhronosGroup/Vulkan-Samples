@@ -536,8 +536,6 @@ struct hash<vkb::PipelineState>
 
 namespace vkb
 {
-namespace
-{
 template <typename T>
 inline void hash_param(size_t &seed, const T &value)
 {
@@ -663,74 +661,4 @@ inline size_t inline_hash_param(const Args &...args)
 
 	return seed;
 }
-
-template <class T, class... A>
-struct RecordHelper
-{
-	size_t record(ResourceRecord & /*recorder*/, A &.../*args*/)
-	{
-		return 0;
-	}
-
-	void index(ResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
-	{
-	}
-};
-
-template <class... A>
-struct RecordHelper<ShaderModule, A...>
-{
-	size_t record(ResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_shader_module(args...);
-	}
-
-	void index(ResourceRecord &recorder, size_t index, ShaderModule &shader_module)
-	{
-		recorder.set_shader_module(index, shader_module);
-	}
-};
-
-template <class... A>
-struct RecordHelper<PipelineLayout, A...>
-{
-	size_t record(ResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_pipeline_layout(args...);
-	}
-
-	void index(ResourceRecord &recorder, size_t index, PipelineLayout &pipeline_layout)
-	{
-		recorder.set_pipeline_layout(index, pipeline_layout);
-	}
-};
-
-template <class... A>
-struct RecordHelper<RenderPass, A...>
-{
-	size_t record(ResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_render_pass(args...);
-	}
-
-	void index(ResourceRecord &recorder, size_t index, RenderPass &render_pass)
-	{
-		recorder.set_render_pass(index, render_pass);
-	}
-};
-
-template <class... A>
-struct RecordHelper<GraphicsPipeline, A...>
-{
-	size_t record(ResourceRecord &recorder, A &...args)
-	{
-		return recorder.register_graphics_pipeline(args...);
-	}
-
-	void index(ResourceRecord &recorder, size_t index, GraphicsPipeline &graphics_pipeline)
-	{
-		recorder.set_graphics_pipeline(index, graphics_pipeline);
-	}
-};
-}        // namespace
 }        // namespace vkb

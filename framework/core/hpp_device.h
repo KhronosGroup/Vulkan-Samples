@@ -24,8 +24,9 @@
 #include <core/hpp_queue.h>
 #include <core/hpp_vulkan_resource.h>
 #include <hpp_fence_pool.h>
-#include <hpp_resource_cache.h>
 #include <vulkan/vulkan.hpp>
+
+#include <hpp_resource_cache.h>
 
 namespace vkb
 {

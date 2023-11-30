@@ -17,7 +17,9 @@
 
 #pragma once
 
-#include <core/hpp_pipeline.h>
+#include <vector>
+
+#include "rendering/hpp_pipeline_state.h"
 
 namespace vkb
 {
@@ -37,6 +39,7 @@ class HPPPipelineLayout;
 class HPPRenderPass;
 class HPPShaderModule;
 struct HPPSubpassInfo;
+class HPPGraphicsPipeline;
 }        // namespace core
 
 /**
@@ -49,7 +52,7 @@ class HPPResourceRecord
   public:
 	void set_data(const std::vector<uint8_t> &data);
 
-	std::vector<uint8_t> get_data();
+	std::vector<uint8_t> get_data() const;
 
 	const std::ostringstream &get_stream();
 

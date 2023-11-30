@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-#include "hpp_resource_cache.h"
 #include <common/hpp_resource_caching.h>
 #include <core/hpp_descriptor_set.h>
 #include <core/hpp_device.h>
 #include <core/hpp_image_view.h>
 #include <core/hpp_pipeline_layout.h>
+
+#include <hpp_resource_cache.h>
 
 namespace vkb
 {

@@ -62,6 +62,9 @@ class CacheMap : public ContainerWrapper<Key, Value, Container>
 	using Wrapper::clear;
 	using Wrapper::empty;
 	using Wrapper::end;
+	using Wrapper::erase;
+	using Wrapper::find;
+	using Wrapper::size;
 
   protected:
 	using ContainerWrapper<Key, Value, Container>::container;

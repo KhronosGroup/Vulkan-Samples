@@ -25,12 +25,7 @@ namespace vkb
 template <class T, class... A>
 T &request_resource(Device &device, CacheMap<std::size_t, T> &resources, A &...args)
 {
-	RecordHelper<T, A...> record_helper;
-
-	std::size_t hash{0U};
-	hash_param(hash, args...);
-
-	auto it = resources.find_or_insert(hash, [&]() -> T {
+	auto it = resources.find_or_insert(inline_hash_param(args...), [&]() -> T {
 		// If we do not have it already, create and cache it
 		const char *res_type = typeid(T).name();
 		size_t      res_id   = resources.size();

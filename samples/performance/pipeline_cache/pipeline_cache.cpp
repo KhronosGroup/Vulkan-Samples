@@ -20,6 +20,7 @@
 #include <imgui_internal.h>
 
 #include "common/logging.h"
+#include "common/resource_caching.h"
 #include "core/device.h"
 #include "gui.h"
 #include "platform/filesystem.h"
@@ -28,6 +29,162 @@
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/node.h"
 #include "stats/stats.h"
+
+#include "resource_cache.h"
+#include "resource_record.h"
+#include "resource_replay.h"
+namespace
+{
+template <class T, class... A>
+struct RecordHelper
+{
+	size_t record(vkb::ResourceRecord & /*recorder*/, A &.../*args*/)
+	{
+		return 0;
+	}
+
+	void index(vkb::ResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
+	{
+	}
+};
+
+template <class... A>
+struct RecordHelper<vkb::ShaderModule, A...>
+{
+	size_t record(vkb::ResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_shader_module(args...);
+	}
+
+	void index(vkb::ResourceRecord &recorder, size_t index, vkb::ShaderModule &shader_module)
+	{
+		recorder.set_shader_module(index, shader_module);
+	}
+};
+
+template <class... A>
+struct RecordHelper<vkb::PipelineLayout, A...>
+{
+	size_t record(vkb::ResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_pipeline_layout(args...);
+	}
+
+	void index(vkb::ResourceRecord &recorder, size_t index, vkb::PipelineLayout &pipeline_layout)
+	{
+		recorder.set_pipeline_layout(index, pipeline_layout);
+	}
+};
+
+template <class... A>
+struct RecordHelper<vkb::RenderPass, A...>
+{
+	size_t record(vkb::ResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_render_pass(args...);
+	}
+
+	void index(vkb::ResourceRecord &recorder, size_t index, vkb::RenderPass &render_pass)
+	{
+		recorder.set_render_pass(index, render_pass);
+	}
+};
+
+template <class... A>
+struct RecordHelper<vkb::GraphicsPipeline, A...>
+{
+	size_t record(vkb::ResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_graphics_pipeline(args...);
+	}
+
+	void index(vkb::ResourceRecord &recorder, size_t index, vkb::GraphicsPipeline &graphics_pipeline)
+	{
+		recorder.set_graphics_pipeline(index, graphics_pipeline);
+	}
+};
+
+template <class T, class... A>
+T &request_resource(vkb::Device &device, vkb::ResourceRecord &recorder, vkb::CacheMap<std::size_t, T> &resources, A &...args)
+{
+	auto it = resources.find_or_insert(vkb::inline_hash_param(args...), [&device, &recorder, &resources, &args...]() {
+		T resource{device, args...};
+
+		RecordHelper<T, A...> helper;
+		helper.index(recorder, resources.size(), resource);
+
+		return resource;
+	});
+	return it->second;
+}
+}        // namespace
+
+class PipelineCacheResourceCache : public vkb::ResourceCache
+{
+  public:
+	explicit PipelineCacheResourceCache(vkb::Device &device) :
+	    vkb::ResourceCache{device} {};
+
+	vkb::ShaderModule &request_shader_module(VkShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant) override
+	{
+		std::string entry_point{"main"};
+		return request_resource<vkb::ShaderModule>(device, recorder, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
+	}
+	vkb::PipelineLayout &request_pipeline_layout(const std::vector<vkb::ShaderModule *> &shader_modules) override
+	{
+		return request_resource<vkb::PipelineLayout>(device, recorder, state.pipeline_layouts, shader_modules);
+	}
+	vkb::DescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::ShaderModule *> &shader_modules, const std::vector<vkb::ShaderResource> &set_resources) override
+	{
+		return request_resource<vkb::DescriptorSetLayout>(device, recorder, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
+	}
+	vkb::GraphicsPipeline &request_graphics_pipeline(vkb::PipelineState &pipeline_state) override
+	{
+		return request_resource<vkb::GraphicsPipeline>(device, recorder, state.graphics_pipelines, pipeline_cache, pipeline_state);
+	}
+	vkb::ComputePipeline &request_compute_pipeline(vkb::PipelineState &pipeline_state) override
+	{
+		return request_resource<vkb::ComputePipeline>(device, recorder, state.compute_pipelines, pipeline_cache, pipeline_state);
+	}
+	vkb::DescriptorSet &request_descriptor_set(vkb::DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos) override
+	{
+		auto &descriptor_pool = request_resource<vkb::DescriptorPool>(device, recorder, state.descriptor_pools, descriptor_set_layout);
+		return request_resource<vkb::DescriptorSet>(device, recorder, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+	}
+	vkb::RenderPass &request_render_pass(const std::vector<vkb::Attachment> &attachments, const std::vector<vkb::LoadStoreInfo> &load_store_infos, const std::vector<vkb::SubpassInfo> &subpasses) override
+	{
+		return request_resource<vkb::RenderPass>(device, recorder, state.render_passes, attachments, load_store_infos, subpasses);
+	}
+	vkb::Framebuffer &request_framebuffer(const vkb::RenderTarget &render_target, const vkb::RenderPass &render_pass) override
+	{
+		return request_resource<vkb::Framebuffer>(device, recorder, state.framebuffers, render_target, render_pass);
+	}
+	void clear_pipelines()
+	{
+		state.graphics_pipelines.clear();
+		state.compute_pipelines.clear();
+	}
+	void set_pipeline_cache(VkPipelineCache in_pipeline_cache)
+	{
+		pipeline_cache = in_pipeline_cache;
+	}
+	void warmup(std::vector<uint8_t> &&data)
+	{
+		recorder.set_data(data);
+		replayer.play(*this, recorder);
+	}
+	std::vector<uint8_t> serialize() const
+	{
+		return recorder.get_data();
+	}
+
+  private:
+	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
+
+	vkb::ResourceRecord recorder;
+
+	vkb::ResourceReplay replayer;
+};
 
 PipelineCache::PipelineCache()
 {
@@ -66,7 +223,7 @@ bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	device->override_resource_cache(std::make_unique<PipelineCacheResourceCache>());
+	device->override_resource_cache(std::make_unique<PipelineCacheResourceCache>(*device));
 
 	/* Try to read pipeline cache file if exists */
 	std::vector<uint8_t> pipeline_data;
