@@ -1140,9 +1140,10 @@ bool Drawer::checkbox(const char *caption, int32_t *value)
 bool Drawer::radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption)
 {
 	bool res = ImGui::RadioButton(caption, selectedOption, elementOption);
-	if (res) {
+	if (res)
+	{
 		dirty = true;
-}
+	}
 
 	return res;
 }

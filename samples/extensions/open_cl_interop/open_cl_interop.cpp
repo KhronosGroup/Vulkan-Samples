@@ -487,22 +487,22 @@ HANDLE OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 #else
 int OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
 {
-	int fd;
+	int                  fd;
 	VkMemoryGetFdInfoKHR fd_info{};
-	fd_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+	fd_info.sType      = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
 	fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
-	fd_info.memory = memory;
+	fd_info.memory     = memory;
 	vkGetMemoryFdKHR(device->get_handle(), &fd_info, &fd);
 	return fd;
 }
 
 int OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 {
-	int fd;
+	int                     fd;
 	VkSemaphoreGetFdInfoKHR fd_info{};
-	fd_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR;
+	fd_info.sType      = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR;
 	fd_info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
-	fd_info.semaphore = sempahore;
+	fd_info.semaphore  = sempahore;
 	vkGetSemaphoreFdKHR(device->get_handle(), &fd_info, &fd);
 	return fd;
 }

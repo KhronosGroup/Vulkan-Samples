@@ -19,7 +19,6 @@
 #include <core/hpp_command_pool.h>
 #include <core/hpp_device.h>
 #include <core/hpp_pipeline.h>
-#include <core/hpp_pipeline_layout.h>
 #include <rendering/hpp_render_frame.h>
 
 namespace vkb

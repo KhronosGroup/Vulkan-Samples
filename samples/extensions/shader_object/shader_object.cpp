@@ -1512,9 +1512,10 @@ void ShaderObject::bind_material_shader(VkCommandBuffer cmd_buffer, int shader_i
 	CurrentShader &shader = current_material_shaders[shader_index];
 
 	bind_shader(cmd_buffer, material_vert_shaders[shader.vert]);
-	if (enable_geometry_pass) {
+	if (enable_geometry_pass)
+	{
 		bind_shader(cmd_buffer, material_geo_shaders[shader.geo]);
-}
+	}
 	bind_shader(cmd_buffer, material_frag_shaders[shader.frag]);
 }
 
@@ -1635,9 +1636,10 @@ void ShaderObject::iterate_current()
 		});
 	}
 
-	if (funcs.size() == 0) {
+	if (funcs.size() == 0)
+	{
 		return;
-}
+	}
 
 	// Call a randomly chosen function
 	funcs[distribution(rng) % funcs.size()]();

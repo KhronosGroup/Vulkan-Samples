@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "core/hpp_render_pass.h"
 #include "pipeline_state.h"
 #include <vulkan/vulkan.hpp>
 
@@ -30,6 +29,8 @@ class HPPPipelineLayout;
 
 namespace rendering
 {
+class HPPRenderPass;
+
 struct HPPColorBlendAttachmentState
 {
 	vk::Bool32              blend_enable           = false;

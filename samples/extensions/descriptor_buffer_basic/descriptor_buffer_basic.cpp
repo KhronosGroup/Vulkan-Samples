@@ -445,9 +445,10 @@ bool DescriptorBufferBasic::prepare(const vkb::ApplicationOptions &options)
 
 void DescriptorBufferBasic::render(float delta_time)
 {
-	if (!prepared) {
+	if (!prepared)
+	{
 		return;
-}
+	}
 	draw();
 	if (animate)
 	{

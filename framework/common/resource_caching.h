@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -536,6 +536,8 @@ struct hash<vkb::PipelineState>
 
 namespace vkb
 {
+namespace
+{
 template <typename T>
 inline void hash_param(size_t &seed, const T &value)
 {
@@ -661,4 +663,5 @@ inline size_t inline_hash_param(const Args &...args)
 
 	return seed;
 }
+}        // namespace
 }        // namespace vkb

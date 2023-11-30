@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -80,8 +80,14 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	pipeline_layout_indices.push_back(pipeline_layout_indices.size());
 
 	std::vector<size_t> shader_indices(shader_modules.size());
-	std::transform(shader_modules.begin(), shader_modules.end(), shader_indices.begin(),
-	               [this](ShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
+
+	std::transform(
+	    shader_modules.begin(),
+	    shader_modules.end(),
+	    shader_indices.begin(),
+	    [this](ShaderModule *shader_module) {
+		    return shader_module_to_index.at(shader_module);
+	    });
 
 	write(stream,
 	      ResourceType::PipelineLayout,
@@ -164,5 +170,4 @@ void ResourceRecord::set_graphics_pipeline(size_t index, const GraphicsPipeline 
 {
 	graphics_pipeline_to_index[&graphics_pipeline] = index;
 }
-
 }        // namespace vkb

@@ -110,11 +110,18 @@ T &request_resource(vkb::Device &device, vkb::ResourceRecord &recorder, vkb::Cac
 	auto it = resources.find_or_insert(vkb::inline_hash_param(args...), [&device, &recorder, &resources, &args...]() {
 		T resource{device, args...};
 
-		RecordHelper<T, A...> helper;
-		helper.index(recorder, resources.size(), resource);
+		// If we do not have it already, create and cache it
+		const char *res_type = typeid(T).name();
+		size_t      res_id   = resources.size();
+
+		LOGD("Building #{} cache object ({})", res_id, res_type);
 
 		return resource;
 	});
+
+	RecordHelper<T, A...> helper;
+	helper.index(recorder, helper.record(recorder, args...), it->second);
+
 	return it->second;
 }
 }        // namespace
@@ -263,7 +270,10 @@ bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	// Build all pipelines from a previous run
+	auto start_time = std::chrono::high_resolution_clock::now();
 	resource_cache.warmup(std::move(data_cache));
+	auto end_time = std::chrono::high_resolution_clock::now();
+	LOGI("Pipeline cache warmup took {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count());
 
 	stats->request_stats({vkb::StatIndex::frame_times});
 

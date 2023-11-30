@@ -103,11 +103,18 @@ T &request_resource(vkb::core::HPPDevice &device, vkb::HPPResourceRecord &record
 	auto it = resources.find_or_insert(vkb::inline_hash_param(args...), [&device, &recorder, &resources, &args...]() {
 		T resource{device, args...};
 
-		HPPRecordHelper<T, A...> helper;
-		helper.index(recorder, resources.size(), resource);
+		// If we do not have it already, create and cache it
+		const char *res_type = typeid(T).name();
+		size_t      res_id   = resources.size();
+
+		LOGD("HPPPipelineCache: Building #{} cache object ({})", res_id, res_type);
 
 		return resource;
 	});
+
+	HPPRecordHelper<T, A...> helper;
+	helper.index(recorder, helper.record(recorder, args...), it->second);
+
 	return it->second;
 }
 }        // namespace
@@ -120,39 +127,39 @@ class HPPPipelineCacheResourceCache : public vkb::HPPResourceCache
 	    vkb::HPPResourceCache(device)
 	{}
 
-	vkb::core::HPPComputePipeline &request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state) override
-	{
-		return request_resource(device, recorder, state.compute_pipelines, pipeline_cache, pipeline_state);
-	}
 	vkb::core::HPPDescriptorSet &request_descriptor_set(vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, const BindingMap<vk::DescriptorBufferInfo> &buffer_infos, const BindingMap<vk::DescriptorImageInfo> &image_infos) override
 	{
 		auto &descriptor_pool = request_resource(device, recorder, state.descriptor_pools, descriptor_set_layout);
-		return request_resource(device, recorder, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+		return request_resource<vkb::core::HPPDescriptorSet>(device, recorder, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 	}
 	vkb::core::HPPDescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::core::HPPShaderModule *> &shader_modules, const std::vector<vkb::core::HPPShaderResource> &set_resources) override
 	{
-		return request_resource(device, recorder, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
+		return request_resource<vkb::core::HPPDescriptorSetLayout>(device, recorder, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
 	}
 	vkb::core::HPPFramebuffer &request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass) override
 	{
-		return request_resource(device, recorder, state.framebuffers, render_target, render_pass);
+		return request_resource<vkb::core::HPPFramebuffer>(device, recorder, state.framebuffers, render_target, render_pass);
+	}
+	vkb::core::HPPComputePipeline &request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state) override
+	{
+		return request_resource<vkb::core::HPPComputePipeline>(device, recorder, state.compute_pipelines, pipeline_cache, pipeline_state);
 	}
 	vkb::core::HPPGraphicsPipeline &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state) override
 	{
-		return request_resource(device, recorder, state.graphics_pipelines, pipeline_cache, pipeline_state);
+		return request_resource<vkb::core::HPPGraphicsPipeline>(device, recorder, state.graphics_pipelines, pipeline_cache, pipeline_state);
 	}
 	vkb::core::HPPPipelineLayout &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules) override
 	{
-		return request_resource(device, recorder, state.pipeline_layouts, shader_modules);
+		return request_resource<vkb::core::HPPPipelineLayout>(device, recorder, state.pipeline_layouts, shader_modules);
 	}
 	vkb::core::HPPRenderPass &request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments, const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos, const std::vector<vkb::core::HPPSubpassInfo> &subpasses) override
 	{
-		return request_resource(device, recorder, state.render_passes, attachments, load_store_infos, subpasses);
+		return request_resource<vkb::core::HPPRenderPass>(device, recorder, state.render_passes, attachments, load_store_infos, subpasses);
 	}
 	vkb::core::HPPShaderModule &request_shader_module(vk::ShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant) override
 	{
 		std::string entry_point{"main"};
-		return request_resource(device, recorder, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
+		return request_resource<vkb::core::HPPShaderModule>(device, recorder, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
 	}
 	void clear_pipelines()
 	{
@@ -252,8 +259,10 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 		LOGW("No data cache found. {}", ex.what());
 	}
 
-	/* Build all pipelines from a previous run */
+	auto start_time = std::chrono::high_resolution_clock::now();
 	resource_cache.warmup(std::move(data_cache));
+	auto end_time = std::chrono::high_resolution_clock::now();
+	LOGI("Pipeline cache warmup took {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count());
 
 	stats->request_stats({vkb::StatIndex::frame_times});
 

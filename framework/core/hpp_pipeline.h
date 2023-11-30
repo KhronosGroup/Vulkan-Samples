@@ -18,8 +18,7 @@
 #pragma once
 
 #include "core/pipeline.h"
-
-#include "core/hpp_device.h"
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
@@ -30,6 +29,8 @@ class HPPPipelineState;
 
 namespace core
 {
+class HPPDevice;
+
 /**
  * @brief facade class around vkb::Pipeline, providing a vulkan.hpp-based interface
  *

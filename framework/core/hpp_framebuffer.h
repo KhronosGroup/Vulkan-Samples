@@ -18,7 +18,6 @@
 #pragma once
 
 #include "core/framebuffer.h"
-#include "core/hpp_render_pass.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb

@@ -293,25 +293,29 @@ void DynamicBlending::create_pipelines()
 	    VK_DYNAMIC_STATE_SCISSOR,
 	};
 
-	if (eds_feature_support.extendedDynamicState3ColorWriteMask) {
+	if (eds_feature_support.extendedDynamicState3ColorWriteMask)
+	{
 		dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT);
-}
+	}
 
-	if (eds_feature_support.extendedDynamicState3ColorBlendEnable) {
+	if (eds_feature_support.extendedDynamicState3ColorBlendEnable)
+	{
 		dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT);
-}
+	}
 
 	switch (current_blend_option)
 	{
 		case 0:
-			if (eds_feature_support.extendedDynamicState3ColorBlendEquation) {
+			if (eds_feature_support.extendedDynamicState3ColorBlendEquation)
+			{
 				dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT);
-}
+			}
 			break;
 		case 1:
-			if (eds_feature_support.extendedDynamicState3ColorBlendAdvanced) {
+			if (eds_feature_support.extendedDynamicState3ColorBlendAdvanced)
+			{
 				dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_ADVANCED_EXT);
-}
+			}
 			break;
 	}
 
@@ -371,13 +375,14 @@ void DynamicBlending::update_pipeline()
 
 void DynamicBlending::update_color()
 {
-	for (uint32_t face = 0; face < 2; ++face) {
+	for (uint32_t face = 0; face < 2; ++face)
+	{
 		for (uint32_t vertex = 0; vertex < 4; ++vertex)
 		{
 			auto &input_color             = face_preferences[face].color[vertex];
 			color.data[face * 4 + vertex] = glm::vec4(input_color[0], input_color[1], input_color[2], input_color[3]);
 		}
-}
+	}
 	color_ubo->convert_and_update(color);
 }
 
@@ -387,9 +392,10 @@ void DynamicBlending::randomize_color(std::array<float, 4> &color, bool alpha)
 	{
 		color[i] = rnd_dist(rnd_engine);
 	}
-	if (alpha) {
+	if (alpha)
+	{
 		color[3] = rnd_dist(rnd_engine);
-}
+	}
 }
 
 void DynamicBlending::update_color_uniform()
@@ -527,9 +533,10 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 			update_color_uniform();
 		}
 		ImGui::PopID();
-		if (same_line) {
+		if (same_line)
+		{
 			ImGui::SameLine();
-}
+		}
 	};
 
 	auto add_next_button = [&](int32_t &index, int32_t first, int32_t last) {
@@ -566,9 +573,10 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 			ImGui::PushID(++item_id);
 			if (drawer.button("Random"))
 			{
-				for (int i = 0; i < 4; ++i) {
+				for (int i = 0; i < 4; ++i)
+				{
 					randomize_color(current_face.color[i]);
-}
+				}
 				update_color();
 			}
 			ImGui::PopID();

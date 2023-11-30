@@ -17,20 +17,33 @@
 
 #pragma once
 
-#include "core/hpp_descriptor_pool.h"
-#include "core/hpp_descriptor_set.h"
-#include "core/hpp_descriptor_set_layout.h"
-#include "core/hpp_framebuffer.h"
-#include "core/hpp_pipeline.h"
-#include "core/hpp_pipeline_layout.h"
-#include "core/hpp_render_pass.h"
-#include "core/hpp_shader_module.h"
-#include "rendering/hpp_render_target.h"
+#include <core/hpp_descriptor_set.h>
+#include <core/hpp_framebuffer.h>
+#include <core/hpp_pipeline.h>
+#include <core/hpp_pipeline_layout.h>
+#include <core/hpp_render_pass.h>
+#include <hpp_resource_record.h>
+#include <hpp_resource_replay.h>
+#include <vulkan/vulkan.hpp>
 
 #include <core/containers/cache_map.hpp>
 
 namespace vkb
 {
+
+namespace core
+{
+class HPPDevice;
+class HPPDescriptorPool;
+class HPPDescriptorSetLayout;
+class HPPImageView;
+}        // namespace core
+
+namespace rendering
+{
+class HPPRenderTarget;
+}
+
 /**
  * @brief Struct to hold the internal state of the Resource Cache
  *

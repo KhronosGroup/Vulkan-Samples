@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include <vector>
-
-#include "rendering/hpp_pipeline_state.h"
+#include "rendering/pipeline_state.h"
+#include <core/hpp_pipeline.h>
 
 namespace vkb
 {

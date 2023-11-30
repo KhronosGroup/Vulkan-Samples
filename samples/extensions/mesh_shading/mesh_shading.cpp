@@ -233,9 +233,10 @@ void MeshShading::prepare_pipelines()
 
 void MeshShading::render(float delta_time)
 {
-	if (!prepared) {
+	if (!prepared)
+	{
 		return;
-}
+	}
 	draw();
 }
 

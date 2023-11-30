@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,15 +16,19 @@
  */
 
 #include "hpp_resource_record.h"
+
+#include "hpp_resource_cache.h"
 #include "hpp_resource_replay.h"
 
+#include "common/hpp_vk_common.h"
 #include "core/hpp_pipeline.h"
 #include "core/hpp_pipeline_layout.h"
 #include "core/hpp_render_pass.h"
 #include "core/hpp_shader_module.h"
-#include "hpp_resource_cache.h"
 #include "rendering/hpp_pipeline_state.h"
-#include "rendering/pipeline_state.h"
+#include "rendering/hpp_render_target.h"
+
+#include "common/logging.h"
 
 namespace vkb
 {
@@ -150,9 +154,11 @@ const std::ostringstream &HPPResourceRecord::get_stream()
 
 size_t HPPResourceRecord::register_shader_module(vk::ShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant)
 {
+	LOGI("HPPResourceRecord::register_shader_module");
+
 	shader_module_indices.push_back(shader_module_indices.size());
 
-	write(stream, ResourceType::ShaderModule, stage, glsl_source.get_source(), entry_point, shader_variant.get_preamble());
+	write(stream, HPPResourceType::ShaderModule, stage, glsl_source.get_source(), entry_point, shader_variant.get_preamble());
 
 	write_processes(stream, shader_variant.get_processes());
 
@@ -161,6 +167,8 @@ size_t HPPResourceRecord::register_shader_module(vk::ShaderStageFlagBits stage, 
 
 size_t HPPResourceRecord::register_pipeline_layout(const std::vector<core::HPPShaderModule *> &shader_modules)
 {
+	LOGI("HPPResourceRecord::register_pipeline_layout");
+
 	pipeline_layout_indices.push_back(pipeline_layout_indices.size());
 
 	std::vector<size_t> shader_indices(shader_modules.size());
@@ -168,7 +176,7 @@ size_t HPPResourceRecord::register_pipeline_layout(const std::vector<core::HPPSh
 	               [this](core::HPPShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
 
 	write(stream,
-	      ResourceType::PipelineLayout,
+	      HPPResourceType::PipelineLayout,
 	      shader_indices);
 
 	return pipeline_layout_indices.back();
@@ -176,10 +184,12 @@ size_t HPPResourceRecord::register_pipeline_layout(const std::vector<core::HPPSh
 
 size_t HPPResourceRecord::register_render_pass(const std::vector<rendering::HPPAttachment> &attachments, const std::vector<common::HPPLoadStoreInfo> &load_store_infos, const std::vector<core::HPPSubpassInfo> &subpasses)
 {
+	LOGI("HPPResourceRecord::register_render_pass");
+
 	render_pass_indices.push_back(render_pass_indices.size());
 
 	write(stream,
-	      ResourceType::RenderPass,
+	      HPPResourceType::RenderPass,
 	      attachments,
 	      load_store_infos);
 
@@ -190,13 +200,15 @@ size_t HPPResourceRecord::register_render_pass(const std::vector<rendering::HPPA
 
 size_t HPPResourceRecord::register_graphics_pipeline(vk::PipelineCache /*pipeline_cache*/, rendering::HPPPipelineState &pipeline_state)
 {
+	LOGI("HPPResourceRecord::register_graphics_pipeline");
+
 	graphics_pipeline_indices.push_back(graphics_pipeline_indices.size());
 
 	auto &pipeline_layout = pipeline_state.get_pipeline_layout();
 	auto  render_pass     = pipeline_state.get_render_pass();
 
 	write(stream,
-	      ResourceType::GraphicsPipeline,
+	      HPPResourceType::GraphicsPipeline,
 	      pipeline_layout_to_index.at(&pipeline_layout),
 	      render_pass_to_index.at(render_pass),
 	      pipeline_state.get_subpass_index());

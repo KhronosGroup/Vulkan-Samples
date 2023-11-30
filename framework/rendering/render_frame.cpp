@@ -202,8 +202,6 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
-	assert(thread_index < descriptor_pools.size());
-
 	// Cache descriptor pools against thread index
 	auto pool_cache_it = descriptor_pools.find_or_insert(thread_index, []() -> std::unique_ptr<CacheMap<std::size_t, DescriptorPool>> {
 		return std::make_unique<CacheMap<std::size_t, DescriptorPool>>();
@@ -226,7 +224,6 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 		}
 
 		// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
-		assert(thread_index < descriptor_sets.size());
 
 		// Cache descriptor sets against thread index
 		auto descriptor_set_cache_it = descriptor_sets.find_or_insert(thread_index, []() -> std::unique_ptr<CacheMap<std::size_t, DescriptorSet>> {
@@ -253,8 +250,6 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 
 void RenderFrame::update_descriptor_sets(size_t thread_index)
 {
-	assert(thread_index < descriptor_sets.size());
-
 	auto it = descriptor_sets.find(thread_index);
 	if (it == descriptor_sets.end())
 	{

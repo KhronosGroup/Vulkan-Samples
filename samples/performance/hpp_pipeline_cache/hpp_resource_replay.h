@@ -42,6 +42,7 @@ enum class HPPResourceType
 class HPPResourceReplay
 {
   public:
+	HPPResourceReplay();
 	void play(vkb::HPPResourceCache &resource_cache, vkb::HPPResourceRecord &recorder);
 
   protected:

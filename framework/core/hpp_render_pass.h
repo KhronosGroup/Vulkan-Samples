@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "core/hpp_device.h"
 #include "core/render_pass.h"
 #include <vulkan/vulkan.hpp>
 

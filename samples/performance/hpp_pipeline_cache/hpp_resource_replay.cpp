@@ -22,6 +22,7 @@
 #include "common/logging.h"
 #include "hpp_resource_cache.h"
 #include "rendering/hpp_pipeline_state.h"
+#include "rendering/hpp_render_target.h"
 #include <core/hpp_pipeline.h>
 
 namespace vkb
