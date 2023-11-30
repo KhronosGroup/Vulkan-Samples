@@ -23,7 +23,8 @@ vkb__register_component(
     SRC
         src/strings.cpp
     LINK_LIBS
-        spdlog::spdlog
+        spdlog
+        fmt
 )
 
 vkb__register_tests(
