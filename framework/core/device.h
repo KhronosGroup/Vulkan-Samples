@@ -216,6 +216,14 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 
 	void override_resource_cache(std::unique_ptr<ResourceCache> &&resource_cache);
 
+	template <typename T>
+	T &get_resource_cache()
+	{
+		auto ptr = dynamic_cast<T *>(resource_cache.get());
+		assert(ptr && "Resource cache is not of the requested type");
+		return *ptr;
+	}
+
   private:
 	const PhysicalDevice &gpu;
 

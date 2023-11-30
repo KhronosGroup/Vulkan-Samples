@@ -23,6 +23,35 @@
 #include "scene_graph/components/camera.h"
 #include "vulkan_sample.h"
 
+#include "resource_cache.h"
+#include "resource_record.h"
+#include "resource_replay.h"
+
+class PipelineCacheResourceCache : public vkb::ResourceCache
+{
+  public:
+	vkb::ShaderModule        &request_shader_module(VkShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant = {}) override;
+	vkb::PipelineLayout      &request_pipeline_layout(const std::vector<vkb::ShaderModule *> &shader_modules) override;
+	vkb::DescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::ShaderModule *> &shader_modules, const std::vector<vkb::ShaderResource> &set_resources) override;
+	vkb::GraphicsPipeline    &request_graphics_pipeline(vkb::PipelineState &pipeline_state) override;
+	vkb::ComputePipeline     &request_compute_pipeline(vkb::PipelineState &pipeline_state) override;
+	vkb::DescriptorSet       &request_descriptor_set(vkb::DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos) override;
+	vkb::RenderPass          &request_render_pass(const std::vector<vkb::Attachment> &attachments, const std::vector<vkb::LoadStoreInfo> &load_store_infos, const std::vector<vkb::SubpassInfo> &subpasses) override;
+	vkb::Framebuffer         &request_framebuffer(const vkb::RenderTarget &render_target, const vkb::RenderPass &render_pass) override;
+
+	void                 clear_pipelines();
+	void                 set_pipeline_cache(VkPipelineCache pipeline_cache);
+	void                 warmup(std::vector<uint8_t> &&data);
+	std::vector<uint8_t> serialize() const;
+
+  private:
+	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
+
+	vkb::ResourceRecord recorder;
+
+	vkb::ResourceReplay replayer;
+};
+
 /**
  * @brief Pipeline creation and caching
  */

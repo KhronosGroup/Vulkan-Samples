@@ -43,7 +43,7 @@ HPPPipelineCache::~HPPPipelineCache()
 		device->get_handle().destroyPipelineCache(pipeline_cache);
 	}
 
-	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
+	vkb::fs::write_temp(device->get_resource_cache<HPPPipelineCacheResourceCache>().serialize(), "cache.data");
 }
 
 bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
@@ -52,6 +52,8 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	{
 		return false;
 	}
+
+	device->override_resource_cache(std::make_unique<HPPPipelineCacheResourceCache>());
 
 	/* Try to read pipeline cache file if exists */
 	std::vector<uint8_t> pipeline_data;
@@ -75,7 +77,7 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	/* Create Vulkan pipeline cache */
 	pipeline_cache = device->get_handle().createPipelineCache(pipeline_cache_create_info);
 
-	vkb::HPPResourceCache &resource_cache = device->get_resource_cache();
+	HPPPipelineCacheResourceCache &resource_cache = device->get_resource_cache<HPPPipelineCacheResourceCache>();
 
 	/* Use pipeline cache to store pipelines */
 	resource_cache.set_pipeline_cache(pipeline_cache);
@@ -91,7 +93,7 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	/* Build all pipelines from a previous run */
-	resource_cache.warmup(data_cache);
+	resource_cache.warmup(std::move(data_cache));
 
 	stats->request_stats({vkb::StatIndex::frame_times});
 
@@ -126,7 +128,7 @@ void HPPPipelineCache::draw_gui()
 	    /* body = */ [this]() {
 		    if (ImGui::Checkbox("Pipeline cache", &enable_pipeline_cache))
 		    {
-			    device->get_resource_cache().set_pipeline_cache(enable_pipeline_cache ? pipeline_cache : nullptr);
+			    device->get_resource_cache<HPPPipelineCacheResourceCache>().set_pipeline_cache(enable_pipeline_cache ? pipeline_cache : nullptr);
 		    }
 
 		    ImGui::SameLine();
@@ -134,7 +136,7 @@ void HPPPipelineCache::draw_gui()
 		    if (ImGui::Button("Destroy Pipelines", button_size))
 		    {
 			    device->get_handle().waitIdle();
-			    device->get_resource_cache().clear_pipelines();
+			    device->get_resource_cache<HPPPipelineCacheResourceCache>().clear_pipelines();
 			    record_frame_time_next_frame = true;
 		    }
 

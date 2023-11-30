@@ -130,6 +130,14 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 
 	void override_resource_cache(std::unique_ptr<vkb::HPPResourceCache> &&resource_cache);
 
+	template <typename T>
+	T &get_resource_cache()
+	{
+		auto ptr = dynamic_cast<T *>(resource_cache.get());
+		assert(ptr && "Resource cache is not of the requested type");
+		return *ptr;
+	}
+
   private:
 	vkb::core::HPPPhysicalDevice const &gpu;
 

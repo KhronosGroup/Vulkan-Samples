@@ -56,7 +56,7 @@ PipelineCache::~PipelineCache()
 		vkDestroyPipelineCache(device->get_handle(), pipeline_cache, nullptr);
 	}
 
-	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
+	vkb::fs::write_temp(device->get_resource_cache<PipelineCacheResourceCache>().serialize(), "cache.data");
 }
 
 bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
@@ -65,6 +65,8 @@ bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
 	{
 		return false;
 	}
+
+	device->override_resource_cache(std::make_unique<PipelineCacheResourceCache>());
 
 	/* Try to read pipeline cache file if exists */
 	std::vector<uint8_t> pipeline_data;
@@ -86,9 +88,10 @@ bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
 	/* Create Vulkan pipeline cache */
 	VK_CHECK(vkCreatePipelineCache(device->get_handle(), &create_info, nullptr, &pipeline_cache));
 
-	vkb::ResourceCache &resource_cache = device->get_resource_cache();
+	PipelineCacheResourceCache &resource_cache = device->get_resource_cache<PipelineCacheResourceCache>();
 
 	// Use pipeline cache to store pipelines
+
 	resource_cache.set_pipeline_cache(pipeline_cache);
 
 	std::vector<uint8_t> data_cache;
@@ -103,7 +106,7 @@ bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	// Build all pipelines from a previous run
-	resource_cache.warmup(data_cache);
+	resource_cache.warmup(std::move(data_cache));
 
 	stats->request_stats({vkb::StatIndex::frame_times});
 
@@ -137,7 +140,7 @@ void PipelineCache::draw_gui()
 	    /* body = */ [this]() {
 		    if (ImGui::Checkbox("Pipeline cache", &enable_pipeline_cache))
 		    {
-			    vkb::ResourceCache &resource_cache = device->get_resource_cache();
+			    PipelineCacheResourceCache &resource_cache = device->get_resource_cache<PipelineCacheResourceCache>();
 
 			    if (enable_pipeline_cache)
 			    {
@@ -156,7 +159,7 @@ void PipelineCache::draw_gui()
 		    if (ImGui::Button("Destroy Pipelines", button_size))
 		    {
 			    device->wait_idle();
-			    device->get_resource_cache().clear_pipelines();
+			    device->get_resource_cache<PipelineCacheResourceCache>().clear_pipelines();
 			    record_frame_time_next_frame = true;
 		    }
 
