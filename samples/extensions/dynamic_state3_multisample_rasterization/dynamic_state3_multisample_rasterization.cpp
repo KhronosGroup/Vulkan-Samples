@@ -18,6 +18,7 @@
 #include "dynamic_state3_multisample_rasterization.h"
 
 #include "gltf_loader.h"
+#include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
@@ -39,6 +40,7 @@ DynamicState3MultisampleRasterization::~DynamicState3MultisampleRasterization()
 	if (device)
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipeline_inversed_rasterizer, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 	}
@@ -185,6 +187,58 @@ bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOption
 	return true;
 }
 
+void DynamicState3MultisampleRasterization::draw_node(VkCommandBuffer &draw_cmd_buffer, SceneNode &node)
+{
+	const auto &vertex_buffer_pos    = node.sub_mesh->vertex_buffers.at("position");
+	const auto &vertex_buffer_normal = node.sub_mesh->vertex_buffers.at("normal");
+	const auto &vertex_buffer_uv     = node.sub_mesh->vertex_buffers.at("texcoord_0");
+	auto       &index_buffer         = node.sub_mesh->index_buffer;
+
+	// Pass data for the current node via push commands
+	auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(node.sub_mesh->get_material());
+	push_const_block.model_matrix = node.node->get_transform().get_world_matrix();
+
+	push_const_block.base_color_factor    = node_material->base_color_factor;
+	push_const_block.metallic_factor      = node_material->metallic_factor;
+	push_const_block.roughness_factor     = node_material->roughness_factor;
+	push_const_block.normal_texture_index = -1;
+	push_const_block.pbr_texture_index    = -1;
+
+	auto base_color_texture = node_material->textures.find("base_color_texture");
+
+	if (base_color_texture != node_material->textures.end())
+	{
+		auto base_color_texture_name        = base_color_texture->second->get_name();
+		push_const_block.base_texture_index = name_to_texture_id.at(base_color_texture_name);
+	}
+
+	auto normal_texture = node_material->textures.find("normal_texture");
+
+	if (normal_texture != node_material->textures.end())
+	{
+		auto normal_texture_name              = normal_texture->second->get_name();
+		push_const_block.normal_texture_index = name_to_texture_id.at(normal_texture_name);
+	}
+
+	auto metallic_roughness_texture = node_material->textures.find("metallic_roughness_texture");
+
+	if (metallic_roughness_texture != node_material->textures.end())
+	{
+		auto metallic_roughness_texture_name = metallic_roughness_texture->second->get_name();
+		push_const_block.pbr_texture_index   = name_to_texture_id.at(metallic_roughness_texture_name);
+	}
+
+	vkCmdPushConstants(draw_cmd_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
+
+	VkDeviceSize offsets[1] = {0};
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, vertex_buffer_pos.get(), offsets);
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 1, 1, vertex_buffer_normal.get(), offsets);
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 2, 1, vertex_buffer_uv.get(), offsets);
+	vkCmdBindIndexBuffer(draw_cmd_buffer, index_buffer->get_handle(), 0, node.sub_mesh->index_type);
+
+	vkCmdDraw(draw_cmd_buffer, node.sub_mesh->vertex_indices, 1, 0, 0);
+}
+
 void DynamicState3MultisampleRasterization::build_command_buffers()
 {
 	if (!check_command_buffers())
@@ -222,59 +276,30 @@ void DynamicState3MultisampleRasterization::build_command_buffers()
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		for (auto &node : scene_nodes)
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+		for (auto &node : scene_nodes_opaque)
 		{
-			const auto &vertex_buffer_pos    = node.sub_mesh->vertex_buffers.at("position");
-			const auto &vertex_buffer_normal = node.sub_mesh->vertex_buffers.at("normal");
-			const auto &vertex_buffer_uv     = node.sub_mesh->vertex_buffers.at("texcoord_0");
-			auto       &index_buffer         = node.sub_mesh->index_buffer;
+			draw_node(draw_cmd_buffers[i], node);
+		}
 
-			// Pass data for the current node via push commands
-			auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(node.sub_mesh->get_material());
-			push_const_block.model_matrix = node.node->get_transform().get_world_matrix();
+		for (auto &node : scene_nodes_transparent)
+		{
+			draw_node(draw_cmd_buffers[i], node);
+		}
 
-			push_const_block.base_color_factor    = node_material->base_color_factor;
-			push_const_block.metallic_factor      = node_material->metallic_factor;
-			push_const_block.roughness_factor     = node_material->roughness_factor;
-			push_const_block.normal_texture_index = -1;
-			push_const_block.pbr_texture_index    = -1;
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_inversed_rasterizer);
 
-			auto base_color_texture = node_material->textures.find("base_color_texture");
+		for (auto &node : scene_nodes_opaque_flipped)
+		{
+			draw_node(draw_cmd_buffers[i], node);
+		}
 
-			if (base_color_texture != node_material->textures.end())
-			{
-				auto base_color_texture_name        = base_color_texture->second->get_name();
-				push_const_block.base_texture_index = name_to_texture_id.at(base_color_texture_name);
-			}
-
-			auto normal_texture = node_material->textures.find("normal_texture");
-
-			if (normal_texture != node_material->textures.end())
-			{
-				auto normal_texture_name              = normal_texture->second->get_name();
-				push_const_block.normal_texture_index = name_to_texture_id.at(normal_texture_name);
-			}
-
-			auto metallic_roughness_texture = node_material->textures.find("metallic_roughness_texture");
-
-			if (metallic_roughness_texture != node_material->textures.end())
-			{
-				auto metallic_roughness_texture_name = metallic_roughness_texture->second->get_name();
-				push_const_block.pbr_texture_index   = name_to_texture_id.at(metallic_roughness_texture_name);
-			}
-
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
-
-			VkDeviceSize offsets[1] = {0};
-			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer_pos.get(), offsets);
-			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, vertex_buffer_normal.get(), offsets);
-			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 2, 1, vertex_buffer_uv.get(), offsets);
-			vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, node.sub_mesh->index_type);
-
-			vkCmdDraw(draw_cmd_buffers[i], node.sub_mesh->vertex_indices, 1, 0, 0);
+		for (auto &node : scene_nodes_transparent_flipped)
+		{
+			draw_node(draw_cmd_buffers[i], node);
 		}
 
 		draw_ui(draw_cmd_buffers[i]);
@@ -316,14 +341,32 @@ void DynamicState3MultisampleRasterization::load_assets()
 	vkb::GLTFLoader loader{get_device()};
 	scene = loader.read_scene_from_file("scenes/space_module/SpaceModule.gltf");
 	assert(scene);
-	// Store all scene nodes in a linear vector for easier access
+	// Store all scene nodes in separate vectors for easier rendering
 	for (auto &mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		for (auto &node : mesh->get_nodes())
 		{
 			for (auto &sub_mesh : mesh->get_submeshes())
 			{
-				scene_nodes.push_back({mesh->get_name(), node, sub_mesh});
+				auto &scale = node->get_transform().get_scale();
+
+				bool flipped     = scale.x * scale.y * scale.z < 0;
+				bool transparent = sub_mesh->get_material()->alpha_mode == vkb::sg::AlphaMode::Blend;
+
+				if (sub_mesh->get_material()->alpha_mode == vkb::sg::AlphaMode::Blend)        // transparent material
+				{
+					if (flipped)
+						scene_nodes_transparent_flipped.push_back({node, sub_mesh});
+					else
+						scene_nodes_transparent.push_back({node, sub_mesh});
+				}
+				else        // opaque material
+				{
+					if (flipped)
+						scene_nodes_opaque_flipped.push_back({node, sub_mesh});
+					else
+						scene_nodes_opaque.push_back({node, sub_mesh});
+				}
 			}
 		}
 	}
@@ -730,6 +773,17 @@ void DynamicState3MultisampleRasterization::prepare_pipelines()
 	shader_stages[0] = load_shader("dynamic_state3_multisample_rasterization/model.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_state3_multisample_rasterization/model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+
+	// Add another pipeline since parts of the scene have to be rendered using VK_FRONT_FACE_CLOCKWISE
+	VkPipelineRasterizationStateCreateInfo rasterization_state_inversed_rasterizer =
+	    vkb::initializers::pipeline_rasterization_state_create_info(
+	        VK_POLYGON_MODE_FILL,
+	        VK_CULL_MODE_BACK_BIT,
+	        VK_FRONT_FACE_CLOCKWISE,
+	        0);
+
+	pipeline_create_info.pRasterizationState = &rasterization_state_inversed_rasterizer;
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_inversed_rasterizer));
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms

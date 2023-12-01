@@ -35,11 +35,13 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 
 	struct SceneNode
 	{
-		std::string       name;
 		vkb::sg::Node    *node;
 		vkb::sg::SubMesh *sub_mesh;
 	};
-	std::vector<SceneNode> scene_nodes;
+	std::vector<SceneNode> scene_nodes_opaque;
+	std::vector<SceneNode> scene_nodes_opaque_flipped;
+	std::vector<SceneNode> scene_nodes_transparent;
+	std::vector<SceneNode> scene_nodes_transparent_flipped;
 
 	struct UniformData
 	{
@@ -49,6 +51,7 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
 
 	VkPipeline            pipeline;
+	VkPipeline            pipeline_inversed_rasterizer;
 	VkPipelineLayout      pipeline_layout;
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
@@ -124,6 +127,7 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	void         setup_color_attachment();
 	void         draw_ui(VkCommandBuffer &);
 	void         update_resources();
+	void         draw_node(VkCommandBuffer &, SceneNode &);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_state3_multisample_rasterization();
