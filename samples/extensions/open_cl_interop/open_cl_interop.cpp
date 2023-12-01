@@ -619,7 +619,7 @@ void OpenCLInterop::prepare_shared_image()
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR);
 	mem_properties.push_back((cl_mem_properties) handle);
 #else
-	int fd = get_vulkan_memory_handle(shared_image.memory);
+	int fd               = get_vulkan_memory_handle(shared_image.memory);
 	mem_properties.push_back(static_cast<cl_mem_properties>(CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR));
 	mem_properties.push_back(static_cast<cl_mem_properties>(fd));
 #endif
