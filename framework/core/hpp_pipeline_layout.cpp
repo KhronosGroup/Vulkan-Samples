@@ -18,14 +18,13 @@
 #include "hpp_pipeline_layout.h"
 
 #include <core/hpp_device.h>
-
-#include <core/shader_module.h>
+#include <core/hpp_shader_module.h>
 
 namespace vkb
 {
 namespace core
 {
-HPPPipelineLayout::HPPPipelineLayout(vkb::core::HPPDevice &device, const std::vector<vkb::core::ShaderModule *> &shader_modules) :
+HPPPipelineLayout::HPPPipelineLayout(vkb::core::HPPDevice &device, const std::vector<vkb::core::HPPShaderModule *> &shader_modules) :
     device{device},
     shader_modules{shader_modules}
 {
@@ -38,7 +37,7 @@ HPPPipelineLayout::HPPPipelineLayout(vkb::core::HPPDevice &device, const std::ve
 			std::string key = shader_resource.name;
 
 			// Since 'Input' and 'Output' resources can have the same name, we modify the key string
-			if (shader_resource.type == vkb::core::ShaderResourceType::Input || shader_resource.type == vkb::core::ShaderResourceType::Output)
+			if (shader_resource.type == vkb::core::HPPShaderResourceType::Input || shader_resource.type == vkb::core::HPPShaderResourceType::Output)
 			{
 				key = std::to_string(static_cast<uint32_t>(shader_resource.stages)) + "_" + key;
 			}
@@ -177,7 +176,7 @@ std::vector<vkb::core::HPPShaderResource> HPPPipelineLayout::get_resources(const
 	return found_resources;
 }
 
-const std::vector<vkb::core::ShaderModule *> &HPPPipelineLayout::get_shader_modules() const
+const std::vector<vkb::core::HPPShaderModule *> &HPPPipelineLayout::get_shader_modules() const
 {
 	return shader_modules;
 }

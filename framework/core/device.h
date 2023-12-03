@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "common/logging.h"
 #include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"

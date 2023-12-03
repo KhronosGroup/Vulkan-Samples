@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
+#include "buffer_pool.h"
+
 #include <cstddef>
 
-#include <core/util/logging.hpp>
-
-#include "buffer_pool.h"
+#include "common/logging.h"
 #include "core/device.h"
 
 namespace vkb

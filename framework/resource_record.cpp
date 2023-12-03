@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -68,7 +68,7 @@ size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage, const
 {
 	shader_module_indices.push_back(shader_module_indices.size());
 
-	write(stream, ResourceType::ShaderModule, stage, glsl_source.handle({}).hash, entry_point, shader_variant.get_preamble());
+	write(stream, ResourceType::ShaderModule, stage, glsl_source.get_source(), entry_point, shader_variant.get_preamble());
 
 	write_processes(stream, shader_variant.get_processes());
 

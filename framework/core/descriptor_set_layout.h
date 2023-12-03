@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@ class DescriptorPool;
 class Device;
 class ShaderModule;
 
-class ShaderResourceSet;
+struct ShaderResource;
 
 /**
  * @brief Caches DescriptorSet objects for the shader's set index.
@@ -42,10 +42,10 @@ class DescriptorSetLayout
 	 * @param shader_modules The shader modules this set layout will be used for
 	 * @param resource_set A grouping of shader resources belonging to the same set
 	 */
-	DescriptorSetLayout(Device                            &device,
+	DescriptorSetLayout(Device &                           device,
 	                    const uint32_t                     set_index,
 	                    const std::vector<ShaderModule *> &shader_modules,
-	                    const ShaderResourceSet           &resource_set);
+	                    const std::vector<ShaderResource> &resource_set);
 
 	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
 

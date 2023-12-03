@@ -21,9 +21,8 @@
 #include <stdexcept>
 #include <string>
 
-#include <core/util/logging.hpp>
-
 #include "common/strings.h"
+#include "logging.h"
 #include "vk_common.h"
 
 #if defined(__clang__)

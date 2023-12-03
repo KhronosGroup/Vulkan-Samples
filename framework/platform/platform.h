@@ -145,6 +145,8 @@ class Platform
 
 	std::unique_ptr<Application> active_app{nullptr};
 
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
+
 	/**
 	 * @brief Handles the creation of the window
 	 *

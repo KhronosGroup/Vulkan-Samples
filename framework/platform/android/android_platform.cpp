@@ -26,11 +26,15 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
+#include <fmt/format.h>
 #include <imgui.h>
 #include <jni.h>
+#include <spdlog/sinks/android_sink.h>
+#include <spdlog/sinks/basic_file_sink.h>
 VKBP_ENABLE_WARNINGS()
 
 #include "apps.h"
+#include "common/logging.h"
 #include "common/strings.h"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"
@@ -493,5 +497,21 @@ GameActivity *AndroidPlatform::get_activity()
 android_app *AndroidPlatform::get_android_app()
 {
 	return app;
+}
+
+std::vector<spdlog::sink_ptr> AndroidPlatform::get_platform_sinks()
+{
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>(PROJECT_NAME));
+
+	char        timestamp[80];
+	std::time_t time = std::time(0);
+	std::tm     now  = thread_safe_time(time);
+	std::strftime(timestamp, 80, "%G-%m-%d_%H-%M-%S_log.txt", &now);
+	log_output = vkb::fs::path::get(vkb::fs::path::Logs) + std::string(timestamp);
+
+	sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_output, true));
+
+	return sinks;
 }
 }        // namespace vkb

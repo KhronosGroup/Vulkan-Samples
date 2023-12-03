@@ -17,6 +17,8 @@
 
 #include <core/hpp_physical_device.h>
 
+#include <common/logging.h>
+
 namespace vkb
 {
 namespace core

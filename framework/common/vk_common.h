@@ -25,9 +25,6 @@
 #include <unordered_map>
 #include <vector>
 
-// Included here for maximum coverage
-#include <core/util/logging.hpp>
-
 #include <vk_mem_alloc.h>
 #include <volk.h>
 

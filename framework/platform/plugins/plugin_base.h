@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#include <fmt/format.h>
+
 #include "common/tags.h"
 #include "platform/parser.h"
 #include "platform/platform.h"
