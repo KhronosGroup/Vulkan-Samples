@@ -332,7 +332,11 @@ CUSTOM_MAIN(context)
 
 	auto json = create_variant_json(unique_variants);
 
+	std::filesystem::path output_file_path(output_file);
+	std::filesystem::path output_dir_path = output_file_path.parent_path();
+
 	auto fs = vkb::fs::get_filesystem();
+	fs->create_directory(output_dir_path.string());
 	fs->write_file(output_file, json.dump(4));
 
 	return 0;
