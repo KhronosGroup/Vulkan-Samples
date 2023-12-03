@@ -9,6 +9,7 @@
 .github
 .jar
 .json
+.spv
 doxyfile
 download_vvl.gradle
 build.gradle.in

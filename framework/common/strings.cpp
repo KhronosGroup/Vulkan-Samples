@@ -17,8 +17,6 @@
 
 #include "strings.h"
 
-#include <fmt/format.h>
-
 #include "core/shader_module.h"
 #include "scene_graph/components/material.h"
 

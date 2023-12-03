@@ -18,7 +18,6 @@
 
 #include "vk_common.h"
 
-#include <fmt/format.h>
 #include <shaders/shader_cache.hpp>
 
 #include "platform/filesystem.h"

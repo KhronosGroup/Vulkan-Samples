@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -102,7 +102,7 @@ inline void read(std::istringstream &is, std::array<T, N> &value)
 }
 
 template <typename T, typename... Args>
-inline void read(std::istringstream &is, T &first_arg, Args &... args)
+inline void read(std::istringstream &is, T &first_arg, Args &...args)
 {
 	read(is, first_arg);
 
@@ -157,7 +157,7 @@ inline void write(std::ostringstream &os, const std::array<T, N> &value)
 }
 
 template <typename T, typename... Args>
-inline void write(std::ostringstream &os, const T &first_arg, const Args &... args)
+inline void write(std::ostringstream &os, const T &first_arg, const Args &...args)
 {
 	write(os, first_arg);
 

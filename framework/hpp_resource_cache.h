@@ -79,17 +79,17 @@ class HPPResourceCache
 	vkb::core::HPPDescriptorSet       &request_descriptor_set(vkb::core::HPPDescriptorSetLayout          &descriptor_set_layout,
 	                                                          const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,
 	                                                          const BindingMap<vk::DescriptorImageInfo>  &image_infos);
-	vkb::core::HPPDescriptorSetLayout &request_descriptor_set_layout(const uint32_t                                   set_index,
+	vkb::core::HPPDescriptorSetLayout &request_descriptor_set_layout(const uint32_t                                set_index,
 	                                                                 const std::vector<vkb::core::ShaderModule *> &shader_modules,
-	                                                                 const ShaderResourceSet                         &set_resources);
+	                                                                 const ShaderResourceSet                      &set_resources);
 	vkb::core::HPPFramebuffer         &request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass);
 	vkb::core::HPPGraphicsPipeline    &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state);
 	vkb::core::HPPPipelineLayout      &request_pipeline_layout(const std::vector<vkb::core::ShaderModule *> &shader_modules);
 	vkb::core::HPPRenderPass          &request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments,
 	                                                       const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
 	                                                       const std::vector<vkb::core::HPPSubpassInfo>     &subpasses);
-	vkb::core::ShaderModule        &request_shader_module(
-	           vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source, const vkb::core::HPPShaderVariant &shader_variant = {});
+	vkb::core::ShaderModule           &request_shader_module(
+	              vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source, const vkb::core::HPPShaderVariant &shader_variant = {});
 	std::vector<uint8_t> serialize();
 	void                 set_pipeline_cache(vk::PipelineCache pipeline_cache);
 

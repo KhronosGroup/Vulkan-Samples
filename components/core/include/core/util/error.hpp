@@ -51,8 +51,7 @@
 #endif
 
 VKBP_DISABLE_WARNINGS()
-// TODO: replace with a direct fmt submodule
-#include <fmt/format.h>
+#include <spdlog/fmt/fmt.h>
 VKBP_ENABLE_WARNINGS()
 
 #include <stdexcept>

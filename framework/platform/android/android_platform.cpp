@@ -26,7 +26,6 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <fmt/format.h>
 #include <imgui.h>
 #include <jni.h>
 VKBP_ENABLE_WARNINGS()

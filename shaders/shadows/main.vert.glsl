@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *

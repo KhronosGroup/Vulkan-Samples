@@ -104,7 +104,7 @@ void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::is
 
 	read_processes(stream, processes);
 
-	ShaderSource shader_source{};
+	ShaderSource  shader_source{};
 	ShaderVariant shader_variant(std::move(preamble), std::move(processes));
 
 	auto &shader_module = resource_cache.request_shader_module(stage, shader_source, shader_variant);

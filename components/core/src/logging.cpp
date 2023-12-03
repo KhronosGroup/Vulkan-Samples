@@ -1,7 +1,5 @@
 #include "core/util/logging.hpp"
 
-#include "spdlog/cfg/env.h"
-
 #ifdef PLATFORM__ANDROID
 #	include "spdlog/sinks/android_sink.h"
 #else
@@ -14,11 +12,22 @@ namespace logging
 {
 void init()
 {
-	// Taken from "spdlog/cfg/env.h" and renamed SPDLOG_LEVEL to VKB_LEVEL
-	auto env_val = spdlog::details::os::getenv("VKB_LEVEL");
-	if (!env_val.empty())
+	// Load logger from environment variables
+	char *env = getenv("VKB_LEVEL");
+	if (env)
 	{
-		spdlog::cfg::helpers::load_levels(env_val);
+		std::string levelStr = env;
+#define SET_LEVEL(envLevel)    \
+	if (levelStr == #envLevel) \
+	spdlog::set_level(spdlog::level::envLevel)
+		SET_LEVEL(trace);
+		SET_LEVEL(debug);
+		SET_LEVEL(info);
+		SET_LEVEL(warn);
+		SET_LEVEL(err);
+		SET_LEVEL(critical);
+		SET_LEVEL(off);
+#undef SET_LEVEL
 	}
 
 #ifdef PLATFORM__ANDROID

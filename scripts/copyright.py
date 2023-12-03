@@ -28,7 +28,8 @@ from subprocess import check_output
 
 # Patterns to search for in the files - Order is important!
 COPYRIGHT_PATTERNS = [
-    re.compile(r"\bCopyright \(c\)[^a-zA-Z0-9]*\b\d{4}-\d{4}\b", re.IGNORECASE),
+    re.compile(
+        r"\bCopyright \(c\)[^a-zA-Z0-9]*\b\d{4}-\d{4}\b", re.IGNORECASE),
     re.compile(r"\bCopyright[^a-zA-Z0-9]*\b\d{4}-\d{4}\b", re.IGNORECASE),
     re.compile(r"\bCopyright \(c\)[^a-zA-Z0-9]*\b\d{4}\b", re.IGNORECASE),
     re.compile(r"\bCopyright[^a-zA-Z0-9]*\b\d{4}\b", re.IGNORECASE),
@@ -39,6 +40,7 @@ YEAR_RANGE_PATTERN = re.compile(r"\b\d{4}-\d{4}\b")
 
 EXCEPTION_FILE = ".copyrightignore"
 
+
 class terminal_colors:
     SUCCESS = "\033[92m"
     INFO = "\033[94m"
@@ -47,17 +49,26 @@ class terminal_colors:
     END = "\033[0m"
 
 # Get the file extension
+
+
 def get_ext(file_path):
     file_name = os.path.basename(file_path)
     file_name, file_ext = os.path.splitext(file_name)
     return file_ext
 
 # Query files for the presence of a valid year in the header
+
+
 def query_files(files):
     failed_queries = {}
     queries = {}
 
     for filename in files:
+        if not os.path.isfile(filename):
+            print(terminal_colors.ERROR + "File not found: " +
+                  filename + terminal_colors.END)
+            continue
+
         with io.open(filename, "r+", encoding="utf-8") as f:
             queries[filename] = None
             file_contents = f.read()
@@ -66,13 +77,15 @@ def query_files(files):
                     matches = re.findall(query, file_contents)
                     if len(matches) > 0:
                         queries[filename] = matches
-                        break # Stop searching after the first match
+                        break  # Stop searching after the first match
                 except re.error as error:
                     failed_queries[filename] = error
 
     return queries, failed_queries
 
 # Check the files for the presence of a valid year in the header
+
+
 def check_files(check_files):
     queries, failures = query_files(check_files)
 
@@ -91,7 +104,8 @@ def check_files(check_files):
         for token in tokens:
             copyright_years = re.findall(YEAR_PATTERN, token)
 
-            most_recent_year = int(copyright_years[-1]) if copyright_years else 0
+            most_recent_year = int(
+                copyright_years[-1]) if copyright_years else 0
 
             if most_recent_year != current_year:
                 if not outdated[filename]:
@@ -101,11 +115,11 @@ def check_files(check_files):
         outdated = {k: v for k, v in outdated.items() if v is not None}
     return missing, outdated, failures
 
+
 def fix(file):
     queries, failures = query_files([file])
 
     current_year = datetime.datetime.now().year
-
 
     for filename, tokens in queries.items():
         if not tokens:
@@ -117,10 +131,12 @@ def fix(file):
                 year_range = year_range.group(0)
                 start_year, end_year = year_range.split("-")
                 if int(end_year) != current_year:
-                    fixed_token = token.replace(year_range, start_year + "-" + str(current_year))
+                    fixed_token = token.replace(
+                        year_range, start_year + "-" + str(current_year))
                     with io.open(filename, "r+", encoding="utf-8") as f:
                         file_contents = f.read()
-                        file_contents = file_contents.replace(token, fixed_token)
+                        file_contents = file_contents.replace(
+                            token, fixed_token)
                         f.seek(0)
                         f.write(file_contents)
                         f.truncate(
@@ -135,12 +151,14 @@ def fix(file):
                     fixed_token = token + "-" + str(current_year)
                     with io.open(filename, "r+", encoding="utf-8") as f:
                         file_contents = f.read()
-                        file_contents = file_contents.replace(token, fixed_token)
+                        file_contents = file_contents.replace(
+                            token, fixed_token)
                         f.seek(0)
                         f.write(file_contents)
                         f.truncate(
                             f.tell()
                         )  # Truncate the file to the current position of the file pointer
+
 
 if __name__ == "__main__":
     argument_parser = argparse.ArgumentParser(
@@ -198,7 +216,8 @@ if __name__ == "__main__":
         missing, outdated, failures = check_files(files_to_check)
 
         if len(failures) > 0:
-            print(terminal_colors.ERROR + "Failed to search:" + terminal_colors.END)
+            print(terminal_colors.ERROR +
+                  "Failed to search:" + terminal_colors.END)
 
             for filename, error in failures.items():
                 print(filename)
@@ -206,7 +225,8 @@ if __name__ == "__main__":
             print()
 
         if len(missing) > 0:
-            print(terminal_colors.ERROR + "Missing copyright:" + terminal_colors.END)
+            print(terminal_colors.ERROR +
+                  "Missing copyright:" + terminal_colors.END)
 
             for filename in missing:
                 print(filename)
@@ -214,16 +234,19 @@ if __name__ == "__main__":
             print()
 
         if len(outdated) > 0:
-            print(terminal_colors.ERROR + "Outdated copyright:" + terminal_colors.END)
+            print(terminal_colors.ERROR +
+                  "Outdated copyright:" + terminal_colors.END)
 
             for filename, tokens in outdated.items():
                 if args.fix:
                     fix(filename)
-                    print(terminal_colors.SUCCESS + "Fixed " + filename + terminal_colors.END)
+                    print(terminal_colors.SUCCESS + "Fixed " +
+                          filename + terminal_colors.END)
                 else:
                     print(filename)
                     for token in tokens:
-                        print("\t", terminal_colors.WARNING + token + terminal_colors.END)
+                        print("\t", terminal_colors.WARNING +
+                              token + terminal_colors.END)
 
             print()
 

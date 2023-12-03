@@ -22,7 +22,6 @@
 #include <mutex>
 #include <vector>
 
-#include <fmt/format.h>
 #include <spdlog/async_logger.h>
 #include <spdlog/details/thread_pool.h>
 #include <spdlog/sinks/basic_file_sink.h>
