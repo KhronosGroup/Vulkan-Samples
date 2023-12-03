@@ -35,6 +35,7 @@
 #include "common/vk_initializers.h"
 #include "core/buffer.h"
 #include "core/swapchain.h"
+#include "glsl_compiler.h"
 #include "gui.h"
 #include "platform/platform.h"
 #include "rendering/render_context.h"

@@ -50,10 +50,6 @@
 		__pragma(warning(pop))
 #endif
 
-VKBP_DISABLE_WARNINGS()
-#include <spdlog/fmt/fmt.h>
-VKBP_ENABLE_WARNINGS()
-
 #include <stdexcept>
 
 template <typename... Args>

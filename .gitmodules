@@ -65,3 +65,6 @@
 [submodule "third_party/picosha2"]
 	path = third_party/picosha2
 	url = https://github.com/okdshin/PicoSHA2.git
+[submodule "third_party/fmt"]
+	path = third_party/fmt
+	url = https://github.com/fmtlib/fmt.git

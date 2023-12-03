@@ -17,6 +17,7 @@
 
 #include "hpp_hello_triangle.h"
 
+#include <hpp_glsl_compiler.h>
 #include <common/hpp_error.h>
 #include <common/hpp_vk_common.h>
 #include <platform/filesystem.h>

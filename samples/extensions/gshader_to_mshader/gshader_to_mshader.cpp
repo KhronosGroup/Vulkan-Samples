@@ -17,6 +17,8 @@
 
 #include "gshader_to_mshader.h"
 
+#include <glsl_compiler.h>
+
 GshaderToMshader::GshaderToMshader()
 {
 	title = "task_mesh_migration";

@@ -24,6 +24,8 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include "ray_tracing_reflection.h"
+
+#include <glsl_compiler.h>
 #include <glm/gtc/type_ptr.hpp>
 
 struct ObjPlane : ObjModelCpu

@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #define LOGGER_FORMAT "[%^%l%$] %v"

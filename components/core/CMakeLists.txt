@@ -29,8 +29,8 @@ vkb__register_component(
         src/logging.cpp
     LINK_LIBS
         spdlog
-        fmt
         picosha2
+        fmt
 )
 
 vkb__register_tests(

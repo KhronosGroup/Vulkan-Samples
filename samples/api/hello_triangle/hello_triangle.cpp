@@ -17,6 +17,7 @@
 
 #include "hello_triangle.h"
 
+#include "glsl_compiler.h"
 #include "common/vk_common.h"
 #include "platform/filesystem.h"
 #include "platform/window.h"
