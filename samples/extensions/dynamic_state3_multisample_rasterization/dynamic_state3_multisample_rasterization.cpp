@@ -138,7 +138,7 @@ void DynamicState3MultisampleRasterization::prepare_supported_sample_count_list(
 			supported_sample_count_list.push_back(count);
 			gui_settings.sample_counts.push_back(to_string(count));
 
-			if (sample_count == VK_SAMPLE_COUNT_1_BIT)
+			if (sample_count & VK_SAMPLE_COUNT_1_BIT)
 			{
 				// Set default sample count based on the priority defined above
 				sample_count          = count;
@@ -384,7 +384,7 @@ void DynamicState3MultisampleRasterization::load_assets()
 		imageInfo.sampler     = texture->get_sampler()->vk_sampler.get_handle();
 
 		image_infos.push_back(imageInfo);
-		name_to_texture_id.emplace(name, image_infos.size() - 1);
+		name_to_texture_id.emplace(name, static_cast<int>(image_infos.size()) - 1);
 	}
 }
 
