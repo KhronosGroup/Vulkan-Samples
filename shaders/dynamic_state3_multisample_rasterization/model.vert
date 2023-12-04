@@ -55,7 +55,7 @@ void main()
 	gl_Position = ubo.projection * localPos;
 	outNormal = mat3(ubo.view * push_constants.model) * inNormal;
 	vec3 lightPos = vec3(10.0, -10.0, 10.0);
-	outLightVec = lightPos.xyz - localPos.xyz;
+	outLightVec = lightPos.xyz;
 	outViewVec = -localPos.xyz;
 	outBaseColorFactor = push_constants.base_color_factor;
 	outMetallicFactor = push_constants.metallic_factor;
