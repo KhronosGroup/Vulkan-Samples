@@ -863,7 +863,7 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 {
 	if (delta_timestamps.empty())
 	{
-		LOGE("Timestamps begin-to-end Fatal Error: Timestamps end is not tagged the same as its begin!\n")
+		LOGE("Timestamps begin-to-end Fatal Error: Timestamps end is not tagged the same as its begin!")
 		return;        // exits the function here, further calculation is meaningless
 	}
 
@@ -880,7 +880,7 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 		LOGE("timestamps_end called without a found corresponding begin timestamp for {}.", input_tag.c_str())
 		return;
 	}
-	LOGE("get_timestamps failed with %d", result)
+	LOGE("get_timestamps failed with {}", vkb::to_string(result))
 }
 
 void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
