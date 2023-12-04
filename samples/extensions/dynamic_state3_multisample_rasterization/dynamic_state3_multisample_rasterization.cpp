@@ -168,8 +168,9 @@ bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOption
 	prepare_supported_sample_count_list();
 
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_position(glm::vec3(1.9f, 2.05f, -18.0f));
-	camera.set_rotation(glm::vec3(-11.25f, -38.0f, 0.0f));
+	camera.set_position(glm::vec3(1.9f, 10.f, -18.f));
+	camera.set_rotation(glm::vec3(0.f, -40.f, 0.f));
+	camera.rotation_speed = 0.001f;
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
