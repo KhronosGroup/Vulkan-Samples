@@ -473,7 +473,7 @@ void DynamicState3MultisampleRasterization::setup_render_pass()
 	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	// Resolve attachment
+	// Depth attachment
 	attachments[2].format         = depth_format;
 	attachments[2].samples        = sample_count;
 	attachments[2].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
