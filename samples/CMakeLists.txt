@@ -127,7 +127,10 @@ set(ORDER_LIST
 	
     #HPP Performance Samples
     "hpp_pipeline_cache"
-    "hpp_swapchain_images")
+    "hpp_swapchain_images"
+    
+    #General Samples
+    "nerf")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)
