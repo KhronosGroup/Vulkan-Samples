@@ -98,11 +98,7 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 		VkImageView    view;
 	} color_attachment;
 
-	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT  extended_dynamic_state_features{};
-	VkPhysicalDeviceExtendedDynamicState2FeaturesEXT extended_dynamic_state_2_features{};
 	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
-
-	VkPhysicalDeviceExtendedDynamicState3PropertiesEXT props;
 
   public:
 	virtual void build_command_buffers() override;
@@ -114,7 +110,6 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool resize(const uint32_t _width, const uint32_t _height) override;
 	virtual void setup_depth_stencil() override;
-	virtual void create_command_pool() override;
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();

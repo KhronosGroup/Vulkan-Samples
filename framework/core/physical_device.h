@@ -129,15 +129,6 @@ class PhysicalDevice
 	}
 
 	/**
-	 * @brief Gets a modifiable pointer to last_requested_extension_feature.
-	 * @return Modifiable pointer to last_requested_extension_feature.
-	 */
-	void* get_last_requested_extension_feature()
-	{
-		return last_requested_extension_feature;
-	}
-
-	/**
 	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
 	 * Very specific feature which is used by async compute samples.
 	 * @param enable If true, present queue will have prio 1.0 and other queues have prio 0.5.

@@ -30,8 +30,6 @@ DynamicState3MultisampleRasterization::DynamicState3MultisampleRasterization()
 	set_api_version(VK_API_VERSION_1_1);
 
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 }
 
@@ -48,28 +46,21 @@ DynamicState3MultisampleRasterization::~DynamicState3MultisampleRasterization()
 
 void DynamicState3MultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto last_requested_extension_feature = gpu.get_last_requested_extension_feature();
+	// Query the extended dynamic state support
+	extended_dynamic_state_3_features       = {};
+	extended_dynamic_state_3_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
 
-	extended_dynamic_state_features.sType                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
-	extended_dynamic_state_features.extendedDynamicState = VK_TRUE;
-	extended_dynamic_state_features.pNext                = &extended_dynamic_state_2_features;
+	VkPhysicalDeviceFeatures2 features2{};
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.pNext = &extended_dynamic_state_3_features;
+	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
 
-	extended_dynamic_state_2_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
-	extended_dynamic_state_2_features.pNext = &extended_dynamic_state_3_features;
+	{
+		// Only request the features that we support
+		auto &features = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
 
-	extended_dynamic_state_3_features.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
-	extended_dynamic_state_3_features.extendedDynamicState3RasterizationSamples = VK_TRUE;
-	extended_dynamic_state_3_features.pNext                                     = VK_NULL_HANDLE;
-
-	last_requested_extension_feature = &extended_dynamic_state_features;
-
-	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT;
-	props.pNext = VK_NULL_HANDLE;
-
-	VkPhysicalDeviceProperties2 device_properties2 = {};
-	device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	device_properties2.pNext                       = &props;
-	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
+		features.extendedDynamicState3RasterizationSamples = VK_TRUE;
+	}
 }
 
 const std::string to_string(VkSampleCountFlagBits count)
@@ -147,15 +138,6 @@ void DynamicState3MultisampleRasterization::prepare_supported_sample_count_list(
 			}
 		}
 	}
-}
-
-void DynamicState3MultisampleRasterization::create_command_pool()
-{
-	VkCommandPoolCreateInfo command_pool_info = {};
-	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_info.queueFamilyIndex        = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
-	command_pool_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	VK_CHECK(vkCreateCommandPool(device->get_handle(), &command_pool_info, nullptr, &cmd_pool));
 }
 
 bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOptions &options)
@@ -242,12 +224,6 @@ void DynamicState3MultisampleRasterization::draw_node(VkCommandBuffer &draw_cmd_
 
 void DynamicState3MultisampleRasterization::build_command_buffers()
 {
-	if (!check_command_buffers())
-	{
-		create_command_buffers();
-		destroy_command_buffers();
-	}
-
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[3];
