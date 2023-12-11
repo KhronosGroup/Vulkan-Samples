@@ -1449,19 +1449,19 @@ void SparseImage::create_sparse_texture_image()
 	//==================================================================================================
 	// Calculating memory dependencies and defining total number of pages and page size
 
-	std::vector<VkSparseImageFormatProperties> sparse_image_format_properties;
-	VkMemoryRequirements                       mem_requirements;
+	std::vector<VkSparseImageMemoryRequirements> sparse_image_memory_requirements;
+	VkMemoryRequirements                         memory_requirements;
 
-	uint32_t property_count;
+	uint32_t sparse_memory_req_count;
 	uint32_t memory_req_count;
 
-	vkGetPhysicalDeviceSparseImageFormatProperties(device->get_gpu().get_handle(), image_format, VK_IMAGE_TYPE_2D, VK_SAMPLE_COUNT_1_BIT, image_usage, VK_IMAGE_TILING_OPTIMAL, &property_count, nullptr);
-	sparse_image_format_properties.resize(property_count);
-	vkGetPhysicalDeviceSparseImageFormatProperties(device->get_gpu().get_handle(), image_format, VK_IMAGE_TYPE_2D, VK_SAMPLE_COUNT_1_BIT, image_usage, VK_IMAGE_TILING_OPTIMAL, &property_count, sparse_image_format_properties.data());
+	vkGetImageSparseMemoryRequirements(device->get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
+	sparse_image_memory_requirements.resize(sparse_memory_req_count);
+	vkGetImageSparseMemoryRequirements(device->get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
 
-	vkGetImageMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &mem_requirements);
+	vkGetImageMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &memory_requirements);
 
-	virtual_texture.format_properties = sparse_image_format_properties[0];
+	virtual_texture.format_properties = sparse_image_memory_requirements[0].formatProperties;
 
 	// calculate page size
 	virtual_texture.page_size = virtual_texture.format_properties.imageGranularity.height * virtual_texture.format_properties.imageGranularity.width * 4U;
@@ -1475,8 +1475,8 @@ void SparseImage::create_sparse_texture_image()
 
 	for (uint32_t mip_level = 0U; mip_level < virtual_texture.mip_levels; mip_level++)
 	{
-		size_t numRows    = current_mip_height / sparse_image_format_properties[0].imageGranularity.height + (current_mip_height % sparse_image_format_properties[0].imageGranularity.height == 0U ? 0U : 1U);
-		size_t numColumns = current_mip_width / sparse_image_format_properties[0].imageGranularity.width + (current_mip_width % sparse_image_format_properties[0].imageGranularity.width == 0U ? 0U : 1U);
+		size_t numRows    = current_mip_height / virtual_texture.format_properties.imageGranularity.height + (current_mip_height % virtual_texture.format_properties.imageGranularity.height == 0U ? 0U : 1U);
+		size_t numColumns = current_mip_width / virtual_texture.format_properties.imageGranularity.width + (current_mip_width % virtual_texture.format_properties.imageGranularity.width == 0U ? 0U : 1U);
 
 		num_total_pages += numRows * numColumns;
 
@@ -1509,7 +1509,7 @@ void SparseImage::create_sparse_texture_image()
 	// Memory allocation required data
 	virtual_texture.memory_allocations.device               = get_device().get_handle();
 	virtual_texture.memory_allocations.page_size            = virtual_texture.page_size;
-	virtual_texture.memory_allocations.memory_type_index    = get_device().get_memory_type(mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	virtual_texture.memory_allocations.memory_type_index    = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	virtual_texture.memory_allocations.pages_per_allocation = PAGES_PER_ALLOC;
 
 	// Setting the constant data for memory page binding via vkQueueBindSparse()
