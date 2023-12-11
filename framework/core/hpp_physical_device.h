@@ -88,6 +88,8 @@ class HPPPhysicalDevice
 
 	vk::PhysicalDeviceFeatures &get_mutable_requested_features();
 
+	bool is_image_format_supported(vk::Format format) const;
+
 	/**
 	 * @brief Requests a third party extension to be used by the framework
 	 *

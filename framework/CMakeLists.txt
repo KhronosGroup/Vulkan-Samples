@@ -70,6 +70,7 @@ set(FRAMEWORK_FILES
     camera.cpp
     hpp_gui.cpp
     hpp_api_vulkan_sample.cpp
+    hpp_gltf_loader.cpp
     hpp_resource_cache.cpp
 	hpp_vulkan_sample.cpp)
 
@@ -154,6 +155,8 @@ set(SCENE_GRAPH_FILES
     scene_graph/node.h
     scene_graph/scene.h
     scene_graph/script.h
+    scene_graph/hpp_node.h
+    scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
     scene_graph/node.cpp
@@ -178,8 +181,17 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/image/astc.h
     scene_graph/components/image/ktx.h
     scene_graph/components/image/stb.h
+    scene_graph/components/hpp_camera.h
     scene_graph/components/hpp_image.h
+    scene_graph/components/hpp_light.h
+    scene_graph/components/hpp_mesh.h
+    scene_graph/components/hpp_pbr_material.h
+    scene_graph/components/hpp_perspective_camera.h
+    scene_graph/components/hpp_sampler.h
     scene_graph/components/hpp_sub_mesh.h
+    scene_graph/components/hpp_texture.h
+    scene_graph/components/hpp_transform.h
+    scene_graph/components/image/hpp_astc.h
     # Source Files
     scene_graph/components/aabb.cpp
     scene_graph/components/camera.cpp
@@ -197,13 +209,16 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/image/astc.cpp
     scene_graph/components/image/ktx.cpp
     scene_graph/components/image/stb.cpp
-    scene_graph/components/hpp_image.cpp)
+    scene_graph/components/hpp_image.cpp
+    scene_graph/components/hpp_perspective_camera.cpp
+    scene_graph/components/image/hpp_astc.cpp)
 
 set(SCENE_GRAPH_SCRIPTS_FILES
     # Header Files
     scene_graph/scripts/free_camera.h
     scene_graph/scripts/node_animation.h
     scene_graph/scripts/animation.h
+    scene_graph/scripts/hpp_animation.h
     # Source Files
     scene_graph/scripts/free_camera.cpp
     scene_graph/scripts/node_animation.cpp

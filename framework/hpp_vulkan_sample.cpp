@@ -22,6 +22,7 @@
 #include <hpp_gui.h>
 #include <rendering/hpp_render_context.h>
 #include <scene_graph/components/camera.h>
+#include <scene_graph/hpp_node.h>
 #include <scene_graph/scripts/animation.h>
 
 namespace vkb
@@ -470,10 +471,10 @@ void HPPVulkanSample::update_debug_window()
 
 	if (scene != nullptr)
 	{
-		get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
-		get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<sg::Texture>().size()));
+		get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<vkb::scene_graph::components::HPPSubMesh>().size()));
+		get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<vkb::scene_graph::components::HPPTexture>().size()));
 
-		if (auto camera = scene->get_components<vkb::sg::Camera>()[0])
+		if (auto camera = scene->get_components<vkb::scene_graph::components::HPPCamera>()[0])
 		{
 			if (auto camera_node = camera->get_node())
 			{
@@ -550,7 +551,7 @@ void HPPVulkanSample::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 	// To be overridden by sample
 }
 
-sg::Scene &HPPVulkanSample::get_scene()
+vkb::scene_graph::HPPScene &HPPVulkanSample::get_scene()
 {
 	assert(scene && "Scene not loaded");
 	return *scene;

@@ -24,6 +24,7 @@
 #include <core/hpp_physical_device.h>
 #include <rendering/hpp_render_pipeline.h>
 #include <rendering/hpp_render_target.h>
+#include <scene_graph/hpp_scene.h>
 #include <stats/hpp_stats.h>
 #include <vulkan/vulkan.hpp>
 
@@ -85,7 +86,7 @@ class HPPVulkanSample : public vkb::Application
 
 	Configuration &get_configuration();
 
-	sg::Scene &get_scene();
+	vkb::scene_graph::HPPScene &get_scene();
 
 	bool has_scene() const;
 
@@ -113,7 +114,7 @@ class HPPVulkanSample : public vkb::Application
 	/**
 	 * @brief Holds all scene information
 	 */
-	std::unique_ptr<sg::Scene> scene;
+	std::unique_ptr<vkb::scene_graph::HPPScene> scene;
 
 	std::unique_ptr<vkb::HPPGui> gui;
 

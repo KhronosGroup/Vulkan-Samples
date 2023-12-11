@@ -52,6 +52,11 @@ void Scene::add_node(std::unique_ptr<Node> &&n)
 	nodes.emplace_back(std::move(n));
 }
 
+std::vector<std::unique_ptr<Node>> const &Scene::get_nodes() const
+{
+	return nodes;
+}
+
 void Scene::add_child(Node &child)
 {
 	root->add_child(child);

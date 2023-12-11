@@ -18,7 +18,7 @@
 #extension GL_EXT_mesh_shader : require
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-layout(lines, max_vertices = 64, max_primitives = 126) out;
+layout(lines, max_vertices = 252, max_primitives = 126) out;
 
 layout(std140, binding = 2) uniform UniformBufferObject 
 {

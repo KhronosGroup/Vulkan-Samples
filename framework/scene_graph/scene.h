@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,6 +52,8 @@ class Scene
 
 	void add_node(std::unique_ptr<Node> &&node);
 
+	std::vector<std::unique_ptr<Node>> const &get_nodes() const;
+
 	void add_child(Node &child);
 
 	std::unique_ptr<Component> get_model(uint32_t index = 0);
@@ -104,7 +106,7 @@ class Scene
 			result.resize(scene_components.size());
 			std::transform(scene_components.begin(), scene_components.end(), result.begin(),
 			               [](const std::unique_ptr<Component> &component) -> T * {
-				               return dynamic_cast<T *>(component.get());
+				               return reinterpret_cast<T *>(component.get());
 			               });
 		}
 

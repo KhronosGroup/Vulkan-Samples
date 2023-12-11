@@ -194,10 +194,10 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 		}
 		case TINYGLTF_COMPONENT_TYPE_SHORT:
 		{
-			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_SINT},
-			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_SINT},
-			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_SINT},
-			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_SINT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R16_SINT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R16G16_SINT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R16G16B16_SINT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R16G16B16A16_SINT}};
 
 			format = mapped_format.at(accessor.type);
 
@@ -271,14 +271,13 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uint8_t> &src_data, uint32_t src_stride, uint32_t dst_stride)
 {
-	auto elem_count = to_u32(src_data.size()) / src_stride;
+	auto elem_count = src_data.size() / src_stride;
 
 	std::vector<uint8_t> result(elem_count * dst_stride);
 
-	for (uint32_t idxSrc = 0, idxDst = 0;
-	     idxSrc < src_data.size() && idxDst < result.size();
-	     idxSrc += src_stride, idxDst += dst_stride)
+	for (size_t idxSrc = 0, idxDst = 0; idxSrc < src_data.size(); idxSrc += src_stride, idxDst += dst_stride)
 	{
+		assert(idxDst < result.size());
 		std::copy(src_data.begin() + idxSrc, src_data.begin() + idxSrc + src_stride, result.begin() + idxDst);
 	}
 
@@ -340,8 +339,7 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 	meshlet.vertex_count = 0;
 	meshlet.index_count  = 0;
 
-	std::set<uint32_t> vertices;                  // set for unique vertices
-	uint32_t           triangle_check = 0;        // each meshlet needs to contain full primitives
+	std::set<uint32_t> vertices;        // set for unique vertices
 
 	for (uint32_t i = 0; i < submesh->vertex_indices; i++)
 	{
@@ -352,24 +350,20 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 			++meshlet.vertex_count;
 
 		meshlet.index_count++;
-		triangle_check = triangle_check < 3 ? ++triangle_check : 1;
 
-		// 96 because for each traingle we draw a line in a mesh shader sample, 32 triangles/lines per meshlet = 64 vertices on output
-		if (meshlet.vertex_count == 64 || meshlet.index_count == 96 || i == submesh->vertex_indices - 1)
+		if (meshlet.vertex_count == Meshlet::MAX_VERTICES || meshlet.index_count == Meshlet::MAX_INDICES || i == submesh->vertex_indices - 1)
 		{
-			if (i == submesh->vertex_indices - 1)
-				assert(triangle_check == 3);
-
 			uint32_t counter = 0;
 			for (auto v : vertices)
 			{
 				meshlet.vertices[counter++] = v;
 			}
-			if (triangle_check != 3)
+			uint32_t triangle_check = meshlet.index_count % 3;
+			if (triangle_check)
 			{
+				// each meshlet needs to contain full primitives
 				meshlet.index_count -= triangle_check;
 				i -= triangle_check;
-				triangle_check = 0;
 			}
 
 			meshlets.push_back(meshlet);
@@ -1170,12 +1164,11 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		for (size_t v = 0; v < vertex_count; v++)
 		{
 			Vertex vert{};
-			vert.pos    = glm::vec4(glm::make_vec3(&pos[v * 3]), 1.0f);
-			vert.normal = glm::normalize(glm::vec3(normals ? glm::make_vec3(&normals[v * 3]) : glm::vec3(0.0f)));
-			vert.uv     = uvs ? glm::make_vec2(&uvs[v * 2]) : glm::vec3(0.0f);
-
-			vert.joint0  = has_skin ? glm::vec4(glm::make_vec4(&joints[v * 4])) : glm::vec4(0.0f);
-			vert.weight0 = has_skin ? glm::make_vec4(&weights[v * 4]) : glm::vec4(0.0f);
+			vert.pos     = glm::make_vec3(&pos[v * 3]);
+			vert.normal  = normals ? glm::normalize(glm::make_vec3(&normals[v * 3])) : glm::vec3(0.0f);
+			vert.uv      = uvs ? glm::vec2(uvs[v * 2 + 0], uvs[v * 2 + 1]) : glm::vec2(0.0f);
+			vert.joint0  = has_skin ? glm::vec4(joints[v * 4 + 0], joints[v * 4 + 1], joints[v * 4 + 2], joints[v * 4 + 3]) : glm::vec4(0.0f);
+			vert.weight0 = has_skin ? glm::vec4(weights[v * 4 + 0], weights[v * 4 + 1], weights[v * 4 + 2], weights[v * 4 + 3]) : glm::vec4(0.0f);
 			vertex_data.push_back(vert);
 		}
 

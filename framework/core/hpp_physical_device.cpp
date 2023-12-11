@@ -138,5 +138,22 @@ vk::PhysicalDeviceFeatures &HPPPhysicalDevice::get_mutable_requested_features()
 	return requested_features;
 }
 
+bool HPPPhysicalDevice::is_image_format_supported(vk::Format format) const
+{
+	try
+	{
+		vk::ImageFormatProperties format_properties = get_handle().getImageFormatProperties(format, vk::ImageType::e2D, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eSampled);
+		return true;
+	}
+	catch (vk::SystemError const &error)
+	{
+		return (error.code() != vk::Result::eErrorFormatNotSupported);
+	}
+	catch (...)
+	{
+		return false;
+	}
+}
+
 }        // namespace core
 }        // namespace vkb
