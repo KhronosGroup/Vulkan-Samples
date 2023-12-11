@@ -209,7 +209,7 @@ void SparseImage::bind_sparse_image()
 
 	VkSparseImageMemoryBindInfo sparse_image_memory_bind_info{};
 	sparse_image_memory_bind_info.image     = virtual_texture.texture_image;
-	sparse_image_memory_bind_info.bindCount = virtual_texture.sparse_image_memory_bind.size();
+	sparse_image_memory_bind_info.bindCount = static_cast<uint32_t>(virtual_texture.sparse_image_memory_bind.size());
 	sparse_image_memory_bind_info.pBinds    = virtual_texture.sparse_image_memory_bind.data();
 
 	bind_sparse_info.imageBindCount = 1U;
