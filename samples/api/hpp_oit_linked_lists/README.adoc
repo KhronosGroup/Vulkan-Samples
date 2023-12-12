@@ -1,0 +1,26 @@
+////
+- Copyright (c) 2023, NVIDIA
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+= Order-independent transparency with per-pixel ordered linked lists with Vulkan-Hpp
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_oit_linked_lists[Khronos Vulkan samples github repository].
+endif::[]
+
+NOTE: This is a transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/oit_linked_lists[OIT linked lists] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp. Please see there for the documentation on this sample.

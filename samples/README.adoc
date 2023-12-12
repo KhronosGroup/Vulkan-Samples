@@ -202,6 +202,10 @@ A transcoded version of the API sample <<hlsl_shaders,HLSL Shaders>> that illust
 
 A transcoded version of the API sample <<instancing,Instancing>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
+=== xref:./api/hpp_oit_linked_lists/README.adoc[HPP OIT Linked Lists]
+
+A transcoded version of the API sample <<oit_linked_lists,OIT Linked Lists>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+
 === xref:./api/hpp_separate_image_sampler/README.adoc[HPP Separate image sampler]
 
 A transcoded version of the API sample <<separate_image_sampler,Separate image sampler>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
