@@ -21,11 +21,19 @@
 #include <core/hpp_physical_device.h>
 #include <volk.h>
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#	define USE_VALIDATION_LAYERS
+#endif
+
+#if defined(USE_VALIDATION_LAYERS) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
+#	define USE_VALIDATION_LAYER_FEATURES
+#endif
+
 namespace vkb
 {
 namespace
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                               void                                       *user_data)
@@ -130,6 +138,8 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::La
 	return {};
 }
 
+Optional<uint32_t> HPPInstance::selected_gpu_index;
+
 namespace
 {
 bool enable_extension(const char                                 *required_ext_name,
@@ -181,7 +191,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 {
 	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
 	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 	                                               available_instance_extensions, enabled_extensions);
@@ -204,7 +214,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
-#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES))
+#ifdef USE_VALIDATION_LAYER_FEATURES
 	bool validation_features = false;
 	{
 		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(std::string("VK_LAYER_KHRONOS_validation"));
@@ -270,7 +280,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
-#ifdef VKB_VALIDATION_LAYERS
+#ifdef USE_VALIDATION_LAYERS
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
 	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
@@ -293,7 +303,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 	vk::InstanceCreateInfo instance_info({}, &app_info, requested_validation_layers, enabled_extensions);
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
 	vk::DebugReportCallbackCreateInfoEXT debug_report_create_info;
 	if (has_debug_utils)
@@ -319,7 +329,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
 #endif
 
-#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES))
+#ifdef USE_VALIDATION_LAYER_FEATURES
 	vk::ValidationFeaturesEXT                   validation_features_info;
 	std::vector<vk::ValidationFeatureEnableEXT> enable_features{};
 	if (validation_features)
@@ -346,7 +356,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	// Need to load volk for all the not-yet Vulkan-Hpp calls
 	volkLoadInstance(handle);
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	if (has_debug_utils)
 	{
 		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(debug_utils_create_info);
@@ -375,7 +385,7 @@ HPPInstance::HPPInstance(vk::Instance instance) :
 
 HPPInstance::~HPPInstance()
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	if (debug_utils_messenger)
 	{
 		handle.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
@@ -423,6 +433,17 @@ vk::Instance HPPInstance::get_handle() const
 vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
+
+	// A GPU can be explicitly selected via the command line (see plugins/gpu_selection.cpp), this overrides the below GPU selection algorithm
+	if (selected_gpu_index.has_value())
+	{
+		LOGI("Explicitly selecting GPU {}", selected_gpu_index.value());
+		if (selected_gpu_index.value() > gpus.size() - 1)
+		{
+			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
+		}
+		return *gpus[selected_gpu_index.value()];
+	}
 
 	// Find a discrete GPU
 	for (auto &gpu : gpus)

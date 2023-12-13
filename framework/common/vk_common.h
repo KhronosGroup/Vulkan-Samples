@@ -49,11 +49,18 @@ namespace vkb
 bool is_depth_only_format(VkFormat format);
 
 /**
- * @brief Helper function to determine if a Vulkan format is depth or stencil.
+ * @brief Helper function to determine if a Vulkan format is depth with stencil.
  * @param format Vulkan format to check.
- * @return True if format is a depth or stencil, false otherwise.
+ * @return True if format is a depth with stencil, false otherwise.
  */
 bool is_depth_stencil_format(VkFormat format);
+
+/**
+ * @brief Helper function to determine if a Vulkan format is depth.
+ * @param format Vulkan format to check.
+ * @return True if format is a depth, false otherwise.
+ */
+bool is_depth_format(VkFormat format);
 
 /**
  * @brief Helper function to determine a suitable supported depth format based on a priority list
@@ -109,6 +116,18 @@ enum class ShaderSourceLanguage
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL);
 
 /**
+ * @brief Helper function to select a VkSurfaceFormatKHR
+ * @param gpu The VkPhysicalDevice to select a format for.
+ * @param surface The VkSurfaceKHR to select a format for.
+ * @param preferred_formats List of preferred VkFormats to use.
+ * @return The preferred VkSurfaceFormatKHR.
+ */
+VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice             gpu,
+                                         VkSurfaceKHR                 surface,
+                                         std::vector<VkFormat> const &preferred_formats = {
+                                             VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32});
+
+/**
  * @brief Image memory barrier structure used to define
  *        memory access for an image view during command recording.
  */
@@ -147,42 +166,73 @@ struct BufferMemoryBarrier
 };
 
 /**
- * @brief Put an image memory barrier for setting an image layout on the sub resource into the given command buffer
+ * @brief Put an image memory barrier for a layout transition of an image, using explicitly give transition parameters.
+ * @param command_buffer The VkCommandBuffer to record the barrier.
+ * @param image The VkImage to transition.
+ * @param src_stage_mask The VkPipelineStageFlags to use as source.
+ * @param dst_stage_mask The VkPipelineStageFlags to use as destination.
+ * @param src_access_mask The VkAccessFlags to use as source.
+ * @param dst_access_mask The VkAccessFlags to use as destination.
+ * @param old_layout The VkImageLayout to transition from.
+ * @param new_layout The VkImageLayout to transition to.
+ * @param subresource_range The VkImageSubresourceRange to use with the transition.
  */
-void set_image_layout(
-    VkCommandBuffer         command_buffer,
-    VkImage                 image,
-    VkImageLayout           old_layout,
-    VkImageLayout           new_layout,
-    VkImageSubresourceRange subresource_range,
-    VkPipelineStageFlags    src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-    VkPipelineStageFlags    dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+void image_layout_transition(VkCommandBuffer                command_buffer,
+                             VkImage                        image,
+                             VkPipelineStageFlags           src_stage_mask,
+                             VkPipelineStageFlags           dst_stage_mask,
+                             VkAccessFlags                  src_access_mask,
+                             VkAccessFlags                  dst_access_mask,
+                             VkImageLayout                  old_layout,
+                             VkImageLayout                  new_layout,
+                             VkImageSubresourceRange const &subresource_range);
 
 /**
- * @brief Uses a fixed sub resource layout with first mip level and layer
+ * @brief Put an image memory barrier for a layout transition of an image, on a given subresource range.
+ *
+ * The src_stage_mask, dst_stage_mask, src_access_mask, and dst_access_mask used are determined from old_layout and new_layout.
+ *
+ * @param command_buffer The VkCommandBuffer to record the barrier.
+ * @param image The VkImage to transition.
+ * @param old_layout The VkImageLayout to transition from.
+ * @param new_layout The VkImageLayout to transition to.
+ * @param subresource_range The VkImageSubresourceRange to use with the transition.
  */
-void set_image_layout(
-    VkCommandBuffer      command_buffer,
-    VkImage              image,
-    VkImageAspectFlags   aspect_mask,
-    VkImageLayout        old_layout,
-    VkImageLayout        new_layout,
-    VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-    VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+void image_layout_transition(VkCommandBuffer                command_buffer,
+                             VkImage                        image,
+                             VkImageLayout                  old_layout,
+                             VkImageLayout                  new_layout,
+                             VkImageSubresourceRange const &subresource_range);
 
 /**
- * @brief Insert an image memory barrier into the command buffer
+ * @brief Put an image memory barrier for a layout transition of an image, on a fixed subresource with first mip level and layer.
+ *
+ * The src_stage_mask, dst_stage_mask, src_access_mask, and dst_access_mask used are determined from old_layout and new_layout.
+ *
+ * @param command_buffer The VkCommandBuffer to record the barrier.
+ * @param image The VkImage to transition.
+ * @param old_layout The VkImageLayout to transition from.
+ * @param new_layout The VkImageLayout to transition to.
  */
-void insert_image_memory_barrier(
-    VkCommandBuffer         command_buffer,
-    VkImage                 image,
-    VkAccessFlags           src_access_mask,
-    VkAccessFlags           dst_access_mask,
-    VkImageLayout           old_layout,
-    VkImageLayout           new_layout,
-    VkPipelineStageFlags    src_stage_mask,
-    VkPipelineStageFlags    dst_stage_mask,
-    VkImageSubresourceRange subresource_range);
+void image_layout_transition(VkCommandBuffer command_buffer,
+                             VkImage         image,
+                             VkImageLayout   old_layout,
+                             VkImageLayout   new_layout);
+
+/**
+ * @brief Put an image memory barrier for a layout transition of a vector of images, with a given subresource range per image.
+ *
+ * The src_stage_mask, dst_stage_mask, src_access_mask, and dst_access_mask used are determined from old_layout and new_layout.
+ *
+ * @param command_buffer The VkCommandBuffer to record the barrier.
+ * @param imagesAndRanges The images to transition, with accompanying subresource ranges.
+ * @param old_layout The VkImageLayout to transition from.
+ * @param new_layout The VkImageLayout to transition to.
+ */
+void image_layout_transition(VkCommandBuffer                                                 command_buffer,
+                             std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
+                             VkImageLayout                                                   old_layout,
+                             VkImageLayout                                                   new_layout);
 
 /**
  * @brief Load and store info for a render pass attachment.

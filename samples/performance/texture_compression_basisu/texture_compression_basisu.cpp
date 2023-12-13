@@ -233,23 +233,8 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	subresource_range.layerCount              = 1;
 
 	// Transition the texture image layout to transfer target, so we can safely copy our buffer data to it.
-	VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-	image_memory_barrier.image                = texture.image;
-	image_memory_barrier.subresourceRange     = subresource_range;
-	image_memory_barrier.srcAccessMask        = 0;
-	image_memory_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-	image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	vkCmdPipelineBarrier(
-	    copy_command,
-	    VK_PIPELINE_STAGE_HOST_BIT,
-	    VK_PIPELINE_STAGE_TRANSFER_BIT,
-	    0,
-	    0, nullptr,
-	    0, nullptr,
-	    1, &image_memory_barrier);
+	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -261,20 +246,9 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	    buffer_copy_regions.data());
 
 	// Once the data has been uploaded we transfer to the texture image to the shader read layout, so it can be sampled from
-	image_memory_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	image_memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	image_memory_barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	image_memory_barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	vkCmdPipelineBarrier(
-	    copy_command,
-	    VK_PIPELINE_STAGE_TRANSFER_BIT,
-	    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-	    0,
-	    0, nullptr,
-	    0, nullptr,
-	    1, &image_memory_barrier);
+	vkb::image_layout_transition(
+	    copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
 	// Store current layout for later reuse
 	texture.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

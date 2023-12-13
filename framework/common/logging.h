@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #define LOGGER_FORMAT "[%^%l%$] %v"

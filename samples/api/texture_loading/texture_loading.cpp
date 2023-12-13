@@ -259,8 +259,8 @@ void TextureLoading::load_texture()
 		device->flush_command_buffer(copy_command, queue, true);
 
 		// Clean up staging resources
-		vkFreeMemory(get_device().get_handle(), staging_memory, nullptr);
 		vkDestroyBuffer(get_device().get_handle(), staging_buffer, nullptr);
+		vkFreeMemory(get_device().get_handle(), staging_memory, nullptr);
 	}
 	else
 	{
@@ -339,6 +339,9 @@ void TextureLoading::load_texture()
 
 		device->flush_command_buffer(copy_command, queue, true);
 	}
+
+	// now, the ktx_texture can be destroyed
+	ktxTexture_Destroy(ktx_texture);
 
 	// Create a texture sampler
 	// In Vulkan textures are accessed by samplers

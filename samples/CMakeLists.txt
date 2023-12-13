@@ -57,6 +57,7 @@ set(ORDER_LIST
     "compute_nbody"
     "terrain_tessellation"
     "hlsl"
+    "oit_linked_lists"
 
     #Extension Samples
     "dynamic_rendering"
@@ -70,10 +71,11 @@ set(ORDER_LIST
     "mesh_shader_culling"
     "push_descriptors"
     "ray_queries"
-    "raytracing_basic"
-    "raytracing_extended"
-    "raytracing_reflection"
+    "ray_tracing_basic"
+    "ray_tracing_extended"
+    "ray_tracing_reflection"
     "timeline_semaphore"
+    "shader_object"
     "synchronization_2"
     "buffer_device_address"
     "descriptor_indexing"

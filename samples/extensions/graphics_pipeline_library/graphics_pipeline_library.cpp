@@ -514,7 +514,7 @@ void GraphicsPipelineLibrary::render(float delta_time)
 	if (new_pipeline_created)
 	{
 		new_pipeline_created = false;
-		build_command_buffers();
+		rebuild_command_buffers();
 	}
 	draw();
 

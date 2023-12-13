@@ -78,7 +78,7 @@ public class NativeSampleActivity extends GameActivity {
         intent.setDataAndType(path, context.getContentResolver().getType(path));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-        PendingIntent pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Notifications.CHANNEL_ID)
                 .setSmallIcon(R.drawable.icon)

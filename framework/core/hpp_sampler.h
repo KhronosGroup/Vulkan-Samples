@@ -17,32 +17,34 @@
 
 #pragma once
 
-#include "core/sampler.h"
+#include "core/hpp_vulkan_resource.h"
 
 namespace vkb
 {
 namespace core
 {
 /**
- * @brief facade class around vkb::core::Sampler, providing a vulkan.hpp-based interface
- *
- * See vkb::core::Sampler for documentation
+ * @brief Represents a Vulkan Sampler, using Vulkan-Hpp
  */
-class HPPSampler : private vkb::core::Sampler
+class HPPSampler : public vkb::core::HPPVulkanResource<vk::Sampler>
 {
   public:
-	using vkb::core::Sampler::set_debug_name;
+	/**
+	 * @brief Creates a Vulkan HPPSampler
+	 * @param device The device to use
+	 * @param info Creation details
+	 */
+	HPPSampler(vkb::core::HPPDevice &device, const vk::SamplerCreateInfo &info);
 
-  public:
-	HPPSampler(vkb::core::HPPDevice const &device, const vk::SamplerCreateInfo &info) :
-	    vkb::core::Sampler(reinterpret_cast<vkb::Device const &>(device), reinterpret_cast<VkSamplerCreateInfo const &>(info))
-	{}
+	HPPSampler(const HPPSampler &) = delete;
 
-  public:
-	vk::Sampler const &get_handle() const
-	{
-		return reinterpret_cast<vk::Sampler const &>(vkb::core::Sampler::get_handle());
-	}
+	HPPSampler(HPPSampler &&sampler);
+
+	~HPPSampler();
+
+	HPPSampler &operator=(const HPPSampler &) = delete;
+
+	HPPSampler &operator=(HPPSampler &&) = delete;
 };
 }        // namespace core
 }        // namespace vkb

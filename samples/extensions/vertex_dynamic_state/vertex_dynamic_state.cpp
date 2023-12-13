@@ -531,25 +531,11 @@ void VertexDynamicState::model_data_creation()
 	                                          3, 7, 6,
 	                                          6, 2, 3};
 
-	struct
-	{
-		VkBuffer       buffer;
-		VkDeviceMemory memory;
-	} vertex_staging, index_staging;
+	vkb::core::Buffer vertex_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_staging.update(vertices);
 
-	vertex_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    vertex_buffer_size,
-	    &vertex_staging.memory,
-	    vertices.data());
-
-	index_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    index_buffer_size,
-	    &index_staging.memory,
-	    indices.data());
+	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_staging.update(indices);
 
 	cube.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
@@ -569,7 +555,7 @@ void VertexDynamicState::model_data_creation()
 	copy_region.size = vertex_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    vertex_staging.buffer,
+	    vertex_staging.get_handle(),
 	    cube.vertices->get_handle(),
 	    1,
 	    &copy_region);
@@ -577,17 +563,12 @@ void VertexDynamicState::model_data_creation()
 	copy_region.size = index_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    index_staging.buffer,
+	    index_staging.get_handle(),
 	    cube.indices->get_handle(),
 	    1,
 	    &copy_region);
 
 	device->flush_command_buffer(copy_command, queue, true);
-
-	vkDestroyBuffer(get_device().get_handle(), vertex_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), vertex_staging.memory, nullptr);
-	vkDestroyBuffer(get_device().get_handle(), index_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), index_staging.memory, nullptr);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_vertex_dynamic_state()

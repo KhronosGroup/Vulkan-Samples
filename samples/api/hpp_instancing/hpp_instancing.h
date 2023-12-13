@@ -39,16 +39,9 @@ class HPPInstancing : public HPPApiVulkanSample
 	// Contains the instanced data
 	struct InstanceBuffer
 	{
-		vk::Buffer               buffer;
-		vk::DescriptorBufferInfo descriptor;
-		vk::DeviceMemory         memory;
-		size_t                   size = 0;
-
-		void destroy(vk::Device device)
-		{
-			device.destroyBuffer(buffer);
-			device.freeMemory(memory);
-		}
+		std::unique_ptr<vkb::core::HPPBuffer> buffer;
+		vk::DescriptorBufferInfo              descriptor;
+		size_t                                size = 0;
 	};
 
 	// Per-instance data block

@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 
 #include "common/tags.h"
 #include "platform/parser.h"

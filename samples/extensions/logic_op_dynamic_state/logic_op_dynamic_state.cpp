@@ -609,32 +609,14 @@ void LogicOpDynamicState::model_data_creation()
 	                                          UINT32_MAX,
 	                                          2, 3, 6, 7};
 
-	struct
-	{
-		VkBuffer       buffer{VK_NULL_HANDLE};
-		VkDeviceMemory memory{VK_NULL_HANDLE};
-	} vertex_pos_staging, vertex_norm_staging, index_staging;
+	vkb::core::Buffer vertex_pos_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_pos_staging.update(vertices_pos);
 
-	vertex_pos_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    vertex_buffer_size,
-	    &vertex_pos_staging.memory,
-	    vertices_pos.data());
+	vkb::core::Buffer vertex_norm_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_norm_staging.update(vertices_norm);
 
-	vertex_norm_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    vertex_buffer_size,
-	    &vertex_norm_staging.memory,
-	    vertices_norm.data());
-
-	index_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    index_buffer_size,
-	    &index_staging.memory,
-	    indices.data());
+	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_staging.update(indices);
 
 	cube.vertices_pos = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                        vertex_buffer_size,
@@ -659,14 +641,14 @@ void LogicOpDynamicState::model_data_creation()
 	copy_region.size = vertex_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    vertex_pos_staging.buffer,
+	    vertex_pos_staging.get_handle(),
 	    cube.vertices_pos->get_handle(),
 	    1,
 	    &copy_region);
 
 	vkCmdCopyBuffer(
 	    copy_command,
-	    vertex_norm_staging.buffer,
+	    vertex_norm_staging.get_handle(),
 	    cube.vertices_norm->get_handle(),
 	    1,
 	    &copy_region);
@@ -674,19 +656,12 @@ void LogicOpDynamicState::model_data_creation()
 	copy_region.size = index_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    index_staging.buffer,
+	    index_staging.get_handle(),
 	    cube.indices->get_handle(),
 	    1,
 	    &copy_region);
 
 	device->flush_command_buffer(copy_command, queue, true);
-
-	vkDestroyBuffer(get_device().get_handle(), vertex_pos_staging.buffer, VK_NULL_HANDLE);
-	vkFreeMemory(get_device().get_handle(), vertex_pos_staging.memory, VK_NULL_HANDLE);
-	vkDestroyBuffer(get_device().get_handle(), vertex_norm_staging.buffer, VK_NULL_HANDLE);
-	vkFreeMemory(get_device().get_handle(), vertex_norm_staging.memory, VK_NULL_HANDLE);
-	vkDestroyBuffer(get_device().get_handle(), index_staging.buffer, VK_NULL_HANDLE);
-	vkFreeMemory(get_device().get_handle(), index_staging.memory, VK_NULL_HANDLE);
 }
 
 /**

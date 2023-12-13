@@ -17,92 +17,164 @@
 
 #pragma once
 
-#include "rendering/render_frame.h"
-#include <core/hpp_command_buffer.h>
-#include <core/hpp_queue.h>
-#include <hpp_buffer_pool.h>
-#include <rendering/hpp_render_target.h>
+#include <core/hpp_device.h>
+#include <hpp_semaphore_pool.h>
+#include <vulkan/vulkan_hash.hpp>
 
 namespace vkb
 {
 namespace rendering
 {
+enum class BufferAllocationStrategy
+{
+	OneAllocationPerBuffer,
+	MultipleAllocationsPerBuffer
+};
+
+enum class DescriptorManagementStrategy
+{
+	StoreInCache,
+	CreateDirectly
+};
+
 /**
- * @brief facade class around vkb::RenderFrame, providing a vulkan.hpp-based interface
+ * @brief HPPRenderFrame is a transcoded version of vkb::RenderFrame from vulkan to vulkan-hpp.
  *
- * See vkb::RenderFrame for documentation
+ * See vkb::HPPRenderFrame for documentation
  */
-class HPPRenderFrame : private vkb::RenderFrame
+/**
+ * @brief HPPRenderFrame is a container for per-frame data, including BufferPool objects,
+ * synchronization primitives (semaphores, fences) and the swapchain RenderTarget.
+ *
+ * When creating a RenderTarget, we need to provide images that will be used as attachments
+ * within a RenderPass. The HPPRenderFrame is responsible for creating a RenderTarget using
+ * RenderTarget::CreateFunc. A custom RenderTarget::CreateFunc can be provided if a different
+ * render target is required.
+ *
+ * A HPPRenderFrame cannot be destroyed individually since frames are managed by the RenderContext,
+ * the whole context must be destroyed. This is because each HPPRenderFrame holds Vulkan objects
+ * such as the swapchain image.
+ */
+class HPPRenderFrame
 {
   public:
-	using vkb::RenderFrame::reset;
+	HPPRenderFrame(vkb::core::HPPDevice &device, std::unique_ptr<vkb::rendering::HPPRenderTarget> &&render_target, size_t thread_count = 1);
 
-	HPPRenderFrame(vkb::core::HPPDevice &device, std::unique_ptr<HPPRenderTarget> &&render_target, size_t thread_count = 1) :
-	    RenderFrame(reinterpret_cast<vkb::Device &>(device),
-	                std::unique_ptr<vkb::RenderTarget>(reinterpret_cast<vkb::RenderTarget *>(render_target.release())),
-	                thread_count)
-	{}
+	HPPRenderFrame(const HPPRenderFrame &)            = delete;
+	HPPRenderFrame(HPPRenderFrame &&)                 = delete;
+	HPPRenderFrame &operator=(const HPPRenderFrame &) = delete;
+	HPPRenderFrame &operator=(HPPRenderFrame &&)      = delete;
 
-	vkb::HPPBufferAllocation allocate_buffer(vk::BufferUsageFlags usage, vk::DeviceSize size, size_t thread_index = 0)
-	{
-		vkb::BufferAllocation allocation = vkb::RenderFrame::allocate_buffer(static_cast<VkBufferUsageFlags>(usage), static_cast<VkDeviceSize>(size), thread_index);
-		return std::move(*reinterpret_cast<vkb::HPPBufferAllocation *>(&allocation));
-	}
+	void                                   clear_descriptors();
+	vkb::core::HPPDevice                  &get_device();
+	const vkb::HPPFencePool               &get_fence_pool() const;
+	vkb::rendering::HPPRenderTarget       &get_render_target();
+	vkb::rendering::HPPRenderTarget const &get_render_target() const;
+	const vkb::HPPSemaphorePool           &get_semaphore_pool() const;
+	void                                   release_owned_semaphore(vk::Semaphore semaphore);
+	vk::DescriptorSet                      request_descriptor_set(const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
+	                                                              const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,
+	                                                              const BindingMap<vk::DescriptorImageInfo>  &image_infos,
+	                                                              bool                                        update_after_bind,
+	                                                              size_t                                      thread_index = 0);
+	vk::Fence                              request_fence();
+	vk::Semaphore                          request_semaphore();
+	vk::Semaphore                          request_semaphore_with_ownership();
+	void                                   reset();
 
-	HPPRenderTarget &get_render_target()
-	{
-		return reinterpret_cast<HPPRenderTarget &>(vkb::RenderFrame::get_render_target());
-	}
+	/**
+	 * @param usage Usage of the buffer
+	 * @param size Amount of memory required
+	 * @param thread_index Index of the buffer pool to be used by the current thread
+	 * @return The requested allocation, it may be empty
+	 */
+	vkb::HPPBufferAllocation allocate_buffer(vk::BufferUsageFlags usage, vk::DeviceSize size, size_t thread_index = 0);
 
-	void release_owned_semaphore(vk::Semaphore semaphore)
-	{
-		vkb::RenderFrame::release_owned_semaphore(static_cast<VkSemaphore>(semaphore));
-	}
-
+	/**
+	 * @brief Requests a command buffer to the command pool of the active frame
+	 *        A frame should be active at the moment of requesting it
+	 * @param queue The queue command buffers will be submitted on
+	 * @param reset_mode Indicate how the command buffer will be used, may trigger a
+	 *        pool re-creation to set necessary flags
+	 * @param level Command buffer level, either primary or secondary
+	 * @param thread_index Selects the thread's command pool used to manage the buffer
+	 * @return A command buffer related to the current active frame
+	 */
 	vkb::core::HPPCommandBuffer &request_command_buffer(const vkb::core::HPPQueue             &queue,
 	                                                    vkb::core::HPPCommandBuffer::ResetMode reset_mode   = vkb::core::HPPCommandBuffer::ResetMode::ResetPool,
 	                                                    vk::CommandBufferLevel                 level        = vk::CommandBufferLevel::ePrimary,
-	                                                    size_t                                 thread_index = 0)
-	{
-		return reinterpret_cast<vkb::core::HPPCommandBuffer &>(
-		    vkb::RenderFrame::request_command_buffer(reinterpret_cast<vkb::Queue const &>(queue),
-		                                             static_cast<vkb::CommandBuffer::ResetMode>(reset_mode),
-		                                             static_cast<VkCommandBufferLevel>(level),
-		                                             thread_index));
-	}
+	                                                    size_t                                 thread_index = 0);
 
-	vk::DescriptorSet request_descriptor_set(const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
-	                                         const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,
-	                                         const BindingMap<vk::DescriptorImageInfo>  &image_infos,
-	                                         bool                                        update_after_bind,
-	                                         size_t                                      thread_index = 0)
-	{
-		return static_cast<vk::DescriptorSet>(vkb::RenderFrame::request_descriptor_set(reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout),
-		                                                                               reinterpret_cast<BindingMap<VkDescriptorBufferInfo> const &>(buffer_infos),
-		                                                                               reinterpret_cast<BindingMap<VkDescriptorImageInfo> const &>(image_infos),
-		                                                                               update_after_bind,
-		                                                                               thread_index));
-	}
+	/**
+	 * @brief Sets a new buffer allocation strategy
+	 * @param new_strategy The new buffer allocation strategy
+	 */
+	void set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy);
 
-	vk::Fence request_fence()
-	{
-		return static_cast<vk::Fence>(vkb::RenderFrame::request_fence());
-	}
+	/**
+	 * @brief Sets a new descriptor set management strategy
+	 * @param new_strategy The new descriptor set management strategy
+	 */
+	void set_descriptor_management_strategy(DescriptorManagementStrategy new_strategy);
 
-	vk::Semaphore request_semaphore()
-	{
-		return static_cast<vk::Semaphore>(vkb::RenderFrame::request_semaphore());
-	}
+	/**
+	 * @brief Called when the swapchain changes
+	 * @param render_target A new render target with updated images
+	 */
+	void update_render_target(std::unique_ptr<vkb::rendering::HPPRenderTarget> &&render_target);
 
-	vk::Semaphore request_semaphore_with_ownership()
-	{
-		return static_cast<vk::Semaphore>(vkb::RenderFrame::request_semaphore_with_ownership());
-	}
+	/**
+	 * @brief Updates all the descriptor sets in the current frame at a specific thread index
+	 */
+	void update_descriptor_sets(size_t thread_index = 0);
 
-	void update_render_target(std::unique_ptr<HPPRenderTarget> &&render_target)
-	{
-		vkb::RenderFrame::update_render_target(std::unique_ptr<vkb::RenderTarget>(reinterpret_cast<vkb::RenderTarget *>(render_target.release())));
-	}
+  private:
+	/**
+	 * @brief Retrieve the frame's command pool(s)
+	 * @param queue The queue command buffers will be submitted on
+	 * @param reset_mode Indicate how the command buffers will be reset after execution,
+	 *        may trigger a pool re-creation to set necessary flags
+	 * @return The frame's command pool(s)
+	 */
+	std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &get_command_pools(const vkb::core::HPPQueue             &queue,
+	                                                                           vkb::core::HPPCommandBuffer::ResetMode reset_mode);
+
+	static std::vector<uint32_t> collect_bindings_to_update(const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
+	                                                        const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,
+	                                                        const BindingMap<vk::DescriptorImageInfo>  &image_infos);
+
+  private:
+	// A map of the supported usages to a multiplier for the BUFFER_POOL_BLOCK_SIZE
+	const std::unordered_map<vk::BufferUsageFlags, uint32_t> supported_usage_map = {
+	    {vk::BufferUsageFlagBits::eUniformBuffer, 1},
+	    {vk::BufferUsageFlagBits::eStorageBuffer, 2},        // x2 the size of BUFFER_POOL_BLOCK_SIZE since SSBOs are normally much larger than other types of buffers
+	    {vk::BufferUsageFlagBits::eVertexBuffer, 1},
+	    {vk::BufferUsageFlagBits::eIndexBuffer, 1}};
+
+	vkb::core::HPPDevice &device;
+
+	/// Commands pools associated to the frame
+	std::map<uint32_t, std::vector<std::unique_ptr<vkb::core::HPPCommandPool>>> command_pools;
+
+	/// Descriptor pools for the frame
+	std::vector<std::unique_ptr<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>>> descriptor_pools;
+
+	/// Descriptor sets for the frame
+	std::vector<std::unique_ptr<std::unordered_map<std::size_t, vkb::core::HPPDescriptorSet>>> descriptor_sets;
+
+	vkb::HPPFencePool fence_pool;
+
+	vkb::HPPSemaphorePool semaphore_pool;
+
+	size_t thread_count;
+
+	std::unique_ptr<vkb::rendering::HPPRenderTarget> swapchain_render_target;
+
+	BufferAllocationStrategy buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
+
+	DescriptorManagementStrategy descriptor_management_strategy{DescriptorManagementStrategy::StoreInCache};
+
+	std::map<vk::BufferUsageFlags, std::vector<std::pair<vkb::HPPBufferPool, vkb::HPPBufferBlock *>>> buffer_pools;
 };
 }        // namespace rendering
 }        // namespace vkb

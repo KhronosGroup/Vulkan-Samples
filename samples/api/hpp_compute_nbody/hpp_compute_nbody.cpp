@@ -44,20 +44,20 @@ HPPComputeNBody::~HPPComputeNBody()
 
 bool HPPComputeNBody::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		load_assets();
+		descriptor_pool = create_descriptor_pool();
+		prepare_graphics();
+		prepare_compute();
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	load_assets();
-
-	descriptor_pool = create_descriptor_pool();
-
-	prepare_graphics();
-	prepare_compute();
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 bool HPPComputeNBody::resize(const uint32_t width, const uint32_t height)
@@ -78,13 +78,6 @@ void HPPComputeNBody::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 
 void HPPComputeNBody::build_command_buffers()
 {
-	// Destroy command buffers if already present
-	if (!check_command_buffers())
-	{
-		destroy_command_buffers();
-		create_command_buffers();
-	}
-
 	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 1.0f}})),
 	                                               vk::ClearDepthStencilValue(0.0f, 0)}};
 
@@ -145,13 +138,14 @@ void HPPComputeNBody::build_command_buffers()
 
 void HPPComputeNBody::render(float delta_time)
 {
-	if (!prepared)
-		return;
-	draw();
-	update_compute_uniform_buffers(delta_time);
-	if (camera.updated)
+	if (prepared)
 	{
-		update_graphics_uniform_buffers();
+		draw();
+		update_compute_uniform_buffers(delta_time);
+		if (camera.updated)
+		{
+			update_graphics_uniform_buffers();
+		}
 	}
 }
 
@@ -305,8 +299,8 @@ vk::DescriptorSetLayout HPPComputeNBody::create_graphics_descriptor_set_layout()
 vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 {
 	// Load shaders
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("compute_nbody/particle.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                   load_shader("compute_nbody/particle.frag", vk::ShaderStageFlagBits::eFragment)}};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("compute_nbody/particle.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("compute_nbody/particle.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_bindings(0, sizeof(Particle), vk::VertexInputRate::eVertex);
@@ -338,6 +332,8 @@ vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 	                                             shader_stages,
 	                                             vertex_input_state,
 	                                             vk::PrimitiveTopology::ePointList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eNone,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},
@@ -383,8 +379,8 @@ void HPPComputeNBody::initializeCamera()
 
 void HPPComputeNBody::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPComputeNBody::prepare_compute()
@@ -462,7 +458,7 @@ void HPPComputeNBody::prepare_compute()
 	}
 
 	// Separate command pool as queue family for compute may be different than graphics
-	compute.command_pool = device.createCommandPool({vk::CommandPoolCreateFlagBits::eResetCommandBuffer, compute.queue_family_index});
+	compute.command_pool = device.createCommandPool({{}, compute.queue_family_index});
 
 	// Create a command buffer for compute operations
 	compute.command_buffer = vkb::common::allocate_command_buffer(device, compute.command_pool);

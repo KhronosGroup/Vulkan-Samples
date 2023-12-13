@@ -30,16 +30,17 @@ class DescriptorBufferBasic : public ApiVulkanSample
   public:
 	bool animate = true;
 
-	std::unique_ptr<vkb::core::Buffer> resource_descriptor_buffer;
-	std::unique_ptr<vkb::core::Buffer> image_descriptor_buffer;
-
 	VkPhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_properties{};
 
-	VkDeviceSize uniform_descriptor_offset;
-	VkDeviceSize image_descriptor_offset;
-
-	VkDescriptorSetLayout descriptor_set_layout_buffer{VK_NULL_HANDLE};
-	VkDescriptorSetLayout descriptor_set_layout_image{VK_NULL_HANDLE};
+	struct DescriptorData
+	{
+		VkDescriptorSetLayout              layout{VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::Buffer> buffer;
+		VkDeviceSize                       size;
+		VkDeviceSize                       offset;
+	};
+	DescriptorData uniform_binding_descriptor;
+	DescriptorData image_binding_descriptor;
 
 	struct Cube
 	{

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,7 +39,7 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 	 * @param flags The allocation create flags
 	 * @param queue_family_indices optional queue family indices
 	 */
-	Buffer(Device const &               device,
+	Buffer(Device const                &device,
 	       VkDeviceSize                 size,
 	       VkBufferUsageFlags           buffer_usage,
 	       VmaMemoryUsage               memory_usage,
@@ -64,7 +64,7 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -128,7 +128,7 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 	 * @param size The amount of bytes to copy
 	 * @param offset The offset to start the copying into the mapped data
 	 */
-	void update(void *data, size_t size, size_t offset = 0);
+	void update(void const *data, size_t size, size_t offset = 0);
 
 	/**
 	 * @brief Copies a vector of bytes into the buffer
@@ -136,6 +136,18 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 	 * @param offset The offset to start the copying into the mapped data
 	 */
 	void update(const std::vector<uint8_t> &data, size_t offset = 0);
+
+	template <typename T, size_t N>
+	void update(std::array<T, N> const &data, size_t offset = 0)
+	{
+		update(data.data(), data.size() * sizeof(T), offset);
+	}
+
+	template <typename T>
+	void update(std::vector<T> const &data, size_t offset = 0)
+	{
+		update(data.data(), data.size() * sizeof(T), offset);
+	}
 
 	/**
 	 * @brief Copies an object as byte data into the buffer

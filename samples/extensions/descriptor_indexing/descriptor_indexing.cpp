@@ -73,6 +73,7 @@ void DescriptorIndexing::render(float delta_time)
 	VkViewport viewport = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
 	VkRect2D   scissor  = {{0, 0}, {width, height}};
 
+	recreate_current_command_buffer();
 	auto cmd         = draw_cmd_buffers[current_buffer];
 	auto begin_info  = vkb::initializers::command_buffer_begin_info();
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -433,27 +434,14 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	auto &cmd = get_device().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	VkImageMemoryBarrier barrier = vkb::initializers::image_memory_barrier();
-	barrier.srcAccessMask        = 0;
-	barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-	barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	barrier.subresourceRange     = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-	barrier.image                = test_image.image;
-	vkCmdPipelineBarrier(cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                     0, 0, nullptr, 0, nullptr, 1, &barrier);
+	vkb::image_layout_transition(cmd.get_handle(), test_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	VkBufferImageCopy copy_info{};
 	copy_info.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 	copy_info.imageExtent      = image_info.extent;
 	vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer->get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
 
-	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	vkCmdPipelineBarrier(cmd.get_handle(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-	                     0, 0, nullptr, 0, nullptr, 1, &barrier);
+	vkb::image_layout_transition(cmd.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	VK_CHECK(cmd.end());
 

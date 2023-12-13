@@ -53,36 +53,37 @@ HPPHlslShaders::~HPPHlslShaders()
 
 bool HPPHlslShaders::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		load_assets();
+		generate_quad();
+
+		// Vertex shader uniform buffer block
+		uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+		                                                           sizeof(ubo_vs),
+		                                                           vk::BufferUsageFlagBits::eUniformBuffer,
+		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
+		update_uniform_buffers();
+
+		// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
+		base_descriptor_set_layout    = create_base_descriptor_set_layout();
+		sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
+
+		pipeline_layout = create_pipeline_layout();
+		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex));
+		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment));
+		pipeline            = create_pipeline();
+		descriptor_pool     = create_descriptor_pool();
+		base_descriptor_set = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
+		update_descriptor_sets();
+		build_command_buffers();
+
+		prepared = true;
 	}
-	load_assets();
-	generate_quad();
 
-	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
-	                                                           sizeof(ubo_vs),
-	                                                           vk::BufferUsageFlagBits::eUniformBuffer,
-	                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
-	update_uniform_buffers();
-
-	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-	base_descriptor_set_layout    = create_base_descriptor_set_layout();
-	sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
-
-	pipeline_layout = create_pipeline_layout();
-	shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex));
-	shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment));
-	pipeline = create_pipeline();
-
-	descriptor_pool     = create_descriptor_pool();
-	base_descriptor_set = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
-	update_descriptor_sets();
-
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 // Enable physical device features required for this example
@@ -139,11 +140,10 @@ void HPPHlslShaders::build_command_buffers()
 
 void HPPHlslShaders::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
+		draw();
 	}
-	draw();
 }
 
 void HPPHlslShaders::view_changed()
@@ -169,9 +169,9 @@ vk::DescriptorPool HPPHlslShaders::create_descriptor_pool()
 
 vk::Pipeline HPPHlslShaders::create_pipeline()
 {
-	size_t                                           vertex_shader_index = shader_modules.size() - 2;
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{{{{}, vk::ShaderStageFlagBits::eVertex, shader_modules[vertex_shader_index], "main"},
-	                                                                {{}, vk::ShaderStageFlagBits::eFragment, shader_modules[vertex_shader_index + 1], "main"}}};
+	size_t                                         vertex_shader_index = shader_modules.size() - 2;
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{{{}, vk::ShaderStageFlagBits::eVertex, shader_modules[vertex_shader_index], "main"},
+	                                                             {{}, vk::ShaderStageFlagBits::eFragment, shader_modules[vertex_shader_index + 1], "main"}};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
@@ -194,6 +194,8 @@ vk::Pipeline HPPHlslShaders::create_pipeline()
 	                                             shader_stages,
 	                                             vertex_input_state,
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eNone,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},
@@ -346,7 +348,7 @@ void HPPHlslShaders::generate_quad()
 
 void HPPHlslShaders::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPHlslShaders::update_descriptor_sets()

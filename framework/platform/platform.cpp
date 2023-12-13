@@ -22,11 +22,11 @@
 #include <mutex>
 #include <vector>
 
+#include <fmt/format.h>
 #include <spdlog/async_logger.h>
 #include <spdlog/details/thread_pool.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
 
 #include "common/logging.h"
 #include "force_close/force_close.h"

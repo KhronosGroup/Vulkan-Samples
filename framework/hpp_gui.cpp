@@ -114,6 +114,7 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 	io.KeyMap[ImGuiKey_UpArrow]    = static_cast<int>(KeyCode::Up);
 	io.KeyMap[ImGuiKey_DownArrow]  = static_cast<int>(KeyCode::Down);
 	io.KeyMap[ImGuiKey_Tab]        = static_cast<int>(KeyCode::Tab);
+	io.KeyMap[ImGuiKey_Escape]     = static_cast<int>(KeyCode::Backspace);
 
 	// Default font
 	fonts.emplace_back(default_font, font_size * dpi_factor);
@@ -391,7 +392,7 @@ bool HPPGui::update_buffers()
 
 void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
 {
-	ImDrawData                     *draw_data    = ImGui::GetDrawData();
+	ImDrawData	                 *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
 
 	if (!draw_data || (draw_data->TotalVtxCount == 0) || (draw_data->TotalIdxCount == 0))

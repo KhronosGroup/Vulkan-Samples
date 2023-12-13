@@ -117,6 +117,24 @@ def generate_sample_help(subparsers, template):
         default=None,
     )
 
+def prompt_if_path_exists(output_dir, name):
+    path = os.path.join(output_dir, name)
+
+    if os.path.exists(path):
+        yes = {'yes', 'y'}
+        no = {'no', 'n', ''}
+        print(terminal_colors.WARNING
+              + f"The output directory {path} is not empty. Would you like to overwrite its content with the sample template? [y/N]"
+              + terminal_colors.END)
+        while True:
+            choice = input().lower()
+            if choice in yes:
+                return True
+            elif choice in no:
+                return False
+            else:
+                print("Please respond with 'y' or 'n'")    
+    return True
 
 def generate_sample(template):
     def func(args):
@@ -129,6 +147,9 @@ def generate_sample(template):
         if not which("cmake"):
             print("Missing cmake")
             sys.exit(1)
+
+        if not prompt_if_path_exists(output_dir, args.name):
+            return 
 
         print(
             terminal_colors.INFO

@@ -60,6 +60,7 @@ extern std::unique_ptr<vkb::PlatformContext> create_platform_context(int argc, c
 		int platform_main(const vkb::PlatformContext &context_name)
 
 #else
+#	include <stdexcept>
 #	define CUSTOM_MAIN(context_name)                           \
 		int main(int argc, char *argv[])                        \
 		{                                                       \

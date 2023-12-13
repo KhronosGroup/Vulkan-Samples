@@ -148,6 +148,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	io.KeyMap[ImGuiKey_UpArrow]    = static_cast<int>(KeyCode::Up);
 	io.KeyMap[ImGuiKey_DownArrow]  = static_cast<int>(KeyCode::Down);
 	io.KeyMap[ImGuiKey_Tab]        = static_cast<int>(KeyCode::Tab);
+	io.KeyMap[ImGuiKey_Escape]     = static_cast<int>(KeyCode::Backspace);
 
 	// Default font
 	fonts.emplace_back(default_font, font_size * dpi_factor);

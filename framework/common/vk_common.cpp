@@ -18,7 +18,7 @@
 
 #include "vk_common.h"
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
@@ -130,6 +130,7 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 	throw std::runtime_error("File extension `" + ext + "` does not have a vulkan shader stage.");
 }
 }        // namespace
+
 bool is_depth_only_format(VkFormat format)
 {
 	return format == VK_FORMAT_D16_UNORM ||
@@ -140,8 +141,12 @@ bool is_depth_stencil_format(VkFormat format)
 {
 	return format == VK_FORMAT_D16_UNORM_S8_UINT ||
 	       format == VK_FORMAT_D24_UNORM_S8_UINT ||
-	       format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
-	       is_depth_only_format(format);
+	       format == VK_FORMAT_D32_SFLOAT_S8_UINT;
+}
+
+bool is_depth_format(VkFormat format)
+{
+	return is_depth_only_format(format) || is_depth_stencil_format(format);
 }
 
 VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_only, const std::vector<VkFormat> &depth_format_priority_list)
@@ -401,184 +406,185 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	return shader_module;
 }
 
-// Create an image memory barrier for changing the layout of
-// an image and put it into an active command buffer
-// See chapter 11.4 "Image Layout" for details
-
-void set_image_layout(
-    VkCommandBuffer         command_buffer,
-    VkImage                 image,
-    VkImageLayout           old_layout,
-    VkImageLayout           new_layout,
-    VkImageSubresourceRange subresource_range,
-    VkPipelineStageFlags    src_mask,
-    VkPipelineStageFlags    dst_mask)
+VkAccessFlags getAccessFlags(VkImageLayout layout)
 {
-	// Create an image barrier object
-	VkImageMemoryBarrier barrier{};
-	barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.oldLayout           = old_layout;
-	barrier.newLayout           = new_layout;
-	barrier.image               = image;
-	barrier.subresourceRange    = subresource_range;
-
-	// Source layouts (old)
-	// Source access mask controls actions that have to be finished on the old layout
-	// before it will be transitioned to the new layout
-	switch (old_layout)
+	switch (layout)
 	{
 		case VK_IMAGE_LAYOUT_UNDEFINED:
-			// Image layout is undefined (or does not matter)
-			// Only valid as initial layout
-			// No flags required, listed only for completeness
-			barrier.srcAccessMask = 0;
-			break;
-
+		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+			return 0;
 		case VK_IMAGE_LAYOUT_PREINITIALIZED:
-			// Image is preinitialized
-			// Only valid as initial layout for linear images, preserves memory contents
-			// Make sure host writes have been finished
-			barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-			break;
-
+			return VK_ACCESS_HOST_WRITE_BIT;
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-			// Image is a color attachment
-			// Make sure any writes to the color buffer have been finished
-			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			break;
-
-		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			// Image is a depth/stencil attachment
-			// Make sure any writes to the depth/stencil buffer have been finished
-			barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-			break;
-
-		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-			// Image is a transfer source
-			// Make sure any reads from the image have been finished
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-			break;
-
-		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-			// Image is a transfer destination
-			// Make sure any writes to the image have been finished
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			break;
-
+			return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL:
+			return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR:
+			return VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-			// Image is read by a shader
-			// Make sure any shader reads from the image have been finished
-			barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			break;
+			return VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			return VK_ACCESS_TRANSFER_READ_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			return VK_ACCESS_TRANSFER_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_GENERAL:
+			assert(false && "Don't know how to get a meaningful VkAccessFlags for VK_IMAGE_LAYOUT_GENERAL! Don't use it!");
+			return 0;
 		default:
-			// Other source layouts aren't handled (yet)
-			break;
+			assert(false);
+			return 0;
 	}
+}
 
-	// Target layouts (new)
-	// Destination access mask controls the dependency for the new image layout
-	switch (new_layout)
+VkPipelineStageFlags getPipelineStageFlags(VkImageLayout layout)
+{
+	switch (layout)
 	{
+		case VK_IMAGE_LAYOUT_UNDEFINED:
+			return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			return VK_PIPELINE_STAGE_HOST_BIT;
 		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-			// Image will be used as a transfer destination
-			// Make sure any writes to the image have been finished
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			break;
-
 		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-			// Image will be used as a transfer source
-			// Make sure any reads from the image have been finished
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-			break;
-
+			return VK_PIPELINE_STAGE_TRANSFER_BIT;
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-			// Image will be used as a color attachment
-			// Make sure any writes to the color buffer have been finished
-			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			break;
-
-		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			// Image layout will be used as a depth/stencil attachment
-			// Make sure any writes to depth/stencil buffer have been finished
-			barrier.dstAccessMask = barrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-			break;
-
+			return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL:
+			return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		case VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR:
+			return VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-			// Image will be read in a shader (sampler, input attachment)
-			// Make sure any writes to the image have been finished
-			if (barrier.srcAccessMask == 0)
-			{
-				barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
-			}
-			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			break;
+			return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+			return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		case VK_IMAGE_LAYOUT_GENERAL:
+			assert(false && "Don't know how to get a meaningful VkPipelineStageFlags for VK_IMAGE_LAYOUT_GENERAL! Don't use it!");
+			return 0;
 		default:
-			// Other source layouts aren't handled (yet)
-			break;
+			assert(false);
+			return 0;
 	}
+}
+
+// Create an image memory barrier for changing the layout of
+// an image and put it into an active command buffer
+// See chapter 12.4 "Image Layout" for details
+
+void image_layout_transition(VkCommandBuffer                command_buffer,
+                             VkImage                        image,
+                             VkPipelineStageFlags           src_stage_mask,
+                             VkPipelineStageFlags           dst_stage_mask,
+                             VkAccessFlags                  src_access_mask,
+                             VkAccessFlags                  dst_access_mask,
+                             VkImageLayout                  old_layout,
+                             VkImageLayout                  new_layout,
+                             VkImageSubresourceRange const &subresource_range)
+{
+	// Create an image barrier object
+	VkImageMemoryBarrier image_memory_barrier{};
+	image_memory_barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	image_memory_barrier.srcAccessMask       = src_access_mask;
+	image_memory_barrier.dstAccessMask       = dst_access_mask;
+	image_memory_barrier.oldLayout           = old_layout;
+	image_memory_barrier.newLayout           = new_layout;
+	image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	image_memory_barrier.image               = image;
+	image_memory_barrier.subresourceRange    = subresource_range;
 
 	// Put barrier inside setup command buffer
-	vkCmdPipelineBarrier(
-	    command_buffer,
-	    src_mask,
-	    dst_mask,
-	    0,
-	    0, nullptr,
-	    0, nullptr,
-	    1, &barrier);
+	vkCmdPipelineBarrier(command_buffer, src_stage_mask, dst_stage_mask, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
+}
+
+void image_layout_transition(VkCommandBuffer                command_buffer,
+                             VkImage                        image,
+                             VkImageLayout                  old_layout,
+                             VkImageLayout                  new_layout,
+                             VkImageSubresourceRange const &subresource_range)
+{
+	VkPipelineStageFlags src_stage_mask  = getPipelineStageFlags(old_layout);
+	VkPipelineStageFlags dst_stage_mask  = getPipelineStageFlags(new_layout);
+	VkAccessFlags        src_access_mask = getAccessFlags(old_layout);
+	VkAccessFlags        dst_access_mask = getAccessFlags(new_layout);
+
+	image_layout_transition(command_buffer, image, src_stage_mask, dst_stage_mask, src_access_mask, dst_access_mask, old_layout, new_layout, subresource_range);
 }
 
 // Fixed sub resource on first mip level and layer
-void set_image_layout(
-    VkCommandBuffer      command_buffer,
-    VkImage              image,
-    VkImageAspectFlags   aspect_mask,
-    VkImageLayout        old_layout,
-    VkImageLayout        new_layout,
-    VkPipelineStageFlags src_mask,
-    VkPipelineStageFlags dst_mask)
+void image_layout_transition(VkCommandBuffer command_buffer,
+                             VkImage         image,
+                             VkImageLayout   old_layout,
+                             VkImageLayout   new_layout)
 {
 	VkImageSubresourceRange subresource_range = {};
-	subresource_range.aspectMask              = aspect_mask;
+	subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
 	subresource_range.baseMipLevel            = 0;
 	subresource_range.levelCount              = 1;
+	subresource_range.baseArrayLayer          = 0;
 	subresource_range.layerCount              = 1;
-	set_image_layout(command_buffer, image, old_layout, new_layout, subresource_range, src_mask, dst_mask);
+	image_layout_transition(command_buffer, image, old_layout, new_layout, subresource_range);
 }
 
-void insert_image_memory_barrier(
-    VkCommandBuffer         command_buffer,
-    VkImage                 image,
-    VkAccessFlags           src_access_mask,
-    VkAccessFlags           dst_access_mask,
-    VkImageLayout           old_layout,
-    VkImageLayout           new_layout,
-    VkPipelineStageFlags    src_stage_mask,
-    VkPipelineStageFlags    dst_stage_mask,
-    VkImageSubresourceRange subresource_range)
+void image_layout_transition(VkCommandBuffer                                                 command_buffer,
+                             std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
+                             VkImageLayout                                                   old_layout,
+                             VkImageLayout                                                   new_layout)
 {
-	VkImageMemoryBarrier barrier{};
-	barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.srcAccessMask       = src_access_mask;
-	barrier.dstAccessMask       = dst_access_mask;
-	barrier.oldLayout           = old_layout;
-	barrier.newLayout           = new_layout;
-	barrier.image               = image;
-	barrier.subresourceRange    = subresource_range;
+	VkPipelineStageFlags src_stage_mask  = getPipelineStageFlags(old_layout);
+	VkPipelineStageFlags dst_stage_mask  = getPipelineStageFlags(new_layout);
+	VkAccessFlags        src_access_mask = getAccessFlags(old_layout);
+	VkAccessFlags        dst_access_mask = getAccessFlags(new_layout);
 
-	vkCmdPipelineBarrier(
-	    command_buffer,
-	    src_stage_mask,
-	    dst_stage_mask,
-	    0,
-	    0, nullptr,
-	    0, nullptr,
-	    1, &barrier);
+	// Create image barrier objects
+	std::vector<VkImageMemoryBarrier> image_memory_barriers;
+	image_memory_barriers.reserve(imagesAndRanges.size());
+	for (size_t i = 0; i < imagesAndRanges.size(); i++)
+	{
+		image_memory_barriers.emplace_back(VkImageMemoryBarrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		                                                        nullptr,
+		                                                        src_access_mask,
+		                                                        dst_access_mask,
+		                                                        old_layout,
+		                                                        new_layout,
+		                                                        VK_QUEUE_FAMILY_IGNORED,
+		                                                        VK_QUEUE_FAMILY_IGNORED,
+		                                                        imagesAndRanges[i].first,
+		                                                        imagesAndRanges[i].second});
+	}
+
+	// Put barriers inside setup command buffer
+	vkCmdPipelineBarrier(command_buffer,
+	                     src_stage_mask,
+	                     dst_stage_mask,
+	                     0,
+	                     0,
+	                     nullptr,
+	                     0,
+	                     nullptr,
+	                     static_cast<uint32_t>(image_memory_barriers.size()),
+	                     image_memory_barriers.data());
 }
+
+VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice gpu, VkSurfaceKHR surface, std::vector<VkFormat> const &preferred_formats)
+{
+	uint32_t surface_format_count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, nullptr);
+	assert(0 < surface_format_count);
+	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, supported_surface_formats.data());
+
+	auto it = std::find_if(supported_surface_formats.begin(),
+	                       supported_surface_formats.end(),
+	                       [&preferred_formats](VkSurfaceFormatKHR surface_format) {
+		                       return std::any_of(preferred_formats.begin(),
+		                                          preferred_formats.end(),
+		                                          [&surface_format](VkFormat format) { return format == surface_format.format; });
+	                       });
+
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
+}
+
 namespace gbuffer
 {
 std::vector<LoadStoreInfo> get_load_all_store_swapchain()

@@ -80,6 +80,15 @@ class Drawer
 	bool checkbox(const char *caption, int32_t *value);
 
 	/**
+	 * @brief Adds a radio button to the gui
+	 * @param caption The text to display
+	 * @param selectedOption The pointer to the variable set using the radio button.
+	 * @param elementOption Value set to the selectedOption when the button is selected.
+	 * @returns True if adding item was successful
+	 */
+	bool radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption);
+
+	/**
 	 * @brief Adds a number input field to the gui
 	 * @param caption The text to display
 	 * @param value The value to map to

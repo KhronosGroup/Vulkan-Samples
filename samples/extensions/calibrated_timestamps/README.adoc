@@ -1,0 +1,49 @@
+////
+- Copyright (c) 2023, Holochip Corporation
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Calibrated Timestamps
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/calibrated_timestamps[Khronos Vulkan samples github repository].
+endif::[]
+
+
+This sample demonstrates the extension `VK_EXT_calibrated_timestamps`.
+The calibrated timestamps profiles any given portion of code, unlike timestamp queries, which only profiles an entire graphic queue.
+
+== Overview
+
+To enable the `VK_EXT_calibrated_timestamps` extension, `VK_KHR_get_physical_device_properties2` must be enabled.
+
+== Introduction
+
+This sample is built upon the framework of the Vulkan Sample `HDR`.
+We demonstrate using calibrated timestamps  over the build_command_buffers function.
+
+== * Time domain, timestamp, timestamp period, and max deviation
+
+A timestamp is being sampled via the calibrated timestamp extension.
+In general, one must take two timestamps in order to measure the time elapsed within a block of code.
+
+Each time domain is different, and the measurement of their associated timestamp periods may vary.
+The precision of timestamps is calibrated by max deviations.
+
+== Get time domain and timestamps
+
+A list of time domains can be extracted by using `vkGetPhysicalDeviceCalibrateableTimeDomainsEXT`.
+And the Vulkan time domain is defined by the enum `VkTimeDomainEXT`

@@ -106,11 +106,6 @@ class TerrainTessellation : public ApiVulkanSample
 	} descriptor_sets;
 
 	// Pipeline statistics
-	struct
-	{
-		VkBuffer       buffer;
-		VkDeviceMemory memory;
-	} query_result;
 	VkQueryPool query_pool        = VK_NULL_HANDLE;
 	uint64_t    pipeline_stats[2] = {0};
 

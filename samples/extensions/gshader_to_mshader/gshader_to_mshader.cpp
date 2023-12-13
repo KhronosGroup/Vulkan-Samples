@@ -415,12 +415,12 @@ void GshaderToMshader::on_update_ui_overlay(vkb::Drawer &drawer)
 		if (drawer.checkbox("Display normals - gshader", &showNormalsGeo))
 		{
 			showNormalsMesh = false;
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Display normals - mshader", &showNormalsMesh))
 		{
 			showNormalsGeo = false;
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }

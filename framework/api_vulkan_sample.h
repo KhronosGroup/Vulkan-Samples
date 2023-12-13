@@ -245,8 +245,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Records the necessary drawing commands to a command buffer
 	 * @param model The model to draw
 	 * @param command_buffer The command buffer to record to
+	 * @param instance_count The number of instances (default: 1)
 	 */
-	void draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer);
+	void draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer, uint32_t instance_count = 1);
 
 	/**
 	 * @brief Synchronously execute a block code within a command buffer, then submit the command buffer and wait for completion.
@@ -274,6 +275,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 *        Called when the framebuffers need to be rebuilt
 	 */
 	virtual void build_command_buffers() = 0;
+
+	/**
+	 * @brief Rebuild the command buffers by first resetting the corresponding command pool and then building the command buffers.
+	 */
+	void rebuild_command_buffers();
 
 	/**
 	 * @brief Creates the fences for rendering
@@ -322,6 +328,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Destroy all command buffers, may be necessary during runtime if options are toggled
 	 */
 	void destroy_command_buffers();
+
+	/**
+	 * @brief Recreate the current command buffer draw_cmd_buffer[current_buffer]
+	 */
+	void recreate_current_command_buffer();
 
 	/**
 	 * @brief Create a cache pool for rendering pipelines
@@ -390,15 +401,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 	uint32_t width    = 1280;
 	uint32_t height   = 720;
 
-	/** @brief Example settings that can be changed e.g. by command line arguments */
-	struct Settings
-	{
-		/** @brief Set to true if fullscreen mode has been requested via command line */
-		bool fullscreen = false;
-		/** @brief Set to true if v-sync will be forced for the swapchain */
-		bool vsync = false;
-	} settings;
-
 	VkClearColorValue default_clear_color = {{0.002f, 0.002f, 0.002f, 1.0f}};
 
 	float zoom = 0;
@@ -434,12 +436,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	struct
 	{
-		glm::vec2 axis_left  = glm::vec2(0.0f);
-		glm::vec2 axis_right = glm::vec2(0.0f);
-	} game_pad_state;
-
-	struct
-	{
 		bool left   = false;
 		bool right  = false;
 		bool middle = false;
@@ -450,7 +446,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 		int32_t x;
 		int32_t y;
 	} touch_pos;
-	bool    touch_down    = false;
-	double  touch_timer   = 0.0;
-	int64_t last_tap_time = 0;
+	bool   touch_down  = false;
+	double touch_timer = 0.0;
 };

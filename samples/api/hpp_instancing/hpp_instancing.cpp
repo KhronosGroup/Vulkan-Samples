@@ -40,50 +40,49 @@ HPPInstancing::~HPPInstancing()
 		device.destroyPipeline(starfield_pipeline);
 		device.destroyPipelineLayout(pipeline_layout);
 		device.destroyDescriptorSetLayout(descriptor_set_layout);
-		instance_buffer.destroy(device);
 	}
 }
 
 bool HPPInstancing::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		initialize_camera();
+		load_assets();
+		prepare_instance_data();
+		prepare_uniform_buffers();
+		vk::Device device     = get_device()->get_handle();
+		descriptor_set_layout = create_descriptor_set_layout();
+		pipeline_layout       = device.createPipelineLayout({{}, descriptor_set_layout});
+		descriptor_pool       = create_descriptor_pool();
+
+		// setup planet
+		planet.pipeline       = create_planet_pipeline();
+		planet.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
+		update_planet_descriptor_set();
+
+		// setup rocks
+		rocks.pipeline       = create_rocks_pipeline();
+		rocks.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
+		update_rocks_descriptor_set();
+
+		// setup starfield
+		starfield_pipeline = create_starfield_pipeline();
+
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	initialize_camera();
-	load_assets();
-	prepare_instance_data();
-	prepare_uniform_buffers();
-
-	vk::Device device = get_device()->get_handle();
-
-	descriptor_set_layout = create_descriptor_set_layout();
-	pipeline_layout       = device.createPipelineLayout({{}, descriptor_set_layout});
-	descriptor_pool       = create_descriptor_pool();
-
-	// setup planet
-	planet.pipeline       = create_planet_pipeline();
-	planet.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
-	update_planet_descriptor_set();
-
-	// setup rocks
-	rocks.pipeline       = create_rocks_pipeline();
-	rocks.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
-	update_rocks_descriptor_set();
-
-	// setup starfield
-	starfield_pipeline = create_starfield_pipeline();
-
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 bool HPPInstancing::resize(const uint32_t width, const uint32_t height)
 {
 	HPPApiVulkanSample::resize(width, height);
-	build_command_buffers();
+	rebuild_command_buffers();
 	return true;
 }
 
@@ -159,7 +158,7 @@ void HPPInstancing::build_command_buffers()
 		// Binding point 0 : Mesh vertex buffer
 		command_buffer.bindVertexBuffers(0, rocks.mesh->get_vertex_buffer("vertex_buffer").get_handle(), offset);
 		// Binding point 1 : Instance data buffer
-		command_buffer.bindVertexBuffers(1, instance_buffer.buffer, offset);
+		command_buffer.bindVertexBuffers(1, instance_buffer.buffer->get_handle(), offset);
 		command_buffer.bindIndexBuffer(rocks.mesh->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
 		// Render instances
 		command_buffer.drawIndexed(rocks.mesh->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
@@ -213,8 +212,8 @@ vk::DescriptorSetLayout HPPInstancing::create_descriptor_set_layout()
 vk::Pipeline HPPInstancing::create_planet_pipeline()
 {
 	// Planet rendering pipeline
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {load_shader("instancing/planet.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                  load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/planet.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
@@ -247,6 +246,8 @@ vk::Pipeline HPPInstancing::create_planet_pipeline()
 	                                             shader_stages,
 	                                             input_state,
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eBack,
 	                                             vk::FrontFace::eClockwise,
 	                                             {blend_attachment_state},
@@ -257,8 +258,8 @@ vk::Pipeline HPPInstancing::create_planet_pipeline()
 
 vk::Pipeline HPPInstancing::create_rocks_pipeline()
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{load_shader("instancing/instancing.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                               load_shader("instancing/instancing.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing/instancing.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("instancing/instancing.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	// The instancing pipeline uses a vertex input state with two bindings
@@ -305,6 +306,8 @@ vk::Pipeline HPPInstancing::create_rocks_pipeline()
 	                                             shader_stages,
 	                                             input_state,
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eBack,
 	                                             vk::FrontFace::eClockwise,
 	                                             {blend_attachment_state},
@@ -316,8 +319,8 @@ vk::Pipeline HPPInstancing::create_rocks_pipeline()
 vk::Pipeline HPPInstancing::create_starfield_pipeline()
 {
 	// Starfield rendering pipeline
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {load_shader("instancing/starfield.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                  load_shader("instancing/starfield.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/starfield.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing/starfield.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
@@ -350,6 +353,8 @@ vk::Pipeline HPPInstancing::create_starfield_pipeline()
 	                                             shader_stages,
 	                                             {},        // Vertices are generated in the vertex shader
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eNone,
 	                                             vk::FrontFace::eClockwise,
 	                                             {blend_attachment_state},
@@ -376,8 +381,8 @@ void HPPInstancing::load_assets()
 	rocks.mesh  = load_model("scenes/rock.gltf");
 	planet.mesh = load_model("scenes/planet.gltf");
 
-	rocks.texture  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
-	planet.texture = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
+	rocks.texture  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
+	planet.texture = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPInstancing::initialize_camera()
@@ -432,40 +437,25 @@ void HPPInstancing::prepare_instance_data()
 	// On devices with separate memory types for host visible and device local memory this will result in better performance
 	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary and you could skip the staging
 
-	struct
-	{
-		vk::DeviceMemory memory;
-		vk::Buffer       buffer;
-	} staging_buffer;
-
 	auto const &device = get_device();
 
-	std::tie(staging_buffer.buffer, staging_buffer.memory) =
-	    device->create_buffer(vk::BufferUsageFlagBits::eTransferSrc,
-	                          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-	                          instance_buffer.size,
-	                          instance_data.data());
+	vkb::core::HPPBuffer staging_buffer(*device, instance_buffer.size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_buffer.update(instance_data.data(), instance_buffer.size);
 
-	std::tie(instance_buffer.buffer, instance_buffer.memory) =
-	    device->create_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
-	                          vk::MemoryPropertyFlagBits::eDeviceLocal,
-	                          instance_buffer.size);
+	instance_buffer.buffer = std::make_unique<vkb::core::HPPBuffer>(
+	    *device, instance_buffer.size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy to staging buffer
 	vk::CommandBuffer copy_command = device->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
 	vk::BufferCopy copy_region(0, 0, instance_buffer.size);
-	copy_command.copyBuffer(staging_buffer.buffer, instance_buffer.buffer, copy_region);
+	copy_command.copyBuffer(staging_buffer.get_handle(), instance_buffer.buffer->get_handle(), copy_region);
 
 	device->flush_command_buffer(copy_command, queue, true);
 
 	instance_buffer.descriptor.range  = instance_buffer.size;
-	instance_buffer.descriptor.buffer = instance_buffer.buffer;
+	instance_buffer.descriptor.buffer = instance_buffer.buffer->get_handle();
 	instance_buffer.descriptor.offset = 0;
-
-	// Destroy staging resources
-	device->get_handle().destroyBuffer(staging_buffer.buffer);
-	device->get_handle().freeMemory(staging_buffer.memory);
 }
 
 void HPPInstancing::prepare_uniform_buffers()

@@ -1,0 +1,13 @@
+# Copyright 2022-2023 The Khronos Group Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: samples
+title: Vulkan Samples
+version: latest
+start_page: README.adoc
+asciidoc:
+  attributes:
+    source-language: asciidoc@
+    table-caption: false
+nav:
+  - modules/ROOT/nav.adoc

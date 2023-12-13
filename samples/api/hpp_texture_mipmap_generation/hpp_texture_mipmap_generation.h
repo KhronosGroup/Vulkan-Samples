@@ -61,15 +61,16 @@ class HPPTextureMipMapGeneration : public HPPApiVulkanSample
 	void render(float delta_time) override;
 	void view_changed() override;
 
-	void draw();
-	void load_assets();
-	void load_texture_generate_mipmaps(std::string file_name);
-	void prepare_pipelines();
-	void prepare_uniform_buffers();
-	void setup_descriptor_pool();
-	void setup_descriptor_set();
-	void setup_descriptor_set_layout();
-	void update_uniform_buffers(float delta_time = 0.0f);
+	void                    check_format_features(vk::Format) const;
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::DescriptorSetLayout create_descriptor_set_layout();
+	vk::Pipeline            create_pipeline();
+	void                    draw();
+	void                    load_assets();
+	void                    prepare_camera();
+	void                    prepare_uniform_buffers();
+	void                    update_descriptor_set();
+	void                    update_uniform_buffers(float delta_time = 0.0f);
 
   private:
 	vk::DescriptorSet       descriptor_set;

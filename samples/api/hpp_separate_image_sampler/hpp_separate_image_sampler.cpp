@@ -23,9 +23,10 @@
 
 HPPSeparateImageSampler::HPPSeparateImageSampler()
 {
+	title = "HPP Separate sampler and image";
+
 	zoom     = -0.5f;
 	rotation = {45.0f, 0.0f, 0.0f};
-	title    = "HPP Separate sampler and image";
 }
 
 HPPSeparateImageSampler::~HPPSeparateImageSampler()
@@ -52,22 +53,44 @@ HPPSeparateImageSampler::~HPPSeparateImageSampler()
 
 bool HPPSeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		load_assets();
+		generate_quad();
+		prepare_uniform_buffers();
+
+		// Create two samplers with different options, first one with linear filtering, the second one with nearest filtering
+		samplers = {{create_sampler(vk::Filter::eLinear), create_sampler(vk::Filter::eNearest)}};
+
+		descriptor_pool = create_descriptor_pool();
+
+		// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
+		// Descriptors set for the uniform buffer and the image
+		base_descriptor_set_layout = create_base_descriptor_set_layout();
+		base_descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
+		update_base_descriptor_set();
+
+		// Sets for each of the sampler
+		sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
+		for (size_t i = 0; i < sampler_descriptor_sets.size(); i++)
+		{
+			sampler_descriptor_sets[i] = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, sampler_descriptor_set_layout);
+			update_sampler_descriptor_set(i);
+		}
+
+		// Pipeline layout
+		// Set layout for the base descriptors in set 0 and set layout for the sampler descriptors in set 1
+		pipeline_layout = create_pipeline_layout({base_descriptor_set_layout, sampler_descriptor_set_layout});
+		pipeline        = create_graphics_pipeline();
+
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	load_assets();
-	generate_quad();
-	prepare_uniform_buffers();
-	setup_samplers();
-	setup_descriptor_set_layout();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_set();
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 // Enable physical device features required for this example
@@ -92,33 +115,34 @@ void HPPSeparateImageSampler::build_command_buffers()
 		// Set target frame buffer
 		render_pass_begin_info.framebuffer = framebuffers[i];
 
-		draw_cmd_buffers[i].begin(command_buffer_begin_info);
+		auto command_buffer = draw_cmd_buffers[i];
+		command_buffer.begin(command_buffer_begin_info);
 
-		draw_cmd_buffers[i].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
 		vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
-		draw_cmd_buffers[i].setViewport(0, viewport);
+		command_buffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor({0, 0}, extent);
-		draw_cmd_buffers[i].setScissor(0, scissor);
+		command_buffer.setScissor(0, scissor);
 
 		// Bind the uniform buffer and sampled image to set 0
-		draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, base_descriptor_set, {});
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, base_descriptor_set, {});
 		// Bind the selected sampler to set 1
-		draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 1, sampler_descriptor_sets[selected_sampler], {});
-		draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 1, sampler_descriptor_sets[selected_sampler], {});
+		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
 		vk::DeviceSize offset = 0;
-		draw_cmd_buffers[i].bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
-		draw_cmd_buffers[i].bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
+		command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
+		command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
 
-		draw_cmd_buffers[i].drawIndexed(index_count, 1, 0, 0, 0);
+		command_buffer.drawIndexed(index_count, 1, 0, 0, 0);
 
-		draw_ui(draw_cmd_buffers[i]);
+		draw_ui(command_buffer);
 
-		draw_cmd_buffers[i].endRenderPass();
+		command_buffer.endRenderPass();
 
-		draw_cmd_buffers[i].end();
+		command_buffer.end();
 	}
 }
 
@@ -136,16 +160,105 @@ void HPPSeparateImageSampler::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void HPPSeparateImageSampler::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
+		draw();
 	}
-	draw();
 }
 
 void HPPSeparateImageSampler::view_changed()
 {
 	update_uniform_buffers();
+}
+
+vk::DescriptorSetLayout HPPSeparateImageSampler::create_base_descriptor_set_layout()
+{
+	// Set layout for the uniform buffer and the image
+	std::array<vk::DescriptorSetLayoutBinding, 2> set_layout_bindings_buffer_and_image = {{
+	    {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},        // Binding 0 : Vertex shader uniform buffer
+	    {1, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment}        // Binding 1 : Fragment shader sampled image
+	}};
+
+	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_bindings_buffer_and_image);
+
+	return get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+}
+
+vk::DescriptorPool HPPSeparateImageSampler::create_descriptor_pool()
+{
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
+	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eSampledImage, 1}, {vk::DescriptorType::eSampler, 2}}};
+
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 3, pool_sizes);
+
+	return get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
+}
+
+vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
+{
+	// Load shaders
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
+	    load_shader("separate_image_sampler/separate_image_sampler.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("separate_image_sampler/separate_image_sampler.frag", vk::ShaderStageFlagBits::eFragment)};
+
+	// Vertex bindings and attributes
+	vk::VertexInputBindingDescription                  input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
+	std::array<vk::VertexInputAttributeDescription, 3> input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, pos)},             // Location 0 : Position
+	     {1, 0, vk::Format::eR32G32Sfloat, offsetof(VertexStructure, uv)},                 // Location 1: Texture Coordinates
+	     {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, normal)}}};        // Location 2 : Normal
+	vk::PipelineVertexInputStateCreateInfo input_state({}, input_binding, input_attributes);
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthTestEnable  = true;
+	depth_stencil_state.depthWriteEnable = true;
+	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
+	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
+
+	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
+}
+
+vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<vk::DescriptorSetLayout> const &descriptor_set_layouts)
+{
+	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, descriptor_set_layouts);
+	return get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
+}
+
+vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
+{
+	return vkb::common::create_sampler(
+	    get_device()->get_handle(),
+	    filter,
+	    vk::SamplerAddressMode::eRepeat,
+	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
+	    static_cast<float>(texture.image->get_mipmaps().size()));
+}
+
+vk::DescriptorSetLayout HPPSeparateImageSampler::create_sampler_descriptor_set_layout()
+{
+	// Set layout for the samplers
+	vk::DescriptorSetLayoutBinding set_layout_binding_sampler(0, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment);
+
+	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_binding_sampler);
+
+	return get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
 }
 
 void HPPSeparateImageSampler::draw()
@@ -196,106 +309,21 @@ void HPPSeparateImageSampler::generate_quad()
 
 void HPPSeparateImageSampler::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
-}
-
-void HPPSeparateImageSampler::prepare_pipelines()
-{
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, vk::PrimitiveTopology::eTriangleList);
-
-	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
-	rasterization_state.cullMode    = vk::CullModeFlagBits::eNone;
-	rasterization_state.frontFace   = vk::FrontFace::eCounterClockwise;
-	rasterization_state.lineWidth   = 1.0f;
-
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, {}, {}, blend_attachment_state);
-
-	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
-	depth_stencil_state.depthTestEnable  = true;
-	depth_stencil_state.depthWriteEnable = true;
-	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
-	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
-
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
-
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
-
-	std::array<vk::DynamicState, 2>    dynamic_state_enables = {{vk::DynamicState::eViewport, vk::DynamicState::eScissor}};
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
-
-	// Load shaders
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("separate_image_sampler/separate_image_sampler.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                   load_shader("separate_image_sampler/separate_image_sampler.frag", vk::ShaderStageFlagBits::eFragment)}};
-
-	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
-	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {
-	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, pos)},             // Location 0 : Position
-	     {1, 0, vk::Format::eR32G32Sfloat, offsetof(VertexStructure, uv)},                 // Location 1: Texture Coordinates
-	     {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, normal)}}};        // Location 2 : Normal
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
-
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &vertex_input_state,
-	                                                    &input_assembly_state,
-	                                                    {},
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layout,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
-
-	vk::Result result;
-	std::tie(result, pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
 void HPPSeparateImageSampler::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
-	                                                           sizeof(ubo_vs),
-	                                                           vk::BufferUsageFlagBits::eUniformBuffer,
-	                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs =
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
 
-void HPPSeparateImageSampler::setup_descriptor_pool()
+void HPPSeparateImageSampler::update_base_descriptor_set()
 {
-	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eSampledImage, 1}, {vk::DescriptorType::eSampler, 2}}};
-
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 3, pool_sizes);
-
-	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
-}
-
-void HPPSeparateImageSampler::setup_descriptor_set()
-{
-	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-
-	// Descriptors set for the uniform buffer and the image
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo descriptor_set_alloc_info(descriptor_pool, 1, &base_descriptor_set_layout);
-#else
-	vk::DescriptorSetAllocateInfo descriptor_set_alloc_info(descriptor_pool, base_descriptor_set_layout);
-#endif
-	base_descriptor_set = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
-
 	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffer_vs->get_handle(), 0, VK_WHOLE_SIZE);
 
 	// Image info only references the image
@@ -309,83 +337,18 @@ void HPPSeparateImageSampler::setup_descriptor_set()
 	    image_write_descriptor_set                                                                     // Binding 1 : Fragment shader sampled image
 	}};
 	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
-
-	// Sets for each of the sampler
-	descriptor_set_alloc_info.pSetLayouts = &sampler_descriptor_set_layout;
-	for (size_t i = 0; i < sampler_descriptor_sets.size(); i++)
-	{
-		sampler_descriptor_sets[i] = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
-
-		// Descriptor info only references the sampler
-		vk::DescriptorImageInfo sampler_info(samplers[i]);
-
-		vk::WriteDescriptorSet sampler_write_descriptor_set(sampler_descriptor_sets[i], 0, 0, vk::DescriptorType::eSampler, sampler_info);
-
-		get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_set, {});
-	}
 }
 
-void HPPSeparateImageSampler::setup_descriptor_set_layout()
+void HPPSeparateImageSampler::update_sampler_descriptor_set(size_t index)
 {
-	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-	// Set layout for the uniform buffer and the image
-	std::array<vk::DescriptorSetLayoutBinding, 2> set_layout_bindings_buffer_and_image = {{
-	    {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},        // Binding 0 : Vertex shader uniform buffer
-	    {1, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment}        // Binding 1 : Fragment shader sampled image
-	}};
-	vk::DescriptorSetLayoutCreateInfo             descriptor_layout_create_info({}, set_layout_bindings_buffer_and_image);
-	base_descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	assert((index < samplers.size()) && (index < sampler_descriptor_sets.size()));
 
-	// Set layout for the samplers
-	vk::DescriptorSetLayoutBinding set_layout_binding_sampler(0, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment);
-	descriptor_layout_create_info.setBindings(set_layout_binding_sampler);
-	sampler_descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	// Descriptor info only references the sampler
+	vk::DescriptorImageInfo sampler_info(samplers[index]);
 
-	// Pipeline layout
-	// Set layout for the base descriptors in set 0 and set layout for the sampler descriptors in set 1
-	std::array<vk::DescriptorSetLayout, 2> set_layouts = {{base_descriptor_set_layout, sampler_descriptor_set_layout}};
-	vk::PipelineLayoutCreateInfo           pipeline_layout_create_info({}, set_layouts);
-	pipeline_layout = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
-}
+	vk::WriteDescriptorSet sampler_write_descriptor_set(sampler_descriptor_sets[index], 0, 0, vk::DescriptorType::eSampler, sampler_info);
 
-void HPPSeparateImageSampler::setup_samplers()
-{
-	// Create two samplers with different options
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter    = vk::Filter::eLinear;
-	sampler_create_info.minFilter    = vk::Filter::eLinear;
-	sampler_create_info.mipmapMode   = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.addressModeV = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.addressModeW = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.mipLodBias   = 0.0f;
-	sampler_create_info.compareOp    = vk::CompareOp::eNever;
-	sampler_create_info.minLod       = 0.0f;
-	// Set max level-of-detail to mip level count of the texture
-	sampler_create_info.maxLod = static_cast<float>(texture.image->get_mipmaps().size());
-	// Enable anisotropic filtering
-	// This feature is optional, so we must check if it's supported on the device
-	if (get_device()->get_gpu().get_features().samplerAnisotropy)
-	{
-		// Use max. level of anisotropy for this example
-		sampler_create_info.maxAnisotropy    = get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy;
-		sampler_create_info.anisotropyEnable = true;
-	}
-	else
-	{
-		// The device does not support anisotropic filtering
-		sampler_create_info.maxAnisotropy    = 1.0;
-		sampler_create_info.anisotropyEnable = false;
-	}
-	sampler_create_info.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-
-	// First sampler with linear filtering
-	samplers[0] = get_device()->get_handle().createSampler(sampler_create_info);
-
-	// Second sampler with nearest filtering
-	sampler_create_info.magFilter = vk::Filter::eNearest;
-	sampler_create_info.minFilter = vk::Filter::eNearest;
-	samplers[1]                   = get_device()->get_handle().createSampler(sampler_create_info);
+	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_set, {});
 }
 
 void HPPSeparateImageSampler::update_uniform_buffers()

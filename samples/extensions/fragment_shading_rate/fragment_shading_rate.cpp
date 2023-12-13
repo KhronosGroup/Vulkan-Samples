@@ -186,20 +186,9 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	delete[] shading_rate_pattern_data;
 
 	// Upload the buffer containing the shading rates to the image that'll be used as the shading rate attachment inside our renderpass
-	VkCommandBuffer         copy_cmd          = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	VkImageSubresourceRange subresource_range = {};
-	subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
-	subresource_range.levelCount              = 1;
-	subresource_range.layerCount              = 1;
+	VkCommandBuffer copy_cmd = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-	image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	image_memory_barrier.srcAccessMask        = 0;
-	image_memory_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-	image_memory_barrier.image                = shading_rate_image.image;
-	image_memory_barrier.subresourceRange     = subresource_range;
-	vkCmdPipelineBarrier(copy_cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
+	vkb::image_layout_transition(copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	VkBufferImageCopy buffer_copy_region           = {};
 	buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -210,13 +199,8 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	vkCmdCopyBufferToImage(copy_cmd, staging_buffer->get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 	// Transfer image layout to fragment shading rate attachment layout required to access this in the renderpass
-	image_memory_barrier.oldLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	image_memory_barrier.newLayout        = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-	image_memory_barrier.srcAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
-	image_memory_barrier.dstAccessMask    = 0;
-	image_memory_barrier.image            = shading_rate_image.image;
-	image_memory_barrier.subresourceRange = subresource_range;
-	vkCmdPipelineBarrier(copy_cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
+	vkb::image_layout_transition(
+	    copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
 
 	device->flush_command_buffer(copy_cmd, queue, true);
 
@@ -736,7 +720,7 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.checkbox("Enable attachment shading rate", &enable_attachment_shading_rate))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Color shading rates", &color_shading_rate))
 		{
@@ -744,7 +728,7 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 		if (drawer.checkbox("skysphere", &display_skysphere))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }
@@ -757,7 +741,7 @@ bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 		setup_framebuffer();
 	}
 	update_uniform_buffers();
-	build_command_buffers();
+	rebuild_command_buffers();
 	return true;
 }
 

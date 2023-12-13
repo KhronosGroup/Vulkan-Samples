@@ -343,15 +343,8 @@ void MultiDrawIndirect::load_scene()
 		subresource_range.baseMipLevel            = 0;
 		subresource_range.levelCount              = texture.n_mip_maps;
 
-		VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
-		image_barrier.srcAccessMask        = 0;
-		image_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-		image_barrier.image                = texture.image->get_handle();
-		image_barrier.subresourceRange     = subresource_range;
-		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-		image_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-		vkCmdPipelineBarrier(texture_cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+		vkb::image_layout_transition(
+		    texture_cmd.get_handle(), texture.image->get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 		auto              offsets              = image->get_offsets();
 		VkBufferImageCopy region               = {};
@@ -420,27 +413,17 @@ void MultiDrawIndirect::load_scene()
 		}
 	}
 
+	std::vector<std::pair<VkImage, VkImageSubresourceRange>> imagesAndRanges;
+	imagesAndRanges.reserve(textures.size());
+	for (auto const &texture : textures)
+	{
+		imagesAndRanges.emplace_back(
+		    std::make_pair(texture.image->get_handle(), VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, texture.n_mip_maps, 0, 1}));
+	}
+
 	auto &cmd = device->get_command_pool().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	std::vector<VkImageMemoryBarrier> image_barriers;
-	image_barriers.reserve(textures.size());
-	for (auto &&texture : textures)
-	{
-		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		subresource_range.baseMipLevel            = 0;
-		subresource_range.levelCount              = texture.n_mip_maps;
-
-		VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
-		image_barrier.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-		image_barrier.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-		image_barrier.image                = texture.image->get_handle();
-		image_barrier.subresourceRange     = subresource_range;
-		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		image_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		image_barriers.emplace_back(image_barrier);
-	}
-	vkCmdPipelineBarrier(cmd.get_handle(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, static_cast<uint32_t>(image_barriers.size()), image_barriers.data());
+	vkb::image_layout_transition(cmd.get_handle(), imagesAndRanges, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	cmd.end();
 	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 	queue.submit(cmd, device->request_fence());
@@ -798,7 +781,7 @@ void MultiDrawIndirect::render(float delta_time)
 
 	if (m_requires_rebuild)
 	{
-		build_command_buffers();
+		rebuild_command_buffers();
 		m_requires_rebuild = false;
 	}
 
