@@ -512,6 +512,6 @@ The library defines a common baseline of features, extensions, etc.
 
 The goal of these samples is to demonstrate different techniques or showcase complex scenarios that doesn't necessarily fit any of the main categories.
 
-=== xref:./general/nerf/README.adoc[NeRF]
+=== xref:./general/mobile_nerf/README.adoc[Mobile NeRF]
 
 A Neural Radiance Field synthesizer sample, based on textured polygons.

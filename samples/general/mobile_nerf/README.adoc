@@ -17,15 +17,16 @@
 -
 ////
 
-= NeRF
+= Mobile NeRF
 
 ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/general/nerf[Khronos Vulkan samples github repository].
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/general/mobile_nerf[Khronos Vulkan samples github repository].
 endif::[]
 
 This sample is a modified version of the https://mobile-nerf.github.io/[Mobile Nerf] developed by Google. 
 It's based on its original https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf[source code] but optimized for Vulkan.
-
+This is a different version from the traditional NeRF as it uses the rasterization pipeline to render the final image.
+ 
 == Description: [https://mobile-nerf.github.io/[Mobile Nerf]]
 Neural Radiance Fields (NeRFs) have demonstrated amazing ability to synthesize images of 3D scenes from novel views. 
 However, they rely upon specialized volumetric rendering algorithms based on ray marching that are mismatched to the capabilities of widely deployed graphics hardware. 

@@ -104,7 +104,7 @@
 * xref:samples/tooling/README.adoc[Tooling samples]
 ** xref:samples/tooling/profiles/README.adoc[Profiles]
 * xref:samples/general/README.adoc[General samples]
-** xref:samples/general/nerf/README.adoc[NeRF]
+** xref:samples/general/mobile_nerf/README.adoc[Mobile NeRF]
 * xref:docs/README.adoc[General documentation]
 ** xref:docs/build.adoc[Build guide]
 ** xref:docs/memory_limits.adoc[Memory limits]
