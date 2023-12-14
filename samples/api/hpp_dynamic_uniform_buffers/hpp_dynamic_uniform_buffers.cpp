@@ -116,21 +116,6 @@ bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 		prepared = true;
 	}
 
-	vk::Device device = get_device()->get_handle();
-
-	prepare_camera();
-	generate_cube();
-	prepare_uniform_buffers();
-
-	descriptor_set_layout = create_descriptor_set_layout();
-	pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
-	pipeline              = create_pipeline(supported_shaders.begin()->first, supported_shaders.begin()->second);
-	descriptor_pool       = create_descriptor_pool();
-	descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
-
-	update_descriptor_set();
-	build_command_buffers();
-	prepared = true;
 	return true;
 }
 
