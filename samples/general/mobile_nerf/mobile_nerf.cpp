@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "nerf.h"
+#include "mobile_nerf.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "gltf_loader.h"
 #include "platform/filesystem.h"
