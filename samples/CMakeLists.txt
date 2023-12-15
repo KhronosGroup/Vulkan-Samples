@@ -87,6 +87,7 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
+    "sparse_image"
 
     #Performance Samples
     "swapchain_images"
