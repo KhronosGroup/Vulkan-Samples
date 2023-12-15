@@ -74,6 +74,7 @@
 ** xref:samples/extensions/ray_queries/README.adoc[Ray queries]
 ** xref:samples/extensions/ray_tracing_reflection/README.adoc[Ray tracing reflection]
 ** xref:samples/extensions/shader_object/README.adoc[Shader Object]
+** xref:samples/extensions/sparse_image/README.adoc[Sparse Image]
 ** xref:samples/extensions/synchronization_2/README.adoc[Synchronization 2]
 ** xref:samples/extensions/timeline_semaphore/README.adoc[Timeline semaphore]
 ** xref:samples/extensions/vertex_dynamic_state/README.adoc[Vertex dynamic state]
