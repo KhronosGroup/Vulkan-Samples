@@ -35,11 +35,11 @@ class Camera;
 }        // namespace sg
 }        // namespace vkb
 
-class Nerf : public ApiVulkanSample
+class MobileNerf : public ApiVulkanSample
 {
   public:
-	Nerf();
-	~Nerf() override;
+	MobileNerf();
+	~MobileNerf() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
@@ -240,4 +240,4 @@ class Nerf : public ApiVulkanSample
 	bool     use_native_screen_size = false;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_nerf();
+std::unique_ptr<vkb::VulkanSample> create_mobile_nerf();
