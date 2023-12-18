@@ -1,5 +1,6 @@
 /*
  * Copyright 2023 Nintendo
+ * Copyright 2023, Sascha Willems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,10 +171,6 @@ bool ShaderObject::prepare(const vkb::ApplicationOptions &options)
 	camera.set_position({0.f, 0.f, -4.5f});
 	camera.set_rotation({19.f, 312.f, 0.f});
 	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 1024.f, 0.1f);
-
-	// For UI need to setup FBO and render pass
-	setup_framebuffer();
-	setup_render_pass();
 
 	// Setup resources for sample
 	create_default_sampler();
@@ -410,6 +407,7 @@ void ShaderObject::load_assets()
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
 	// Setup a mirroring sampler for the height map
+	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
 	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
 	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
 	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -423,6 +421,7 @@ void ShaderObject::load_assets()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &heightmap_texture.sampler));
 
 	// Setup a repeating sampler for the terrain texture layers
+	vkDestroySampler(get_device().get_handle(), terrain_array_textures.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
 	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
 	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
@@ -1426,8 +1425,8 @@ void ShaderObject::set_initial_state(VkCommandBuffer cmd)
 		const VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		const VkRect2D   scissor  = vkb::initializers::rect2D(width, height, 0, 0);
 
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
+		vkCmdSetViewportWithCountEXT(cmd, 1, &viewport);
+		vkCmdSetScissorWithCountEXT(cmd, 1, &scissor);
 	}
 
 	// Rasterization is always enabled
