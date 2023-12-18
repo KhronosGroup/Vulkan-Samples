@@ -187,6 +187,7 @@ void ExtendedDynamicState3MultisampleRasterization::draw_node(VkCommandBuffer &d
 	push_const_block.base_color_factor    = node_material->base_color_factor;
 	push_const_block.metallic_factor      = node_material->metallic_factor;
 	push_const_block.roughness_factor     = node_material->roughness_factor;
+	push_const_block.base_texture_index   = -1;
 	push_const_block.normal_texture_index = -1;
 	push_const_block.pbr_texture_index    = -1;
 
@@ -364,7 +365,7 @@ void ExtendedDynamicState3MultisampleRasterization::load_assets()
 		imageInfo.sampler     = texture->get_sampler()->vk_sampler.get_handle();
 
 		image_infos.push_back(imageInfo);
-		name_to_texture_id.emplace(name, static_cast<int>(image_infos.size()) - 1);
+		name_to_texture_id.emplace(name, static_cast<int32_t>(image_infos.size()) - 1);
 	}
 }
 

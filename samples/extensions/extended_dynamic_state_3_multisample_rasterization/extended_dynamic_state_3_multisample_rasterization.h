@@ -31,7 +31,7 @@ class ExtendedDynamicState3MultisampleRasterization : public ApiVulkanSample
 
 	std::unique_ptr<vkb::sg::Scene>    scene;
 	std::vector<VkDescriptorImageInfo> image_infos;
-	std::map<std::string, int>         name_to_texture_id;
+	std::map<std::string, int32_t>     name_to_texture_id;
 
 	struct SceneNode
 	{
@@ -79,9 +79,9 @@ class ExtendedDynamicState3MultisampleRasterization : public ApiVulkanSample
 		float     metallic_factor;
 		float     roughness_factor;
 
-		uint32_t base_texture_index;
-		uint32_t normal_texture_index;
-		uint32_t pbr_texture_index;
+		int32_t base_texture_index;
+		int32_t normal_texture_index;
+		int32_t pbr_texture_index;
 
 	} push_const_block;
 

@@ -23,7 +23,7 @@
 == Overview
 
 This sample demonstrates one of the functionalities of VK_EXT_extended_dynamic_state3 related to rasterization samples.
-The extension can be used to dynamically change sampling without any need to restart the application.
+The extension can be used to dynamically change sampling without need to swap pipelines.
 image:image/image.png[]
 
 == Enabling the extension
