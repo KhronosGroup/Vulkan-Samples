@@ -106,6 +106,10 @@ Follow build instructions for your platform below.
 
 The following shows some example command line usage on how to configure and run the Vulkan Samples.
 
+> Make sure that you are running the samples from the root directory of the repository.
+> Otherwise the samples will not be able to find the assets.
+> ./build/app/bin/<BuildType>/<Arch>/vulkan_samples
+
 ----
 # For the entire usage use
 vulkan_samples --help

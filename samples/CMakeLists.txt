@@ -88,6 +88,7 @@ set(ORDER_LIST
     "gshader_to_mshader"
     "color_write_enable"
     "extended_dynamic_state_3_multisample_rasterization"
+    "sparse_image"
 
     #Performance Samples
     "swapchain_images"
@@ -128,7 +129,10 @@ set(ORDER_LIST
 	
     #HPP Performance Samples
     "hpp_pipeline_cache"
-    "hpp_swapchain_images")
+    "hpp_swapchain_images"
+    
+    #General Samples
+    "nerf")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)
