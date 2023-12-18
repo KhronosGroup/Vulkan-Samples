@@ -131,7 +131,7 @@ set(ORDER_LIST
     "hpp_swapchain_images"
     
     #General Samples
-    "nerf")
+    "mobile_nerf")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)
