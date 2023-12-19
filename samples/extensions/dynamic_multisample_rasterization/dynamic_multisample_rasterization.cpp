@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "extended_dynamic_state_3_multisample_rasterization.h"
+#include "dynamic_multisample_rasterization.h"
 
 #include "gltf_loader.h"
 #include "scene_graph/components/material.h"
@@ -23,7 +23,7 @@
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
 
-ExtendedDynamicState3MultisampleRasterization::ExtendedDynamicState3MultisampleRasterization()
+DynamicMultisampleRasterization::DynamicMultisampleRasterization()
 {
 	title = "DynamicState3 Multisample Rasterization";
 
@@ -31,7 +31,7 @@ ExtendedDynamicState3MultisampleRasterization::ExtendedDynamicState3MultisampleR
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 }
 
-ExtendedDynamicState3MultisampleRasterization::~ExtendedDynamicState3MultisampleRasterization()
+DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 {
 	if (device)
 	{
@@ -42,7 +42,7 @@ ExtendedDynamicState3MultisampleRasterization::~ExtendedDynamicState3Multisample
 	}
 }
 
-void ExtendedDynamicState3MultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Query the extended dynamic state support
 	extended_dynamic_state_3_features       = {};
@@ -108,7 +108,7 @@ const ImVec2 to_scale_ui(VkSampleCountFlagBits sample_count)
 	}
 }
 
-void ExtendedDynamicState3MultisampleRasterization::prepare_supported_sample_count_list()
+void DynamicMultisampleRasterization::prepare_supported_sample_count_list()
 {
 	VkPhysicalDeviceProperties gpu_properties;
 	vkGetPhysicalDeviceProperties(get_device().get_gpu().get_handle(), &gpu_properties);
@@ -137,7 +137,7 @@ void ExtendedDynamicState3MultisampleRasterization::prepare_supported_sample_cou
 	}
 }
 
-bool ExtendedDynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOptions &options)
+bool DynamicMultisampleRasterization::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!ApiVulkanSample::prepare(options))
 	{
@@ -167,7 +167,7 @@ bool ExtendedDynamicState3MultisampleRasterization::prepare(const vkb::Applicati
 	return true;
 }
 
-void ExtendedDynamicState3MultisampleRasterization::draw_node(VkCommandBuffer &draw_cmd_buffer, SceneNode &node)
+void DynamicMultisampleRasterization::draw_node(VkCommandBuffer &draw_cmd_buffer, SceneNode &node)
 {
 	assert(node.sub_mesh->vertex_buffers.count("position") == 1);
 	assert(node.sub_mesh->vertex_buffers.count("normal") == 1);
@@ -223,7 +223,7 @@ void ExtendedDynamicState3MultisampleRasterization::draw_node(VkCommandBuffer &d
 	vkCmdDraw(draw_cmd_buffer, node.sub_mesh->vertex_indices, 1, 0, 0);
 }
 
-void ExtendedDynamicState3MultisampleRasterization::build_command_buffers()
+void DynamicMultisampleRasterization::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -292,7 +292,7 @@ void ExtendedDynamicState3MultisampleRasterization::build_command_buffers()
 	}
 }
 
-void ExtendedDynamicState3MultisampleRasterization::draw_ui(VkCommandBuffer &cmd_buffer)
+void DynamicMultisampleRasterization::draw_ui(VkCommandBuffer &cmd_buffer)
 {
 	if (gui)
 	{
@@ -318,7 +318,7 @@ void ExtendedDynamicState3MultisampleRasterization::draw_ui(VkCommandBuffer &cmd
 	}
 }
 
-void ExtendedDynamicState3MultisampleRasterization::load_assets()
+void DynamicMultisampleRasterization::load_assets()
 {
 	vkb::GLTFLoader loader{get_device()};
 	scene = loader.read_scene_from_file("scenes/space_module/SpaceModule.gltf");
@@ -369,7 +369,7 @@ void ExtendedDynamicState3MultisampleRasterization::load_assets()
 	}
 }
 
-void ExtendedDynamicState3MultisampleRasterization::setup_descriptor_pool()
+void DynamicMultisampleRasterization::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
@@ -380,7 +380,7 @@ void ExtendedDynamicState3MultisampleRasterization::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void ExtendedDynamicState3MultisampleRasterization::setup_descriptor_set_layout()
+void DynamicMultisampleRasterization::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
@@ -405,7 +405,7 @@ void ExtendedDynamicState3MultisampleRasterization::setup_descriptor_set_layout(
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
-void ExtendedDynamicState3MultisampleRasterization::setup_descriptor_sets()
+void DynamicMultisampleRasterization::setup_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(
@@ -423,7 +423,7 @@ void ExtendedDynamicState3MultisampleRasterization::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void ExtendedDynamicState3MultisampleRasterization::setup_render_pass()
+void DynamicMultisampleRasterization::setup_render_pass()
 {
 	VkPhysicalDeviceProperties gpu_properties;
 	vkGetPhysicalDeviceProperties(get_device().get_gpu().get_handle(), &gpu_properties);
@@ -518,7 +518,7 @@ void ExtendedDynamicState3MultisampleRasterization::setup_render_pass()
 }
 
 // Create attachment that will be used in a framebuffer.
-void ExtendedDynamicState3MultisampleRasterization::setup_color_attachment()
+void DynamicMultisampleRasterization::setup_color_attachment()
 {
 	VkImageCreateInfo image_create_info{};
 	image_create_info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -560,7 +560,7 @@ void ExtendedDynamicState3MultisampleRasterization::setup_color_attachment()
 	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &color_attachment.view));
 }
 
-void ExtendedDynamicState3MultisampleRasterization::setup_depth_stencil()
+void DynamicMultisampleRasterization::setup_depth_stencil()
 {
 	VkImageCreateInfo image_create_info{};
 	image_create_info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -602,7 +602,7 @@ void ExtendedDynamicState3MultisampleRasterization::setup_depth_stencil()
 	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &depth_stencil.view));
 }
 
-void ExtendedDynamicState3MultisampleRasterization::setup_framebuffer()
+void DynamicMultisampleRasterization::setup_framebuffer()
 {
 	setup_color_attachment();
 	setup_depth_stencil();
@@ -638,7 +638,7 @@ void ExtendedDynamicState3MultisampleRasterization::setup_framebuffer()
 	}
 }
 
-void ExtendedDynamicState3MultisampleRasterization::prepare_pipelines()
+void DynamicMultisampleRasterization::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
@@ -744,8 +744,8 @@ void ExtendedDynamicState3MultisampleRasterization::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	shader_stages[0] = load_shader("extended_dynamic_state_3_multisample_rasterization/model.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("extended_dynamic_state_3_multisample_rasterization/model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_multisample_rasterization/model.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_multisample_rasterization/model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 
 	// Add another pipeline since parts of the scene have to be rendered using VK_FRONT_FACE_CLOCKWISE
@@ -761,7 +761,7 @@ void ExtendedDynamicState3MultisampleRasterization::prepare_pipelines()
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
-void ExtendedDynamicState3MultisampleRasterization::prepare_uniform_buffers()
+void DynamicMultisampleRasterization::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
 	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -772,7 +772,7 @@ void ExtendedDynamicState3MultisampleRasterization::prepare_uniform_buffers()
 	update_uniform_buffers();
 }
 
-void ExtendedDynamicState3MultisampleRasterization::update_uniform_buffers()
+void DynamicMultisampleRasterization::update_uniform_buffers()
 {
 	uniform_data.projection = camera.matrices.perspective;
 	// Scale the view matrix as the model is pretty large, and also flip it upside down
@@ -780,7 +780,7 @@ void ExtendedDynamicState3MultisampleRasterization::update_uniform_buffers()
 	uniform_buffer->convert_and_update(uniform_data);
 }
 
-void ExtendedDynamicState3MultisampleRasterization::draw()
+void DynamicMultisampleRasterization::draw()
 {
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
@@ -789,7 +789,7 @@ void ExtendedDynamicState3MultisampleRasterization::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-void ExtendedDynamicState3MultisampleRasterization::render(float delta_time)
+void DynamicMultisampleRasterization::render(float delta_time)
 {
 	if (!prepared)
 	{
@@ -803,7 +803,7 @@ void ExtendedDynamicState3MultisampleRasterization::render(float delta_time)
 	}
 }
 
-void ExtendedDynamicState3MultisampleRasterization::update_resources()
+void DynamicMultisampleRasterization::update_resources()
 {
 	prepared = false;
 
@@ -841,7 +841,7 @@ void ExtendedDynamicState3MultisampleRasterization::update_resources()
 	prepared = true;
 }
 
-void ExtendedDynamicState3MultisampleRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
+void DynamicMultisampleRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
@@ -854,7 +854,7 @@ void ExtendedDynamicState3MultisampleRasterization::on_update_ui_overlay(vkb::Dr
 	}
 }
 
-bool ExtendedDynamicState3MultisampleRasterization::resize(const uint32_t _width, const uint32_t _height)
+bool DynamicMultisampleRasterization::resize(const uint32_t _width, const uint32_t _height)
 {
 	if (!ApiVulkanSample::resize(_width, _height))
 		return false;
@@ -867,7 +867,7 @@ bool ExtendedDynamicState3MultisampleRasterization::resize(const uint32_t _width
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_extended_dynamic_state_3_multisample_rasterization()
+std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization()
 {
-	return std::make_unique<ExtendedDynamicState3MultisampleRasterization>();
+	return std::make_unique<DynamicMultisampleRasterization>();
 }

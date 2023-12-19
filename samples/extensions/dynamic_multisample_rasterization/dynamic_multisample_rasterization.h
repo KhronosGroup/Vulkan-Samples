@@ -19,11 +19,11 @@
 
 #include "api_vulkan_sample.h"
 
-class ExtendedDynamicState3MultisampleRasterization : public ApiVulkanSample
+class DynamicMultisampleRasterization : public ApiVulkanSample
 {
   public:
-	ExtendedDynamicState3MultisampleRasterization();
-	virtual ~ExtendedDynamicState3MultisampleRasterization();
+	DynamicMultisampleRasterization();
+	virtual ~DynamicMultisampleRasterization();
 
   private:
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
@@ -125,4 +125,4 @@ class ExtendedDynamicState3MultisampleRasterization : public ApiVulkanSample
 	void         draw_node(VkCommandBuffer &, SceneNode &);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_extended_dynamic_state_3_multisample_rasterization();
+std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization();
