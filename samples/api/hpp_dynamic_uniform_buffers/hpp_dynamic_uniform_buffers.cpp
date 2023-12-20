@@ -101,7 +101,7 @@ bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 		prepared = true;
 	}
 
-	return true;
+	return prepared;
 }
 
 bool HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)

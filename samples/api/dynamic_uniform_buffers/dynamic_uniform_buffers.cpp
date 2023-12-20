@@ -338,6 +338,11 @@ void DynamicUniformBuffers::prepare_pipelines()
 	        static_cast<uint32_t>(dynamic_state_enables.size()),
 	        0);
 
+	// Load shaders
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	shader_stages[0] = load_shader("dynamic_uniform_buffers/base.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_uniform_buffers/base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
@@ -357,11 +362,6 @@ void DynamicUniformBuffers::prepare_pipelines()
 	        pipeline_layout,
 	        render_pass,
 	        0);
-
-	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-	shader_stages[0] = load_shader("dynamic_uniform_buffers/base.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_uniform_buffers/base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -506,7 +506,6 @@ bool DynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 	setup_descriptor_pool();
 	setup_descriptor_set();
 	build_command_buffers();
-
 	prepared = true;
 	return true;
 }
