@@ -197,9 +197,9 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 	virtual void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
-	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void render(float delta_time) override;
+	virtual void build_command_buffers() override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	virtual void render(float delta_time) override;
 
 	vk::DeviceMemory      allocate_memory(vk::Image image);
 	FramebufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
