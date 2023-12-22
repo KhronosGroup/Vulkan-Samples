@@ -88,6 +88,7 @@ set(ORDER_LIST
     "gshader_to_mshader"
     "color_write_enable"
     "sparse_image"
+    "dynamic_depth_clipping"
 
     #Performance Samples
     "swapchain_images"
