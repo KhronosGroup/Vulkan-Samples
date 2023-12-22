@@ -87,6 +87,7 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
+    "dynamic_depth_clipping"
 
     #Performance Samples
     "swapchain_images"
