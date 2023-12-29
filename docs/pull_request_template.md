@@ -31,6 +31,6 @@ If your PR contains a new or modified sample, these further checks must be carri
 - [ ] If the sample is vendor-specific, I have [tagged it appropriately](https://github.com/KhronosGroup/Vulkan-Samples/tree/main/CONTRIBUTING.md#General-Requirements)
 - [ ] I have stated on what implementation the sample has been tested so that others can test on different implementations and platforms
 - [ ] Any dependent assets have been merged and published in downstream modules
-- [ ] For new samples, I have added a paragraph with a summary to the appropriate chapter in the [samples readme](./../samples/README.md)
-- [ ] For new samples, I have added a tutorial README.md file to guide users through what they need to know to implement code using this feature. For example, see [conditional_rendering](./../samples/extensions/conditional_rendering)
-- [ ] For new samples, I have added a link to the [Antora navigation](./../antora/modules/ROOT/nav.adoc) so that the sample will be listed at the Vulkan documentation site
+- [ ] For new samples, I have added a paragraph with a summary to the appropriate chapter in the [samples readme](https://github.com/KhronosGroup/Vulkan-Samples/blob/main/samples/README.adoc)
+- [ ] For new samples, I have added a tutorial README.md file to guide users through what they need to know to implement code using this feature. For example, see [conditional_rendering](https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/conditional_rendering)
+- [ ] For new samples, I have added a link to the [Antora navigation](https://github.com/KhronosGroup/Vulkan-Samples/blob/main/antora/modules/ROOT/nav.adoc) so that the sample will be listed at the Vulkan documentation site
