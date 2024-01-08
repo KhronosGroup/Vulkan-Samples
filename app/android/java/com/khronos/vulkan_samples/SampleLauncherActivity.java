@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -124,6 +124,7 @@ public class SampleLauncherActivity extends AppCompatActivity {
             arguments.add("batch");
             arguments.add("--category");
             arguments.add(category);
+            arguments.add("--tag");
             arguments.addAll(sampleListView.dialog.getFilter());
 
             String[] sa = {};
