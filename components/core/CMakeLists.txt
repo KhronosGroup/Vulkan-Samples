@@ -20,7 +20,9 @@ vkb__register_component(
         include/core/util/strings.hpp
         include/core/util/error.hpp
         include/core/util/hash.hpp
-
+        
+        include/core/containers/cache_map.hpp
+        include/core/containers/type_map.hpp
         include/core/containers/container_wrapper.hpp
     SRC
         src/strings.cpp

@@ -76,23 +76,22 @@ class HPPResourceCache
 	HPPResourceCache &operator=(const HPPResourceCache &) = delete;
 	HPPResourceCache &operator=(HPPResourceCache &&)      = delete;
 
-	void clear();
-	void clear_framebuffers();
-
+	virtual vkb::core::HPPShaderModule        &request_shader_module(vk::ShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant = {});
+	virtual vkb::core::HPPPipelineLayout      &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules);
+	virtual vkb::core::HPPDescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::core::HPPShaderModule *> &shader_modules, const std::vector<vkb::core::HPPShaderResource> &set_resources);
+	virtual vkb::core::HPPGraphicsPipeline    &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state);
 	virtual vkb::core::HPPComputePipeline     &request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state);
 	virtual vkb::core::HPPDescriptorSet       &request_descriptor_set(vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, const BindingMap<vk::DescriptorBufferInfo> &buffer_infos, const BindingMap<vk::DescriptorImageInfo> &image_infos);
-	virtual vkb::core::HPPDescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::core::HPPShaderModule *> &shader_modules, const std::vector<vkb::core::HPPShaderResource> &set_resources);
-	virtual vkb::core::HPPFramebuffer         &request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass);
-	virtual vkb::core::HPPGraphicsPipeline    &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state);
-	virtual vkb::core::HPPPipelineLayout      &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules);
 	virtual vkb::core::HPPRenderPass          &request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments, const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos, const std::vector<vkb::core::HPPSubpassInfo> &subpasses);
-	virtual vkb::core::HPPShaderModule        &request_shader_module(vk::ShaderStageFlagBits stage, const vkb::ShaderSource &glsl_source, const vkb::ShaderVariant &shader_variant = {});
+	virtual vkb::core::HPPFramebuffer         &request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass);
 
 	/// @brief Update those descriptor sets referring to old views
 	/// @param old_views Old image views referred by descriptor sets
 	/// @param new_views New image views to be referred
-	void update_descriptor_sets(const std::vector<vkb::core::HPPImageView> &old_views, const std::vector<vkb::core::HPPImageView> &new_views);
+	virtual void update_descriptor_sets(const std::vector<vkb::core::HPPImageView> &old_views, const std::vector<vkb::core::HPPImageView> &new_views);
 
+	virtual void clear();
+	virtual void clear_framebuffers();
   protected:
 	vkb::core::HPPDevice &device;
 

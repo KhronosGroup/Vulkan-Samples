@@ -92,8 +92,6 @@ class ResourceCache
 
   protected:
 	Device &device;
-
-	mutable std::mutex mutex;
 	ResourceCacheState state;
 };
 }        // namespace vkb

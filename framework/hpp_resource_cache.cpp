@@ -67,6 +67,9 @@ void HPPResourceCache::clear_framebuffers()
 
 vkb::core::HPPComputePipeline &HPPResourceCache::request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
 {
+	// The benefits of a pipeline cache in most of the vulkan samples scenes is negligable
+	// as we use 1-3 pipelines per sample.
+	// Opt to not use a state because of this
 	vk::PipelineCache pipeline_cache{VK_NULL_HANDLE};
 	return request_resource(device, state.compute_pipelines, pipeline_cache, pipeline_state);
 }
@@ -89,6 +92,9 @@ vkb::core::HPPFramebuffer &HPPResourceCache::request_framebuffer(const vkb::rend
 
 vkb::core::HPPGraphicsPipeline &HPPResourceCache::request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
 {
+	// The benefits of a pipeline cache in most of the vulkan samples scenes is negligable
+	// as we use 1-3 pipelines per sample.
+	// Opt to not use a state because of this
 	vk::PipelineCache pipeline_cache{VK_NULL_HANDLE};
 	return request_resource(device, state.graphics_pipelines, pipeline_cache, pipeline_state);
 }

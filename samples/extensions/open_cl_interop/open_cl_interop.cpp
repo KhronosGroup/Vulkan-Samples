@@ -572,7 +572,7 @@ void OpenCLInterop::prepare_shared_image()
 	sampler_create_info.magFilter   = VK_FILTER_LINEAR;
 	sampler_create_info.minFilter   = VK_FILTER_LINEAR;
 	sampler_create_info.mipmapMode  = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	sampler_create_info.maxLod      = static_cast<float>(1);
+	sampler_create_info.maxLod      = 1.0f;
 	sampler_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	vkCreateSampler(device_handle, &sampler_create_info, nullptr, &shared_image.sampler);
 
