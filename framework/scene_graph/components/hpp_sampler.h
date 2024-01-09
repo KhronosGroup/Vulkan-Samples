@@ -38,7 +38,7 @@ class HPPSampler : private vkb::sg::Sampler
 	using vkb::sg::Sampler::get_name;
 
 	HPPSampler(const std::string &name, vkb::core::HPPSampler &&vk_sampler) :
-	    vkb::sg::Sampler(name, reinterpret_cast<vkb::core::Sampler &&>(std::move(vk_sampler)))
+	    vkb::sg::Sampler(name, reinterpret_cast<vkb::core::Sampler &&>(std::forward<vkb::core::HPPSampler>(vk_sampler)))
 	{}
 };
 }        // namespace components

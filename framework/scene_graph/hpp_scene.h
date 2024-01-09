@@ -48,7 +48,7 @@ class HPPScene : private vkb::sg::Scene
 	template <typename T>
 	void add_component(std::unique_ptr<T> &&component)
 	{
-		vkb::sg::Scene::add_component(reinterpret_cast<std::unique_ptr<typename T::ComponentType> &&>(std::move(component)));
+		vkb::sg::Scene::add_component(reinterpret_cast<std::unique_ptr<typename T::ComponentType> &&>(std::forward<std::unique_ptr<T>>(component)));
 	}
 
 	void add_node(std::unique_ptr<vkb::scene_graph::HPPNode> &&node)
@@ -82,7 +82,8 @@ class HPPScene : private vkb::sg::Scene
 	template <typename T>
 	void set_components(std::vector<std::unique_ptr<T>> &&components)
 	{
-		vkb::sg::Scene::set_components(reinterpret_cast<std::vector<std::unique_ptr<typename T::ComponentType>> &&>(std::move(components)));
+		vkb::sg::Scene::set_components(
+		    reinterpret_cast<std::vector<std::unique_ptr<typename T::ComponentType>> &&>(std::forward<std::vector<std::unique_ptr<T>>>(components)));
 	}
 
 	void set_nodes(std::vector<std::unique_ptr<vkb::scene_graph::HPPNode>> &&nodes)
