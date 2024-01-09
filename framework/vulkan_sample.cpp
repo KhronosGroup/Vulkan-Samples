@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -95,7 +95,7 @@ bool VulkanSample::prepare(const ApplicationOptions &options)
 		throw VulkanException(result, "Failed to initialize volk.");
 	}
 
-	std::unique_ptr<DebugUtils> debug_utils{};
+	std::unique_ptr<vkb::core::DebugUtils> debug_utils{};
 
 	// Creating the vulkan instance
 	for (const char *extension_name : window->get_required_surface_extensions())
@@ -117,7 +117,7 @@ bool VulkanSample::prepare(const ApplicationOptions &options)
 			{
 				LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-				debug_utils = std::make_unique<DebugUtilsExtDebugUtils>();
+				debug_utils = std::make_unique<vkb::core::DebugUtilsExtDebugUtils>();
 				add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 				break;
 			}
@@ -177,7 +177,7 @@ bool VulkanSample::prepare(const ApplicationOptions &options)
 			{
 				LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 
-				debug_utils = std::make_unique<DebugMarkerExtDebugUtils>();
+				debug_utils = std::make_unique<vkb::core::DebugMarkerExtDebugUtils>();
 				add_device_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 				break;
 			}
@@ -192,7 +192,7 @@ bool VulkanSample::prepare(const ApplicationOptions &options)
 
 	if (!debug_utils)
 	{
-		debug_utils = std::make_unique<DummyDebugUtils>();
+		debug_utils = std::make_unique<vkb::core::DummyDebugUtils>();
 	}
 
 	create_device();        // create_custom_device? better way than override?

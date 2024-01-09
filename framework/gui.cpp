@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -494,7 +494,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 		return;
 	}
 
-	ScopedDebugLabel debug_label{command_buffer, "GUI"};
+	vkb::core::ScopedDebugLabel debug_label{command_buffer, "GUI"};
 
 	// Vertex input state
 	VkVertexInputBindingDescription vertex_input_binding{};

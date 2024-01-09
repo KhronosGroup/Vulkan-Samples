@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,10 +25,10 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-Device::Device(PhysicalDevice                        &gpu,
-               VkSurfaceKHR                           surface,
-               std::unique_ptr<DebugUtils>          &&debug_utils,
-               std::unordered_map<const char *, bool> requested_extensions) :
+Device::Device(PhysicalDevice                          &gpu,
+               VkSurfaceKHR                             surface,
+               std::unique_ptr<vkb::core::DebugUtils> &&debug_utils,
+               std::unordered_map<const char *, bool>   requested_extensions) :
     VulkanResource{VK_NULL_HANDLE, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
@@ -251,7 +251,7 @@ Device::Device(PhysicalDevice &gpu, VkDevice &vulkan_device, VkSurfaceKHR surfac
     resource_cache{*this}
 {
 	this->handle = vulkan_device;
-	debug_utils  = std::make_unique<DummyDebugUtils>();
+	debug_utils  = std::make_unique<vkb::core::DummyDebugUtils>();
 }
 
 Device::~Device()

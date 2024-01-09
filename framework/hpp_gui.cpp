@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -443,7 +443,7 @@ void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
 		return;
 	}
 
-	vkb::core::HPPScopedDebugLabel debug_label(command_buffer, "GUI");
+	vkb::core::ScopedDebugLabel debug_label(command_buffer, "GUI");
 
 	// Vertex input state
 	vk::VertexInputBindingDescription vertex_input_binding({}, to_u32(sizeof(ImDrawVert)));

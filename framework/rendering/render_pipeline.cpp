@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -109,7 +109,7 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 		{
 			subpass->set_debug_name(fmt::format("RP subpass #{}", i));
 		}
-		ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
+		vkb::core::ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
 
 		subpass->draw(command_buffer);
 	}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,11 +36,11 @@ void PostProcessingPipeline::draw(CommandBuffer &command_buffer, RenderTarget &d
 		{
 			pass.debug_name = fmt::format("PPP pass #{}", current_pass_index);
 		}
-		ScopedDebugLabel marker{command_buffer, pass.debug_name.c_str()};
+		vkb::core::ScopedDebugLabel marker{command_buffer, pass.debug_name.c_str()};
 
 		if (!pass.prepared)
 		{
-			ScopedDebugLabel marker{command_buffer, "Prepare"};
+			vkb::core::ScopedDebugLabel marker{command_buffer, "Prepare"};
 
 			pass.prepare(command_buffer, default_render_target);
 			pass.prepared = true;
@@ -48,7 +48,7 @@ void PostProcessingPipeline::draw(CommandBuffer &command_buffer, RenderTarget &d
 
 		if (pass.pre_draw)
 		{
-			ScopedDebugLabel marker{command_buffer, "Pre-draw"};
+			vkb::core::ScopedDebugLabel marker{command_buffer, "Pre-draw"};
 
 			pass.pre_draw();
 		}
@@ -57,7 +57,7 @@ void PostProcessingPipeline::draw(CommandBuffer &command_buffer, RenderTarget &d
 
 		if (pass.post_draw)
 		{
-			ScopedDebugLabel marker{command_buffer, "Post-draw"};
+			vkb::core::ScopedDebugLabel marker{command_buffer, "Post-draw"};
 
 			pass.post_draw();
 		}

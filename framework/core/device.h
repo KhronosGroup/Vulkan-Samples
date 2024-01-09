@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,10 +60,10 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	 * @param debug_utils The debug utils to be associated to this device
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
 	 */
-	Device(PhysicalDevice                        &gpu,
-	       VkSurfaceKHR                           surface,
-	       std::unique_ptr<DebugUtils>          &&debug_utils,
-	       std::unordered_map<const char *, bool> requested_extensions = {});
+	Device(PhysicalDevice                          &gpu,
+	       VkSurfaceKHR                             surface,
+	       std::unique_ptr<vkb::core::DebugUtils> &&debug_utils,
+	       std::unordered_map<const char *, bool>   requested_extensions = {});
 
 	/**
 	 * @brief Device constructor
@@ -92,7 +92,7 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	/**
 	 * @brief Returns the debug utils associated with this Device.
 	 */
-	inline const DebugUtils &get_debug_utils() const
+	inline const vkb::core::DebugUtils &get_debug_utils() const
 	{
 		return *debug_utils;
 	}
@@ -219,7 +219,7 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
 
-	std::unique_ptr<DebugUtils> debug_utils;
+	std::unique_ptr<vkb::core::DebugUtils> debug_utils;
 
 	std::vector<VkExtensionProperties> device_extensions;
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -94,7 +94,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 
 	// Draw opaque objects in front-to-back order
 	{
-		ScopedDebugLabel opaque_debug_label{command_buffer, "Opaque objects"};
+		vkb::core::ScopedDebugLabel opaque_debug_label{command_buffer, "Opaque objects"};
 
 		for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 		{
@@ -128,7 +128,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 
 	// Draw transparent objects in back-to-front order
 	{
-		ScopedDebugLabel transparent_debug_label{command_buffer, "Transparent objects"};
+		vkb::core::ScopedDebugLabel transparent_debug_label{command_buffer, "Transparent objects"};
 
 		for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
 		{
@@ -164,7 +164,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 {
 	auto &device = command_buffer.get_device();
 
-	ScopedDebugLabel submesh_debug_label{command_buffer, sub_mesh.get_name().c_str()};
+	vkb::core::ScopedDebugLabel submesh_debug_label{command_buffer, sub_mesh.get_name().c_str()};
 
 	prepare_pipeline_state(command_buffer, front_face, sub_mesh.get_material()->double_sided);
 

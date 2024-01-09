@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -257,7 +257,6 @@ set(CORE_FILES
     core/hpp_buffer.h
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
-    core/hpp_debug.h
     core/hpp_descriptor_pool.h
     core/hpp_descriptor_set.h
     core/hpp_descriptor_set_layout.h
@@ -309,7 +308,6 @@ set(CORE_FILES
     core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp
-    core/hpp_debug.cpp
     core/hpp_device.cpp
     core/hpp_image.cpp
     core/hpp_image_view.cpp

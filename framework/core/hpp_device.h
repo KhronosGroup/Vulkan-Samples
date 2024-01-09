@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include <core/debug.h>
 #include <core/hpp_command_buffer.h>
 #include <core/hpp_command_pool.h>
-#include <core/hpp_debug.h>
 #include <core/hpp_physical_device.h>
 #include <core/hpp_queue.h>
 #include <core/hpp_vulkan_resource.h>
@@ -43,10 +43,10 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 	 * @param debug_utils The debug utils to be associated to this device
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
 	 */
-	HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
-	          vk::SurfaceKHR                              surface,
-	          std::unique_ptr<vkb::core::HPPDebugUtils> &&debug_utils,
-	          std::unordered_map<const char *, bool>      requested_extensions = {});
+	HPPDevice(vkb::core::HPPPhysicalDevice            &gpu,
+	          vk::SurfaceKHR                           surface,
+	          std::unique_ptr<vkb::core::DebugUtils> &&debug_utils,
+	          std::unordered_map<const char *, bool>   requested_extensions = {});
 
 	HPPDevice(const HPPDevice &) = delete;
 
@@ -65,7 +65,7 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 	/**
 	 * @brief Returns the debug utils associated with this HPPDevice.
 	 */
-	vkb::core::HPPDebugUtils const &get_debug_utils() const;
+	vkb::core::DebugUtils const &get_debug_utils() const;
 
 	vkb::core::HPPQueue const &get_queue(uint32_t queue_family_index, uint32_t queue_index) const;
 
@@ -133,7 +133,7 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 
 	vk::SurfaceKHR surface{nullptr};
 
-	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
+	std::unique_ptr<vkb::core::DebugUtils> debug_utils;
 
 	std::vector<vk::ExtensionProperties> device_extensions;
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -86,7 +86,7 @@ bool HPPVulkanSample::prepare(const vkb::ApplicationOptions &options)
 		add_instance_extension(extension_name);
 	}
 
-	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
+	std::unique_ptr<vkb::core::DebugUtils> debug_utils;
 #ifdef VKB_VULKAN_DEBUG
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
@@ -97,7 +97,7 @@ bool HPPVulkanSample::prepare(const vkb::ApplicationOptions &options)
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-			debug_utils = std::make_unique<vkb::core::HPPDebugUtilsExtDebugUtils>();
+			debug_utils = std::make_unique<vkb::core::DebugUtilsExtDebugUtils>();
 			add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 	}
@@ -146,7 +146,7 @@ bool HPPVulkanSample::prepare(const vkb::ApplicationOptions &options)
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 
-			debug_utils = std::make_unique<vkb::core::HPPDebugMarkerExtDebugUtils>();
+			debug_utils = std::make_unique<vkb::core::DebugMarkerExtDebugUtils>();
 			add_device_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 		}
 	}
@@ -159,7 +159,7 @@ bool HPPVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 	if (!debug_utils)
 	{
-		debug_utils = std::make_unique<vkb::core::HPPDummyDebugUtils>();
+		debug_utils = std::make_unique<vkb::core::DummyDebugUtils>();
 	}
 
 	device = std::make_unique<vkb::core::HPPDevice>(gpu, surface, std::move(debug_utils), get_device_extensions());

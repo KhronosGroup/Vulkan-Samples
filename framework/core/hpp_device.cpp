@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,10 +25,10 @@ namespace vkb
 {
 namespace core
 {
-HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
-                     vk::SurfaceKHR                              surface,
-                     std::unique_ptr<vkb::core::HPPDebugUtils> &&debug_utils,
-                     std::unordered_map<const char *, bool>      requested_extensions) :
+HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice            &gpu,
+                     vk::SurfaceKHR                           surface,
+                     std::unique_ptr<vkb::core::DebugUtils> &&debug_utils,
+                     std::unordered_map<const char *, bool>   requested_extensions) :
     HPPVulkanResource{nullptr, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
@@ -277,7 +277,7 @@ VmaAllocator const &HPPDevice::get_memory_allocator() const
 	return memory_allocator;
 }
 
-vkb::core::HPPDebugUtils const &HPPDevice::get_debug_utils() const
+vkb::core::DebugUtils const &HPPDevice::get_debug_utils() const
 {
 	return *debug_utils;
 }

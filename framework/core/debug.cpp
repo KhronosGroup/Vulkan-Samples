@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,193 +16,91 @@
  */
 
 #include "debug.h"
-
-#include "core/command_buffer.h"
-#include "core/device.h"
-
-#include <glm/gtc/type_ptr.hpp>
-#include <unordered_map>
+#include "core/hpp_command_buffer.h"
+#include "core/hpp_device.h"
 
 namespace vkb
 {
-void DebugUtilsExtDebugUtils::set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                             const char *name) const
+namespace core
 {
-	VkDebugUtilsObjectNameInfoEXT name_info{};
-	name_info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-	name_info.objectType   = object_type;
-	name_info.objectHandle = object_handle;
-	name_info.pObjectName  = name;
-
-	assert(vkSetDebugUtilsObjectNameEXT);
-	vkSetDebugUtilsObjectNameEXT(device, &name_info);
+void DebugUtilsExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const
+{
+	vk::DebugUtilsObjectNameInfoEXT name_info(object_type, object_handle, name);
+	device.setDebugUtilsObjectNameEXT(name_info);
 }
 
-void DebugUtilsExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                            uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
+void DebugUtilsExtDebugUtils::set_debug_tag(
+    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
-	VkDebugUtilsObjectTagInfoEXT tag_info{};
-	tag_info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT;
-	tag_info.objectType   = object_type;
-	tag_info.objectHandle = object_handle;
-	tag_info.tagName      = tag_name;
-	tag_info.tagSize      = tag_data_size;
-	tag_info.pTag         = tag_data;
-
-	assert(vkSetDebugUtilsObjectTagEXT);
-	vkSetDebugUtilsObjectTagEXT(device, &tag_info);
+	vk::DebugUtilsObjectTagInfoEXT tag_info(object_type, object_handle, tag_name, tag_data_size, tag_data);
+	device.setDebugUtilsObjectTagEXT(tag_info);
 }
 
-void DebugUtilsExtDebugUtils::cmd_begin_label(VkCommandBuffer command_buffer,
-                                              const char *name, glm::vec4 color) const
+void DebugUtilsExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	VkDebugUtilsLabelEXT label_info{};
-	label_info.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-	label_info.pLabelName = name;
-	memcpy(label_info.color, glm::value_ptr(color), sizeof(glm::vec4));
-
-	assert(vkCmdBeginDebugUtilsLabelEXT);
-	vkCmdBeginDebugUtilsLabelEXT(command_buffer, &label_info);
+	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	command_buffer.beginDebugUtilsLabelEXT(label_info);
 }
 
-void DebugUtilsExtDebugUtils::cmd_end_label(VkCommandBuffer command_buffer) const
+void DebugUtilsExtDebugUtils::cmd_end_label(vk::CommandBuffer command_buffer) const
 {
-	assert(vkCmdEndDebugUtilsLabelEXT);
-	vkCmdEndDebugUtilsLabelEXT(command_buffer);
+	command_buffer.endDebugUtilsLabelEXT();
 }
 
-void DebugUtilsExtDebugUtils::cmd_insert_label(VkCommandBuffer command_buffer,
-                                               const char *name, glm::vec4 color) const
+void DebugUtilsExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	VkDebugUtilsLabelEXT label_info{};
-	label_info.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-	label_info.pLabelName = name;
-	memcpy(label_info.color, glm::value_ptr(color), sizeof(glm::vec4));
-
-	assert(vkCmdInsertDebugUtilsLabelEXT);
-	vkCmdInsertDebugUtilsLabelEXT(command_buffer, &label_info);
+	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	command_buffer.insertDebugUtilsLabelEXT(label_info);
 }
 
-// See https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkDebugReportObjectTypeEXT.html
-static const std::unordered_map<VkObjectType, VkDebugReportObjectTypeEXT> VK_OBJECT_TYPE_TO_DEBUG_REPORT_TYPE{
-    {VK_OBJECT_TYPE_UNKNOWN, VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT},
-    {VK_OBJECT_TYPE_INSTANCE, VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT},
-    {VK_OBJECT_TYPE_PHYSICAL_DEVICE, VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT},
-    {VK_OBJECT_TYPE_DEVICE, VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT},
-    {VK_OBJECT_TYPE_QUEUE, VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT},
-    {VK_OBJECT_TYPE_SEMAPHORE, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT},
-    {VK_OBJECT_TYPE_COMMAND_BUFFER, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT},
-    {VK_OBJECT_TYPE_FENCE, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT},
-    {VK_OBJECT_TYPE_DEVICE_MEMORY, VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT},
-    {VK_OBJECT_TYPE_BUFFER, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT},
-    {VK_OBJECT_TYPE_IMAGE, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT},
-    {VK_OBJECT_TYPE_EVENT, VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT},
-    {VK_OBJECT_TYPE_QUERY_POOL, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT},
-    {VK_OBJECT_TYPE_BUFFER_VIEW, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT},
-    {VK_OBJECT_TYPE_IMAGE_VIEW, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT},
-    {VK_OBJECT_TYPE_SHADER_MODULE, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT},
-    {VK_OBJECT_TYPE_PIPELINE_CACHE, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT},
-    {VK_OBJECT_TYPE_PIPELINE_LAYOUT, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT},
-    {VK_OBJECT_TYPE_RENDER_PASS, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT},
-    {VK_OBJECT_TYPE_PIPELINE, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT},
-    {VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT},
-    {VK_OBJECT_TYPE_SAMPLER, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT},
-    {VK_OBJECT_TYPE_DESCRIPTOR_POOL, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT},
-    {VK_OBJECT_TYPE_DESCRIPTOR_SET, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT},
-    {VK_OBJECT_TYPE_FRAMEBUFFER, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT},
-    {VK_OBJECT_TYPE_COMMAND_POOL, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT},
-    {VK_OBJECT_TYPE_SURFACE_KHR, VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT},
-    {VK_OBJECT_TYPE_SWAPCHAIN_KHR, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT},
-    {VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT, VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT},
-    {VK_OBJECT_TYPE_DISPLAY_KHR, VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT},
-    {VK_OBJECT_TYPE_DISPLAY_MODE_KHR, VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT},
-    {VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_KHR, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT},
-};
-
-void DebugMarkerExtDebugUtils::set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                              const char *name) const
+void DebugMarkerExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const
 {
-	VkDebugMarkerObjectNameInfoEXT name_info{};
-	name_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-	name_info.objectType  = VK_OBJECT_TYPE_TO_DEBUG_REPORT_TYPE.at(object_type);
-	name_info.object      = object_handle;
-	name_info.pObjectName = name;
-
-	assert(vkDebugMarkerSetObjectNameEXT);
-	vkDebugMarkerSetObjectNameEXT(device, &name_info);
+	vk::DebugMarkerObjectNameInfoEXT name_info(vk::debugReportObjectType(object_type), object_handle, name);
+	device.debugMarkerSetObjectNameEXT(name_info);
 }
 
-void DebugMarkerExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                             uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
+void DebugMarkerExtDebugUtils::set_debug_tag(
+    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
-	VkDebugMarkerObjectTagInfoEXT tag_info{};
-	tag_info.sType      = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
-	tag_info.objectType = VK_OBJECT_TYPE_TO_DEBUG_REPORT_TYPE.at(object_type);
-	tag_info.object     = object_handle;
-	tag_info.tagName    = tag_name;
-	tag_info.tagSize    = tag_data_size;
-	tag_info.pTag       = tag_data;
-
-	assert(vkDebugMarkerSetObjectTagEXT);
-	vkDebugMarkerSetObjectTagEXT(device, &tag_info);
+	vk::DebugMarkerObjectTagInfoEXT tag_info(vk::debugReportObjectType(object_type), object_handle, tag_name, tag_data_size, tag_data);
+	device.debugMarkerSetObjectTagEXT(tag_info);
 }
 
-void DebugMarkerExtDebugUtils::cmd_begin_label(VkCommandBuffer command_buffer,
-                                               const char *name, glm::vec4 color) const
+void DebugMarkerExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	VkDebugMarkerMarkerInfoEXT marker_info{};
-	marker_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-	marker_info.pMarkerName = name;
-	memcpy(marker_info.color, glm::value_ptr(color), sizeof(glm::vec4));
-
-	assert(vkCmdDebugMarkerBeginEXT);
-	vkCmdDebugMarkerBeginEXT(command_buffer, &marker_info);
+	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	command_buffer.debugMarkerBeginEXT(marker_info);
 }
 
-void DebugMarkerExtDebugUtils::cmd_end_label(VkCommandBuffer command_buffer) const
+void DebugMarkerExtDebugUtils::cmd_end_label(vk::CommandBuffer command_buffer) const
 {
-	assert(vkCmdDebugMarkerEndEXT);
-	vkCmdDebugMarkerEndEXT(command_buffer);
+	command_buffer.debugMarkerEndEXT();
 }
 
-void DebugMarkerExtDebugUtils::cmd_insert_label(VkCommandBuffer command_buffer,
-                                                const char *name, glm::vec4 color) const
+void DebugMarkerExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	VkDebugMarkerMarkerInfoEXT marker_info{};
-	marker_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-	marker_info.pMarkerName = name;
-	memcpy(marker_info.color, glm::value_ptr(color), sizeof(glm::vec4));
-
-	assert(vkCmdDebugMarkerInsertEXT);
-	vkCmdDebugMarkerInsertEXT(command_buffer, &marker_info);
+	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	command_buffer.debugMarkerInsertEXT(marker_info);
 }
 
-ScopedDebugLabel::ScopedDebugLabel(const DebugUtils &debug_utils, VkCommandBuffer command_buffer,
-                                   const char *name, glm::vec4 color) :
-    debug_utils{&debug_utils},
-    command_buffer{VK_NULL_HANDLE}
+ScopedDebugLabel::ScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer_, std::string const &name, glm::vec4 const color)
 {
-	if (name && *name != '\0')
+	if (!name.empty())
 	{
-		assert(command_buffer != VK_NULL_HANDLE);
-		this->command_buffer = command_buffer;
+		assert(command_buffer);
+		command_buffer = &command_buffer_;
 
-		debug_utils.cmd_begin_label(command_buffer, name, color);
+		command_buffer->get_device().get_debug_utils().cmd_begin_label(command_buffer->get_handle(), name.c_str(), color);
 	}
-}
-
-ScopedDebugLabel::ScopedDebugLabel(const CommandBuffer &command_buffer,
-                                   const char *name, glm::vec4 color) :
-    ScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
-{
 }
 
 ScopedDebugLabel::~ScopedDebugLabel()
 {
-	if (command_buffer != VK_NULL_HANDLE)
+	if (command_buffer)
 	{
-		debug_utils->cmd_end_label(command_buffer);
+		command_buffer->get_device().get_debug_utils().cmd_end_label(command_buffer->get_handle());
 	}
 }
 
+}        // namespace core
 }        // namespace vkb
