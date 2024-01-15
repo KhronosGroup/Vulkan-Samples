@@ -75,9 +75,12 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 
 bool OITLinkedLists::resize(const uint32_t width, const uint32_t height)
 {
-	destroy_sized_objects();
-	create_sized_objects(width, height);
-	update_descriptors();
+	if ((width != this->width) || (height != this->height))
+	{
+		destroy_sized_objects();
+		create_sized_objects(width, height);
+		update_descriptors();
+	}
 	ApiVulkanSample::resize(width, height);
 	return true;
 }
