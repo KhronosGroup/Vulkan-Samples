@@ -29,7 +29,7 @@ image:image/image.png[]
 == Enabling the extension
 
 To be able to use this extension in Vulkan API:
-1) VK_EXT_extended_dynamic_state3 depends on `VK_KHR_get_physical_device_properties2`, which is promoted to Vulkan 1.1. That is, to use this extension, `VK_EXT_extended_dynamic_state3` and either `VK_KHR_get_physical_device_properties2` or Vulkan 1.1 are required.
+1) `VK_EXT_extended_dynamic_state3` depends on `VK_KHR_get_physical_device_properties2`, which is promoted to Vulkan 1.1. That is, to use this extension, `VK_EXT_extended_dynamic_state3` and either `VK_KHR_get_physical_device_properties2` or Vulkan 1.1 are required.
 2) Set of `VkPhysicalDeviceExtendedDynamicStateFeaturesEXT`, `VkPhysicalDeviceExtendedDynamicState2FeaturesEXT`, `VkPhysicalDeviceExtendedDynamicState3FeaturesEXT`
 must be added to the feature chain of `VkPhysicalDeviceProperties2`.
 

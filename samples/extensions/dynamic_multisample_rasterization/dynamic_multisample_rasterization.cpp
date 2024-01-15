@@ -110,6 +110,9 @@ const ImVec2 to_scale_ui(VkSampleCountFlagBits sample_count)
 
 void DynamicMultisampleRasterization::prepare_supported_sample_count_list()
 {
+	if (sample_count_prepared)
+		return;
+
 	VkPhysicalDeviceProperties gpu_properties;
 	vkGetPhysicalDeviceProperties(get_device().get_gpu().get_handle(), &gpu_properties);
 
@@ -135,6 +138,8 @@ void DynamicMultisampleRasterization::prepare_supported_sample_count_list()
 		gui_sample_count      = sample_count;
 		last_gui_sample_count = sample_count;
 	}
+
+	sample_count_prepared = true;
 }
 
 bool DynamicMultisampleRasterization::prepare(const vkb::ApplicationOptions &options)
@@ -143,8 +148,6 @@ bool DynamicMultisampleRasterization::prepare(const vkb::ApplicationOptions &opt
 	{
 		return false;
 	}
-
-	prepare_supported_sample_count_list();
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(1.9f, 10.f, -18.f));
@@ -425,6 +428,8 @@ void DynamicMultisampleRasterization::setup_descriptor_sets()
 
 void DynamicMultisampleRasterization::setup_render_pass()
 {
+	prepare_supported_sample_count_list();
+
 	VkPhysicalDeviceProperties gpu_properties;
 	vkGetPhysicalDeviceProperties(get_device().get_gpu().get_handle(), &gpu_properties);
 
@@ -436,7 +441,7 @@ void DynamicMultisampleRasterization::setup_render_pass()
 	attachments[0].format         = render_context->get_format();
 	attachments[0].samples        = sample_count;
 	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;

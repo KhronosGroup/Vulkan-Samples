@@ -71,6 +71,8 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 
 	VkSampleCountFlagBits last_gui_sample_count{VK_SAMPLE_COUNT_1_BIT};
 
+	bool sample_count_prepared = false;
+
 	struct
 	{
 		glm::mat4 model_matrix;
