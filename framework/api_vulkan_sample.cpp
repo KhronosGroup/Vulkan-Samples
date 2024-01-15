@@ -185,7 +185,7 @@ void ApiVulkanSample::prepare_render_context()
 
 void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 {
-	Application::input_event(input_event);
+	VulkanSample::input_event(input_event);
 
 	bool gui_captures_event = false;
 
