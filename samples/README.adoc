@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2020-2023, Arm Limited and Contributors
+- Copyright (c) 2020-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -262,6 +262,10 @@ A sample that implements best practices in handling swapchain recreation, for ex
 === xref:./api/oit_linked_lists/README.adoc[Order-independent transparency with per-pixel ordered linked lists]
 
 A sample that implements an order-independent transparency algorithm using per-pixel ordered linked lists.
+
+=== xref:./api/oit_depth_peeling/README.adoc[Order-independent transparency with depth peeling]
+
+A sample that implements order-independent transparency with depth peeling.
 
 == Extension Samples
 
