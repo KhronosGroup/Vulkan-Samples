@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ const HPPRenderTarget::CreateFunc HPPRenderTarget::DEFAULT_CREATE_FUNC = [](core
 
 	core::HPPImage depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
 	                           depth_format,
-	                           vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
+	                           vk::ImageUsageFlagBits::eDepthStencilAttachment,
 	                           VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<core::HPPImage> images;

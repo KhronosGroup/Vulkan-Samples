@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,7 +43,7 @@ const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Imag
 
 	core::Image depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
 	                        depth_format,
-	                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+	                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	                        VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<core::Image> images;
