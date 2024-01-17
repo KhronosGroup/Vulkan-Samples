@@ -30,7 +30,7 @@ image::./images/sample.png[Sample]
 == Overview
 
 This sample implements an order-independent transparency (OIT) algorithm using depth peeling.
-It renders a single torus whose opacity can be controller via the UI.
+It renders a single torus whose opacity can be controlled via the UI.
 It produces pixel-perfect results.
 It is based on the https://developer.download.nvidia.com/assets/gamedev/docs/OrderIndependentTransparency.pdf[original paper] from Cass Everitt.
 

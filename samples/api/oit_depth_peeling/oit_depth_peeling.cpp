@@ -374,8 +374,8 @@ void OITDepthPeeling::create_descriptors()
 	}
 
 	{
-		const uint32_t num_gather_pass_combined_image_sampler = 1 * kDepthCount;
-		const uint32_t num_gather_pass_uniform_buffer         = 1 * kDepthCount;
+		const uint32_t num_gather_pass_combined_image_sampler = kDepthCount;
+		const uint32_t num_gather_pass_uniform_buffer         = kDepthCount;
 
 		const uint32_t num_combine_pass_combined_image_sampler = kLayerMaxCount + 1;
 		const uint32_t num_combine_pass_uniform_buffer         = 1;
