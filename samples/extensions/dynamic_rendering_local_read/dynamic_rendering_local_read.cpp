@@ -910,10 +910,10 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		// So with this barrier we can use the output attachments from the draw call above as input attachments in the next call
 		VkMemoryBarrier2KHR memoryBarrier{};
 		memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
-		memoryBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+		memoryBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memoryBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-		memoryBarrier.srcAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT;
-		memoryBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT;
+		memoryBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+		memoryBarrier.dstAccessMask = VK_ACCESS_2_INPUT_ATTACHMENT_READ_BIT;
 
 		VkDependencyInfoKHR dependencyInfo{};
 		dependencyInfo.sType              = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
