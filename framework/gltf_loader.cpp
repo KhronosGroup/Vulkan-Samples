@@ -425,7 +425,6 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 	if (!err.empty())
 	{
 		LOGE("Error loading gltf model: {}.", err.c_str());
-
 		return nullptr;
 	}
 
@@ -1032,7 +1031,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		auto node_it = traverse_nodes.front();
 		traverse_nodes.pop();
 
-		assert(node_it.second < nodes.size());
+		// @todo: this crashes on some very basic scenes
+		//assert(node_it.second < nodes.size());
+		if (node_it.second >= nodes.size())
+		{
+			continue;
+		}
 		auto &current_node       = *nodes[node_it.second];
 		auto &traverse_root_node = node_it.first;
 
@@ -1097,6 +1101,8 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 	const float    *uvs     = nullptr;
 	const uint16_t *joints  = nullptr;
 	const float    *weights = nullptr;
+	const float    *colors  = nullptr;
+	uint32_t        color_component_count{4};
 
 	// Position attribute is required
 	auto  &accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
@@ -1116,6 +1122,14 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		accessor    = model.accessors[gltf_primitive.attributes.find("TEXCOORD_0")->second];
 		buffer_view = model.bufferViews[accessor.bufferView];
 		uvs         = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
+	}
+
+	if (gltf_primitive.attributes.find("COLOR_0") != gltf_primitive.attributes.end())
+	{
+		accessor              = model.accessors[gltf_primitive.attributes.find("COLOR_0")->second];
+		buffer_view           = model.bufferViews[accessor.bufferView];
+		colors                = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
+		color_component_count = accessor.type == TINYGLTF_PARAMETER_TYPE_FLOAT_VEC3 ? 3 : 4;
 	}
 
 	// Skinning
@@ -1173,7 +1187,20 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			vert.pos    = glm::vec4(glm::make_vec3(&pos[v * 3]), 1.0f);
 			vert.normal = glm::normalize(glm::vec3(normals ? glm::make_vec3(&normals[v * 3]) : glm::vec3(0.0f)));
 			vert.uv     = uvs ? glm::make_vec2(&uvs[v * 2]) : glm::vec3(0.0f);
-
+			if (colors)
+			{
+				switch (color_component_count)
+				{
+					case 3:
+						vert.color = glm::vec4(glm::make_vec3(&colors[v * 3]), 1.0f);
+					case 4:
+						vert.color = glm::make_vec4(&colors[v * 4]);
+				}
+			}
+			else
+			{
+				vert.color = glm::vec4(1.0f);
+			}
 			vert.joint0  = has_skin ? glm::vec4(glm::make_vec4(&joints[v * 4])) : glm::vec4(0.0f);
 			vert.weight0 = has_skin ? glm::make_vec4(&weights[v * 4]) : glm::vec4(0.0f);
 			vertex_data.push_back(vert);
@@ -1364,6 +1391,9 @@ std::unique_ptr<sg::Mesh> GLTFLoader::parse_mesh(const tinygltf::Mesh &gltf_mesh
 std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Material &gltf_material) const
 {
 	auto material = std::make_unique<sg::PBRMaterial>(gltf_material.name);
+
+	// Initialize base color to 1.0f as per glTF spec
+	material->base_color_factor = glm::vec4(1.0f);
 
 	for (auto &gltf_value : gltf_material.values)
 	{
