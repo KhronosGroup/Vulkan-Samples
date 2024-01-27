@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1032,7 +1032,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		traverse_nodes.pop();
 
 		// @todo: this crashes on some very basic scenes
-		//assert(node_it.second < nodes.size());
+		// assert(node_it.second < nodes.size());
 		if (node_it.second >= nodes.size())
 		{
 			continue;
