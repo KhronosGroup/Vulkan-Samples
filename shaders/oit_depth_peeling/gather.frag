@@ -28,7 +28,7 @@ layout(set = 0, binding = 1) uniform sampler2D depthTex;
 
 void main()
 {
-	const float layerDepth = texture(depthTex, gl_FragCoord.xy / textureSize(depthTex, 0).xy).r;
+	const float layerDepth = texelFetch(depthTex, ivec2(gl_FragCoord.xy), 0).r;
 	if(gl_FragCoord.z >= layerDepth)
 	{
 		discard;
