@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -126,6 +126,9 @@ set(ORDER_LIST
 	"hpp_terrain_tessellation"
 	"hpp_texture_loading"
 	"hpp_texture_mipmap_generation"
+	
+	#HPP Extension Samples
+	"hpp_mesh_shading"
 	
     #HPP Performance Samples
     "hpp_pipeline_cache"

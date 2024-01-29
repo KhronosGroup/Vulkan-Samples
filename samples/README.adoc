@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2020-2023, Arm Limited and Contributors
+- Copyright (c) 2020-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -342,6 +342,10 @@ There is no vertex shader,  there is only a mesh and fragment shader.
 The mesh shader creates the vertices for the triangle.
 The mesh shading  pipeline includes the task and mesh shaders before going into the fragment shader.
 This replaces the vertex /  geometry shader standard pipeline.
+
+=== xref:./extensions/hpp_mesh_shading/README.adoc[HPP Mesh shading]
+
+A transcoded version of the Extensions sample <<mesh_shading,Mesh shading>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./extensions/open_gl_interop/README.adoc[OpenGL interoperability]
 
