@@ -28,7 +28,7 @@ function(add_sample)
 
     add_sample_with_tags(
         TYPE "Sample"
-        ID ${TARGET_ID}ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+        ID ${TARGET_ID}
         CATEGORY ${TARGET_CATEGORY}
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
@@ -221,7 +221,7 @@ function(compile_shaders)
     if(DEFINED SHADERS_HLSL)
 
         set(FAKE_TARGET ${PROJECT_NAME}_hlsl_shaders)
-        add_custom_target(${FAKE_TARGET})
+        add_custom_target(${FAKE_TARGET} WORKING_DIRECTORY "Samples//${CATEGORY}")
         add_dependencies(${PROJECT_NAME} ${FAKE_TARGET})
 
         foreach(SHADER_FILE_HLSL ${SHADERS_HLSL})

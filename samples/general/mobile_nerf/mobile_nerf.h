@@ -18,7 +18,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
 
 using json = nlohmann::json;
