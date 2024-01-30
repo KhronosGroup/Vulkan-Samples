@@ -71,9 +71,9 @@ bool HPPHlslShaders::prepare(const vkb::ApplicationOptions &options)
 		base_descriptor_set_layout    = create_base_descriptor_set_layout();
 		sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
 
-		pipeline_layout     = create_pipeline_layout();
-		shader_modules      = {create_shader_module("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex),
-		                       create_shader_module("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment)};
+		pipeline_layout = create_pipeline_layout();
+		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex));
+		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment));
 		pipeline            = create_pipeline();
 		descriptor_pool     = create_descriptor_pool();
 		base_descriptor_set = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
@@ -348,7 +348,7 @@ void HPPHlslShaders::generate_quad()
 
 void HPPHlslShaders::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPHlslShaders::update_descriptor_sets()

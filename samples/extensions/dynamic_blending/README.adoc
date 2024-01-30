@@ -17,9 +17,9 @@
 -
 ////
 
-== Dynamic blending
+= Dynamic blending
 
-=== Overview
+== Overview
 
 This sample demonstrates the functionality of VK_EXT_extended_dynamic_state3 related to blending. It includes the
 following features: 
@@ -29,7 +29,7 @@ following features:
 * `vkCmdSetColorBlendAdvancedEXT`: utilizes more complex blending operators. 
 * `vkCmdSetColorWriteMaskEXT`: toggles individual channels on and off.
 
-=== How to use in Vulkan
+== How to use in Vulkan
 
 To utilize this feature, the device extension `VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME` need to be enabled.
 The extension `VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME` is required for the advanced blend equations.
@@ -46,7 +46,7 @@ blending operators and premultiplication for color blending.
 `VkColorComponentFlags` objects. These objects can be created by combining
 the desired color bit flags using bitwise oring.
 
-=== The sample
+== The sample
 
 The sample demonstrates how to set up an application to work with this
 extension: 
@@ -56,7 +56,7 @@ extension:
 
 The sample demonstrates how the use of each operator affects color blending.
 
-=== Documentation links
+== Documentation links
 
 https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetColorBlendEnableEXT.html
 

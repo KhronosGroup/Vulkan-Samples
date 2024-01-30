@@ -139,6 +139,14 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	std::vector<vk::Fence> wait_fences;
 
 	/**
+	 * @brief Creates a vulkan sampler
+	 * @param address_mode The samplers address mode
+	 * @param mipmaps_count The samplers mipmaps count
+	 * @returns A valid vk::Sampler
+	 */
+	vk::Sampler create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count);
+
+	/**
 	 * @brief Populates the swapchain_buffers vector with the image and imageviews
 	 */
 	void create_swapchain_buffers();
@@ -168,7 +176,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eRepeat.
 	 */
 	HPPTexture
-	    load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat);
+	    load_texture(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type, vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat);
 
 	/**
 	 * @brief Loads in a ktx 2D texture array
@@ -176,16 +184,16 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @param content_type The type of content in the image file
 	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eClampToEdge.
 	 */
-	HPPTexture load_texture_array(const std::string          &file,
-	                              vkb::sg::Image::ContentType content_type,
-	                              vk::SamplerAddressMode      address_mode = vk::SamplerAddressMode::eClampToEdge);
+	HPPTexture load_texture_array(const std::string                                  &file,
+	                              vkb::scene_graph::components::HPPImage::ContentType content_type,
+	                              vk::SamplerAddressMode                              address_mode = vk::SamplerAddressMode::eClampToEdge);
 
 	/**
 	 * @brief Loads in a ktx 2D texture cubemap
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
 	 */
-	HPPTexture load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type);
+	HPPTexture load_texture_cubemap(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type);
 
 	/**
 	 * @brief Loads in a single model from a GLTF file
@@ -198,8 +206,9 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Records the necessary drawing commands to a command buffer
 	 * @param model The model to draw
 	 * @param command_buffer The command buffer to record to
+	 * @param instance_count The number of instances (default: 1)
 	 */
-	void draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer);
+	void draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer, uint32_t instance_count = 1);
 
 	/**
 	 * @brief Synchronously execute a block code within a command buffer, then submit the command buffer and wait for completion.
@@ -346,15 +355,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	bool         prepared = false;
 	vk::Extent2D extent{1280, 720};
 
-	/** @brief Example settings that can be changed e.g. by command line arguments */
-	struct
-	{
-		/** @brief Set to true if fullscreen mode has been requested via command line */
-		bool fullscreen = false;
-		/** @brief Set to true if v-sync will be forced for the swapchain */
-		bool vsync = false;
-	} settings;
-
 	vk::ClearColorValue default_clear_color = std::array<float, 4>({{0.002f, 0.002f, 0.002f, 1.0f}});
 
 	float zoom = 0;
@@ -390,12 +390,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	struct
 	{
-		glm::vec2 axis_left  = glm::vec2(0.0f);
-		glm::vec2 axis_right = glm::vec2(0.0f);
-	} game_pad_state;
-
-	struct
-	{
 		bool left   = false;
 		bool right  = false;
 		bool middle = false;
@@ -408,7 +402,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 		int32_t x;
 		int32_t y;
 	} touch_pos;
-	bool    touch_down    = false;
-	double  touch_timer   = 0.0;
-	int64_t last_tap_time = 0;
+	bool   touch_down  = false;
+	double touch_timer = 0.0;
 };

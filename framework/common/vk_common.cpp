@@ -18,7 +18,7 @@
 
 #include "vk_common.h"
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 
 #include "platform/filesystem.h"
 #include "shader_compiler.h"

@@ -243,35 +243,12 @@ vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<v
 
 vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
 {
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter    = filter;
-	sampler_create_info.minFilter    = filter;
-	sampler_create_info.mipmapMode   = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.addressModeV = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.addressModeW = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.mipLodBias   = 0.0f;
-	sampler_create_info.compareOp    = vk::CompareOp::eNever;
-	sampler_create_info.minLod       = 0.0f;
-	// Set max level-of-detail to mip level count of the texture
-	sampler_create_info.maxLod = static_cast<float>(texture.image->get_mipmaps().size());
-	// Enable anisotropic filtering
-	// This feature is optional, so we must check if it's supported on the device
-	if (get_device()->get_gpu().get_features().samplerAnisotropy)
-	{
-		// Use max. level of anisotropy for this example
-		sampler_create_info.maxAnisotropy    = get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy;
-		sampler_create_info.anisotropyEnable = true;
-	}
-	else
-	{
-		// The device does not support anisotropic filtering
-		sampler_create_info.maxAnisotropy    = 1.0;
-		sampler_create_info.anisotropyEnable = false;
-	}
-	sampler_create_info.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-
-	return get_device()->get_handle().createSampler(sampler_create_info);
+	return vkb::common::create_sampler(
+	    get_device()->get_handle(),
+	    filter,
+	    vk::SamplerAddressMode::eRepeat,
+	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
+	    static_cast<float>(texture.image->get_mipmaps().size()));
 }
 
 vk::DescriptorSetLayout HPPSeparateImageSampler::create_sampler_descriptor_set_layout()
@@ -332,7 +309,7 @@ void HPPSeparateImageSampler::generate_quad()
 
 void HPPSeparateImageSampler::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms

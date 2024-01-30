@@ -18,10 +18,10 @@
 ////
 :pp: {plus}{plus}
 
-=== HPP Hello Triangle
+= HPP Hello Triangle
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_hello_triangle[Khronos Vulkan samples github repository].
 endif::[]
 
-NOTE: A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/hello_triangle[Hello Triangle] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+NOTE: A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hello_triangle[Hello Triangle] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.

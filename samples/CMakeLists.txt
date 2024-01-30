@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -57,6 +57,7 @@ set(ORDER_LIST
     "compute_nbody"
     "terrain_tessellation"
     "hlsl"
+    "oit_linked_lists"
 
     #Extension Samples
     "dynamic_rendering"
@@ -87,6 +88,7 @@ set(ORDER_LIST
     "gshader_to_mshader"
     "color_write_enable"
     "hlsl_raytracing_basic"
+    "sparse_image"
 
     #Performance Samples
     "swapchain_images"
@@ -120,14 +122,21 @@ set(ORDER_LIST
     "hpp_hello_triangle"
 	"hpp_hlsl_shaders"
 	"hpp_instancing"
+	"hpp_oit_linked_lists"
 	"hpp_separate_image_sampler"
 	"hpp_terrain_tessellation"
 	"hpp_texture_loading"
 	"hpp_texture_mipmap_generation"
 	
+	#HPP Extension Samples
+	"hpp_mesh_shading"
+	
     #HPP Performance Samples
     "hpp_pipeline_cache"
-    "hpp_swapchain_images")
+    "hpp_swapchain_images"
+    
+    #General Samples
+    "mobile_nerf")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

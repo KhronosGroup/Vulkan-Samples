@@ -17,7 +17,7 @@
 -
 ////
 
-=== Compute shader N-Body simulation
+= Compute shader N-Body simulation
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/compute_nbody[Khronos Vulkan samples github repository].

@@ -406,19 +406,13 @@ void HPPTerrainTessellation::generate_terrain()
 	uint32_t vertex_buffer_size = vertex_count * sizeof(Vertex);
 	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
 
-	struct
-	{
-		vk::Buffer       buffer;
-		vk::DeviceMemory memory;
-	} vertex_staging, index_staging;
-
 	// Create staging buffers
 
-	std::tie(vertex_staging.buffer, vertex_staging.memory) = get_device()->create_buffer(
-	    vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, vertex_buffer_size, vertices.data());
+	vkb::core::HPPBuffer vertex_staging(*device, vertex_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_staging.update(vertices);
 
-	std::tie(index_staging.buffer, index_staging.memory) = get_device()->create_buffer(
-	    vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, index_buffer_size, indices.data());
+	vkb::core::HPPBuffer index_staging(*device, index_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_staging.update(indices);
 
 	terrain.vertices = std::make_unique<vkb::core::HPPBuffer>(
 	    *get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
@@ -426,31 +420,24 @@ void HPPTerrainTessellation::generate_terrain()
 	terrain.indices = std::make_unique<vkb::core::HPPBuffer>(
 	    *get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	vk::Device vkDevice = get_device()->get_handle();
-
 	// Copy from staging buffers
-	vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(vkDevice, device->get_command_pool().get_handle());
+	vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(device->get_handle(), device->get_command_pool().get_handle());
 	copy_command.begin(vk::CommandBufferBeginInfo());
-	copy_command.copyBuffer(vertex_staging.buffer, terrain.vertices->get_handle(), {{0, 0, vertex_buffer_size}});
-	copy_command.copyBuffer(index_staging.buffer, terrain.indices->get_handle(), {{0, 0, index_buffer_size}});
+	copy_command.copyBuffer(vertex_staging.get_handle(), terrain.vertices->get_handle(), {{0, 0, vertex_buffer_size}});
+	copy_command.copyBuffer(index_staging.get_handle(), terrain.indices->get_handle(), {{0, 0, index_buffer_size}});
 	get_device()->flush_command_buffer(copy_command, queue, true);
-
-	vkDevice.destroyBuffer(vertex_staging.buffer);
-	vkDevice.freeMemory(vertex_staging.memory);
-	vkDevice.destroyBuffer(index_staging.buffer);
-	vkDevice.freeMemory(index_staging.memory);
 }
 
 void HPPTerrainTessellation::load_assets()
 {
 	sky_sphere.geometry = load_model("scenes/geosphere.gltf");
-	sky_sphere.texture  = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
+	sky_sphere.texture  = load_texture("textures/skysphere_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 
 	// Terrain textures are stored in a texture array with layers corresponding to terrain height; create a repeating sampler
-	terrain.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::sg::Image::Color, vk::SamplerAddressMode::eRepeat);
+	terrain.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::scene_graph::components::HPPImage::Color, vk::SamplerAddressMode::eRepeat);
 
 	// Height data is stored in a one-channel texture; create a mirroring sampler
-	terrain.height_map = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other, vk::SamplerAddressMode::eMirroredRepeat);
+	terrain.height_map = load_texture("textures/terrain_heightmap_r16.ktx", vkb::scene_graph::components::HPPImage::Other, vk::SamplerAddressMode::eMirroredRepeat);
 }
 
 void HPPTerrainTessellation::prepare_camera()
@@ -477,12 +464,11 @@ void HPPTerrainTessellation::prepare_statistics()
 	if (statistics.query_supported)
 	{
 		// Create query pool
-		vk::QueryPoolCreateInfo query_pool_info({},
-		                                        vk::QueryType::ePipelineStatistics,
-		                                        2,
-		                                        vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
-		                                            vk::QueryPipelineStatisticFlagBits::eTessellationEvaluationShaderInvocations);
-		statistics.query_pool = get_device()->get_handle().createQueryPool(query_pool_info);
+		statistics.query_pool = vkb::common::create_query_pool(get_device()->get_handle(),
+		                                                       vk::QueryType::ePipelineStatistics,
+		                                                       2,
+		                                                       vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
+		                                                           vk::QueryPipelineStatisticFlagBits::eTessellationEvaluationShaderInvocations);
 	}
 }
 

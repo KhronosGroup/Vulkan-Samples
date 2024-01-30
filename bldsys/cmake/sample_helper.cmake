@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2023, Arm Limited and Contributors
+ Copyright (c) 2019-2024, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -28,7 +28,7 @@ function(add_sample)
 
     add_sample_with_tags(
         TYPE "Sample"
-        ID ${TARGET_ID}
+        ID ${TARGET_ID}ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
         CATEGORY ${TARGET_CATEGORY}
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
@@ -107,6 +107,11 @@ function(vkb_add_test)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(SRC_FILES
+        ${TARGET_ID}.h
+        ${TARGET_ID}.cpp
+    )
+
     add_project(
         TYPE "Test"
         ID ${TARGET_ID}
@@ -114,11 +119,9 @@ function(vkb_add_test)
         AUTHOR " "
         NAME ${TARGET_ID}
         DESCRIPTION " "
-        VENDOR_TAG " "
-        LIBS test_framework
-        FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.cpp)
+        TAGS " "
+        FILES ${SRC_FILES}
+        LIBS test_framework)
 endfunction()
 
 function(add_project)
@@ -154,7 +157,11 @@ function(add_project)
         source_group("\\Shaders" FILES ${SHADERS_HLSL})
     endif()
 
+if(${TARGET_TYPE} STREQUAL "Sample")
     add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
+elseif(${TARGET_TYPE} STREQUAL "Test")
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
+endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # # inherit include directories from framework target

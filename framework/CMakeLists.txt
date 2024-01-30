@@ -48,6 +48,7 @@ set(FRAMEWORK_FILES
     hpp_resource_cache.h
     hpp_resource_record.h
     hpp_resource_replay.h
+    hpp_semaphore_pool.h
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
@@ -74,6 +75,7 @@ set(FRAMEWORK_FILES
 
 set(COMMON_FILES
     # Header Files
+    common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
     common/glm_common.h 
@@ -91,6 +93,7 @@ set(COMMON_FILES
     common/hpp_vk_common.h
     # Source Files
     common/error.cpp
+    common/ktx_common.cpp
     common/vk_common.cpp
     common/utils.cpp
     common/strings.cpp)
@@ -131,6 +134,7 @@ set(RENDERING_FILES
     rendering/render_target.cpp
     rendering/subpass.cpp
     rendering/hpp_render_context.cpp
+    rendering/hpp_render_frame.cpp
     rendering/hpp_render_target.cpp)
 
 set(RENDERING_SUBPASSES_FILES
@@ -192,7 +196,8 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/transform.cpp
     scene_graph/components/image/astc.cpp
     scene_graph/components/image/ktx.cpp
-    scene_graph/components/image/stb.cpp)
+    scene_graph/components/image/stb.cpp
+    scene_graph/components/hpp_image.cpp)
 
 set(SCENE_GRAPH_SCRIPTS_FILES
     # Header Files

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,7 +35,7 @@ using BatchModeTags = vkb::PluginBase<vkb::tags::Entrypoint, vkb::tags::FullCont
  * 
  * Run a subset of samples. The next sample in the set will start after the current sample being executed has finished. Using --wrap-to-start will start again from the first sample after the last sample is executed.
  * 
- * Usage: vulkan_samples batch --duration 3 --tag performance --category arm
+ * Usage: vulkan_samples batch --duration 3 --category performance --tag arm
  * 
  */
 class BatchMode : public BatchModeTags

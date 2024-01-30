@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -42,15 +42,10 @@ You will also need to have built the Vulkan Best Practices in 64 bit, with the C
 *Before you begin a system test on Android, ensure that the device is held in landscape, and there isn't an instance of Vulkan Best Practice running already.*
 
 . From the root of the project: `cd tests/system_test`
-. To run: `python system_test.py -B <build dir> -C <Debug|Release>` + 2.1.
-e.g.
-`python system_test.py -Bbuild/windows -CRelease` (build path is relative to root) + 2.2.
-To target just testing on desktop, add a `-D` flag, or to target just Android, an `-A` flag.
-If no flag is specified it will run for both.
-+ 2.3.
-To run a specific sub test(s), use the `-S` flag (e.g.
-`+python system_test.py ...
--S sponza bonza+` runs sponza and bonza)
+. To run: `python system_test.py -B <build dir> -C <Debug|Release>`
+.. e.g. `python system_test.py -Bbuild/windows -CRelease` (build path is relative to root) 
+.. To target just testing on desktop, add a `-D` flag, or to target just Android, an `-A` flag. If no flag is specified it will run for both.
+.. To run a specific sub test(s), use the `-S` flag (e.g. `+python system_test.py ... -S sponza bonza+` runs sponza and bonza)
 
 === Android
 

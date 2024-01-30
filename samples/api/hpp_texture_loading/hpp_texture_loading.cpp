@@ -19,8 +19,8 @@
  * Texture loading (and display) example (including mip maps), using vulkan.hpp
  */
 
-#include <hpp_texture_loading.h>
-
+#include "hpp_texture_loading.h"
+#include <common/ktx_common.h>
 #include <core/hpp_command_pool.h>
 
 HPPTextureLoading::HPPTextureLoading()
@@ -275,20 +275,14 @@ void HPPTextureLoading::generate_quad()
 void HPPTextureLoading::load_texture()
 {
 	// We use the Khronos texture format (https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/)
-	std::string filename = vkb::fs::path::get(vkb::fs::path::Assets, "textures/metalplate01_rgba.ktx");
+	const std::string filename = vkb::fs::path::get(vkb::fs::path::Assets, "textures/metalplate01_rgba.ktx");
 	// ktx1 doesn't know whether the content is sRGB or linear, but most tools save in sRGB, so assume that.
-	vk::Format format = vk::Format::eR8G8B8A8Srgb;
+	constexpr vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
-	ktxTexture    *ktx_texture;
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
-	if ((result != KTX_SUCCESS) || (ktx_texture == nullptr))
-	{
-		throw std::runtime_error("Couldn't load texture");
-	}
+	ktxTexture *ktx_texture = vkb::ktx::load_texture(filename);
 
-	texture.extent.width  = ktx_texture->baseWidth;
-	texture.extent.height = ktx_texture->baseHeight;
-	texture.mip_levels    = ktx_texture->numLevels;
+	texture.extent     = vk::Extent2D(ktx_texture->baseWidth, ktx_texture->baseHeight);
+	texture.mip_levels = ktx_texture->numLevels;
 
 	// We prefer using staging to copy the texture data to a device local optimal image
 	vk::Bool32 use_staging = true;
@@ -486,6 +480,9 @@ void HPPTextureLoading::load_texture()
 
 		get_device()->flush_command_buffer(copy_command, queue, true);
 	}
+
+	// now, the ktx_texture can be destroyed
+	ktxTexture_Destroy(ktx_texture);
 
 	// Create a texture sampler
 	// In Vulkan textures are accessed by samplers

@@ -429,11 +429,11 @@ void RaytracingReflection::create_model(ObjModelCpu &obj, const std::vector<ObjM
 	model.vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	model.vertex_buffer->update(obj.vertices.data(), vertex_buffer_size);
 
-	// Acceleration structure flag is not needed for the rest
-	buffer_usage_flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-
 	model.index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	model.index_buffer->update(obj.indices.data(), index_buffer_size);
+
+	// Acceleration structure flag is not needed for the rest
+	buffer_usage_flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
 	model.mat_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), mat_index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	model.mat_index_buffer->update(mat_index.data(), mat_index_buffer_size);

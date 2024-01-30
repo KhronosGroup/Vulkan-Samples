@@ -18,6 +18,7 @@
 #pragma once
 
 #include <core/hpp_command_buffer.h>
+#include <core/hpp_command_pool.h>
 #include <core/hpp_debug.h>
 #include <core/hpp_physical_device.h>
 #include <core/hpp_queue.h>
@@ -31,7 +32,6 @@ namespace vkb
 namespace core
 {
 class HPPBuffer;
-class HPPCommandPool;
 
 class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 {
@@ -88,14 +88,15 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 	vkb::core::HPPCommandPool &get_command_pool();
 
 	/**
-	 * @brief Creates a vulkan buffer
-	 * @param usage The buffer usage
-	 * @param properties The memory properties
-	 * @param size The size of the buffer
-	 * @param data The data to place inside the buffer
-	 * @returns A valid vk::Buffer and a corresponding vk::DeviceMemory
+	 * @brief Creates a vulkan image and associated device memory
+	 * @param format The image format
+	 * @param extent The image extent
+	 * @param mip_levels The mip levels of the image
+	 * @param usage The image usage
+	 * @param properties The device memory property flags
+	 * @returns A valid vk::Image and a corresponding vk::DeviceMemory
 	 */
-	std::pair<vk::Buffer, vk::DeviceMemory> create_buffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceSize size, void *data = nullptr) const;
+	std::pair<vk::Image, vk::DeviceMemory> create_image(vk::Format format, vk::Extent2D const &extent, uint32_t mip_levels, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) const;
 
 	/**
 	 * @brief Copies a buffer from one to another

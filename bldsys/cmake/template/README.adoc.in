@@ -82,3 +82,8 @@ The chapter itself can be structured by using sub paragraphs, e.g.:
 ////
 The tutorial should end with a conclusion chapter that recaps the tutorial and (if applicable) talks about pros and cons of the features demonstrated in this sample
 ////
+
+////
+NOTE: Please also add a link to the new samples' README.adoc to the file located in ./antora/modules/ROOT/nav.adoc
+THis is necessary to have the sample show up on the build for the docs site under https://docs.vulkan.org
+////
