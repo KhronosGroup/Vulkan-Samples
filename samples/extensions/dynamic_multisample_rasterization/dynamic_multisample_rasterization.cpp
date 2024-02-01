@@ -85,29 +85,6 @@ const std::string to_string(VkSampleCountFlagBits count)
 	}
 }
 
-const ImVec2 to_scale_ui(VkSampleCountFlagBits sample_count)
-{
-	switch (sample_count)
-	{
-		case VK_SAMPLE_COUNT_1_BIT:
-			return ImVec2(1.0, 1.0);
-		case VK_SAMPLE_COUNT_2_BIT:
-			return ImVec2(2.0, 1.0);
-		case VK_SAMPLE_COUNT_4_BIT:
-			return ImVec2(2.0, 2.0);
-		case VK_SAMPLE_COUNT_8_BIT:
-			return ImVec2(4.0, 2.0);
-		case VK_SAMPLE_COUNT_16_BIT:
-			return ImVec2(4.0, 4.0);
-		case VK_SAMPLE_COUNT_32_BIT:
-			return ImVec2(8.0, 4.0);
-		case VK_SAMPLE_COUNT_64_BIT:
-			return ImVec2(8.0, 8.0);
-		default:
-			return ImVec2(1.0, 1.0);
-	}
-}
-
 void DynamicMultisampleRasterization::prepare_supported_sample_count_list()
 {
 	if (sample_count_prepared)
@@ -299,25 +276,7 @@ void DynamicMultisampleRasterization::draw_ui(VkCommandBuffer &cmd_buffer)
 {
 	if (gui)
 	{
-		auto &scale    = to_scale_ui(sample_count);
-		auto  viewport = vkb::initializers::viewport(static_cast<float>(width) * scale.x, static_cast<float>(height) * scale.y, 0.0f, 1.0f);
-		vkCmdSetViewport(cmd_buffer, 0, 1, &viewport);
-		auto draw_data = ImGui::GetDrawData();
-
-		if (draw_data)
-		{
-			for (int32_t i = 0; i < draw_data->CmdListsCount; i++)
-			{
-				ImDrawList *cmd_list = draw_data->CmdLists[i];
-				for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++)
-				{
-					auto cmd = &cmd_list->CmdBuffer[j];
-					cmd->ClipRect.z *= scale.x;
-					cmd->ClipRect.w *= scale.y;
-				}
-			}
-		}
-		gui->draw(cmd_buffer);
+		gui->draw(cmd_buffer, pipeline_gui, pipeline_layout_gui, descriptor_set_gui);
 	}
 }
 
@@ -751,6 +710,7 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 
 	shader_stages[0] = load_shader("dynamic_multisample_rasterization/model.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_multisample_rasterization/model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 
 	// Add another pipeline since parts of the scene have to be rendered using VK_FRONT_FACE_CLOCKWISE
@@ -765,6 +725,122 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_inversed_rasterizer));
 }
 
+void DynamicMultisampleRasterization::prepare_gui_pipeline()
+{
+	auto &device = get_render_context().get_device();
+
+	// Descriptor pool
+	std::vector<VkDescriptorPoolSize> pool_sizes = {
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	VkDescriptorPoolCreateInfo descriptorPoolInfo = vkb::initializers::descriptor_pool_create_info(pool_sizes, 2);
+	VK_CHECK(vkCreateDescriptorPool(device.get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool_gui));
+
+	// Descriptor set layout
+	std::vector<VkDescriptorSetLayoutBinding> layout_bindings_gui = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+	};
+	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(layout_bindings_gui);
+	VK_CHECK(vkCreateDescriptorSetLayout(device.get_handle(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout_gui));
+
+	// Descriptor set
+	VkDescriptorSetAllocateInfo descriptor_allocation = vkb::initializers::descriptor_set_allocate_info(descriptor_pool_gui, &descriptor_set_layout_gui, 1);
+	VK_CHECK(vkAllocateDescriptorSets(device.get_handle(), &descriptor_allocation, &descriptor_set_gui));
+	VkDescriptorImageInfo font_descriptor = vkb::initializers::descriptor_image_info(
+	    gui->get_sampler(),
+	    gui->get_font_image_view(),
+	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(descriptor_set_gui, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &font_descriptor)};
+	vkUpdateDescriptorSets(device.get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+
+	// Setup graphics pipeline for UI rendering
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+	// Enable blending
+	VkPipelineColorBlendAttachmentState blend_attachment_state{};
+	blend_attachment_state.blendEnable         = VK_TRUE;
+	blend_attachment_state.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
+	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
+
+	VkPipelineColorBlendStateCreateInfo color_blend_state =
+	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_ALWAYS);
+
+	VkPipelineViewportStateCreateInfo viewport_state =
+	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+
+	VkPipelineMultisampleStateCreateInfo multisample_state =
+	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
+
+	std::vector<VkDynamicState> dynamic_state_enables = {
+	    VK_DYNAMIC_STATE_VIEWPORT,
+	    VK_DYNAMIC_STATE_SCISSOR,
+	    VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT /* VK_EXT_extended_dynamic_state3 */
+	};
+	VkPipelineDynamicStateCreateInfo dynamic_state =
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
+
+	std::vector<vkb::ShaderModule *> shader_modules;
+
+	vkb::ShaderSource vert_shader("uioverlay/uioverlay.vert");
+	vkb::ShaderSource frag_shader("uioverlay/uioverlay.frag");
+
+	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
+	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
+
+	pipeline_layout_gui = device.get_resource_cache().request_pipeline_layout(shader_modules).get_handle();
+
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout_gui, render_pass);
+
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+
+	shader_stages[0] = load_shader(vert_shader.get_filename(), VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader(frag_shader.get_filename(), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages    = shader_stages.data();
+
+	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+	pipeline_create_info.pRasterizationState = &rasterization_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages             = shader_stages.data();
+
+	// Vertex bindings an attributes based on ImGui vertex definition
+	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+	    vkb::initializers::vertex_input_binding_description(0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX),
+	};
+	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos)),         // Location 0: Position
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv)),          // Location 1: UV
+	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col)),        // Location 0: Color
+	};
+	VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info = vkb::initializers::pipeline_vertex_input_state_create_info();
+	vertex_input_state_create_info.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
+	vertex_input_state_create_info.pVertexBindingDescriptions           = vertex_input_bindings.data();
+	vertex_input_state_create_info.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
+	vertex_input_state_create_info.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+
+	pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
+
+	VK_CHECK(vkCreateGraphicsPipelines(device.get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_gui));
+}
+
 // Prepare and initialize uniform buffer containing shader uniforms
 void DynamicMultisampleRasterization::prepare_uniform_buffers()
 {
@@ -775,6 +851,15 @@ void DynamicMultisampleRasterization::prepare_uniform_buffers()
 	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
+}
+
+void DynamicMultisampleRasterization::prepare_gui()
+{
+	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
+
+	prepare_gui_pipeline();
+
+	// No need to call gui->prepare because the pipeline has been created above
 }
 
 void DynamicMultisampleRasterization::update_uniform_buffers()

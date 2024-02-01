@@ -350,6 +350,15 @@ class Gui
 	void draw(VkCommandBuffer command_buffer);
 
 	/**
+	 * @brief Draws the Gui using an external pipeline
+	 * @param command_buffer Command buffer to register draw-commands
+	 * @param pipeline Pipeline to bind to perform draw-commands
+	 * @param pipeline_layout PipelineLayout for given pieline
+	 * @param descriptor_set DescriptorSet to bind to perform draw-commands
+	 */
+	void draw(VkCommandBuffer command_buffer, const VkPipeline pipeline, const VkPipelineLayout pipeline_layout, const VkDescriptorSet descriptor_set);
+
+	/**
 	 * @brief Shows an overlay top window with app info and maybe stats
 	 * @param app_name Application name
 	 * @param stats Statistics to show (can be null)
@@ -406,6 +415,10 @@ class Gui
 	bool is_debug_view_active() const;
 
 	void set_subpass(const uint32_t subpass);
+
+	VkSampler   get_sampler() const;
+
+	VkImageView get_font_image_view() const;
 
   private:
 	/**

@@ -56,6 +56,13 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
 
+	// GUI
+	VkPipeline            pipeline_gui;
+	VkPipelineLayout      pipeline_layout_gui;
+	VkDescriptorSet       descriptor_set_gui;
+	VkDescriptorSetLayout descriptor_set_layout_gui;
+	VkDescriptorPool      descriptor_pool_gui;
+
 	/**
 	 * @brief List of MSAA levels supported by the platform
 	 */
@@ -112,11 +119,13 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool resize(const uint32_t _width, const uint32_t _height) override;
 	virtual void setup_depth_stencil() override;
+	virtual void prepare_gui() override;
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
 	void         setup_descriptor_sets();
 	void         prepare_pipelines();
+	void         prepare_gui_pipeline();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
 	void         draw();
