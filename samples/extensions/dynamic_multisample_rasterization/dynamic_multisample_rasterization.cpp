@@ -129,7 +129,7 @@ bool DynamicMultisampleRasterization::prepare(const vkb::ApplicationOptions &opt
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(1.9f, 10.f, -18.f));
 	camera.set_rotation(glm::vec3(0.f, -40.f, 0.f));
-	camera.rotation_speed = 0.001f;
+	camera.rotation_speed = 0.01f;
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
