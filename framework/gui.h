@@ -416,7 +416,7 @@ class Gui
 
 	void set_subpass(const uint32_t subpass);
 
-	VkSampler   get_sampler() const;
+	VkSampler get_sampler() const;
 
 	VkImageView get_font_image_view() const;
 
