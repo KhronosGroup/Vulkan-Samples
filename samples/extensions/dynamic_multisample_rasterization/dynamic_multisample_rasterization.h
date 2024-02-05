@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -134,6 +134,7 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	void         draw_ui(VkCommandBuffer &);
 	void         update_resources();
 	void         draw_node(VkCommandBuffer &, SceneNode &);
+	virtual void input_event(const vkb::InputEvent &input_event) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization();

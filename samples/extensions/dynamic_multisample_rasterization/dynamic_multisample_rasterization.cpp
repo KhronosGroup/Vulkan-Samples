@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -955,6 +955,58 @@ bool DynamicMultisampleRasterization::resize(const uint32_t _width, const uint32
 
 	prepared = true;
 	return true;
+}
+
+void DynamicMultisampleRasterization::input_event(const vkb::InputEvent &input_event)
+{
+	ApiVulkanSample::input_event(input_event);
+
+	bool gui_captures_event = false;
+
+	if (gui)
+	{
+		gui_captures_event = gui->input_event(input_event);
+	}
+
+	if (!gui_captures_event)
+	{
+		if (input_event.get_source() == vkb::EventSource::Keyboard)
+		{
+			const auto &key_button = static_cast<const vkb::KeyInputEvent &>(input_event);
+
+			if (key_button.get_action() == vkb::KeyAction::Down)
+			{
+				switch (key_button.get_code())
+				{
+					case vkb::KeyCode::Q:
+						std::cout << "AAAAA" << std::endl;
+
+						gui_settings.gui_sample_count++;
+
+						if (gui_settings.gui_sample_count > 3)
+							gui_settings.gui_sample_count = 0;
+
+						sample_count = supported_sample_count_list[gui_settings.gui_sample_count];
+
+						update_resources();
+						break;
+					default:
+						break;
+				}
+			}
+			else if (key_button.get_action() == vkb::KeyAction::Up)
+			{
+				switch (key_button.get_code())
+				{
+					case vkb::KeyCode::Q:
+						std::cout << "BBBB" << std::endl;
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
 }
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization()
