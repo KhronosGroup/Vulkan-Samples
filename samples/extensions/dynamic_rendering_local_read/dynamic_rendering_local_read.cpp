@@ -653,7 +653,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
 	pipeline_create_info.pNext = &pipeline_rendering_create_info;
 #else
-	pipeline_create_info.renderPass  = render_pass;
+	pipeline_create_info.renderPass = render_pass;
 #endif
 
 	/*
@@ -687,7 +687,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	pipeline_create_info.subpass     = 0;
+	pipeline_create_info.subpass = 0;
 #endif
 
 	shader_stages[0] = load_shader("dynamic_rendering_local_read/scene_opaque.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -725,8 +725,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount      = 1;
-	pipeline_create_info.subpass     = 2;
+	blend_state.attachmentCount = 1;
+	pipeline_create_info.subpass = 2;
 #endif
 
 	shader_stages[0] = load_shader("dynamic_rendering_local_read/scene_transparent.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -747,8 +747,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount      = 1;
-	pipeline_create_info.subpass     = 1;
+	blend_state.attachmentCount = 1;
+	pipeline_create_info.subpass = 1;
 #endif
 
 	blend_attachment_states = {
@@ -949,50 +949,50 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
 
 #else
-        VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-        render_pass_begin_info.renderPass               = render_pass;
-        render_pass_begin_info.renderArea.offset.x      = 0;
-        render_pass_begin_info.renderArea.offset.y      = 0;
-        render_pass_begin_info.renderArea.extent.width  = width;
-        render_pass_begin_info.renderArea.extent.height = height;
-        render_pass_begin_info.clearValueCount          = 5;
-        render_pass_begin_info.pClearValues             = clear_values;
-        render_pass_begin_info.framebuffer              = framebuffers[i];
+		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.renderPass = render_pass;
+		render_pass_begin_info.renderArea.offset.x = 0;
+		render_pass_begin_info.renderArea.offset.y = 0;
+		render_pass_begin_info.renderArea.extent.width = width;
+		render_pass_begin_info.renderArea.extent.height = height;
+		render_pass_begin_info.clearValueCount = 5;
+		render_pass_begin_info.pClearValues = clear_values;
+		render_pass_begin_info.framebuffer = framebuffers[i];
 
-        // Start our render pass, which contains multiple sub passes
-        vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		// Start our render pass, which contains multiple sub passes
+		vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-        VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-        vkCmdSetViewport(cmd, 0, 1, &viewport);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-        VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-        vkCmdSetScissor(cmd, 0, 1, &scissor);
+		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-        // First sub pass
-        // Renders the components of the scene to the G-Buffer attachments
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline_layout, 0, 1, &scene_opaque_pass.descriptor_set, 0, nullptr);
-        draw_scene(scenes.opaque, cmd, scene_opaque_pass.pipeline_layout);
+		// First sub pass
+		// Renders the components of the scene to the G-Buffer attachments
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline_layout, 0, 1, &scene_opaque_pass.descriptor_set, 0, nullptr);
+		draw_scene(scenes.opaque, cmd, scene_opaque_pass.pipeline_layout);
 
-        // Second sub pass
-        // This subpass will use the G-Buffer components that have been filled in the first subpass as input attachment for the final compositing
-        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+		// Second sub pass
+		// This subpass will use the G-Buffer components that have been filled in the first subpass as input attachment for the final compositing
+		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline_layout, 0, 1, &composition_pass.descriptor_set, 0, nullptr);
-        vkCmdDraw(cmd, 3, 1, 0, 0);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline_layout, 0, 1, &composition_pass.descriptor_set, 0, nullptr);
+		vkCmdDraw(cmd, 3, 1, 0, 0);
 
-        // Third subpass
-        // Render transparent geometry using a forward pass that compares against depth generated during G-Buffer fill
-        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+		// Third subpass
+		// Render transparent geometry using a forward pass that compares against depth generated during G-Buffer fill
+		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
-        draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
+		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
 
-        draw_ui(draw_cmd_buffers[i]);
+		draw_ui(draw_cmd_buffers[i]);
 
-        vkCmdEndRenderPass(cmd);
+		vkCmdEndRenderPass(cmd);
 #endif
 
 		VK_CHECK(vkEndCommandBuffer(cmd));
