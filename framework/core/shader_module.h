@@ -260,4 +260,20 @@ class ShaderModule
 
 	std::string info_log;
 };
+
+class CompiledShader
+{
+public:
+	// FIXME we'd prefer to use `std::array<uint32_t, @SHADER_TOKENS@>` since it would allow us to declare this `constexpr`
+	// and allocate at compile time instead of runtime, but that's problematic to pass to functions
+	// unless they're able to accept the SPIRV as vk::ArrayProxy (which requires vulkan.hpp)
+	// or std::span (which requires C++20)
+	const std::vector<uint32_t> spirv;
+	const std::string           source;
+	const VkShaderStageFlagBits stage;
+
+	CompiledShader(const std::vector<uint32_t> &spirv, const std::string &source , VkShaderStageFlagBits stage) :
+	    spirv(spirv), source(source), stage(stage) {}
+};
+
 }        // namespace vkb

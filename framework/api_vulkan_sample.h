@@ -345,6 +345,13 @@ class ApiVulkanSample : public vkb::VulkanSample
 	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
 
 	/**
+	 * @brief Load a SPIR-V shader
+	 * @param file The file location of the shader relative to the shaders folder
+	 * @param stage The shader stage
+	 */
+	VkPipelineShaderStageCreateInfo load_shader(const std::vector<uint32_t> &spirv, VkShaderStageFlagBits stage);
+
+	/**
 	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
 	 */

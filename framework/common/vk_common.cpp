@@ -382,6 +382,11 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 		return VK_NULL_HANDLE;
 	}
 
+	return load_shader(spirv, device, stage);
+}
+
+VkShaderModule load_shader(const std::vector<uint32_t> &spirv, VkDevice device, VkShaderStageFlagBits stage)
+{
 	VkShaderModule           shader_module;
 	VkShaderModuleCreateInfo module_create_info{};
 	module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

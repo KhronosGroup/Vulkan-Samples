@@ -19,11 +19,12 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample(
+add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "VK_EXT_Debug_Utils"
+    TAGS "OfflineShaders"
     DESCRIPTION "Demonstrates the use of the debug utils extension for tagging and labeling Vulkan objects for debugging applications like RenderDoc"
     SHADER_FILES_GLSL
         "debug_utils/composition.vert"

@@ -135,7 +135,7 @@ class DebugUtils : public ApiVulkanSample
 	void                            queue_insert_label(VkQueue queue, const char *label_name, std::vector<float> color);
 	void                            queue_end_label(VkQueue queue);
 	void                            set_object_name(VkObjectType object_type, uint64_t object_handle, const char *object_name);
-	VkPipelineShaderStageCreateInfo debug_load_shader(const std::string &file, VkShaderStageFlagBits stage);
+	VkPipelineShaderStageCreateInfo debug_load_shader(const vkb::CompiledShader &compiledShader);
 	void                            debug_name_objects();
 	virtual void                    request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void                            build_command_buffers() override;
