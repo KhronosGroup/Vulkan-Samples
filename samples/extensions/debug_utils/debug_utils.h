@@ -127,14 +127,19 @@ class DebugUtils : public ApiVulkanSample
 
 	DebugUtils();
 	~DebugUtils();
-	void                            debug_check_extension();
-	void                            cmd_begin_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
-	void                            cmd_insert_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
-	void                            cmd_end_label(VkCommandBuffer command_buffer);
-	void                            queue_begin_label(VkQueue queue, const char *label_name, std::vector<float> color);
-	void                            queue_insert_label(VkQueue queue, const char *label_name, std::vector<float> color);
-	void                            queue_end_label(VkQueue queue);
-	void                            set_object_name(VkObjectType object_type, uint64_t object_handle, const char *object_name);
+	void debug_check_extension();
+	void cmd_begin_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
+	void cmd_insert_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
+	void cmd_end_label(VkCommandBuffer command_buffer);
+	void queue_begin_label(VkQueue queue, const char *label_name, std::vector<float> color);
+	void queue_insert_label(VkQueue queue, const char *label_name, std::vector<float> color);
+	void queue_end_label(VkQueue queue);
+	//void                            set_object_name(VkObjectType object_type, uint64_t object_handle, const char *object_name);
+	template <typename T>
+	void set_object_name(VkObjectType object_type, const T &object_handle, const char *object_name)
+	{
+		set_object_name(object_type, reinterpret_cast<const uint64_t &>(object_handle), object_name);
+	}
 	VkPipelineShaderStageCreateInfo debug_load_shader(const vkb::CompiledShader &compiledShader);
 	void                            debug_name_objects();
 	virtual void                    request_gpu_features(vkb::PhysicalDevice &gpu) override;

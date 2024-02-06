@@ -22,12 +22,12 @@
 
 #include "debug_utils.h"
 
-#include "debug_utils/gbuffer.frag.inl"
-#include "debug_utils/gbuffer.vert.inl"
-#include "debug_utils/composition.frag.inl"
-#include "debug_utils/composition.vert.inl"
 #include "debug_utils/bloom.frag.inl"
 #include "debug_utils/bloom.vert.inl"
+#include "debug_utils/composition.frag.inl"
+#include "debug_utils/composition.vert.inl"
+#include "debug_utils/gbuffer.frag.inl"
+#include "debug_utils/gbuffer.vert.inl"
 
 #include "scene_graph/components/sub_mesh.h"
 
@@ -183,8 +183,8 @@ void DebugUtils::queue_end_label(VkQueue queue)
 /*
  * Object naming and tagging functions
  */
-
-void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handle, const char *object_name)
+template <>
+void DebugUtils::set_object_name(VkObjectType object_type, const uint64_t &object_handle, const char *object_name)
 {
 	if (!debug_utils_supported)
 	{
@@ -201,7 +201,7 @@ void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handl
  * This sample uses a modified version of the shader loading function that adds a tag to the shader
  * The tag includes the source GLSL that can then be displayed by a debugging application
  */
-VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const vkb::CompiledShader& compiledShader)
+VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const vkb::CompiledShader &compiledShader)
 {
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -240,46 +240,46 @@ void DebugUtils::debug_name_objects()
 	{
 		return;
 	}
-	set_object_name(VK_OBJECT_TYPE_BUFFER, (uint64_t) uniform_buffers.matrices->get_handle(), "Matrices uniform buffer");
+	set_object_name(VK_OBJECT_TYPE_BUFFER, uniform_buffers.matrices->get_handle(), "Matrices uniform buffer");
 
-	set_object_name(VK_OBJECT_TYPE_PIPELINE, (uint64_t) pipelines.skysphere, "Skysphere pipeline");
-	set_object_name(VK_OBJECT_TYPE_PIPELINE, (uint64_t) pipelines.composition, "Skysphere pipeline");
-	set_object_name(VK_OBJECT_TYPE_PIPELINE, (uint64_t) pipelines.sphere, "Sphere rendering pipeline");
-	set_object_name(VK_OBJECT_TYPE_PIPELINE, (uint64_t) pipelines.bloom[0], "Horizontal bloom filter pipeline");
-	set_object_name(VK_OBJECT_TYPE_PIPELINE, (uint64_t) pipelines.bloom[1], "Vertical bloom filter pipeline");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE, pipelines.skysphere, "Skysphere pipeline");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE, pipelines.composition, "Skysphere pipeline");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE, pipelines.sphere, "Sphere rendering pipeline");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE, pipelines.bloom[0], "Horizontal bloom filter pipeline");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE, pipelines.bloom[1], "Vertical bloom filter pipeline");
 
-	set_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t) pipeline_layouts.models, "Model rendering pipeline layout");
-	set_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t) pipeline_layouts.composition, "Composition pass pipeline layout");
-	set_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t) pipeline_layouts.bloom_filter, "Bloom filter pipeline layout");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT, pipeline_layouts.models, "Model rendering pipeline layout");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT, pipeline_layouts.composition, "Composition pass pipeline layout");
+	set_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT, pipeline_layouts.bloom_filter, "Bloom filter pipeline layout");
 
-	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t) descriptor_sets.sphere, "Sphere model descriptor set");
-	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t) descriptor_sets.skysphere, "Sky sphere model descriptor set");
-	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t) descriptor_sets.composition, "Composition pass descriptor set");
-	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t) descriptor_sets.bloom_filter, "Bloom filter descriptor set");
+	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptor_sets.sphere, "Sphere model descriptor set");
+	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptor_sets.skysphere, "Sky sphere model descriptor set");
+	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptor_sets.composition, "Composition pass descriptor set");
+	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptor_sets.bloom_filter, "Bloom filter descriptor set");
 
-	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t) descriptor_set_layouts.models, "Model rendering descriptor set layout");
-	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t) descriptor_set_layouts.composition, "Composition pass set layout");
-	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t) descriptor_set_layouts.bloom_filter, "Bloom filter descriptor set layout");
+	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptor_set_layouts.models, "Model rendering descriptor set layout");
+	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptor_set_layouts.composition, "Composition pass set layout");
+	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptor_set_layouts.bloom_filter, "Bloom filter descriptor set layout");
 
-	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) textures.skysphere.image->get_vk_image().get_handle(), "Sky sphere texture");
-	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.depth.image, "Offscreen pass depth image");
-	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.depth.image, "Offscreen pass depth image");
-	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.color[0].image, "Offscreen pass color image 0");
-	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.color[1].image, "Offscreen pass color image 1");
-	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) filter_pass.color[0].image, "Bloom filter pass color image");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, textures.skysphere.image->get_vk_image().get_handle(), "Sky sphere texture");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, offscreen.depth.image, "Offscreen pass depth image");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, offscreen.depth.image, "Offscreen pass depth image");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, offscreen.color[0].image, "Offscreen pass color image 0");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, offscreen.color[1].image, "Offscreen pass color image 1");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, filter_pass.color[0].image, "Bloom filter pass color image");
 
-	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) depth_stencil.image, "Base depth/stencil image");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, depth_stencil.image, "Base depth/stencil image");
 	for (size_t i = 0; i < swapchain_buffers.size(); i++)
 	{
 		std::string name = "Swapchain image" + std::to_string(i);
-		set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) swapchain_buffers[i].image, name.c_str());
+		set_object_name(VK_OBJECT_TYPE_IMAGE, swapchain_buffers[i].image, name.c_str());
 	}
 
-	set_object_name(VK_OBJECT_TYPE_SAMPLER, (uint64_t) offscreen.sampler, "Offscreen pass sampler");
-	set_object_name(VK_OBJECT_TYPE_SAMPLER, (uint64_t) filter_pass.sampler, "Bloom filter pass sampler");
+	set_object_name(VK_OBJECT_TYPE_SAMPLER, offscreen.sampler, "Offscreen pass sampler");
+	set_object_name(VK_OBJECT_TYPE_SAMPLER, filter_pass.sampler, "Bloom filter pass sampler");
 
-	set_object_name(VK_OBJECT_TYPE_RENDER_PASS, (uint64_t) offscreen.render_pass, "Offscreen pass render pass");
-	set_object_name(VK_OBJECT_TYPE_RENDER_PASS, (uint64_t) filter_pass.render_pass, "Bloom filter pass render pass");
+	set_object_name(VK_OBJECT_TYPE_RENDER_PASS, offscreen.render_pass, "Offscreen pass render pass");
+	set_object_name(VK_OBJECT_TYPE_RENDER_PASS, filter_pass.render_pass, "Bloom filter pass render pass");
 }
 
 void DebugUtils::request_gpu_features(vkb::PhysicalDevice &gpu)

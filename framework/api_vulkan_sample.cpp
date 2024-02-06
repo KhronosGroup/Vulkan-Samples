@@ -437,7 +437,8 @@ void ApiVulkanSample::create_pipeline_cache()
 	VK_CHECK(vkCreatePipelineCache(device->get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
 }
 
-VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::vector<uint32_t>& spirv, VkShaderStageFlagBits stage) {
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::vector<uint32_t> &spirv, VkShaderStageFlagBits stage)
+{
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
@@ -1117,7 +1118,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
 
-	auto       &mipmaps = texture.image->get_mipmaps();
+	auto &      mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1216,7 +1217,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
 
-	auto       &mipmaps = texture.image->get_mipmaps();
+	auto &      mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1314,7 +1315,7 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 	VkDeviceSize offsets[1] = {0};
 
 	const auto &vertex_buffer = model->vertex_buffers.at("vertex_buffer");
-	auto       &index_buffer  = model->index_buffer;
+	auto &      index_buffer  = model->index_buffer;
 
 	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer.get(), offsets);
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);
