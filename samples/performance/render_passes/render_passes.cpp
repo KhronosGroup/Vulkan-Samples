@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,9 @@
 #include "render_passes.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "filesystem/legacy.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"

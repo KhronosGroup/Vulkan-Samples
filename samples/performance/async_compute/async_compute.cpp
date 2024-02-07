@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,9 +19,9 @@
 
 #include "api_vulkan_sample.h"
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "filesystem/legacy.h"
 
 #include "scene_graph/components/orthographic_camera.h"
 #include "stats/stats.h"

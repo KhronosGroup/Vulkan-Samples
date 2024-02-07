@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,9 +27,9 @@ VKBP_ENABLE_WARNINGS()
 #include "core/device.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "filesystem/legacy.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"

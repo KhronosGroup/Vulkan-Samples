@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,11 +28,11 @@ using ScreenshotTags = vkb::PluginBase<Screenshot, vkb::tags::Passive>;
 
 /**
  * @brief Screenshot
- * 
+ *
  * Capture a screen shot of the last rendered image at a given frame. The output can also be named
- * 
+ *
  * Usage: vulkan_sample sample afbc --screenshot 1 --screenshot-output afbc-screenshot
- * 
+ *
  */
 class Screenshot : public ScreenshotTags
 {

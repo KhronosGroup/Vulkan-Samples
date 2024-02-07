@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,8 +19,8 @@
 
 #include "common/logging.h"
 #include "device.h"
-#include "glsl_compiler.h"
 #include "filesystem/legacy.h"
+#include "glsl_compiler.h"
 #include "spirv_reflection.h"
 
 namespace vkb

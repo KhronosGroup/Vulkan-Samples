@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +20,8 @@
 #include <common/hpp_error.h>
 #include <common/hpp_vk_common.h>
 #include <common/logging.h>
-#include <hpp_glsl_compiler.h>
 #include <filesystem/legacy.h>
+#include <hpp_glsl_compiler.h>
 #include <platform/window.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.

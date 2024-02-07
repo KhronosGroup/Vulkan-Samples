@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,9 @@
 #include "constant_data.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "filesystem/legacy.h"
 
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"

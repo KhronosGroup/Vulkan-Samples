@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2023, Bradley Austin Davis
- * Copyright (c) 2020-2023, Arm Limited
+/* Copyright (c) 2020-2024, Bradley Austin Davis
+ * Copyright (c) 2020-2024, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,9 +19,9 @@
 #include "open_gl_interop.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "filesystem/legacy.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 
