@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,8 @@ layout (location = 0) in vec3 inNormal;
 layout (binding = 0) uniform Ubo
 {
     mat4 projection;
-    mat4 modelview;
+    mat4 view;
+    mat4 model;
     vec4 colorTransformation;
     ivec2 sceneTransformation;
 } ubo;
@@ -31,8 +32,8 @@ layout (location = 0) out vec4 outColor;
 
 void main()
 {
-    outColor = vec4(0.5*inNormal+vec3(0.5),1);
-//    outColor = vec4(0.1,0.1,1,1);
+
+    outColor = vec4( 0.5 * inNormal + vec3(0.5), 1);
 
     outColor.xyz = ubo.colorTransformation.x * outColor.xyz + vec3(ubo.colorTransformation.y);
 }

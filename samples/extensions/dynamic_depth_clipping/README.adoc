@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, The Khronos Group
+- Copyright (c) 2024, Mobica Limited
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,73 +17,85 @@
 -
 ////
 
-// NOTE: Remove the following comment block for the actual readme of your sample -->
-
-////
-This is a template for the sample's readme. Every new sample should come with a readme that contains at least a short tutorial that accompanies the code of the example.
-
-Readmes are written in Asciidoc (see https://asciidoc.org/).
-
-You can freely choose how to structure it, but it should always contain an overview and conclusion paragraph.
-
-The readme can (and most often should) show code from along with an explanation. Code in asciidoc can be rendered with syntax highlighting using the following syntax:
-
-[,cpp]
-----
-void main() {
-    std::cout << "Hello World";
-}
-----
-
-or
-
-[,glsl]
-----
-void main() {
-    gl_color = vec4(1.0f);
-}
-----
-
-Ideally it also contains an image of how the sample is supposed to look.
-
-For an example you can take a look at the readme's of existing samples, e.g. https://raw.githubusercontent.com/KhronosGroup/Vulkan-Samples/main/samples/extensions/descriptor_indexing/README.adoc
-////
-
-= Sample name
-
-////
-The following block adds linkage to this repo in the Vulkan docs site project. It's only visible if the file is viewed via the Antora framework.
-////
+== Dynamic primitive clipping
 
 ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/PUT_SAMPLE_PATH_HERE[Khronos Vulkan samples github repository].
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/dynamic_depth_clipping[Khronos Vulkan samples github repository].
 endif::[]
-
 
 == Overview
 
-////
-This chapter should contain an overview of what this sample is trying to achieve. If extensions are used, this chapter should also list those.
+This sample demonstrates how to apply primitive clipping using `vkCmdSetDepthClipEnableEXT()` command which is part of `VK_EXT_extended_dynamic_state3` extension. 
 
-The following chapters get into the details on how the sample is working, what features are used, etc. 
+# What is primitive clipping
 
-The chapter itself can be structured by using sub paragraphs, e.g.:
+Primitives produced by vertex/geometry/tesellation shaders are sent to fixed-function vertex post-processing.
+Primitive clipping is a part of post-processing pipeline in which primitives such as points/lines/triangles are culled against cull volume and then clipped to clip volume.
+And then they might be further clipped by results stored in `gl_ClipDistance[]` array - values in this array must be calculated in a vertex/geometry/tesellation shader.
 
-# Feature description
+In the past, fixed-function version of OpenGL API provided a method to specify parameters for up to 6 clipping planes ( half-spaces ) that could perform additional primitive clipping. Fixed-function hardware calculated proper distances to these planes and made a decision - should the primitive be clipped or not ( for historical study - search for the `glClipPlane()` description ).
 
-# Enabling extensions
+Vulkan inherited the idea of primitive clipping, but with one important difference: user has to calculate the distance to the clip planes on its own in the vertex shader.
+And - because user does it in a shader - he does not have to use clip planes. It can be any kind of calculation, as long as the results are put in `gl_ClipDistance[]` array.
+Values that are less than 0.0 cause the vertex to be be clipped. In this example we show a group of different calculations that achieve such results ( see shaders/dynamic_depth_clipping/clipping.vert for details ).
 
-# etc.
+In case of triangle primitive the whole triangle is clipped if all of its vertices have values stored in `gl_ClipDistance[]` below 0.0.
+When some of these values are above 0.0 - triangle is split into new triangles as described in Vulkan specification.
 
-////
+== How to apply primitive clipping in Vulkan
 
-== Conclusion
+There are few ways of applying primitive clipping in Vulkan API:
 
-////
-The tutorial should end with a conclusion chapter that recaps the tutorial and (if applicable) talks about pros and cons of the features demonstrated in this sample
-////
+- statically: when `VkPipelineRasterizationDepthClipStateCreateInfoEXT` is present in `VkGraphicsPipelineCreateInfo::pNext` chain and `VkPipelineRasterizationDepthClipStateCreateInfoEXT::depthClipEnable` is set to `VK_TRUE` ( requires extension `VK_EXT_depth_clip_enable` )
 
-////
-NOTE: Please also add a link to the new samples' README.adoc to the file located in ./antora/modules/ROOT/nav.adoc
-THis is necessary to have the sample show up on the build for the docs site under https://docs.vulkan.org
-////
+- statically: when `VkPipelineRasterizationDepthClipStateCreateInfoEXT` IS NOT present and `VkPipelineRasterizationStateCreateInfo::depthClampEnable` is VK_FALSE
+
+- dynamically: when `VK_DYNAMIC_STATE_DEPTH_CLAMP_ENABLE_EXT` is present in `VkPipelineDynamicStateCreateInfo::pDynamicStates` and command `vkCmdSetDepthClipEnableEXT(cmd, VK_TRUE)` is called before `vkCmdDraw*(cmd, ... )` command.
+
+In all above mentioned cases - vertex/geometry/tesselation shaders must fill `gl_ClipDistance[]` values.
+
+This example focuses on the last, dynamic case.
+
+In order to use the dynamic primitive clipping we need to:
+
+- create `VkInstance` with extension `VK_KHR_get_physical_device_properties2`
+
+- create `VkDevice` with extension `VK_EXT_extended_dynamic_state3`
+
+- `VkPhysicalDeviceFeatures::shaderClipDistance` must be set to VK_TRUE - in order to use `gl_ClipDistance[]` variable in shaders
+
+- `VkPhysicalDeviceDepthClipEnableFeaturesEXT::depthClipEnable` must be set to VK_TRUE
+
+- `VkPhysicalDeviceExtendedDynamicState3FeaturesEXT::extendedDynamicState3DepthClipEnable` must be set to VK_TRUE - in order to use `vkCmdSetDepthClipEnableEXT()` command
+
+- during graphics pipeline creation `VkPipelineDynamicStateCreateInfo::pDynamicStates` must contain `VK_DYNAMIC_STATE_DEPTH_CLAMP_ENABLE_EXT`
+
+- command `vkCmdSetDepthClipEnableEXT(cmd, VK_TRUE)` is called before `vkCmdDraw*(cmd, ... )` command
+
+- `gl_ClipDistance[]` must be added to a definition of `gl_PerVertex` structure in a vertex shader. Simplest form with one value per vertex will look like this:
+
+[,glsl]
+----
+out gl_PerVertex 
+{
+    vec4  gl_Position;
+    float gl_ClipDistance[1];
+};
+----
+
+The size of `gl_ClipDistance[]` array may not be larger than `VkPhysicalDeviceLimits::maxClipDistances`.
+
+== Potential applications
+
+In the past primitive clipping was used in different CAD applications to make cross-sections of different objects.
+We still can use it in similar fashion, but other applications also come to mind:
+
+- we can hide parts of the 3D model
+
+- we can make holes in a terrain
+
+- we can use it in some special effects
+
+Advantage of using primitive clipping over using `discard` keyword in a fragment shader is obvious: we are doing it earlier in a pipeline which may result in better performance ( or may not, you have to measure it ). 
+
+But beware of vertex density: because this technique is vertex based it may have some nasty results when vertices are too sparse. See "Torusknot" object type with "Clip space Y" visualization in a sample to see where the problem may arise.
