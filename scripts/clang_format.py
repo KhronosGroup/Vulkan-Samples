@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2023, Thomas Atkinson
+# Copyright 2023-2024, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -36,6 +36,38 @@ class terminal_colors:
     ERROR = "\033[91m"
     END = "\033[0m"
 
+# CI checks if files are formatted using a fixed version of clang-format
+# Different versions of clang-format may produce different results
+# If the version of clang-format is not found, the script will exit with an error
+CI_CLANG_FORMAT_VERSION = 15
+
+def get_clang_format_command() -> str:
+    """
+    Gets the clang-format command to use based on the CI_CLANG_FORMAT_VERSION
+    """
+    if which("clang-format-" + str(CI_CLANG_FORMAT_VERSION)):
+        return "clang-format-" + str(CI_CLANG_FORMAT_VERSION)
+
+    if which("clang-format"):
+        return "clang-format"
+
+    return ""
+
+
+def validate_clang_version() -> bool:
+    """
+    Validates that the clang-format version is the same as the CI_CLANG_FORMAT_VERSION
+    """
+    clang_format = get_clang_format_command()
+    if not clang_format:
+        return False
+    version = check_output([clang_format, "--version"]).decode("utf-8")
+    # Eg: "version 15" in Ubuntu clang-format version 15.0.7
+    if "version " + str(CI_CLANG_FORMAT_VERSION) in version:
+        return True
+    return False
+
+
 if __name__ == "__main__":
     argument_parser = argparse.ArgumentParser(
         description="Format C/C++ files using clang-format"
@@ -59,8 +91,14 @@ if __name__ == "__main__":
         print(terminal_colors.ERROR + "Missing git" + terminal_colors.END)
         sys.exit(1)
 
-    if not which("clang-format"):
-        print(terminal_colors.ERROR + "Missing clang-format" + terminal_colors.END)
+    if not validate_clang_version():
+        print(
+            terminal_colors.ERROR
+            + "clang-format version "
+            + str(CI_CLANG_FORMAT_VERSION)
+            + " not found"
+            + terminal_colors.END
+        )
         sys.exit(1)
 
     out = check_output(["git", "diff", args.branch, "--name-only"])
@@ -70,6 +108,7 @@ if __name__ == "__main__":
     files = out.decode("utf-8").split("\n")
     files = [f for f in files if f and get_ext(f) in check_files]
 
+    clang_format = get_clang_format_command()
     if files and len(files) > 0:
         print(terminal_colors.INFO + "Formatting files:" + terminal_colors.END)
         for f in files:
@@ -78,9 +117,6 @@ if __name__ == "__main__":
 
         for f in files:
             if os.path.isfile(f):
-                check_output(["clang-format", "-i", f])
+                check_output([clang_format, "-i", f])
     else:
         print(terminal_colors.INFO + "No files to format" + terminal_colors.END)
-        
-        
-        
