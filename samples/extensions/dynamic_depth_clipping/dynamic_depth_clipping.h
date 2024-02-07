@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Arm Limited and Contributors
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+/*
+* Rendering using depth clipping configured by dynamic pipeline state
+*/
+
 #pragma once
 
 #include "api_vulkan_sample.h"
@@ -25,14 +29,6 @@ class DynamicDepthClipping : public ApiVulkanSample
 	DynamicDepthClipping();
 	virtual ~DynamicDepthClipping();
 
-	// Create pipeline
-	void setup_descriptor_set_layout();
-	void prepare_pipelines();
-	void prepare_uniform_buffers();
-	void update_uniform_buffers();
-	void setup_descriptor_pool();
-	void setup_descriptor_sets();
-
 	// Override basic framework functionality
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
@@ -40,23 +36,45 @@ class DynamicDepthClipping : public ApiVulkanSample
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
+	// Auxiliary functions
+	void load_assets();
+	void setup_layouts();
+	void prepare_pipelines();
+	void prepare_uniform_buffers();
+	void update_uniform_buffers();
+	void setup_descriptor_pool();
+	void setup_descriptor_sets();
 
   private:
-	// Sample specific data
-	VkPipeline       sample_pipeline{};
-	VkPipelineLayout sample_pipeline_layout{};
 
-	struct Model
+	// vector of models rendered by sample
+	struct Models
 	{
-		std::unique_ptr<vkb::sg::SubMesh> object;
+		std::vector<std::unique_ptr<vkb::sg::SubMesh>> objects;
+		std::vector<glm::mat4>                         transforms;
+		int32_t                                        object_index = 0;
 	} models;
 
+	std::vector<std::string> model_names;
+	std::vector<std::string> visualization_names;
+
+	// sample parameters used on CPU side
 	struct Params
 	{
 		bool    useClipping;
-		bool	drawObject[2];
+		bool    drawObject[2];
 		int32_t visualization;
 	} params;
+
+	// parameters sent to shaders through uniform buffers
+	struct UBOVS
+	{
+		glm::mat4  projection;
+		glm::mat4  view;
+		glm::mat4  model;
+		glm::vec4  colorTransformation;
+		glm::ivec2 sceneTransformation;
+	} ubo_positive, ubo_negative;
 
 	struct
 	{
@@ -64,14 +82,7 @@ class DynamicDepthClipping : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> buffer_negative;
 	} uniform_buffers;
 
-	struct UBOVS
-	{
-		glm::mat4  projection;
-		glm::mat4  modelview;
-		glm::vec4  colorTransformation;
-		glm::ivec2 sceneTransformation;
-	} ubo_positive, ubo_negative;
-
+	// pipeline infrastructure
 	struct
 	{
 		VkPipelineLayout models;
@@ -88,7 +99,7 @@ class DynamicDepthClipping : public ApiVulkanSample
 		VkDescriptorSet descriptor_negative;
 	} descriptor_sets;
 
-	std::vector<std::string> visualization_names;
+	VkPipeline       sample_pipeline{};
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_depth_clipping();
