@@ -21,7 +21,7 @@
 #include <fmt/format.h>
 
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {

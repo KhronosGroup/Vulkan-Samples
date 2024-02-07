@@ -25,7 +25,7 @@ VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 VKBP_ENABLE_WARNINGS()
 
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 
 namespace vkb
 {

@@ -22,7 +22,7 @@
 #include "common/logging.h"
 #include "core/device.h"
 #include "gui.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/window.h"
 
 #include "rendering/subpasses/forward_subpass.h"

@@ -25,3 +25,6 @@ elseif(APPLE OR UNIX)
 else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
+
+
+add_subdirectory(filesystem)

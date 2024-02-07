@@ -21,18 +21,7 @@
 
 extern "C"
 {
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
-	{
-		const char *external_dir_cstr                                   = env->GetStringUTFChars(external_dir, 0);
-		vkb::AndroidPlatformContext::android_external_storage_directory = std::string(external_dir_cstr) + "/";
-		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
-
-		const char *temp_dir_cstr                           = env->GetStringUTFChars(temp_dir, 0);
-		vkb::AndroidPlatformContext::android_temp_directory = std::string(temp_dir_cstr) + "/";
-		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
-	}
-
+	// TODO: Arguments can be parsed from the bundle
 	JNIEXPORT void JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
 	{
@@ -53,6 +42,55 @@ extern "C"
 	}
 }
 
+namespace details
+{
+std::string get_external_storage_directory(android_app *app)
+{
+	JNIEnv *env;
+	app->activity->vm->AttachCurrentThread(&env, nullptr);
+
+	jclass    activity_class = env->GetObjectClass(app->activity->clazz);
+	jmethodID method_id      = env->GetMethodID(activity_class, "getExternalFilesDir", "(Ljava/lang/String;)Ljava/io/File;");
+	jstring   arg            = env->NewStringUTF(nullptr);
+
+	jobject file = env->CallObjectMethod(app->activity->clazz, method_id, arg);
+
+	jclass    file_class = env->GetObjectClass(file);
+	jmethodID get_path   = env->GetMethodID(file_class, "getAbsolutePath", "()Ljava/lang/String;");
+	jstring   path       = (jstring) env->CallObjectMethod(file, get_path);
+
+	const char *path_cstr = env->GetStringUTFChars(path, 0);
+	std::string path_str  = std::string(path_cstr) + "/";
+	env->ReleaseStringUTFChars(path, path_cstr);
+
+	app->activity->vm->DetachCurrentThread();
+
+	return path_str;
+}
+
+std::string get_external_cache_directory(android_app *app)
+{
+	JNIEnv *env;
+	app->activity->vm->AttachCurrentThread(&env, nullptr);
+
+	jclass    activity  = env->GetObjectClass(app->activity->clazz);
+	jmethodID method_id = env->GetMethodID(activity, "getCacheDir", "()Ljava/io/File;");
+	jobject   file      = env->CallObjectMethod(app->activity->clazz, method_id);
+
+	jclass    file_class = env->GetObjectClass(file);
+	jmethodID get_path   = env->GetMethodID(file_class, "getAbsolutePath", "()Ljava/lang/String;");
+	jstring   path       = (jstring) env->CallObjectMethod(file, get_path);
+
+	const char *path_cstr = env->GetStringUTFChars(path, 0);
+	std::string path_str  = std::string(path_cstr) + "/";
+	env->ReleaseStringUTFChars(path, path_cstr);
+
+	app->activity->vm->DetachCurrentThread();
+
+	return path_str;
+}
+}        // namespace details
+
 namespace vkb
 {
 std::string              AndroidPlatformContext::android_external_storage_directory = {};
@@ -62,8 +100,8 @@ std::vector<std::string> AndroidPlatformContext::android_arguments              
 AndroidPlatformContext::AndroidPlatformContext(android_app *app) :
     PlatformContext{}, app{app}
 {
-	_external_storage_directory = android_external_storage_directory;
-	_temp_directory             = android_temp_directory;
+	_external_storage_directory = details::get_external_storage_directory(app);
+	_temp_directory             = details::get_external_cache_directory(app);
 	_arguments                  = android_arguments;
 }
 }        // namespace vkb

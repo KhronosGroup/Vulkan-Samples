@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,27 +15,23 @@
  * limitations under the License.
  */
 
-#include "unix_d2d_platform.h"
+#pragma once
 
-#include "platform/headless_window.h"
-#include "platform/unix/direct_window.h"
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/spdlog.h>
+
+#define LOGGER_FORMAT "[%^%l%$] %v"
+#define PROJECT_NAME "VulkanSamples"
+
+#define LOGI(...) spdlog::info(__VA_ARGS__);
+#define LOGW(...) spdlog::warn(__VA_ARGS__);
+#define LOGE(...) spdlog::error("{}", fmt::format(__VA_ARGS__));
+#define LOGD(...) spdlog::debug(__VA_ARGS__);
 
 namespace vkb
 {
-UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) :
-    Platform{context}
+namespace logging
 {
-}
-
-void UnixD2DPlatform::create_window(const Window::Properties &properties)
-{
-	if (properties.mode == vkb::Window::Mode::Headless)
-	{
-		window = std::make_unique<HeadlessWindow>(properties);
-	}
-	else
-	{
-		window = std::make_unique<DirectWindow>(this, properties);
-	}
+void init();
 }
 }        // namespace vkb

@@ -20,6 +20,7 @@
 #include "plugins/plugins.h"
 
 #include <core/platform/entrypoint.hpp>
+#include <filesystem/filesystem.hpp>
 
 #if defined(PLATFORM__ANDROID)
 #	include "platform/android/android_platform.h"
@@ -35,6 +36,8 @@
 
 CUSTOM_MAIN(context)
 {
+	vkb::filesystem::init(context);
+
 #if defined(PLATFORM__ANDROID)
 	vkb::AndroidPlatform platform{context};
 #elif defined(PLATFORM__WINDOWS)

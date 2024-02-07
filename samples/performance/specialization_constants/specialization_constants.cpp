@@ -22,7 +22,7 @@
 
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 
 #include "stats/stats.h"
 

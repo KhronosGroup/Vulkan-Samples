@@ -335,17 +335,6 @@ bool motion_event_filter(const GameActivityMotionEvent *event)
 }
 }        // namespace
 
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
-
 AndroidPlatform::AndroidPlatform(const PlatformContext &context) :
     Platform{context}
 {

@@ -20,7 +20,7 @@
 #include "common/logging.h"
 #include "device.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "spirv_reflection.h"
 
 namespace vkb

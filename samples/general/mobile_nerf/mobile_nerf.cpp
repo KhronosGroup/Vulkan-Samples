@@ -18,7 +18,7 @@
 #include "mobile_nerf.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "gltf_loader.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"

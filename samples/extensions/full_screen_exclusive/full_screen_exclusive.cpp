@@ -18,7 +18,7 @@
 #include "full_screen_exclusive.h"
 
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)

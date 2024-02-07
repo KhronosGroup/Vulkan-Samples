@@ -43,17 +43,6 @@
 namespace vkb
 {
 
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
-
 UnixPlatform::UnixPlatform(const PlatformContext &context, const UnixType &type) :
     Platform{context}, type{type}
 {

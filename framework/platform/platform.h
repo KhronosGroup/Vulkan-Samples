@@ -29,7 +29,7 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "platform/application.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/parser.h"
 #include "platform/plugins/plugin.h"
 #include "platform/window.h"

@@ -326,7 +326,6 @@ set(PLATFORM_FILES
     platform/application.h
     platform/platform.h
     platform/window.h
-    platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
     platform/parser.h
@@ -339,7 +338,6 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/platform.cpp
     platform/window.cpp
-    platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
     platform/parser.cpp
@@ -513,6 +511,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
     vkb__core
+    vkb__filesystem
     volk
     ktx
     stb

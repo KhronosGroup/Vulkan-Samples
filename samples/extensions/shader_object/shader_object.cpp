@@ -20,6 +20,8 @@
 #include <heightmap.h>
 #include <unordered_map>
 
+#include <json.hpp>
+
 ShaderObject::ShaderObject()
 {
 	title = "Shader Object";

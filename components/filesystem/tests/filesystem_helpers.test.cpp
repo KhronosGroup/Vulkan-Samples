@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,27 +15,15 @@
  * limitations under the License.
  */
 
-#include "unix_d2d_platform.h"
+#include <core/util/error.hpp>
 
-#include "platform/headless_window.h"
-#include "platform/unix/direct_window.h"
+VKBP_DISABLE_WARNINGS()
+#include <catch2/catch_test_macros.hpp>
+VKBP_ENABLE_WARNINGS()
 
-namespace vkb
+#include <filesystem/filesystem.hpp>
+
+TEST_CASE("Windows Filename", "[filesystem]")
 {
-UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) :
-    Platform{context}
-{
+	REQUIRE("file.txt" == vkb::filesystem::helpers::filename("C:\\path\\to\\file.txt"));
 }
-
-void UnixD2DPlatform::create_window(const Window::Properties &properties)
-{
-	if (properties.mode == vkb::Window::Mode::Headless)
-	{
-		window = std::make_unique<HeadlessWindow>(properties);
-	}
-	else
-	{
-		window = std::make_unique<DirectWindow>(this, properties);
-	}
-}
-}        // namespace vkb

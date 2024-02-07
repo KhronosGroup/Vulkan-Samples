@@ -22,6 +22,8 @@
 #include <hpp_vulkan_sample.h>
 #include <imgui_internal.h>
 
+#include <numeric>
+
 namespace vkb
 {
 namespace

@@ -20,7 +20,7 @@
 #include "common/logging.h"
 #include "common/vk_common.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)

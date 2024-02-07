@@ -35,7 +35,7 @@ VKBP_ENABLE_WARNINGS()
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/image/astc.h"

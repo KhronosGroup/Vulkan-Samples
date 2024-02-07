@@ -21,7 +21,7 @@
 #include <common/hpp_vk_common.h>
 #include <common/logging.h>
 #include <hpp_glsl_compiler.h>
-#include <platform/filesystem.h>
+#include <filesystem/legacy.h>
 #include <platform/window.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.

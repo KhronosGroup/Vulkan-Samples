@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/plugins/plugin_base.h"
 
 namespace plugins

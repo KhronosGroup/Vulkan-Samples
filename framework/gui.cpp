@@ -39,7 +39,7 @@ VKBP_ENABLE_WARNINGS()
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
 #include "imgui_internal.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/window.h"
 #include "rendering/render_context.h"
 #include "timer.h"
