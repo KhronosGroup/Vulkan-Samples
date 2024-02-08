@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -83,19 +83,19 @@ elseif(UNIX)
     else()
         message(FATAL_ERROR "Unknown WSI")
     endif()
-endif() 
+endif()
 
 # vma
 add_library(vma INTERFACE)
-set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/src)
+set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/include)
 target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
-target_include_directories(vma INTERFACE ${VMA_DIR})
+target_include_directories(vma SYSTEM INTERFACE ${VMA_DIR})
 target_link_libraries(vma INTERFACE vulkan)
 
 # libktx
 set(KTX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ktx)
 
-set(KTX_SOURCES  
+set(KTX_SOURCES
     ${KTX_DIR}/lib/checkheader.c
     ${KTX_DIR}/lib/dfdutils/createdfd.c
     ${KTX_DIR}/lib/dfdutils/colourspaces.c
@@ -136,7 +136,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/basisu/transcoder/basisu_transcoder.h
     ${KTX_DIR}/lib/basisu/transcoder/basisu.h
     ${KTX_DIR}/lib/basisu/zstd/zstd.c
-   
+
     # KT1
     ${KTX_DIR}/lib/texture1.c
     ${KTX_DIR}/lib/texture1.h
@@ -152,7 +152,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/vkformat_str.c
     ${KTX_DIR}/lib/vk_funcs.c
     ${KTX_DIR}/lib/vk_funcs.h
-    ${KTX_DIR}/lib/vkloader.c    
+    ${KTX_DIR}/lib/vkloader.c
 )
 
 set(KTX_INCLUDE_DIRS
