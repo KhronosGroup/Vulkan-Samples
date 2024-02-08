@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Sascha Willems
- *
+/* Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2024, Mobica Limited
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
