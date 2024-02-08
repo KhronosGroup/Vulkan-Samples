@@ -50,6 +50,8 @@ There are few ways of applying primitive clipping in Vulkan API:
 
 - statically: when `VkPipelineRasterizationDepthClipStateCreateInfoEXT` IS NOT present and `VkPipelineRasterizationStateCreateInfo::depthClampEnable` is VK_FALSE
 
+- using shader objects with `vkCmdSetDepthClipEnableEXT(cmd, VK_TRUE)` called before `vkCmdDraw*(cmd, ... )` command.
+
 - dynamically: when `VK_DYNAMIC_STATE_DEPTH_CLAMP_ENABLE_EXT` is present in `VkPipelineDynamicStateCreateInfo::pDynamicStates` and command `vkCmdSetDepthClipEnableEXT(cmd, VK_TRUE)` is called before `vkCmdDraw*(cmd, ... )` command.
 
 In all above mentioned cases - vertex/geometry/tesselation shaders must fill `gl_ClipDistance[]` values.
