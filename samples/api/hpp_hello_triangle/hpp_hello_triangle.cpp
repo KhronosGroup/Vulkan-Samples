@@ -757,7 +757,7 @@ vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
 	                                                                                {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
 	                                                                                {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation},
 	                                                                                {"vert", vk::ShaderStageFlagBits::eVertex}};
-	vkb::HPPShaderCompiler shader_compiler;
+	vkb::HPPShaderCompiler                                      shader_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
 
