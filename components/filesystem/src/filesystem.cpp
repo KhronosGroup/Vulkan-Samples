@@ -51,10 +51,16 @@ void FileSystem::write_file(const Path &path, const std::string &data)
 	write_file(path, std::vector<uint8_t>(data.begin(), data.end()));
 }
 
-std::string FileSystem::read_file(const Path &path)
+std::string FileSystem::read_file_string(const Path &path)
 {
-	auto bin = read_binary_file(path);
+	auto bin = read_file_binary(path);
 	return {bin.begin(), bin.end()};
+}
+
+std::vector<uint8_t> FileSystem::read_file_binary(const Path &path)
+{
+	auto stat   = stat_file(path);
+	return read_chunk(path, 0, stat.size);
 }
 
 }        // namespace filesystem

@@ -47,7 +47,7 @@ const std::string get(const Type type, const std::string &file)
 	// Check for special cases first
 	if (type == Type::Temp)
 	{
-		return vkb::filesystem::get()->temp_directory();
+		return vkb::filesystem::get()->temp_directory().string();
 	}
 
 	// Check for relative paths
@@ -71,10 +71,11 @@ const std::string get(const Type type, const std::string &file)
 
 	if (!is_directory(path))
 	{
-		create_path(fs->external_storage_directory(), it->second);
+		create_path(fs->external_storage_directory().string(), it->second);
 	}
 
-	return path / file;
+	auto full_path = path / file;
+	return full_path.string();
 }
 }        // namespace path
 
@@ -104,22 +105,22 @@ void create_path(const std::string &root, const std::string &path)
 
 std::vector<uint8_t> read_asset(const std::string &filename)
 {
-	return vkb::filesystem::get()->read_binary_file<uint8_t>(path::get(path::Type::Assets) + filename);
+	return vkb::filesystem::get()->read_file_binary(path::get(path::Type::Assets) + filename);
 }
 
 std::string read_shader(const std::string &filename)
 {
-	return vkb::filesystem::get()->read_file(path::get(path::Type::Shaders) + filename);
+	return vkb::filesystem::get()->read_file_string(path::get(path::Type::Shaders) + filename);
 }
 
 std::vector<uint8_t> read_shader_binary(const std::string &filename)
 {
-	return vkb::filesystem::get()->read_binary_file<uint8_t>(path::get(path::Type::Shaders) + filename);
+	return vkb::filesystem::get()->read_file_binary(path::get(path::Type::Shaders) + filename);
 }
 
 std::vector<uint8_t> read_temp(const std::string &filename)
 {
-	return vkb::filesystem::get()->read_binary_file<uint8_t>(path::get(path::Type::Temp) + filename);
+	return vkb::filesystem::get()->read_file_binary(path::get(path::Type::Temp) + filename);
 }
 
 void write_temp(const std::vector<uint8_t> &data, const std::string &filename)

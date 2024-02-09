@@ -111,6 +111,13 @@ std::vector<uint8_t> StdFileSystem::read_chunk(const Path &path, size_t start, s
 
 void StdFileSystem::write_file(const Path &path, const std::vector<uint8_t> &data)
 {
+	// create directory if it doesn't exist
+	auto parent = path.parent_path();
+	if (!std::filesystem::exists(parent))
+	{
+		create_directory(parent);
+	}
+
 	std::ofstream file{path, std::ios::binary | std::ios::trunc};
 
 	if (!file.is_open())

@@ -60,17 +60,10 @@ class FileSystem
 	void write_file(const Path &path, const std::string &data);
 
 	// Read the entire file into a string
-	std::string read_file(const Path &path);
+	std::string read_file_string(const Path &path);
 
 	// Read the entire file into a vector of bytes
-	template <typename T = uint8_t>
-	std::vector<T> read_binary_file(const Path &path)
-	{
-		static_assert(std::is_arithmetic<T>::value, "T must be an arithmetic type");
-		auto stat   = stat_file(path);
-		auto binary = read_chunk(path, 0, stat.size);
-		return std::vector<T>(binary.data(), binary.data() + binary.size() / sizeof(T));
-	}
+	std::vector<uint8_t> read_file_binary(const Path &path);
 };
 
 using FileSystemPtr = std::shared_ptr<FileSystem>;
