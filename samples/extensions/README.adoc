@@ -70,7 +70,7 @@ Render a sponza scene using the ray query extension.
 Shows how to set up all data structures required for ray queries, including the bottom and top level acceleration structures for the geometry and a standard vertex/fragment shader pipeline.
 Shadows are cast dynamically by ray queries being cast by the fragment shader.
 
-=== xref:./{samplespath}raytracing_basic/README.adoc[Basic hardware accelerated ray tracing]
+=== xref:./{samplespath}ray_tracing_basic/README.adoc[Basic hardware accelerated ray tracing]
 
 *Extensions*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline[`VK_KHR_ray_tracing_pipeline`], https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure[`VK_KHR_acceleration_structure`]
 
@@ -78,7 +78,7 @@ Render a basic scene using the official cross-vendor ray tracing extension.
 Shows how to setup all data structures required for ray tracing, including the bottom and top level acceleration structures for the geometry, the shader binding table and the ray tracing pipelines with shader groups for ray generation, ray hits, and ray misses.
 After dispatching the rays, the final result is copied to the swapchain image.
 
-=== xref:./{samplespath}raytracing_extended/README.adoc[Extended hardware accelerated ray tracing]
+=== xref:./{samplespath}ray_tracing_extended/README.adoc[Extended hardware accelerated ray tracing]
 
 *Extensions*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline[`VK_KHR_ray_tracing_pipeline`], https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure[`VK_KHR_acceleration_structure`]
 
