@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,12 +15,32 @@
  * limitations under the License.
  */
 
-#version 460
-#extension GL_EXT_ray_tracing : enable
-
-layout(location = 0) rayPayloadInEXT vec3 hitValue;
-
-void main()
+struct VSInput
 {
-    hitValue = vec3(0.0, 0.0, 0.2);
+[[vk::location(0)]] float3 Pos : POSITION0;
+[[vk::location(1)]] float2 UV : TEXCOORD0;
+[[vk::location(2)]] float3 Normal : NORMAL0;
+};
+
+struct UBO
+{
+	float4x4 projection;
+	float4x4 model;
+	float4 viewPos;
+};
+
+cbuffer ubo : register(b0) { UBO ubo; }
+
+struct VSOutput
+{
+	float4 Pos : SV_POSITION;
+[[vk::location(0)]] float2 UV : TEXCOORD0;
+};
+
+VSOutput main(VSInput input)
+{
+	VSOutput output = (VSOutput)0;
+	output.UV = input.UV;
+	output.Pos = mul(ubo.projection, mul(ubo.model, float4(input.Pos.xyz, 1.0)));
+	return output;
 }

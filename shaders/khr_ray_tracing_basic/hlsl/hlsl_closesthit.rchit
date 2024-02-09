@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2024, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,32 +15,19 @@
  * limitations under the License.
  */
 
-struct VSInput
+struct Payload
 {
-[[vk::location(0)]] float3 Pos : POSITION0;
-[[vk::location(1)]] float2 UV : TEXCOORD0;
-[[vk::location(2)]] float3 Normal : NORMAL0;
+    float3 hitValue;
 };
 
-struct UBO
+struct Attribute
 {
-	float4x4 projection;
-	float4x4 model;
-	float4 viewPos;
+    float2 bary;
 };
 
-cbuffer ubo : register(b0) { UBO ubo; }
-
-struct VSOutput
+[shader("closesthit")]
+void main(inout Payload payload, in Attribute attribs)
 {
-	float4 Pos : SV_POSITION;
-[[vk::location(0)]] float2 UV : TEXCOORD0;
-};
-
-VSOutput main(VSInput input)
-{
-	VSOutput output = (VSOutput)0;
-	output.UV = input.UV;
-	output.Pos = mul(ubo.projection, mul(ubo.model, float4(input.Pos.xyz, 1.0)));
-	return output;
+    const float3 barycentrics = float3(1.0f - attribs.bary.x - attribs.bary.y, attribs.bary.x, attribs.bary.y);
+    payload.hitValue = barycentrics;
 }

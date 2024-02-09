@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,19 +15,14 @@
  * limitations under the License.
  */
 
-struct Payload
-{
-    float3 hitValue;
-};
+#version 460
+#extension GL_EXT_ray_tracing : enable
 
-struct Attribute
-{
-    float2 bary;
-};
+layout(location = 0) rayPayloadInEXT vec3 hitValue;
+hitAttributeEXT vec3 attribs;
 
-[shader("closesthit")]
-void main(inout Payload payload, in Attribute attribs)
+void main()
 {
-    const float3 barycentrics = float3(1.0f - attribs.bary.x - attribs.bary.y, attribs.bary.x, attribs.bary.y);
-    payload.hitValue = barycentrics;
+  const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
+  hitValue = barycentricCoords;
 }

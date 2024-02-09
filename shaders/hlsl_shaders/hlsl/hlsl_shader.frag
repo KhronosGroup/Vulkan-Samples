@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,13 +15,17 @@
  * limitations under the License.
  */
 
-struct Payload
+Texture2D textureColor : register(t1, space0);
+SamplerState samplerColor : register(s1, space0);
+
+struct VSOutput
 {
-    float3 hitValue;
+	float4 Pos : SV_POSITION;
+[[vk::location(0)]] float2 UV : TEXCOORD0;
 };
 
-[shader("miss")]
-void main(inout Payload payload)
+float4 main(VSOutput input) : SV_TARGET
 {
-    payload.hitValue = float3(0.0, 0.0, 0.2);
+	float4 color = textureColor.Sample(samplerColor, input.UV);
+	return color;	
 }

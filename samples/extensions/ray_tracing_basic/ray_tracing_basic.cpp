@@ -594,9 +594,9 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	// Ray generation group
 	{
 		if (gui_settings.selected_language == vkb::VK_GLSL)
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+			shader_stages.push_back(load_shader("khr_ray_tracing_basic/glsl/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
 		else if (gui_settings.selected_language == vkb::VK_SPV)
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR, vkb::VK_SPV));
+			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl/hlsl_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR, vkb::VK_SPV));
 		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -610,9 +610,9 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	// Ray miss group
 	{
 		if (gui_settings.selected_language == vkb::VK_GLSL)
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+			shader_stages.push_back(load_shader("khr_ray_tracing_basic/glsl/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
 		else if (gui_settings.selected_language == vkb::VK_SPV)
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR, vkb::VK_SPV));
+			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl/hlsl_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR, vkb::VK_SPV));
 		VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 		miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -626,9 +626,9 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	// Ray closest hit group
 	{
 		if (gui_settings.selected_language == vkb::VK_GLSL)
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+			shader_stages.push_back(load_shader("khr_ray_tracing_basic/glsl/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
 		else if (gui_settings.selected_language == vkb::VK_SPV)
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, vkb::VK_SPV));
+			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl/hlsl_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, vkb::VK_SPV));
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
