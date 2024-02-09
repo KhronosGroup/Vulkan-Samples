@@ -67,14 +67,14 @@ const std::string get(const Type type, const std::string &file)
 	}
 
 	auto fs   = vkb::filesystem::get();
-	auto path = fs->external_storage_directory() + it->second;
+	auto path = fs->external_storage_directory() / it->second;
 
 	if (!is_directory(path))
 	{
 		create_path(fs->external_storage_directory(), it->second);
 	}
 
-	return path + file;
+	return path / file;
 }
 }        // namespace path
 

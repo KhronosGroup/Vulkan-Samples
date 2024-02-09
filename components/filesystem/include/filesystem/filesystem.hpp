@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,6 +36,8 @@ struct FileStat
 	size_t size;
 };
 
+using Path = std::filesystem::path;
+
 // A thin filesystem wrapper
 class FileSystem
 {
@@ -42,25 +45,26 @@ class FileSystem
 	FileSystem()          = default;
 	virtual ~FileSystem() = default;
 
-	virtual FileStat             stat_file(const std::string &path)                                    = 0;
-	virtual bool                 is_file(const std::string &path)                                      = 0;
-	virtual bool                 is_directory(const std::string &path)                                 = 0;
-	virtual bool                 exists(const std::string &path)                                       = 0;
-	virtual bool                 create_directory(const std::string &path)                             = 0;
-	virtual std::vector<uint8_t> read_chunk(const std::string &path, size_t start, size_t offset)      = 0;
-	virtual void                 write_file(const std::string &path, const std::vector<uint8_t> &data) = 0;
+	virtual FileStat             stat_file(const Path &path)                                    = 0;
+	virtual bool                 is_file(const Path &path)                                      = 0;
+	virtual bool                 is_directory(const Path &path)                                 = 0;
+	virtual bool                 exists(const Path &path)                                       = 0;
+	virtual bool                 create_directory(const Path &path)                             = 0;
+	virtual std::vector<uint8_t> read_chunk(const Path &path, size_t start, size_t offset)      = 0;
+	virtual void                 write_file(const Path &path, const std::vector<uint8_t> &data) = 0;
+	virtual void                 remove(const Path &path)                                       = 0;
 
-	virtual const std::string &external_storage_directory() const = 0;
-	virtual const std::string &temp_directory() const             = 0;
+	virtual const Path &external_storage_directory() const = 0;
+	virtual const Path &temp_directory() const             = 0;
 
-	void write_file(const std::string &path, const std::string &data);
+	void write_file(const Path &path, const std::string &data);
 
 	// Read the entire file into a string
-	std::string read_file(const std::string &path);
+	std::string read_file(const Path &path);
 
 	// Read the entire file into a vector of bytes
 	template <typename T = uint8_t>
-	std::vector<T> read_binary_file(const std::string &path)
+	std::vector<T> read_binary_file(const Path &path)
 	{
 		static_assert(std::is_arithmetic<T>::value, "T must be an arithmetic type");
 		auto stat   = stat_file(path);
@@ -71,8 +75,10 @@ class FileSystem
 
 using FileSystemPtr = std::shared_ptr<FileSystem>;
 
+void init();
+
 // Initialize the filesystem with the given context
-void init(const PlatformContext &context);
+void init_with_context(const PlatformContext &context);
 
 // Get the filesystem instance
 FileSystemPtr get();

@@ -36,7 +36,7 @@
 
 CUSTOM_MAIN(context)
 {
-	vkb::filesystem::init(context);
+	vkb::filesystem::init_with_context(context);
 
 #if defined(PLATFORM__ANDROID)
 	vkb::AndroidPlatform platform{context};

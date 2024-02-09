@@ -32,19 +32,9 @@ vkb__register_component(
 
 vkb__register_tests(
     COMPONENT filesystem
-    NAME filesystem_helpers
+    NAME filesystem
     SRC
-        tests/filesystem_helpers.test.cpp
-    LINK_LIBS
-        vkb__filesystem
-)
-
-vkb__register_tests(
-    NO_CATCH2
-    COMPONENT std_filesystem
-    NAME std_filesystem
-    SRC
-        tests/std_filesystem.test.cpp
+        tests/filesystem.test.cpp
     LINK_LIBS
         vkb__filesystem
 )

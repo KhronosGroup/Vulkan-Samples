@@ -26,7 +26,7 @@ namespace vkb
 {
 namespace filesystem
 {
-FileStat StdFileSystem::stat_file(const std::string &path)
+FileStat StdFileSystem::stat_file(const Path &path)
 {
 	std::error_code ec;
 
@@ -53,25 +53,25 @@ FileStat StdFileSystem::stat_file(const std::string &path)
 	};
 }
 
-bool StdFileSystem::is_file(const std::string &path)
+bool StdFileSystem::is_file(const Path &path)
 {
 	auto stat = stat_file(path);
 	return stat.is_file;
 }
 
-bool StdFileSystem::is_directory(const std::string &path)
+bool StdFileSystem::is_directory(const Path &path)
 {
 	auto stat = stat_file(path);
 	return stat.is_directory;
 }
 
-bool StdFileSystem::exists(const std::string &path)
+bool StdFileSystem::exists(const Path &path)
 {
 	auto stat = stat_file(path);
 	return stat.is_file || stat.is_directory;
 }
 
-bool StdFileSystem::create_directory(const std::string &path)
+bool StdFileSystem::create_directory(const Path &path)
 {
 	std::error_code ec;
 
@@ -79,19 +79,19 @@ bool StdFileSystem::create_directory(const std::string &path)
 
 	if (ec)
 	{
-		LOGE("Failed to create directory: {}", path);
+		throw std::runtime_error("Failed to create directory");
 	}
 
 	return !ec;
 }
 
-std::vector<uint8_t> StdFileSystem::read_chunk(const std::string &path, size_t start, size_t offset)
+std::vector<uint8_t> StdFileSystem::read_chunk(const Path &path, size_t start, size_t offset)
 {
 	std::ifstream file{path, std::ios::binary | std::ios::ate};
 
 	if (!file.is_open())
 	{
-		return {};
+		throw std::runtime_error("Failed to open file for reading");
 	}
 
 	auto size = stat_file(path).size;
@@ -109,24 +109,36 @@ std::vector<uint8_t> StdFileSystem::read_chunk(const std::string &path, size_t s
 	return data;
 }
 
-void StdFileSystem::write_file(const std::string &path, const std::vector<uint8_t> &data)
+void StdFileSystem::write_file(const Path &path, const std::vector<uint8_t> &data)
 {
 	std::ofstream file{path, std::ios::binary | std::ios::trunc};
 
 	if (!file.is_open())
 	{
-		return;
+		throw std::runtime_error("Failed to open file for writing");
 	}
 
 	file.write(reinterpret_cast<const char *>(data.data()), data.size());
 }
 
-const std::string &StdFileSystem::external_storage_directory() const
+void StdFileSystem::remove(const Path &path)
+{
+	std::error_code ec;
+
+	std::filesystem::remove(path, ec);
+
+	if (ec)
+	{
+		throw std::runtime_error("Failed to remove file");
+	}
+}
+
+const Path &StdFileSystem::external_storage_directory() const
 {
 	return _external_storage_directory;
 }
 
-const std::string &StdFileSystem::temp_directory() const
+const Path &StdFileSystem::temp_directory() const
 {
 	return _temp_directory;
 }
