@@ -893,7 +893,7 @@ void RaytracingBasic::render(float delta_time)
 }
 
 std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic();
-void RaytracingBasic::on_update_ui_overlay(vkb::Drawer &drawer)
+void                               RaytracingBasic::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
