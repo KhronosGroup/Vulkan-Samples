@@ -16,6 +16,9 @@
 - limitations under the License.
 -
 ////
+
+ifndef::extenstion_samplespath[:extenstion_samplespath: ./extensions/]
+
 = Samples overview
 :pp: {plus}{plus}
 :toc:
