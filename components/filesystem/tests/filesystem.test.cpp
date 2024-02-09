@@ -54,7 +54,8 @@ TEST_CASE("File read and write", "[filesystem]")
 	delete_test_file(fs, test_file);
 }
 
-TEST_CASE("Read file chunk", "[filesystem]") {
+TEST_CASE("Read file chunk", "[filesystem]")
+{
 	vkb::filesystem::init();
 
 	auto fs = vkb::filesystem::get();
@@ -64,14 +65,15 @@ TEST_CASE("Read file chunk", "[filesystem]") {
 
 	create_test_file(fs, test_file, test_data);
 
-	const auto chunk = fs->read_chunk(test_file, 0, 5);
+	const auto  chunk = fs->read_chunk(test_file, 0, 5);
 	std::string chunk_str(chunk.begin(), chunk.end());
 	REQUIRE(chunk_str == "Hello");
 
 	delete_test_file(fs, test_file);
 }
 
-TEST_CASE("Read file chunk out of bounds", "[filesystem]") {
+TEST_CASE("Read file chunk out of bounds", "[filesystem]")
+{
 	vkb::filesystem::init();
 
 	auto fs = vkb::filesystem::get();
@@ -87,7 +89,8 @@ TEST_CASE("Read file chunk out of bounds", "[filesystem]") {
 	delete_test_file(fs, test_file);
 }
 
-TEST_CASE("Read file chunk with offset", "[filesystem]") {
+TEST_CASE("Read file chunk with offset", "[filesystem]")
+{
 	vkb::filesystem::init();
 
 	auto fs = vkb::filesystem::get();
@@ -97,14 +100,15 @@ TEST_CASE("Read file chunk with offset", "[filesystem]") {
 
 	create_test_file(fs, test_file, test_data);
 
-	const auto chunk = fs->read_chunk(test_file, 7, 5);
+	const auto  chunk = fs->read_chunk(test_file, 7, 5);
 	std::string chunk_str(chunk.begin(), chunk.end());
 	REQUIRE(chunk_str == "World");
 
 	delete_test_file(fs, test_file);
 }
 
-TEST_CASE("Read binary file", "[filesystem]") {
+TEST_CASE("Read binary file", "[filesystem]")
+{
 	vkb::filesystem::init();
 
 	auto fs = vkb::filesystem::get();
@@ -114,7 +118,7 @@ TEST_CASE("Read binary file", "[filesystem]") {
 
 	create_test_file(fs, test_file, test_data);
 
-	const auto binary = fs->read_file_binary(test_file);
+	const auto  binary = fs->read_file_binary(test_file);
 	std::string binary_str(binary.begin(), binary.end());
 	REQUIRE(binary_str == test_data);
 

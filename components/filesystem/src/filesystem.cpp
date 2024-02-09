@@ -59,7 +59,7 @@ std::string FileSystem::read_file_string(const Path &path)
 
 std::vector<uint8_t> FileSystem::read_file_binary(const Path &path)
 {
-	auto stat   = stat_file(path);
+	auto stat = stat_file(path);
 	return read_chunk(path, 0, stat.size);
 }
 

@@ -54,11 +54,11 @@ std::string get_external_cache_directory(android_app *app)
 	JNIEnv *env;
 	app->activity->vm->AttachCurrentThread(&env, NULL);
 
-	jclass    cls = env->FindClass("android/app/NativeActivity");
-	jmethodID getCacheDir   = env->GetMethodID(cls, "getCacheDir", "()Ljava/io/File;");
-	jobject   cache_dir     = env->CallObjectMethod(app->activity->javaGameActivity, getCacheDir);
+	jclass    cls         = env->FindClass("android/app/NativeActivity");
+	jmethodID getCacheDir = env->GetMethodID(cls, "getCacheDir", "()Ljava/io/File;");
+	jobject   cache_dir   = env->CallObjectMethod(app->activity->javaGameActivity, getCacheDir);
 
-	jclass    fcls   = env->FindClass("java/io/File");
+	jclass    fcls        = env->FindClass("java/io/File");
 	jmethodID getPath     = env->GetMethodID(fcls, "getPath", "()Ljava/lang/String;");
 	jstring   path_string = (jstring) env->CallObjectMethod(cache_dir, getPath);
 
