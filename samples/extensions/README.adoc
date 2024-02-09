@@ -18,4 +18,12 @@
 ////
 = Extension samples
 
+ifndef::site-gen-antora[]
+The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.
+
+A list of all extension samples can be found link:../README.adoc#extension-samples[here].
+endif::[]
+
+ifdef::site-gen-antora[]
 include::../README.adoc[tag=extension-samples]
+endif::[]
