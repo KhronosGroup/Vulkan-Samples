@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2021-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -96,7 +96,7 @@ And indeed, in debug build, which was used for profiling, frame time is decrease
 
 == Further reading
 
-xref:../command_buffer_usage/README.adoc[Command buffer usage and multi-threaded recording]
+xref:samples/performance/command_buffer_usage/README.adoc[Command buffer usage and multi-threaded recording]
 
 == Best practice summary
 
