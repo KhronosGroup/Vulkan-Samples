@@ -17,7 +17,7 @@
 - limitations under the License.
 -
 ////
-* xref:samples/RADME.adoc[Samples overview]
+* xref:samples/README.adoc[Samples overview]
 * xref:samples/vulkan_basics.adoc[Vulkan basics]
 * xref:framework/README.adoc[Sample framework]
 * xref:samples/api/README.adoc[Api usage samples]
