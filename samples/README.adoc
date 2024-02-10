@@ -18,6 +18,7 @@
 ////
 
 ifndef::extenstion_samplespath[:extenstion_samplespath: ./extensions/]
+ifndef::api_samplespath[:api_samplespath: ./api/]
 
 = Samples overview
 :pp: {plus}{plus}
@@ -162,110 +163,8 @@ This sample demonstrates how to reduce CPU usage by offloading draw call generat
 
 This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows  the timing benefits of each.
 
-== API samples
-
-The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.
-
-=== xref:./api/compute_nbody/README.adoc[Compute shader N-Body simulation]
-
-Compute shader example that uses two passes and shared compute shader memory for simulating a N-Body particle system.
-
-=== xref:./api/dynamic_uniform_buffers/README.adoc[Dynamic Uniform buffers]
-
-Dynamic uniform buffers are used for rendering multiple objects with separate matrices stored in a single uniform buffer object, that are addressed dynamically.
-
-=== xref:./api/hdr/README.adoc[High dynamic range]
-
-Implements a high dynamic range rendering pipeline using 16/32 bit floating point precision for all calculations.
-
-=== xref:./api/hello_triangle/README.adoc[Hello Triangle]
-
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
-
-=== xref:./api/hpp_compute_nbody/README.adoc[HPP Compute shader N-Body simulation]
-
-A transcoded version of the API sample <<compute_nbody,Compute N-Body>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_dynamic_uniform_buffers/README.adoc[HPP Dynamic Uniform Buffers]
-
-A transcoded version of the API sample <<dynamic_uniform_buffers,Dynamic Uniform buffers>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_hdr/README.adoc[HPP High dynamic range]
-
-A transcoded version of the API sample <<hdr,High dynamic range>>that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_hello_triangle/README.adoc[HPP Hello Triangle]
-
-A transcoded version of the API sample <<hello_triangle,Hello Triangle>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_hlsl_shaders/README.adoc[HPP HLSL shaders]
-
-A transcoded version of the API sample <<hlsl_shaders,HLSL Shaders>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_instancing/README.adoc[HPP Instancing]
-
-A transcoded version of the API sample <<instancing,Instancing>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_oit_linked_lists/README.adoc[HPP OIT Linked Lists]
-
-A transcoded version of the API sample <<oit_linked_lists,OIT Linked Lists>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_separate_image_sampler/README.adoc[HPP Separate image sampler]
-
-A transcoded version of the API sample <<separate_image_sampler,Separate image sampler>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_terrain_tessellation/README.adoc[HPP Terrain Tessellation]
-
-A transcoded version of the API sample <<terrain_tessellation,Terrain Tessellation>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_texture_loading/README.adoc[HPP Texture Loading]
-
-A transcoded version of the API sample <<texture_loading,Texture loading>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_texture_mipmap_generation/README.adoc[HPP Texture run-time mip-map generation]
-
-A transcoded version of the API sample <<texture_mipmap_generation,Texture run-time mip-map generation>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
-
-=== xref:./api/hpp_timestamp_queries/README.adoc[HPP Timestamp queries]
-
-A transcoded version of the API sample <<timestamp_queries,Timestamp queries>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
-
-=== xref:./api/instancing/README.adoc[Instancing]
-
-Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
-
-=== xref:./api/separate_image_sampler/README.adoc[Separate image sampler]
-
-Separate image and samplers, both in the application and the shaders.
-The sample demonstrates how to use different samplers for the same image without the need to recreate descriptors.
-
-=== xref:./api/terrain_tessellation/README.adoc[Terrain Tessellation]
-
-Uses a tessellation shader for rendering a terrain with dynamic level-of-detail and frustum culling.
-
-=== xref:./api/texture_loading/README.adoc[Texture loading]
-
-Loading and rendering of a 2D texture map from a file.
-
-=== xref:./api/texture_mipmap_generation/README.adoc[Texture run-time mip-map generation]
-
-Generates a complete mip-chain for a texture at runtime instead of loading it from a file.
-
-=== xref:./api/hlsl_shaders/README.adoc[HLSL shaders]
-
-Converts High Level Shading Language (HLSL) shaders to Vulkan-compatible SPIR-V.
-
-=== xref:./api/timestamp_queries/README.adoc[Timestamp queries]
-
-Using timestamp queries for profiling GPU workloads.
-
-=== xref:./api/swapchain_recreation/README.adoc[Swapchain recreation]
-
-A sample that implements best practices in handling swapchain recreation, for example due to window resizing or present mode changes.
-
-=== xref:./api/oit_linked_lists/README.adoc[Order-independent transparency with per-pixel ordered linked lists]
-
-A sample that implements an order-independent transparency algorithm using per-pixel ordered linked lists.
+[[api-samples]]
+include::./api/README.adoc[]
 
 [[extension-samples]]
 include::./extensions/README.adoc[]
