@@ -136,10 +136,6 @@ If you cannot verify on all these target platforms, please note platform restric
 . Verify the sample against a recent version of the Vulkan validation layers, either built from source or from the most recent available Vulkan SDK.
 . Submit a pull request via github for the contribution, including electronically signing the Khronos Contributor License Agreement (CLA) for the repository using CLA-Assistant.
 
-== Creating a Pull Request
-
-When you create your pull request, ensure the description is created with xref:docs/pull_request_template.md[this template], and then fill out the relative information.
-
 == Code Reviews
 
 All submissions, including those by project members, are subject to a code review by the Khronos Membership.
