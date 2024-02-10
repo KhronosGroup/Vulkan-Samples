@@ -19,6 +19,7 @@
 
 ifndef::extenstion_samplespath[:extenstion_samplespath: ./extensions/]
 ifndef::api_samplespath[:api_samplespath: ./api/]
+ifndef::general_samplespath[:general_samplespath: ./general/]
 
 = Samples overview
 :pp: {plus}{plus}
@@ -178,10 +179,5 @@ The goal of these samples is to demonstrate usage of tooling functions and libra
 Use the https://github.com/KhronosGroup/Vulkan-Profiles[Vulkan Profiles library] to simplify instance and device setup.
 The library defines a common baseline of features, extensions, etc.
 
-== General Samples
-
-The goal of these samples is to demonstrate different techniques or showcase complex scenarios that doesn't necessarily fit any of the main categories.
-
-=== xref:./general/mobile_nerf/README.adoc[Mobile NeRF]
-
-A Neural Radiance Field synthesizer sample, based on textured polygons.
+[[general-samples]]
+include::./general/README.adoc[]
