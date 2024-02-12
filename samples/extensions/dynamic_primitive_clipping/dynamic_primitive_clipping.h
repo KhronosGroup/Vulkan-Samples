@@ -16,8 +16,8 @@
  */
 
 /*
-* Rendering using primitive clipping configured by dynamic pipeline state
-*/
+ * Rendering using primitive clipping configured by dynamic pipeline state
+ */
 
 #pragma once
 
@@ -46,7 +46,6 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 	void setup_descriptor_sets();
 
   private:
-
 	// vector of models rendered by sample
 	struct Models
 	{
@@ -99,7 +98,7 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 		VkDescriptorSet descriptor_negative;
 	} descriptor_sets;
 
-	VkPipeline       sample_pipeline{};
+	VkPipeline sample_pipeline{};
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_primitive_clipping();
