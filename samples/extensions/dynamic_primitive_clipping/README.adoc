@@ -17,11 +17,13 @@
 -
 ////
 
-== Dynamic primitive clipping
+= Dynamic primitive clipping
 
 ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/dynamic_depth_clipping[Khronos Vulkan samples github repository].
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/dynamic_primitive_clipping[Khronos Vulkan samples github repository].
 endif::[]
+
+image::screenshot.png[]
 
 == Overview
 
@@ -37,7 +39,7 @@ In the past, fixed-function version of OpenGL API provided a method to specify p
 
 Vulkan inherited the idea of primitive clipping, but with one important difference: user has to calculate the distance to the clip planes on its own in the vertex shader.
 And - because user does it in a shader - he does not have to use clip planes. It can be any kind of calculation, as long as the results are put in `gl_ClipDistance[]` array.
-Values that are less than 0.0 cause the vertex to be be clipped. In this example we show a group of different calculations that achieve such results ( see shaders/dynamic_depth_clipping/clipping.vert for details ).
+Values that are less than 0.0 cause the vertex to be be clipped. In this example we show a group of different calculations that achieve such results ( see shaders/dynamic_primitive_clipping/clipping.vert for details ).
 
 In case of triangle primitive the whole triangle is clipped if all of its vertices have values stored in `gl_ClipDistance[]` below 0.0.
 When some of these values are above 0.0 - triangle is split into new triangles as described in Vulkan specification.

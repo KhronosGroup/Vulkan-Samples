@@ -60,9 +60,9 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 	// sample parameters used on CPU side
 	struct Params
 	{
-		bool    useClipping;
-		bool    drawObject[2];
-		int32_t visualization;
+		bool    useClipping   = true;
+		bool    drawObject[2] = {true, true};
+		int32_t visualization = 0;
 	} params;
 
 	// parameters sent to shaders through uniform buffers
@@ -84,18 +84,18 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 	// pipeline infrastructure
 	struct
 	{
-		VkPipelineLayout models;
+		VkPipelineLayout models = VK_NULL_HANDLE;
 	} pipeline_layouts;
 
 	struct
 	{
-		VkDescriptorSetLayout models;
+		VkDescriptorSetLayout models = VK_NULL_HANDLE;
 	} descriptor_set_layouts;
 
 	struct
 	{
-		VkDescriptorSet descriptor_positive;
-		VkDescriptorSet descriptor_negative;
+		VkDescriptorSet descriptor_positive = VK_NULL_HANDLE;
+		VkDescriptorSet descriptor_negative = VK_NULL_HANDLE;
 	} descriptor_sets;
 
 	VkPipeline sample_pipeline{};

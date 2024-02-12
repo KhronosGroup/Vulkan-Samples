@@ -55,14 +55,7 @@ bool DynamicPrimitiveClipping::prepare(const vkb::ApplicationOptions &options)
 	load_assets();
 
 	// Setup parameters used on CPU
-	models.object_index = 0;
-
 	visualization_names = {"World space X", "World space Y", "Clip space X", "Clip space Y", "Euclidean distance to center", "Manhattan distance to center", "Chebyshev distance to center"};
-
-	params.useClipping   = true;
-	params.drawObject[0] = true;
-	params.drawObject[1] = true;
-	params.visualization = 0;
 
 	// Setup Vulkan objects required by GPU
 	prepare_uniform_buffers();
