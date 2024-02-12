@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Sascha Willems
+/* Copyright (c) 2022-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -99,7 +99,7 @@ void ConditionalRendering::build_command_buffers()
 			// Pass data for the current node via push commands
 			auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(node.sub_mesh->get_material());
 			push_const_block.model_matrix = node.node->get_transform().get_world_matrix();
-			push_const_block.color        = glm::vec4(node_material->base_color_factor.rgb, 1.0f);
+			push_const_block.color        = glm::vec4(glm::vec3(node_material->base_color_factor), 1.0f);
 			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
 
 			VkDeviceSize offsets[1] = {0};

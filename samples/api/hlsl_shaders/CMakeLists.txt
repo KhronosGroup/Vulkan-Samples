@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Sascha Willems
+# Copyright (c) 2021-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,6 +24,7 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Using HLSL shaders in Vulkan with glslang"
+    LIBS vkb__shader_compiler
     DESCRIPTION "Shows how to generate SPIR-V from HLSL shaders that can be used in Vulkan"
     SHADER_FILES_GLSL
         "hlsl_shaders/hlsl_shader.vert"

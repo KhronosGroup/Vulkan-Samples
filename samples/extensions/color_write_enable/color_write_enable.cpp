@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -543,7 +543,7 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 		                                                ImGuiColorEditFlags_NoSidePreview |
 		                                                    ImGuiColorEditFlags_NoSmallPreview |
 		                                                    ImGuiColorEditFlags_Float |
-		                                                    ImGuiColorEditFlags_RGB))
+		                                                    ImGuiColorEditFlags_InputRGB))
 		{
 			rebuild_command_buffers();
 		}

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -78,7 +78,7 @@ set(COMMON_FILES
     common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
-    common/glm_common.h 
+    common/glm_common.h
     common/resource_caching.h
     common/logging.h
     common/helpers.h
@@ -387,7 +387,7 @@ set(LINUX_D2D_FILES
     platform/unix/direct_window.h
     # Source Files
     platform/unix/unix_d2d_platform.cpp
-    platform/unix/direct_window.cpp) 
+    platform/unix/direct_window.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
@@ -509,25 +509,21 @@ endif()
 target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Link third party libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC
-    vkb__core
-    volk
-    ktx
-    stb
-    astc
-    imgui
-    tinygltf
-    glm
-    glslang
-    SPIRV
-    vma
-    hwcpipe
-    spirv-cross-glsl
-    glslang-default-resource-limits
-    spdlog
-    ctpl
-    CLI11::CLI11
-    plugins)
+target_link_libraries(
+    ${PROJECT_NAME}
+    PUBLIC
+        vkb__core
+        vkb__deps
+        plugins
+    PRIVATE
+        vkb__shader_compiler
+        astc
+        hwcpipe
+        ctpl
+    )
+
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/third_party/astc/Source)
 
 if(${NEED_LINK_ATOMIC})
     target_link_libraries(${PROJECT_NAME} PUBLIC atomic)

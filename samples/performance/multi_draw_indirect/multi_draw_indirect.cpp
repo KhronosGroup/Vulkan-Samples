@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip Corporation
+/* Copyright (c) 2021-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -883,7 +883,7 @@ struct VisibilityTester
 		// normalize plane; see Appendix A.2
 		for (auto &&plane : out)
 		{
-			plane /= float(length(vec3(plane.xyz)));
+			plane /= float(length(vec3(plane.xyz())));
 		}
 		return out;
 	}
@@ -894,7 +894,7 @@ struct VisibilityTester
 		std::array<int, 4> V{0, 1, 4, 5};
 		return std::all_of(V.begin(), V.end(), [this, origin, radius](size_t i) {
 			const auto &plane = planes[i];
-			return dot(origin, vec3(plane.xyz)) + plane.w + radius >= 0;
+			return dot(origin, vec3(plane.xyz())) + plane.w + radius >= 0;
 		});
 	}
 };

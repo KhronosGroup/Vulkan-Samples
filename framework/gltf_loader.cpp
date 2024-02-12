@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 
+#include <nlohmann/json.hpp>
 #define TINYGLTF_IMPLEMENTATION
+#define TINYGLTF_NO_INCLUDE_JSON
 #include "gltf_loader.h"
 
 #include <limits>
@@ -1468,7 +1470,7 @@ std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 
 	VkSamplerAddressMode address_mode_u = find_wrap_mode(gltf_sampler.wrapS);
 	VkSamplerAddressMode address_mode_v = find_wrap_mode(gltf_sampler.wrapT);
-	VkSamplerAddressMode address_mode_w = find_wrap_mode(gltf_sampler.wrapR);
+	VkSamplerAddressMode address_mode_w = find_wrap_mode(gltf_sampler.wrapT);
 
 	VkSamplerCreateInfo sampler_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 
@@ -1507,7 +1509,6 @@ std::unique_ptr<sg::Sampler> GLTFLoader::create_default_sampler()
 
 	gltf_sampler.wrapS = TINYGLTF_TEXTURE_WRAP_REPEAT;
 	gltf_sampler.wrapT = TINYGLTF_TEXTURE_WRAP_REPEAT;
-	gltf_sampler.wrapR = TINYGLTF_TEXTURE_WRAP_REPEAT;
 
 	return parse_sampler(gltf_sampler);
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <spirv_glsl.hpp>
+#include <spirv_cross/spirv_glsl.hpp>
 VKBP_ENABLE_WARNINGS()
 
 #include "common/vk_common.h"
@@ -44,22 +44,22 @@ class SPIRVReflection
 	bool reflect_shader_resources(VkShaderStageFlagBits        stage,
 	                              const std::vector<uint32_t> &spirv,
 	                              std::vector<ShaderResource> &resources,
-	                              const ShaderVariant &        variant);
+	                              const ShaderVariant         &variant);
 
   private:
 	void parse_shader_resources(const spirv_cross::Compiler &compiler,
 	                            VkShaderStageFlagBits        stage,
 	                            std::vector<ShaderResource> &resources,
-	                            const ShaderVariant &        variant);
+	                            const ShaderVariant         &variant);
 
 	void parse_push_constants(const spirv_cross::Compiler &compiler,
 	                          VkShaderStageFlagBits        stage,
 	                          std::vector<ShaderResource> &resources,
-	                          const ShaderVariant &        variant);
+	                          const ShaderVariant         &variant);
 
 	void parse_specialization_constants(const spirv_cross::Compiler &compiler,
 	                                    VkShaderStageFlagBits        stage,
 	                                    std::vector<ShaderResource> &resources,
-	                                    const ShaderVariant &        variant);
+	                                    const ShaderVariant         &variant);
 };
 }        // namespace vkb

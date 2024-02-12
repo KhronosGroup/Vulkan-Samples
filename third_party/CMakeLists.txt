@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,40 +15,15 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.10)
-
-project(third_party LANGUAGES C CXX)
-
-# glm
-add_library(glm INTERFACE)
-set(GLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glm)
-target_sources(glm INTERFACE ${GLM_DIR}/glm/glm.hpp)
-target_include_directories(glm INTERFACE ${GLM_DIR})
-
-target_compile_definitions(glm INTERFACE
-    GLM_FORCE_SWIZZLE
-    GLM_FORCE_RADIANS
-    GLM_FORCE_CTOR_INIT
-    GLM_ENABLE_EXPERIMENTAL
-)
-if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_definitions(glm INTERFACE GLM_FORCE_CXX14)
-endif()
-
-# tinygltf
-add_library(tinygltf INTERFACE)
-set(TINYGLTF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf)
-target_sources(tinygltf INTERFACE ${TINYGLTF_DIR}/tiny_gltf.h ${TINYGLTF_DIR}/json.hpp)
-target_include_directories(tinygltf INTERFACE ${TINYGLTF_DIR})
-
 # vulkan
-add_library(vulkan INTERFACE)
 set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/include)
+# Make sure this include comes first, so it overrides any transitive dependency on the vcpkg headers
+include_directories(${VULKAN_INCLUDE_DIR})
+
+add_library(vulkan INTERFACE)
 target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
 target_include_directories(vulkan INTERFACE ${VULKAN_INCLUDE_DIR})
-
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
-
 
 if(ANDROID)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)
@@ -83,19 +58,13 @@ elseif(UNIX)
     else()
         message(FATAL_ERROR "Unknown WSI")
     endif()
-endif() 
+endif()
 
-# vma
-add_library(vma INTERFACE)
-set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/src)
-target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
-target_include_directories(vma INTERFACE ${VMA_DIR})
-target_link_libraries(vma INTERFACE vulkan)
 
 # libktx
 set(KTX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ktx)
 
-set(KTX_SOURCES  
+set(KTX_SOURCES
     ${KTX_DIR}/lib/checkheader.c
     ${KTX_DIR}/lib/dfdutils/createdfd.c
     ${KTX_DIR}/lib/dfdutils/colourspaces.c
@@ -136,7 +105,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/basisu/transcoder/basisu_transcoder.h
     ${KTX_DIR}/lib/basisu/transcoder/basisu.h
     ${KTX_DIR}/lib/basisu/zstd/zstd.c
-   
+
     # KT1
     ${KTX_DIR}/lib/texture1.c
     ${KTX_DIR}/lib/texture1.h
@@ -152,7 +121,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/vkformat_str.c
     ${KTX_DIR}/lib/vk_funcs.c
     ${KTX_DIR}/lib/vk_funcs.h
-    ${KTX_DIR}/lib/vkloader.c    
+    ${KTX_DIR}/lib/vkloader.c
 )
 
 set(KTX_INCLUDE_DIRS
@@ -201,27 +170,11 @@ endif()
 
 set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
 
-# imgui
-set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui")
-set(IMGUI_FILES
-    "${IMGUI_DIR}/imgui.cpp"
-    "${IMGUI_DIR}/imgui_demo.cpp"
-    "${IMGUI_DIR}/imgui_draw.cpp"
-    "${IMGUI_DIR}/imgui_widgets.cpp"
-    "${IMGUI_DIR}/imconfig.h"
-    "${IMGUI_DIR}/imgui.h"
-    "${IMGUI_DIR}/imgui_internal.h"
-    "${IMGUI_DIR}/imstb_rectpack.h"
-    "${IMGUI_DIR}/imstb_textedit.h"
-    "${IMGUI_DIR}/imstb_truetype.h")
-
-add_library(imgui STATIC ${IMGUI_FILES})
-
-target_include_directories(imgui PUBLIC ${IMGUI_DIR})
-
-set_target_properties(imgui PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # glslang
+#find_package(glslang CONFIG REQUIRED)
+#target_link_libraries(main PRIVATE glslang::OSDependent glslang::glslang glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits glslang::OGLCompiler glslang::SPVRemapper glslang::SPIRV glslang::HLSL)
+
 option(ENABLE_SPVREMAPPER OFF)
 option(ENABLE_GLSLANG_BINARIES OFF)
 set(ENABLE_HLSL ON)
@@ -251,31 +204,11 @@ if(NOT MSVC)
         "-Wno-unused-parameter")
 endif()
 
-set_target_properties(glslang PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(OGLCompiler PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(OSDependent PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(SPIRV PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-
-# spirv-cross
-add_subdirectory(spirv-cross)
-
-set_target_properties(spirv-cross PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(spirv-cross-core PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(spirv-cross-glsl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(spirv-cross-cpp PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(spirv-cross-hlsl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(spirv-cross-msl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(spirv-cross-reflect PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(spirv-cross-util PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-
 # hwcpipe
 add_subdirectory(hwcpipe)
 
 set_target_properties(hwcpipe PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
-# stb
-add_library(stb INTERFACE)
-target_include_directories(stb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
 
 # astc
 set(ASTC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/astc)
@@ -314,35 +247,6 @@ add_library(astc STATIC ${ASTC_SOURCES})
 target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
 target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
 set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(astc PUBLIC stb)
-
-if(NOT ANDROID)
-    if (NOT DIRECT_TO_DISPLAY)
-        # GLFW
-        option(GLFW_BUILD_DOCS OFF)
-        option(GLFW_BUILD_TESTS OFF)
-        option(GLFW_BUILD_EXAMPLES OFF)
-        option(GLFW_BUILD_TESTS OFF)
-        option(GLFW_INSTALL OFF)
-        option(BUILD_SHARED_LIBS ON)
-        if (VKB_WSI_SELECTION STREQUAL WAYLAND)
-            set(GLFW_USE_WAYLAND ON)
-        endif()
-
-        add_subdirectory(glfw)
-
-        set_property(TARGET glfw PROPERTY FOLDER "ThirdParty")
-    endif()
-endif()
-
-# fmt
-add_subdirectory(fmt)
-set_property(TARGET fmt PROPERTY FOLDER "ThirdParty")
-
-# spdlog
-set(SPDLOG_FMT_EXTERNAL ON)
-add_subdirectory(spdlog)
-set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
 
 # ctpl
 add_library(ctpl INTERFACE)
@@ -350,26 +254,47 @@ set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
 target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
 target_include_directories(ctpl INTERFACE ${CTPL_DIR})
 
-# cli11
-set(CLI11_SANITIZERS OFF)
-set(CLI11_BUILD_DOCS OFF)
-set(CLI11_BUILD_TESTS OFF)
-set(CLI11_BUILD_EXAMPLES OFF)
-set(CLI11_BUILD_EXAMPLES_JSON OFF)
-set(CLI11_SINGLE_FILE_TESTS OFF)
-set(CLI11_INSTALL OFF)
-set(CLI11_FORCE_LIBCXX OFF)
-set(CLI11_CUDA_TESTS OFF)
-set(CLI11_CLANG_TIDY OFF)
-add_subdirectory(cli11)
-
 # OpenCL
 add_library(opencl INTERFACE)
 set(OPENCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl)
 target_sources(opencl INTERFACE ${OPENCL_INCLUDE_DIR}/CL/opencl.h)
 target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
 
-# Catch2
-add_subdirectory(catch2)
-set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
-set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")
+
+add_library(vkb__deps INTERFACE)
+target_link_libraries(vkb__deps INTERFACE
+    # Vcpkg dependencies
+    CLI11::CLI11
+    spdlog::spdlog
+    imgui::imgui
+    # submodule dependencies
+    volk
+    ktx
+)
+
+if (NOT (CMAKE_SYSTEM_NAME STREQUAL "Android"))
+    target_link_libraries(vkb__deps INTERFACE
+        GPUOpen::VulkanMemoryAllocator
+        glm::glm
+    )
+endif()
+
+target_compile_definitions(vkb__deps INTERFACE
+    GLM_FORCE_SWIZZLE
+    GLM_FORCE_RADIANS
+    GLM_FORCE_CTOR_INIT
+    GLM_ENABLE_EXPERIMENTAL
+)
+
+if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
+    target_compile_definitions(vkb__deps INTERFACE GLM_FORCE_CXX14)
+endif()
+
+add_library(vkb__shader_compiler INTERFACE)
+target_link_libraries(vkb__shader_compiler INTERFACE
+    spirv-cross-core
+    spirv-cross-glsl
+    glslang
+    glslang-default-resource-limits
+    SPIRV
+)

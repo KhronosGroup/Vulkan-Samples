@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 #include "scene_graph/components/image/stb.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_PSD
 #include <stb_image.h>
 
 namespace vkb

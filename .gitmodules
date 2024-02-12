@@ -1,36 +1,12 @@
 [submodule "third_party/volk"]
 	path = third_party/volk
 	url = https://github.com/zeux/volk
-[submodule "third_party/glm"]
-	path = third_party/glm
-	url = https://github.com/g-truc/glm
-[submodule "third_party/stb"]
-	path = third_party/stb
-	url = https://github.com/nothings/stb
-[submodule "third_party/imgui"]
-	path = third_party/imgui
-	url = https://github.com/ocornut/imgui
-[submodule "third_party/tinygltf"]
-	path = third_party/tinygltf
-	url = https://github.com/syoyo/tinygltf
-[submodule "third_party/glfw"]
-	path = third_party/glfw
-	url = https://github.com/glfw/glfw
 [submodule "third_party/glslang"]
 	path = third_party/glslang
 	url = https://github.com/KhronosGroup/glslang
-[submodule "third_party/spirv-cross"]
-	path = third_party/spirv-cross
-	url = https://github.com/KhronosGroup/SPIRV-Cross
 [submodule "third_party/hwcpipe"]
 	path = third_party/hwcpipe
 	url = https://github.com/ARM-software/HWCPipe
-[submodule "third_party/vma"]
-	path = third_party/vma
-	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-[submodule "third_party/spdlog"]
-	path = third_party/spdlog
-	url = https://github.com/gabime/spdlog
 [submodule "third_party/ktx"]
 	path = third_party/ktx
 	url = https://github.com/KhronosGroup/KTX-Software
@@ -47,15 +23,6 @@
 	path = assets
 	url = https://github.com/KhronosGroup/Vulkan-Samples-Assets
 	shallow = true
-[submodule "third_party/cli11"]
-	path = third_party/cli11
-	url = https://github.com/CLIUtils/CLI11.git
 [submodule "third_party/opencl"]
 	path = third_party/opencl
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
-[submodule "third_party/catch2"]
-	path = third_party/catch2
-	url = https://github.com/catchorg/Catch2.git
-[submodule "third_party/fmt"]
-	path = third_party/fmt
-	url = https://github.com/fmtlib/fmt

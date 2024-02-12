@@ -21,7 +21,16 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: "recursive"
-
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-vcpkg-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+        with:
+          path: ~/.ezvcpkg
+          key: build-${{ env.cache-name }}
+          restore-keys: |
+            build-${{ env.cache-name }}
+            build-cache-vcpkg-${{ runner.os }}-
       - if: ${{ matrix.platform == 'ubuntu' }}
         name: Install RandR headers
         run: |

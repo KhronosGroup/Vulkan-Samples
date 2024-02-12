@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
- * Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,6 @@
 
 VKBP_DISABLE_WARNINGS()
 #include <ktx.h>
-#include <ktxvulkan.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
@@ -31,7 +30,7 @@ namespace sg
 {
 struct CallbackData final
 {
-	ktxTexture *         texture;
+	ktxTexture          *texture;
 	std::vector<Mipmap> *mipmaps;
 };
 
@@ -44,8 +43,8 @@ static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_le
                                                              int          height,
                                                              int          depth,
                                                              ktx_uint64_t face_lod_size,
-                                                             void *       pixels,
-                                                             void *       user_data)
+                                                             void        *pixels,
+                                                             void        *user_data)
 {
 	auto *callback_data = reinterpret_cast<CallbackData *>(user_data);
 	assert(static_cast<size_t>(mip_level) < callback_data->mipmaps->size() && "Not enough space in the mipmap vector");
@@ -73,11 +72,13 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType 
 	auto data_buffer = reinterpret_cast<const ktx_uint8_t *>(data.data());
 	auto data_size   = static_cast<ktx_size_t>(data.size());
 
-	ktxTexture *texture;
-	auto        load_ktx_result = ktxTexture_CreateFromMemory(data_buffer,
-                                                       data_size,
-                                                       KTX_TEXTURE_CREATE_NO_FLAGS,
-                                                       &texture);
+	ktxTexture2 *texture2;
+	auto         load_ktx_result = ktxTexture2_CreateFromMemory(data_buffer,
+	                                                            data_size,
+	                                                            KTX_TEXTURE_CREATE_NO_FLAGS,
+	                                                            &texture2);
+	ktxTexture  *texture         = ktxTexture(texture2);
+
 	if (load_ktx_result != KTX_SUCCESS)
 	{
 		throw std::runtime_error{"Error loading KTX texture: " + name};
@@ -115,7 +116,7 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType 
 		set_layers(texture->numFaces);
 	}
 
-	auto updated_format = ktxTexture_GetVkFormat(texture);
+	auto updated_format = static_cast<VkFormat>(texture2->vkFormat);
 
 	set_format(updated_format);
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -93,8 +93,8 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	glm::uvec2 initial_data_fp16[NumBlobs];
 	for (unsigned i = 0; i < NumBlobs; i++)
 	{
-		initial_data_fp16[i].x = glm::packHalf2x16(initial_data_fp32[i].xy);
-		initial_data_fp16[i].y = glm::packHalf2x16(initial_data_fp32[i].zw);
+		initial_data_fp16[i].x = glm::packHalf2x16(initial_data_fp32[i].xy());
+		initial_data_fp16[i].y = glm::packHalf2x16(initial_data_fp32[i].zw());
 	}
 
 	// Upload the blob buffer.

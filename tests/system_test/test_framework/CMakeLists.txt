@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -19,10 +19,10 @@ cmake_minimum_required(VERSION 3.16)
 
 project(test_framework LANGUAGES C CXX)
 
-set(FRAMEWORK_FILES 
+set(FRAMEWORK_FILES
     # Header files
     gltf_loader_test.h
-    vulkan_test.h 
+    vulkan_test.h
     # Source Files
     gltf_loader_test.cpp
     vulkan_test.cpp)
@@ -37,7 +37,7 @@ target_include_directories(test_framework_headers INTERFACE ${CMAKE_CURRENT_SOUR
 
 # inherit compile definitions from framework target
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
-target_link_libraries(${PROJECT_NAME} PRIVATE framework imgui)
+target_link_libraries(${PROJECT_NAME} PRIVATE framework imgui::imgui)
 target_link_libraries(${PROJECT_NAME} PUBLIC test_framework_headers)
 
 if(ANDROID)

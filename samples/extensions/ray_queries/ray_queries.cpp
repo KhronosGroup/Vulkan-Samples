@@ -308,8 +308,8 @@ void RayQueries::load_scene()
 				const float sponza_scale = 0.01f;
 				for (size_t i = 0; i < pts_.size(); ++i)
 				{
-					model.vertices[vertex_start_index + i].position = sponza_scale * pts_[i].yzx;
-					model.vertices[vertex_start_index + i].normal   = normals_[i].yzx;
+					model.vertices[vertex_start_index + i].position = sponza_scale * pts_[i].yzx();
+					model.vertices[vertex_start_index + i].normal   = normals_[i].yzx();
 				}
 			}
 

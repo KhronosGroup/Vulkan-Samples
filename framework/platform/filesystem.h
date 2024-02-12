@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,8 +24,6 @@
 #include <sys/stat.h>
 #include <unordered_map>
 #include <vector>
-
-#include <json.hpp>
 
 namespace vkb
 {

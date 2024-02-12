@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,6 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Command Buffer Usage"
+    LIBS ctpl
     DESCRIPTION "Primary and secondary command buffers, allocation and recycling."
     SHADER_FILES_GLSL
         "base.vert"

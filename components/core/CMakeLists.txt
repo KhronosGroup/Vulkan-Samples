@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Thomas Atkinson
+# Copyright (c) 2023-2024, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,8 +23,8 @@ vkb__register_component(
     SRC
         src/strings.cpp
     LINK_LIBS
-        spdlog
-        fmt
+        spdlog::spdlog
+        fmt::fmt
 )
 
 vkb__register_tests(
