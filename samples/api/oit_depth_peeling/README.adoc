@@ -76,9 +76,3 @@ When there are more geometry layers than gather passes, the backmost layers get 
 
 |===
 
-== Tests
-
-This sample was tested on Windows.
-The validation layers were enabled and all reported issues were fixed.
-The system featured an AMD GPU.
-

@@ -102,7 +102,7 @@ class OITDepthPeeling : public ApiVulkanSample
 
 	int32_t camera_auto_rotation = false;
 	float   background_grayscale = 0.3f;
-	float   object_alpha         = 1.0f;
+	float   object_alpha         = 0.5f;
 	int32_t front_layer_index    = 0;
 	int32_t back_layer_index     = kLayerMaxCount - 1;
 };

@@ -28,11 +28,18 @@ layout(set = 0, binding = 1) uniform sampler2D depthTex;
 
 void main()
 {
+	// 'depthTex' contains the depth information of the previous layer.
+	// That information is used to discard any fragment that belongs to
+	// a layer that has already be rendered (i.e. a layer further in front).
 	const float layerDepth = texelFetch(depthTex, ivec2(gl_FragCoord.xy), 0).r;
 	if(gl_FragCoord.z >= layerDepth)
 	{
+		// NOTE
+		// Remember that a reversed Z-buffer is used here.
+		// Fragments closer to the camera have a higher z coordinate.
 		discard;
 	}
+
 	outFragColor = inColor;
 }
 

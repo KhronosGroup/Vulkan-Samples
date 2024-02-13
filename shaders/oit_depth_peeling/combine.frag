@@ -38,6 +38,7 @@ layout(set = 0, binding = 2) uniform sampler2D layerTex[kLayersCount];
 
 void main()
 {
+	// Merge all layers using in-shader alpha blending.
 	vec4 color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	const int front_layer_index = clamp(sceneConstants.front_layer_index, 0, kLayersCount - 1);
 	const int back_layer_index = clamp(sceneConstants.back_layer_index, front_layer_index, kLayersCount - 1);
@@ -47,6 +48,7 @@ void main()
 		color.rgb = mix(color.rgb, fragmentColor.rgb, fragmentColor.a);
 		color.a *= 1.0f - fragmentColor.a;
 	}
+	// The final color is blended in the background using fixed-function alpha blending.
 	color.a = 1.0f - color.a;
 	outFragColor = color;
 }

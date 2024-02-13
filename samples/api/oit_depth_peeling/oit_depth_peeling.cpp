@@ -149,8 +149,15 @@ void OITDepthPeeling::build_command_buffers()
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 		{
 			// Gather passes
+			// Each pass renders a single transparent layer into a layer texture.
 			for (uint32_t l = 0; l <= back_layer_index; ++l)
 			{
+				// Two depth textures are used.
+				// Their roles alternates for each pass.
+				// The first depth texture is used for fixed-function depth test.
+				// The second one is the result of the depth test from the previous gather pass.
+				// It is bound as texture and read in the shader to discard fragments from the
+				// previous layers.
 				VkImageSubresourceRange depth_subresource_range = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
 				vkb::image_layout_transition(
 				    draw_cmd_buffers[i], depth_image[l % kDepthCount]->get_handle(),
@@ -168,6 +175,7 @@ void OITDepthPeeling::build_command_buffers()
 					    depth_subresource_range);
 				}
 
+				// Set one of the layer textures as color attachment, as the gather pass will render to it.
 				VkImageSubresourceRange layer_subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 				vkb::image_layout_transition(
 				    draw_cmd_buffers[i], layer_image[l]->get_handle(),
@@ -180,6 +188,7 @@ void OITDepthPeeling::build_command_buffers()
 				render_pass_begin_info.renderPass  = gather_render_pass;
 				vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 				{
+					// Render the geometry into the layer texture.
 					VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 					vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
@@ -193,6 +202,7 @@ void OITDepthPeeling::build_command_buffers()
 				}
 				vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
+				// Get the layer texture ready to be read by the combine pass.
 				vkb::image_layout_transition(
 				    draw_cmd_buffers[i], layer_image[l]->get_handle(),
 				    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -202,6 +212,8 @@ void OITDepthPeeling::build_command_buffers()
 			}
 
 			// Combine pass
+			// This pass blends all the layers into the final transparent color.
+			// The final color is then alpha blended into the background.
 			render_pass_begin_info.framebuffer = framebuffers[i];
 			render_pass_begin_info.renderPass  = render_pass;
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);

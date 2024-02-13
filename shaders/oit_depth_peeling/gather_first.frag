@@ -24,6 +24,8 @@ layout (location = 0) out vec4 outFragColor;
 
 void main()
 {
+	// The first gather pass is equivalent to rendering an opaque object.
+	// That is, only the front-most fragments are rendered.
 	outFragColor = inColor;
 }
 
