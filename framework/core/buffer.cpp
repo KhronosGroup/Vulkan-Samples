@@ -88,7 +88,7 @@ uint64_t Buffer::get_device_address()
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer = handle;
-	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
+	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 }
 
 }        // namespace core

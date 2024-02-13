@@ -42,12 +42,12 @@ void RenderPassesSample::reset_stats_view()
 {
 	if (load.value == VK_ATTACHMENT_LOAD_OP_LOAD)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::gpu_ext_read_bytes);
+		get_gui().get_stats_view().reset_max_value(vkb::StatIndex::gpu_ext_read_bytes);
 	}
 
 	if (store.value == VK_ATTACHMENT_STORE_OP_STORE)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::gpu_ext_write_bytes);
+		get_gui().get_stats_view().reset_max_value(vkb::StatIndex::gpu_ext_write_bytes);
 	}
 }
 
@@ -60,7 +60,7 @@ void RenderPassesSample::draw_gui()
 		lines = lines * 2;
 	}
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this, lines]() {
 		    // Checkbox vkCmdClear
 		    ImGui::Checkbox("Use vkCmdClearAttachments (color)", &cmd_clear);
@@ -105,25 +105,25 @@ bool RenderPassesSample::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	stats->request_stats({vkb::StatIndex::gpu_fragment_cycles,
-	                      vkb::StatIndex::gpu_ext_read_bytes,
-	                      vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::gpu_fragment_cycles,
+	                           vkb::StatIndex::gpu_ext_read_bytes,
+	                           vkb::StatIndex::gpu_ext_write_bytes});
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -147,8 +147,8 @@ void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb
 
 	set_viewport_and_scissor(command_buffer, extent);
 
-	auto &subpasses = render_pipeline->get_subpasses();
-	command_buffer.begin_render_pass(render_target, load_store, render_pipeline->get_clear_value(), subpasses);
+	auto &subpasses = get_render_pipeline().get_subpasses();
+	command_buffer.begin_render_pass(render_target, load_store, get_render_pipeline().get_clear_value(), subpasses);
 
 	if (cmd_clear)
 	{
@@ -168,12 +168,12 @@ void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb
 	assert(!subpasses.empty());
 	subpasses[0]->draw(command_buffer);
 
-	gui->draw(command_buffer);
+	get_gui().draw(command_buffer);
 
 	command_buffer.end_render_pass();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_render_passes()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_render_passes()
 {
 	return std::make_unique<RenderPassesSample>();
 }

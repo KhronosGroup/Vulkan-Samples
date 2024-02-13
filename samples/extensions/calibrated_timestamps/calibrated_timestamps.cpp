@@ -47,7 +47,7 @@ CalibratedTimestamps::CalibratedTimestamps() :
 
 CalibratedTimestamps::~CalibratedTimestamps()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
@@ -872,7 +872,7 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	// Timestamps period extracted in runtime
-	float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
+	float timestamp_period = get_device().get_gpu().get_properties().limits.timestampPeriod;
 	drawer.text("Timestamps Period:\n %.1f Nanoseconds", timestamp_period);
 
 	// Adjustment Handles:

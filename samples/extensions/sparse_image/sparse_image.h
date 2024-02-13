@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -396,4 +396,4 @@ class SparseImage : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_sparse_image();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_sparse_image();

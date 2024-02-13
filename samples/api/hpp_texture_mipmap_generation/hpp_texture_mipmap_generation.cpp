@@ -35,9 +35,9 @@ HPPTextureMipMapGeneration::HPPTextureMipMapGeneration()
 
 HPPTextureMipMapGeneration::~HPPTextureMipMapGeneration()
 {
-	if (get_device() && get_device()->get_handle())
+	if (has_device() && get_device().get_handle())
 	{
-		vk::Device device = get_device()->get_handle();
+		vk::Device device = get_device().get_handle();
 
 		device.destroyPipeline(pipeline);
 		device.destroyPipelineLayout(pipeline_layout);
@@ -64,10 +64,10 @@ bool HPPTextureMipMapGeneration::prepare(const vkb::ApplicationOptions &options)
 		load_assets();
 		prepare_uniform_buffers();
 		descriptor_set_layout = create_descriptor_set_layout();
-		pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
+		pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, descriptor_set_layout});
 		pipeline              = create_pipeline();
 		descriptor_pool       = create_descriptor_pool();
-		descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
+		descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, descriptor_set_layout);
 		update_descriptor_set();
 		build_command_buffers();
 
@@ -160,7 +160,7 @@ void HPPTextureMipMapGeneration::view_changed()
 void HPPTextureMipMapGeneration::check_format_features(vk::Format format) const
 {
 	// Get device properties for the requested texture format
-	vk::FormatProperties format_properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
+	vk::FormatProperties format_properties = get_device().get_gpu().get_handle().getFormatProperties(format);
 
 	// Check if the selected format supports blit source and destination, which is required for generating the mip levels
 	vk::FormatFeatureFlags format_feature_flags = vk::FormatFeatureFlagBits::eBlitSrc | vk::FormatFeatureFlagBits::eBlitDst;
@@ -180,7 +180,7 @@ vk::DescriptorPool HPPTextureMipMapGeneration::create_descriptor_pool()
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
 
-	return get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
+	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 vk::DescriptorSetLayout HPPTextureMipMapGeneration::create_descriptor_set_layout()
@@ -192,7 +192,7 @@ vk::DescriptorSetLayout HPPTextureMipMapGeneration::create_descriptor_set_layout
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout({}, set_layout_bindings);
 
-	return get_device()->get_handle().createDescriptorSetLayout(descriptor_layout);
+	return get_device().get_handle().createDescriptorSetLayout(descriptor_layout);
 }
 
 vk::Pipeline HPPTextureMipMapGeneration::create_pipeline()
@@ -221,7 +221,7 @@ vk::Pipeline HPPTextureMipMapGeneration::create_pipeline()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             vertex_input_state,
@@ -267,20 +267,20 @@ void HPPTextureMipMapGeneration::load_assets()
 	check_format_features(format);
 
 	// Create a host-visible staging buffer that contains the raw image data
-	vkb::core::HPPBuffer staging_buffer = vkb::core::HPPBuffer::create_staging_buffer(*device, ktx_texture->dataSize, ktx_texture->pData);
+	vkb::core::HPPBuffer staging_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), ktx_texture->dataSize, ktx_texture->pData);
 
 	// now, the ktx_texture can be destroyed
 	ktxTexture_Destroy(ktx_texture);
 
 	// Create optimal tiled target image on the device
 	std::tie(texture.image, texture.device_memory) =
-	    device->create_image(format,
-	                         texture.extent,
-	                         texture.mip_levels,
-	                         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled,
-	                         vk::MemoryPropertyFlagBits::eDeviceLocal);
+	    get_device().create_image(format,
+	                              texture.extent,
+	                              texture.mip_levels,
+	                              vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled,
+	                              vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-	vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(device->get_handle(), device->get_command_pool().get_handle());
+	vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(get_device().get_handle(), get_device().get_command_pool().get_handle());
 	copy_command.begin(vk::CommandBufferBeginInfo());
 
 	// Optimal image will be used as destination for the copy, so we must transfer from our initial undefined image layout to the transfer destination layout
@@ -293,13 +293,13 @@ void HPPTextureMipMapGeneration::load_assets()
 	// Transition first mip level to transfer source so we can blit(read) from it
 	vkb::common::image_layout_transition(copy_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	// Generate the mip chain
 	// ---------------------------------------------------------------
 	// We copy down the whole mip chain doing a blit from mip-1 to mip
 	// An alternative way would be to always blit from the first mip level and sample that one down
-	vk::CommandBuffer blit_command = vkb::common::allocate_command_buffer(device->get_handle(), device->get_command_pool().get_handle());
+	vk::CommandBuffer blit_command = vkb::common::allocate_command_buffer(get_device().get_handle(), get_device().get_command_pool().get_handle());
 	blit_command.begin(vk::CommandBufferBeginInfo());
 
 	// Copy down mips from n-1 to n
@@ -330,29 +330,29 @@ void HPPTextureMipMapGeneration::load_assets()
 	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
 	                                     {vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels, 0, 1});
 
-	device->flush_command_buffer(blit_command, queue, true);
+	get_device().flush_command_buffer(blit_command, queue, true);
 	// ---------------------------------------------------------------
 
 	// Create samplers for different mip map demonstration cases
 
 	// Without mip mapping
-	samplers[0] = vkb::common::create_sampler(device->get_handle(), vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, 0.0f);
+	samplers[0] = vkb::common::create_sampler(get_device().get_handle(), vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, 0.0f);
 
 	// With mip mapping
 	samplers[1] =
-	    vkb::common::create_sampler(device->get_handle(), vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, static_cast<float>(texture.mip_levels));
+	    vkb::common::create_sampler(get_device().get_handle(), vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, static_cast<float>(texture.mip_levels));
 
 	// With mip mapping and anisotropic filtering (when supported)
 	samplers[2] = vkb::common::create_sampler(
-	    device->get_handle(),
+	    get_device().get_handle(),
 	    vk::Filter::eLinear,
 	    vk::SamplerAddressMode::eRepeat,
-	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
+	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(texture.mip_levels));
 
 	// Create image view
 	texture.view = vkb::common::create_image_view(
-	    get_device()->get_handle(), texture.image, vk::ImageViewType::e2D, format, vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels);
+	    get_device().get_handle(), texture.image, vk::ImageViewType::e2D, format, vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels);
 }
 
 void HPPTextureMipMapGeneration::prepare_camera()
@@ -365,7 +365,7 @@ void HPPTextureMipMapGeneration::prepare_camera()
 void HPPTextureMipMapGeneration::prepare_uniform_buffers()
 {
 	// Shared parameter uniform buffer block
-	uniform_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	uniform_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
 	                                                        sizeof(ubo),
 	                                                        vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -389,7 +389,7 @@ void HPPTextureMipMapGeneration::update_descriptor_set()
 	     {descriptor_set, 1, {}, vk::DescriptorType::eSampledImage, image_descriptor},              // Binding 1 : Fragment shader texture sampler
 	     {descriptor_set, 2, {}, vk::DescriptorType::eSampler, sampler_descriptors}}};              // Binding 2: Sampler array
 
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPTextureMipMapGeneration::update_uniform_buffers(float delta_time)

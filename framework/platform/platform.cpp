@@ -31,7 +31,6 @@
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "force_close/force_close.h"
-#include "hpp_vulkan_sample.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
@@ -207,18 +206,18 @@ void Platform::update()
 		});
 		active_app->update(delta_time);
 
-		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
-		{
-			if (app->has_render_context())
-			{
-				on_post_draw(app->get_render_context());
-			}
-		}
-		else if (auto *app = dynamic_cast<HPPVulkanSample *>(active_app.get()))
+		if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::Cpp> *>(active_app.get()))
 		{
 			if (app->has_render_context())
 			{
 				on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+			}
+		}
+		else if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::C> *>(active_app.get()))
+		{
+			if (app->has_render_context())
+			{
+				on_post_draw(app->get_render_context());
 			}
 		}
 	}

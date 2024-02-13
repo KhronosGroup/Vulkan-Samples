@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -95,4 +95,4 @@ class OpenCLInteropArm : public ApiVulkanSample
 	CLData *cl_data{nullptr};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_open_cl_interop_arm();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop_arm();

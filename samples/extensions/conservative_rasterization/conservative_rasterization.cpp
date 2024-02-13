@@ -41,7 +41,7 @@ ConservativeRasterization::ConservativeRasterization()
 
 ConservativeRasterization::~ConservativeRasterization()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyImageView(get_device().get_handle(), offscreen_pass.color.view, nullptr);
 		vkDestroyImage(get_device().get_handle(), offscreen_pass.color.image, nullptr);
@@ -470,7 +470,8 @@ void ConservativeRasterization::prepare_pipelines()
 
 	// Get device properties for conservative rasterization
 	// Requires VK_KHR_get_physical_device_properties2 and manual function pointer creation
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
+	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
+	    reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(get_instance().get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
 	assert(vkGetPhysicalDeviceProperties2KHR);
 	VkPhysicalDeviceProperties2KHR device_properties{};
 	conservative_raster_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
@@ -631,7 +632,7 @@ void ConservativeRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_conservative_rasterization()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_conservative_rasterization()
 {
 	return std::make_unique<ConservativeRasterization>();
 }

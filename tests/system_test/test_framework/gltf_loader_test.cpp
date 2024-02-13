@@ -48,17 +48,17 @@ bool GLTFLoaderTest::prepare(const vkb::ApplicationOptions &options)
 
 	load_scene(scene_path);
 
-	scene->clear_components<vkb::sg::Light>();
+	get_scene().clear_components<vkb::sg::Light>();
 
 	vkb::add_directional_light(get_scene(), glm::quat({glm::radians(-90.0f), 0.0f, glm::radians(30.0f)}));
 
-	auto camera_node = scene->find_node("main_camera");
+	auto camera_node = get_scene().find_node("main_camera");
 
 	if (!camera_node)
 	{
 		LOGW("Camera node not found. Looking for `default_camera` node.");
 
-		camera_node = scene->find_node("default_camera");
+		camera_node = get_scene().find_node("default_camera");
 	}
 
 	auto &camera = camera_node->get_component<vkb::sg::Camera>();
@@ -66,12 +66,12 @@ bool GLTFLoaderTest::prepare(const vkb::ApplicationOptions &options)
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
 
-	auto scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, camera);
+	auto scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
-	VulkanSample::set_render_pipeline(std::move(render_pipeline));
+	VulkanSample<vkb::BindingType::C>::set_render_pipeline(std::move(render_pipeline));
 
 	return true;
 }

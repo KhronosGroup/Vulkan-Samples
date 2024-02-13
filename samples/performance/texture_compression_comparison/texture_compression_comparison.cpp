@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip
+/* Copyright (c) 2021-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,13 +73,13 @@ bool TextureCompressionComparison::prepare(const vkb::ApplicationOptions &option
 
 	load_assets();
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	create_subpass();
 
-	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_read_bytes});
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_read_bytes});
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -112,7 +112,7 @@ void TextureCompressionComparison::draw_gui()
 		return in.c_str();
 	});
 
-	gui->show_options_window([this, &name_pointers]() {
+	get_gui().show_options_window([this, &name_pointers]() {
 		if (ImGui::Combo("Compressed Format", &current_gui_format, name_pointers.data(), static_cast<int>(name_pointers.size())))
 		{
 			require_redraw     = true;
@@ -206,12 +206,12 @@ void TextureCompressionComparison::load_assets()
 {
 	get_available_texture_formats();
 	load_scene("scenes/sponza/Sponza01.gltf");
-	if (!scene)
+	if (!has_scene())
 	{
 		throw std::runtime_error("Unable to load Sponza scene");
 	}
 
-	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+	for (auto &&mesh : get_scene().get_components<vkb::sg::Mesh>())
 	{
 		for (auto &&sub_mesh : mesh->get_submeshes())
 		{
@@ -230,10 +230,10 @@ void TextureCompressionComparison::create_subpass()
 {
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_sub_pass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_sub_pass));
 
 	set_render_pipeline(std::move(render_pipeline));
 }
@@ -333,7 +333,7 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 
 	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
-	device->flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle(), true);
+	get_device().flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle(), true);
 
 	return image_out;
 }

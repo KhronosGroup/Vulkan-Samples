@@ -60,16 +60,16 @@ OpenCLInteropArm::OpenCLInteropArm()
 
 OpenCLInteropArm::~OpenCLInteropArm()
 {
-	device->wait_idle();
+	get_device().wait_idle();
 
-	vkDestroyPipeline(device->get_handle(), pipeline, nullptr);
-	vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
-	vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
-	vkDestroyFence(device->get_handle(), rendering_finished_fence, nullptr);
-	vkDestroySampler(device->get_handle(), shared_texture.sampler, nullptr);
-	vkDestroyImageView(device->get_handle(), shared_texture.view, nullptr);
-	vkDestroyImage(device->get_handle(), shared_texture.image, nullptr);
-	vkFreeMemory(device->get_handle(), shared_texture.memory, nullptr);
+	vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+	vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
+	vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+	vkDestroyFence(get_device().get_handle(), rendering_finished_fence, nullptr);
+	vkDestroySampler(get_device().get_handle(), shared_texture.sampler, nullptr);
+	vkDestroyImageView(get_device().get_handle(), shared_texture.view, nullptr);
+	vkDestroyImage(get_device().get_handle(), shared_texture.image, nullptr);
+	vkFreeMemory(get_device().get_handle(), shared_texture.memory, nullptr);
 
 	if (cl_data)
 	{
@@ -101,7 +101,7 @@ bool OpenCLInteropArm::prepare(const vkb::ApplicationOptions &options)
 	build_command_buffers();
 
 	auto fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-	vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
+	vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
 
 	prepared = true;
 	return true;
@@ -117,8 +117,8 @@ void OpenCLInteropArm::render(float delta_time)
 	total_time_passed += delta_time;
 
 	// Wait until Vulkan rendering is finished and the texture can be written to
-	vkWaitForFences(device->get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device->get_handle(), 1, &rendering_finished_fence);
+	vkWaitForFences(get_device().get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(get_device().get_handle(), 1, &rendering_finished_fence);
 
 	// Fill the texture using OpenCL
 	run_texture_generation();
@@ -476,7 +476,7 @@ void OpenCLInteropArm::prepare_shared_resources()
 	dedicated_allocate_info.image  = shared_texture.image;
 
 	VkMemoryRequirements memory_requirements{};
-	vkGetImageMemoryRequirements(device->get_handle(), shared_texture.image, &memory_requirements);
+	vkGetImageMemoryRequirements(get_device().get_handle(), shared_texture.image, &memory_requirements);
 
 	// In order to export an external handle later, we need to tell it explicitly during memory allocation
 	VkExportMemoryAllocateInfo export_memory_allocate_Info;
@@ -487,7 +487,7 @@ void OpenCLInteropArm::prepare_shared_resources()
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.pNext                = &export_memory_allocate_Info;
 	memory_allocate_info.allocationSize       = 0;
-	memory_allocate_info.memoryTypeIndex      = device->get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	VK_CHECK(vkAllocateMemory(device_handle, &memory_allocate_info, nullptr, &shared_texture.memory));
 	VK_CHECK(vkBindImageMemory(device_handle, shared_texture.image, shared_texture.memory, 0));
@@ -514,7 +514,7 @@ void OpenCLInteropArm::prepare_shared_resources()
 	view_create_info.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 	vkCreateImageView(device_handle, &view_create_info, nullptr, &shared_texture.view);
 
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkImageSubresourceRange subresource_range = {};
 	subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -539,7 +539,7 @@ void OpenCLInteropArm::prepare_shared_resources()
 	    0, nullptr,
 	    1, &image_memory_barrier);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	// Setting up OpenCL resources
 
@@ -649,7 +649,7 @@ void OpenCLInteropArm::run_texture_generation()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_open_cl_interop_arm()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop_arm()
 {
 	return std::make_unique<OpenCLInteropArm>();
 }

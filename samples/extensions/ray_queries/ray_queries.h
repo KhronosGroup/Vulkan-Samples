@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip Corporation
+/* Copyright (c) 2021-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -96,4 +96,4 @@ class RayQueries : public ApiVulkanSample
 	void draw();
 };
 
-std::unique_ptr<vkb::VulkanSample> create_ray_queries();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_queries();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -103,4 +103,4 @@ class RaytracingBasic : public ApiVulkanSample
 	virtual void  render(float delta_time) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_basic();

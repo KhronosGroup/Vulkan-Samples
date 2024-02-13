@@ -56,24 +56,24 @@ bool SurfaceRotation::prepare(const vkb::ApplicationOptions &options)
 		throw std::runtime_error("Requires a surface to run sample");
 	}
 
-	stats->request_stats({vkb::StatIndex::gpu_ext_read_stalls,
-	                      vkb::StatIndex::gpu_ext_write_stalls});
+	get_stats().request_stats({vkb::StatIndex::gpu_ext_read_stalls,
+	                           vkb::StatIndex::gpu_ext_write_stalls});
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -135,7 +135,7 @@ void SurfaceRotation::draw_gui()
 	{
 		// GUI landscape layout
 		uint32_t lines = 2;
-		gui->show_options_window(
+		get_gui().show_options_window(
 		    /* body = */ [&]() {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
 			    ImGui::Text("%s | %s", transform.c_str(), resolution_str.c_str());
@@ -146,7 +146,7 @@ void SurfaceRotation::draw_gui()
 	{
 		// GUI portrait layout
 		uint32_t lines = 3;
-		gui->show_options_window(
+		get_gui().show_options_window(
 		    /* body = */ [&]() {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
 			    ImGui::Text("%s", transform.c_str());
@@ -208,13 +208,13 @@ void SurfaceRotation::recreate_swapchain()
 
 	get_render_context().update_swapchain(surface_extent, select_pre_transform());
 
-	if (gui)
+	if (has_gui())
 	{
-		gui->resize(surface_extent.width, surface_extent.height);
+		get_gui().resize(surface_extent.width, surface_extent.height);
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_surface_rotation()
 {
 	return std::make_unique<SurfaceRotation>();
 }

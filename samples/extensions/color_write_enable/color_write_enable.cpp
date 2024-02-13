@@ -26,7 +26,7 @@ ColorWriteEnable::ColorWriteEnable()
 
 ColorWriteEnable::~ColorWriteEnable()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.color, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.composition, nullptr);
@@ -65,11 +65,11 @@ bool ColorWriteEnable::prepare(const vkb::ApplicationOptions &options)
 
 void ColorWriteEnable::prepare_gui()
 {
-	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
-	gui->set_subpass(1);
-	gui->prepare(pipeline_cache, render_pass,
-	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	create_gui(*window, nullptr, 15.0f, true);
+	get_gui().set_subpass(1);
+	get_gui().prepare(pipeline_cache, render_pass,
+	                  {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	                   load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void ColorWriteEnable::prepare_pipelines()
@@ -231,7 +231,7 @@ void ColorWriteEnable::create_attachment(VkFormat format, FrameBufferAttachment 
 // Create attachments for each framebuffer used in the first pipeline
 void ColorWriteEnable::create_attachments()
 {
-	VkFormat format = render_context->get_format();
+	VkFormat format = get_render_context().get_format();
 	create_attachment(format, &attachments.red);
 	create_attachment(format, &attachments.green);
 	create_attachment(format, &attachments.blue);
@@ -312,7 +312,7 @@ void ColorWriteEnable::setup_render_pass()
 
 	for (uint32_t i = 0; i < attachments.size(); ++i)
 	{
-		attachments[i].format         = render_context->get_format();
+		attachments[i].format         = get_render_context().get_format();
 		attachments[i].samples        = VK_SAMPLE_COUNT_1_BIT;
 		attachments[i].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachments[i].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -390,7 +390,7 @@ void ColorWriteEnable::setup_render_pass()
 	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 	render_pass_create_info.pDependencies          = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass));
 
 	// Create sampler for each color attachment.
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
@@ -455,11 +455,11 @@ void ColorWriteEnable::setup_framebuffer()
 	attachments[2] = this->attachments.green.view;
 	attachments[3] = this->attachments.blue.view;
 
-	framebuffers.resize(render_context->get_render_frames().size());
+	framebuffers.resize(get_render_context().get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		attachments[0] = swapchain_buffers[i].view;
-		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
+		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
 	}
 }
 
