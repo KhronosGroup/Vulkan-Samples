@@ -17,7 +17,7 @@
 -
 ////
 
-= Dynamic primitive clipping
+= Dynamic depth clipping and primitive clipping
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/dynamic_primitive_clipping[Khronos Vulkan samples github repository].
