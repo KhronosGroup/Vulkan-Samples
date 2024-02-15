@@ -76,11 +76,11 @@ out gl_PerVertex
 
 The size of `gl_ClipDistance[]` array may not be larger than `VkPhysicalDeviceLimits::maxClipDistances`.
 
-There is no external function that turns the primitive clipping off. If you want to have such feature - you have to implement it yourself by providing some additional variable to the vertex shader ( see shaders/dynamic_primitive_clipping/primitive_clipping.vert on how it can be implemented ).
+In Vulkan API there is no external command that turns the primitive clipping off. If you want to have such feature - you have to implement it yourself by providing some additional variable to the vertex shader ( see shaders/dynamic_primitive_clipping/primitive_clipping.vert on how it can be implemented ).
 
 == How to apply depth clipping in Vulkan
 
-There are few ways of applying primitive clipping in Vulkan API:
+There are few ways of applying depth clipping in Vulkan API:
 
 - statically: when `VkPipelineRasterizationDepthClipStateCreateInfoEXT` IS NOT present and `VkPipelineRasterizationStateCreateInfo::depthClampEnable` is equal to VK_FALSE
 
@@ -92,7 +92,7 @@ There are few ways of applying primitive clipping in Vulkan API:
 
 This sample focuses on the last, dynamic case.
 
-In order to use the dynamic primitive clipping we need to:
+In order to use the dynamic depth clipping we need to:
 
 - create `VkInstance` with extension `VK_KHR_get_physical_device_properties2`
 
@@ -108,7 +108,7 @@ In order to use the dynamic primitive clipping we need to:
 
 == Potential applications
 
-In the past primitive clipping was used in various CAD applications to make cross-sections of different objects.
+In the past primitive clipping was used in various CAD applications to make cross-sections of different 3D objects.
 We still can use it in similar fashion, but other applications also come to mind:
 
 - we can hide parts of the 3D model
