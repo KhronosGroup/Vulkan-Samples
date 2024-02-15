@@ -25,7 +25,10 @@ DynamicPrimitiveClipping::DynamicPrimitiveClipping()
 {
 	title = "Dynamic primitive clipping";
 	set_api_version(VK_API_VERSION_1_1);
+
+	// Extensions required by vkCmdSetDepthClipEnableEXT().
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 }
 
@@ -46,18 +49,21 @@ bool DynamicPrimitiveClipping::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	// Setup camera position and load assets from file
+	// Setup camera position.
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -50.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 256.0f);
 
+	// Near plane is set far away from observer position in order to show depth clipping better.
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 30.f, 256.0f);
+
+	// Load assets from file.
 	load_assets();
 
-	// Setup parameters used on CPU
-	visualization_names = {"World space X", "World space Y", "Clip space X", "Clip space Y", "Euclidean distance to center", "Manhattan distance to center", "Chebyshev distance to center"};
+	// Setup parameters used on CPU.
+	visualization_names = {"World space X", "World space Y", "Half-space in world space coordinates", "Half-space in world space coordinates", "Clip space X", "Clip space Y", "Euclidean distance to center", "Manhattan distance to center", "Chebyshev distance to center"};
 
-	// Setup Vulkan objects required by GPU
+	// Setup Vulkan objects required by GPU.
 	prepare_uniform_buffers();
 	setup_layouts();
 	prepare_pipelines();
@@ -71,11 +77,17 @@ bool DynamicPrimitiveClipping::prepare(const vkb::ApplicationOptions &options)
 
 void DynamicPrimitiveClipping::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Following features must be enabled in order for vkCmdSetDepthClipEnableEXT() to work
+	// shaderClipDistance feature is required in order to gl_ClipDistance builtin shader variable to work.
 	if (gpu.get_features().shaderClipDistance)
 	{
 		gpu.get_mutable_requested_features().shaderClipDistance = VK_TRUE;
 	}
+	else
+	{
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support gl_ClipDistance builtin shader variable");
+	}
+
+	// Features required by vkCmdSetDepthClipEnableEXT().
 	{
 		auto &features           = gpu.request_extension_features<VkPhysicalDeviceDepthClipEnableFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT);
 		features.depthClipEnable = VK_TRUE;
@@ -120,38 +132,34 @@ void DynamicPrimitiveClipping::build_command_buffers()
 		// Bind the graphics pipeline.
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, sample_pipeline);
 
-		// Set viewport dynamically
+		// Set viewport dynamically.
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-		// Set scissor dynamically
+		// Set scissor dynamically.
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		// Enable primitive clipping dynamically (if required)
-		if (params.useClipping)
+		// Enable depth clipping dynamically as defined in GUI.
+		if (params.useDepthClipping)
 			vkCmdSetDepthClipEnableEXT(cmd, VK_TRUE);
 		else
 			vkCmdSetDepthClipEnableEXT(cmd, VK_FALSE);
 
-		// Draw object once using descriptor_positive
+		// Draw object once using descriptor_positive.
 		if (params.drawObject[0])
 		{
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.descriptor_positive, 0, NULL);
 			draw_model(models.objects[models.object_index], cmd);
 		}
 
-		// Draw the same object for the second time, but this time using descriptor_negative
-		// Skip second rendering if clipping is disabled.
-		if (params.drawObject[1] && params.useClipping)
+		// Draw the same object for the second time, but this time using descriptor_negative.
+		// Skip second rendering if primitive clipping is turned off by user in a GUI.
+		if (params.drawObject[1] && params.usePrimitiveClipping)
 		{
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.descriptor_negative, 0, NULL);
 			draw_model(models.objects[models.object_index], cmd);
 		}
-
-		// Turn the primitive clipping off, so that it does not interfere with further rendering ( GUI rendering comes next )
-		// It may interfere, because using dynamic states turns Vulkan pipelines into state machines similar to OpenGL.
-		vkCmdSetDepthClipEnableEXT(cmd, VK_FALSE);
 
 		// Draw user interface.
 		draw_ui(draw_cmd_buffers[i]);
@@ -187,12 +195,13 @@ void DynamicPrimitiveClipping::on_update_ui_overlay(vkb::Drawer &drawer)
 			update_uniform_buffers();
 			rebuild_command_buffers();
 		}
+		if (drawer.checkbox("Use primitive clipping", &params.usePrimitiveClipping))
+		{
+			update_uniform_buffers();
+			rebuild_command_buffers();
+		}
 		if (drawer.combo_box("Visualization", &params.visualization, visualization_names))
 		{
-		}
-		if (drawer.checkbox("Use clipping", &params.useClipping))
-		{
-			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Draw object 1", &params.drawObject[0]))
 		{
@@ -202,12 +211,16 @@ void DynamicPrimitiveClipping::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			rebuild_command_buffers();
 		}
+		if (drawer.checkbox("Use depth clipping", &params.useDepthClipping))
+		{
+			rebuild_command_buffers();
+		}
 	}
 }
 
 void DynamicPrimitiveClipping::load_assets()
 {
-	// Load three different models. User may pick them from GUI menu.
+	// Load three different models. User may pick them from GUI.
 	std::vector<std::string> filenames = {"teapot.gltf", "torusknot.gltf", "geosphere.gltf"};
 	model_names                        = {"Teapot", "Torusknot", "Sphere"};
 	for (auto file : filenames)
@@ -216,7 +229,7 @@ void DynamicPrimitiveClipping::load_assets()
 		models.objects.emplace_back(std::move(object));
 	}
 
-	// Setup model transformation matrices
+	// Setup model transformation matrices.
 	auto teapot_matrix = glm::mat4(1.0f);
 	teapot_matrix      = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
 	teapot_matrix      = glm::rotate(teapot_matrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -237,7 +250,7 @@ void DynamicPrimitiveClipping::setup_layouts()
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.models));
 
-	// Pipeline layout contains above defined descriptor set layout
+	// Pipeline layout contains above defined descriptor set layout.
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
 	    vkb::initializers::pipeline_layout_create_info(
 	        &descriptor_set_layouts.models,
@@ -248,13 +261,12 @@ void DynamicPrimitiveClipping::setup_layouts()
 
 void DynamicPrimitiveClipping::prepare_pipelines()
 {
-	// Vertex bindings an attributes for model rendering
-	// Binding description
+	// Binding description.
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 
-	// Attribute descriptions
+	// Attribute descriptions.
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                         // Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3u),        // Normal
@@ -281,7 +293,7 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 	// We will have one viewport and scissor box.
 	VkPipelineViewportStateCreateInfo viewport = vkb::initializers::pipeline_viewport_state_create_info(1, 1);
 
-	// Enable depth testing
+	// Enable depth testing.
 	VkPipelineDepthStencilStateCreateInfo depth_stencil = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
 
 	// No multisampling.
@@ -292,10 +304,8 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 	std::array<VkDynamicState, 3>    dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_CLIP_ENABLE_EXT};
 	VkPipelineDynamicStateCreateInfo dynamic = vkb::initializers::pipeline_dynamic_state_create_info(dynamics.data(), vkb::to_u32(dynamics.size()));
 
-	// Load our SPIR-V shaders.
+	// Load shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-
-	// Vertex stage of the pipeline
 	shader_stages[0] = load_shader("dynamic_primitive_clipping/primitive_clipping.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_primitive_clipping/primitive_clipping.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
@@ -315,10 +325,10 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &sample_pipeline));
 }
 
-// Prepare and initialize uniform buffer containing shader uniforms
+// Prepare and initialize uniform buffer containing shader uniforms.
 void DynamicPrimitiveClipping::prepare_uniform_buffers()
 {
-	// We will render the same object twice using two different sets of parameters called "positive" and "negative"
+	// We will render the same object twice using two different sets of parameters called "positive" and "negative".
 	uniform_buffers.buffer_positive = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                                      sizeof(UBOVS),
 	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -327,24 +337,26 @@ void DynamicPrimitiveClipping::prepare_uniform_buffers()
 	                                                                      sizeof(UBOVS),
 	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+
 	update_uniform_buffers();
 }
 
 void DynamicPrimitiveClipping::update_uniform_buffers()
 {
-	ubo_positive.projection          = camera.matrices.perspective;
-	ubo_positive.view                = camera.matrices.view;
-	ubo_positive.model               = models.transforms[models.object_index];
-	ubo_positive.colorTransformation = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-	ubo_positive.sceneTransformation = glm::ivec2(params.visualization, 1);
+	ubo_positive.projection           = camera.matrices.perspective;
+	ubo_positive.view                 = camera.matrices.view;
+	ubo_positive.model                = models.transforms[models.object_index];
+	ubo_positive.colorTransformation  = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	ubo_positive.sceneTransformation  = glm::ivec2(params.visualization, 1);
+	ubo_positive.usePrimitiveClipping = params.usePrimitiveClipping ? 1.0f : -1.0f;
 	uniform_buffers.buffer_positive->convert_and_update(ubo_positive);
 
-	ubo_negative.projection          = camera.matrices.perspective;
-	ubo_negative.view                = camera.matrices.view;
-	ubo_negative.model               = models.transforms[models.object_index];
-	ubo_negative.colorTransformation = glm::vec4(-1.0f, 1.0f, 0.0f, 0.0f);
-	ubo_negative.sceneTransformation = glm::ivec2(params.visualization, -1);
-
+	ubo_negative.projection           = camera.matrices.perspective;
+	ubo_negative.view                 = camera.matrices.view;
+	ubo_negative.model                = models.transforms[models.object_index];
+	ubo_negative.colorTransformation  = glm::vec4(-1.0f, 1.0f, 0.0f, 0.0f);
+	ubo_negative.sceneTransformation  = glm::ivec2(params.visualization, -1);
+	ubo_negative.usePrimitiveClipping = params.usePrimitiveClipping ? 1.0f : -1.0f;
 	uniform_buffers.buffer_negative->convert_and_update(ubo_negative);
 }
 

@@ -60,19 +60,21 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 	// sample parameters used on CPU side
 	struct Params
 	{
-		bool    useClipping   = true;
-		bool    drawObject[2] = {true, true};
-		int32_t visualization = 0;
+		bool    usePrimitiveClipping = true;
+		bool    drawObject[2]        = {true, true};
+		int32_t visualization        = 0;
+		bool    useDepthClipping     = false;
 	} params;
 
 	// parameters sent to shaders through uniform buffers
 	struct UBOVS
 	{
-		glm::mat4  projection;
-		glm::mat4  view;
-		glm::mat4  model;
-		glm::vec4  colorTransformation;
-		glm::ivec2 sceneTransformation;
+		alignas(16) glm::mat4 projection;
+		alignas(16) glm::mat4 view;
+		alignas(16) glm::mat4 model;
+		alignas(16) glm::vec4 colorTransformation;
+		alignas(8) glm::ivec2 sceneTransformation;
+		alignas(4) float usePrimitiveClipping;
 	} ubo_positive, ubo_negative;
 
 	struct

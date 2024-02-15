@@ -32,7 +32,6 @@ layout (location = 0) out vec4 outColor;
 
 void main()
 {
-
     outColor = vec4( 0.5 * inNormal + vec3(0.5), 1);
 
     outColor.xyz = ubo.colorTransformation.x * outColor.xyz + vec3(ubo.colorTransformation.y);
