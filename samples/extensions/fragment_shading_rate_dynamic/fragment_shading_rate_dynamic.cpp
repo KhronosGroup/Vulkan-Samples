@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip
+/* Copyright (c) 2021-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -770,7 +770,7 @@ void FragmentShadingRateDynamic::create_compute_pipeline()
 	VK_CHECK(vkCreateComputePipelines(device->get_handle(), pipeline_cache, 1, &pipeline_create_info, VK_NULL_HANDLE,
 	                                  &compute.pipeline));
 
-	for (auto &&compute_buffer : compute_buffers)
+	for (auto &compute_buffer : compute_buffers)
 	{
 		auto create = vkb::initializers::command_buffer_allocate_info(command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
 		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &create, &compute_buffer.command_buffer));
