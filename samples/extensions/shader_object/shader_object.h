@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nintendo
+ * Copyright 2023-2024 Nintendo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ class ShaderObject : public ApiVulkanSample
   public:
 	class Shader
 	{
-		VkShaderStageFlagBits stage;
-		VkShaderStageFlags    next_stage;
+		VkShaderStageFlagBits stage{};
+		VkShaderStageFlags    next_stage{};
 		VkShaderEXT           shader      = VK_NULL_HANDLE;
 		std::string           shader_name = "shader";
-		VkShaderCreateInfoEXT vk_shader_create_info;
+		VkShaderCreateInfoEXT vk_shader_create_info{};
 		std::vector<uint32_t> spirv;
 
 	  public:
