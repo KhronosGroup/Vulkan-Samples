@@ -80,7 +80,7 @@ set(COMMON_FILES
     common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
-    common/glm_common.h 
+    common/glm_common.h
     common/resource_caching.h
     common/logging.h
     common/helpers.h
@@ -242,6 +242,7 @@ set(CORE_FILES
     core/command_pool.h
     core/swapchain.h
     core/command_buffer.h
+    core/allocated.h
     core/buffer.h
     core/image.h
     core/image_view.h
@@ -254,6 +255,7 @@ set(CORE_FILES
     core/scratch_buffer.h
     core/acceleration_structure.h
     core/shader_binding_table.h
+    core/hpp_allocated.h
     core/hpp_buffer.h
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
@@ -293,6 +295,7 @@ set(CORE_FILES
     core/command_pool.cpp
     core/swapchain.cpp
     core/command_buffer.cpp
+    core/allocated.cpp
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
@@ -389,7 +392,7 @@ set(LINUX_D2D_FILES
     platform/unix/direct_window.h
     # Source Files
     platform/unix/unix_d2d_platform.cpp
-    platform/unix/direct_window.cpp) 
+    platform/unix/direct_window.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
