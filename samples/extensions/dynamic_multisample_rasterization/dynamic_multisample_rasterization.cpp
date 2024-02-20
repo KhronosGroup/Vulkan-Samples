@@ -393,7 +393,8 @@ void DynamicMultisampleRasterization::setup_render_pass()
 	// Check if device supports requested sample count for color and depth frame buffer
 	assert((gpu_properties.limits.framebufferColorSampleCounts >= sample_count) && (gpu_properties.limits.framebufferDepthSampleCounts >= sample_count));
 
-	std::array<VkAttachmentDescription, 3> attachments = {};
+	uint32_t attachments_cnt = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
+	std::vector<VkAttachmentDescription> attachments(attachments_cnt);
 	// Color attachment
 	attachments[0].format         = render_context->get_format();
 	attachments[0].samples        = sample_count;
@@ -402,38 +403,41 @@ void DynamicMultisampleRasterization::setup_render_pass()
 	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	attachments[0].finalLayout    = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	// Resolve attachment
-	attachments[1].format         = render_context->get_format();
-	attachments[1].samples        = VK_SAMPLE_COUNT_1_BIT;
-	attachments[1].loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[1].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+	// Depth attachment
+	attachments[1].format         = depth_format;
+	attachments[1].samples        = sample_count;
+	attachments[1].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	// Depth attachment
-	attachments[2].format         = depth_format;
-	attachments[2].samples        = sample_count;
-	attachments[2].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[2].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[2].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[2].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[2].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	if(sample_count != VK_SAMPLE_COUNT_1_BIT)
+	{
+		// Resolve attachment
+		attachments[2].format         = render_context->get_format();
+		attachments[2].samples        = VK_SAMPLE_COUNT_1_BIT;
+		attachments[2].loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[2].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[2].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[2].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[2].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
 
 	VkAttachmentReference color_reference = {};
 	color_reference.attachment            = 0;
 	color_reference.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentReference depth_reference = {};
-	depth_reference.attachment            = 2;
+	depth_reference.attachment            = 1;
 	depth_reference.layout                = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentReference resolve_reference = {};
-	resolve_reference.attachment            = 1;
+	resolve_reference.attachment            = 2;
 	resolve_reference.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkSubpassDescription subpass_description    = {};
@@ -445,7 +449,7 @@ void DynamicMultisampleRasterization::setup_render_pass()
 	subpass_description.pInputAttachments       = nullptr;
 	subpass_description.preserveAttachmentCount = 0;
 	subpass_description.pPreserveAttachments    = nullptr;
-	subpass_description.pResolveAttachments     = &resolve_reference;
+	subpass_description.pResolveAttachments     = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? &resolve_reference : nullptr;
 
 	// Subpass dependencies for layout transitions
 	std::array<VkSubpassDependency, 2> dependencies;
@@ -571,17 +575,18 @@ void DynamicMultisampleRasterization::setup_framebuffer()
 	setup_color_attachment();
 	setup_depth_stencil();
 
-	VkImageView attachments[3];
+	uint32_t attachments_cnt = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
+	VkImageView attachments[attachments_cnt];
 
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[0] = color_attachment.view;
-	attachments[2] = depth_stencil.view;
+	attachments[1] = depth_stencil.view;
 
 	VkFramebufferCreateInfo framebuffer_create_info = {};
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebuffer_create_info.pNext                   = NULL;
 	framebuffer_create_info.renderPass              = render_pass;
-	framebuffer_create_info.attachmentCount         = 3;
+	framebuffer_create_info.attachmentCount         = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
 	framebuffer_create_info.pAttachments            = attachments;
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
@@ -597,7 +602,14 @@ void DynamicMultisampleRasterization::setup_framebuffer()
 	framebuffers.resize(render_context->get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
-		attachments[1] = swapchain_buffers[i].view;
+		if(sample_count != VK_SAMPLE_COUNT_1_BIT)
+		{
+			attachments[2] = swapchain_buffers[i].view;
+		}
+		else
+		{
+			attachments[0] = swapchain_buffers[i].view;
+		}
 		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
 	}
 }
