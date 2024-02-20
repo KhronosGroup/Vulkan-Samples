@@ -654,56 +654,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 
 void Gui::draw(VkCommandBuffer command_buffer)
 {
-	if (!visible)
-	{
-		return;
-	}
-
-	auto       &io            = ImGui::GetIO();
-	ImDrawData *draw_data     = ImGui::GetDrawData();
-	int32_t     vertex_offset = 0;
-	int32_t     index_offset  = 0;
-
-	if ((!draw_data) || (draw_data->CmdListsCount == 0))
-	{
-		return;
-	}
-
-	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->get_handle(), 0, 1, &descriptor_set, 0, NULL);
-
-	// Push constants
-	auto push_transform = glm::mat4(1.0f);
-	push_transform      = glm::translate(push_transform, glm::vec3(-1.0f, -1.0f, 0.0f));
-	push_transform      = glm::scale(push_transform, glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
-	vkCmdPushConstants(command_buffer, pipeline_layout->get_handle(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &push_transform);
-
-	VkDeviceSize offsets[1] = {0};
-
-	VkBuffer vertex_buffer_handle = vertex_buffer->get_handle();
-	vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer_handle, offsets);
-
-	VkBuffer index_buffer_handle = index_buffer->get_handle();
-	vkCmdBindIndexBuffer(command_buffer, index_buffer_handle, 0, VK_INDEX_TYPE_UINT16);
-
-	for (int32_t i = 0; i < draw_data->CmdListsCount; i++)
-	{
-		const ImDrawList *cmd_list = draw_data->CmdLists[i];
-		for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++)
-		{
-			const ImDrawCmd *cmd = &cmd_list->CmdBuffer[j];
-			VkRect2D         scissor_rect;
-			scissor_rect.offset.x      = std::max(static_cast<int32_t>(cmd->ClipRect.x), 0);
-			scissor_rect.offset.y      = std::max(static_cast<int32_t>(cmd->ClipRect.y), 0);
-			scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-			scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-
-			vkCmdSetScissor(command_buffer, 0, 1, &scissor_rect);
-			vkCmdDrawIndexed(command_buffer, cmd->ElemCount, 1, index_offset, vertex_offset, 0);
-			index_offset += cmd->ElemCount;
-		}
-		vertex_offset += cmd_list->VtxBuffer.Size;
-	}
+	draw(command_buffer, pipeline, pipeline_layout->get_handle(), descriptor_set);
 }
 
 void Gui::draw(VkCommandBuffer command_buffer, const VkPipeline pipeline, const VkPipelineLayout pipeline_layout, const VkDescriptorSet descriptor_set)

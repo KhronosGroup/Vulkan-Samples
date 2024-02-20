@@ -74,10 +74,6 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	 */
 	VkSampleCountFlagBits sample_count{VK_SAMPLE_COUNT_1_BIT};
 
-	VkSampleCountFlagBits gui_sample_count{VK_SAMPLE_COUNT_1_BIT};
-
-	VkSampleCountFlagBits last_gui_sample_count{VK_SAMPLE_COUNT_1_BIT};
-
 	bool sample_count_prepared = false;
 
 	struct
@@ -96,7 +92,7 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 
 	struct GUI_settings
 	{
-		int                      gui_sample_count = 0;
+		int                      sample_count_index = 0;
 		std::vector<std::string> sample_counts;
 	} gui_settings;
 
@@ -134,7 +130,8 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	void         draw_ui(VkCommandBuffer &);
 	void         update_resources();
 	void         draw_node(VkCommandBuffer &, SceneNode &);
-	virtual void input_event(const vkb::InputEvent &input_event) override;
+	void         destroy_color_attachment();
+	void         destroy_depth_stencil_attachment();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization();
