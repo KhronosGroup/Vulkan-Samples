@@ -209,11 +209,18 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 
 	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
 
+	// Determine the filtering to be used, based on what is supported for the format
+	const vk::FormatProperties fmt_props = device.get_gpu().get_handle().getFormatProperties(font_image_view->get_format());
+
+	vk::Filter filter = (fmt_props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear) ?
+	                        vk::Filter::eLinear :
+	                        vk::Filter::eNearest;
+
 	// Create texture sampler
 	vk::SamplerCreateInfo sampler_info;
 	sampler_info.maxAnisotropy = 1.0f;
-	sampler_info.magFilter     = vk::Filter::eLinear;
-	sampler_info.minFilter     = vk::Filter::eLinear;
+	sampler_info.magFilter     = filter;
+	sampler_info.minFilter     = filter;
 	sampler_info.mipmapMode    = vk::SamplerMipmapMode::eNearest;
 	sampler_info.addressModeU  = vk::SamplerAddressMode::eClampToEdge;
 	sampler_info.addressModeV  = vk::SamplerAddressMode::eClampToEdge;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -158,12 +158,16 @@ void DescriptorIndexing::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void DescriptorIndexing::create_immutable_sampler_descriptor_set()
 {
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter);
+
 	// The common case for bindless is to have an array of sampled images, not combined image sampler.
 	// It is more efficient to use a single sampler instead, and we can just use a single immutable sampler for this purpose.
 	// Create the sampler, descriptor set layout and allocate an immutable descriptor set.
 	VkSamplerCreateInfo create_info = vkb::initializers::sampler_create_info();
-	create_info.minFilter           = VK_FILTER_LINEAR;
-	create_info.magFilter           = VK_FILTER_LINEAR;
+	create_info.minFilter           = filter;
+	create_info.magFilter           = filter;
 	create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -322,7 +326,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	DescriptorIndexing::TestImage test_image;
 
 	VkImageCreateInfo image_info = vkb::initializers::image_create_info();
-	image_info.format            = VK_FORMAT_R8G8B8A8_UNORM;
+	image_info.format            = format;
 	image_info.extent            = {16, 16, 1};
 	image_info.mipLevels         = 1;
 	image_info.arrayLayers       = 1;
@@ -346,7 +350,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 
 	VkImageViewCreateInfo image_view           = vkb::initializers::image_view_create_info();
 	image_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	image_view.format                          = VK_FORMAT_R8G8B8A8_UNORM;
+	image_view.format                          = format;
 	image_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 	image_view.subresourceRange.baseMipLevel   = 0;
 	image_view.subresourceRange.levelCount     = 1;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1347,10 +1347,14 @@ void SparseImage::create_uniform_buffers()
  */
 void SparseImage::create_texture_sampler()
 {
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image_format, &filter);
+
 	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
 
-	sampler_info.magFilter               = VK_FILTER_LINEAR;
-	sampler_info.minFilter               = VK_FILTER_LINEAR;
+	sampler_info.magFilter               = filter;
+	sampler_info.minFilter               = filter;
 	sampler_info.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_info.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_info.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -343,14 +343,19 @@ void TextureLoading::load_texture()
 	// now, the ktx_texture can be destroyed
 	ktxTexture_Destroy(ktx_texture);
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
+
 	// Create a texture sampler
 	// In Vulkan textures are accessed by samplers
 	// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different settings
 	// Note: Similar to the samplers available with OpenGL 3.3
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-	sampler.magFilter           = VK_FILTER_LINEAR;
-	sampler.minFilter           = VK_FILTER_LINEAR;
-	sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler.magFilter           = filter;
+	sampler.minFilter           = filter;
+	sampler.mipmapMode          = mipmap_mode;
 	sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;

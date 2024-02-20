@@ -749,10 +749,12 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 void HPPApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 {}
 
-vk::Sampler HPPApiVulkanSample::create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count)
+vk::Sampler HPPApiVulkanSample::create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count, vk::Format format)
 {
 	return vkb::common::create_sampler(
+	    get_device()->get_gpu().get_handle(),
 	    get_device()->get_handle(),
+	    format,
 	    vk::Filter::eLinear,
 	    address_mode,
 	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
@@ -880,7 +882,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
-	texture.sampler = create_default_sampler(address_mode, mipmaps.size());
+	texture.sampler = create_default_sampler(address_mode, mipmaps.size(), texture.image->get_format());
 
 	return texture;
 }
@@ -946,7 +948,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
-	texture.sampler = create_default_sampler(address_mode, mipmaps.size());
+	texture.sampler = create_default_sampler(address_mode, mipmaps.size(), texture.image->get_format());
 
 	return texture;
 }
@@ -1012,7 +1014,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
-	texture.sampler = create_default_sampler(vk::SamplerAddressMode::eClampToEdge, mipmaps.size());
+	texture.sampler = create_default_sampler(vk::SamplerAddressMode::eClampToEdge, mipmaps.size(), texture.image->get_format());
 
 	return texture;
 }

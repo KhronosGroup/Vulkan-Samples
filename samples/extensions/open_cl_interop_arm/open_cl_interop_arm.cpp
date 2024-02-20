@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -499,10 +499,15 @@ void OpenCLInteropArm::prepare_shared_resources()
 	info.memory = shared_texture.memory;
 	VK_CHECK(vkGetMemoryAndroidHardwareBufferANDROID(device_handle, &info, &shared_texture.hardware_buffer));
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image_create_info.format, &filter, &mipmap_mode);
+
 	VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-	sampler_create_info.magFilter   = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter   = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode  = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter   = filter;
+	sampler_create_info.minFilter   = filter;
+	sampler_create_info.mipmapMode  = mipmap_mode;
 	sampler_create_info.maxLod      = (float) 1;
 	sampler_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	vkCreateSampler(device_handle, &sampler_create_info, nullptr, &shared_texture.sampler);

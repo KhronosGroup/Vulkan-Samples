@@ -488,35 +488,19 @@ void HPPTextureLoading::load_texture()
 	// In Vulkan textures are accessed by samplers
 	// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different settings
 	// Note: Similar to the samplers available with OpenGL 3.3
-	vk::SamplerCreateInfo sampler;
-	sampler.magFilter     = vk::Filter::eLinear;
-	sampler.minFilter     = vk::Filter::eLinear;
-	sampler.mipmapMode    = vk::SamplerMipmapMode::eLinear;
-	sampler.addressModeU  = vk::SamplerAddressMode::eRepeat;
-	sampler.addressModeV  = vk::SamplerAddressMode::eRepeat;
-	sampler.addressModeW  = vk::SamplerAddressMode::eRepeat;
-	sampler.mipLodBias    = 0.0f;
-	sampler.compareOp     = vk::CompareOp::eNever;
-	sampler.minLod        = 0.0f;
-	sampler.maxLod        = (use_staging) ? static_cast<float>(texture.mip_levels) : 0.0f;        // Set max level-of-detail to mip level count of the texture
-	sampler.maxAnisotropy = 1.0f;
 
 	// Enable anisotropic filtering
 	// This feature is optional, so we must check if it's supported on the device
+	float maxAnisotropy = 1.0f;
 	if (get_device()->get_gpu().get_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
-		sampler.maxAnisotropy    = get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy;
-		sampler.anisotropyEnable = true;
+		maxAnisotropy = get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy;
 	}
-	else
-	{
-		// The device does not support anisotropic filtering
-		sampler.maxAnisotropy    = 1.0;
-		sampler.anisotropyEnable = false;
-	}
-	sampler.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler     = device.createSampler(sampler);
+
+	texture.sampler = vkb::common::create_sampler(get_device()->get_gpu().get_handle(), get_device()->get_handle(),
+	                                              format, vk::Filter::eLinear, vk::SamplerAddressMode::eClampToEdge,
+	                                              maxAnisotropy, (use_staging) ? static_cast<float>(texture.mip_levels) : 0.0f);
 
 	// Create image view
 	// Textures are not directly accessed by the shaders and

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -259,11 +259,16 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	vkFreeMemory(get_device().get_handle(), staging_memory, nullptr);
 	vkDestroyBuffer(get_device().get_handle(), staging_buffer, nullptr);
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
+
 	// Create a texture sampler
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-	sampler.magFilter           = VK_FILTER_LINEAR;
-	sampler.minFilter           = VK_FILTER_LINEAR;
-	sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler.magFilter           = filter;
+	sampler.minFilter           = filter;
+	sampler.mipmapMode          = mipmap_mode;
 	sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

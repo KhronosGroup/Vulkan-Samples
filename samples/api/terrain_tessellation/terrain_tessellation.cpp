@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -142,11 +142,16 @@ void TerrainTessellation::load_assets()
 
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.heightmap.image->get_format(), &filter, &mipmap_mode);
+
 	// Setup a mirroring sampler for the height map
 	vkDestroySampler(get_device().get_handle(), textures.heightmap.sampler, nullptr);
-	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter    = filter;
+	sampler_create_info.minFilter    = filter;
+	sampler_create_info.mipmapMode   = mipmap_mode;
 	sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
 	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
 	sampler_create_info.addressModeW = sampler_create_info.addressModeU;
@@ -156,12 +161,16 @@ void TerrainTessellation::load_assets()
 	sampler_create_info.borderColor  = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &textures.heightmap.sampler));
 
+	filter      = VK_FILTER_LINEAR;
+	mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.terrain_array.image->get_format(), &filter, &mipmap_mode);
+
 	// Setup a repeating sampler for the terrain texture layers
 	vkDestroySampler(get_device().get_handle(), textures.terrain_array.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
-	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter    = filter;
+	sampler_create_info.minFilter    = filter;
+	sampler_create_info.mipmapMode   = mipmap_mode;
 	sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
 	sampler_create_info.addressModeW = sampler_create_info.addressModeU;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nintendo
+ * Copyright 2023-2024 Nintendo
  * Copyright 2023, Sascha Willems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -284,6 +284,7 @@ void ShaderObject::setup_render_pass()
 void ShaderObject::create_default_sampler()
 {
 	// Create a sampler
+	// Note: we know that this is only used with VK_FORMAT_R8G8B8A8_UNORM, so linear filtering must be supported
 	VkSamplerCreateInfo sampler_create_info = {};
 	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
@@ -404,13 +405,18 @@ void ShaderObject::load_assets()
 	// Height data is stored in a one-channel texture
 	heightmap_texture = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other);
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), heightmap_texture.image->get_format(), &filter, &mipmap_mode);
+
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
 	// Setup a mirroring sampler for the height map
 	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
-	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter    = filter;
+	sampler_create_info.minFilter    = filter;
+	sampler_create_info.mipmapMode   = mipmap_mode;
 	sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
 	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
 	sampler_create_info.addressModeW = sampler_create_info.addressModeU;
@@ -420,12 +426,16 @@ void ShaderObject::load_assets()
 	sampler_create_info.borderColor  = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &heightmap_texture.sampler));
 
+	filter      = VK_FILTER_LINEAR;
+	mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), terrain_array_textures.image->get_format(), &filter, &mipmap_mode);
+
 	// Setup a repeating sampler for the terrain texture layers
 	vkDestroySampler(get_device().get_handle(), terrain_array_textures.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
-	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter    = filter;
+	sampler_create_info.minFilter    = filter;
+	sampler_create_info.mipmapMode   = mipmap_mode;
 	sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
 	sampler_create_info.addressModeW = sampler_create_info.addressModeU;

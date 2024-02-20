@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip Corporation
+/* Copyright (c) 2021-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -106,7 +106,8 @@ class MultiDrawIndirect : public ApiVulkanSample
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
-	VkSampler             sampler{VK_NULL_HANDLE};
+	VkSampler             sampler_linear{VK_NULL_HANDLE};
+	VkSampler             sampler_nearest{VK_NULL_HANDLE};
 
 	// GPU Draw Calls
 	void                  run_cull();
@@ -136,7 +137,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void create_sampler();
+	void create_samplers();
 	void load_scene();
 	void initialize_resources();
 	void create_pipeline();

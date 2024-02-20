@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -114,12 +114,16 @@ void AsyncComputeSample::prepare_render_targets()
 		    *blur_chain.back(), VK_IMAGE_VIEW_TYPE_2D));
 	}
 
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), depth_targets[0].get_format(), &filter);
+
 	auto sampler_info         = vkb::initializers::sampler_create_info();
 	sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_info.minFilter    = VK_FILTER_LINEAR;
-	sampler_info.magFilter    = VK_FILTER_LINEAR;
+	sampler_info.minFilter    = filter;
+	sampler_info.magFilter    = filter;
 	sampler_info.maxLod       = VK_LOD_CLAMP_NONE;
 
 	linear_sampler = std::make_unique<vkb::core::Sampler>(*device, sampler_info);

@@ -193,6 +193,23 @@ VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::ve
 	throw std::runtime_error("No suitable blendable format could be determined");
 }
 
+void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFilter *filter, VkSamplerMipmapMode *mipmapMode)
+{
+	// Not all formats support linear filtering, so we need to adjust them if they don't
+	if (*filter == VK_FILTER_NEAREST && (mipmapMode == nullptr || *mipmapMode == VK_SAMPLER_MIPMAP_MODE_NEAREST))
+		return;        // These must already be valid
+
+	VkFormatProperties properties;
+	vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+
+	if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+	{
+		*filter = VK_FILTER_NEAREST;
+		if (mipmapMode)
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	}
+}
+
 bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
 {
 	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ||

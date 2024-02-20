@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -230,12 +230,17 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	device->flush_command_buffer(blit_command, queue, true);
 	// ---------------------------------------------------------------
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
+
 	// Create samplers for different mip map demonstration cases
 	samplers.resize(3);
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-	sampler.magFilter           = VK_FILTER_LINEAR;
-	sampler.minFilter           = VK_FILTER_LINEAR;
-	sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler.magFilter           = filter;
+	sampler.minFilter           = filter;
+	sampler.mipmapMode          = mipmap_mode;
 	sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;

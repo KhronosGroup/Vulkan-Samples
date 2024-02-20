@@ -551,11 +551,15 @@ void MobileNerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, Fram
 	color_image_view.image                           = attachment.image->get_handle();
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &attachment.view));
 
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter);
+
 	VkSamplerCreateInfo samplerCreateInfo = {};
 
 	samplerCreateInfo.sType        = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerCreateInfo.magFilter    = VK_FILTER_LINEAR;
-	samplerCreateInfo.minFilter    = VK_FILTER_LINEAR;
+	samplerCreateInfo.magFilter    = filter;
+	samplerCreateInfo.minFilter    = filter;
 	samplerCreateInfo.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -1467,17 +1471,15 @@ void MobileNerf::create_texture_helper(std::string const &texturePath, Texture &
 
 	VkSamplerCreateInfo samplerCreateInfo = {};
 	samplerCreateInfo.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	if (using_original_nerf_models[0])
-	{
-		samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
-		samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
-	}
-	else
-	{
-		samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-		samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
-	}
 
+	// Calculate valid filter
+	VkFilter filter = using_original_nerf_models[0] ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture_input.image->get_format(), &filter);
+
+	VkSamplerCreateInfo samplerCreateInfo     = {};
+	samplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerCreateInfo.magFilter               = filter;
+	samplerCreateInfo.minFilter               = filter;
 	samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplerCreateInfo.addressModeU            = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeV            = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

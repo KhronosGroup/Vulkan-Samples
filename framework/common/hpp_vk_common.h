@@ -297,12 +297,17 @@ inline vk::QueryPool create_query_pool(vk::Device device, vk::QueryType query_ty
 	return device.createQueryPool(query_pool_create_info);
 }
 
-inline vk::Sampler create_sampler(vk::Device device, vk::Filter filter, vk::SamplerAddressMode sampler_address_mode, float max_anisotropy, float max_LOD)
+inline vk::Sampler create_sampler(vk::PhysicalDevice gpu, vk::Device device, vk::Format format, vk::Filter filter,
+                                  vk::SamplerAddressMode sampler_address_mode, float max_anisotropy, float max_LOD)
 {
+	const vk::FormatProperties fmt_props = gpu.getFormatProperties(format);
+
+	bool has_linear_filter = !!(fmt_props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
+
 	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter               = filter;
-	sampler_create_info.minFilter               = filter;
-	sampler_create_info.mipmapMode              = vk::SamplerMipmapMode::eLinear;
+	sampler_create_info.magFilter               = has_linear_filter ? filter : vk::Filter::eNearest;
+	sampler_create_info.minFilter               = has_linear_filter ? filter : vk::Filter::eNearest;
+	sampler_create_info.mipmapMode              = has_linear_filter ? vk::SamplerMipmapMode::eLinear : vk::SamplerMipmapMode::eNearest;
 	sampler_create_info.addressModeU            = sampler_address_mode;
 	sampler_create_info.addressModeV            = sampler_address_mode;
 	sampler_create_info.addressModeW            = sampler_address_mode;
