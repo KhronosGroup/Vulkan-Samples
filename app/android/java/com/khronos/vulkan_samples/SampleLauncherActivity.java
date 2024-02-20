@@ -124,6 +124,7 @@ public class SampleLauncherActivity extends AppCompatActivity {
             arguments.add("batch");
             arguments.add("--category");
             arguments.add(category);
+            arguments.add("--tag");
             arguments.addAll(sampleListView.dialog.getFilter());
 
             String[] sa = {};

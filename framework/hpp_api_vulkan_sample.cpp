@@ -1032,7 +1032,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> HPPApiVulkanSample::lo
 	return model;
 }
 
-void HPPApiVulkanSample::draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer)
+void HPPApiVulkanSample::draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer, uint32_t instance_count)
 {
 	vk::DeviceSize offset = 0;
 
@@ -1041,7 +1041,7 @@ void HPPApiVulkanSample::draw_model(std::unique_ptr<vkb::scene_graph::components
 
 	command_buffer.bindVertexBuffers(0, vertex_buffer.get_handle(), offset);
 	command_buffer.bindIndexBuffer(index_buffer.get_handle(), 0, model->get_index_type());
-	command_buffer.drawIndexed(model->vertex_indices, 1, 0, 0, 0);
+	command_buffer.drawIndexed(model->vertex_indices, instance_count, 0, 0, 0);
 }
 
 void HPPApiVulkanSample::with_command_buffer(const std::function<void(vk::CommandBuffer command_buffer)> &f, vk::Semaphore signalSemaphore)

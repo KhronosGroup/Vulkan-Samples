@@ -33,7 +33,7 @@ All remote git usage is handled automatically.
 To update your local repository to use main please use the following commands
 
 ----
-git branch -m master main git fetch origin git branch -u origin/main main git remote set-head origin -a
+git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a
 ----
 endif::[]
 
@@ -105,6 +105,10 @@ Follow build instructions for your platform below.
 == Usage
 
 The following shows some example command line usage on how to configure and run the Vulkan Samples.
+
+> Make sure that you are running the samples from the root directory of the repository.
+> Otherwise the samples will not be able to find the assets.
+> ./build/app/bin/<BuildType>/<Arch>/vulkan_samples
 
 ----
 # For the entire usage use

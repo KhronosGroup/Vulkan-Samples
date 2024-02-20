@@ -202,6 +202,10 @@ A transcoded version of the API sample <<hlsl_shaders,HLSL Shaders>> that illust
 
 A transcoded version of the API sample <<instancing,Instancing>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
+=== xref:./api/hpp_oit_linked_lists/README.adoc[HPP OIT Linked Lists]
+
+A transcoded version of the API sample <<oit_linked_lists,OIT Linked Lists>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+
 === xref:./api/hpp_separate_image_sampler/README.adoc[HPP Separate image sampler]
 
 A transcoded version of the API sample <<separate_image_sampler,Separate image sampler>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
@@ -338,6 +342,10 @@ There is no vertex shader,  there is only a mesh and fragment shader.
 The mesh shader creates the vertices for the triangle.
 The mesh shading  pipeline includes the task and mesh shaders before going into the fragment shader.
 This replaces the vertex /  geometry shader standard pipeline.
+
+=== xref:./extensions/hpp_mesh_shading/README.adoc[HPP Mesh shading]
+
+A transcoded version of the Extensions sample <<mesh_shading,Mesh shading>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./extensions/open_gl_interop/README.adoc[OpenGL interoperability]
 
@@ -507,3 +515,11 @@ The goal of these samples is to demonstrate usage of tooling functions and libra
 
 Use the https://github.com/KhronosGroup/Vulkan-Profiles[Vulkan Profiles library] to simplify instance and device setup.
 The library defines a common baseline of features, extensions, etc.
+
+== General Samples
+
+The goal of these samples is to demonstrate different techniques or showcase complex scenarios that doesn't necessarily fit any of the main categories.
+
+=== xref:./general/mobile_nerf/README.adoc[Mobile NeRF]
+
+A Neural Radiance Field synthesizer sample, based on textured polygons.

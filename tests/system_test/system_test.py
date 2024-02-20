@@ -96,7 +96,7 @@ class UnixSubtest(Subtest):
         super().__init__(test_name, platform_type)
 
     def run(self):
-        app_path = "{}app/bin/{}/vulkan_samples".format(build_path, platform.machine())
+        app_path = "{}app/bin/{}/{}/vulkan_samples".format(build_path, build_config, platform.machine())
         return super().run(app_path)
 
 class AndroidSubtest(Subtest):
@@ -104,15 +104,15 @@ class AndroidSubtest(Subtest):
         super().__init__(test_name, "Android")
 
     def run(self):
-        subprocess.run("adb shell am force-stop com.khronos.vulkan_samples")
+        subprocess.run(["adb", "shell", "am", "force-stop", "com.khronos.vulkan_samples"])
         subprocess.run(["adb", "shell", "am", "start", "-W", "-n", "com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity", "-e", "test", "{0}".format(self.test_name)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        output = subprocess.check_output("adb shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | cut -d . -f 5 | cut -d ' ' -f 1")
+        output = subprocess.check_output("adb shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | cut -d . -f 5 | cut -d ' ' -f 1", shell=True)
         activity = "".join(output.decode("utf-8").split())
         timeout_counter = 0
         while activity == "vulkan_samples" and timeout_counter <= android_timeout:
             sleep(check_step)
             timeout_counter += check_step
-            output = subprocess.check_output("adb shell \"dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | cut -d . -f 5 | cut -d ' ' -f 1\"")
+            output = subprocess.check_output("adb shell \"dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | cut -d . -f 5 | cut -d ' ' -f 1\"", shell=True)
             activity = "".join(output.decode("utf-8").split())
         if timeout_counter <= android_timeout:
             subprocess.run(["adb", "pull", "/sdcard/Android/data/com.khronos.vulkan_samples/files/" + outputs_path + self.test_name + image_ext, os.path.join(root_path, outputs_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -253,7 +253,7 @@ def main():
             failed += 1
 
     if failed == 0:
-        print("=== Success: All tests passed! ===")        
+        print("=== Success: All tests passed! ===")
         shutil.rmtree(tmp_path)
         exit(0)
     else:
@@ -300,7 +300,7 @@ if __name__ == "__main__":
     # If building for android check that a valid device is plugged in
     if test_android:
         try:
-            subprocess.check_output("adb get-state")
+            subprocess.check_output(["adb", "get-state"])
         except:
             print("Device not found, disabling Android testing")
             test_android = False

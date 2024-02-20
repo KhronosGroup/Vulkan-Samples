@@ -43,7 +43,7 @@ HPPPipelineCache::~HPPPipelineCache()
 		device->get_handle().destroyPipelineCache(pipeline_cache);
 	}
 
-	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
+	vkb::fs::write_temp(device->get_resource_cache().serialize(), "hpp_cache.data");
 }
 
 bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
@@ -83,7 +83,7 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	std::vector<uint8_t> data_cache;
 	try
 	{
-		data_cache = vkb::fs::read_temp("cache.data");
+		data_cache = vkb::fs::read_temp("hpp_cache.data");
 	}
 	catch (std::runtime_error &ex)
 	{
