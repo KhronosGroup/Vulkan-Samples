@@ -103,8 +103,6 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 		VkImageView    view;
 	} color_attachment;
 
-	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
-
   public:
 	virtual void build_command_buffers() override;
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;

@@ -45,7 +45,7 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Query the extended dynamic state support
-	extended_dynamic_state_3_features       = {};
+	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
 	extended_dynamic_state_3_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
 
 	VkPhysicalDeviceFeatures2 features2{};
