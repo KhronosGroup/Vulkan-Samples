@@ -219,8 +219,6 @@ class Device : public core::VulkanResource<VkDevice>
 
 	std::unique_ptr<DebugUtils> debug_utils;
 
-	std::vector<VkExtensionProperties> device_extensions;
-
 	std::vector<const char *> enabled_extensions{};
 
 	std::vector<std::vector<Queue>> queues;

@@ -327,6 +327,13 @@ class VulkanSample : public vkb::Application
 	 */
 	static void set_viewport_and_scissor(CommandBufferType const &command_buffer, Extent2DType const &extent);
 
+	/**
+	 * @brief A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
+	 */
+	std::vector<vk::SurfaceFormatKHR> default_surface_priority_list = {
+	    {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	    {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
+
 	/// <summary>
 	/// PRIVATE INTERFACE
 	/// </summary>
@@ -470,9 +477,7 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanS
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::create_render_context()
 {
-	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
-	create_render_context_impl(surface_priority_list);
+	create_render_context_impl(default_surface_priority_list);
 }
 
 template <vkb::BindingType bindingType>
@@ -532,11 +537,13 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &co
 		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		render_target.set_layout(0, memory_barrier.new_layout);
 
 		// Skip 1 as it is handled later as a depth-stencil attachment
 		for (size_t i = 2; i < views.size(); ++i)
 		{
 			command_buffer.image_memory_barrier(views[i], memory_barrier);
+			render_target.set_layout(static_cast<uint32_t>(i), memory_barrier.new_layout);
 		}
 	}
 
@@ -550,6 +557,7 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &co
 		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
 
 		command_buffer.image_memory_barrier(views[1], memory_barrier);
+		render_target.set_layout(1, memory_barrier.new_layout);
 	}
 
 	if constexpr (bindingType == BindingType::Cpp)
@@ -570,6 +578,7 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &co
 		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eBottomOfPipe;
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		render_target.set_layout(0, memory_barrier.new_layout);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -119,6 +119,13 @@ class RenderContext
 	 * @param transform The surface transform flags
 	 */
 	void update_swapchain(const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform);
+
+	/**
+	 * @brief Updates the swapchain's compression settings, if a swapchain exists
+	 * @param compression The compression to use for swapchain images (default, fixed-rate, none)
+	 * @param compression_fixed_rate The rate to use, if compression is fixed-rate
+	 */
+	void update_swapchain(const VkImageCompressionFlagsEXT compression, const VkImageCompressionFixedRateFlagsEXT compression_fixed_rate);
 
 	/**
 	 * @returns True if a valid swapchain exists in the RenderContext
