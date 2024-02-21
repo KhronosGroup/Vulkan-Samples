@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -437,6 +437,7 @@ class HPPGui
 	Timer                                    timer;        // Used to measure duration of input events
 	bool                                     prev_visible           = true;
 	bool                                     two_finger_tap         = false;        // Whether or not the GUI has detected a multi touch gesture
+	bool                                     three_finger_tap       = false;
 	bool                                     show_graph_file_output = false;
 };
 }        // namespace vkb

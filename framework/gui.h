@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -477,6 +477,8 @@ class Gui
 
 	/// Whether or not the GUI has detected a multi touch gesture
 	bool two_finger_tap = false;
+
+	bool three_finger_tap = false;
 
 	bool show_graph_file_output = false;
 
