@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2020, Broadcom Inc.
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2020-2024, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,63 +21,31 @@
 #include "common/error.h"
 #include "common/vk_common.h"
 
-VKBP_DISABLE_WARNINGS()
-#include <hwcpipe.h>
-VKBP_ENABLE_WARNINGS()
-
 #include "stats_provider.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <device/product_id.hpp>
+#include <hwcpipe/counter_database.hpp>
+#include <hwcpipe/gpu.hpp>
+#include <hwcpipe/sampler.hpp>
+
+#include <iomanip>
+
+#include <unistd.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
 class HWCPipeStatsProvider : public StatsProvider
 {
   private:
-	enum class StatType
-	{
-		Cpu,
-		Gpu
-	};
-
 	struct StatData
 	{
-		StatType            type;
-		StatScaling         scaling;
-		hwcpipe::CpuCounter cpu_counter;
-		hwcpipe::CpuCounter divisor_cpu_counter;
-		hwcpipe::GpuCounter gpu_counter;
-		hwcpipe::GpuCounter divisor_gpu_counter;
+		hwcpipe_counter counter;
+		StatScaling     scaling;
+		hwcpipe_counter divisor;
 
 		StatData() = default;
-
-		/**
-		 * @brief Constructor for CPU counters
-		 * @param c The CPU counter to be gathered
-		 * @param stat_scaling The scaling to be applied to the stat
-		 * @param divisor The CPU counter to be used as divisor if scaling is ByCounter
-		 */
-		StatData(hwcpipe::CpuCounter c,
-		         StatScaling         stat_scaling = StatScaling::ByDeltaTime,
-		         hwcpipe::CpuCounter divisor      = hwcpipe::CpuCounter::MaxValue) :
-		    type(StatType::Cpu),
-		    scaling(stat_scaling),
-		    cpu_counter(c),
-		    divisor_cpu_counter(divisor)
-		{}
-
-		/**
-		 * @brief Constructor for GPU counters
-		 * @param c The GPU counter to be gathered
-		 * @param stat_scaling The scaling to be applied to the stat
-		 * @param divisor The GPU counter to be used as divisor if scaling is ByCounter
-		 */
-		StatData(hwcpipe::GpuCounter c,
-		         StatScaling         stat_scaling = StatScaling::ByDeltaTime,
-		         hwcpipe::GpuCounter divisor      = hwcpipe::GpuCounter::MaxValue) :
-		    type(StatType::Gpu),
-		    scaling(stat_scaling),
-		    gpu_counter(c),
-		    divisor_gpu_counter(divisor)
-		{}
 	};
 
 	using StatDataMap = std::unordered_map<StatIndex, StatData, StatIndexHash>;
@@ -88,6 +56,11 @@ class HWCPipeStatsProvider : public StatsProvider
 	 * @param requested_stats Set of stats to be collected. Supported stats will be removed from the set.
 	 */
 	HWCPipeStatsProvider(std::set<StatIndex> &requested_stats);
+
+	/**
+	 * @brief Destructor
+	 */
+	~HWCPipeStatsProvider();
 
 	/**
 	 * @brief Checks if this provider can supply the given enabled stat
@@ -110,13 +83,12 @@ class HWCPipeStatsProvider : public StatsProvider
 
 	/**
 	 * @brief Retrieve a new sample set from continuous sampling
- 	 * @param delta_time Time since last sample
+	 * @param delta_time Time since last sample
 	 */
 	Counters continuous_sample(float delta_time) override;
 
   private:
-	// The hwcpipe instance
-	std::unique_ptr<hwcpipe::HWCPipe> hwcpipe{};
+	std::unique_ptr<hwcpipe::sampler<>> sampler;
 
 	// Only stats which are available and were requested end up in stat_data
 	StatDataMap stat_data;

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -268,10 +268,11 @@ set_target_properties(spirv-cross-msl PROPERTIES FOLDER "ThirdParty" POSITION_IN
 set_target_properties(spirv-cross-reflect PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-util PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
+if(ANDROID)
 # hwcpipe
 add_subdirectory(hwcpipe)
-
 set_target_properties(hwcpipe PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # stb
 add_library(stb INTERFACE)
