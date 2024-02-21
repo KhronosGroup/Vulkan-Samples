@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -249,8 +249,9 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	/**
 	 * @brief Creates a new (graphics) command pool object storing command buffers
+	 * @param flags (Optional) The flags for the pool
 	 */
-	void create_command_pool();
+	void create_command_pool(vk::CommandPoolCreateFlags flags = vk::CommandPoolCreateFlags());
 
 	/**
 	 * @brief Setup default depth and stencil views

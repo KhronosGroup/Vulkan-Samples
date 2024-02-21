@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -610,6 +610,13 @@ bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)
 	{
 		return false;
 	}
+
+	// We want a resettable command pool, so swap out the default one that was created
+	// by the base class along with the command buffers that belong to it
+	ApiVulkanSample::destroy_command_buffers();
+	vkDestroyCommandPool(device->get_handle(), cmd_pool, nullptr);
+	ApiVulkanSample::create_command_pool(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	ApiVulkanSample::create_command_buffers();
 
 	create_resources();
 	create_pipelines();

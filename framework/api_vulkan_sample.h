@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -286,8 +286,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	/**
 	 * @brief Creates a new (graphics) command pool object storing command buffers
+	 * @param flags (Optional) The command pool flags
 	 */
-	void create_command_pool();
+	void create_command_pool(VkCommandPoolCreateFlags flags = 0);
 
 	/**
 	 * @brief Setup default depth and stencil views
