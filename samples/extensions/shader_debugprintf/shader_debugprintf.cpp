@@ -27,7 +27,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
     void                                       *pUserData)
 {
-	// @todo: clean message and maybe store to buffer and display in GUI
 	if (strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0)
 	{
 		debug_output.append(pCallbackData->pMessage);
@@ -414,7 +413,9 @@ void ShaderDebugPrintf::create_instance()
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
-	app_info.apiVersion       = VK_API_VERSION_1_0;
+
+	// Shader debugprintf requires at least Vulkan 1.1
+	app_info.apiVersion = VK_API_VERSION_1_1;
 
 	VkInstanceCreateInfo instance_create_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 	instance_create_info.ppEnabledExtensionNames = enabled_extensions.data();
@@ -431,9 +432,8 @@ void ShaderDebugPrintf::create_instance()
 	debug_utils_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
 	debug_utils_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
 	debug_utils_messenger_create_info.pfnUserCallback = debug_utils_message_callback;
-	debug_utils_messenger_create_info.pNext           = &validation_features;
 
-	instance_create_info.pNext = &debug_utils_messenger_create_info;
+	instance_create_info.pNext = &validation_features;
 
 	std::vector<const char *> validation_layers = {"VK_LAYER_KHRONOS_validation"};
 	instance_create_info.ppEnabledLayerNames    = validation_layers.data();
@@ -476,7 +476,8 @@ void ShaderDebugPrintf::on_update_ui_overlay(vkb::Drawer &drawer)
 			rebuild_command_buffers();
 		}
 	}
-	if (drawer.header("Debug output")) {
+	if (drawer.header("Debug output"))
+	{
 		drawer.text(debug_output.c_str());
 	}
 
