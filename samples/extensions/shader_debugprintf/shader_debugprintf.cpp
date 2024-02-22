@@ -53,6 +53,11 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 	}
+
+	if (instance)
+	{
+		vkDestroyDebugUtilsMessengerEXT(instance->get_handle(), debug_utils_messenger, nullptr);
+	}
 }
 
 void ShaderDebugPrintf::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -154,9 +159,10 @@ void ShaderDebugPrintf::load_assets()
 void ShaderDebugPrintf::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
-	uint32_t                   num_descriptor_sets = 1;
+	// Note: Using debugprintf in a shader consumes a descriptor set, so we need to allocate one additional descriptor set
+	uint32_t                   num_descriptor_sets = 2;
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
@@ -312,8 +318,8 @@ void ShaderDebugPrintf::prepare_pipelines()
 	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
 
-	shader_stages[0] = load_shader("shader_debugprintf/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("shader_debugprintf/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("shader_debugprintf/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("shader_debugprintf/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// skysphere pipeline (background cube)
 	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
