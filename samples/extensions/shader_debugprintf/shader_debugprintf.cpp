@@ -19,7 +19,9 @@
 
 #include "scene_graph/components/sub_mesh.h"
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_message_callback(
+std::string ShaderDebugPrintf::debug_output{};
+
+VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
     VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT             messageType,
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
@@ -28,7 +30,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_message_callback(
 	// @todo: clean message and maybe store to buffer and display in GUI
 	if (strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0)
 	{
-		std::cout << pCallbackData->pMessage << "\n";
+		debug_output.append(pCallbackData->pMessage);
+		debug_output.append("\n");
 	}
 	return VK_FALSE;
 }
@@ -473,6 +476,12 @@ void ShaderDebugPrintf::on_update_ui_overlay(vkb::Drawer &drawer)
 			rebuild_command_buffers();
 		}
 	}
+	if (drawer.header("Debug output")) {
+		drawer.text(debug_output.c_str());
+	}
+
+	// Clear saved debug output, so we only get output for the last frame
+	debug_output.clear();
 }
 
 bool ShaderDebugPrintf::resize(const uint32_t width, const uint32_t height)

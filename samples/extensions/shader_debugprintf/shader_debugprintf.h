@@ -22,7 +22,7 @@
 class ShaderDebugPrintf : public ApiVulkanSample
 {
   public:
-	bool display_skysphere     = true;
+	bool display_skysphere = true;
 
 	struct
 	{
@@ -70,6 +70,14 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	} push_const_block;
 
 	VkDebugUtilsMessengerEXT debug_utils_messenger{VK_NULL_HANDLE};
+
+	static std::string debug_output;
+
+	VKAPI_ATTR static VkBool32 VKAPI_CALL debug_utils_message_callback(
+	    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+	    VkDebugUtilsMessageTypeFlagsEXT             messageType,
+	    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+	    void                                       *pUserData);
 
 	ShaderDebugPrintf();
 	~ShaderDebugPrintf();
