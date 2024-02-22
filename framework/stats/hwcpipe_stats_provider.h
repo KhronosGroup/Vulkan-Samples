@@ -41,9 +41,10 @@ class HWCPipeStatsProvider : public StatsProvider
   private:
 	struct StatData
 	{
-		hwcpipe_counter counter;
-		StatScaling     scaling;
-		hwcpipe_counter divisor;
+		hwcpipe_counter              counter;
+		std::vector<hwcpipe_counter> fallback_list;
+		StatScaling                  scaling;
+		hwcpipe_counter              divisor;
 
 		StatData() = default;
 	};

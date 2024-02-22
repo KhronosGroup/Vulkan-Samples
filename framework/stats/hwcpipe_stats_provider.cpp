@@ -46,12 +46,12 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 	// clang-format off
 	StatDataMap hwcpipe_stats = {
 	    {StatIndex::gpu_cycles,            {hwcpipe_counter::MaliGPUActiveCy}},
-	    {StatIndex::gpu_vertex_cycles,     {hwcpipe_counter::MaliNonFragQueueActiveCy}},
+	    {StatIndex::gpu_vertex_cycles,     {hwcpipe_counter::MaliNonFragQueueActiveCy, {MaliNonFragActiveCy, MaliBinningIterActiveCy} }},
 	    {StatIndex::gpu_load_store_cycles, {hwcpipe_counter::MaliLSIssueCy}},
 	    {StatIndex::gpu_tiles,             {hwcpipe_counter::MaliFragTile}},
 	    {StatIndex::gpu_killed_tiles,      {hwcpipe_counter::MaliFragTileKill}},
-	    {StatIndex::gpu_fragment_cycles,   {hwcpipe_counter::MaliFragQueueActiveCy}},
-	    {StatIndex::gpu_fragment_jobs,     {hwcpipe_counter::MaliFragQueueJob}},
+	    {StatIndex::gpu_fragment_cycles,   {hwcpipe_counter::MaliFragQueueActiveCy, {MaliFragActiveCy, MaliMainIterActiveCy}}},
+	    {StatIndex::gpu_fragment_jobs,     {hwcpipe_counter::MaliFragQueueJob, {MaliFragIterJob, MaliMainIterJob}}},
 	    {StatIndex::gpu_ext_reads,         {hwcpipe_counter::MaliExtBusRdBt}},
 	    {StatIndex::gpu_ext_writes,        {hwcpipe_counter::MaliExtBusWrBt}},
 	    {StatIndex::gpu_ext_read_stalls,   {hwcpipe_counter::MaliExtBusRdStallCy}},
@@ -97,6 +97,27 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 			}
 
 			ec = config.add_counter(it->second.counter);
+			if (ec)
+			{
+				// Some counters have changed in recent devices
+				auto &fallback_list = it->second.fallback_list;
+				if (!fallback_list.empty())
+				{
+					for (const auto &fallback : fallback_list)
+					{
+						ec = counter_db.describe_counter(fallback, meta);
+						ec = config.add_counter(fallback);
+
+						if (!ec)
+						{
+							// Replace counter with available alternative
+							it->second.counter = fallback;
+							break;
+						}
+					}
+				}
+			}
+
 			if (ec)
 			{
 				LOGE("HWCPipe: '{}' counter not supported by this GPU.", meta.name);
