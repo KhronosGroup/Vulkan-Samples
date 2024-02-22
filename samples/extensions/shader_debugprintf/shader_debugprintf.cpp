@@ -160,10 +160,10 @@ void ShaderDebugPrintf::load_assets()
 
 void ShaderDebugPrintf::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 	// Note: Using debugprintf in a shader consumes a descriptor set, so we need to allocate one additional descriptor set
+	std::vector<VkDescriptorPoolSize> pool_sizes = {
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
 	uint32_t                   num_descriptor_sets = 2;
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
@@ -410,34 +410,30 @@ void ShaderDebugPrintf::create_instance()
 
 	enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
+	std::vector<VkValidationFeatureEnableEXT>  validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+	std::vector<VkValidationFeatureDisableEXT> disables{};
+
+	VkValidationFeaturesEXT validation_features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+	validation_features.enabledValidationFeatureCount = 1;
+	validation_features.pEnabledValidationFeatures    = validation_feature_enables.data();
+	validation_features.pDisabledValidationFeatures   = 0;
+	validation_features.pDisabledValidationFeatures   = disables.data();
+
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
+	// @todo: Only 1.1 is required, but there seems to be a performance bug in the SDK using that
+	app_info.apiVersion       = VK_API_VERSION_1_2;
 
-	// Shader debugprintf requires at least Vulkan 1.1
-	app_info.apiVersion = VK_API_VERSION_1_1;
+	std::vector<const char *> validation_layers = {"VK_LAYER_KHRONOS_validation"};
 
 	VkInstanceCreateInfo instance_create_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 	instance_create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	instance_create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
 	instance_create_info.pApplicationInfo        = &app_info;
-
-	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
-
-	VkValidationFeaturesEXT validation_features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
-	validation_features.enabledValidationFeatureCount = static_cast<uint32_t>(validation_feature_enables.size());
-	validation_features.pEnabledValidationFeatures    = validation_feature_enables.data();
-
-	VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-	debug_utils_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-	debug_utils_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-	debug_utils_messenger_create_info.pfnUserCallback = debug_utils_message_callback;
-
-	instance_create_info.pNext = &validation_features;
-
-	std::vector<const char *> validation_layers = {"VK_LAYER_KHRONOS_validation"};
-	instance_create_info.ppEnabledLayerNames    = validation_layers.data();
-	instance_create_info.enabledLayerCount      = static_cast<uint32_t>(validation_layers.size());
+	instance_create_info.pNext                   = &validation_features;
+	instance_create_info.ppEnabledLayerNames     = validation_layers.data();
+	instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
 
 	VkInstance vulkan_instance;
 	result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
@@ -448,6 +444,11 @@ void ShaderDebugPrintf::create_instance()
 	}
 
 	volkLoadInstance(vulkan_instance);
+
+	VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+	debug_utils_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+	debug_utils_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+	debug_utils_messenger_create_info.pfnUserCallback = debug_utils_message_callback;
 
 	VK_CHECK(vkCreateDebugUtilsMessengerEXT(vulkan_instance, &debug_utils_messenger_create_info, nullptr, &debug_utils_messenger));
 
