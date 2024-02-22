@@ -68,6 +68,8 @@ This sample shows the difference between recording both render passes into a sin
 
 Below are screenshots of the sample running on a phone with a Mali G72 GPU:
 
+NOTE: Since the time of writing this tutorial, the CPU counter provider, HWCPipe, has been updated and it no longer provides CPU cycles. These may still be measured using external tools, as shown later.
+
 image::./images/no_multi_threading.png[Single Thread]
 
 Using two threads gives a 10ms frame time improvement and CPU cycles show an increase in CPU utilization:
