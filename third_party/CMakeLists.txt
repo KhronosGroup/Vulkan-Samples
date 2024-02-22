@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -83,7 +83,7 @@ elseif(UNIX)
     else()
         message(FATAL_ERROR "Unknown WSI")
     endif()
-endif() 
+endif()
 
 # vma
 add_library(vma INTERFACE)
@@ -95,7 +95,7 @@ target_link_libraries(vma INTERFACE vulkan)
 # libktx
 set(KTX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ktx)
 
-set(KTX_SOURCES  
+set(KTX_SOURCES
     ${KTX_DIR}/lib/checkheader.c
     ${KTX_DIR}/lib/dfdutils/createdfd.c
     ${KTX_DIR}/lib/dfdutils/colourspaces.c
@@ -136,7 +136,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/basisu/transcoder/basisu_transcoder.h
     ${KTX_DIR}/lib/basisu/transcoder/basisu.h
     ${KTX_DIR}/lib/basisu/zstd/zstd.c
-   
+
     # KT1
     ${KTX_DIR}/lib/texture1.c
     ${KTX_DIR}/lib/texture1.h
@@ -152,7 +152,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/vkformat_str.c
     ${KTX_DIR}/lib/vk_funcs.c
     ${KTX_DIR}/lib/vk_funcs.h
-    ${KTX_DIR}/lib/vkloader.c    
+    ${KTX_DIR}/lib/vkloader.c
 )
 
 set(KTX_INCLUDE_DIRS
@@ -231,6 +231,17 @@ option(BUILD_EXTERNAL OFF)
 
 add_subdirectory(glslang)
 
+if (TARGET GenericCodeGen)
+    set_target_properties(GenericCodeGen PROPERTIES FOLDER "ThirdParty")
+endif()
+if (TARGET MachineIndependent)
+    set_target_properties(MachineIndependent PROPERTIES FOLDER "ThirdParty")
+endif()
+if (TARGET HLSL)
+    set_target_properties(HLSL PROPERTIES FOLDER "ThirdParty")
+endif()
+
+
 if (NOT TARGET glslang-default-resource-limits)
     add_library(glslang-default-resource-limits
                 glslang/StandAlone/ResourceLimits.cpp)
@@ -260,6 +271,7 @@ set_target_properties(SPIRV PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_
 add_subdirectory(spirv-cross)
 
 set_target_properties(spirv-cross PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-c PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-core PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-glsl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-cpp PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
@@ -331,6 +343,9 @@ if(NOT ANDROID)
 
         add_subdirectory(glfw)
 
+        if (TARGET update_mappings)
+            set_target_properties(update_mappings PROPERTIES FOLDER "ThirdParty")
+        endif()
         set_property(TARGET glfw PROPERTY FOLDER "ThirdParty")
     endif()
 endif()
@@ -362,6 +377,9 @@ set(CLI11_FORCE_LIBCXX OFF)
 set(CLI11_CUDA_TESTS OFF)
 set(CLI11_CLANG_TIDY OFF)
 add_subdirectory(cli11)
+if (TARGET CLI11)
+    set_property(TARGET CLI11 PROPERTY FOLDER "ThirdParty")
+endif()
 
 # OpenCL
 add_library(opencl INTERFACE)
