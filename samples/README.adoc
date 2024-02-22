@@ -263,6 +263,10 @@ A sample that implements best practices in handling swapchain recreation, for ex
 
 A sample that implements an order-independent transparency algorithm using per-pixel ordered linked lists.
 
+=== xref:./api/oit_depth_peeling/README.adoc[Order-independent transparency with depth peeling]
+
+A sample that implements order-independent transparency with depth peeling.
+
 == Extension Samples
 
 The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.
