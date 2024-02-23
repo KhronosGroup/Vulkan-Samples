@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2021-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -67,6 +67,8 @@ When using both of these methods for multi-threading, general recommendations sh
 This sample shows the difference between recording both render passes into a single command buffer in one thread and using the methods described above.
 
 Below are screenshots of the sample running on a phone with a Mali G72 GPU:
+
+NOTE: Since the time of writing this tutorial, the CPU counter provider, HWCPipe, has been updated and it no longer provides CPU cycles. These may still be measured using external tools, as shown later.
 
 image::./images/no_multi_threading.png[Single Thread]
 
