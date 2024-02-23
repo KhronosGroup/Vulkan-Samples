@@ -17,7 +17,7 @@
 -
 ////
 ifndef::performance_samplespath[:performance_samplespath: ./performance/]
-ifndef::extenstion_samplespath[:extenstion_samplespath: ./extensions/]
+ifndef::extension_samplespath[:extension_samplespath: ./extensions/]
 ifndef::api_samplespath[:api_samplespath: ./api/]
 ifndef::general_samplespath[:general_samplespath: ./general/]
 ifndef::tooling_samplespath[:tooling_samplespath: ./tooling/]
