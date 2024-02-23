@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -568,20 +568,12 @@ void HPPHDR::prepare_models()
 void HPPHDR::prepare_offscreen_buffer()
 {
 	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
-	const std::vector<vk::Format> float_format_priority_list = {vk::Format::eR32G32B32A32Sfloat, vk::Format::eR16G16B16A16Sfloat};
+	const std::vector<vk::Format> float_format_priority_list = {
+	    vk::Format::eR32G32B32A32Sfloat,
+	    vk::Format::eR16G16B16A16Sfloat        // Guaranteed blend support for this
+	};
 
-	auto formatIt = std::find_if(float_format_priority_list.begin(),
-	                             float_format_priority_list.end(),
-	                             [this](vk::Format format) {
-		                             const vk::FormatProperties properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
-		                             return properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend;
-	                             });
-	if (formatIt == float_format_priority_list.end())
-	{
-		throw std::runtime_error("No suitable float format could be determined");
-	}
-
-	vk::Format color_format = *formatIt;
+	vk::Format color_format = vkb::common::choose_blendable_format(get_device()->get_gpu().get_handle(), float_format_priority_list);
 
 	{
 		offscreen.extent = extent;

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -178,6 +178,19 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_
 	}
 
 	throw std::runtime_error("No suitable depth format could be determined");
+}
+
+VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &format_priority_list)
+{
+	for (const auto &format : format_priority_list)
+	{
+		VkFormatProperties properties;
+		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+			return format;
+	}
+
+	throw std::runtime_error("No suitable blendable format could be determined");
 }
 
 bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
