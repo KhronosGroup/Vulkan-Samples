@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Sascha Willems
+/* Copyright (c) 2022-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -440,10 +440,16 @@ void TimestampQueries::prepare_offscreen_buffer()
 		filter_pass.width  = width;
 		filter_pass.height = height;
 
-		// Color attachments
+		// Color attachments - needs to be a blendable format, so choose from a priority ordered list
+		const std::vector<VkFormat> float_format_priority_list = {
+		    VK_FORMAT_R32G32B32A32_SFLOAT,
+		    VK_FORMAT_R16G16B16A16_SFLOAT        // Guaranteed blend support for this
+		};
+
+		VkFormat color_format = vkb::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 		// Two floating point color buffers
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
 		// Set up separate renderpass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
