@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -584,10 +584,10 @@ void HPPApiVulkanSample::create_synchronization_primitives()
 	}
 }
 
-void HPPApiVulkanSample::create_command_pool(vk::CommandPoolCreateFlags flags)
+void HPPApiVulkanSample::create_command_pool()
 {
 	uint32_t                  queue_family_index = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
-	vk::CommandPoolCreateInfo command_pool_info(flags, queue_family_index);
+	vk::CommandPoolCreateInfo command_pool_info({}, queue_family_index);
 	cmd_pool = get_device()->get_handle().createCommandPool(command_pool_info);
 }
 

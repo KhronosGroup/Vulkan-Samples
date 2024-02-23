@@ -611,13 +611,6 @@ bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	// We want a resettable command pool, so swap out the default one that was created
-	// by the base class along with the command buffers that belong to it
-	ApiVulkanSample::destroy_command_buffers();
-	vkDestroyCommandPool(device->get_handle(), cmd_pool, nullptr);
-	ApiVulkanSample::create_command_pool(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-	ApiVulkanSample::create_command_buffers();
-
 	create_resources();
 	create_pipelines();
 	prepare_queue();
@@ -650,6 +643,7 @@ void TimelineSemaphore::render(float delta_time)
 		viewport.height = viewport.width;
 	}
 
+	recreate_current_command_buffer();
 	auto cmd         = draw_cmd_buffers[current_buffer];
 	auto begin_info  = vkb::initializers::command_buffer_begin_info();
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
