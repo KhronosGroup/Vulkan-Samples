@@ -401,8 +401,6 @@ void ShaderDebugPrintf::create_instance()
 	}
 
 	std::vector<const char *> enabled_extensions;
-	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-
 	for (const char *extension_name : window->get_required_surface_extensions())
 	{
 		enabled_extensions.push_back(extension_name);
@@ -431,16 +429,16 @@ void ShaderDebugPrintf::create_instance()
 	instance_create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	instance_create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
 	instance_create_info.pApplicationInfo        = &app_info;
-	instance_create_info.pNext                   = &validation_features;
 	instance_create_info.ppEnabledLayerNames     = validation_layers.data();
 	instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
+	instance_create_info.pNext                   = &validation_features;
 
 	VkInstance vulkan_instance;
 	result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
 
 	if (result != VK_SUCCESS)
 	{
-		throw vkb::VulkanException{result, "Could not create instance with the selected profile. The instance may not support all features required by this profile!"};
+		throw vkb::VulkanException{result, "Could not create instance"};
 	}
 
 	volkLoadInstance(vulkan_instance);
