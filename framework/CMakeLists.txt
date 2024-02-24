@@ -252,9 +252,7 @@ set(CORE_FILES
     core/framebuffer.h
     core/render_pass.h
     core/query_pool.h
-    core/scratch_buffer.h
     core/acceleration_structure.h
-    core/shader_binding_table.h
     core/hpp_allocated.h
     core/hpp_buffer.h
     core/hpp_command_buffer.h
@@ -305,9 +303,7 @@ set(CORE_FILES
     core/framebuffer.cpp
     core/render_pass.cpp
     core/query_pool.cpp
-    core/scratch_buffer.cpp
     core/acceleration_structure.cpp
-    core/shader_binding_table.cpp
     core/vulkan_resource.cpp
     core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp

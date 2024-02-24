@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  * Copyright (c) 2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -473,8 +473,7 @@ void MemoryBudget::prepare_instance_data()
 	// On devices with separate memory types for host visible and device local memory this will result in better performance
 	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary, and you could skip the staging
 
-	vkb::core::Buffer staging_buffer(get_device(), instance_buffer.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_buffer.update(instance_data);
+	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), instance_data);
 
 	instance_buffer.buffer = std::make_unique<vkb::core::Buffer>(get_device(), instance_buffer.size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
