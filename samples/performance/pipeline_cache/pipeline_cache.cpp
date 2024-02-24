@@ -19,7 +19,7 @@
 
 #include <imgui_internal.h>
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "core/device.h"
 #include "filesystem/legacy.h"
 #include "gui.h"

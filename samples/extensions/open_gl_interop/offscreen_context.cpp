@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 
 void APIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_param)
 {

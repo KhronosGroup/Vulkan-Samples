@@ -31,8 +31,8 @@ namespace logging
 {
 void init()
 {
-	// Taken from "spdlog/cfg/env.h" and renamed SPDLOG_LEVEL to VKB_LEVEL
-	auto env_val = spdlog::details::os::getenv("VKB_LEVEL");
+	// Taken from "spdlog/cfg/env.h" and renamed SPDLOG_LEVEL to VKB_LOG_LEVEL
+	auto env_val = spdlog::details::os::getenv("VKB_LOG_LEVEL");
 	if (!env_val.empty())
 	{
 		spdlog::cfg::helpers::load_levels(env_val);

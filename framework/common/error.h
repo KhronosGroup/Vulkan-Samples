@@ -22,7 +22,7 @@
 #include <string>
 
 #include "common/strings.h"
-#include "logging.h"
+#include "core/util/logging.hpp"
 #include "vk_common.h"
 
 #if defined(__clang__)

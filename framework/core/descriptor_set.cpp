@@ -17,7 +17,7 @@
 
 #include "descriptor_set.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "common/resource_caching.h"
 #include "descriptor_pool.h"
 #include "descriptor_set_layout.h"

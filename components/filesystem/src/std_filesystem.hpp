@@ -43,7 +43,7 @@ class StdFileSystem final : public FileSystem
 
 	bool create_directory(const Path &path) override;
 
-	std::vector<uint8_t> read_chunk(const Path &path, size_t start, size_t offset) override;
+	std::vector<uint8_t> read_chunk(const Path &path, size_t offset, size_t count) override;
 
 	void write_file(const Path &path, const std::vector<uint8_t> &data) override;
 

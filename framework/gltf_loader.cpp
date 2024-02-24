@@ -30,7 +30,7 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/device.h"

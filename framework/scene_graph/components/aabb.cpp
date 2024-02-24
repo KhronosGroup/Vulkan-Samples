@@ -17,7 +17,7 @@
 
 #include "aabb.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 
 namespace vkb
 {

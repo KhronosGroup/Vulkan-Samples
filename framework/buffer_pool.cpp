@@ -19,7 +19,7 @@
 
 #include <cstddef>
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "core/device.h"
 
 namespace vkb

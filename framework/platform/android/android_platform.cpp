@@ -34,7 +34,7 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "apps.h"
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "common/strings.h"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"

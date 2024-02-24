@@ -30,6 +30,12 @@ vkb__register_component(
         stb
 )
 
+# GCC 9.0 and later has std::filesystem in the stdc++ library
+# Earlier versions require linking against stdc++fs
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+   target_link_libraries(vkb__filesystem PRIVATE stdc++fs)
+endif()
+
 vkb__register_tests(
     COMPONENT filesystem
     NAME filesystem

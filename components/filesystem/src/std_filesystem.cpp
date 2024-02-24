@@ -85,7 +85,7 @@ bool StdFileSystem::create_directory(const Path &path)
 	return !ec;
 }
 
-std::vector<uint8_t> StdFileSystem::read_chunk(const Path &path, size_t start, size_t offset)
+std::vector<uint8_t> StdFileSystem::read_chunk(const Path &path, size_t offset, size_t count)
 {
 	std::ifstream file{path, std::ios::binary | std::ios::ate};
 
@@ -96,15 +96,15 @@ std::vector<uint8_t> StdFileSystem::read_chunk(const Path &path, size_t start, s
 
 	auto size = stat_file(path).size;
 
-	if (start + offset > size)
+	if (offset + count > size)
 	{
 		return {};
 	}
 
 	// read file contents
-	file.seekg(start, std::ios::beg);
-	std::vector<uint8_t> data(offset);
-	file.read(reinterpret_cast<char *>(data.data()), offset);
+	file.seekg(offset, std::ios::beg);
+	std::vector<uint8_t> data(count);
+	file.read(reinterpret_cast<char *>(data.data()), count);
 
 	return data;
 }

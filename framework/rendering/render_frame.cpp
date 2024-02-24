@@ -17,7 +17,7 @@
 
 #include "render_frame.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "common/utils.h"
 
 namespace vkb

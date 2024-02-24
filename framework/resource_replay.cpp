@@ -17,7 +17,7 @@
 
 #include "resource_replay.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "common/vk_common.h"
 #include "rendering/pipeline_state.h"
 #include "resource_cache.h"

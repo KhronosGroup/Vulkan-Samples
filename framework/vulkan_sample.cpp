@@ -26,7 +26,7 @@ VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
 #include "common/helpers.h"
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "common/strings.h"
 #include "common/utils.h"
 #include "common/vk_common.h"

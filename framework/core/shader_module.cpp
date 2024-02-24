@@ -17,7 +17,7 @@
 
 #include "shader_module.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "device.h"
 #include "filesystem/legacy.h"
 #include "glsl_compiler.h"

@@ -28,7 +28,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "force_close/force_close.h"
 #include "hpp_vulkan_sample.h"

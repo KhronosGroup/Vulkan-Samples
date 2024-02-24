@@ -82,7 +82,6 @@ set(COMMON_FILES
     common/vk_initializers.h
     common/glm_common.h 
     common/resource_caching.h
-    common/logging.h
     common/helpers.h
     common/error.h
     common/utils.h

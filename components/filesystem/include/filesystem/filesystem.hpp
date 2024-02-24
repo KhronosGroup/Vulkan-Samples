@@ -50,7 +50,7 @@ class FileSystem
 	virtual bool                 is_directory(const Path &path)                                 = 0;
 	virtual bool                 exists(const Path &path)                                       = 0;
 	virtual bool                 create_directory(const Path &path)                             = 0;
-	virtual std::vector<uint8_t> read_chunk(const Path &path, size_t start, size_t offset)      = 0;
+	virtual std::vector<uint8_t> read_chunk(const Path &path, size_t offset, size_t count)      = 0;
 	virtual void                 write_file(const Path &path, const std::vector<uint8_t> &data) = 0;
 	virtual void                 remove(const Path &path)                                       = 0;
 
