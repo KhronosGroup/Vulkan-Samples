@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,8 @@
 
 #include "core/hpp_swapchain.h"
 
-#include "core/util/logging.hpp"
 #include "core/hpp_device.h"
+#include "core/util/logging.hpp"
 
 namespace vkb
 {

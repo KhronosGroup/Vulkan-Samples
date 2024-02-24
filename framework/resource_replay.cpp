@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,8 @@
 
 #include "resource_replay.h"
 
-#include "core/util/logging.hpp"
 #include "common/vk_common.h"
+#include "core/util/logging.hpp"
 #include "rendering/pipeline_state.h"
 #include "resource_cache.h"
 

@@ -30,11 +30,11 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
-#include "core/util/logging.hpp"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
+#include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"

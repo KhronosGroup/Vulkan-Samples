@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,19 +17,19 @@
 
 #include "descriptor_set.h"
 
-#include "core/util/logging.hpp"
 #include "common/resource_caching.h"
+#include "core/util/logging.hpp"
 #include "descriptor_pool.h"
 #include "descriptor_set_layout.h"
 #include "device.h"
 
 namespace vkb
 {
-DescriptorSet::DescriptorSet(Device &                                  device,
-                             const DescriptorSetLayout &               descriptor_set_layout,
-                             DescriptorPool &                          descriptor_pool,
+DescriptorSet::DescriptorSet(Device                                   &device,
+                             const DescriptorSetLayout                &descriptor_set_layout,
+                             DescriptorPool                           &descriptor_pool,
                              const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-                             const BindingMap<VkDescriptorImageInfo> & image_infos) :
+                             const BindingMap<VkDescriptorImageInfo>  &image_infos) :
     device{device},
     descriptor_set_layout{descriptor_set_layout},
     descriptor_pool{descriptor_pool},

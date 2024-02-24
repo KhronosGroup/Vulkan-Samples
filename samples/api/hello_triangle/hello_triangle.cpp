@@ -17,8 +17,8 @@
 
 #include "hello_triangle.h"
 
-#include "core/util/logging.hpp"
 #include "common/vk_common.h"
+#include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "glsl_compiler.h"
 #include "platform/window.h"

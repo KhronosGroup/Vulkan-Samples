@@ -384,7 +384,7 @@ void OpenCLInteropArm::prepare_pipelines()
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
 	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
-        vertex_input_attributes.size());
+	         vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =

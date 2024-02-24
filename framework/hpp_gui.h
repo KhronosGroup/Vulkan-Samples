@@ -59,7 +59,7 @@ struct HPPFont
 	}
 
 	std::vector<uint8_t> data;
-	ImFont              *handle = nullptr;
+	ImFont	          *handle = nullptr;
 	std::string          name;
 	float                size = 0.0f;
 };
@@ -257,7 +257,7 @@ class HPPGui
 
   private:
 	PushConstBlock                           push_const_block;
-	HPPVulkanSample                         &sample;
+	HPPVulkanSample	                     &sample;
 	std::unique_ptr<vkb::core::HPPBuffer>    vertex_buffer;
 	std::unique_ptr<vkb::core::HPPBuffer>    index_buffer;
 	size_t                                   last_vertex_buffer_size = 0;

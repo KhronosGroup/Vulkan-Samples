@@ -29,7 +29,6 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
-#include "core/util/logging.hpp"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "common/vk_initializers.h"
@@ -38,6 +37,7 @@ VKBP_ENABLE_WARNINGS()
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
+#include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "imgui_internal.h"
 #include "platform/window.h"

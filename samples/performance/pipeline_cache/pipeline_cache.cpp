@@ -19,8 +19,8 @@
 
 #include <imgui_internal.h>
 
-#include "core/util/logging.hpp"
 #include "core/device.h"
+#include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "gui.h"
 #include "platform/window.h"

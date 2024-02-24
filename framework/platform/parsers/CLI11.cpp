@@ -19,8 +19,8 @@
 
 #include <climits>
 
-#include "core/util/logging.hpp"
 #include "common/strings.h"
+#include "core/util/logging.hpp"
 
 namespace vkb
 {

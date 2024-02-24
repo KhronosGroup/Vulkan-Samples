@@ -479,7 +479,7 @@ void MultithreadingRenderPasses::MainSubpass::draw(vkb::CommandBuffer &command_b
 	assert(!shadow_render_target.get_views().empty());
 	command_buffer.bind_image(shadow_render_target.get_views()[0], *shadowmap_sampler, 0, 5, 0);
 
-	auto                 &render_frame  = get_render_context().get_active_frame();
+	auto	             &render_frame  = get_render_context().get_active_frame();
 	vkb::BufferAllocation shadow_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4));
 	shadow_buffer.update(shadow_uniform);
 	// Bind the shadowmap uniform to the proper set nd binding in shader
