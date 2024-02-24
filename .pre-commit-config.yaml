@@ -9,3 +9,4 @@ repos:
     rev: 'v15.0.7'
     hooks:
     -   id: clang-format
+        'types_or': [c++, c]
