@@ -29,8 +29,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
 {
 	if (strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0)
 	{
-		debug_output.append(pCallbackData->pMessage);
-		debug_output.append("\n");
+		// Validation messages are a bit verbose, but we only want the text from the shader, so we cut off everything before the first word from the shader message
+		// See scene.vert: debugPrintfEXT("Position = %v4f", outPos);
+		std::string shader_message{pCallbackData->pMessage};
+		shader_message = shader_message.substr(shader_message.find("Position"));
+		debug_output.append(shader_message + "\n");
 	}
 	return VK_FALSE;
 }
@@ -420,8 +423,7 @@ void ShaderDebugPrintf::create_instance()
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
-	// @todo: Only 1.1 is required, but there seems to be a performance bug in the SDK using that
-	app_info.apiVersion       = VK_API_VERSION_1_2;
+	app_info.apiVersion       = VK_API_VERSION_1_1;
 
 	std::vector<const char *> validation_layers = {"VK_LAYER_KHRONOS_validation"};
 
