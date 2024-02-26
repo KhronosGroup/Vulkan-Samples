@@ -80,8 +80,8 @@ void @SAMPLE_NAME@::prepare_pipelines()
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	// Vertex stage of the pipeline
-	shader_stages[0] = load_shader("triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("hello_triangle/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("hello_triangle/triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// We need to specify the pipeline layout and the render pass description up front as well.
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(sample_pipeline_layout, render_pass);

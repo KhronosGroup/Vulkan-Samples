@@ -39,7 +39,7 @@ layout(push_constant, std430) uniform PBRMaterialUniform
 }
 pbr_material_uniform;
 
-#include "lighting.h"
+#include "../lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {

@@ -26,5 +26,5 @@ add_sample(
     NAME "@SAMPLE_NAME@"
     DESCRIPTION "Sample description"
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+        "hello_triangle/triangle.vert"
+        "hello_triangle/triangle.frag")

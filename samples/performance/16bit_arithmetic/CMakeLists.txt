@@ -28,4 +28,5 @@ add_sample_with_tags(
         SHADER_FILES_GLSL
                 "16bit_arithmetic/visualize.vert"
                 "16bit_arithmetic/visualize.frag"
-                "16bit_arithmetic/compute_buffer.comp")
+                "16bit_arithmetic/compute_buffer.comp"
+)

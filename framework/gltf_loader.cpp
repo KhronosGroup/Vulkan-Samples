@@ -555,7 +555,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		    [this, image_index](size_t) {
 			    auto image = parse_image(model.images[image_index]);
 
-			    LOGI("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
+			    LOGD("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
 
 			    return image;
 		    });

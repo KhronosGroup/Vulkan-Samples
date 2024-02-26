@@ -228,8 +228,8 @@ void TextureCompressionComparison::load_assets()
 
 void TextureCompressionComparison::create_subpass()
 {
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
+	vkb::ShaderSource vert_shader("texture_compression_comparison/base.vert");
+	vkb::ShaderSource frag_shader("texture_compression_comparison/base.frag");
 	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();

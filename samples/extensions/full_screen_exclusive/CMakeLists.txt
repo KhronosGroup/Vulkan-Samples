@@ -34,8 +34,8 @@ if (WIN32)
                     NAME "Full Screen Exclusive"
                     DESCRIPTION "Demonstrates and showcases full_screen_exclusive related functionalities."
                     SHADER_FILES_GLSL
-                    "triangle.vert"
-                    "triangle.frag")
+                    "hello_triangle/triangle.vert"
+                    "hello_triangle/triangle.frag")
         endif ()
     endif ()
 endif ()

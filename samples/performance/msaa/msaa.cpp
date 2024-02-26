@@ -111,8 +111,8 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource scene_vs("base.vert");
-	vkb::ShaderSource scene_fs("base.frag");
+	vkb::ShaderSource scene_vs("msaa/base.vert");
+	vkb::ShaderSource scene_fs("msaa/base.frag");
 	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), *scene, *camera);
 	scene_pipeline                  = std::make_unique<vkb::RenderPipeline>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
@@ -592,7 +592,7 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	postprocessing_subpass.get_fs_variant().clear();
 	if (multisampled_depth)
 	{
-		postprocessing_subpass.get_fs_variant().add_define("MS_DEPTH");
+		postprocessing_subpass.get_fs_variant().add_define("MS_DEPTH", "1");
 	}
 	postprocessing_subpass
 	    .bind_sampled_image(depth_sampler_name, {depth_attachment, nullptr, nullptr, depth_writeback_resolve_supported && resolve_depth_on_writeback})

@@ -18,9 +18,7 @@
 
 precision highp float;
 
-#ifdef HAS_BASE_COLOR_TEXTURE
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
-#endif
 
 layout(location = 0) in vec4 in_pos;
 layout(location = 1) in vec2 in_uv;
@@ -39,7 +37,7 @@ layout(push_constant, std430) uniform MVPUniform
 #endif
 } mvp_uniform;
 
-#include "lighting.h"
+#include "../lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
@@ -76,11 +74,7 @@ void main(void)
 
 	vec4 base_color = vec4(1.0, 0.0, 0.0, 1.0);
 
-#ifdef HAS_BASE_COLOR_TEXTURE
 	base_color = texture(base_color_texture, in_uv);
-#else
-	base_color = vec4(1.0, 1.0, 1.0, 1.0);
-#endif
 
 	vec3 ambient_color = vec3(0.2) * base_color.xyz;
 

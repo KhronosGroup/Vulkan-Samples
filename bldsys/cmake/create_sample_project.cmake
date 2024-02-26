@@ -25,11 +25,14 @@ set(ROOT_DIR ${SCRIPT_DIR}/../..)
 set(SAMPLE_NAME "" CACHE STRING "")
 set(TEMPLATE_NAME "sample" CACHE STRING "")
 set(OUTPUT_DIR "${ROOT_DIR}/samples" CACHE PATH "")
+set(SHADER_OUTPUT_DIR "${ROOT_DIR}/shaders" CACHE PATH)
 
 set(CMAKE_FILE ${SCRIPT_DIR}/template/${TEMPLATE_NAME}/CMakeLists.txt.in)
 set(SAMPLE_SOURCE_FILE ${SCRIPT_DIR}/template/${TEMPLATE_NAME}/sample.cpp.in)
 set(SAMPLE_HEADER_FILE ${SCRIPT_DIR}/template/${TEMPLATE_NAME}/sample.h.in)
 set(SAMPLE_README_FILE ${SCRIPT_DIR}/template/README.adoc.in)
+set(BASE_VERT ${SCRIPT_DIR}/template/${TEMPLATE_NAME}/base.vert.in)
+set(BASE_FRAG ${SCRIPT_DIR}/template/${TEMPLATE_NAME}/base.frag.in)
 
 # Only create a new sample if a name is given
 if(NOT SAMPLE_NAME)
@@ -48,3 +51,5 @@ configure_file(${CMAKE_FILE} ${OUTPUT_DIR}/${SAMPLE_NAME_FILE}/CMakeLists.txt @O
 configure_file(${SAMPLE_SOURCE_FILE} ${OUTPUT_DIR}/${SAMPLE_NAME_FILE}/${SAMPLE_NAME_FILE}.cpp)
 configure_file(${SAMPLE_HEADER_FILE} ${OUTPUT_DIR}/${SAMPLE_NAME_FILE}/${SAMPLE_NAME_FILE}.h)
 configure_file(${SAMPLE_README_FILE} ${OUTPUT_DIR}/${SAMPLE_NAME_FILE}/README.adoc)
+configure_file(${BASE_VERT} ${SHADER_OUTPUT_DIR}/${SAMPLE_NAME_FILE}/base.vert)
+configure_file(${BASE_FRAG} ${SHADER_OUTPUT_DIR}/${SAMPLE_NAME_FILE}/base.frag)

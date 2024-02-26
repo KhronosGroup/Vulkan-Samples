@@ -73,25 +73,6 @@ const ShaderVariant &SubMesh::get_shader_variant() const
 
 void SubMesh::compute_shader_variant()
 {
-	shader_variant.clear();
-
-	if (material != nullptr)
-	{
-		for (auto &texture : material->textures)
-		{
-			std::string tex_name = texture.first;
-			std::transform(tex_name.begin(), tex_name.end(), tex_name.begin(), ::toupper);
-
-			shader_variant.add_define("HAS_" + tex_name);
-		}
-	}
-
-	for (auto &attribute : vertex_attributes)
-	{
-		std::string attrib_name = attribute.first;
-		std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::toupper);
-		shader_variant.add_define("HAS_" + attrib_name);
-	}
 }
 
 ShaderVariant &SubMesh::get_mut_shader_variant()

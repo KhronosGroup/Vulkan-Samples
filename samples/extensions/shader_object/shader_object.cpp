@@ -544,7 +544,7 @@ void ShaderObject::create_shaders()
 	const int unlinked_post_process_prefix_size = strlen("post_process_");
 	const int unlinked_material_prefix_size     = strlen("material_");
 	const int vert_suffix_size                  = strlen(".vert");
-	const int geo_suffix_size                   = strlen(".geo");
+	const int geo_suffix_size                   = strlen(".geom");
 	const int frag_suffix_size                  = strlen(".frag");
 
 	// Load skybox shader
@@ -1513,7 +1513,7 @@ void ShaderObject::bind_material_shader(VkCommandBuffer cmd_buffer, int shader_i
 
 	bind_shader(cmd_buffer, material_vert_shaders[shader.vert]);
 	if (enable_geometry_pass)
-		bind_shader(cmd_buffer, material_geo_shaders[shader.geo]);
+		bind_shader(cmd_buffer, material_geo_shaders[shader.geom]);
 	bind_shader(cmd_buffer, material_frag_shaders[shader.frag]);
 }
 
@@ -1596,8 +1596,8 @@ void ShaderObject::iterate_current()
 	{
 		funcs.emplace_back([selected_shader, this]() {
 			selected_material_object = selected_shader % num_material_objects;
-			current_material_shaders[selected_shader % num_material_objects].geo++;
-			current_material_shaders[selected_shader % num_material_objects].geo %= material_geo_shaders.size();
+			current_material_shaders[selected_shader % num_material_objects].geom++;
+			current_material_shaders[selected_shader % num_material_objects].geom %= material_geo_shaders.size();
 		});
 	}
 
@@ -1668,8 +1668,8 @@ void ShaderObject::randomize_current()
 	{
 		for (int i = 0; i < num_material_objects; ++i)
 		{
-			current_material_shaders[i].geo += distribution(rng);
-			current_material_shaders[i].geo %= material_geo_shaders.size();
+			current_material_shaders[i].geom += distribution(rng);
+			current_material_shaders[i].geom %= material_geo_shaders.size();
 		}
 	}
 
@@ -1766,8 +1766,8 @@ void ShaderObject::on_update_ui_overlay(vkb::Drawer &drawer)
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_material_geo, "Material Geo Shader:",
-		             material_geo_shaders[current_material_shaders[selected_material_object].geo]->get_name(),
-		             &current_material_shaders[selected_material_object].geo, material_geo_shaders.size() - 1,
+		             material_geo_shaders[current_material_shaders[selected_material_object].geom]->get_name(),
+		             &current_material_shaders[selected_material_object].geom, material_geo_shaders.size() - 1,
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_material_frag, "Material Frag Shader:",

@@ -26,5 +26,5 @@ add_sample(
     NAME "Wait Idle"
     DESCRIPTION "Showing the negative impact of WaitIdle."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "wait_idle/base.vert"
+        "wait_idle/base.frag")

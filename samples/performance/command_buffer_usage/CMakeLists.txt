@@ -26,5 +26,5 @@ add_sample(
     NAME "Command Buffer Usage"
     DESCRIPTION "Primary and secondary command buffers, allocation and recycling."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "command_buffer_usage/base.vert"
+        "command_buffer_usage/base.frag")

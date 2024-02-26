@@ -62,8 +62,8 @@ bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
+	vkb::ShaderSource vert_shader("command_buffer_usage/base.vert");
+	vkb::ShaderSource frag_shader("command_buffer_usage/base.frag");
 	auto              scene_subpass = std::make_unique<ForwardSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();

@@ -19,7 +19,7 @@
 #extension GL_EXT_mesh_shader: require
 #extension GL_GOOGLE_include_directive: require
 
-#include "mesh_shader_culling/mesh_shader_shared.h"
+#include "mesh_shader_shared.h"
 
 layout(local_size_x = numMeshInvocationsX, local_size_y = numMeshInvocationsY, local_size_z = 1) in;
 // we'll emit 4 vertices on 2 primitives per mesh shader invocation

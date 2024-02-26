@@ -25,5 +25,8 @@ add_sample_with_tags(
     AUTHOR "Holochip Corporation"
     NAME "Ray queries"
     DESCRIPTION "Calculate shadows by extending a standard pipeline with ray queries"
+    SHADER_FILES_GLSL
+        "ray_queries/ray_shadow.vert"
+        "ray_queries/ray_shadow.frag"
 )
 

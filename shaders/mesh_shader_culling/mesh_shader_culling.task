@@ -20,7 +20,7 @@
 #extension GL_GOOGLE_include_directive: require
 #extension GL_KHR_shader_subgroup_ballot : require                  // subgroupBallot, subgroupBallotBitCount, subgroupBallotExclusiveBitCount
 
-#include "mesh_shader_culling/mesh_shader_shared.h"
+#include "mesh_shader_shared.h"
 
 // Use numTaskInvocationsX * numTaskInvocationsY task shader invocations per task shader workgroup,
 // resulting in N * N * numTaskInvocationsX * numTaskInvocationsY invocations

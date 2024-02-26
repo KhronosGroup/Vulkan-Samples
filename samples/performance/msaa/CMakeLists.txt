@@ -26,7 +26,7 @@ add_sample(
     NAME "MSAA"
     DESCRIPTION "How to efficiently use multisampling for MSAA."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag"
+        "msaa/base.vert"
+        "msaa/base.frag"
         "postprocessing/postprocessing.vert"
         "postprocessing/outline.frag")

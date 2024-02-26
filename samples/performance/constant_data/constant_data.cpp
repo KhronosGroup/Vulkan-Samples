@@ -293,14 +293,12 @@ void ConstantData::ConstantDataSubpass::prepare()
 			auto &variant = sub_mesh->get_mut_shader_variant();
 
 			// Copied from vkb::ForwardSubpass
-			variant.add_definitions({"SCENE_MESH_COUNT " + std::to_string(scene.get_components<vkb::sg::SubMesh>().size())});
-			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
-			variant.add_definitions(vkb::light_type_definitions);
+			variant.add_define("SCENE_MESH_COUNT", std::to_string(scene.get_components<vkb::sg::SubMesh>().size()));
 
 			// If struct size is 256 we add a definition so the uniform has more values
 			if (struct_size == 256)
 			{
-				variant.add_definitions({"PUSH_CONSTANT_LIMIT_256"});
+				variant.add_define("PUSH_CONSTANT_LIMIT_256", "1");
 			}
 
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);

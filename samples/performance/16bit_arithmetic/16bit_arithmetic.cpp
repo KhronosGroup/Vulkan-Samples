@@ -153,7 +153,7 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 		vkb::ShaderVariant variant;
 		if (supports_push_constant16)
 		{
-			variant.add_define("PUSH_CONSTANT_16");
+			variant.add_define("PUSH_CONSTANT_16", "1");
 		}
 
 		const char *shader = "16bit_arithmetic/compute_buffer_fp16.comp";

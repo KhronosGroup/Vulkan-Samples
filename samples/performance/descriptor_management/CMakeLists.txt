@@ -26,5 +26,5 @@ add_sample(
     NAME "Descriptor Management"
     DESCRIPTION "Descriptor set management and buffer allocation strategies."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "descriptor_management/base.vert"
+        "descriptor_management/base.frag")

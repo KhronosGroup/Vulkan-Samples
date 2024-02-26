@@ -620,12 +620,12 @@ void FullScreenExclusive::init_pipeline()
 
 	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module("triangle.vert");
+	shader_stages[0].module = load_shader_module("hello_triangle/triangle.vert");
 	shader_stages[0].pName  = "main";
 
 	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module("triangle.frag");
+	shader_stages[1].module = load_shader_module("hello_triangle/triangle.frag");
 	shader_stages[1].pName  = "main";
 
 	VkGraphicsPipelineCreateInfo pipe{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};

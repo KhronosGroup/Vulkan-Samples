@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <map>
+
 #include "common/helpers.h"
 #include "common/vk_common.h"
 
@@ -113,22 +115,10 @@ class ShaderVariant
 	size_t get_id() const;
 
 	/**
-	 * @brief Add definitions to shader variant
-	 * @param definitions Vector of definitions to add to the variant
-	 */
-	void add_definitions(const std::vector<std::string> &definitions);
-
-	/**
 	 * @brief Adds a define macro to the shader
 	 * @param def String which should go to the right of a define directive
 	 */
-	void add_define(const std::string &def);
-
-	/**
-	 * @brief Adds an undef macro to the shader
-	 * @param undef String which should go to the right of an undef directive
-	 */
-	void add_undefine(const std::string &undef);
+	void add_define(const std::string &def, const std::string &value);
 
 	/**
 	 * @brief Specifies the size of a named runtime array for automatic reflection. If already specified, overrides the size.
@@ -152,6 +142,8 @@ class ShaderVariant
 	size_t id;
 
 	std::string preamble;
+
+	std::map<std::string, std::string> definitions;
 
 	std::vector<std::string> processes;
 
@@ -195,11 +187,11 @@ class ShaderSource
 class ShaderModule
 {
   public:
-	ShaderModule(Device &              device,
+	ShaderModule(Device               &device,
 	             VkShaderStageFlagBits stage,
-	             const ShaderSource &  glsl_source,
-	             const std::string &   entry_point,
-	             const ShaderVariant & shader_variant);
+	             const ShaderSource   &glsl_source,
+	             const std::string    &entry_point,
+	             const ShaderVariant  &shader_variant);
 
 	ShaderModule(const ShaderModule &) = delete;
 
