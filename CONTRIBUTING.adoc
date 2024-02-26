@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -134,11 +134,7 @@ Ensure that you are using clang-format 8.
 . Make sure the sample code builds and runs on Windows, Linux, macOS and Android.
 If you cannot verify on all these target platforms, please note platform restrictions in the sample's README.
 . Verify the sample against a recent version of the Vulkan validation layers, either built from source or from the most recent available Vulkan SDK.
-. Submit a <<creating-a-pull-request,pull request>> for the contribution, including electronically signing the Khronos Contributor License Agreement (CLA) for the repository using CLA-Assistant.
-
-== Creating a Pull Request
-
-When you create your pull request, ensure the description is created with xref:docs/pull_request_template.md[this template], and then fill out the relative information.
+. Submit a pull request via github for the contribution, including electronically signing the Khronos Contributor License Agreement (CLA) for the repository using CLA-Assistant.
 
 == Code Reviews
 

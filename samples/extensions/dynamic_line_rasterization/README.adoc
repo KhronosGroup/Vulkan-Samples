@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, Mobica Limited
+- Copyright (c) 2023-2024, Mobica Limited
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -24,7 +24,7 @@ TIP: The source for this sample can be found in the https://github.com/KhronosGr
 endif::[]
 
 
-image::screenshot.png[]
+image::./screenshot.png[]
 
 == Overview
 
