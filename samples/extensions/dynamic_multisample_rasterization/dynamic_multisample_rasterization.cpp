@@ -39,6 +39,12 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 		vkDestroyPipeline(get_device().get_handle(), pipeline_inversed_rasterizer, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+
+		vkDestroyPipeline(get_device().get_handle(), pipeline_gui, nullptr);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout_gui, nullptr);
+		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool_gui, VK_NULL_HANDLE);
+		destroy_image_data(depth_stencil);
+		destroy_image_data(color_attachment);
 	}
 }
 
@@ -393,7 +399,7 @@ void DynamicMultisampleRasterization::setup_render_pass()
 	// Check if device supports requested sample count for color and depth frame buffer
 	assert((gpu_properties.limits.framebufferColorSampleCounts >= sample_count) && (gpu_properties.limits.framebufferDepthSampleCounts >= sample_count));
 
-	uint32_t attachments_cnt = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
+	uint32_t                             attachments_cnt = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
 	std::vector<VkAttachmentDescription> attachments(attachments_cnt);
 	// Color attachment
 	attachments[0].format         = render_context->get_format();
@@ -415,7 +421,7 @@ void DynamicMultisampleRasterization::setup_render_pass()
 	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	if(sample_count != VK_SAMPLE_COUNT_1_BIT)
+	if (sample_count != VK_SAMPLE_COUNT_1_BIT)
 	{
 		// Resolve attachment
 		attachments[2].format         = render_context->get_format();
@@ -570,12 +576,12 @@ void DynamicMultisampleRasterization::setup_depth_stencil()
 
 void DynamicMultisampleRasterization::setup_framebuffer()
 {
-	destroy_depth_stencil_attachment();
+	destroy_image_data(depth_stencil);
 
 	setup_color_attachment();
 	setup_depth_stencil();
 
-	uint32_t attachments_cnt = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
+	uint32_t    attachments_cnt = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
 	VkImageView attachments[attachments_cnt];
 
 	// Depth/Stencil attachment is the same for all frame buffers
@@ -602,7 +608,7 @@ void DynamicMultisampleRasterization::setup_framebuffer()
 	framebuffers.resize(render_context->get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
-		if(sample_count != VK_SAMPLE_COUNT_1_BIT)
+		if (sample_count != VK_SAMPLE_COUNT_1_BIT)
 		{
 			attachments[2] = swapchain_buffers[i].view;
 		}
@@ -739,31 +745,29 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 
 void DynamicMultisampleRasterization::prepare_gui_pipeline()
 {
-	auto &device = get_render_context().get_device();
-
 	// Descriptor pool
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 	VkDescriptorPoolCreateInfo descriptorPoolInfo = vkb::initializers::descriptor_pool_create_info(pool_sizes, 2);
-	VK_CHECK(vkCreateDescriptorPool(device.get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool_gui));
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool_gui));
 
 	// Descriptor set layout
 	std::vector<VkDescriptorSetLayoutBinding> layout_bindings_gui = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	};
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(layout_bindings_gui);
-	VK_CHECK(vkCreateDescriptorSetLayout(device.get_handle(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout_gui));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout_gui));
 
 	// Descriptor set
 	VkDescriptorSetAllocateInfo descriptor_allocation = vkb::initializers::descriptor_set_allocate_info(descriptor_pool_gui, &descriptor_set_layout_gui, 1);
-	VK_CHECK(vkAllocateDescriptorSets(device.get_handle(), &descriptor_allocation, &descriptor_set_gui));
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_allocation, &descriptor_set_gui));
 	VkDescriptorImageInfo font_descriptor = vkb::initializers::descriptor_image_info(
 	    gui->get_sampler(),
 	    gui->get_font_image_view(),
 	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_set_gui, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &font_descriptor)};
-	vkUpdateDescriptorSets(device.get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Setup graphics pipeline for UI rendering
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
@@ -808,10 +812,10 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 	vkb::ShaderSource vert_shader("uioverlay/uioverlay.vert");
 	vkb::ShaderSource frag_shader("uioverlay/uioverlay.frag");
 
-	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
-	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
+	shader_modules.push_back(&get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
+	shader_modules.push_back(&get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
 
-	pipeline_layout_gui = device.get_resource_cache().request_pipeline_layout(shader_modules).get_handle();
+	pipeline_layout_gui = get_device().get_resource_cache().request_pipeline_layout(shader_modules).get_handle();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout_gui, render_pass);
 
@@ -850,7 +854,7 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
 
-	VK_CHECK(vkCreateGraphicsPipelines(device.get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_gui));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_gui));
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
@@ -905,24 +909,14 @@ void DynamicMultisampleRasterization::render(float delta_time)
 	}
 }
 
-void DynamicMultisampleRasterization::destroy_color_attachment()
+void DynamicMultisampleRasterization::destroy_image_data(ImageData &image_data)
 {
-	vkDestroyImageView(get_device().get_handle(), color_attachment.view, nullptr);
-	vkDestroyImage(get_device().get_handle(), color_attachment.image, nullptr);
-	vkFreeMemory(get_device().get_handle(), color_attachment.mem, nullptr);
-	color_attachment.view  = VK_NULL_HANDLE;
-	color_attachment.image = VK_NULL_HANDLE;
-	color_attachment.mem   = VK_NULL_HANDLE;
-}
-
-void DynamicMultisampleRasterization::destroy_depth_stencil_attachment()
-{
-	vkDestroyImageView(get_device().get_handle(), depth_stencil.view, nullptr);
-	vkDestroyImage(get_device().get_handle(), depth_stencil.image, nullptr);
-	vkFreeMemory(get_device().get_handle(), depth_stencil.mem, nullptr);
-	depth_stencil.view  = VK_NULL_HANDLE;
-	depth_stencil.image = VK_NULL_HANDLE;
-	depth_stencil.mem   = VK_NULL_HANDLE;
+	vkDestroyImageView(get_device().get_handle(), image_data.view, nullptr);
+	vkDestroyImage(get_device().get_handle(), image_data.image, nullptr);
+	vkFreeMemory(get_device().get_handle(), image_data.mem, nullptr);
+	image_data.view  = VK_NULL_HANDLE;
+	image_data.image = VK_NULL_HANDLE;
+	image_data.mem   = VK_NULL_HANDLE;
 }
 
 void DynamicMultisampleRasterization::update_resources()
@@ -933,7 +927,7 @@ void DynamicMultisampleRasterization::update_resources()
 	{
 		device->wait_idle();
 
-		destroy_color_attachment();
+		destroy_image_data(color_attachment);
 
 		if (render_pass != VK_NULL_HANDLE)
 		{

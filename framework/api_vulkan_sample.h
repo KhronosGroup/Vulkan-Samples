@@ -424,7 +424,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::string title = "Vulkan Example";
 	std::string name  = "vulkanExample";
 
-	struct
+	struct ImageData
 	{
 		VkImage        image;
 		VkDeviceMemory mem;

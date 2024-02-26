@@ -63,6 +63,8 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout_gui;
 	VkDescriptorPool      descriptor_pool_gui;
 
+	ImageData color_attachment;
+
 	/**
 	 * @brief List of MSAA levels supported by the platform
 	 */
@@ -96,12 +98,12 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 		std::vector<std::string> sample_counts;
 	} gui_settings;
 
-	struct
-	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
-	} color_attachment;
+	// struct
+	// {
+	// 	VkImage        image;
+	// 	VkDeviceMemory mem;
+	// 	VkImageView    view;
+	// } color_attachment;
 
   public:
 	virtual void build_command_buffers() override;
@@ -128,8 +130,7 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	void         draw_ui(VkCommandBuffer &);
 	void         update_resources();
 	void         draw_node(VkCommandBuffer &, SceneNode &);
-	void         destroy_color_attachment();
-	void         destroy_depth_stencil_attachment();
+	void         destroy_image_data(ImageData &image_data);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization();
