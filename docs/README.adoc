@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023-2024, The Khronos Group
+- Copyright (c) 2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,13 +16,6 @@
 - limitations under the License.
 -
 ////
-ifndef::tooling_samplespath[:tooling_samplespath:]
+= General documentation
 
-== Tooling Samples
-
-The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
-
-=== xref:./{tooling_samplespath}profiles/README.adoc[Profiles Library]
-
-Use the https://github.com/KhronosGroup/Vulkan-Profiles[Vulkan Profiles library] to simplify instance and device setup.
-The library defines a common baseline of features, extensions, etc.
+This folder contains documentation on general usage of the samples.

@@ -1,6 +1,6 @@
 ////
-- Copyright (c) 2024, Holochip Inc
-- Copyright (c) 2024, Sascha Willems
+- Copyright (c) 2023, Holochip Inc
+- Copyright (c) 2023-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,8 +17,10 @@
 - limitations under the License.
 -
 ////
+* xref:samples/README.adoc[Samples overview]
 * xref:samples/vulkan_basics.adoc[Vulkan basics]
 * xref:framework/README.adoc[Sample framework]
+** xref:components/README.adoc[Framework components]
 * xref:samples/api/README.adoc[Api usage samples]
 ** xref:samples/api/compute_nbody/README.adoc[Compute N-body]
 *** xref:samples/api/hpp_compute_nbody/README.adoc[Compute N-body (Vulkan-Hpp)]
@@ -71,8 +73,8 @@
 ** xref:samples/extensions/open_gl_interop/README.adoc[OpenGL interop]
 ** xref:samples/extensions/portability/README.adoc[Portability]
 ** xref:samples/extensions/push_descriptors/README.adoc[Push descriptors]
-** xref:samples/extensions/raytracing_basic/README.adoc[Raytracing basic]
-** xref:samples/extensions/raytracing_extended/README.adoc[Raytracing extended]
+** xref:samples/extensions/ray_tracing_basic/README.adoc[Raytracing basic]
+** xref:samples/extensions/ray_tracing_extended/README.adoc[Raytracing extended]
 ** xref:samples/extensions/ray_queries/README.adoc[Ray queries]
 ** xref:samples/extensions/ray_tracing_reflection/README.adoc[Ray tracing reflection]
 ** xref:samples/extensions/shader_object/README.adoc[Shader Object]
