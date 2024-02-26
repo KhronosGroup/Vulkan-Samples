@@ -140,6 +140,11 @@ function(compile_shaders)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    find_program(SPV_VALIDATOR_EXECUTABLE spirv-val HINTS $ENV{VULKAN_SDK}/bin)
+    if(NOT SPV_VALIDATOR_EXECUTABLE)
+        message(WARNING "spirv-val not found! SPIR-V validation will not be performed. Please set VULKAN_SDK to the Vulkan SDK path.")
+    endif()
+
     find_program(GLSLC_EXECUTABLE glslc HINTS $ENV{VULKAN_SDK}/bin)
     if(NOT GLSLC_EXECUTABLE)
         message(FATAL_ERROR "glslc not found! Shaders with .glsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
@@ -171,6 +176,7 @@ function(compile_shaders)
             endif()
 
             set(SHADER_FILE_SPV "${SHADER_DIR}/${SHADER_FILE_GLSL}.spv")
+            set(STORED_SHADER_FILE_SPV "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}.spv")
 
             get_filename_component(SHADER_FILE_DIR ${SHADER_FILE_SPV} DIRECTORY)
             file(MAKE_DIRECTORY ${SHADER_FILE_DIR})
@@ -179,7 +185,7 @@ function(compile_shaders)
                 OUTPUT ${SHADER_FILE_SPV}
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
                 COMMAND ${GLSLC_EXECUTABLE} -o "${SHADER_FILE_SPV}" --target-spv=spv1.6 ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
-                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}.spv"
+                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
                 DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
                 COMMENT "Compiling ${SHADER_FILE_GLSL} to SPIR-V"
                 VERBATIM)
@@ -201,6 +207,7 @@ function(compile_shaders)
             endif()
 
             set(SHADER_FILE_SPV "${SHADER_DIR}/${SHADER_FILE_HLSL}.spv")
+            set(STORED_SHADER_FILE_SPV "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}.spv")
 
             get_filename_component(SHADER_FILE_DIR ${SHADER_FILE_SPV} DIRECTORY)
             file(MAKE_DIRECTORY ${SHADER_FILE_DIR})
@@ -211,10 +218,11 @@ function(compile_shaders)
                 OUTPUT ${SHADER_FILE_SPV}
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
                 COMMAND ${DXC_EXECUTABLE} -spirv -fspv-target-env=vulkan1.3 -E main -T ${SHADER_PROFILE} -Fo "${SHADER_FILE_SPV}" ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
-                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}.spv"
+                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
                 DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
                 COMMENT "Compiling ${SHADER_FILE_HLSL} to SPIR-V"
                 VERBATIM)
+
             list(APPEND SHADER_FILES_SPV ${SHADER_FILE_SPV})
         endforeach()
     endif()
