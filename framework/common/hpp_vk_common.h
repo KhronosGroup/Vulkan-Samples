@@ -172,6 +172,19 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice            
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
 }
 
+inline vk::Format choose_blendable_format(vk::PhysicalDevice gpu, const std::vector<vk::Format> &format_priority_list)
+{
+	for (const auto &format : format_priority_list)
+	{
+		vk::FormatProperties fmt_props = gpu.getFormatProperties(format);
+
+		if (fmt_props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
+			return format;
+	}
+
+	throw std::runtime_error("No suitable blendable format could be determined");
+}
+
 // helper functions not backed by vk_common.h
 inline vk::CommandBuffer allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
 {

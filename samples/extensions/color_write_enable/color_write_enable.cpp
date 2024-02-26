@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -231,9 +231,10 @@ void ColorWriteEnable::create_attachment(VkFormat format, FrameBufferAttachment 
 // Create attachments for each framebuffer used in the first pipeline
 void ColorWriteEnable::create_attachments()
 {
-	create_attachment(VK_FORMAT_B8G8R8A8_SRGB, &attachments.red);
-	create_attachment(VK_FORMAT_B8G8R8A8_SRGB, &attachments.green);
-	create_attachment(VK_FORMAT_B8G8R8A8_SRGB, &attachments.blue);
+	VkFormat format = render_context->get_format();
+	create_attachment(format, &attachments.red);
+	create_attachment(format, &attachments.green);
+	create_attachment(format, &attachments.blue);
 }
 
 void ColorWriteEnable::request_gpu_features(vkb::PhysicalDevice &gpu)

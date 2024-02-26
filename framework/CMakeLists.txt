@@ -217,7 +217,6 @@ set(STATS_FILES
     stats/stats_common.h
     stats/stats_provider.h
     stats/frame_time_stats_provider.h
-    stats/hwcpipe_stats_provider.h
     stats/vulkan_stats_provider.h
     stats/hpp_stats.h
 
@@ -225,7 +224,6 @@ set(STATS_FILES
     stats/stats.cpp
     stats/stats_provider.cpp
     stats/frame_time_stats_provider.cpp
-    stats/hwcpipe_stats_provider.cpp
     stats/vulkan_stats_provider.cpp)
 
 set(CORE_FILES
@@ -367,9 +365,11 @@ set(ANDROID_FILES
     # Header Files
     platform/android/android_platform.h
     platform/android/android_window.h
+    stats/hwcpipe_stats_provider.h
     # Source Files
     platform/android/android_platform.cpp
-    platform/android/android_window.cpp)
+    platform/android/android_window.cpp
+    stats/hwcpipe_stats_provider.cpp)
 
 set(WINDOWS_FILES
     # Header Files
@@ -523,7 +523,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     glslang
     SPIRV
     vma
-    hwcpipe
     spirv-cross-glsl
     glslang-default-resource-limits
     spdlog
@@ -539,7 +538,7 @@ endif()
 if(ANDROID)
     # Import game-activity static lib inside the game-activity_static prefab module.
     find_package(game-activity REQUIRED CONFIG)
-    target_link_libraries(${PROJECT_NAME} PUBLIC log android game-activity::game-activity_static)
+    target_link_libraries(${PROJECT_NAME} PUBLIC hwcpipe log android game-activity::game-activity_static)
 else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)

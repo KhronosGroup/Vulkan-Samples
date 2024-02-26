@@ -1,6 +1,6 @@
 /* Copyright (c) 2018-2024, Arm Limited and Contributors
  * Copyright (c) 2019-2024, Sascha Willems
- * Copyright (c) 2023, Mobica Limited
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,6 +76,14 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
                                        VK_FORMAT_D32_SFLOAT,
                                        VK_FORMAT_D24_UNORM_S8_UINT,
                                        VK_FORMAT_D16_UNORM});
+
+/**
+ * @brief Helper function to pick a blendable format from a priority ordered list
+ * @param physical_device The physical device to check the formats against
+ * @param format_priority_list List of formats in order of priority
+ * @return The selected format
+ */
+VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &format_priority_list);
 
 /**
  * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
