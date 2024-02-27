@@ -141,10 +141,7 @@ void DynamicPrimitiveClipping::build_command_buffers()
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 		// Enable depth clipping dynamically as defined in GUI.
-		if (params.useDepthClipping)
-			vkCmdSetDepthClipEnableEXT(cmd, VK_TRUE);
-		else
-			vkCmdSetDepthClipEnableEXT(cmd, VK_FALSE);
+		vkCmdSetDepthClipEnableEXT(cmd, params.useDepthClipping);
 
 		// Draw object once using descriptor_positive.
 		if (params.drawObject[0])
