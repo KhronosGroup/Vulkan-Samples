@@ -25,7 +25,7 @@ add_sample(
     AUTHOR "Holochip Corporation"
     NAME "HPP Mesh shader sample"
     DESCRIPTION "Example showing how to utilize the EXT_MESH_SHADER pipeline, using Vulkan-Hpp."
-    SPRIV_VERSION 1.4
+    SPIRV_VERSION 1.6
     SHADER_FILES_GLSL
         "mesh_shading/ms.mesh"
         "mesh_shading/ps.frag"

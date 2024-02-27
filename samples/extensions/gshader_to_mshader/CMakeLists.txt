@@ -25,7 +25,7 @@ add_sample(
     AUTHOR "Mobica"
     NAME "gshader_to_mshader"
     DESCRIPTION "Sample shows migration from geometry shader pipeline to mesh shader one"
-    SPRIV_VERSION 1.4
+    SPIRV_VERSION 1.6
     SHADER_FILES_GLSL
         "gshader_to_mshader/gshader_to_mshader.vert"
         "gshader_to_mshader/gshader_to_mshader.frag"

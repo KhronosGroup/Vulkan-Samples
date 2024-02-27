@@ -25,6 +25,7 @@ add_sample(
     AUTHOR "Holochip Corporation"
     NAME "Ray tracing extended"
     DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Level Acceleration Structure rebuild and AO."
+    SPIRV_VERSION 1.4
     SHADER_FILES_GLSL
         "khr_ray_tracing_extended/raygen.rgen"
         "khr_ray_tracing_extended/miss.rmiss"

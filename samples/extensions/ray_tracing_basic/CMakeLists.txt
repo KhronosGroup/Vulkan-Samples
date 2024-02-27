@@ -25,6 +25,7 @@ add_sample(
     AUTHOR "Sascha Willems"
     NAME "Ray tracing basic"
     DESCRIPTION "Basic example for hardware accelerated ray tracing"
+    SPIRV_VERSION 1.4
     SHADER_FILES_GLSL
         "khr_ray_tracing_basic/raygen.rgen"
         "khr_ray_tracing_basic/miss.rmiss"

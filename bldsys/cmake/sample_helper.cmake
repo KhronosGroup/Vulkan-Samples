@@ -43,6 +43,8 @@ function(add_sample)
         ${TARGET_ID}.cpp
     )
 
+    message(STATUS "Adding shaders ${TARGET_ID} ${TARGET_SPIRV_VERSION}")
+
     # Append extra files if present
     if (TARGET_FILES)
         list(APPEND SRC_FILES ${TARGET_FILES})

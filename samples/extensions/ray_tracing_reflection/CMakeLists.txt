@@ -29,6 +29,7 @@ add_sample(
     AUTHOR "Martin-Karl Lefrançois"
     NAME "Ray tracing reflection"
     DESCRIPTION "Example for hardware accelerated ray tracing"
+    SPIRV_VERSION 1.4
     SHADER_FILES_GLSL
         "ray_tracing_reflection/raygen.rgen"
         "ray_tracing_reflection/miss.rmiss"

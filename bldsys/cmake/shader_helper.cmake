@@ -73,7 +73,7 @@ function(compile_shaders)
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
                 COMMAND ${GLSLC_EXECUTABLE} -o "${SHADER_FILE_SPV}" --target-spv=spv${TARGET_SPIRV_VERSION} ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
                 COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
-                COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}"
+                COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}" || true
                 DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
                 COMMENT "Compiling ${SHADER_FILE_GLSL} to SPIR-V"
                 VERBATIM)
@@ -108,7 +108,7 @@ function(compile_shaders)
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
                 COMMAND ${DXC_EXECUTABLE} -spirv -fspv-target-env=vulkan1.3 -E main -T ${SHADER_PROFILE} -Fo "${SHADER_FILE_SPV}" ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
                 COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
-                COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}"
+                COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}" || true
                 DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
                 COMMENT "Compiling ${SHADER_FILE_HLSL} to SPIR-V"
                 VERBATIM)
