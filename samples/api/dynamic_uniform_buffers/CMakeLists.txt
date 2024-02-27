@@ -27,4 +27,6 @@ add_sample_with_tags(
     DESCRIPTION "Demonstrates the use of dynamic offsets into one single uniform buffers for rendering multiple objects"
     SHADER_FILES_GLSL
         "dynamic_uniform_buffers/base.vert"
-        "dynamic_uniform_buffers/base.frag")
+        "dynamic_uniform_buffers/base.frag"
+        "dynamic_uniform_buffers/base.vert.spv"
+        "dynamic_uniform_buffers/base.frag.spv")
