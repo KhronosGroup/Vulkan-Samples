@@ -340,7 +340,6 @@ void DynamicUniformBuffers::prepare_pipelines()
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-
 	shader_stages[0] = load_shader("dynamic_uniform_buffers/base.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_uniform_buffers/base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
