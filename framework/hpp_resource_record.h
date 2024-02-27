@@ -37,7 +37,6 @@ namespace core
 class HPPPipelineLayout;
 class HPPRenderPass;
 class HPPShaderModule;
-class HPPShaderSource;
 class HPPShaderVariant;
 struct HPPSubpassInfo;
 }        // namespace core
@@ -74,7 +73,7 @@ class HPPResourceRecord : private vkb::ResourceRecord
 	}
 
 	size_t register_shader_module(vk::ShaderStageFlagBits            stage,
-	                              const vkb::core::HPPShaderSource  &glsl_source,
+	                              const vkb::ShaderSource  &glsl_source,
 	                              const std::string                 &entry_point,
 	                              const vkb::core::HPPShaderVariant &shader_variant)
 	{

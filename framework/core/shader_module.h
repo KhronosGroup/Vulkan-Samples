@@ -155,6 +155,13 @@ class ShaderVariant
 class ShaderSource
 {
   public:
+	enum class Type
+	{
+		Source,
+		Spirv
+	};
+
+  public:
 	ShaderSource() = default;
 
 	ShaderSource(const std::string &filename);
@@ -163,16 +170,26 @@ class ShaderSource
 
 	const std::string &get_filename() const;
 
+	Type get_type() const;
+
 	void set_source(const std::string &source);
 
 	const std::string &get_source() const;
 
+	const std::vector<uint32_t> &get_spirv() const;
+
   private:
 	size_t id;
+
+	Type type{Type::Source};
 
 	std::string filename;
 
 	std::string source;
+
+	std::vector<uint32_t> spirv;
+
+	void update_id();
 };
 
 /**
