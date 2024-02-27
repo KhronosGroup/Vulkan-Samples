@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -333,6 +333,10 @@ void VulkanSample::update(float delta_time)
 	render_context->submit(command_buffer);
 }
 
+void VulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
+{
+}
+
 void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
 	auto &views = render_target.get_views();
@@ -464,6 +468,13 @@ void VulkanSample::input_event(const InputEvent &input_event)
 			screenshot(*render_context, "screenshot-" + get_name());
 		}
 	}
+}
+
+Drawer *VulkanSample::get_drawer()
+{
+	if (nullptr == gui)
+		return nullptr;
+	return &gui->get_drawer();
 }
 
 void VulkanSample::finish()

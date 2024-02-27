@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -54,10 +54,19 @@ void Application::input_event(const InputEvent &input_event)
 {
 }
 
+Drawer *Application::get_drawer()
+{
+	return nullptr;
+}
+
 void Application::update(float delta_time)
 {
 	fps        = 1.0f / delta_time;
 	frame_time = delta_time * 1000.0f;
+}
+
+void Application::update_overlay(float delta_time, const std::function<void()> &additional_ui)
+{
 }
 
 const std::string &Application::get_name() const
@@ -74,4 +83,20 @@ DebugInfo &Application::get_debug_info()
 {
 	return debug_info;
 }
+
+void Application::change_shader(const vkb::ShaderSourceLanguage &shader_language)
+{
+	LOGE("Not implemented by sample");
+}
+
+const std::map<ShaderSourceLanguage, std::vector<std::pair<VkShaderStageFlagBits, std::string>>> &Application::get_available_shaders() const
+{
+	return available_shaders;
+}
+
+void Application::store_shaders(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<VkShaderStageFlagBits, std::string>> &list_of_shaders)
+{
+	available_shaders.insert({shader_language, list_of_shaders});
+}
+
 }        // namespace vkb

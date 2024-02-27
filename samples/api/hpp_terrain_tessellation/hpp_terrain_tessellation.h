@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -149,7 +149,7 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 
 	// from HPPApiVulkanSample
 	void build_command_buffers() override;
-	void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
 	void view_changed() override;
 

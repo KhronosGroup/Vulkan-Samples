@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -159,6 +160,7 @@ class Platform
 	void on_app_start(const std::string &app_id);
 	void on_app_close(const std::string &app_id);
 	void on_platform_close();
+	void on_update_ui_overlay(vkb::Drawer &drawer);
 
 	Window::Properties window_properties;              /* Source of truth for window state */
 	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */

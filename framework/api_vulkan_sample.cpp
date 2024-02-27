@@ -92,8 +92,6 @@ void ApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
-	update_overlay(delta_time);
-
 	render(delta_time);
 	camera.update(delta_time);
 	if (camera.moving())
@@ -437,24 +435,25 @@ void ApiVulkanSample::create_pipeline_cache()
 	VK_CHECK(vkCreatePipelineCache(device->get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
 }
 
-VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage);
+	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage, src_language);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
 	return shader_stage;
 }
 
-void ApiVulkanSample::update_overlay(float delta_time)
+void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() {
 			on_update_ui_overlay(gui->get_drawer());
+			additional_ui();
 		});
 
 		gui->update(delta_time);
