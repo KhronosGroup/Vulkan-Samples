@@ -85,6 +85,21 @@ bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 {
 	assert(!prepared);
 
+	std::vector<std::pair<vkb::ShaderSourceLanguage, std::vector<std::pair<vk::ShaderStageFlagBits, std::string>>>> supported_shaders{
+	    {vkb::ShaderSourceLanguage::GLSL, {
+	                                          {vk::ShaderStageFlagBits::eVertex, "dynamic_uniform_buffers/base.vert"},
+	                                          {vk::ShaderStageFlagBits::eFragment, "dynamic_uniform_buffers/base.frag"},
+	                                      }},
+
+	    {vkb::ShaderSourceLanguage::SPV, {
+	                                         {vk::ShaderStageFlagBits::eVertex, "dynamic_uniform_buffers/base.vert.spv"},
+	                                         {vk::ShaderStageFlagBits::eFragment, "dynamic_uniform_buffers/base.frag.spv"},
+	                                     }}};
+	for (auto &shader : supported_shaders)
+	{
+		store_shaders(shader.first, shader.second);
+	}
+
 	if (HPPApiVulkanSample::prepare(options))
 	{
 		prepare_camera();
@@ -92,7 +107,7 @@ bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 		prepare_uniform_buffers();
 		descriptor_set_layout = create_descriptor_set_layout();
 		pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
-		pipeline              = create_pipeline();
+		pipeline              = create_pipeline(supported_shaders.begin()->first, supported_shaders.begin()->second);
 		descriptor_pool       = create_descriptor_pool();
 		descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
 		update_descriptor_set();
@@ -109,6 +124,12 @@ bool HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t heigh
 	HPPApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
 	return true;
+}
+
+void HPPDynamicUniformBuffers::change_shader(const vkb::ShaderSourceLanguage &shader_language)
+{
+	get_device()->get_handle().destroyPipeline(pipeline);
+	pipeline = create_pipeline(shader_language, get_available_shaders().find(shader_language)->second);
 }
 
 void HPPDynamicUniformBuffers::build_command_buffers()
@@ -182,11 +203,14 @@ vk::DescriptorSetLayout HPPDynamicUniformBuffers::create_descriptor_set_layout()
 	return get_device()->get_handle().createDescriptorSetLayout({{}, bindings});
 }
 
-vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
+vk::Pipeline HPPDynamicUniformBuffers::create_pipeline(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<vk::ShaderStageFlagBits, std::string>> &list_of_shaders)
 {
 	// Load shaders
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("dynamic_uniform_buffers/base.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages;
+	for (auto &shader : list_of_shaders)
+	{
+		shader_stages.emplace_back(load_shader(shader.second, shader.first, shader_language));
+	}
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
