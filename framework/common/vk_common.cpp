@@ -374,33 +374,57 @@ int32_t get_bits_per_pixel(VkFormat format)
 	}
 }
 
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
+// Load or Compile the glsl shader into spir-v
+// If the shader was offline compiled to spir-v, it will be loaded
+// If there is no offline compiled shader, it will be compiled to spir-v
+std::vector<uint32_t> load_glsl_spv(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage)
 {
+	// Check if the shader has already been compiled to SPIR-V
+	if (vkb::fs::is_file("./shaders/" + filename + ".spv"))
+	{
+		LOGI("Loading precompiled shader: {}", filename + ".spv");
+		auto buffer = vkb::fs::read_shader_binary(filename + ".spv");
+		return {reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data() + buffer.size())};
+	}
+
+	// Online compile
+
 	vkb::GLSLCompiler glsl_compiler;
 
+	auto buffer = vkb::fs::read_shader_binary(filename);
+
+	std::string file_ext = filename;
+
+	// Extract extension name from the glsl shader file
+	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+
+	std::string info_log;
+
+	// Compile the GLSL source
+	std::vector<uint32_t> spirv;
+	if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	{
+		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
+		throw std::runtime_error{"Failed to compile shader"};
+	}
+
+	return spirv;
+}
+
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
+{
 	auto                  buffer = vkb::fs::read_shader_binary(filename);
 	std::vector<uint32_t> spirv;
 
 	if (vkb::ShaderSourceLanguage::GLSL == src_language)
 	{
-		std::string file_ext = filename;
-
-		// Extract extension name from the glsl shader file
-		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-		std::string info_log;
-
-		// Compile the GLSL source
-		if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
-		{
-			LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-			return VK_NULL_HANDLE;
-		}
+		spirv = vkb::load_glsl_spv(filename, device, stage);
 	}
 	else if (vkb::ShaderSourceLanguage::SPV == src_language)
 	{
-		spirv = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
-		                              reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+		spirv = std::vector<uint32_t>(
+		    reinterpret_cast<uint32_t *>(buffer.data()),
+		    reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 	}
 	else
 	{

@@ -30,3 +30,13 @@ add_sample_with_tags(
         "compute_nbody/particle.frag"
         "compute_nbody/particle_calculate.comp"
         "compute_nbody/particle_integrate.comp")
+
+compile_shaders(
+    ID ${FOLDER_NAME}
+    SPIRV_VERSION "1.0"
+    SHADER_FILES_GLSL
+        "compute_nbody/particle.vert"
+        "compute_nbody/particle.frag"
+        "compute_nbody/particle_calculate.comp"
+        "compute_nbody/particle_integrate.comp"
+)

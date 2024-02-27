@@ -87,18 +87,6 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]",
 	                         glsl_source.get_filename(), shader_variant.get_id(), entry_point);
 
-	auto file_logger = spdlog::get("file_logger");
-	if (!file_logger)
-	{
-		file_logger = std::make_shared<spdlog::logger>("file_logger", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/shaders.txt", true)});
-		spdlog::register_logger(file_logger);
-	}
-
-	auto defines     = vkb::split(shader_variant.get_preamble(), "\n");
-	auto defines_str = vkb::join(defines, " ");
-	file_logger->log(spdlog::level::info, "ShaderModule: {}, {}\n\tDefines {}", glsl_source.get_filename(), entry_point, defines_str);
-	file_logger->flush();
-
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())
 	{

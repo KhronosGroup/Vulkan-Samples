@@ -28,3 +28,11 @@ add_sample(
     SHADER_FILES_GLSL
         "hello_triangle/triangle.vert"
         "hello_triangle/triangle.frag")
+
+compile_shaders(
+    ID ${FOLDER_NAME}
+    SPIRV_VERSION "1.0"
+    SHADER_FILES_GLSL
+        "hello_triangle/triangle.vert"
+        "hello_triangle/triangle.frag"
+)

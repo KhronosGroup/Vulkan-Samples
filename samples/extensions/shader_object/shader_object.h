@@ -121,7 +121,7 @@ class ShaderObject : public ApiVulkanSample
 	struct CurrentShader
 	{
 		int vert = 0;
-		int geo  = 0;
+		int geom = 0;
 		int frag = 0;
 	};
 

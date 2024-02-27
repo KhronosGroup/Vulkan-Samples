@@ -28,3 +28,11 @@ add_sample_with_tags(
     SHADER_FILES_GLSL
         "dynamic_uniform_buffers/base.vert"
         "dynamic_uniform_buffers/base.frag")
+
+compile_shaders(
+    ID ${FOLDER_NAME}
+    SPIRV_VERSION "1.0"
+    SHADER_FILES_GLSL
+        "dynamic_uniform_buffers/base.vert"
+        "dynamic_uniform_buffers/base.frag"
+)

@@ -32,3 +32,15 @@ add_sample_with_tags(
         "hdr/bloom.frag"
         "hdr/gbuffer.vert"
         "hdr/gbuffer.frag")
+
+compile_shaders(
+    ID ${FOLDER_NAME}
+    SPIRV_VERSION "1.0"
+    SHADER_FILES_GLSL
+        "hdr/composition.vert"
+        "hdr/composition.frag"
+        "hdr/bloom.vert"
+        "hdr/bloom.frag"
+        "hdr/gbuffer.vert"
+        "hdr/gbuffer.frag"
+)

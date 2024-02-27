@@ -57,6 +57,7 @@ include(global_options)
 include(sample_helper)
 include(check_atomic)
 include(component_helper)
+include(shader_helper)
 
 # Add third party libraries
 add_subdirectory(third_party)

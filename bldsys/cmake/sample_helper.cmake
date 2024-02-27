@@ -36,7 +36,7 @@ function(add_sample)
         TAGS 
             "any"
         FILES
-            ${SRC_FILES}
+            ${TARGET_FILES}
         LIBS
             ${TARGET_LIBS}
         SHADER_FILES_GLSL
@@ -48,8 +48,8 @@ function(add_sample)
 endfunction()
 
 function(add_sample_with_tags)
-    set(options)
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION NO_SHADERS)
+    set(options NO_SHADERS)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
     set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -115,123 +115,6 @@ function(vkb_add_test)
         LIBS test_framework)
 endfunction()
 
-add_custom_target(vkb__shaders)
-
-# TODO: Shaders to fix
-set(SHADERS_TO_FIX
-    buffer_array.frag
-    buffer_array.vert
-)
-
-macro(get_hlsl_target_profile SHADER_FILE OUT_PROFILE)
-    if(${SHADER_FILE} MATCHES ".*\\.vert$")
-        set(${OUT_PROFILE} "vs_6_0")
-    elseif(${SHADER_FILE} MATCHES ".*\\.frag$")
-        set(${OUT_PROFILE} "ps_6_0")
-    else()
-        message(FATAL_ERROR "Unknown shader profile for ${SHADER_FILE}")
-    endif()
-endmacro()
-
-function(compile_shaders)
-    set(options)  
-    set(oneValueArgs ID)
-    set(multiValueArgs SHADER_FILES_GLSL SHADER_FILES_HLSL)
-
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    find_program(SPV_VALIDATOR_EXECUTABLE spirv-val HINTS $ENV{VULKAN_SDK}/bin)
-    if(NOT SPV_VALIDATOR_EXECUTABLE)
-        message(WARNING "spirv-val not found! SPIR-V validation will not be performed. Please set VULKAN_SDK to the Vulkan SDK path.")
-    endif()
-
-    find_program(GLSLC_EXECUTABLE glslc HINTS $ENV{VULKAN_SDK}/bin)
-    if(NOT GLSLC_EXECUTABLE)
-        message(FATAL_ERROR "glslc not found! Shaders with .glsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
-    endif()
-
-    set(SHADER_DIR "${CMAKE_BINARY_DIR}/shaders")
-
-    set(SHADER_FILES_SPV)
-
-    # Compile GLSL shaders to SPIR-V
-    if (GLSLC_EXECUTABLE)
-        foreach(SHADER_FILE_GLSL ${TARGET_SHADER_FILES_GLSL})
-            # Skip header and OpenCL files
-            if(${SHADER_FILE_GLSL} MATCHES ".*\\.h$" OR ${SHADER_FILE_GLSL} MATCHES ".*\\.cl$")
-                continue()
-            endif()
-
-            # TODO: Remove this when all shaders are fixed
-            set(SKIP 0)
-            foreach(SHADER_TO_FIX ${SHADERS_TO_FIX})
-                if(${SHADER_FILE_GLSL} MATCHES ".*\\${SHADER_TO_FIX}$")
-                    message(WARNING "Shader ${SHADER_FILE_GLSL} needs to be fixed")
-                    set(SKIP 1)
-                endif()
-            endforeach()
-
-            if(SKIP)
-                continue()
-            endif()
-
-            set(SHADER_FILE_SPV "${SHADER_DIR}/${SHADER_FILE_GLSL}.spv")
-            set(STORED_SHADER_FILE_SPV "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}.spv")
-
-            get_filename_component(SHADER_FILE_DIR ${SHADER_FILE_SPV} DIRECTORY)
-            file(MAKE_DIRECTORY ${SHADER_FILE_DIR})
-
-            add_custom_command(
-                OUTPUT ${SHADER_FILE_SPV}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
-                COMMAND ${GLSLC_EXECUTABLE} -o "${SHADER_FILE_SPV}" --target-spv=spv1.6 ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
-                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
-                DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
-                COMMENT "Compiling ${SHADER_FILE_GLSL} to SPIR-V"
-                VERBATIM)
-            list(APPEND SHADER_FILES_SPV ${SHADER_FILE_SPV})
-        endforeach()
-    endif()
-
-    find_program(DXC_EXECUTABLE dxc HINTS $ENV{VULKAN_SDK}/bin)
-    if(NOT DXC_EXECUTABLE)
-        message(WARNING "dxc not found! Shaders with .hlsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
-    endif()
-
-    # Compile HLSL shaders to SPIR-V
-    if (DXC_EXECUTABLE)
-        foreach(SHADER_FILE_HLSL ${TARGET_SHADER_FILES_HLSL})
-            # Skip header and OpenCL files
-            if(${SHADER_FILE_HLSL} MATCHES ".*\\.h$" OR ${SHADER_FILE_HLSL} MATCHES ".*\\.cl$")
-                continue()
-            endif()
-
-            set(SHADER_FILE_SPV "${SHADER_DIR}/${SHADER_FILE_HLSL}.spv")
-            set(STORED_SHADER_FILE_SPV "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}.spv")
-
-            get_filename_component(SHADER_FILE_DIR ${SHADER_FILE_SPV} DIRECTORY)
-            file(MAKE_DIRECTORY ${SHADER_FILE_DIR})
-
-            get_hlsl_target_profile(${SHADER_FILE_HLSL} SHADER_PROFILE)
-
-            add_custom_command(
-                OUTPUT ${SHADER_FILE_SPV}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
-                COMMAND ${DXC_EXECUTABLE} -spirv -fspv-target-env=vulkan1.3 -E main -T ${SHADER_PROFILE} -Fo "${SHADER_FILE_SPV}" ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
-                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
-                DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
-                COMMENT "Compiling ${SHADER_FILE_HLSL} to SPIR-V"
-                VERBATIM)
-
-            list(APPEND SHADER_FILES_SPV ${SHADER_FILE_SPV})
-        endforeach()
-    endif()
-
-    add_custom_target(${TARGET_ID}_shaders DEPENDS ${SHADER_FILES_SPV})
-    add_dependencies(${TARGET_ID} ${TARGET_ID}_shaders)
-    add_dependencies(vkb__shaders ${TARGET_ID}_shaders)
-endfunction()
-
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
@@ -250,20 +133,25 @@ function(add_project)
 
     message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - BUILD")
 
+    set(TARGET_DIR ${CMAKE_SOURCE_DIR})
+
+    # create project (object target - reused by app target)
+    project(${TARGET_ID} LANGUAGES C CXX)
+
     source_group("\\" FILES ${TARGET_FILES})
 
     # Add shaders to project group
     if (TARGET_SHADERS_GLSL)
         list(APPEND SOURCE_SHADER_FILES)
         foreach(GLSL_FILE ${TARGET_SHADERS_GLSL})
-            list(APPEND SOURCE_SHADER_FILES "${PROJECT_SOURCE_DIR}/shaders/${GLSL_FILE}")
+            list(APPEND SOURCE_SHADER_FILES "${TARGET_DIR}/shaders/${GLSL_FILE}")
         endforeach()   
     endif()
 
     if (TARGET_SHADERS_HLSL)
         list(APPEND SOURCE_SHADER_FILES)
         foreach(HLSL_FILE ${TARGET_SHADERS_HLSL})
-            list(APPEND SOURCE_SHADER_FILES "${PROJECT_SOURCE_DIR}/shaders/${HLSL_FILE}")
+            list(APPEND SOURCE_SHADER_FILES "${TARGET_DIR}/shaders/${HLSL_FILE}")
         endforeach()   
     endif()
     
@@ -272,19 +160,19 @@ function(add_project)
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${TARGET_ID} OBJECT ${TARGET_FILES} ${SOURCE_SHADER_FILES})
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SOURCE_SHADER_FILES})
 elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${TARGET_ID} STATIC ${TARGET_FILES} ${SOURCE_SHADER_FILES})
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SOURCE_SHADER_FILES})
 endif()
-    set_target_properties(${TARGET_ID} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # # inherit include directories from framework target
-    target_include_directories(${TARGET_ID} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_libraries(${TARGET_ID} PRIVATE framework)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(${PROJECT_NAME} PRIVATE framework)
 
     # Link against extra project specific libraries
     if(TARGET_LIBS)
-        target_link_libraries(${TARGET_ID} PUBLIC ${TARGET_LIBS})
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
     # capitalise the first letter of the category  (performance -> Performance) 
@@ -294,7 +182,7 @@ endif()
 
     if(${TARGET_TYPE} STREQUAL "Sample")
         # set sample properties
-        set_target_properties(${TARGET_ID}
+        set_target_properties(${PROJECT_NAME}
             PROPERTIES 
                 SAMPLE_CATEGORY ${TARGET_CATEGORY}
                 SAMPLE_AUTHOR ${TARGET_AUTHOR}
@@ -303,19 +191,13 @@ endif()
                 SAMPLE_TAGS "${TARGET_TAGS}")
 
         # add sample project to a folder
-        set_property(TARGET ${TARGET_ID} PROPERTY FOLDER "Samples//${CATEGORY}")
+        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Samples//${CATEGORY}")
     elseif(${TARGET_TYPE} STREQUAL "Test")
         # add test project to a folder
-        set_property(TARGET ${TARGET_ID} PROPERTY FOLDER "Tests")
+        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Tests")
     endif()
 
     if(VKB_DO_CLANG_TIDY)
-        set_target_properties(${TARGET_ID} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
+        set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
-
-    compile_shaders(
-        ID ${TARGET_ID}
-        SHADER_FILES_GLSL ${TARGET_SHADERS_GLSL}
-        SHADER_FILES_HLSL ${TARGET_SHADERS_HLSL}
-    )
 endfunction()

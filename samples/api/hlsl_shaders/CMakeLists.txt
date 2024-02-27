@@ -28,3 +28,11 @@ add_sample_with_tags(
     SHADER_FILES_HLSL
         "hlsl_shaders/hlsl_shader.vert"
         "hlsl_shaders/hlsl_shader.frag")
+
+compile_shaders(
+    ID ${FOLDER_NAME}
+    SPIRV_VERSION "1.0"
+    SHADER_FILES_HLSL
+        "hlsl_shaders/hlsl_shader.vert"
+        "hlsl_shaders/hlsl_shader.frag"
+)
