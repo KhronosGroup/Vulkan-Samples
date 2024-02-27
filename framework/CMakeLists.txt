@@ -78,7 +78,7 @@ set(COMMON_FILES
     common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
-    common/glm_common.h 
+    common/glm_common.h
     common/resource_caching.h
     common/logging.h
     common/helpers.h
@@ -387,7 +387,7 @@ set(LINUX_D2D_FILES
     platform/unix/direct_window.h
     # Source Files
     platform/unix/unix_d2d_platform.cpp
-    platform/unix/direct_window.cpp) 
+    platform/unix/direct_window.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
@@ -514,7 +514,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     volk
     ktx
     stb
-    astc
+    ${ASTC_TARGET}
     imgui
     tinygltf
     glm
