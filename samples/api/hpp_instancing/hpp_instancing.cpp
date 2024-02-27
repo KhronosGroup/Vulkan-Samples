@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -171,7 +171,7 @@ void HPPInstancing::build_command_buffers()
 	}
 }
 
-void HPPInstancing::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPInstancing::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Statistics"))
 	{

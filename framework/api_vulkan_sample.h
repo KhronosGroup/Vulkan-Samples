@@ -112,6 +112,8 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	virtual void update(float delta_time) override;
 
+	virtual void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
+
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	virtual void render(float delta_time) = 0;
@@ -347,8 +349,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Load a SPIR-V shader
 	 * @param file The file location of the shader relative to the shaders folder
 	 * @param stage The shader stage
+	 * @param src_language The shader language
 	 */
-	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
+	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
 
 	/**
 	 * @brief Updates the overlay

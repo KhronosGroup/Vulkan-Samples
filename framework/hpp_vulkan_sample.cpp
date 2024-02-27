@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -426,6 +426,13 @@ void HPPVulkanSample::input_event(const InputEvent &input_event)
 	}
 }
 
+Drawer *HPPVulkanSample::get_drawer()
+{
+	if (nullptr == gui)
+		return nullptr;
+	return &gui->get_drawer();
+}
+
 void HPPVulkanSample::finish()
 {
 	vkb::Application::finish();
@@ -482,6 +489,16 @@ void HPPVulkanSample::update_debug_window()
 			}
 		}
 	}
+}
+
+const std::map<ShaderSourceLanguage, std::vector<std::pair<vk::ShaderStageFlagBits, std::string>>> &HPPVulkanSample::get_available_shaders() const
+{
+	return reinterpret_cast<std::map<ShaderSourceLanguage, std::vector<std::pair<vk::ShaderStageFlagBits, std::string>>> const &>(Application::get_available_shaders());
+}
+
+void HPPVulkanSample::store_shaders(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<vk::ShaderStageFlagBits, std::string>> &list_of_shaders)
+{
+	Application::store_shaders(shader_language, reinterpret_cast<std::vector<std::pair<VkShaderStageFlagBits, std::string>> const &>(list_of_shaders));
 }
 
 void HPPVulkanSample::set_viewport_and_scissor(vkb::core::HPPCommandBuffer const &command_buffer, const vk::Extent2D &extent)
