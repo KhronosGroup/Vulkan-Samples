@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,7 +65,30 @@ void BatchMode::init(const vkb::CommandParser &parser)
 		categories = parser.as<std::vector<std::string>>(&categories_flag);
 	}
 
+	std::unordered_set<std::string> skips;
+	if (parser.contains(&skip_flag))
+	{
+		skips = parser.as<std::unordered_set<std::string>>(&skip_flag);
+	}
+
 	sample_list = apps::get_samples(categories, tags);
+	if (!skips.empty())
+	{
+		std::vector<apps::AppInfo *> filtered_list;
+		filtered_list.reserve(sample_list.size());
+
+		std::copy_if(
+		    sample_list.begin(), sample_list.end(),
+		    std::back_inserter(filtered_list),
+		    [&](const apps::AppInfo *app) {
+			    return skips.find(app->id) == skips.end();
+		    });
+
+		if (filtered_list.size() != sample_list.size())
+		{
+			sample_list.swap(filtered_list);
+		}
+	}
 
 	if (sample_list.empty())
 	{

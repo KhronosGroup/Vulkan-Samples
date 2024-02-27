@@ -32,11 +32,11 @@ using BatchModeTags = vkb::PluginBase<vkb::tags::Entrypoint, vkb::tags::FullCont
 
 /**
  * @brief Batch Mode
- * 
+ *
  * Run a subset of samples. The next sample in the set will start after the current sample being executed has finished. Using --wrap-to-start will start again from the first sample after the last sample is executed.
- * 
+ *
  * Usage: vulkan_samples batch --duration 3 --category performance --tag arm
- * 
+ *
  */
 class BatchMode : public BatchModeTags
 {
@@ -62,7 +62,9 @@ class BatchMode : public BatchModeTags
 
 	vkb::FlagCommand categories_flag{vkb::FlagType::ManyValues, "category", "C", "Filter samples by categories"};
 
-	vkb::SubCommand batch_cmd{"batch", "Enable batch mode", {&duration_flag, &wrap_flag, &tags_flag, &categories_flag}};
+	vkb::FlagCommand skip_flag{vkb::FlagType::ManyValues, "skip", "", "Skip a sample by id"};
+
+	vkb::SubCommand batch_cmd{"batch", "Enable batch mode", {&duration_flag, &wrap_flag, &tags_flag, &categories_flag, &skip_flag}};
 
   private:
 	/// The list of suitable samples to be run in conjunction with batch mode

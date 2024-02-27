@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <string>
 #include <typeindex>
+#include <unordered_set>
 #include <vector>
 
 namespace vkb
@@ -303,6 +304,13 @@ template <>
 inline bool CommandParser::convert_type(const std::vector<std::string> &values, std::vector<std::string> *type) const
 {
 	*type = values;
+	return true;
+}
+
+template <>
+inline bool CommandParser::convert_type(const std::vector<std::string> &values, std::unordered_set<std::string> *type) const
+{
+	*type = std::unordered_set<std::string>(values.begin(), values.end());
 	return true;
 }
 

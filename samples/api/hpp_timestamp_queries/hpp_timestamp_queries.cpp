@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -672,10 +672,16 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 	{
 		filter_pass.extent = extent;
 
-		// Color attachments
+		// Color attachments - needs to be a blendable format, so choose from a priority ordered list
+		const std::vector<vk::Format> float_format_priority_list = {
+		    vk::Format::eR32G32B32A32Sfloat,
+		    vk::Format::eR16G16B16A16Sfloat        // Guaranteed blend support for this
+		};
+
+		vk::Format color_format = vkb::common::choose_blendable_format(get_device()->get_gpu().get_handle(), float_format_priority_list);
 
 		// One floating point color buffer
-		filter_pass.color = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
+		filter_pass.color = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 
 		filter_pass.render_pass = create_filter_render_pass();
 		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device()->get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);

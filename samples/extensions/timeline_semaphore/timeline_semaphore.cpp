@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -643,6 +643,7 @@ void TimelineSemaphore::render(float delta_time)
 		viewport.height = viewport.width;
 	}
 
+	recreate_current_command_buffer();
 	auto cmd         = draw_cmd_buffers[current_buffer];
 	auto begin_info  = vkb::initializers::command_buffer_begin_info();
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;

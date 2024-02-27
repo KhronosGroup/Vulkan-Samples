@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -75,7 +75,7 @@ image::./images/clear_store.jpg[Using LOAD_OP_CLEAR]
 
 We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`.
 We calculate an estimate of `2220 * 1080 * (32/8) * ~60 = ~575 MiB/s`.
-The savings will be lower if the images are compressed, see xref:../afbc/README.adoc[Enabling AFBC in your Vulkan Application].
+The savings will be lower if the images are compressed, see xref:samples/performance/afbc/README.adoc[Enabling AFBC in your Vulkan Application].
 
 == Depth attachment store operation
 
