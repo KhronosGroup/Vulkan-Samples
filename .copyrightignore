@@ -27,3 +27,4 @@ khrplatform.h
 clang_format.py
 run-clang-tidy.py
 package-list.txt
+.pre-commit-config.yaml
