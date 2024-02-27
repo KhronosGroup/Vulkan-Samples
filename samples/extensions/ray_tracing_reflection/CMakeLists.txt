@@ -22,7 +22,7 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
 file(GLOB GLSL_FILES "${CMAKE_SOURCE_DIR}/shaders/${FOLDER_NAME}/*.*")
 
-add_sample_with_tags(
+add_sample(
     ID ${FOLDER_NAME}
     FILES ${GLSL_FILES}
     CATEGORY ${CATEGORY_NAME}

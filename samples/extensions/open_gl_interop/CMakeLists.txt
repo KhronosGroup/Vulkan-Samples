@@ -42,7 +42,7 @@ set_target_properties(glad PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_C
 # Only Compile on platforms that support glfw
 if (NOT (ANDROID OR DIRECT_TO_DISPLAY))
     target_link_libraries( glad PUBLIC glfw )
-    add_sample_with_tags(
+    add_sample(
         ID ${FOLDER_NAME}
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Bradley Austin Davis"
