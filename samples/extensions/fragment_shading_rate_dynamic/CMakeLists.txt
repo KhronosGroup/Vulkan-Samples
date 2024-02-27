@@ -26,6 +26,7 @@ add_sample(
     NAME "Dynamic fragment shading rate"
     DESCRIPTION "Using dynamically-generated fragment shading rate patterns generated each frame"
     SHADER_FILES_GLSL
+        "fragment_shading_rate_dynamic/generate_shading_rate.comp"
         "fragment_shading_rate_dynamic/scene.vert"
         "fragment_shading_rate_dynamic/scene.frag"
 )
