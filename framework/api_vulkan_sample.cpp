@@ -1315,3 +1315,14 @@ void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuff
 	f(command_buffer);
 	device->flush_command_buffer(command_buffer, queue, true, signalSemaphore);
 }
+
+void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f)
+{
+	auto &cmd = device->request_command_buffer();
+	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	f(cmd);
+	cmd.end();
+	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	queue.submit(cmd, device->request_fence());
+	device->get_fence_pool().wait();
+}

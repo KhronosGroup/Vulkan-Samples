@@ -256,6 +256,12 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 */
 	void with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore = VK_NULL_HANDLE);
 
+	/**
+	 * @brief Synchronously execute a block code within a command buffer vkb wrapper, then submit the command buffer and wait for completion.
+	 * @param f a block of code which is passed a command buffer which is already in the begin state.
+	 */
+	void with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f);
+
   public:
 	/**
 	 * @brief Called when a view change occurs, can be overriden in derived samples to handle updating uniforms

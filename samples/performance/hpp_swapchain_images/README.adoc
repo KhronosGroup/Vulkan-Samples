@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2022-2023, The Khronos Group
+- Copyright (c) 2022-2024, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -84,13 +84,13 @@ every 16 ms), which is the only chance for an image to be presented.
 Double buffering works well if frames can be processed within 16 ms, so at each VSync signal the processed image is presented on screen and the previously presented one becomes available to the application again.
 This behavior is demonstrated in the figure below:
 
-image::../swapchain_images/images/swapchain_double_buffering.png[Double buffering at 60 FPS]
+image::samples/performance/swapchain_images/images/swapchain_double_buffering.png[Double buffering at 60 FPS]
 
 This behavior breaks when frames take more than 16 ms to be processed.
 Let us suppose that a frame is ready after 20 ms.
 The following figure illustrates what happens in this case:
 
-image::../swapchain_images/images/swapchain_double_buffering_slow.png[Double buffering at <60 FPS]
+image::samples/performance/swapchain_images/images/swapchain_double_buffering_slow.png[Double buffering at <60 FPS]
 
 The orange dashed line highlights a point in which the whole system is idle.
 FB1 was not yet ready for presentation for the previous VSync signal, so the presentation engine keeps presenting FB0, which in turn cannot be used to start processing the next frame.
@@ -98,7 +98,7 @@ FB1 was not yet ready for presentation for the previous VSync signal, so the pre
 This idling behavior caps framerate at 30 fps, while the application could achieve ~50 fps.
 With triple buffering there will always be an image already processed and ready for presentation, so the GPU can start processing a new image without stalling.
 
-image::../swapchain_images/images/swapchain_triple_buffering.png[Triple buffering at 60 FPS]
+image::samples/performance/swapchain_images/images/swapchain_triple_buffering.png[Triple buffering at 60 FPS]
 
 == The sample
 
@@ -106,12 +106,12 @@ The `hpp_swapchain_images` Vulkan sample highlights this behavior, by allowing t
 
 This is a screenshot of the sample on a phone with a Mali G72 GPU:
 
-image::../swapchain_images/images/sponza_triple_buffering.jpg[Sponza with triple buffering]
+image::samples/performance/swapchain_images/images/sponza_triple_buffering.jpg[Sponza with triple buffering]
 
 Triple buffering is enabled and Sponza is comfortably rendered at 60 FPS.
 When we switch to double buffering the framerate drops to 30 FPS:
 
-image::../swapchain_images/images/sponza_double_buffering.jpg[Sponza with double buffering]
+image::samples/performance/swapchain_images/images/sponza_double_buffering.jpg[Sponza with double buffering]
 
 In this case the actual CPU and GPU frame time is close to 16 ms, so it is possible that the framerate remains at 60 FPS for a few seconds even after switching to double buffering.
 Thermal effects or other running processes may cause a small increase in frame time, resulting in the app missing VSync.
@@ -121,7 +121,7 @@ In order for an application to achieve its potential framerate without being VSy
 
 We can confirm this behavior using https://developer.arm.com/products/software-development-tools/arm-development-studio/components/streamline-performance-analyzer[Streamline Performance Analyzer].
 
-image::../swapchain_images/images/streamline_swapchain_marker.png[Streamline analysis]
+image::samples/performance/swapchain_images/images/streamline_swapchain_marker.png[Streamline analysis]
 
 The first part of the trace until the marker is with triple buffering.
 As we can see the CPU and GPU show a good utilization, with not much idling between frames.
