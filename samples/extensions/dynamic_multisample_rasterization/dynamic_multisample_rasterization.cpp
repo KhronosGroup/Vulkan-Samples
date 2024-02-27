@@ -582,7 +582,7 @@ void DynamicMultisampleRasterization::setup_framebuffer()
 	setup_depth_stencil();
 
 	uint32_t    attachments_cnt = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
-	VkImageView attachments[attachments_cnt];
+	std::vector<VkImageView> attachments(attachments_cnt);
 
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[0] = color_attachment.view;
@@ -592,8 +592,8 @@ void DynamicMultisampleRasterization::setup_framebuffer()
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebuffer_create_info.pNext                   = NULL;
 	framebuffer_create_info.renderPass              = render_pass;
-	framebuffer_create_info.attachmentCount         = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? 3 : 2;
-	framebuffer_create_info.pAttachments            = attachments;
+	framebuffer_create_info.attachmentCount         = attachments.size();
+	framebuffer_create_info.pAttachments            = attachments.data();
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;

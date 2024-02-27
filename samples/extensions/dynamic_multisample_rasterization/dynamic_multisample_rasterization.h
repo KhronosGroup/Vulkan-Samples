@@ -98,13 +98,6 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 		std::vector<std::string> sample_counts;
 	} gui_settings;
 
-	// struct
-	// {
-	// 	VkImage        image;
-	// 	VkDeviceMemory mem;
-	// 	VkImageView    view;
-	// } color_attachment;
-
   public:
 	virtual void build_command_buffers() override;
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
