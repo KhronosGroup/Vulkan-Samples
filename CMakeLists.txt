@@ -84,3 +84,5 @@ endif()
 add_subdirectory(app)
 
 add_subdirectory(antora)
+
+compile_all_shaders()

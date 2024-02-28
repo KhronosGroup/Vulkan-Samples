@@ -1,3 +1,6 @@
+add_custom_target(vkb__shaders)
+set_target_properties(vkb__shaders PROPERTIES FOLDER "CMake\\CustomTargets" POSITION_INDEPENDENT_CODE ON)
+
 if (NOT DEFINED DXC_EXECUTABLE)
     find_program(DXC_EXECUTABLE dxc HINTS $ENV{VULKAN_SDK}/bin)
     if(NOT DXC_EXECUTABLE)
@@ -19,6 +22,7 @@ if (NOT DEFINED GLSLC_EXECUTABLE)
     endif()
 endif()
 
+set(SHADERS_PROCESSED)
 
 macro(get_hlsl_target_profile SHADER_FILE OUT_PROFILE)
     if(${SHADER_FILE} MATCHES ".*\\.vert$")
@@ -44,10 +48,10 @@ macro(filter_shadsers TYPE OUT_VAR)
     target_sources(${TARGET_ID} PRIVATE ${${OUT_VAR}})
 endmacro()
 
-macro(compile_shader TYPE SHADER_FILE)
+
+macro(compile_shader SHADER_FILE TYPE SPIRV_VERSION)
     set(SHADER_BUILD_DIR "${CMAKE_BINARY_DIR}/shaders")
     set(SHADER_SOURCE_DIR "${CMAKE_SOURCE_DIR}/shaders")
-
     file(RELATIVE_PATH SHADER_FILE_REL "${CMAKE_SOURCE_DIR}/shaders" ${SHADER_FILE})
     set(SHADER_FILE_SPV "${SHADER_BUILD_DIR}/${SHADER_FILE_REL}.spv")
     set(STORED_SHADER_FILE_SPV "${SHADER_SOURCE_DIR}/${SHADER_FILE_REL}.spv")
@@ -59,7 +63,7 @@ macro(compile_shader TYPE SHADER_FILE)
         add_custom_command(
             OUTPUT ${SHADER_FILE_SPV}
             COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
-            COMMAND ${GLSLC_EXECUTABLE} -o "${SHADER_FILE_SPV}" --target-spv=spv${TARGET_SPIRV_VERSION} ${SHADER_FILE}
+            COMMAND ${GLSLC_EXECUTABLE} -o "${SHADER_FILE_SPV}" --target-spv=spv${SPIRV_VERSION} ${SHADER_FILE}
             COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
             COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}" || true
             DEPENDS ${SHADER_FILE}
@@ -79,8 +83,20 @@ macro(compile_shader TYPE SHADER_FILE)
     else()
         message(FATAL_ERROR "Unknown shader type ${TYPE}")
     endif()
-    source_group("Shaders\\${TYPE}\\Compiled" FILES ${SHADER_FILE_SPV})
-    target_sources(${TARGET_ID} PRIVATE ${SHADER_FILE_SPV})
+    # CMake doesn't like if you reference a generated file in a different scope than you created it with
+    # add_custom_command, so all use of `target_sources` referencing the output of the above custom commands
+    # needs to be concentrated here.
+    target_sources(vkb__shaders PRIVATE ${SHADER_FILE_SPV})
+endmacro()
+
+
+# Because the `compile_shaders` command is called at various different scopes
+# we want to push the list of all shaders into a global variable, so during a
+# final compile_all_shaders pass we can dedupe them.
+macro(queue_shader SHADER_FILE TYPE SPIRV_VERSION)
+    get_property(SHADERS_QUEUED GLOBAL PROPERTY SHADERS_QUEUED)
+    list(APPEND SHADERS_QUEUED "${SHADER_FILE}|${TYPE}|${SPIRV_VERSION}")
+    set_property(GLOBAL PROPERTY SHADERS_QUEUED "${SHADERS_QUEUED}")
 endmacro()
 
 function(compile_shaders)
@@ -98,7 +114,7 @@ function(compile_shaders)
     # Compile GLSL shaders to SPIR-V
     if (GLSLC_EXECUTABLE)
         foreach(SHADER_FILE ${SHADER_FILES_GLSL})
-            compile_shader(GLSL ${SHADER_FILE})
+            queue_shader(${SHADER_FILE} GLSL ${TARGET_SPIRV_VERSION})
         endforeach()
     endif()
 
@@ -106,7 +122,26 @@ function(compile_shaders)
     filter_shadsers(HLSL SHADER_FILES_HLSL ${TARGET_SHADER_FILES_HLSL})
     if (DXC_EXECUTABLE)
         foreach(SHADER_FILE ${SHADER_FILES_HLSL})
-            compile_shader(HLSL ${SHADER_FILE})
+            queue_shader(${SHADER_FILE} HLSL ${TARGET_SPIRV_VERSION})
         endforeach()
     endif()
+    add_dependencies(${TARGET_ID} vkb__shaders)
+endfunction()
+
+function(compile_all_shaders)
+    get_property(SHADERS_QUEUED GLOBAL PROPERTY SHADERS_QUEUED)
+
+    # Ninja doesn't like if there's more than one definition to create a given output file, so we need to dedupe the
+    # shaders that may be referenced from more than one example.
+    # Note, this means that queueing the same shader with different type or different SPIRV_VERSIONS will cause an
+    # error
+    list(REMOVE_DUPLICATES SHADERS_QUEUED)
+
+    foreach(SHADER_QUEUED ${SHADERS_QUEUED})
+        string(REPLACE "|" ";" SHADERR_LIST ${SHADER_QUEUED})
+        list(GET SHADERR_LIST 0 SHADER_FILE)
+        list(GET SHADERR_LIST 1 TYPE)
+        list(GET SHADERR_LIST 2 SPIRV_VERSION)
+        compile_shader(${SHADER_FILE} ${TYPE} ${SPIRV_VERSION})
+    endforeach()
 endfunction()
