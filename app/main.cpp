@@ -51,6 +51,10 @@ CUSTOM_MAIN(context)
 
 	auto code = platform.initialize(plugins::get_all());
 
+	if (code == vkb::ExitCode::Help)
+	{
+	}
+
 	if (code == vkb::ExitCode::Success)
 	{
 		code = platform.main_loop();
