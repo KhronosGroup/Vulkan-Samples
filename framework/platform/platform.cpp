@@ -116,6 +116,12 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 		return ExitCode::Close;
 	}
 
+	if (!app_requested())
+	{
+		LOGE("An app was not requested, can not continue");
+		return ExitCode::Help;
+	}
+
 	create_window(window_properties);
 
 	if (!window)
@@ -131,7 +137,7 @@ ExitCode Platform::main_loop()
 {
 	if (!app_requested())
 	{
-		LOGI("An app was not requested, can not continue");
+		LOGE("An app was not requested, can not continue");
 		return ExitCode::Close;
 	}
 
