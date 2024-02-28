@@ -245,14 +245,14 @@ void Platform::terminate(ExitCode code)
 
 	on_platform_close();
 
+#ifdef PLATFORM__WINDOWS
 	// Halt on all unsuccessful exit codes unless ForceClose is in use
 	if (code != ExitCode::Success && !using_plugin<::plugins::ForceClose>())
 	{
-#ifdef PLATFORM__WINDOWS
 		std::cout << "Press return to continue";
 		std::cin.get();
-#endif
 	}
+#endif
 }
 
 void Platform::close()
