@@ -20,11 +20,11 @@
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_sample)
-    set(options NO_SHADERS)  
+    set(options NO_SHADERS)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION SPIRV_VERSION)
     set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})    
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     set(options NO_SHADERS)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION SPIRV_VERSION)
@@ -62,7 +62,7 @@ function(add_sample)
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
         DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
+        TAGS
             ${TARGET_TAGS}
         FILES
             ${SRC_FILES}
@@ -110,7 +110,7 @@ function(vkb_add_test)
 endfunction()
 
 function(add_project)
-    set(options)  
+    set(options)
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION SPIRV_VERSION)
     set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
@@ -127,37 +127,16 @@ function(add_project)
 
     message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - BUILD")
 
-    set(TARGET_DIR ${CMAKE_SOURCE_DIR})
-
     # create project (object target - reused by app target)
     project(${TARGET_ID} LANGUAGES C CXX)
 
     source_group("\\" FILES ${TARGET_FILES})
 
-    # Add shaders to project group
-    if (TARGET_SHADERS_GLSL)
-        list(APPEND SOURCE_SHADER_FILES)
-        foreach(GLSL_FILE ${TARGET_SHADERS_GLSL})
-            list(APPEND SOURCE_SHADER_FILES "${TARGET_DIR}/shaders/${GLSL_FILE}")
-        endforeach()   
+    if(${TARGET_TYPE} STREQUAL "Sample")
+        add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES})
+    elseif(${TARGET_TYPE} STREQUAL "Test")
+        add_library(${PROJECT_NAME} STATIC ${TARGET_FILES})
     endif()
-
-    if (TARGET_SHADERS_HLSL)
-        list(APPEND SOURCE_SHADER_FILES)
-        foreach(HLSL_FILE ${TARGET_SHADERS_HLSL})
-            list(APPEND SOURCE_SHADER_FILES "${TARGET_DIR}/shaders/${HLSL_FILE}")
-        endforeach()   
-    endif()
-    
-    if (SOURCE_SHADER_FILES)
-        source_group("\\Shaders" FILES ${SOURCE_SHADER_FILES})
-    endif()
-
-if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SOURCE_SHADER_FILES})
-elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SOURCE_SHADER_FILES})
-endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # # inherit include directories from framework target
@@ -169,7 +148,7 @@ endif()
         target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
-    # capitalise the first letter of the category  (performance -> Performance) 
+    # capitalise the first letter of the category  (performance -> Performance)
     string(SUBSTRING ${TARGET_CATEGORY} 0 1 FIRST_LETTER)
     string(TOUPPER ${FIRST_LETTER} FIRST_LETTER)
     string(REGEX REPLACE "^.(.*)" "${FIRST_LETTER}\\1" CATEGORY "${TARGET_CATEGORY}")
@@ -177,7 +156,7 @@ endif()
     if(${TARGET_TYPE} STREQUAL "Sample")
         # set sample properties
         set_target_properties(${PROJECT_NAME}
-            PROPERTIES 
+            PROPERTIES
                 SAMPLE_CATEGORY ${TARGET_CATEGORY}
                 SAMPLE_AUTHOR ${TARGET_AUTHOR}
                 SAMPLE_NAME ${TARGET_NAME}

@@ -80,7 +80,7 @@ set(COMMON_FILES
     common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
-    common/glm_common.h 
+    common/glm_common.h
     common/resource_caching.h
     common/logging.h
     common/helpers.h
@@ -389,7 +389,7 @@ set(LINUX_D2D_FILES
     platform/unix/direct_window.h
     # Source Files
     platform/unix/unix_d2d_platform.cpp
-    platform/unix/direct_window.cpp) 
+    platform/unix/direct_window.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
@@ -456,6 +456,14 @@ endif()
 #NB: switch this to shared library and things stop working. (there is likely two copies of volk somewhere.
 add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# Compile common shaders
+compile_shaders(
+    ID ${PROJECT_NAME}
+    SHADER_FILES_GLSL
+        "imgui.vert"
+        "imgui.frag"
+)
 
 # compiler flags based on compiler type
 if(NOT MSVC)

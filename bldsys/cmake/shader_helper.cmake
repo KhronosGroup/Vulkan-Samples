@@ -1,4 +1,24 @@
-add_custom_target(vkb__shaders)
+if (NOT DEFINED DXC_EXECUTABLE)
+    find_program(DXC_EXECUTABLE dxc HINTS $ENV{VULKAN_SDK}/bin)
+    if(NOT DXC_EXECUTABLE)
+        message(WARNING "dxc not found! Shaders with .hlsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
+    endif()
+endif()
+
+if (NOT DEFINED SPV_VALIDATOR_EXECUTABLE)
+    find_program(SPV_VALIDATOR_EXECUTABLE spirv-val HINTS $ENV{VULKAN_SDK}/bin)
+    if(NOT SPV_VALIDATOR_EXECUTABLE)
+        message(WARNING "spirv-val not found! SPIR-V validation will not be performed. Please set VULKAN_SDK to the Vulkan SDK path.")
+    endif()
+endif()
+
+if (NOT DEFINED GLSLC_EXECUTABLE)
+    find_program(GLSLC_EXECUTABLE glslc HINTS $ENV{VULKAN_SDK}/bin)
+    if(NOT GLSLC_EXECUTABLE)
+        message(WARNING "glslc not found! Shaders with .glsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
+    endif()
+endif()
+
 
 macro(get_hlsl_target_profile SHADER_FILE OUT_PROFILE)
     if(${SHADER_FILE} MATCHES ".*\\.vert$")
@@ -10,8 +30,61 @@ macro(get_hlsl_target_profile SHADER_FILE OUT_PROFILE)
     endif()
 endmacro()
 
+macro(filter_shadsers TYPE OUT_VAR)
+    set(${OUT_VAR})
+    foreach(SHADER_FILE ${ARGN})
+        # Skip header and OpenCL files
+        if(${SHADER_FILE} MATCHES ".*\\.h$" OR ${SHADER_FILE} MATCHES ".*\\.cl$")
+            continue()
+        endif()
+        list(APPEND ${OUT_VAR} "${CMAKE_SOURCE_DIR}/shaders/${SHADER_FILE}")
+    endforeach()
+
+    source_group("\\Shaders\\${TYPE}" FILES ${${OUT_VAR}})
+    target_sources(${TARGET_ID} PRIVATE ${${OUT_VAR}})
+endmacro()
+
+macro(compile_shader TYPE SHADER_FILE)
+    set(SHADER_BUILD_DIR "${CMAKE_BINARY_DIR}/shaders")
+    set(SHADER_SOURCE_DIR "${CMAKE_SOURCE_DIR}/shaders")
+
+    file(RELATIVE_PATH SHADER_FILE_REL "${CMAKE_SOURCE_DIR}/shaders" ${SHADER_FILE})
+    set(SHADER_FILE_SPV "${SHADER_BUILD_DIR}/${SHADER_FILE_REL}.spv")
+    set(STORED_SHADER_FILE_SPV "${SHADER_SOURCE_DIR}/${SHADER_FILE_REL}.spv")
+
+    get_filename_component(SHADER_FILE_DIR ${SHADER_FILE_SPV} DIRECTORY)
+    file(MAKE_DIRECTORY ${SHADER_FILE_DIR})
+
+    if (${TYPE} STREQUAL "GLSL")
+        add_custom_command(
+            OUTPUT ${SHADER_FILE_SPV}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
+            COMMAND ${GLSLC_EXECUTABLE} -o "${SHADER_FILE_SPV}" --target-spv=spv${TARGET_SPIRV_VERSION} ${SHADER_FILE}
+            COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
+            COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}" || true
+            DEPENDS ${SHADER_FILE}
+            COMMENT "Compiling GLSL ${SHADER_FILE_REL} to SPIR-V"
+            VERBATIM)
+    elseif(${TYPE} STREQUAL "HLSL")
+        get_hlsl_target_profile(${SHADER_FILE} SHADER_PROFILE)
+        add_custom_command(
+            OUTPUT ${SHADER_FILE_SPV}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
+            COMMAND ${DXC_EXECUTABLE} -spirv -fspv-target-env=vulkan1.3 -E main -T ${SHADER_PROFILE} -Fo "${SHADER_FILE_SPV}" ${SHADER_FILE}
+            COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
+            COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}" || true
+            DEPENDS ${SHADER_FILE}
+            COMMENT "Compiling HLSL ${SHADER_FILE_REL} to SPIR-V"
+            VERBATIM)
+    else()
+        message(FATAL_ERROR "Unknown shader type ${TYPE}")
+    endif()
+    source_group("Shaders\\${TYPE}\\Compiled" FILES ${SHADER_FILE_SPV})
+    target_sources(${TARGET_ID} PRIVATE ${SHADER_FILE_SPV})
+endmacro()
+
 function(compile_shaders)
-    set(options)  
+    set(options)
     set(oneValueArgs ID SPIRV_VERSION)
     set(multiValueArgs SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
@@ -21,84 +94,19 @@ function(compile_shaders)
         set(TARGET_SPIRV_VERSION "1.0")
     endif()
 
-    find_program(SPV_VALIDATOR_EXECUTABLE spirv-val HINTS $ENV{VULKAN_SDK}/bin)
-    if(NOT SPV_VALIDATOR_EXECUTABLE)
-        message(WARNING "spirv-val not found! SPIR-V validation will not be performed. Please set VULKAN_SDK to the Vulkan SDK path.")
-    endif()
-
-    find_program(GLSLC_EXECUTABLE glslc HINTS $ENV{VULKAN_SDK}/bin)
-    if(NOT GLSLC_EXECUTABLE)
-        message(WARNING "glslc not found! Shaders with .glsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
-    endif()
-
-    set(SHADER_DIR "${CMAKE_BINARY_DIR}/shaders")
-
-    set(SHADER_FILES_SPV)
-
+    filter_shadsers(GLSL SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
     # Compile GLSL shaders to SPIR-V
     if (GLSLC_EXECUTABLE)
-        foreach(SHADER_FILE_GLSL ${TARGET_SHADER_FILES_GLSL})
-            # Skip header and OpenCL files
-            if(${SHADER_FILE_GLSL} MATCHES ".*\\.h$" OR ${SHADER_FILE_GLSL} MATCHES ".*\\.cl$")
-                continue()
-            endif()
-
-            set(SHADER_FILE_SPV "${SHADER_DIR}/${SHADER_FILE_GLSL}.spv")
-            set(STORED_SHADER_FILE_SPV "${CMAKE_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}.spv")
-
-            get_filename_component(SHADER_FILE_DIR ${SHADER_FILE_SPV} DIRECTORY)
-            file(MAKE_DIRECTORY ${SHADER_FILE_DIR})
-
-            add_custom_command(
-                OUTPUT ${SHADER_FILE_SPV}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
-                COMMAND ${GLSLC_EXECUTABLE} -o "${SHADER_FILE_SPV}" --target-spv=spv${TARGET_SPIRV_VERSION} ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
-                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
-                COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}" || true
-                DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}
-                COMMENT "Compiling ${SHADER_FILE_GLSL} to SPIR-V"
-                VERBATIM)
-
-            list(APPEND SHADER_FILES_SPV ${SHADER_FILE_SPV})
+        foreach(SHADER_FILE ${SHADER_FILES_GLSL})
+            compile_shader(GLSL ${SHADER_FILE})
         endforeach()
-    endif()
-
-    find_program(DXC_EXECUTABLE dxc HINTS $ENV{VULKAN_SDK}/bin)
-    if(NOT DXC_EXECUTABLE)
-        message(WARNING "dxc not found! Shaders with .hlsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
     endif()
 
     # Compile HLSL shaders to SPIR-V
+    filter_shadsers(HLSL SHADER_FILES_HLSL ${TARGET_SHADER_FILES_HLSL})
     if (DXC_EXECUTABLE)
-        foreach(SHADER_FILE_HLSL ${TARGET_SHADER_FILES_HLSL})
-            # Skip header and OpenCL files
-            if(${SHADER_FILE_HLSL} MATCHES ".*\\.h$" OR ${SHADER_FILE_HLSL} MATCHES ".*\\.cl$")
-                continue()
-            endif()
-
-            set(SHADER_FILE_SPV "${SHADER_DIR}/${SHADER_FILE_HLSL}.spv")
-            set(STORED_SHADER_FILE_SPV "${CMAKE_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}.spv")
-
-            get_filename_component(SHADER_FILE_DIR ${SHADER_FILE_SPV} DIRECTORY)
-            file(MAKE_DIRECTORY ${SHADER_FILE_DIR})
-
-            get_hlsl_target_profile(${SHADER_FILE_HLSL} SHADER_PROFILE)
-
-            add_custom_command(
-                OUTPUT ${SHADER_FILE_SPV}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
-                COMMAND ${DXC_EXECUTABLE} -spirv -fspv-target-env=vulkan1.3 -E main -T ${SHADER_PROFILE} -Fo "${SHADER_FILE_SPV}" ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
-                COMMAND ${CMAKE_COMMAND} -E copy "${SHADER_FILE_SPV}" "${STORED_SHADER_FILE_SPV}"
-                COMMAND ${SPV_VALIDATOR_EXECUTABLE} "${SHADER_FILE_SPV}" || true
-                DEPENDS ${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}
-                COMMENT "Compiling ${SHADER_FILE_HLSL} to SPIR-V"
-                VERBATIM)
-
-            list(APPEND SHADER_FILES_SPV ${SHADER_FILE_SPV})
+        foreach(SHADER_FILE ${SHADER_FILES_HLSL})
+            compile_shader(HLSL ${SHADER_FILE})
         endforeach()
     endif()
-
-    add_custom_target(${TARGET_ID}_shaders DEPENDS ${SHADER_FILES_SPV})
-    add_dependencies(${TARGET_ID} ${TARGET_ID}_shaders)
-    add_dependencies(vkb__shaders ${TARGET_ID}_shaders)
 endfunction()
