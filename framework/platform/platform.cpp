@@ -248,7 +248,7 @@ void Platform::terminate(ExitCode code)
 	// Halt on all unsuccessful exit codes unless ForceClose is in use
 	if (code != ExitCode::Success && !using_plugin<::plugins::ForceClose>())
 	{
-#if !(defined PLATFORM__ANDROID || defined PLATFORM__LINUX)
+#ifdef PLATFORM__WINDOWS
 		std::cout << "Press return to continue";
 		std::cin.get();
 #endif
