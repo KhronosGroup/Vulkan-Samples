@@ -80,10 +80,6 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 	// Process command line arguments
 	if (!parser->parse(associate_plugins(plugins)))
 	{
-		for (auto &help : parser->help())
-		{
-			LOGI(help);
-		}
 		return ExitCode::Help;
 	}
 
@@ -123,10 +119,6 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 	if (!app_requested())
 	{
 		LOGE("An app was not requested, can not continue");
-		for (auto &help : parser->help())
-		{
-			LOGI(help);
-		}
 		return ExitCode::Help;
 	}
 
