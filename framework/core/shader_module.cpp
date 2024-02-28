@@ -90,7 +90,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		throw std::runtime_error("Entry point must be specified when compiling from GLSL source");
 	}
 
 	if (glsl_source.get_type() == ShaderSource::Type::Source)
@@ -100,7 +100,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 		// Check if application is passing in GLSL source code to compile to SPIR-V
 		if (source.empty())
 		{
-			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+			throw std::runtime_error("GLSL source is empty");
 		}
 
 		// Precompile source into the final spirv bytecode
@@ -126,7 +126,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	// Reflect all shader resources
 	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		throw std::runtime_error("Failed to reflect shader resources");
 	}
 
 	// Generate a unique id, determined by source and variant
@@ -288,9 +288,11 @@ ShaderSource::ShaderSource(const std::string &filename) :
 		LOGI("Loading precompiled shader: {}", filename + ".spv");
 		auto buffer = fs::read_shader_binary(filename + ".spv");
 		spirv       = {reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data() + buffer.size())};
+		type        = ShaderSource::Type::Spirv;
 	}
 	else
 	{
+		LOGI("Precompiled shader was not found: {}", filename + ".spv");
 		source = fs::read_shader(filename);
 	}
 

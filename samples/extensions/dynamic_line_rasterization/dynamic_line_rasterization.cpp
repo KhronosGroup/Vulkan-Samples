@@ -335,13 +335,15 @@ void DynamicLineRasterization::draw()
 
 void DynamicLineRasterization::render(float delta_time)
 {
-	if (!prepared)
+	if (!prepared) {
 		return;
+}
 
 	draw();
 
-	if (camera.updated)
+	if (camera.updated) {
 		update_uniform_buffers();
+}
 }
 
 void DynamicLineRasterization::build_command_buffers()
@@ -456,8 +458,9 @@ void DynamicLineRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 void DynamicLineRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	auto build_command_buffers_when = [this](bool drawer_action) {
-		if (drawer_action)
+		if (drawer_action) {
 			rebuild_command_buffers();
+}
 	};
 
 	auto uint16_to_hex_string = [](const char *caption, uint16_t value) {
@@ -487,8 +490,9 @@ void DynamicLineRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 				rebuild_command_buffers();
 			}
 			ImGui::PopID();
-			if (i % 8 != 7)
+			if (i % 8 != 7) {
 				ImGui::SameLine();
+}
 		}
 	}
 }
@@ -496,9 +500,11 @@ void DynamicLineRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 uint16_t DynamicLineRasterization::array_to_uint16(const std::array<bool, 16> &array)
 {
 	uint16_t result = 0;
-	for (int i = 0; i < 16; ++i)
-		if (array[i])
+	for (int i = 0; i < 16; ++i) {
+		if (array[i]) {
 			result |= (1 << i);
+}
+}
 	return result;
 }
 

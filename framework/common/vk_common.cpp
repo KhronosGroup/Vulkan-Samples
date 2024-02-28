@@ -186,8 +186,9 @@ VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::ve
 	{
 		VkFormatProperties properties;
 		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
-		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT) {
 			return format;
+}
 	}
 
 	throw std::runtime_error("No suitable blendable format could be determined");

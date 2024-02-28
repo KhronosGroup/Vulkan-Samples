@@ -132,11 +132,13 @@ MobileNerf::~MobileNerf()
 			vkDestroyPipeline(device_ptr, model.pipeline_first_pass, nullptr);
 		}
 
-		for (auto &weights_buffer : weights_buffers)
+		for (auto &weights_buffer : weights_buffers) {
 			weights_buffer.reset();
+}
 
-		for (auto &uniform_buffer : uniform_buffers)
+		for (auto &uniform_buffer : uniform_buffers) {
 			uniform_buffer.reset();
+}
 
 		vkDestroyPipelineLayout(device_ptr, pipeline_first_pass_layout, nullptr);
 		vkDestroyDescriptorSetLayout(device_ptr, descriptor_set_first_pass_layout, nullptr);
@@ -259,10 +261,11 @@ void MobileNerf::read_json_map()
 	asset_map                = raw_asset_map[target_model];
 
 	// Load combo models or a single model
-	if (!asset_map["combo"].is_null())
+	if (!asset_map["combo"].is_null()) {
 		combo_mode = asset_map["combo"].get<bool>();
-	else
+	} else {
 		combo_mode = false;
+}
 
 	if (combo_mode)
 	{
@@ -427,7 +430,7 @@ bool MobileNerf::prepare(const vkb::ApplicationOptions &options)
 	camera.set_position(camera_pos);
 	camera_set_look_at(camera, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.01f, 256.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.01f, 256.0f);
 
 	int models_entry = 0;
 
@@ -746,7 +749,7 @@ void MobileNerf::build_command_buffers_baseline()
 		// First sub pass
 		// Fills the attachments
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		const auto scissor  = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
@@ -807,10 +810,11 @@ void MobileNerf::load_scene(int model_index, int sub_model_index, int models_ent
 	{
 		std::string inputfile(model_path[model_index] + "shape" + std::to_string(sub_model_index));
 
-		if (total_sub_sub_model > 1)
+		if (total_sub_sub_model > 1) {
 			inputfile += ("_" + std::to_string(sub_model) + ".gltf");
-		else
+		} else {
 			inputfile += (".gltf");
+}
 
 		LOGI("Parsing nerf obj {}", inputfile);
 
@@ -850,9 +854,9 @@ void MobileNerf::load_scene(int model_index, int sub_model_index, int models_ent
 						memcpy(&tempBuffer[0], ptr, sz);
 						for (size_t i = 0; i < nTriangles; ++i)
 						{
-							model.indices[triangle_start_index + i] = {vertex_start_index + uint32_t(tempBuffer[3 * i]),
-							                                           vertex_start_index + uint32_t(tempBuffer[3 * i + 1]),
-							                                           vertex_start_index + uint32_t(tempBuffer[3 * i + 2])};
+							model.indices[triangle_start_index + i] = {vertex_start_index + static_cast<uint32_t>(tempBuffer[3 * i]),
+							                                           vertex_start_index + static_cast<uint32_t>(tempBuffer[3 * i + 1]),
+							                                           vertex_start_index + static_cast<uint32_t>(tempBuffer[3 * i + 2])};
 						}
 					}
 				}
@@ -867,11 +871,11 @@ void MobileNerf::create_descriptor_pool()
 	{
 		std::vector<VkDescriptorPoolSize> pool_sizes = {
 		    // First Pass
-		    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * (uint32_t) models.size()},
-		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * (uint32_t) models.size()},
+		    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * static_cast<uint32_t>(models.size())},
+		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(models.size())},
 		    // Second Pass
-		    {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 3 * (uint32_t) framebuffers.size()},
-		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * (uint32_t) framebuffers.size()}};
+		    {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 3 * static_cast<uint32_t>(framebuffers.size())},
+		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(framebuffers.size())}};
 
 		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, models.size() + framebuffers.size());
 		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
@@ -880,9 +884,9 @@ void MobileNerf::create_descriptor_pool()
 	{
 		std::vector<VkDescriptorPoolSize> pool_sizes = {
 		    // First Pass
-		    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * (uint32_t) models.size() * (uint32_t) framebuffers.size()},
-		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * (uint32_t) models.size() * (uint32_t) framebuffers.size()},
-		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * (uint32_t) models.size() * (uint32_t) framebuffers.size()}};
+		    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * static_cast<uint32_t>(models.size()) * static_cast<uint32_t>(framebuffers.size())},
+		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(models.size()) * static_cast<uint32_t>(framebuffers.size())},
+		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(models.size()) * static_cast<uint32_t>(framebuffers.size())}};
 
 		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, models.size() * framebuffers.size());
 		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
@@ -1013,13 +1017,13 @@ void MobileNerf::create_descriptor_sets_baseline()
 		attachment_input_descriptors[2].imageView   = frameAttachments[i].feature_2.view;
 		attachment_input_descriptors[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		// TODO: add in descriptor sets for MLP weights
+		// TODO(tomatkinson): add in descriptor sets for MLP weights
 		VkDescriptorBufferInfo weights_buffer_descriptor = create_descriptor(**models[0].weights_buffer_ref);
 		VkWriteDescriptorSet   texture_input_write_0     = vkb::initializers::write_descriptor_set(descriptor_set_baseline[i], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &attachment_input_descriptors[0]);
 		VkWriteDescriptorSet   texture_input_write_1     = vkb::initializers::write_descriptor_set(descriptor_set_baseline[i], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, &attachment_input_descriptors[1]);
 		VkWriteDescriptorSet   texture_input_write_2     = vkb::initializers::write_descriptor_set(descriptor_set_baseline[i], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 2, &attachment_input_descriptors[2]);
 
-		// TODO: add in descriptor sets for MLP weights
+		// TODO(tomatkinson): add in descriptor sets for MLP weights
 		VkWriteDescriptorSet weights_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set_baseline[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, &weights_buffer_descriptor);        // UBO
 
 		std::vector<VkWriteDescriptorSet> write_descriptor_sets = {

@@ -29,4 +29,5 @@ add_sample(
         "msaa/base.vert"
         "msaa/base.frag"
         "postprocessing/postprocessing.vert"
-        "postprocessing/outline.frag")
+        "postprocessing/outline.frag"
+        "postprocessing/outline_ms_depth.frag")

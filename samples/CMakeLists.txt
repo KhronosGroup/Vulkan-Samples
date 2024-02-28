@@ -160,3 +160,12 @@ endforeach ()
 
 # Make sample list visible parent scope (required by vulkan_samples project)
 set(TOTAL_SAMPLE_ID_LIST ${ORDERED_LIST} PARENT_SCOPE)
+
+# Compile common shaders
+
+compile_shaders(
+    ID vkb__shaders
+    SHADER_FILES_GLSL
+        "imgui.vert"
+        "imgui.frag"
+)

@@ -18,7 +18,7 @@
 
 precision highp float;
 
-layout(set = 0, binding = 1) uniform sampler2D depth_sampler;
+layout(set = 0, binding = 1) uniform sampler2DMS ms_depth_sampler;
 
 layout(set = 0, binding = 2) uniform sampler2D color_sampler;
 
@@ -41,9 +41,7 @@ float linearizeDepth(float depth, float near, float far)
 float getDepth(ivec2 offset)
 {
 	float depth;
-
-	depth = texelFetch(depth_sampler, ivec2(gl_FragCoord.xy) + offset, 0).r;
-
+	depth = texelFetch(ms_depth_sampler, ivec2(gl_FragCoord.xy) + offset, 0).r;
 	return linearizeDepth(depth, postprocessing_uniform.near_far.x, postprocessing_uniform.near_far.y);
 }
 

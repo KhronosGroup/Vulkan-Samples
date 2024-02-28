@@ -348,8 +348,9 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 		// index_data is unsigned char type, casting to uint32_t* will give proper value
 		meshlet.indices[meshlet.index_count] = *(reinterpret_cast<uint32_t *>(index_data.data()) + i);
 
-		if (vertices.insert(meshlet.indices[meshlet.index_count]).second)
+		if (vertices.insert(meshlet.indices[meshlet.index_count]).second) {
 			++meshlet.vertex_count;
+}
 
 		meshlet.index_count++;
 		triangle_check = triangle_check < 3 ? ++triangle_check : 1;
@@ -357,8 +358,9 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 		// 96 because for each traingle we draw a line in a mesh shader sample, 32 triangles/lines per meshlet = 64 vertices on output
 		if (meshlet.vertex_count == 64 || meshlet.index_count == 96 || i == submesh->vertex_indices - 1)
 		{
-			if (i == submesh->vertex_indices - 1)
+			if (i == submesh->vertex_indices - 1) {
 				assert(triangle_check == 3);
+}
 
 			uint32_t counter = 0;
 			for (auto v : vertices)
@@ -1239,7 +1241,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			prepare_meshlets(meshlets, submesh, index_data);
 
 			// vertex_indices and index_buffer are used for meshlets now
-			submesh->vertex_indices = (uint32_t) meshlets.size();
+			submesh->vertex_indices = static_cast<uint32_t>(meshlets.size());
 
 			core::Buffer stage_buffer{device,
 			                          meshlets.size() * sizeof(Meshlet),

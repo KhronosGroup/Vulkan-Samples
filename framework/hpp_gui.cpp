@@ -690,8 +690,9 @@ bool HPPGui::is_debug_view_active() const
 
 HPPGui::StatsView::StatsView(const vkb::stats::HPPStats *stats)
 {
-	if (stats == nullptr)
+	if (stats == nullptr) {
 		return;
+}
 
 	// Request graph data information for each stat and record it in graph_map
 	const std::set<StatIndex> &indices = stats->get_requested_stats();

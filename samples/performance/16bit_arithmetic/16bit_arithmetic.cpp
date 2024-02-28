@@ -151,12 +151,15 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	if (supported_extensions)
 	{
 		vkb::ShaderVariant variant;
-		if (supports_push_constant16)
-		{
-			variant.add_define("PUSH_CONSTANT_16", "1");
-		}
 
 		const char *shader = "16bit_arithmetic/compute_buffer_fp16.comp";
+		if (!supports_push_constant16)
+		{
+			LOGW("16-bit push constants are not supported, falling back to supported shader.");
+			LOGW("To see the effect of 16-bit arithmetic please use a different device.");
+			shader = "16bit_arithmetic/compute_buffer.comp";
+		}
+
 		auto       &module_fp16 =
 		    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
 		                                                      vkb::ShaderSource{shader}, variant);

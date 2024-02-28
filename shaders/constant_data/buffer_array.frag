@@ -37,6 +37,9 @@ struct MVPUniform
 #endif
 };
 
+// TODO: fix me
+#define SCENE_MESH_COUNT 100
+
 layout(set = 0, binding = 1) buffer MVPUniformArray
 {
 	MVPUniform uniform_data[SCENE_MESH_COUNT];

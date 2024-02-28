@@ -1,11 +1,5 @@
 add_custom_target(vkb__shaders)
 
-# TODO: Shaders to fix
-set(SHADERS_TO_FIX
-    buffer_array.frag
-    buffer_array.vert
-)
-
 macro(get_hlsl_target_profile SHADER_FILE OUT_PROFILE)
     if(${SHADER_FILE} MATCHES ".*\\.vert$")
         set(${OUT_PROFILE} "vs_6_0")
@@ -34,7 +28,7 @@ function(compile_shaders)
 
     find_program(GLSLC_EXECUTABLE glslc HINTS $ENV{VULKAN_SDK}/bin)
     if(NOT GLSLC_EXECUTABLE)
-        message(FATAL_ERROR "glslc not found! Shaders with .glsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
+        message(WARNING "glslc not found! Shaders with .glsl extension will not be compiled to SPIR-V. Please set VULKAN_SDK to the Vulkan SDK path.")
     endif()
 
     set(SHADER_DIR "${CMAKE_BINARY_DIR}/shaders")
@@ -46,19 +40,6 @@ function(compile_shaders)
         foreach(SHADER_FILE_GLSL ${TARGET_SHADER_FILES_GLSL})
             # Skip header and OpenCL files
             if(${SHADER_FILE_GLSL} MATCHES ".*\\.h$" OR ${SHADER_FILE_GLSL} MATCHES ".*\\.cl$")
-                continue()
-            endif()
-
-            # TODO: Remove this when all shaders are fixed
-            set(SKIP 0)
-            foreach(SHADER_TO_FIX ${SHADERS_TO_FIX})
-                if(${SHADER_FILE_GLSL} MATCHES ".*\\${SHADER_TO_FIX}$")
-                    message(WARNING "Shader ${SHADER_FILE_GLSL} needs to be fixed")
-                    set(SKIP 1)
-                endif()
-            endforeach()
-
-            if(SKIP)
                 continue()
             endif()
 

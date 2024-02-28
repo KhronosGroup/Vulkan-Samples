@@ -122,6 +122,10 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	postprocessing_pipeline->add_pass()
 	    .add_subpass(vkb::ShaderSource("postprocessing/outline.frag"));
 
+	postprocessing_pipeline_with_ms_depth = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), std::move(postprocessing_vs));
+	postprocessing_pipeline_with_ms_depth->add_pass()
+		.add_subpass(vkb::ShaderSource("postprocessing/outline_ms_depth.frag"));
+
 	update_pipelines();
 
 	stats->request_stats({vkb::StatIndex::frame_times,
@@ -578,10 +582,11 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	auto        depth_attachment   = (msaa_enabled && depth_writeback_resolve_supported && resolve_depth_on_writeback) ? i_depth_resolve : i_depth;
 	bool        multisampled_depth = msaa_enabled && !(depth_writeback_resolve_supported && resolve_depth_on_writeback);
 	std::string depth_sampler_name = multisampled_depth ? "ms_depth_sampler" : "depth_sampler";
+	auto target_pipeline = multisampled_depth ? postprocessing_pipeline_with_ms_depth.get() : postprocessing_pipeline.get();
 
 	glm::vec4 near_far = {camera->get_far_plane(), camera->get_near_plane(), -1.0f, -1.0f};
 
-	auto &postprocessing_pass = postprocessing_pipeline->get_pass(0);
+	auto &postprocessing_pass = target_pipeline->get_pass(0);
 	postprocessing_pass.set_uniform_data(near_far);
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
@@ -589,11 +594,6 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	postprocessing_subpass.unbind_sampled_image("depth_sampler");
 	postprocessing_subpass.unbind_sampled_image("ms_depth_sampler");
 
-	postprocessing_subpass.get_fs_variant().clear();
-	if (multisampled_depth)
-	{
-		postprocessing_subpass.get_fs_variant().add_define("MS_DEPTH", "1");
-	}
 	postprocessing_subpass
 	    .bind_sampled_image(depth_sampler_name, {depth_attachment, nullptr, nullptr, depth_writeback_resolve_supported && resolve_depth_on_writeback})
 	    .bind_sampled_image("color_sampler", i_color_resolve);
