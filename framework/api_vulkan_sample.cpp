@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -91,8 +91,6 @@ void ApiVulkanSample::update(float delta_time)
 		view_updated = false;
 		view_changed();
 	}
-
-	update_overlay(delta_time);
 
 	render(delta_time);
 	camera.update(delta_time);
@@ -437,24 +435,25 @@ void ApiVulkanSample::create_pipeline_cache()
 	VK_CHECK(vkCreatePipelineCache(device->get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
 }
 
-VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage);
+	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage, src_language);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
 	return shader_stage;
 }
 
-void ApiVulkanSample::update_overlay(float delta_time)
+void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() {
 			on_update_ui_overlay(gui->get_drawer());
+			additional_ui();
 		});
 
 		gui->update(delta_time);
@@ -1315,4 +1314,15 @@ void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuff
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	f(command_buffer);
 	device->flush_command_buffer(command_buffer, queue, true, signalSemaphore);
+}
+
+void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f)
+{
+	auto &cmd = device->request_command_buffer();
+	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	f(cmd);
+	cmd.end();
+	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	queue.submit(cmd, device->request_fence());
+	device->get_fence_pool().wait();
 }

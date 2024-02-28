@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,6 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/instance.h"
-#include "gui.h"
 #include "platform/application.h"
 #include "rendering/render_context.h"
 #include "rendering/render_pipeline.h"
@@ -128,9 +127,22 @@ class VulkanSample : public Application
 	 */
 	void update(float delta_time) override;
 
+	/**
+	 * @brief Main loop sample overlay events
+	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
+	 */
+	virtual void update_overlay(
+	    float delta_time, const std::function<void()> &additional_ui = []() {}) override;
+
 	bool resize(uint32_t width, uint32_t height) override;
 
 	void input_event(const InputEvent &input_event) override;
+
+	/**
+	 * @brief Returns the drawer object for the sample
+	 */
+	vkb::Drawer *get_drawer() override;
 
 	void finish() override;
 

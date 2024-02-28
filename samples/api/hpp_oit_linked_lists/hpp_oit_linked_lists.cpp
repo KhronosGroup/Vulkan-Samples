@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA
+/* Copyright (c) 2023-2024, NVIDIA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -159,7 +159,7 @@ void HPPOITLinkedLists::build_command_buffers()
 	}
 }
 
-void HPPOITLinkedLists::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPOITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	drawer.checkbox("Sort fragments", &sort_fragments);
 	drawer.checkbox("Camera auto-rotation", &camera_auto_rotation);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -116,6 +116,12 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 		return ExitCode::Close;
 	}
 
+	if (!app_requested())
+	{
+		LOGE("An app was not requested, can not continue");
+		return ExitCode::Help;
+	}
+
 	create_window(window_properties);
 
 	if (!window)
@@ -131,7 +137,7 @@ ExitCode Platform::main_loop()
 {
 	if (!app_requested())
 	{
-		LOGI("An app was not requested, can not continue");
+		LOGE("An app was not requested, can not continue");
 		return ExitCode::Close;
 	}
 
@@ -198,6 +204,9 @@ void Platform::update()
 			delta_time = simulation_frame_time;
 		}
 
+		active_app->update_overlay(delta_time, [=]() {
+			on_update_ui_overlay(*active_app->get_drawer());
+		});
 		active_app->update(delta_time);
 
 		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
@@ -446,6 +455,11 @@ void Platform::on_app_close(const std::string &app_id)
 void Platform::on_platform_close()
 {
 	HOOK(Hook::OnPlatformClose, on_platform_close());
+}
+
+void Platform::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	HOOK(Hook::OnUpdateUi, on_update_ui_overlay(drawer));
 }
 
 #undef HOOK

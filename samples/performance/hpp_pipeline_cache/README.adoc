@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2022-2023, The Khronos Group
+- Copyright (c) 2022-2024, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -48,7 +48,7 @@ To create a graphics pipeline in Vulkan, using Vulkan-Hpp, the following objects
  ** Depth Stencil
  ** Color Blend
 
-image::../pipeline_cache/images/graphics_pipeline_dependencies.png[Graphics Pipeline Dependencies]
+image::samples/performance/pipeline_cache/images/graphics_pipeline_dependencies.png[Graphics Pipeline Dependencies]
 
 Alternatively for a compute pipeline in Vulkan, using Vulkan-Hpp, you need:
 
@@ -57,7 +57,7 @@ Alternatively for a compute pipeline in Vulkan, using Vulkan-Hpp, you need:
  ** Push Constants
  ** Descriptor Set Layouts
 
-image::../pipeline_cache/images/compute_pipeline_dependencies.png[Compute Pipeline Dependencies]
+image::samples/performance/pipeline_cache/images/compute_pipeline_dependencies.png[Compute Pipeline Dependencies]
 
 == Vulkan Pipeline Cache
 
@@ -101,12 +101,12 @@ ____
 
 Below is a screenshot of the sample on a phone with Mali G76 GPU:
 
-image::../pipeline_cache/images/pipeline_cache_enable.jpg[Pipeline Cache Enable]
+image::samples/performance/pipeline_cache/images/pipeline_cache_enable.jpg[Pipeline Cache Enable]
 
 Pipeline cache is enabled and Sponza is rendered at 60 FPS when the existing pipelines are destroyed.
 Pipeline re-creation takes 24.4 ms thanks to the pipeline cache.
 
-image::../pipeline_cache/images/pipeline_cache_disable.jpg[Pipeline Cache Disable]
+image::samples/performance/pipeline_cache/images/pipeline_cache_disable.jpg[Pipeline Cache Disable]
 
 If we disable the pipeline cache, re-creating the pipelines takes 50.4 ms, more than double the previous time.
 Building pipelines dynamically without a pipeline cache can result in a sudden framerate drop.
