@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -87,8 +87,6 @@ void HPPApiVulkanSample::update(float delta_time)
 		view_updated = false;
 		view_changed();
 	}
-
-	update_overlay(delta_time);
 
 	render(delta_time);
 	camera.update(delta_time);
@@ -408,18 +406,18 @@ void HPPApiVulkanSample::create_pipeline_cache()
 	pipeline_cache = get_device()->get_handle().createPipelineCache({});
 }
 
-vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage)
+vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
-	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device()->get_handle(), stage));
+	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device()->get_handle(), stage, src_language));
 	assert(shader_modules.back());
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
-void HPPApiVulkanSample::update_overlay(float delta_time)
+void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() { on_update_ui_overlay(gui->get_drawer()); });
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() { on_update_ui_overlay(gui->get_drawer()); additional_ui(); });
 
 		gui->update(delta_time);
 
@@ -748,7 +746,7 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	render_pass = get_device()->get_handle().createRenderPass(render_pass_create_info);
 }
 
-void HPPApiVulkanSample::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 {}
 
 vk::Sampler HPPApiVulkanSample::create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count)
