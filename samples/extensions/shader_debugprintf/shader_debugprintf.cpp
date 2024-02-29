@@ -404,12 +404,15 @@ void ShaderDebugPrintf::create_instance()
 	}
 
 	std::vector<const char *> enabled_extensions;
+	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+
 	for (const char *extension_name : window->get_required_surface_extensions())
 	{
 		enabled_extensions.push_back(extension_name);
 	}
 
 	enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 	std::vector<VkValidationFeatureEnableEXT>  validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
 	std::vector<VkValidationFeatureDisableEXT> disables{};
