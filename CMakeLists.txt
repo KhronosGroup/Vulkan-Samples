@@ -33,23 +33,41 @@ cmake_minimum_required(VERSION 3.16)
 
 include(FindVulkan)
 
-if (NOT Vulkan_FOUND)
-    find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/libs/vulkan)
-    if (Vulkan_LIBRARY)
-        set(Vulkan_FOUND ON)
-        message("Using bundled Vulkan library version")
+# If CMake has the FindVulkan module and it works, use it.
+find_package(Vulkan QUIET)
+
+if(DEFINED ENV{VULKAN_SDK})
+    message("Found VULKAN_SDK under $ENV{VULKAN_SDK}")
+    if(WIN32)
+        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            find_program(Vulkan_dxc_EXECUTABLE
+                        NAMES dxc
+                        HINTS
+                        "$ENV{VULKAN_SDK}/Bin"
+                        )
+        elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+            find_program(Vulkan_dxc_EXECUTABLE
+                        NAMES dxc
+                        HINTS
+                        "$ENV{VULKAN_SDK}/Bin32"
+                        )
+        endif()
+    else()
+        find_program(Vulkan_dxc_EXECUTABLE
+                    NAMES dxc
+                    HINTS
+                    "$ENV{VULKAN_SDK}/bin"
+                    )
     endif()
+    if(DEFINED Vulkan_dxc_EXECUTABLE)
+        message("Found DirectX Shader Compiler under ${Vulkan_dxc_EXECUTABLE}")
+        set(DXC_EXECUTABLE ${Vulkan_dxc_EXECUTABLE})
+    elseif()
+        message("Couldn't find DirectX Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_dxc_EXECUTABLE env variable")
+    endif()
+else()
+    message("VULKAN_SDK path not found, HLSL shaders won't be compiled")
 endif()
-
-if (NOT Vulkan_dxc_EXECUTABLE)
-       if(WIN32)
-            set(Vulkan_dxc_EXECUTABLE ${Vulkan_INCLUDE_DIR}/../Bin/dxc.exe)
-       elseif(UNIX OR ANDROID)
-            set(Vulkan_dxc_EXECUTABLE ${Vulkan_INCLUDE_DIR}/../bin/dxc)
-       endif()
-    message("Setting dxc path manually")
-endif()
-
 
 # globally add VKB_DEBUG for the debug build
 add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)

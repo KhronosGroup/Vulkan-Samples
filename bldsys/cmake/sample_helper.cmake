@@ -200,19 +200,21 @@ endif()
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
 
-	compile_shaders(
-        TYPE "Test"
-        ID ${TARGET_ID}
-        CATEGORY "Tests"
-        AUTHOR " "
-        NAME ${TARGET_ID}
-        DESCRIPTION " "
-        VENDOR_TAG " "
-        LIBS test_framework
-        FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.cpp
-    )
+    if(DEFINED Vulkan_dxc_EXECUTABLE)
+        compile_shaders(
+            TYPE "Test"
+            ID ${TARGET_ID}
+            CATEGORY "Tests"
+            AUTHOR " "
+            NAME ${TARGET_ID}
+            DESCRIPTION " "
+            VENDOR_TAG " "
+            LIBS test_framework
+            FILES
+                ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.h
+                ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.cpp
+        )
+    endif()
 endfunction()
 
 function(compile_shaders)
@@ -231,15 +233,15 @@ function(compile_shaders)
             cmake_path(GET SHADER_FILE_HLSL STEM LAST_ONLY SHADER_FILE_HLSL_NAME)
 
             if(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".vert")
-                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T vs_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${DXC_EXECUTABLE} -spirv ${SHADER_FILE_HLSL} /T vs_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
             elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".frag")
-                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T ps_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${DXC_EXECUTABLE} -spirv ${SHADER_FILE_HLSL} /T ps_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
             elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rgen")
-                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${DXC_EXECUTABLE} -spirv ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
             elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rmiss")
-                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${DXC_EXECUTABLE} -spirv ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
             elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rchit")
-                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${DXC_EXECUTABLE} -spirv ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
             endif()
         endforeach()
     endif()
