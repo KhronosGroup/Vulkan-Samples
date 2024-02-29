@@ -1,0 +1,60 @@
+////
+- Copyright (c) 2024, Sascha Willems
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Shader debug Printf
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/shader_debugprintf[Khronos Vulkan samples github repository].
+endif::[]
+
+:pp: {plus}{plus}
+
+image::./images/sample.png[Sample]
+
+== Overview
+
+== Printf in a graphics debugger
+
+While displaying the printf messages directly in the application may be useful to a certain extent (low number of invocations) the most interesting use case is to use it in combination with a graphics debugger like RenderDoc.
+
+If we remove the sample's limitation to output only for the first invocation by changing `scene.vert` from:
+
+[,glsl]
+----
+// Output the vertex position using debug printf
+if (gl_VertexIndex == 0) {
+    debugPrintfEXT("Position = %v4f", outPos);
+}
+----
+
+to this:
+
+[,glsl]
+----
+debugPrintfEXT("Position = %v4f", outPos);
+----
+
+And then run the sample in RenderDoc we now get a list of all shader debug printf messages for all invocations:
+
+image::./images/renderdoc_shader_messages.png[RenderDoc]
+
+Selecting a draw call with at least one debug message on the Event browser will show a label with the no. of messages for that drawcall (e.g. 1250 msg(s)). Clicking on such a label will open the list of messages for that draw call. From here you can navigate to e.g. the mesh viewer for a given vertex (in the case of a vertex shader) or the texture view (in the case of a fragment shader).
+
+== Conclusion
+
+While not meant as a full debugging solution, using printf in a shader can help find problems that are otherwise hard to find or visualize. Used on conjunction with a proper graphics debugger like RenderDoc, shader printf is a great tool for debugging shaders.
