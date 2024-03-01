@@ -22,7 +22,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 function(add_sample)
     set(options)  
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL)
+    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})    
 
@@ -40,13 +40,15 @@ function(add_sample)
         LIBS
             ${TARGET_LIBS}
         SHADER_FILES_GLSL
-            ${TARGET_SHADER_FILES_GLSL})
+            ${TARGET_SHADER_FILES_GLSL}
+        SHADER_FILES_HLSL            
+            ${TARGET_SHADER_FILES_HLSL})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL)
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL) 
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -63,10 +65,18 @@ function(add_sample_with_tags)
     endif()
 
     # Add GLSL shader files for this sample
-    if (TARGET_SHADER_FILES_GLSL)    
+    if (TARGET_SHADER_FILES_GLSL)
         list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
         foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
             list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
+        endforeach()        
+    endif()
+
+    # Add HLSL shader files for this sample
+    if (TARGET_SHADER_FILES_HLSL)
+        list(APPEND SHADER_FILES_HLSL ${TARGET_SHADER_FILES_HLSL})
+        foreach(SHADER_FILE_HLSL ${SHADER_FILES_HLSL})
+            list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
         endforeach()        
     endif()
 
@@ -84,7 +94,9 @@ function(add_sample_with_tags)
         LIBS
             ${TARGET_LIBS}
         SHADERS_GLSL
-            ${SHADERS_GLSL})
+            ${SHADERS_GLSL}
+        SHADERS_HLSL
+            ${SHADERS_HLSL})
 
 endfunction()
 
@@ -115,7 +127,7 @@ endfunction()
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -124,7 +136,7 @@ function(add_project)
     endif()
 
     if(NOT ${VKB_${TARGET_ID}})
-        message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
+        # message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
         return()
     endif()
 
@@ -137,13 +149,16 @@ function(add_project)
 
     # Add shaders to project group
     if (SHADERS_GLSL)
-        source_group("\\Shaders" FILES ${SHADERS_GLSL})
+        source_group("\\Shaders\\glsl" FILES ${SHADERS_GLSL})
+    endif()
+    if (SHADERS_HLSL)
+        source_group("\\Shaders\\hlsl" FILES ${SHADERS_HLSL})
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
