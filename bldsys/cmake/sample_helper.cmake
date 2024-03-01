@@ -153,6 +153,8 @@ function(add_project)
     endif()
     if (SHADERS_HLSL)
         source_group("\\Shaders\\hlsl" FILES ${SHADERS_HLSL})
+        # Disable automatic compilation of HLSL shaders for MSVC
+        set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
