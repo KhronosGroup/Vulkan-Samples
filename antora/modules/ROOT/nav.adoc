@@ -19,6 +19,7 @@
 ////
 * xref:samples/README.adoc[Samples overview]
 * xref:samples/vulkan_basics.adoc[Vulkan basics]
+* xref:shaders/README.adoc[Shaders]
 * xref:framework/README.adoc[Sample framework]
 ** xref:components/README.adoc[Framework components]
 * xref:samples/api/README.adoc[Api usage samples]
