@@ -70,7 +70,7 @@ for root, dirs, files in os.walk(dir_path):
             elif(hlsl_file.find('.rgen') != -1 or
 				hlsl_file.find('.rchit') != -1 or
 				hlsl_file.find('.rmiss') != -1):
-                target='-fspv-target-env=vulkan1.2'
+                target='-fspv-target-env=vulkan1.1spirv1.4'
                 profile = 'lib_6_3'
             elif(hlsl_file.find('.mesh') != -1):
                 target='-fspv-target-env=vulkan1.2'
@@ -85,6 +85,7 @@ for root, dirs, files in os.walk(dir_path):
                 '-spirv',
                 '-T', profile,
                 '-E', 'main',
+                '-fspv-extension=SPV_KHR_ray_tracing',
                 target,
                 hlsl_file,
                 '-Fo', spv_out])
