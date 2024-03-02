@@ -51,6 +51,7 @@ for root, dirs, files in os.walk(dir_path):
         if file.endswith(".hlsl"):
             hlsl_file = os.path.join(root, file)
             spv_out = hlsl_file + ".spv"
+            spv_out = spv_out.replace('.hlsl.','.')
 
             target = ''
             profile = ''
@@ -78,7 +79,7 @@ for root, dirs, files in os.walk(dir_path):
             if(profile == ''):
                 continue;
 
-            print('Compiling %s' % (hlsl_file))
+            print('Compiling %s to %s' % (hlsl_file, spv_out))
             subprocess.check_output([
                 dxc_path,
                 '-spirv',
