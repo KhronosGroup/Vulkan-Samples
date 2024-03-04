@@ -411,7 +411,7 @@ void HlslShaders::prepare_pipelines()
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("hlsl_shaders/hlsl_shader.vert", VK_SHADER_STAGE_VERTEX_BIT, vkb::ShaderSourceLanguage::VK_HLSL);
+	shader_stages[0] = load_shader("hlsl_shaders/hlsl_shader.vert", VK_SHADER_STAGE_VERTEX_BIT, vkb::ShaderSourceLanguage::HLSL);
 	shader_stages[1] = load_hlsl_shader("hlsl_shaders/hlsl_shader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes

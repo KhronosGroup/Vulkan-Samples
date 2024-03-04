@@ -111,7 +111,7 @@ bool ShaderCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
 
 	EShMessages messages = static_cast<EShMessages>(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 
-	if (src_language == vkb::ShaderSourceLanguage::VK_HLSL)
+	if (src_language == vkb::ShaderSourceLanguage::HLSL)
 	{
 		messages = static_cast<EShMessages>(messages | EShMsgReadHlsl);
 	}
@@ -132,7 +132,7 @@ bool ShaderCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
 	{
 		shader.setEnvTarget(ShaderCompiler::env_target_language, ShaderCompiler::env_target_language_version);
 	}
-	if (src_language == vkb::ShaderSourceLanguage::VK_HLSL)
+	if (src_language == vkb::ShaderSourceLanguage::HLSL)
 	{
 		shader.setEnvInput(glslang::EShSourceHlsl, language, glslang::EShClientVulkan, 1);
 	}
