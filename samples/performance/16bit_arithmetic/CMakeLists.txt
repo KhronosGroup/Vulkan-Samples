@@ -29,4 +29,5 @@ add_sample(
                 "16bit_arithmetic/visualize.vert"
                 "16bit_arithmetic/visualize.frag"
                 "16bit_arithmetic/compute_buffer.comp"
+                "16bit_arithmetic/compute_buffer_fp16.comp"
 )

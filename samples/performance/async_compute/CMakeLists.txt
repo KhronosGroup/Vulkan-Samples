@@ -26,6 +26,9 @@ add_sample(
     NAME "Async compute"
     DESCRIPTION "Using multiple queues to achieve more parallelism on the GPU."
     SHADER_FILES_GLSL
+        "async_compute/threshold.comp"
+        "async_compute/blur_down.comp"
+        "async_compute/blur_up.comp"
         "async_compute/forward.vert"
         "async_compute/forward.frag"
         "async_compute/shadow.vert"
