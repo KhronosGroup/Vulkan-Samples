@@ -40,28 +40,27 @@ if(DEFINED ENV{VULKAN_SDK})
     message("Found VULKAN_SDK under $ENV{VULKAN_SDK}")
     if(WIN32)
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            find_program(Vulkan_dxc_EXECUTABLE
+            find_program(DXC_EXECUTABLE
                         NAMES dxc
                         HINTS
                         "$ENV{VULKAN_SDK}/Bin"
                         )
         elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-            find_program(Vulkan_dxc_EXECUTABLE
+            find_program(DXC_EXECUTABLE
                         NAMES dxc
                         HINTS
                         "$ENV{VULKAN_SDK}/Bin32"
                         )
         endif()
     else()
-        find_program(Vulkan_dxc_EXECUTABLE
+        find_program(DXC_EXECUTABLE
                     NAMES dxc
                     HINTS
                     "$ENV{VULKAN_SDK}/bin"
                     )
     endif()
-    if(DEFINED Vulkan_dxc_EXECUTABLE)
-        message("Found DirectX Shader Compiler under ${Vulkan_dxc_EXECUTABLE}")
-        set(DXC_EXECUTABLE ${Vulkan_dxc_EXECUTABLE})
+    if(DEFINED DXC_EXECUTABLE)
+        message("Found DirectX Shader Compiler under ${DXC_EXECUTABLE}")
     elseif()
         message("Couldn't find DirectX Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_dxc_EXECUTABLE env variable")
     endif()
