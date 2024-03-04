@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2021-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -68,6 +68,8 @@ This sample shows the difference between recording both render passes into a sin
 
 Below are screenshots of the sample running on a phone with a Mali G72 GPU:
 
+NOTE: Since the time of writing this tutorial, the CPU counter provider, HWCPipe, has been updated and it no longer provides CPU cycles. These may still be measured using external tools, as shown later.
+
 image::./images/no_multi_threading.png[Single Thread]
 
 Using two threads gives a 10ms frame time improvement and CPU cycles show an increase in CPU utilization:
@@ -96,7 +98,7 @@ And indeed, in debug build, which was used for profiling, frame time is decrease
 
 == Further reading
 
-xref:../command_buffer_usage/README.adoc[Command buffer usage and multi-threaded recording]
+xref:samples/performance/command_buffer_usage/README.adoc[Command buffer usage and multi-threaded recording]
 
 == Best practice summary
 

@@ -181,6 +181,19 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_
 	throw std::runtime_error("No suitable depth format could be determined");
 }
 
+VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &format_priority_list)
+{
+	for (const auto &format : format_priority_list)
+	{
+		VkFormatProperties properties;
+		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+			return format;
+	}
+
+	throw std::runtime_error("No suitable blendable format could be determined");
+}
+
 bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
 {
 	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ||
@@ -367,7 +380,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	auto                  buffer = vkb::fs::read_shader_binary(filename);
 	std::vector<uint32_t> spirv;
 
-	if (src_language != vkb::ShaderSourceLanguage::VK_SPV)
+	if (src_language == vkb::ShaderSourceLanguage::GLSL || src_language == vkb::ShaderSourceLanguage::HLSL )
 	{
 		std::string         file_ext = filename;
 		std::string         info_log;
@@ -380,10 +393,15 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 			return VK_NULL_HANDLE;
 		}
 	}
-	else
+	else if (vkb::ShaderSourceLanguage::SPV == src_language)
 	{
 		spirv = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
 		                              reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	}
+	else
+	{
+		LOGE("The format is not supported");
+		return VK_NULL_HANDLE;
 	}
 
 	VkShaderModule           shader_module;

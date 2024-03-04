@@ -78,6 +78,14 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
                                        VK_FORMAT_D16_UNORM});
 
 /**
+ * @brief Helper function to pick a blendable format from a priority ordered list
+ * @param physical_device The physical device to check the formats against
+ * @param format_priority_list List of formats in order of priority
+ * @return The selected format
+ */
+VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &format_priority_list);
+
+/**
  * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
  * @param descriptor_type Vulkan descriptor type to check.
  * @return True if type is dynamic buffer, false otherwise.
@@ -98,12 +106,12 @@ bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
  */
 int32_t get_bits_per_pixel(VkFormat format);
 
-typedef enum ShaderSourceLanguage
+enum class ShaderSourceLanguage
 {
-	VK_GLSL,
-	VK_HLSL,
-	VK_SPV,
-} ShaderSourceLanguage;
+	GLSL,
+	HLSL,
+	SPV,
+};
 
 /**
  * @brief Helper function to create a VkShaderModule
@@ -113,7 +121,7 @@ typedef enum ShaderSourceLanguage
  * @param src_language The shader language
  * @return The string to return.
  */
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::VK_GLSL);
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL);
 
 /**
  * @brief Helper function to select a VkSurfaceFormatKHR

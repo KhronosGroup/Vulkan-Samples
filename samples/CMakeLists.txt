@@ -59,6 +59,7 @@ set(ORDER_LIST
     "terrain_tessellation"
     "hlsl"
     "oit_linked_lists"
+    "oit_depth_peeling"
 
     #Extension Samples
     "dynamic_rendering"

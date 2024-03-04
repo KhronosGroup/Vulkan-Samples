@@ -89,8 +89,6 @@ void HPPApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
-	update_overlay(delta_time);
-
 	render(delta_time);
 	camera.update(delta_time);
 	if (camera.moving())
@@ -416,11 +414,11 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
-void HPPApiVulkanSample::update_overlay(float delta_time)
+void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() { on_update_ui_overlay(gui->get_drawer()); });
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() { on_update_ui_overlay(gui->get_drawer()); additional_ui(); });
 
 		gui->update(delta_time);
 
@@ -749,7 +747,7 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	render_pass = get_device()->get_handle().createRenderPass(render_pass_create_info);
 }
 
-void HPPApiVulkanSample::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 {}
 
 vk::Sampler HPPApiVulkanSample::create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count)

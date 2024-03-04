@@ -1,5 +1,6 @@
 /* Copyright (c) 2019-2024, Sascha Willems
  * Copyright (c) 2024, Mobica Limited
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
@@ -91,8 +92,6 @@ void ApiVulkanSample::update(float delta_time)
 		view_updated = false;
 		view_changed();
 	}
-
-	update_overlay(delta_time);
 
 	render(delta_time);
 	camera.update(delta_time);
@@ -449,12 +448,13 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 	return shader_stage;
 }
 
-void ApiVulkanSample::update_overlay(float delta_time)
+void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() {
 			on_update_ui_overlay(gui->get_drawer());
+			additional_ui();
 		});
 
 		gui->update(delta_time);
@@ -1315,4 +1315,15 @@ void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuff
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	f(command_buffer);
 	device->flush_command_buffer(command_buffer, queue, true, signalSemaphore);
+}
+
+void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f)
+{
+	auto &cmd = device->request_command_buffer();
+	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	f(cmd);
+	cmd.end();
+	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	queue.submit(cmd, device->request_fence());
+	device->get_fence_pool().wait();
 }
