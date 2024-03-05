@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Sascha Willems
+/* Copyright (c) 2020-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,6 +41,7 @@ FragmentShadingRate::~FragmentShadingRate()
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroySampler(get_device().get_handle(), textures.scene.sampler, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 		uniform_buffers.scene.reset();
 		invalidate_shading_rate_attachment();
