@@ -31,7 +31,7 @@ add_sample_with_tags(
         "khr_ray_tracing_basic/glsl/miss.rmiss"
         "khr_ray_tracing_basic/glsl/closesthit.rchit"
     SHADER_FILES_HLSL
-        "khr_ray_tracing_basic/hlsl/hlsl_raygen.rgen.spv"
-        "khr_ray_tracing_basic/hlsl/hlsl_miss.rmiss.spv"
-        "khr_ray_tracing_basic/hlsl/hlsl_closesthit.rchit.spv"
+        "khr_ray_tracing_basic/hlsl/hlsl_raygen.rgen"
+        "khr_ray_tracing_basic/hlsl/hlsl_miss.rmiss"
+        "khr_ray_tracing_basic/hlsl/hlsl_closesthit.rchit"
 )
