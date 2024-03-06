@@ -544,7 +544,7 @@ void RaytracingBasic::create_descriptor_sets()
 /*
     Create our ray tracing pipeline
 */
-void RaytracingBasic::create_ray_tracing_pipeline()
+void RaytracingBasic::create_ray_tracing_pipeline(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<VkShaderStageFlagBits, std::string>> &list_of_shaders)
 {
 	// Slot for binding top level acceleration structures to the ray generation shader
 	VkDescriptorSetLayoutBinding acceleration_structure_layout_binding{};
@@ -591,12 +591,10 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	    Each shader group points at the corresponding shader in the pipeline
 	*/
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+
 	// Ray generation group
 	{
-		if (gui_settings.selected_language == static_cast<int>(vkb::ShaderSourceLanguage::GLSL))
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/glsl/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
-		else if (gui_settings.selected_language == static_cast<int>(vkb::ShaderSourceLanguage::SPV))
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl/hlsl_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR, vkb::ShaderSourceLanguage::SPV));
+		shader_stages.emplace_back(load_shader(list_of_shaders.at(0).second, list_of_shaders.at(0).first, shader_language));
 		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -609,10 +607,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray miss group
 	{
-		if (gui_settings.selected_language == static_cast<int>(vkb::ShaderSourceLanguage::GLSL))
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/glsl/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
-		else if (gui_settings.selected_language == static_cast<int>(vkb::ShaderSourceLanguage::SPV))
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl/hlsl_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR, vkb::ShaderSourceLanguage::SPV));
+		shader_stages.emplace_back(load_shader(list_of_shaders.at(1).second, list_of_shaders.at(1).first, shader_language));
 		VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 		miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -625,10 +620,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray closest hit group
 	{
-		if (gui_settings.selected_language == static_cast<int>(vkb::ShaderSourceLanguage::GLSL))
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/glsl/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
-		else if (gui_settings.selected_language == static_cast<int>(vkb::ShaderSourceLanguage::SPV))
-			shader_stages.push_back(load_shader("khr_ray_tracing_basic/hlsl/hlsl_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, vkb::ShaderSourceLanguage::SPV));
+		shader_stages.emplace_back(load_shader(list_of_shaders.at(2).second, list_of_shaders.at(2).first, shader_language));
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
@@ -833,6 +825,23 @@ bool RaytracingBasic::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	std::vector<std::pair<vkb::ShaderSourceLanguage, std::vector<std::pair<VkShaderStageFlagBits, std::string>>>> supported_shaders{
+	    {vkb::ShaderSourceLanguage::GLSL, {
+	                                          {VK_SHADER_STAGE_RAYGEN_BIT_KHR, "khr_ray_tracing_basic/glsl/raygen.rgen"},
+	                                          {VK_SHADER_STAGE_MISS_BIT_KHR, "khr_ray_tracing_basic/glsl/miss.rmiss"},
+	                                          {VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, "khr_ray_tracing_basic/glsl/closesthit.rchit"},
+	                                      }},
+
+	    {vkb::ShaderSourceLanguage::SPV, {
+	                                         {VK_SHADER_STAGE_RAYGEN_BIT_KHR, "khr_ray_tracing_basic/hlsl/hlsl_raygen.rgen.spv"},
+	                                         {VK_SHADER_STAGE_MISS_BIT_KHR, "khr_ray_tracing_basic/hlsl/hlsl_miss.rmiss.spv"},
+	                                         {VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, "khr_ray_tracing_basic/hlsl/hlsl_closesthit.rchit.spv"},
+	                                     }}};
+	for (auto &shader : supported_shaders)
+	{
+		store_shaders(shader.first, shader.second);
+	}
+
 	// This sample copies the ray traced output to the swap chain image, so we need to enable the required image usage flags
 	const std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
 	update_swapchain_image_usage_flags(image_usage_flags);
@@ -862,7 +871,7 @@ bool RaytracingBasic::prepare(const vkb::ApplicationOptions &options)
 	create_storage_image();
 	create_scene();
 	create_uniform_buffer();
-	create_ray_tracing_pipeline();
+	create_ray_tracing_pipeline(supported_shaders.begin()->first, supported_shaders.begin()->second);
 	create_shader_binding_tables();
 	create_descriptor_sets();
 	build_command_buffers();
@@ -892,21 +901,13 @@ void RaytracingBasic::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic();
-void                               RaytracingBasic::on_update_ui_overlay(vkb::Drawer &drawer)
-{
-	if (drawer.header("Settings"))
-	{
-		if (drawer.combo_box("Shader language", &gui_settings.selected_language, gui_settings.shader_language))
-		{
-			vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
-			vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
-			create_ray_tracing_pipeline();
-		}
-	}
-}
-
 std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic()
 {
 	return std::make_unique<RaytracingBasic>();
+}
+
+void RaytracingBasic::change_shader(const vkb::ShaderSourceLanguage &shader_language)
+{
+	vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+	create_ray_tracing_pipeline(shader_language, get_available_shaders().find(shader_language)->second);
 }
