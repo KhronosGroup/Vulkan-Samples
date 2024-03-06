@@ -73,8 +73,8 @@ bool HPPHlslShaders::prepare(const vkb::ApplicationOptions &options)
 		sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
 
 		pipeline_layout = create_pipeline_layout();
-		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex));
-		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment));
+		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex));
+		shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment));
 		pipeline            = create_pipeline();
 		descriptor_pool     = create_descriptor_pool();
 		base_descriptor_set = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
