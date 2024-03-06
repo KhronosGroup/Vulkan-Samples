@@ -414,19 +414,17 @@ void ShaderDebugPrintf::create_instance()
 	enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
-	std::vector<VkValidationFeatureEnableEXT>  validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
-	std::vector<VkValidationFeatureDisableEXT> disables{};
-
-	VkValidationFeaturesEXT validation_features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
-	validation_features.enabledValidationFeatureCount = 1;
-	validation_features.pEnabledValidationFeatures    = validation_feature_enables.data();
-	validation_features.pDisabledValidationFeatures   = 0;
-	validation_features.pDisabledValidationFeatures   = disables.data();
-
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
 	app_info.apiVersion       = VK_API_VERSION_1_1;
+
+	// Shader printf is a feature of the validation layers that needs to be enabled
+	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+
+	VkValidationFeaturesEXT validation_features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+	validation_features.enabledValidationFeatureCount = 1;
+	validation_features.pEnabledValidationFeatures    = validation_feature_enables.data();
 
 	std::vector<const char *> validation_layers = {"VK_LAYER_KHRONOS_validation"};
 
