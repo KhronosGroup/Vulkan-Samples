@@ -30,7 +30,7 @@ image::./images/sample.png[Sample]
 
 This sample demonstrates the usage of the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_shader_non_semantic_info.html[VK_KHR_shader_non_semantic_info] for adding means to output debug messages from SPIR-V shaders using a print function at runtime.
 
-It allows you to output invocation related debug messages from a give shader stage and can help to find problems or bugs together with a graphics debugger like a https://www.renderdoc.org[RenderDoc]. But it's also possible to display that data in your application (e.g. a debug window or the command line), although this has some limitations like a fixed buffer size that all messages need to fit in.
+It allows you to output invocation related debug messages from a given shader stage and can help to find problems or bugs together with a graphics debugger like https://www.renderdoc.org[RenderDoc]. But it's also possible to display that data in your application (e.g. a debug window or the command line), although this has some limitations like a fixed buffer size that all messages need to fit in.
 
 == (Debug) Printf for shaders
 
@@ -57,7 +57,7 @@ VSOutput main(VSInput input) {
 
 == Setup
 
-Shader printf is a feature of the validation layers. So the firs step is to enable the `VK_LAYER_KHRONOS_validation` layer at instance creation. In addition to the layer(s) to be enabled we also need to provide `VkValidationFeaturesEXT` with the `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT` feature enabled:
+Shader printf is a feature of the validation layers. So the first step is to enable the `VK_LAYER_KHRONOS_validation` layer at instance creation. In addition to the layer(s) to be enabled we also need to provide `VkValidationFeaturesEXT` with the `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT` feature enabled:
 
 [,cpp]
 ----
@@ -102,7 +102,7 @@ But if you want to display or process those messages in your own application you
 
 [NOTE]
 ====
-Shader printf messages are of `info` type, so in order for them to be passed to the callback you need to enable set the `VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT` `messageSeverity` flag.
+Shader printf messages are of `info` type, so in order for them to be passed to the callback you need to enable the `VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT` `messageSeverity` flag.
 ====
 
 With the validation layers and feature enabled and a debug callback wired up, we can process or output the shader printf messages. The most basic option could look like this:
@@ -130,7 +130,7 @@ if (gl_VertexIndex == 0) {
 }
 ----
 
-And then gather those so they can be displayed in the graphical user interface. The sample also checks if it's actually a printf message (`pMessageIdName == WARNING-DEBUG-PRINTF`), which is something one could you to distinguish between actual validation messages and printf outputs:
+And then gather those so they can be displayed in the graphical user interface. The sample also checks if it's actually a printf message (`pMessageIdName == WARNING-DEBUG-PRINTF`), which is something one could do to distinguish between actual validation messages and printf outputs:
 
 [,cpp]
 ----
@@ -163,7 +163,7 @@ This **does not** apply to outputting messages in graphics debuggers.
 
 == Memory considerations
 
-Using debug printf will consume a descriptor set, so if you use every last descriptor set it may not work and you may need to increase set count at pool allocation. Thus in the sample we allocate an additional set from the pool. It also consumes device memory based on the no. and/or size fo the debug messages.
+Using debug printf will consume a descriptor set, so if you use every last descriptor set it may not work and you may need to increase the set count at pool allocation. Thus in the sample we allocate an additional set from the pool. It also consumes device memory based on the number and/or size fo the debug messages.
 
 == Printf in a graphics debugger
 
