@@ -396,13 +396,6 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 // This sample overrides the instance creation part of the framework to chain in additional structures
 void ShaderDebugPrintf::create_instance()
 {
-	// Initialize Volk Vulkan Loader
-	VkResult result = volkInitialize();
-	if (result)
-	{
-		throw vkb::VulkanException(result, "Failed to initialize volk.");
-	}
-
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -423,7 +416,7 @@ void ShaderDebugPrintf::create_instance()
 	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
 
 	VkValidationFeaturesEXT validation_features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
-	validation_features.enabledValidationFeatureCount = 1;
+	validation_features.enabledValidationFeatureCount = static_cast<uint32_t>(validation_feature_enables.size());
 	validation_features.pEnabledValidationFeatures    = validation_feature_enables.data();
 
 	std::vector<const char *> validation_layers = {"VK_LAYER_KHRONOS_validation"};
@@ -437,7 +430,7 @@ void ShaderDebugPrintf::create_instance()
 	instance_create_info.pNext                   = &validation_features;
 
 	VkInstance vulkan_instance;
-	result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
+	VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
 
 	if (result != VK_SUCCESS)
 	{
