@@ -380,7 +380,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	auto                  buffer = vkb::fs::read_shader_binary(filename);
 	std::vector<uint32_t> spirv;
 
-	if (src_language == vkb::ShaderSourceLanguage::GLSL || src_language == vkb::ShaderSourceLanguage::HLSL )
+	if (src_language == vkb::ShaderSourceLanguage::GLSL || src_language == vkb::ShaderSourceLanguage::HLSL)
 	{
 		std::string         file_ext = filename;
 		std::string         info_log;

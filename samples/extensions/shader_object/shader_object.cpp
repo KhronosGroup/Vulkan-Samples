@@ -17,8 +17,8 @@
  */
 
 #include "shader_object.h"
-#include <hpp_shader_compiler.h>
 #include <heightmap.h>
+#include <hpp_shader_compiler.h>
 #include <unordered_map>
 
 ShaderObject::ShaderObject()
@@ -537,9 +537,9 @@ void ShaderObject::create_shaders()
 
 	// Initialize a GLSL compiler and load shaders from the shader json file
 	vkb::HPPShaderCompiler shader_compiler;
-	std::string       shaders     = vkb::fs::read_shader("shader_object/shaders.json");
-	json              shader_data = json::parse(shaders);
-	VkDevice          device      = get_device().get_handle();
+	std::string            shaders     = vkb::fs::read_shader("shader_object/shaders.json");
+	json                   shader_data = json::parse(shaders);
+	VkDevice               device      = get_device().get_handle();
 
 	// Pre calc string lengths
 	const int unlinked_post_process_prefix_size = strlen("post_process_");
@@ -1973,7 +1973,7 @@ ShaderObject::Shader::Shader(VkShaderStageFlagBits        stage_,
 	next_stage  = next_stage_;
 
 	vkb::HPPShaderCompiler shader_compiler;
-	std::string       info_log;
+	std::string            info_log;
 
 	// Compile the GLSL source
 	if (!shader_compiler.compile_to_spirv(static_cast<vk::ShaderStageFlagBits>(stage), vert_glsl_source, "main", {}, spirv, info_log))

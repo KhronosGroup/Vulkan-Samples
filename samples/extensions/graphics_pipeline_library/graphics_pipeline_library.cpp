@@ -212,7 +212,7 @@ void GraphicsPipelineLibrary::setup_descriptor_sets()
 
 	VkDescriptorBufferInfo            uniform_buffer_descriptor = create_descriptor(*uniform_buffer);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets     = {
-	        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniform_buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniform_buffer_descriptor),
     };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
