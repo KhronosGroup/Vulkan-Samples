@@ -430,7 +430,7 @@ void ShaderDebugPrintf::create_instance()
 	instance_create_info.pNext                   = &validation_features;
 
 	VkInstance vulkan_instance;
-	VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
+	VkResult   result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
 
 	if (result != VK_SUCCESS)
 	{
