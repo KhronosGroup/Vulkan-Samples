@@ -39,19 +39,11 @@ find_package(Vulkan QUIET)
 if(DEFINED ENV{VULKAN_SDK})
     message("Found VULKAN_SDK under $ENV{VULKAN_SDK}")
     if(WIN32)
-        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            find_program(DXC_EXECUTABLE
-                        NAMES dxc
-                        HINTS
-                        "$ENV{VULKAN_SDK}/Bin"
-                        )
-        elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-            find_program(DXC_EXECUTABLE
-                        NAMES dxc
-                        HINTS
-                        "$ENV{VULKAN_SDK}/Bin32"
-                        )
-        endif()
+        find_program(DXC_EXECUTABLE
+                    NAMES dxc
+                    HINTS
+                    "$ENV{VULKAN_SDK}/Bin"
+                    )
     else()
         find_program(DXC_EXECUTABLE
                     NAMES dxc

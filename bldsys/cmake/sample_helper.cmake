@@ -159,9 +159,9 @@ function(add_project)
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -200,62 +200,37 @@ endif()
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
 
-    if(DEFINED DXC_EXECUTABLE)
-        compile_shaders(
-            TYPE "Test"
-            ID ${TARGET_ID}
-            CATEGORY "Tests"
-            AUTHOR " "
-            NAME ${TARGET_ID}
-            DESCRIPTION " "
-            VENDOR_TAG " "
-            LIBS test_framework
-            FILES
-                ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.h
-                ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.cpp
-        )
+    if(DEFINED DXC_EXECUTABLE AND DEFINED SHADERS_HLSL)
+        compile_shaders()
     endif()
 endfunction()
 
 function(compile_shaders)
+    foreach(SHADER_FILE_HLSL ${SHADERS_HLSL})
+        cmake_path(GET SHADER_FILE_HLSL EXTENSION LAST_ONLY SHADER_FILE_HLSL_EXTENSION)
 
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+        if(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".vert")
+            set(DXC_PROFILE "vs_6_1")
+        elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".frag")
+            set(DXC_PROFILE "ps_6_4")
+        elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rgen" OR ${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rmiss" OR ${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rchit")
+            set(DXC_PROFILE "lib_6_3")
+            set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
+        elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".comp")
+            set(DXC_PROFILE "cs_6_1")
+        elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".geom")
+            set(DXC_PROFILE "gs_6_1")
+        elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".tesc")
+            set(DXC_PROFILE "hs_6_1")
+        elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".tese")
+            set(DXC_PROFILE "ds_6_1")
+        elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".mesh")
+            set(DXC_PROFILE "cs_6_1")
+            set(DXC_TARGET "-fspv-target-env=vulkan1.2")
+        endif()
 
-    if(DEFINED SHADERS_HLSL)
-
-        set(FAKE_TARGET ${PROJECT_NAME}_hlsl_shaders)
-        add_custom_target(${FAKE_TARGET} WORKING_DIRECTORY "Samples//${CATEGORY}")
-        add_dependencies(${PROJECT_NAME} ${FAKE_TARGET})
-
-        foreach(SHADER_FILE_HLSL ${SHADERS_HLSL})
-
-            cmake_path(GET SHADER_FILE_HLSL EXTENSION LAST_ONLY SHADER_FILE_HLSL_EXTENSION)
-            cmake_path(GET SHADER_FILE_HLSL STEM LAST_ONLY SHADER_FILE_HLSL_NAME)
-
-            if(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".vert")
-                set(DXC_PROFILE "vs_6_1")
-            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".frag")
-                set(DXC_PROFILE "ps_6_4")
-            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rgen" OR ${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rmiss" OR ${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rchit")
-                set(DXC_PROFILE "lib_6_3")
-                set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
-            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".comp")
-                set(DXC_PROFILE "cs_6_1")
-            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".geom")
-                set(DXC_PROFILE "gs_6_1")
-            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".tesc")
-                set(DXC_PROFILE "hs_6_1")
-            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".tese")
-                set(DXC_PROFILE "ds_6_1")
-            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".mesh")
-                set(DXC_PROFILE "cs_6_1")
-                set(DXC_TARGET "-fspv-target-env=vulkan1.2")
-            endif()
-
-            if(NOT ${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".spv")
-                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${DXC_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${SHADER_FILE_HLSL}.spv)
-            endif()
-
-        endforeach()
-    endif()
+        if(NOT ${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".spv")
+            execute_process(COMMAND ${DXC_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${SHADER_FILE_HLSL}.spv)
+        endif()
+    endforeach()
 endfunction()
