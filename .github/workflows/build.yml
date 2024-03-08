@@ -12,48 +12,48 @@ concurrency:
 
 jobs:
   build:
-    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+    name: "Build ${{ matrix.platform.runtime }} in ${{ matrix.build_type }}"
     strategy:
       matrix:
-        platform: [windows, ubuntu, macos]
+        platform: [{ os: windows, runtime: windows-latest }, { os: ubuntu, runtime: ubuntu-latest }, { os: macos, runtime: macos-12 }, { os: macos, runtime: macos-14-arm64 }]
         build_type: [Debug, Release]
     env:
       PARALLEL: -j 2
-    runs-on: "${{ matrix.platform }}-latest"
+    runs-on: "${{ matrix.platform.runtime }}"
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: "recursive"
-      - if: ${{ matrix.platform == 'ubuntu' }}
+      - if: ${{ matrix.platform.os == 'ubuntu' }}
         name: Install RandR headers
         run: |
           sudo apt-get update
           sudo apt install xorg-dev libglu1-mesa-dev
-      - if: ${{ matrix.platform == 'windows' }}
+      - if: ${{ matrix.platform.os == 'windows' }}
         name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
-      - if: ${{ matrix.platform == 'windows' }}
+      - if: ${{ matrix.platform.os == 'windows' }}
         name: sccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ${{ github.job }}-${{ matrix.os }}
           variant: sccache
-      - if: ${{ matrix.platform != 'windows' }}
+      - if: ${{ matrix.platform.os != 'windows' }}
         name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ${{ github.job }}-${{ matrix.os }}
-      - if: ${{ matrix.platform == 'windows' }}
+      - if: ${{ matrix.platform.os == 'windows' }}
         name: Configure and build
         shell: pwsh
         run: |
-          cmake -B"build/${{ matrix.platform }}" -G"Ninja" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
-          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
-      - if: ${{ matrix.platform != 'windows' }}
+          cmake -B"build/${{ matrix.platform.os }}" -G"Ninja" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake --build "build/${{ matrix.platform.os }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
+      - if: ${{ matrix.platform.os != 'windows' }}
         name: Configure and build
         run: |
-          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+          cmake -B"build/${{ matrix.platform.os }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake --build "build/${{ matrix.platform.os }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_d2d:
     name: "Build Ubuntu with Direct To Display"
