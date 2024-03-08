@@ -238,13 +238,13 @@ void Platform::terminate(ExitCode code)
 	if (code == ExitCode::NoSample)
 	{
 		LOGI("");
-		LOGI("No sample was requested or the selected sample is not available");
+		LOGI("No sample was requested or the selected sample does not exist");
 		LOGI("");
 		LOGI("To run a specific sample use the \"sample\" argument, e.g.");
 		LOGI("");
 		LOGI("\tvulkan_samples sample hello_triangle");
 		LOGI("");
-		LOGI("To get a list of aviailable samples, use the \"samples\" argument")
+		LOGI("To get a list of available samples, use the \"samples\" argument")
 		LOGI("To get a list of available command line options, use the \"-h\" or \"--help\" argument");
 		LOGI("");
 	}
