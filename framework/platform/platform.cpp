@@ -118,8 +118,7 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 
 	if (!app_requested())
 	{
-		LOGE("An app was not requested, can not continue");
-		return ExitCode::Help;
+		return ExitCode::NoSample;
 	}
 
 	create_window(window_properties);
@@ -137,8 +136,7 @@ ExitCode Platform::main_loop()
 {
 	if (!app_requested())
 	{
-		LOGE("An app was not requested, can not continue");
-		return ExitCode::Close;
+		return ExitCode::NoSample;
 	}
 
 	while (!window->should_close() && !close_requested)
@@ -235,6 +233,20 @@ void Platform::terminate(ExitCode code)
 		{
 			LOGI(line);
 		}
+	}
+
+	if (code == ExitCode::NoSample)
+	{
+		LOGI("");
+		LOGI("No sample was requested or the selected sample is not available");
+		LOGI("");
+		LOGI("To run a specific sample use the \"sample\" argument, e.g.");
+		LOGI("");
+		LOGI("\tvulkan_samples sample hello_triangle");
+		LOGI("");
+		LOGI("To get a list of aviailable samples, use the \"samples\" argument")
+		LOGI("To get a list of available command line options, use the \"-h\" or \"--help\" argument");
+		LOGI("");
 	}
 
 	if (active_app)
