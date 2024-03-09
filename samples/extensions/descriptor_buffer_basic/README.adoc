@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, Sascha Willems
+- Copyright (c) 2023-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -183,7 +183,7 @@ for (size_t i = 0; i < cubes.size(); i++)
 	VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
 	image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
-	vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * uniform_binding_descriptor.size + uniform_binding_descriptor.offset);
+	vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_binding_descriptor.size + image_binding_descriptor.offset);
 }
 ----
 
@@ -255,4 +255,3 @@ vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_G
 
 With descriptor set and pipeline layouts, Vulkan decouples the shader interfaces from the application.
 And since we don't change these but only the way how we provide descriptors to the GPU, *no changes to the shaders are required*.
-haders are required*.

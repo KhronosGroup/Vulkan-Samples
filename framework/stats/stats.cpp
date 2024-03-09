@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2020-2023, Broadcom Inc.
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2020-2024, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,9 @@
 #include "core/device.h"
 
 #include "frame_time_stats_provider.h"
-#include "hwcpipe_stats_provider.h"
+#ifdef VK_USE_PLATFORM_ANDROID_KHR
+#	include "hwcpipe_stats_provider.h"
+#endif
 #include "vulkan_stats_provider.h"
 
 namespace vkb
@@ -63,7 +65,9 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 	// All supported stats will be removed from the given 'stats' set by the provider's constructor
 	// so subsequent providers only see requests for stats that aren't already supported.
 	providers.emplace_back(std::make_unique<FrameTimeStatsProvider>(stats));
+#ifdef VK_USE_PLATFORM_ANDROID_KHR
 	providers.emplace_back(std::make_unique<HWCPipeStatsProvider>(stats));
+#endif
 	providers.emplace_back(std::make_unique<VulkanStatsProvider>(stats, sampling_config, render_context));
 
 	// In continuous sampling mode we still need to update the frame times as if we are polling

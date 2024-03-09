@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,6 +22,7 @@ project(framework LANGUAGES C CXX)
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
+    drawer.h
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
@@ -52,6 +53,7 @@ set(FRAMEWORK_FILES
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
+    drawer.cpp
     glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
@@ -78,7 +80,7 @@ set(COMMON_FILES
     common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
-    common/glm_common.h 
+    common/glm_common.h
     common/resource_caching.h
     common/logging.h
     common/helpers.h
@@ -215,7 +217,6 @@ set(STATS_FILES
     stats/stats_common.h
     stats/stats_provider.h
     stats/frame_time_stats_provider.h
-    stats/hwcpipe_stats_provider.h
     stats/vulkan_stats_provider.h
     stats/hpp_stats.h
 
@@ -223,7 +224,6 @@ set(STATS_FILES
     stats/stats.cpp
     stats/stats_provider.cpp
     stats/frame_time_stats_provider.cpp
-    stats/hwcpipe_stats_provider.cpp
     stats/vulkan_stats_provider.cpp)
 
 set(CORE_FILES
@@ -365,9 +365,11 @@ set(ANDROID_FILES
     # Header Files
     platform/android/android_platform.h
     platform/android/android_window.h
+    stats/hwcpipe_stats_provider.h
     # Source Files
     platform/android/android_platform.cpp
-    platform/android/android_window.cpp)
+    platform/android/android_window.cpp
+    stats/hwcpipe_stats_provider.cpp)
 
 set(WINDOWS_FILES
     # Header Files
@@ -387,7 +389,7 @@ set(LINUX_D2D_FILES
     platform/unix/direct_window.h
     # Source Files
     platform/unix/unix_d2d_platform.cpp
-    platform/unix/direct_window.cpp) 
+    platform/unix/direct_window.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
@@ -514,14 +516,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     volk
     ktx
     stb
-    astc
+    ${ASTC_TARGET}
     imgui
     tinygltf
     glm
     glslang
     SPIRV
     vma
-    hwcpipe
     spirv-cross-glsl
     glslang-default-resource-limits
     spdlog
@@ -537,7 +538,7 @@ endif()
 if(ANDROID)
     # Import game-activity static lib inside the game-activity_static prefab module.
     find_package(game-activity REQUIRED CONFIG)
-    target_link_libraries(${PROJECT_NAME} PUBLIC log android game-activity::game-activity_static)
+    target_link_libraries(${PROJECT_NAME} PUBLIC hwcpipe log android game-activity::game-activity_static)
 else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)

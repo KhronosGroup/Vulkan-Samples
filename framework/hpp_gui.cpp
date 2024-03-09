@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -661,7 +661,7 @@ const HPPGui::StatsView &HPPGui::get_stats_view() const
 	return stats_view;
 }
 
-HPPDrawer &HPPGui::get_drawer()
+Drawer &HPPGui::get_drawer()
 {
 	return drawer;
 }
@@ -1021,150 +1021,6 @@ bool HPPGui::input_event(const InputEvent &input_event)
 	}
 
 	return capture_move_event;
-}
-
-void HPPDrawer::clear()
-{
-	dirty = false;
-}
-
-bool HPPDrawer::is_dirty() const
-{
-	return dirty;
-}
-
-void HPPDrawer::set_dirty(bool dirty)
-{
-	this->dirty = dirty;
-}
-
-bool HPPDrawer::header(const std::string &caption) const
-{
-	return ImGui::CollapsingHeader(caption.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
-}
-
-bool HPPDrawer::checkbox(const std::string &caption, bool *value)
-{
-	bool res = ImGui::Checkbox(caption.c_str(), value);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::checkbox(const std::string &caption, int32_t *value)
-{
-	bool val = (*value == 1);
-	bool res = ImGui::Checkbox(caption.c_str(), &val);
-	*value   = val;
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption)
-{
-	bool res = ImGui::RadioButton(caption, selectedOption, elementOption);
-	if (res)
-		dirty = true;
-
-	return res;
-}
-
-bool HPPDrawer::input_float(const std::string &caption, float *value, float step, uint32_t precision)
-{
-	bool res = ImGui::InputFloat(caption.c_str(), value, step, step * 10.0f, precision);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::slider_float(const std::string &caption, float *value, float min, float max)
-{
-	bool res = ImGui::SliderFloat(caption.c_str(), value, min, max);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::slider_int(const std::string &caption, int32_t *value, int32_t min, int32_t max)
-{
-	bool res = ImGui::SliderInt(caption.c_str(), value, min, max);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::combo_box(const std::string &caption, int32_t *itemindex, std::vector<std::string> items)
-{
-	if (items.empty())
-	{
-		return false;
-	}
-	std::vector<const char *> charitems;
-	charitems.reserve(items.size());
-	for (size_t i = 0; i < items.size(); i++)
-	{
-		charitems.push_back(items[i].c_str());
-	}
-	uint32_t itemCount = static_cast<uint32_t>(charitems.size());
-	bool     res       = ImGui::Combo(caption.c_str(), itemindex, &charitems[0], itemCount, itemCount);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::button(const std::string &caption)
-{
-	bool res = ImGui::Button(caption.c_str());
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-void HPPDrawer::text(const char *formatstr, ...)
-{
-	va_list args;
-	va_start(args, formatstr);
-	ImGui::TextV(formatstr, args);
-	va_end(args);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorEdit3(caption, colors, flags);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorEdit4(caption, colors, flags);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorPicker3(caption, colors, flags);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorPicker4(caption, colors, flags);
 }
 
 }        // namespace vkb

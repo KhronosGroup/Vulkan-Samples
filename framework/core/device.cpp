@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -198,23 +198,8 @@ Device::Device(PhysicalDevice                        &gpu,
 	}
 
 	VmaVulkanFunctions vma_vulkan_func{};
-	vma_vulkan_func.vkAllocateMemory                    = vkAllocateMemory;
-	vma_vulkan_func.vkBindBufferMemory                  = vkBindBufferMemory;
-	vma_vulkan_func.vkBindImageMemory                   = vkBindImageMemory;
-	vma_vulkan_func.vkCreateBuffer                      = vkCreateBuffer;
-	vma_vulkan_func.vkCreateImage                       = vkCreateImage;
-	vma_vulkan_func.vkDestroyBuffer                     = vkDestroyBuffer;
-	vma_vulkan_func.vkDestroyImage                      = vkDestroyImage;
-	vma_vulkan_func.vkFlushMappedMemoryRanges           = vkFlushMappedMemoryRanges;
-	vma_vulkan_func.vkFreeMemory                        = vkFreeMemory;
-	vma_vulkan_func.vkGetBufferMemoryRequirements       = vkGetBufferMemoryRequirements;
-	vma_vulkan_func.vkGetImageMemoryRequirements        = vkGetImageMemoryRequirements;
-	vma_vulkan_func.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
-	vma_vulkan_func.vkGetPhysicalDeviceProperties       = vkGetPhysicalDeviceProperties;
-	vma_vulkan_func.vkInvalidateMappedMemoryRanges      = vkInvalidateMappedMemoryRanges;
-	vma_vulkan_func.vkMapMemory                         = vkMapMemory;
-	vma_vulkan_func.vkUnmapMemory                       = vkUnmapMemory;
-	vma_vulkan_func.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
+	vma_vulkan_func.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+	vma_vulkan_func.vkGetDeviceProcAddr   = vkGetDeviceProcAddr;
 
 	VmaAllocatorCreateInfo allocator_info{};
 	allocator_info.physicalDevice = gpu.get_handle();
@@ -224,13 +209,31 @@ Device::Device(PhysicalDevice                        &gpu,
 	if (can_get_memory_requirements && has_dedicated_allocation)
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
-		vma_vulkan_func.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR;
-		vma_vulkan_func.vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR;
 	}
 
 	if (is_extension_supported(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) && is_enabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+	}
+
+	if (is_extension_supported(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME) && is_enabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
+	{
+		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+	}
+
+	if (is_extension_supported(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME) && is_enabled(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME))
+	{
+		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
+	}
+
+	if (is_extension_supported(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME) && is_enabled(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME))
+	{
+		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT;
+	}
+
+	if (is_extension_supported(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME) && is_enabled(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME))
+	{
+		allocator_info.flags |= VMA_ALLOCATOR_CREATE_AMD_DEVICE_COHERENT_MEMORY_BIT;
 	}
 
 	allocator_info.pVulkanFunctions = &vma_vulkan_func;
@@ -263,10 +266,10 @@ Device::~Device()
 
 	if (memory_allocator != VK_NULL_HANDLE)
 	{
-		VmaStats stats;
-		vmaCalculateStats(memory_allocator, &stats);
+		VmaTotalStatistics stats;
+		vmaCalculateStatistics(memory_allocator, &stats);
 
-		LOGI("Total device memory leaked: {} bytes.", stats.total.usedBytes);
+		LOGI("Total device memory leaked: {} bytes.", stats.total.statistics.allocationBytes);
 
 		vmaDestroyAllocator(memory_allocator);
 	}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,7 +42,7 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 	          vk::DeviceSize               size,
 	          vk::BufferUsageFlags         buffer_usage,
 	          VmaMemoryUsage               memory_usage,
-	          VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	          VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
 	          const std::vector<uint32_t> &queue_family_indices = {});
 
 	HPPBuffer(const HPPBuffer &) = delete;

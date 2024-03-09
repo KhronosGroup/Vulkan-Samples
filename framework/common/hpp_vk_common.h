@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -102,9 +102,9 @@ inline bool is_dynamic_buffer_descriptor_type(vk::DescriptorType descriptor_type
 	return vkb::is_dynamic_buffer_descriptor_type(static_cast<VkDescriptorType>(descriptor_type));
 }
 
-inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
+inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL)
 {
-	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
+	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage), src_language));
 }
 
 inline void image_layout_transition(vk::CommandBuffer command_buffer,
@@ -170,6 +170,19 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice            
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
+}
+
+inline vk::Format choose_blendable_format(vk::PhysicalDevice gpu, const std::vector<vk::Format> &format_priority_list)
+{
+	for (const auto &format : format_priority_list)
+	{
+		vk::FormatProperties fmt_props = gpu.getFormatProperties(format);
+
+		if (fmt_props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
+			return format;
+	}
+
+	throw std::runtime_error("No suitable blendable format could be determined");
 }
 
 // helper functions not backed by vk_common.h

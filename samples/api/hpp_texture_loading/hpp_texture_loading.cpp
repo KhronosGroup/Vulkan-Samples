@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -133,7 +133,7 @@ void HPPTextureLoading::build_command_buffers()
 	}
 }
 
-void HPPTextureLoading::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPTextureLoading::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
