@@ -15,7 +15,7 @@ jobs:
     name: "Build ${{ matrix.platform.runtime }} in ${{ matrix.build_type }}"
     strategy:
       matrix:
-        platform: [{ os: windows, runtime: windows-latest }, { os: ubuntu, runtime: ubuntu-latest }, { os: macos, runtime: macos-12 }, { os: macos, runtime: macos-14-arm64 }]
+        platform: [{ os: windows, runtime: windows-latest }, { os: ubuntu, runtime: ubuntu-latest }, { os: macos, runtime: macos-12 }, { os: macos, runtime: macos-14 }]
         build_type: [Debug, Release]
     env:
       PARALLEL: -j 2
