@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -45,8 +45,8 @@
 | -
 
 | toggle GUI
-| +++<kbd>+++left click+++</kbd>+++
-| +++<kbd>+++tap+++</kbd>+++
+| +++<kbd>+++F1+++</kbd>+++
+| 3 finger +++<kbd>+++tap+++</kbd>+++
 
 | toggle Debug Window
 | +++<kbd>+++right click+++</kbd>+++

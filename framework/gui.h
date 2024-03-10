@@ -321,6 +321,8 @@ class Gui
 	/// Whether or not the GUI has detected a multi touch gesture
 	bool two_finger_tap = false;
 
+	bool three_finger_tap = false;
+
 	bool show_graph_file_output = false;
 
 	uint32_t subpass = 0;

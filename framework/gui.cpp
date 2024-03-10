@@ -1061,6 +1061,10 @@ bool Gui::input_event(const InputEvent &input_event)
 				{
 					two_finger_tap = true;
 				}
+				else if (touch_event.get_touch_points() == 3)
+				{
+					three_finger_tap = true;
+				}
 			}
 		}
 		if (press_up)
@@ -1086,6 +1090,15 @@ bool Gui::input_event(const InputEvent &input_event)
 					else
 					{
 						two_finger_tap = false;
+					}
+
+					if (three_finger_tap && touch_event.get_touch_points() == 3)
+					{
+						visible = !visible;
+					}
+					else
+					{
+						three_finger_tap = false;
 					}
 				}
 			}
