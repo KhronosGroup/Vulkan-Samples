@@ -57,6 +57,7 @@ include(global_options)
 include(sample_helper)
 include(check_atomic)
 include(component_helper)
+include(shader_helper)
 
 # Add third party libraries
 add_subdirectory(third_party)
@@ -83,3 +84,5 @@ endif()
 add_subdirectory(app)
 
 add_subdirectory(antora)
+
+compile_all_shaders()

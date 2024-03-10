@@ -757,11 +757,13 @@ bool CalibratedTimestamps::prepare(const vkb::ApplicationOptions &options)
 
 void CalibratedTimestamps::render(float delta_time)
 {
-	if (!prepared)
+	if (!prepared) {
 		return;
+}
 	draw();
-	if (camera.updated)
+	if (camera.updated) {
 		update_uniform_buffers();
+}
 }
 
 void CalibratedTimestamps::get_time_domains()

@@ -256,11 +256,11 @@ void HPPTimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 		// The timestampPeriod property of the device tells how many nanoseconds such a timestep translates to on the selected device
 		float timestampFrequency = device->get_gpu().get_properties().limits.timestampPeriod;
 
-		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", float(time_stamps.values[1] - time_stamps.values[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Pass 2: %s %.3f ms", (bloom.enabled ? "First bloom pass" : "Scene display"), float(time_stamps.values[3] - time_stamps.values[2]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", static_cast<float>(time_stamps.values[1] - time_stamps.values[0]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 2: %s %.3f ms", (bloom.enabled ? "First bloom pass" : "Scene display"), static_cast<float>(time_stamps.values[3] - time_stamps.values[2]) * timestampFrequency / 1000000.0f);
 		if (bloom.enabled)
 		{
-			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps.values[5] - time_stamps.values[4]) * timestampFrequency / 1000000.0f);
+			drawer.text("Pass 3: Second bloom pass %.3f ms", static_cast<float>(time_stamps.values[5] - time_stamps.values[4]) * timestampFrequency / 1000000.0f);
 			drawer.set_dirty(true);
 		}
 	}

@@ -200,8 +200,8 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 		device.get_command_pool().reset_pool();
 	}
 
-	vkb::core::HPPShaderSource vert_shader("imgui.vert");
-	vkb::core::HPPShaderSource frag_shader("imgui.frag");
+	vkb::ShaderSource vert_shader("imgui.vert");
+	vkb::ShaderSource frag_shader("imgui.frag");
 
 	std::vector<vkb::core::HPPShaderModule *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, vert_shader, {}));
@@ -690,8 +690,9 @@ bool HPPGui::is_debug_view_active() const
 
 HPPGui::StatsView::StatsView(const vkb::stats::HPPStats *stats)
 {
-	if (stats == nullptr)
+	if (stats == nullptr) {
 		return;
+}
 
 	// Request graph data information for each stat and record it in graph_map
 	const std::set<StatIndex> &indices = stats->get_requested_stats();

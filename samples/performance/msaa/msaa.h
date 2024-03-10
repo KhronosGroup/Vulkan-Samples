@@ -96,6 +96,11 @@ class MSAASample : public vkb::VulkanSample
 	std::unique_ptr<vkb::PostProcessingPipeline> postprocessing_pipeline{};
 
 	/**
+	 *	@brief Postprocessing pipeline using a multisampled depth attachment
+	 */
+	std::unique_ptr<vkb::PostProcessingPipeline> postprocessing_pipeline_with_ms_depth{};
+
+	/**
 	 * @brief Update MSAA options and accordingly set the load/store
 	 *        attachment operations for the renderpasses
 	 *        This will trigger a swapchain recreation

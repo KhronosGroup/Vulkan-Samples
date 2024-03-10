@@ -20,42 +20,30 @@
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_sample)
-    set(options)  
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL)
+    set(options NO_SHADERS)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION SPIRV_VERSION)
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})    
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    add_sample_with_tags(
-        TYPE "Sample"
-        ID ${TARGET_ID}
-        CATEGORY ${TARGET_CATEGORY}
-        AUTHOR ${TARGET_AUTHOR}
-        NAME ${TARGET_NAME}
-        DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
-            "any"
-        FILES
-            ${SRC_FILES}
-        LIBS
-            ${TARGET_LIBS}
-        SHADER_FILES_GLSL
-            ${TARGET_SHADER_FILES_GLSL})
-endfunction()
-
-function(add_sample_with_tags)
-    set(options)
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL)
+    set(options NO_SHADERS)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION SPIRV_VERSION)
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     list(APPEND TARGET_TAGS "any")
 
+    if (NOT TARGET_SPIRV_VERSION)
+        set(TARGET_SPIRV_VERSION "1.0")
+    endif()
+
     set(SRC_FILES
         ${TARGET_ID}.h
         ${TARGET_ID}.cpp
     )
+
+    message(STATUS "Adding shaders ${TARGET_ID} ${TARGET_SPIRV_VERSION}")
 
     # Append extra files if present
     if (TARGET_FILES)
@@ -63,11 +51,8 @@ function(add_sample_with_tags)
     endif()
 
     # Add GLSL shader files for this sample
-    if (TARGET_SHADER_FILES_GLSL)    
-        list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
-        foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
-            list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
-        endforeach()        
+    if (NOT TARGET_SHADER_FILES_GLSL AND NOT TARGET_SHADER_FILES_HLSL AND NOT TARGET_NO_SHADERS)
+        message(FATAL_ERROR "No GLSL or HLSL shader files provided for sample ${TARGET_ID}\n\tPlease provide at least one GLSL shader file under SHADER_FILES_GLSL or HLSL shader file under SHADER_FILES_HLSL\n\tIf the sample does not need shaders, set NO_SHADERS to ON")
     endif()
 
     add_project(
@@ -77,15 +62,27 @@ function(add_sample_with_tags)
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
         DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
+        TAGS
             ${TARGET_TAGS}
         FILES
             ${SRC_FILES}
         LIBS
             ${TARGET_LIBS}
+        SPIRV_VERSION
+            ${TARGET_SPIRV_VERSION}
         SHADERS_GLSL
-            ${SHADERS_GLSL})
+            ${TARGET_SHADER_FILES_GLSL}
+        SHADERS_HLSL
+            ${TARGET_SHADER_FILES_HLSL})
 
+    compile_shaders(
+        ID ${TARGET_ID}
+        SPIRV_VERSION ${TARGET_SPIRV_VERSION}
+        SHADER_FILES_GLSL
+            ${TARGET_SHADER_FILES_GLSL}
+        SHADER_FILES_HLSL
+            ${TARGET_SHADER_FILES_HLSL}
+    )
 endfunction()
 
 function(vkb_add_test)
@@ -113,9 +110,9 @@ function(vkb_add_test)
 endfunction()
 
 function(add_project)
-    set(options)  
-    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL)
+    set(options)
+    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION SPIRV_VERSION)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -135,16 +132,11 @@ function(add_project)
 
     source_group("\\" FILES ${TARGET_FILES})
 
-    # Add shaders to project group
-    if (SHADERS_GLSL)
-        source_group("\\Shaders" FILES ${SHADERS_GLSL})
+    if(${TARGET_TYPE} STREQUAL "Sample")
+        add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES})
+    elseif(${TARGET_TYPE} STREQUAL "Test")
+        add_library(${PROJECT_NAME} STATIC ${TARGET_FILES})
     endif()
-
-if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
-elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
-endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # # inherit include directories from framework target
@@ -156,7 +148,7 @@ endif()
         target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
-    # capitalise the first letter of the category  (performance -> Performance) 
+    # capitalise the first letter of the category  (performance -> Performance)
     string(SUBSTRING ${TARGET_CATEGORY} 0 1 FIRST_LETTER)
     string(TOUPPER ${FIRST_LETTER} FIRST_LETTER)
     string(REGEX REPLACE "^.(.*)" "${FIRST_LETTER}\\1" CATEGORY "${TARGET_CATEGORY}")
@@ -164,7 +156,7 @@ endif()
     if(${TARGET_TYPE} STREQUAL "Sample")
         # set sample properties
         set_target_properties(${PROJECT_NAME}
-            PROPERTIES 
+            PROPERTIES
                 SAMPLE_CATEGORY ${TARGET_CATEGORY}
                 SAMPLE_AUTHOR ${TARGET_AUTHOR}
                 SAMPLE_NAME ${TARGET_NAME}

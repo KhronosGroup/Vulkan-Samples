@@ -26,5 +26,5 @@ add_sample(
     NAME "Pipeline Management"
     DESCRIPTION "Pipeline creation and caching."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "pipeline_cache/base.vert"
+        "pipeline_cache/base.frag")

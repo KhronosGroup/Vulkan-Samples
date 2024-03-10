@@ -111,8 +111,8 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource scene_vs("base.vert");
-	vkb::ShaderSource scene_fs("base.frag");
+	vkb::ShaderSource scene_vs("msaa/base.vert");
+	vkb::ShaderSource scene_fs("msaa/base.frag");
 	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), *scene, *camera);
 	scene_pipeline                  = std::make_unique<vkb::RenderPipeline>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
@@ -121,6 +121,10 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), std::move(postprocessing_vs));
 	postprocessing_pipeline->add_pass()
 	    .add_subpass(vkb::ShaderSource("postprocessing/outline.frag"));
+
+	postprocessing_pipeline_with_ms_depth = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), std::move(postprocessing_vs));
+	postprocessing_pipeline_with_ms_depth->add_pass()
+		.add_subpass(vkb::ShaderSource("postprocessing/outline_ms_depth.frag"));
 
 	update_pipelines();
 
@@ -578,10 +582,11 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	auto        depth_attachment   = (msaa_enabled && depth_writeback_resolve_supported && resolve_depth_on_writeback) ? i_depth_resolve : i_depth;
 	bool        multisampled_depth = msaa_enabled && !(depth_writeback_resolve_supported && resolve_depth_on_writeback);
 	std::string depth_sampler_name = multisampled_depth ? "ms_depth_sampler" : "depth_sampler";
+	auto target_pipeline = multisampled_depth ? postprocessing_pipeline_with_ms_depth.get() : postprocessing_pipeline.get();
 
 	glm::vec4 near_far = {camera->get_far_plane(), camera->get_near_plane(), -1.0f, -1.0f};
 
-	auto &postprocessing_pass = postprocessing_pipeline->get_pass(0);
+	auto &postprocessing_pass = target_pipeline->get_pass(0);
 	postprocessing_pass.set_uniform_data(near_far);
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
@@ -589,11 +594,6 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	postprocessing_subpass.unbind_sampled_image("depth_sampler");
 	postprocessing_subpass.unbind_sampled_image("ms_depth_sampler");
 
-	postprocessing_subpass.get_fs_variant().clear();
-	if (multisampled_depth)
-	{
-		postprocessing_subpass.get_fs_variant().add_define("MS_DEPTH");
-	}
 	postprocessing_subpass
 	    .bind_sampled_image(depth_sampler_name, {depth_attachment, nullptr, nullptr, depth_writeback_resolve_supported && resolve_depth_on_writeback})
 	    .bind_sampled_image("color_sampler", i_color_resolve);

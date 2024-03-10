@@ -26,5 +26,5 @@ add_sample(
     NAME "Specialization Constants"
     DESCRIPTION "Using specialization constants to enable the compiler to produce more optimised shaders."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.vert")
+        "specialization_constants/base.vert"
+        "specialization_constants/specialization_constants.frag")

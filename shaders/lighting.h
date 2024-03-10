@@ -15,6 +15,12 @@
  * limitations under the License.
  */
 
+#ifndef MAX_LIGHT_COUNT
+	// By default we support 8 lights of each type
+	// This can be overridden by defining MAX_LIGHT_COUNT before including this file.
+	#define MAX_LIGHT_COUNT 8
+#endif
+
 struct Light
 {
 	vec4 position;         // position.w represents type of light

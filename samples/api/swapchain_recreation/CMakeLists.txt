@@ -24,4 +24,6 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Google"
     NAME "Swapchain Recreation"
-    DESCRIPTION "Best practices when dealing with Vulkan swapchain recreation.")
+    DESCRIPTION "Best practices when dealing with Vulkan swapchain recreation."
+    NO_SHADERS
+)

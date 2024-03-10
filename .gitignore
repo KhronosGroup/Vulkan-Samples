@@ -14,3 +14,6 @@ tags
 *~
 .*.sw*
 .sw*
+
+# Temp to ignore all .spv files
+*.spv

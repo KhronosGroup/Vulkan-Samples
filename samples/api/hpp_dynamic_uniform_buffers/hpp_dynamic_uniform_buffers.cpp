@@ -274,7 +274,7 @@ void HPPDynamicUniformBuffers::prepare_camera()
 	camera.set_rotation(glm::vec3(0.0f));
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms

@@ -186,15 +186,6 @@ struct hash<vkb::core::HPPShaderResource>
 };
 
 template <>
-struct hash<vkb::core::HPPShaderSource>
-{
-	size_t operator()(const vkb::core::HPPShaderSource &shader_source) const
-	{
-		return std::hash<vkb::ShaderSource>()(reinterpret_cast<vkb::ShaderSource const &>(shader_source));
-	}
-};
-
-template <>
 struct hash<vkb::core::HPPShaderVariant>
 {
 	size_t operator()(const vkb::core::HPPShaderVariant &shader_variant) const

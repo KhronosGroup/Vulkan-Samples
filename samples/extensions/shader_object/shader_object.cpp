@@ -544,7 +544,7 @@ void ShaderObject::create_shaders()
 	const int unlinked_post_process_prefix_size = strlen("post_process_");
 	const int unlinked_material_prefix_size     = strlen("material_");
 	const int vert_suffix_size                  = strlen(".vert");
-	const int geo_suffix_size                   = strlen(".geo");
+	const int geo_suffix_size                   = strlen(".geom");
 	const int frag_suffix_size                  = strlen(".frag");
 
 	// Load skybox shader
@@ -1095,7 +1095,7 @@ void ShaderObject::build_command_buffers()
 			material_push_constant.camera_pos   = camera.position;
 
 			// Update and push constants for torus
-			material_push_constant.model = glm::translate(glm::vec3(1.2f, 0, 0)) * glm::rotate((float) elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.015f));
+			material_push_constant.model = glm::translate(glm::vec3(1.2f, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.015f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			                   0, sizeof(MaterialPushConstant), &material_push_constant);
@@ -1107,7 +1107,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(torus, draw_cmd_buffer);
 
 			// Update and push constants for rock 1
-			material_push_constant.model = glm::translate(glm::vec3(1.2f, 1.f, 0)) * glm::rotate((float) elapsed_time, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(4.0f));
+			material_push_constant.model = glm::translate(glm::vec3(1.2f, 1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(4.0f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			                   0, sizeof(MaterialPushConstant), &material_push_constant);
@@ -1119,7 +1119,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(rock, draw_cmd_buffer);
 
 			// Update and push constants for cube 1
-			material_push_constant.model = glm::translate(glm::vec3(1.2f, -1.f, 0)) * glm::rotate((float) elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.05f));
+			material_push_constant.model = glm::translate(glm::vec3(1.2f, -1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.05f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			                   0, sizeof(MaterialPushConstant), &material_push_constant);
@@ -1131,7 +1131,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(cube, draw_cmd_buffer);
 
 			// Update and push constants for torus 2
-			material_push_constant.model = glm::translate(glm::vec3(-1.2f, 1.0f, 0)) * glm::rotate((float) elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.015f));
+			material_push_constant.model = glm::translate(glm::vec3(-1.2f, 1.0f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.015f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			                   0, sizeof(MaterialPushConstant), &material_push_constant);
@@ -1143,7 +1143,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(torus, draw_cmd_buffer);
 
 			// Update and push constants for rock 2
-			material_push_constant.model = glm::translate(glm::vec3(-1.2f, -1.f, 0)) * glm::rotate((float) elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(4.0f));
+			material_push_constant.model = glm::translate(glm::vec3(-1.2f, -1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(4.0f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			                   0, sizeof(MaterialPushConstant), &material_push_constant);
@@ -1155,7 +1155,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(rock, draw_cmd_buffer);
 
 			// Update and push constants for cube 2
-			material_push_constant.model = glm::translate(glm::vec3(-1.2f, 0, 0)) * glm::rotate((float) elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.05f));
+			material_push_constant.model = glm::translate(glm::vec3(-1.2f, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.05f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			                   0, sizeof(MaterialPushConstant), &material_push_constant);
@@ -1177,7 +1177,7 @@ void ShaderObject::build_command_buffers()
 			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypeBasic], 0, 1, &descriptor_sets[ShaderTypeBasic], 0, nullptr);
 
 			// Update and push constants for rock
-			glm::mat4 model_matrix = glm::translate(glm::vec3(0, 0, -1.2f)) * glm::rotate((float) elapsed_time, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(4.0f));
+			glm::mat4 model_matrix = glm::translate(glm::vec3(0, 0, -1.2f)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(4.0f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for rock
@@ -1187,7 +1187,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(rock, draw_cmd_buffer);
 
 			// Update and push constants for teapot 1
-			model_matrix = glm::translate(glm::vec3(0, 0, 0)) * glm::rotate((float) elapsed_time, glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
+			model_matrix = glm::translate(glm::vec3(0, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for teapot 1
@@ -1197,7 +1197,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(teapot, draw_cmd_buffer);
 
 			// Update and push constants for teapot 2
-			model_matrix = glm::translate(glm::vec3(0, -1.2f, 0)) * glm::rotate((float) elapsed_time, glm::vec3(1, 0, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
+			model_matrix = glm::translate(glm::vec3(0, -1.2f, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for teapot 2
@@ -1207,7 +1207,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(teapot, draw_cmd_buffer);
 
 			// Update and push constants for teapot 3
-			model_matrix = glm::translate(glm::vec3(0, 1.2f, 0)) * glm::rotate((float) elapsed_time, glm::vec3(0, 0, 1)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
+			model_matrix = glm::translate(glm::vec3(0, 1.2f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for teapot 3
@@ -1217,7 +1217,7 @@ void ShaderObject::build_command_buffers()
 			draw_model(teapot, draw_cmd_buffer);
 
 			// Update and push constants for cube
-			model_matrix = glm::translate(glm::vec3(0, 0, 1.2f)) * glm::rotate((float) elapsed_time, glm::vec3(1, 1, 0)) * glm::scale(glm::vec3(0.05f));
+			model_matrix = glm::translate(glm::vec3(0, 0, 1.2f)) * glm::rotate(elapsed_time, glm::vec3(1, 1, 0)) * glm::scale(glm::vec3(0.05f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for cube
@@ -1238,7 +1238,7 @@ void ShaderObject::build_command_buffers()
 		blit.srcSubresource.layerCount     = 1;
 		blit.srcSubresource.mipLevel       = 0;
 		blit.srcOffsets[0]                 = {0, 0, 0};
-		blit.srcOffsets[1]                 = {(int) width, (int) height, 1};
+		blit.srcOffsets[1]                 = {static_cast<int>(width), static_cast<int>(height), 1};
 
 		// Copy color from source to destination of screen size
 		blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1246,7 +1246,7 @@ void ShaderObject::build_command_buffers()
 		blit.dstSubresource.layerCount     = 1;
 		blit.dstSubresource.mipLevel       = 0;
 		blit.dstOffsets[0]                 = {0, 0, 0};
-		blit.dstOffsets[1]                 = {(int) width, (int) height, 1};
+		blit.dstOffsets[1]                 = {static_cast<int>(width), static_cast<int>(height), 1};
 
 		// Add barrier for swapchain buffer image
 		vkb::image_layout_transition(draw_cmd_buffer,
@@ -1512,8 +1512,9 @@ void ShaderObject::bind_material_shader(VkCommandBuffer cmd_buffer, int shader_i
 	CurrentShader &shader = current_material_shaders[shader_index];
 
 	bind_shader(cmd_buffer, material_vert_shaders[shader.vert]);
-	if (enable_geometry_pass)
-		bind_shader(cmd_buffer, material_geo_shaders[shader.geo]);
+	if (enable_geometry_pass) {
+		bind_shader(cmd_buffer, material_geo_shaders[shader.geom]);
+}
 	bind_shader(cmd_buffer, material_frag_shaders[shader.frag]);
 }
 
@@ -1596,8 +1597,8 @@ void ShaderObject::iterate_current()
 	{
 		funcs.emplace_back([selected_shader, this]() {
 			selected_material_object = selected_shader % num_material_objects;
-			current_material_shaders[selected_shader % num_material_objects].geo++;
-			current_material_shaders[selected_shader % num_material_objects].geo %= material_geo_shaders.size();
+			current_material_shaders[selected_shader % num_material_objects].geom++;
+			current_material_shaders[selected_shader % num_material_objects].geom %= material_geo_shaders.size();
 		});
 	}
 
@@ -1634,8 +1635,9 @@ void ShaderObject::iterate_current()
 		});
 	}
 
-	if (funcs.size() == 0)
+	if (funcs.size() == 0) {
 		return;
+}
 
 	// Call a randomly chosen function
 	funcs[distribution(rng) % funcs.size()]();
@@ -1668,8 +1670,8 @@ void ShaderObject::randomize_current()
 	{
 		for (int i = 0; i < num_material_objects; ++i)
 		{
-			current_material_shaders[i].geo += distribution(rng);
-			current_material_shaders[i].geo %= material_geo_shaders.size();
+			current_material_shaders[i].geom += distribution(rng);
+			current_material_shaders[i].geom %= material_geo_shaders.size();
 		}
 	}
 
@@ -1766,8 +1768,8 @@ void ShaderObject::on_update_ui_overlay(vkb::Drawer &drawer)
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_material_geo, "Material Geo Shader:",
-		             material_geo_shaders[current_material_shaders[selected_material_object].geo]->get_name(),
-		             &current_material_shaders[selected_material_object].geo, material_geo_shaders.size() - 1,
+		             material_geo_shaders[current_material_shaders[selected_material_object].geom]->get_name(),
+		             &current_material_shaders[selected_material_object].geom, material_geo_shaders.size() - 1,
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_material_frag, "Material Frag Shader:",

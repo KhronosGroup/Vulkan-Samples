@@ -23,6 +23,8 @@
 #include "platform/filesystem.h"
 #include "spirv_reflection.h"
 
+#include "spdlog/sinks/basic_file_sink.h"
+
 namespace vkb
 {
 /**
@@ -88,28 +90,35 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		throw std::runtime_error("Entry point must be specified when compiling from GLSL source");
 	}
 
-	auto &source = glsl_source.get_source();
-
-	// Check if application is passing in GLSL source code to compile to SPIR-V
-	if (source.empty())
+	if (glsl_source.get_type() == ShaderSource::Type::Source)
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		auto &source = glsl_source.get_source();
+
+		// Check if application is passing in GLSL source code to compile to SPIR-V
+		if (source.empty())
+		{
+			throw std::runtime_error("GLSL source is empty");
+		}
+
+		// Precompile source into the final spirv bytecode
+		auto glsl_final_source = precompile_shader(source);
+
+		// Compile the GLSL source
+		GLSLCompiler glsl_compiler;
+
+		if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
+		{
+			LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
+			LOGE("{}", info_log);
+			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		}
 	}
-
-	// Precompile source into the final spirv bytecode
-	auto glsl_final_source = precompile_shader(source);
-
-	// Compile the GLSL source
-	GLSLCompiler glsl_compiler;
-
-	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
+	else
 	{
-		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
-		LOGE("{}", info_log);
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		spirv = glsl_source.get_spirv();
 	}
 
 	SPIRVReflection spirv_reflection;
@@ -117,7 +126,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	// Reflect all shader resources
 	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		throw std::runtime_error("Failed to reflect shader resources");
 	}
 
 	// Generate a unique id, determined by source and variant
@@ -209,37 +218,17 @@ size_t ShaderVariant::get_id() const
 	return id;
 }
 
-void ShaderVariant::add_definitions(const std::vector<std::string> &definitions)
+void ShaderVariant::add_define(const std::string &def, const std::string &value)
 {
-	for (auto &definition : definitions)
+	// processes.push_back("D" + def);
+
+	definitions.emplace(def, value);
+
+	preamble = "";
+	for (auto &def : definitions)
 	{
-		add_define(definition);
+		preamble += "#define " + def.first + " " + def.second + "\n";
 	}
-}
-
-void ShaderVariant::add_define(const std::string &def)
-{
-	processes.push_back("D" + def);
-
-	std::string tmp_def = def;
-
-	// The "=" needs to turn into a space
-	size_t pos_equal = tmp_def.find_first_of("=");
-	if (pos_equal != std::string::npos)
-	{
-		tmp_def[pos_equal] = ' ';
-	}
-
-	preamble.append("#define " + tmp_def + "\n");
-
-	update_id();
-}
-
-void ShaderVariant::add_undefine(const std::string &undef)
-{
-	processes.push_back("U" + undef);
-
-	preamble.append("#undef " + undef + "\n");
 
 	update_id();
 }
@@ -291,11 +280,23 @@ void ShaderVariant::update_id()
 }
 
 ShaderSource::ShaderSource(const std::string &filename) :
-    filename{filename},
-    source{fs::read_shader(filename)}
+    filename{filename}
 {
-	std::hash<std::string> hasher{};
-	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
+	if (fs::is_file(fs::path::get(fs::path::Type::Shaders) + filename + ".spv"))
+	{
+		// We have a precompiled shader
+		LOGI("Loading precompiled shader: {}", filename + ".spv");
+		auto buffer = fs::read_shader_binary(filename + ".spv");
+		spirv       = {reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data() + buffer.size())};
+		type        = ShaderSource::Type::Spirv;
+	}
+	else
+	{
+		LOGI("Precompiled shader was not found: {}", filename + ".spv");
+		source = fs::read_shader(filename);
+	}
+
+	update_id();
 }
 
 size_t ShaderSource::get_id() const
@@ -310,13 +311,41 @@ const std::string &ShaderSource::get_filename() const
 
 void ShaderSource::set_source(const std::string &source_)
 {
+	type   = ShaderSource::Type::Source;
 	source = source_;
-	std::hash<std::string> hasher{};
-	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
+	update_id();
+}
+
+ShaderSource::Type ShaderSource::get_type() const
+{
+	return type;
 }
 
 const std::string &ShaderSource::get_source() const
 {
 	return source;
 }
+
+const std::vector<uint32_t> &ShaderSource::get_spirv() const
+{
+	return spirv;
+}
+
+void ShaderSource::update_id()
+{
+	std::hash<std::string> hasher{};
+	if (type == ShaderSource::Type::Source)
+	{
+		id = hasher(std::string{source.cbegin(), source.cend()});
+	}
+	else if (type == ShaderSource::Type::Spirv)
+	{
+		id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()), reinterpret_cast<const char *>(spirv.data() + spirv.size())});
+	}
+	else
+	{
+		throw std::runtime_error("Invalid shader source type");
+	}
+}
+
 }        // namespace vkb

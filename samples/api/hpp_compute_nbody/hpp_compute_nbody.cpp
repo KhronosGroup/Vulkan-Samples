@@ -371,7 +371,7 @@ void HPPComputeNBody::initializeCamera()
 	camera.type = vkb::CameraType::LookAt;
 
 	// Note: Using reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
@@ -513,7 +513,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(compute.ubo.particle_count);
 
-	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -547,7 +547,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 			}
 
 			// Color gradient offset
-			particle.vel.w = (float) i * 1.0f / static_cast<uint32_t>(attractors.size());
+			particle.vel.w = static_cast<float>(i) * 1.0f / static_cast<uint32_t>(attractors.size());
 		}
 	}
 

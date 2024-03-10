@@ -18,11 +18,8 @@
 
 precision highp float;
 
-#ifdef MS_DEPTH
-layout(set = 0, binding = 1) uniform sampler2DMS ms_depth_sampler;
-#else
 layout(set = 0, binding = 1) uniform sampler2D depth_sampler;
-#endif
+
 layout(set = 0, binding = 2) uniform sampler2D color_sampler;
 
 layout(location = 0) in vec2 in_uv;
@@ -34,6 +31,8 @@ layout(set = 0, binding = 0) uniform PostprocessingUniform
 	vec2 near_far;
 } postprocessing_uniform;
 
+layout(constant_id = 0) const uint OUTLINE_ONLY = 0U;
+
 float linearizeDepth(float depth, float near, float far)
 {
     return near * far / (far + depth * (near - far));
@@ -42,11 +41,9 @@ float linearizeDepth(float depth, float near, float far)
 float getDepth(ivec2 offset)
 {
 	float depth;
-#ifdef MS_DEPTH
-	depth = texelFetch(ms_depth_sampler, ivec2(gl_FragCoord.xy) + offset, 0).r;
-#else
+
 	depth = texelFetch(depth_sampler, ivec2(gl_FragCoord.xy) + offset, 0).r;
-#endif
+
 	return linearizeDepth(depth, postprocessing_uniform.near_far.x, postprocessing_uniform.near_far.y);
 }
 
@@ -62,9 +59,9 @@ void main(void)
 	outline += depth - getDepth(ivec2(thickness, 0));
 	outline += depth - getDepth(ivec2(0, -thickness));
 
-#ifdef OUTLINE_ONLY
-	o_color.rgb = vec3(outline);
-#else
-	o_color.rgb = mix(color.rgb, outline_color, clamp(outline, 0.0, 1.0));
-#endif
+	if (OUTLINE_ONLY == 1U) {
+		o_color.rgb = vec3(outline);
+	} else {
+		o_color.rgb = mix(color.rgb, outline_color, clamp(outline, 0.0, 1.0));
+	}
 }

@@ -457,6 +457,14 @@ endif()
 add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# Compile common shaders
+compile_shaders(
+    ID ${PROJECT_NAME}
+    SHADER_FILES_GLSL
+        "imgui.vert"
+        "imgui.frag"
+)
+
 # compiler flags based on compiler type
 if(NOT MSVC)
     target_compile_options(${PROJECT_NAME} PUBLIC -fexceptions)

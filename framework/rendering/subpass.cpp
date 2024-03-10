@@ -21,10 +21,6 @@
 
 namespace vkb
 {
-const std::vector<std::string> light_type_definitions = {
-    "DIRECTIONAL_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Directional)),
-    "POINT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Point)),
-    "SPOT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Spot))};
 
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 {

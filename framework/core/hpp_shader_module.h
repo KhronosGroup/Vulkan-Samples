@@ -77,14 +77,6 @@ struct HPPShaderResource
 	std::string           name;
 };
 
-class HPPShaderSource : private vkb::ShaderSource
-{
-  public:
-	HPPShaderSource(const std::string &filename) :
-	    vkb::ShaderSource(filename)
-	{}
-};
-
 class HPPShaderVariant : private vkb::ShaderVariant
 {};
 
@@ -96,7 +88,7 @@ class HPPShaderModule : private vkb::ShaderModule
   public:
 	HPPShaderModule(vkb::core::HPPDevice              &device,
 	                vk::ShaderStageFlagBits            stage,
-	                const vkb::core::HPPShaderSource  &glsl_source,
+	                const vkb::ShaderSource     &glsl_source,
 	                const std::string                 &entry_point,
 	                const vkb::core::HPPShaderVariant &shader_variant) :
 	    vkb::ShaderModule(reinterpret_cast<vkb::Device &>(device),

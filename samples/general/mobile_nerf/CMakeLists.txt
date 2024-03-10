@@ -19,10 +19,19 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample_with_tags(
+add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Qualcomm"
     NAME "Mobile NeRF"
     DESCRIPTION "A Mobile Neural Radiance Field synthesizer sample, based on textured polygons"
+    SHADER_FILES_GLSL
+        "mobile_nerf/raster.vert"
+        "mobile_nerf/raster.frag"
+        "mobile_nerf/raster_morpheus.frag"
+        "mobile_nerf/quad.vert"
+        "mobile_nerf/mlp.frag"
+        "mobile_nerf/mlp_morpheus.frag"
+        "mobile_nerf/merged.frag"
+        "mobile_nerf/merged_morpheus.frag"
 )

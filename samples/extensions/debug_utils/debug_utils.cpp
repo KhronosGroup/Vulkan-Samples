@@ -207,7 +207,7 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 	if (debug_utils_supported)
 	{
 		// Name the shader (by file name)
-		set_object_name(VK_OBJECT_TYPE_SHADER_MODULE, (uint64_t) shader_stage.module, std::string("Shader " + file).c_str());
+		set_object_name(VK_OBJECT_TYPE_SHADER_MODULE, (uint64_t) shader_stage.module, static_cast<std::string>("Shader " + file).c_str());
 
 		std::vector<uint8_t> buffer = vkb::fs::read_shader_binary(file);
 		// Pass the source GLSL shader code via an object tag
@@ -1046,7 +1046,7 @@ void DebugUtils::update_uniform_buffers()
 
 void DebugUtils::draw()
 {
-	queue_begin_label(queue, std::string("Graphics queue command buffer " + std::to_string(current_buffer) + " submission").c_str(), {1.0f, 1.0f, 1.0f, 1.0f});
+	queue_begin_label(queue, static_cast<std::string>("Graphics queue command buffer " + std::to_string(current_buffer) + " submission").c_str(), {1.0f, 1.0f, 1.0f, 1.0f});
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];

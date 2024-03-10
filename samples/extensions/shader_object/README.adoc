@@ -325,7 +325,7 @@ void ShaderObject::bind_material_shader(VkCommandBuffer cmd_buffer, int shader_i
 
 	bind_shader(cmd_buffer, material_vert_shaders[shader.vert]);
 	if (enable_geometry_pass)
-		bind_shader(cmd_buffer, material_geo_shaders[shader.geo]);
+		bind_shader(cmd_buffer, material_geo_shaders[shader.geom]);
 	bind_shader(cmd_buffer, material_frag_shaders[shader.frag]);
 }
 ----

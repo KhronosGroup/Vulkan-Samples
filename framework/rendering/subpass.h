@@ -60,8 +60,6 @@ struct LightingState
  */
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
 
-extern const std::vector<std::string> light_type_definitions;
-
 /**
  * @brief This class defines an interface for subpasses
  *        where they need to implement the draw function.

@@ -25,4 +25,7 @@ add_sample(
     AUTHOR "Holochip"
     NAME "Dynamic Rendering"
     DESCRIPTION "Demonstrates the dynamic rendering extension to streamline render passes and avoid the requirement of render pass objects"
+    SHADER_FILES_GLSL
+        "dynamic_rendering/gbuffer.vert"
+        "dynamic_rendering/gbuffer.frag"
 )

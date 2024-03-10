@@ -113,7 +113,7 @@ vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vecto
 }
 
 vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits            stage,
-                                                                    const vkb::core::HPPShaderSource  &glsl_source,
+                                                                    const vkb::ShaderSource     &glsl_source,
                                                                     const vkb::core::HPPShaderVariant &shader_variant)
 {
 	std::string entry_point{"main"};

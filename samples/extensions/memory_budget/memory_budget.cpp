@@ -435,7 +435,7 @@ void MemoryBudget::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(MESH_DENSITY);
 
-	std::default_random_engine              rnd_generator(lock_simulation_speed ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine              rnd_generator(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
@@ -544,7 +544,7 @@ bool MemoryBudget::prepare(const vkb::ApplicationOptions &options)
 
 	// Note: Using reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
 	camera.set_translation(glm::vec3(5.5f, -1.85f, -18.5f));
 
