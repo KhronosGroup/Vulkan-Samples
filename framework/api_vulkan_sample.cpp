@@ -999,12 +999,7 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer{*device,
-	                               texture.image->get_data().size(),
-	                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                               VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(*device, texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> bufferCopyRegions;
@@ -1095,12 +1090,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer{*device,
-	                               texture.image->get_data().size(),
-	                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                               VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(*device, texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
@@ -1194,12 +1184,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer{*device,
-	                               texture.image->get_data().size(),
-	                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                               VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(*device, texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;

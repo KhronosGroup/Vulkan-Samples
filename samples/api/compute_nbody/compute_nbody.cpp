@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -322,8 +322,7 @@ void ComputeNBody::prepare_storage_buffers()
 
 	// Staging
 	// SSBO won't be changed on the host after upload so copy to device local memory
-	vkb::core::Buffer staging_buffer{get_device(), storage_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
-	staging_buffer.update(particle_buffer.data(), storage_buffer_size);
+	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), particle_buffer);
 
 	compute.storage_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                             storage_buffer_size,
