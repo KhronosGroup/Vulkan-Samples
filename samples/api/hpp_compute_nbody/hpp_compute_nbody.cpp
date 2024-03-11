@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -371,7 +371,7 @@ void HPPComputeNBody::initializeCamera()
 	camera.type = vkb::CameraType::LookAt;
 
 	// Note: Using reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
@@ -513,7 +513,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(compute.ubo.particle_count);
 
-	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -547,7 +547,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 			}
 
 			// Color gradient offset
-			particle.vel.w = (float) i * 1.0f / static_cast<uint32_t>(attractors.size());
+			particle.vel.w = static_cast<float>(i) * 1.0f / static_cast<uint32_t>(attractors.size());
 		}
 	}
 
@@ -555,8 +555,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 
 	// Staging
 	// SSBO won't be changed on the host after upload so copy to device local memory
-	vkb::core::HPPBuffer staging_buffer(*get_device(), storage_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
-	staging_buffer.update(particle_buffer.data(), storage_buffer_size);
+	vkb::core::HPPBuffer staging_buffer = vkb::core::HPPBuffer::create_staging_buffer(*get_device(), particle_buffer);
 
 	compute.storage_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
 	                                                                storage_buffer_size,

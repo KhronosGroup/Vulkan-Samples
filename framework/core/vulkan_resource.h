@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,11 +33,60 @@ namespace detail
 void set_debug_name(const Device *device, VkObjectType object_type, uint64_t handle, const char *debug_name);
 }
 
+template <typename HandleType>
+constexpr VkObjectType get_object_type(const HandleType &handle)
+{
+	throw std::runtime_error("Unknown handle type");
+	return static_cast<VkObjectType>(-1);
+}
+
+template <>
+constexpr VkObjectType get_object_type(const VkImage &handle)
+{
+	return VK_OBJECT_TYPE_IMAGE;
+}
+
+template <>
+constexpr VkObjectType get_object_type(const VkImageView &handle)
+{
+	return VK_OBJECT_TYPE_IMAGE_VIEW;
+}
+
+template <>
+constexpr VkObjectType get_object_type(const VkRenderPass &handle)
+{
+	return VK_OBJECT_TYPE_RENDER_PASS;
+}
+
+template <>
+constexpr VkObjectType get_object_type(const VkSampler &handle)
+{
+	return VK_OBJECT_TYPE_SAMPLER;
+}
+
+template <>
+constexpr VkObjectType get_object_type(const VkBuffer &handle)
+{
+	return VK_OBJECT_TYPE_BUFFER;
+}
+
+template <>
+constexpr VkObjectType get_object_type(const VkDevice &handle)
+{
+	return VK_OBJECT_TYPE_DEVICE;
+}
+
+template <>
+constexpr VkObjectType get_object_type(const VkCommandBuffer &handle)
+{
+	return VK_OBJECT_TYPE_COMMAND_BUFFER;
+}
+
 /// Inherit this for any Vulkan object with a handle of type `THandle`.
 ///
 /// This allows the derived class to store a Vulkan handle, and also a pointer to the parent Device.
 /// It also allow for adding debug data to any Vulkan object.
-template <typename THandle, VkObjectType OBJECT_TYPE, typename Device = vkb::Device>
+template <typename THandle, typename Device = vkb::Device>
 class VulkanResource
 {
   public:
@@ -46,7 +95,7 @@ class VulkanResource
 	{
 	}
 
-	VulkanResource(const VulkanResource &) = delete;
+	VulkanResource(const VulkanResource &)            = delete;
 	VulkanResource &operator=(const VulkanResource &) = delete;
 
 	VulkanResource(VulkanResource &&other) :
@@ -70,9 +119,9 @@ class VulkanResource
 
 	virtual ~VulkanResource() = default;
 
-	inline VkObjectType get_object_type() const
+	constexpr VkObjectType get_object_type() const
 	{
-		return OBJECT_TYPE;
+		return vkb::core::get_object_type(handle);
 	}
 
 	inline Device &get_device() const
@@ -104,12 +153,12 @@ class VulkanResource
 	inline void set_debug_name(const std::string &name)
 	{
 		debug_name = name;
-		detail::set_debug_name(device, OBJECT_TYPE, get_handle_u64(), debug_name.c_str());
+		detail::set_debug_name(device, get_object_type(), get_handle_u64(), debug_name.c_str());
 	}
 
   protected:
 	THandle     handle;
-	Device *    device;
+	Device     *device;
 	std::string debug_name;
 };
 

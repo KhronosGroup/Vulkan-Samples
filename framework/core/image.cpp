@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -67,6 +67,17 @@ inline VkImageType find_image_type(VkExtent3D extent)
 
 namespace core
 {
+
+Image ImageBuilder::build(const Device &device) const
+{
+	return Image(device, *this);
+}
+
+ImagePtr ImageBuilder::build_unique(const Device &device) const
+{
+	return std::make_unique<Image>(device, *this);
+}
+
 Image::Image(Device const         &device,
              const VkExtent3D     &extent,
              VkFormat              format,
@@ -79,88 +90,53 @@ Image::Image(Device const         &device,
              VkImageCreateFlags    flags,
              uint32_t              num_queue_families,
              const uint32_t       *queue_families) :
-    VulkanResource{VK_NULL_HANDLE, &device},
-    type{find_image_type(extent)},
-    extent{extent},
-    format{format},
-    sample_count{sample_count},
-    usage{image_usage},
-    array_layer_count{array_layers},
-    tiling{tiling}
+    // Pass through to the ImageBuilder ctor
+    Image(device,
+          ImageBuilder(extent)
+              .with_format(format)
+              .with_image_type(find_image_type(extent))
+              .with_usage(image_usage)
+              .with_mip_levels(mip_levels)
+              .with_array_layers(array_layers)
+              .with_tiling(tiling)
+              .with_flags(flags)
+              .with_vma_usage(memory_usage)
+              .with_sample_count(sample_count)
+              .with_queue_families(num_queue_families, queue_families)
+              .with_implicit_sharing_mode())
 {
-	assert(mip_levels > 0 && "Image should have at least one level");
-	assert(array_layers > 0 && "Image should have at least one layer");
+}
 
-	subresource.mipLevel   = mip_levels;
-	subresource.arrayLayer = array_layers;
-
-	VkImageCreateInfo image_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
-	image_info.flags       = flags;
-	image_info.imageType   = type;
-	image_info.format      = format;
-	image_info.extent      = extent;
-	image_info.mipLevels   = mip_levels;
-	image_info.arrayLayers = array_layers;
-	image_info.samples     = sample_count;
-	image_info.tiling      = tiling;
-	image_info.usage       = image_usage;
-
-	if (num_queue_families != 0)
+Image::Image(Device const &device, ImageBuilder const &builder) :
+    Allocated{builder.alloc_create_info, VK_NULL_HANDLE, &device}, create_info(builder.create_info)
+{
+	handle                 = create_image(create_info);
+	subresource.arrayLayer = create_info.arrayLayers;
+	subresource.mipLevel   = create_info.mipLevels;
+	if (!builder.debug_name.empty())
 	{
-		image_info.sharingMode           = VK_SHARING_MODE_CONCURRENT;
-		image_info.queueFamilyIndexCount = num_queue_families;
-		image_info.pQueueFamilyIndices   = queue_families;
-	}
-
-	VmaAllocationCreateInfo memory_info{};
-	memory_info.usage = memory_usage;
-
-	if (image_usage & VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)
-	{
-		memory_info.preferredFlags = VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
-	}
-
-	auto result = vmaCreateImage(device.get_memory_allocator(),
-	                             &image_info, &memory_info,
-	                             &handle, &memory,
-	                             nullptr);
-
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException{result, "Cannot create Image"};
+		set_debug_name(builder.debug_name);
 	}
 }
 
 Image::Image(Device const &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) :
-    VulkanResource{handle, &device},
-    type{find_image_type(extent)},
-    extent{extent},
-    format{format},
-    sample_count{sample_count},
-    usage{image_usage}
+    Allocated{handle, &device}
 {
-	subresource.mipLevel   = 1;
-	subresource.arrayLayer = 1;
+	create_info.extent     = extent;
+	create_info.imageType  = find_image_type(extent);
+	create_info.format     = format;
+	create_info.samples    = sample_count;
+	create_info.usage      = image_usage;
+	subresource.arrayLayer = create_info.arrayLayers = 1;
+	subresource.mipLevel = create_info.mipLevels = 1;
 }
 
-Image::Image(Image &&other) :
-    VulkanResource{std::move(other)},
-    memory{other.memory},
-    type{other.type},
-    extent{other.extent},
-    format{other.format},
-    sample_count{other.sample_count},
-    usage{other.usage},
-    tiling{other.tiling},
-    subresource{other.subresource},
-    views(std::exchange(other.views, {})),
-    mapped_data{other.mapped_data},
-    mapped{other.mapped}
+Image::Image(Image &&other) noexcept :
+    Allocated{std::move(other)},
+    create_info{std::exchange(other.create_info, {})},
+    subresource{std::exchange(other.subresource, {})},
+    views(std::exchange(other.views, {}))
 {
-	other.memory      = VK_NULL_HANDLE;
-	other.mapped_data = nullptr;
-	other.mapped      = false;
-
 	// Update image views references to this image to avoid dangling pointers
 	for (auto &view : views)
 	{
@@ -170,80 +146,47 @@ Image::Image(Image &&other) :
 
 Image::~Image()
 {
-	if (handle != VK_NULL_HANDLE && memory != VK_NULL_HANDLE)
-	{
-		unmap();
-		vmaDestroyImage(device->get_memory_allocator(), handle, memory);
-	}
-}
-
-VmaAllocation Image::get_memory() const
-{
-	return memory;
-}
-
-uint8_t *Image::map()
-{
-	if (!mapped_data)
-	{
-		if (tiling != VK_IMAGE_TILING_LINEAR)
-		{
-			LOGW("Mapping image memory that is not linear");
-		}
-		VK_CHECK(vmaMapMemory(device->get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
-		mapped = true;
-	}
-	return mapped_data;
-}
-
-void Image::unmap()
-{
-	if (mapped)
-	{
-		vmaUnmapMemory(device->get_memory_allocator(), memory);
-		mapped_data = nullptr;
-		mapped      = false;
-	}
+	destroy_image(get_handle());
 }
 
 VkImageType Image::get_type() const
 {
-	return type;
+	return create_info.imageType;
 }
 
 const VkExtent3D &Image::get_extent() const
 {
-	return extent;
+	return create_info.extent;
 }
 
 VkFormat Image::get_format() const
 {
-	return format;
+	return create_info.format;
 }
 
 VkSampleCountFlagBits Image::get_sample_count() const
 {
-	return sample_count;
+	return create_info.samples;
 }
 
 VkImageUsageFlags Image::get_usage() const
 {
-	return usage;
+	return create_info.usage;
 }
 
 VkImageTiling Image::get_tiling() const
 {
-	return tiling;
+	return create_info.tiling;
 }
 
-VkImageSubresource Image::get_subresource() const
+const VkImageSubresource &Image::get_subresource() const
 {
 	return subresource;
 }
 
 uint32_t Image::get_array_layer_count() const
 {
-	return array_layer_count;
+	return create_info.arrayLayers;
 }
 
 std::unordered_set<ImageView *> &Image::get_views()

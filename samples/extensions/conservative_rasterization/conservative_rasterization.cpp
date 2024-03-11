@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -353,11 +353,8 @@ void ConservativeRasterization::load_assets()
 	uint32_t index_buffer_size               = triangle.index_count * sizeof(uint32_t);
 
 	// Host visible source buffers (staging)
-	vkb::core::Buffer vertex_staging_buffer{get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
-	vertex_staging_buffer.update(vertex_buffer.data(), vertex_buffer_size);
-
-	vkb::core::Buffer index_staging_buffer{get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
-	index_staging_buffer.update(index_buffer.data(), index_buffer_size);
+	vkb::core::Buffer vertex_staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertex_buffer);
+	vkb::core::Buffer index_staging_buffer  = vkb::core::Buffer::create_staging_buffer(get_device(), index_buffer);
 
 	// Device local destination buffers
 	triangle.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
