@@ -19,6 +19,8 @@ jobs:
         build_type: [Debug, Release]
     env:
       PARALLEL: -j 2
+    # only run macos-14 on main due to slower provisioning times
+    if: ${{ github.ref == 'refs/heads/main' || matrix.platform.runtime != 'macos-14' }}
     runs-on: "${{ matrix.platform.runtime }}"
     steps:
       - uses: actions/checkout@v3
