@@ -27,7 +27,7 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "common/utils.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"

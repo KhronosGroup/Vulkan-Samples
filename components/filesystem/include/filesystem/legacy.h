@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,8 +25,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <json.hpp>
-
 namespace vkb
 {
 namespace fs
@@ -46,7 +44,6 @@ enum Type
 
 	// Special paths
 	ExternalStorage,
-	WorkingDir = ExternalStorage,
 	Temp
 };
 
@@ -93,11 +90,9 @@ void create_path(const std::string &root, const std::string &path);
  * @brief Helper to read an asset file into a byte-array
  *
  * @param filename The path to the file (relative to the assets directory)
- * @param count (optional) How many bytes to read. If 0 or not specified, the size
- * of the file will be used.
  * @return A vector filled with data read from the file
  */
-std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t count = 0);
+std::vector<uint8_t> read_asset(const std::string &filename);
 
 /**
  * @brief Helper to read a shader file into a single string
@@ -119,22 +114,18 @@ std::vector<uint8_t> read_shader_binary(const std::string &filename);
  * @brief Helper to read a temporary file into a byte-array
  *
  * @param filename The path to the file (relative to the temporary storage directory)
- * @param count (optional) How many bytes to read. If 0 or not specified, the size
- * of the file will be used.
  * @return A vector filled with data read from the file
  */
-std::vector<uint8_t> read_temp(const std::string &filename, const uint32_t count = 0);
+std::vector<uint8_t> read_temp(const std::string &filename);
 
 /**
  * @brief Helper to write to a file in temporary storage
  *
  * @param data A vector filled with data to write
  * @param filename The path to the file (relative to the temporary storage directory)
- * @param count (optional) How many bytes to write. If 0 or not specified, the size
  * of data will be used.
  */
-void write_temp(const std::vector<uint8_t> &data, const std::string &filename, const uint32_t count = 0);
-
+void write_temp(const std::vector<uint8_t> &data, const std::string &filename);
 /**
  * @brief Helper to write to a png image in permanent storage
  *

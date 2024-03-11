@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,10 +19,10 @@
 
 #include <imgui_internal.h>
 
-#include "common/logging.h"
 #include "core/device.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/window.h"
 
 #include "rendering/subpasses/forward_subpass.h"

@@ -329,6 +329,13 @@ set(ASTC_TARGET ${ASTC_RAW_TARGET} PARENT_SCOPE)
 # astc
 add_subdirectory(astc)
 
+# ASTC apparently tries to build for x86_64 even on Mac arm64 architectures,
+# but we can force it to build for the correct arch
+# Upstream bug: https://github.com/ARM-software/astc-encoder/issues/458
+if (APPLE AND (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
+    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
+endif()
+
 # astc doesn't have separate directories for it's source code and public interface.  Additionally, it includes it's
 # own copy of STB. In order to avoid conflicts, we copy the only header we need to the build directory and alter the
 # INTERFACE_INCLUDE_DIRECTORIES of the target
@@ -395,7 +402,7 @@ set(CLI11_FORCE_LIBCXX OFF)
 set(CLI11_CUDA_TESTS OFF)
 set(CLI11_CLANG_TIDY OFF)
 add_subdirectory(cli11)
-if (TARGET CLI11)
+if (TARGET CLI11 AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
     set_property(TARGET CLI11 PROPERTY FOLDER "ThirdParty")
 endif()
 

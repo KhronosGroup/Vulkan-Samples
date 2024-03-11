@@ -21,6 +21,8 @@
 #include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
 
+#include <json.hpp>
+
 using json = nlohmann::json;
 
 namespace vkb

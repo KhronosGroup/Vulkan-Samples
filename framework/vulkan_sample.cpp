@@ -26,10 +26,10 @@ VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
 #include "common/helpers.h"
-#include "common/logging.h"
 #include "common/strings.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "core/util/logging.hpp"
 #include "gltf_loader.h"
 #include "platform/platform.h"
 #include "platform/window.h"
