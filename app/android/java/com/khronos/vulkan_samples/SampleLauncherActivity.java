@@ -66,13 +66,6 @@ public class SampleLauncherActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         if (loadNativeLibrary(getResources().getString(R.string.native_lib_name))) {
-            // Initialize cpp android platform
-            File external_files_dir = getExternalFilesDir("");
-            File temp_files_dir = getCacheDir();
-            if (external_files_dir != null && temp_files_dir != null) {
-                initFilePath(external_files_dir.toString(), temp_files_dir.toString());
-            }
-
             // Get sample info from cpp cmake generated file
             samples = new SampleStore(Arrays.asList(getSamples()));
         }
@@ -340,9 +333,4 @@ public class SampleLauncherActivity extends AppCompatActivity {
      * @param args The arguments that are to be passed to the app
      */
     private native void sendArgumentsToPlatform(String[] args);
-
-    /**
-     * @brief Initiate the file system for the Native Application
-     */
-    private native void initFilePath(String external_dir, String temp_path);
 }
