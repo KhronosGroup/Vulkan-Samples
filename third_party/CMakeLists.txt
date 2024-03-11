@@ -23,7 +23,7 @@ project(third_party LANGUAGES C CXX)
 add_library(glm INTERFACE)
 set(GLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glm)
 target_sources(glm INTERFACE ${GLM_DIR}/glm/glm.hpp)
-target_include_directories(glm INTERFACE ${GLM_DIR})
+target_include_directories(glm SYSTEM INTERFACE ${GLM_DIR})
 
 target_compile_definitions(glm INTERFACE
     GLM_FORCE_SWIZZLE
@@ -39,13 +39,13 @@ endif()
 add_library(tinygltf INTERFACE)
 set(TINYGLTF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf)
 target_sources(tinygltf INTERFACE ${TINYGLTF_DIR}/tiny_gltf.h ${TINYGLTF_DIR}/json.hpp)
-target_include_directories(tinygltf INTERFACE ${TINYGLTF_DIR})
+target_include_directories(tinygltf SYSTEM INTERFACE ${TINYGLTF_DIR})
 
 # vulkan
 add_library(vulkan INTERFACE)
 set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/include)
 target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
-target_include_directories(vulkan INTERFACE ${VULKAN_INCLUDE_DIR})
+target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
 
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
@@ -173,7 +173,7 @@ target_compile_definitions(ktx PUBLIC KTX_FEATURE_WRITE=0)
 target_compile_definitions(ktx PUBLIC BASISD_SUPPORT_KTX2_ZSTD=0)
 target_compile_definitions(ktx PUBLIC BASISU_NO_ITERATOR_DEBUG_LEVEL)
 
-target_include_directories(ktx PUBLIC ${KTX_INCLUDE_DIRS})
+target_include_directories(ktx SYSTEM PUBLIC ${KTX_INCLUDE_DIRS})
 
 target_link_libraries(ktx PUBLIC vulkan)
 
@@ -190,13 +190,13 @@ set_target_properties(volk PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(volk PUBLIC vulkan)
 
-target_include_directories(volk PUBLIC ${VOLK_DIR})
+target_include_directories(volk SYSTEM PUBLIC ${VOLK_DIR})
 if (VKB_WSI_SELECTION STREQUAL XCB)
-    target_include_directories(volk PUBLIC ${XCB_INCLUDE_DIRS})
+    target_include_directories(volk SYSTEM PUBLIC ${XCB_INCLUDE_DIRS})
 elseif (VKB_WSI_SELECTION STREQUAL XLIB)
-    target_include_directories(volk PUBLIC ${X11_INCLUDE_DIRS})
+    target_include_directories(volk SYSTEM PUBLIC ${X11_INCLUDE_DIRS})
 elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
-    target_include_directories(volk PUBLIC ${WAYLAND_INCLUDE_DIRS})
+    target_include_directories(volk SYSTEM PUBLIC ${WAYLAND_INCLUDE_DIRS})
 endif()
 
 set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
@@ -217,7 +217,7 @@ set(IMGUI_FILES
 
 add_library(imgui STATIC ${IMGUI_FILES})
 
-target_include_directories(imgui PUBLIC ${IMGUI_DIR})
+target_include_directories(imgui SYSTEM PUBLIC ${IMGUI_DIR})
 
 set_target_properties(imgui PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
@@ -249,7 +249,7 @@ if (NOT TARGET glslang-default-resource-limits)
     set_target_properties(glslang-default-resource-limits PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
     target_include_directories(glslang-default-resource-limits
-            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
+        SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
 endif()
 
 if(NOT MSVC)
@@ -288,7 +288,7 @@ endif()
 
 # stb
 add_library(stb INTERFACE)
-target_include_directories(stb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
+target_include_directories(stb SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
 
 
 # On an x86_64 macbook, AVX2 is selected, but linking fails with this message,
@@ -347,9 +347,27 @@ get_target_property(ASTC_BINARY_DIR ${ASTC_RAW_TARGET} BINARY_DIR)
 file(
     COPY astc/Source/astcenc.h
     DESTINATION ${ASTC_BINARY_DIR}/Include)
-set_target_properties(
-    ${ASTC_RAW_TARGET} PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${ASTC_BINARY_DIR}/Include)
+
+    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ""
+    INCLUDE_DIRECTORIES ""
+    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${ASTC_BINARY_DIR}/Include
+)
+target_include_directories(${ASTC_RAW_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/astc/Source)
+target_include_directories(${ASTC_RAW_TARGET} SYSTEM INTERFACE  ${ASTC_BINARY_DIR}/Include)
+
+# message(STATUS "INTERFACE_INCLUDE_DIRECTORIES: ${ASTC_INCLUDE_DIRS}")
+# get_target_property(ASTC_INCLUDE_DIRS ${ASTC_RAW_TARGET} INCLUDE_DIRECTORIES)
+# message(STATUS "INCLUDE_DIRECTORIES: ${ASTC_INCLUDE_DIRS}")
+# get_target_property(ASTC_INCLUDE_DIRS ${ASTC_RAW_TARGET} INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+# message(STATUS "INTERFACE_SYSTEM_INCLUDE_DIRECTORIES: ${ASTC_INCLUDE_DIRS}")
+# message(FATAL_ERROR "Foo")
+if (MSVC)
+  target_compile_definitions(${ASTC_RAW_TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(gtest PUBLIC -Wno-deprecated-declarations)
+  endif ()
+endif ()
 set_property(TARGET ${ASTC_RAW_TARGET} PROPERTY FOLDER "ThirdParty")
 
 
@@ -388,7 +406,7 @@ set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
 add_library(ctpl INTERFACE)
 set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
 target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
-target_include_directories(ctpl INTERFACE ${CTPL_DIR})
+target_include_directories(ctpl SYSTEM INTERFACE ${CTPL_DIR})
 
 # cli11
 set(CLI11_SANITIZERS OFF)
@@ -410,7 +428,7 @@ endif()
 add_library(opencl INTERFACE)
 set(OPENCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl)
 target_sources(opencl INTERFACE ${OPENCL_INCLUDE_DIR}/CL/opencl.h)
-target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
+target_include_directories(opencl SYSTEM INTERFACE ${OPENCL_INCLUDE_DIR})
 
 # Catch2
 add_subdirectory(catch2)
