@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Mobica Limited
+/* Copyright (c) 2022-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -531,11 +531,8 @@ void VertexDynamicState::model_data_creation()
 	                                          3, 7, 6,
 	                                          6, 2, 3};
 
-	vkb::core::Buffer vertex_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_staging.update(vertices);
-
-	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_staging.update(indices);
+	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	cube.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,

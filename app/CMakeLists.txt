@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -41,7 +41,7 @@ else()
     add_executable(${PROJECT_NAME} WIN32 ${SRC})
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE vkb__core apps plugins)
+target_link_libraries(${PROJECT_NAME} PRIVATE vkb__core vkb__filesystem apps plugins)
 
 # Create android project
 if(ANDROID)

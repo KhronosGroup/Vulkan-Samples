@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,7 @@
 #include "hpp_image.h"
 
 #include "common/hpp_utils.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"

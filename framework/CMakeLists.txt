@@ -82,7 +82,6 @@ set(COMMON_FILES
     common/vk_initializers.h
     common/glm_common.h
     common/resource_caching.h
-    common/logging.h
     common/helpers.h
     common/error.h
     common/utils.h
@@ -242,6 +241,7 @@ set(CORE_FILES
     core/command_pool.h
     core/swapchain.h
     core/command_buffer.h
+    core/allocated.h
     core/buffer.h
     core/image.h
     core/image_view.h
@@ -251,9 +251,8 @@ set(CORE_FILES
     core/framebuffer.h
     core/render_pass.h
     core/query_pool.h
-    core/scratch_buffer.h
     core/acceleration_structure.h
-    core/shader_binding_table.h
+    core/hpp_allocated.h
     core/hpp_buffer.h
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
@@ -293,6 +292,7 @@ set(CORE_FILES
     core/command_pool.cpp
     core/swapchain.cpp
     core/command_buffer.cpp
+    core/allocated.cpp
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
@@ -302,9 +302,7 @@ set(CORE_FILES
     core/framebuffer.cpp
     core/render_pass.cpp
     core/query_pool.cpp
-    core/scratch_buffer.cpp
     core/acceleration_structure.cpp
-    core/shader_binding_table.cpp
     core/vulkan_resource.cpp
     core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
@@ -326,7 +324,6 @@ set(PLATFORM_FILES
     platform/application.h
     platform/platform.h
     platform/window.h
-    platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
     platform/parser.h
@@ -339,7 +336,6 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/platform.cpp
     platform/window.cpp
-    platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
     platform/parser.cpp
@@ -513,6 +509,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
     vkb__core
+    vkb__filesystem
     volk
     ktx
     stb

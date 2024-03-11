@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip
+/* Copyright (c) 2021-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -123,11 +123,11 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 			                                          VK_SAMPLE_COUNT_1_BIT);
 		};
 
-		shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR |
-		                                                     static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT),
-		                                                 VK_FORMAT_R8_UINT);
+		shading_rate_image = create_shading_rate(
+		    VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+		    VK_FORMAT_R8_UINT);
 		shading_rate_image_compute = create_shading_rate(
-		    VK_IMAGE_USAGE_STORAGE_BIT | static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT),
+		    VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 		    VK_FORMAT_R8_UINT);
 
 		uint32_t fragment_shading_rate_count = 0;
@@ -148,10 +148,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		const auto           min_shading_rate = fragment_shading_rates.front().fragmentSize;
 		std::vector<uint8_t> temp_buffer(frame_height * frame_width,
 		                                 (min_shading_rate.height >> 1) | ((min_shading_rate.width << 1) & 12));
-		auto                 staging_buffer = std::make_unique<vkb::core::Buffer>(*device, temp_buffer.size() * sizeof(temp_buffer[0]),
-                                                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
-		staging_buffer->update(temp_buffer);
+		auto                 staging_buffer = vkb::core::Buffer::create_staging_buffer(*device, temp_buffer);
 
 		auto cmd = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -161,7 +158,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		buffer_copy_region.imageSubresource.layerCount = 1;
 		buffer_copy_region.imageExtent                 = image_extent;
-		vkCmdCopyBufferToImage(cmd, staging_buffer->get_handle(), shading_rate_image->get_handle(),
+		vkCmdCopyBufferToImage(cmd, staging_buffer.get_handle(), shading_rate_image->get_handle(),
 		                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 		vkb::image_layout_transition(
