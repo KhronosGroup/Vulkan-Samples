@@ -76,4 +76,9 @@ if (VKB_CLANG_TIDY)
     set(VKB_DO_CLANG_TIDY ${CLANG_TIDY} ${VKB_CLANG_TIDY_EXTRAS})
 endif()
 
+if (ANDROID AND VKB_PROFILING)
+    message(WARNING "Tracy Profiling is not supported on android yet")
+    set(VKB_PROFILING OFF)
+endif()
+
 set(TRACY_ENABLE ${VKB_PROFILING})
