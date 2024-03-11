@@ -27,6 +27,8 @@
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
 #	include "hwcpipe_stats_provider.h"
 #endif
+#include "core/allocated.h"
+#include "rendering/render_context.h"
 #include "vulkan_stats_provider.h"
 
 namespace vkb
@@ -364,6 +366,7 @@ const char *to_string(StatIndex index)
 
 void Stats::profile_counters() const
 {
+#if VKB_PROFILING
 	static std::chrono::high_resolution_clock::time_point last_time = std::chrono::high_resolution_clock::now();
 	std::chrono::high_resolution_clock::time_point        now       = std::chrono::high_resolution_clock::now();
 
@@ -400,7 +403,7 @@ void Stats::profile_counters() const
 	static std::vector<std::string> labels;
 
 	auto        &device    = render_context.get_device();
-	VmaAllocator allocator = device.get_memory_allocator();
+	VmaAllocator allocator = allocated::get_memory_allocator();
 
 	VmaBudget heap_budgets[VK_MAX_MEMORY_HEAPS];
 	vmaGetHeapBudgets(allocator, heap_budgets);
@@ -424,6 +427,7 @@ void Stats::profile_counters() const
 	{
 		Plot<float, PlotType::Memory>::plot(labels[heap].c_str(), heap_budgets[heap].usage / (1024.0f * 1024.0f));
 	}
+#endif
 }
 
 void Stats::begin_sampling(CommandBuffer &cb)

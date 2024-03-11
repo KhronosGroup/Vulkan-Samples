@@ -74,16 +74,3 @@ class VulkanException : public std::runtime_error
 			abort();                    \
 		}                               \
 	} while (0)
-
-template <typename... Args>
-inline void ERRORF(const std::string &format, Args &&...args)
-{
-    throw std::runtime_error(fmt::format(format, std::forward<Args>(args)...));
-}
-
-inline void ERRORF(const std::string &message)
-{
-    throw std::runtime_error(message);
-}
-
-#define NOT_IMPLEMENTED() ERRORF("not implemented")

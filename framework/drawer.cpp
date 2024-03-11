@@ -66,7 +66,9 @@ bool Drawer::radio_button(const char *caption, int32_t *selectedOption, const in
 {
 	bool res = ImGui::RadioButton(caption, selectedOption, elementOption);
 	if (res)
+	{
 		dirty = true;
+	}
 
 	return res;
 }
