@@ -32,7 +32,7 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-/// Helper class to generate SPIRV code from GLSL source
+/// Helper class to generate SPIRV code from GLSL/HLSL source
 /// A very simple version of the glslValidator application
 class ShaderCompiler
 {
