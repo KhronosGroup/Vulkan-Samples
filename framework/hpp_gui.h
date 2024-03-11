@@ -62,7 +62,7 @@ struct HPPFont
 	}
 
 	std::vector<uint8_t> data;
-	ImFont	          *handle = nullptr;
+	ImFont              *handle = nullptr;
 	std::string          name;
 	float                size = 0.0f;
 };
