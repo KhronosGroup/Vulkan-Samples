@@ -15,12 +15,56 @@ jobs:
     name: "Build ${{ matrix.platform.runtime }} in ${{ matrix.build_type }}"
     strategy:
       matrix:
-        platform: [{ os: windows, runtime: windows-latest }, { os: ubuntu, runtime: ubuntu-latest }, { os: macos, runtime: macos-12 }, { os: macos, runtime: macos-14 }]
+        platform: [{ os: windows, runtime: windows-latest }, { os: ubuntu, runtime: ubuntu-latest }, { os: macos, runtime: macos-12 }]
         build_type: [Debug, Release]
     env:
       PARALLEL: -j 2
-    # only run macos-14 on main due to slower provisioning times
-    if: ${{ github.ref == 'refs/heads/main' || matrix.platform.runtime != 'macos-14' }}
+    runs-on: "${{ matrix.platform.runtime }}"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+      - if: ${{ matrix.platform.os == 'ubuntu' }}
+        name: Install RandR headers
+        run: |
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
+      - if: ${{ matrix.platform.os == 'windows' }}
+        name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - if: ${{ matrix.platform.os == 'windows' }}
+        name: sccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+          variant: sccache
+      - if: ${{ matrix.platform.os != 'windows' }}
+        name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+      - if: ${{ matrix.platform.os == 'windows' }}
+        name: Configure and build
+        shell: pwsh
+        run: |
+          cmake -B"build/${{ matrix.platform.os }}" -G"Ninja" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake --build "build/${{ matrix.platform.os }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
+      - if: ${{ matrix.platform.os != 'windows' }}
+        name: Configure and build
+        run: |
+          cmake -B"build/${{ matrix.platform.os }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake --build "build/${{ matrix.platform.os }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+
+  build_apple_silicon:
+    name: "Build Apple Silicon in ${{ matrix.build_type }}"
+    strategy:
+      matrix:
+        platform: [{ os: macos, runtime: macos-14 }]
+        build_type: [Debug, Release]
+    env:
+      PARALLEL: -j 2
+    # Only run on main due to provisioning time for Apple Silicon runners
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: "${{ matrix.platform.runtime }}"
     steps:
       - uses: actions/checkout@v3
