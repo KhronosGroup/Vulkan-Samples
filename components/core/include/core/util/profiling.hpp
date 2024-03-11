@@ -24,10 +24,14 @@
 
 #include "core/util/error.hpp"
 
-VKBP_DISABLE_WARNINGS()
+#ifdef TRACY_ENABLE
 #include <tracy/Tracy.hpp>
-VKBP_ENABLE_WARNINGS()
+#endif
 
+
+
+
+#ifdef TRACY_ENABLE
 // malloc and free are used by Tracy to provide memory profiling
 void *operator new(size_t count);
 void  operator delete(void *ptr) noexcept;
@@ -37,6 +41,10 @@ void  operator delete(void *ptr) noexcept;
 
 // Trace a function
 #define PROFILE_FUNCTION() ZoneScoped
+#else
+#define PROFILE_SCOPE(name)
+#define PROFILE_FUNCTION()
+#endif
 
 // The type of plot to use
 enum class PlotType
@@ -108,8 +116,10 @@ class Plot
   private:
 	static void update_tracy_plot(const char *name, T value)
 	{
-		TracyPlot(name, value);
-		TracyPlotConfig(name, TO_TRACY_PLOT_FORMAT(PT), true, true, 0);
+		#ifdef TRACY_ENABLE
+			TracyPlot(name, value);
+			TracyPlotConfig(name, TO_TRACY_PLOT_FORMAT(PT), true, true, 0);
+		#endif
 	}
 
 	static Plot *get_instance()
