@@ -25,11 +25,8 @@
 #include "core/util/error.hpp"
 
 #ifdef TRACY_ENABLE
-#include <tracy/Tracy.hpp>
+#	include <tracy/Tracy.hpp>
 #endif
-
-
-
 
 #ifdef TRACY_ENABLE
 // malloc and free are used by Tracy to provide memory profiling
@@ -37,13 +34,13 @@ void *operator new(size_t count);
 void  operator delete(void *ptr) noexcept;
 
 // Tracy a scope
-#define PROFILE_SCOPE(name) ZoneScopedN(name)
+#	define PROFILE_SCOPE(name) ZoneScopedN(name)
 
 // Trace a function
-#define PROFILE_FUNCTION() ZoneScoped
+#	define PROFILE_FUNCTION() ZoneScoped
 #else
-#define PROFILE_SCOPE(name)
-#define PROFILE_FUNCTION()
+#	define PROFILE_SCOPE(name)
+#	define PROFILE_FUNCTION()
 #endif
 
 // The type of plot to use
@@ -116,10 +113,10 @@ class Plot
   private:
 	static void update_tracy_plot(const char *name, T value)
 	{
-		#ifdef TRACY_ENABLE
-			TracyPlot(name, value);
-			TracyPlotConfig(name, TO_TRACY_PLOT_FORMAT(PT), true, true, 0);
-		#endif
+#ifdef TRACY_ENABLE
+		TracyPlot(name, value);
+		TracyPlotConfig(name, TO_TRACY_PLOT_FORMAT(PT), true, true, 0);
+#endif
 	}
 
 	static Plot *get_instance()
