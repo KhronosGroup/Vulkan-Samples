@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,6 +50,11 @@ void Scene::set_nodes(std::vector<std::unique_ptr<Node>> &&n)
 void Scene::add_node(std::unique_ptr<Node> &&n)
 {
 	nodes.emplace_back(std::move(n));
+}
+
+std::vector<std::unique_ptr<Node>> const &Scene::get_nodes() const
+{
+	return nodes;
 }
 
 void Scene::add_child(Node &child)

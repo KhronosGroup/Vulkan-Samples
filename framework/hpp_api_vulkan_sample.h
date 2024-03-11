@@ -26,6 +26,19 @@
 #include <scene_graph/components/hpp_sub_mesh.h>
 
 /**
+ * @brief The structure of a meshlet for mesh shader
+ */
+struct HPPMeshlet
+{
+	static const size_t MAX_VERTICES = 64;
+	static const size_t MAX_INDICES  = 126;
+	uint32_t            vertices[64];
+	uint32_t            indices[126];
+	uint32_t            vertex_count;
+	uint32_t            index_count;
+};
+
+/**
  * @brief A swapchain buffer
  */
 struct HPPSwapchainBuffer
@@ -48,11 +61,25 @@ struct HPPTexture
  */
 struct HPPVertex
 {
+	HPPVertex(glm::vec3 const &p, glm::vec3 const &n, glm::vec2 const &t, glm::vec4 const &j, glm::vec4 const &w) :
+	    pos(p), normal(n), uv(t), joint0(j), weight0(w)
+	{}
+
 	glm::vec3 pos;
 	glm::vec3 normal;
 	glm::vec2 uv;
 	glm::vec4 joint0;
 	glm::vec4 weight0;
+};
+
+/**
+ * @brief The structure of a vertex for storage buffer
+ * Simplified to position and normal for easier alignment
+ */
+struct HPPAlignedVertex
+{
+	glm::vec4 pos;
+	glm::vec4 normal;
 };
 
 /**

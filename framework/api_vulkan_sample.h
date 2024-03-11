@@ -88,10 +88,12 @@ struct AlignedVertex
  */
 struct Meshlet
 {
-	uint32_t vertices[64];
-	uint32_t indices[126];
-	uint32_t vertex_count;
-	uint32_t index_count;
+	static const size_t MAX_VERTICES = 64;
+	static const size_t MAX_INDICES  = 126;
+	uint32_t            vertices[MAX_VERTICES];
+	uint32_t            indices[MAX_INDICES];
+	uint32_t            vertex_count;
+	uint32_t            index_count;
 };
 
 /**

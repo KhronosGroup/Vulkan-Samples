@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,6 +23,11 @@
 
 namespace vkb
 {
+namespace sg
+{
+class Image;
+}
+
 namespace scene_graph
 {
 namespace components
@@ -46,6 +51,8 @@ struct HPPMipmap
 class HPPImage : public vkb::sg::Component
 {
   public:
+	using ComponentType = vkb::sg::Image;
+
 	HPPImage(const std::string &name, std::vector<uint8_t> &&data = {}, std::vector<vkb::scene_graph::components::HPPMipmap> &&mipmaps = {{}});
 	virtual ~HPPImage() = default;
 
