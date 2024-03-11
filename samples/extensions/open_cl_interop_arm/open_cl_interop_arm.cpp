@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,8 +18,8 @@
 #include "open_cl_interop_arm.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #define CL_FUNCTION_DEFINITIONS
 #include "../open_cl_common/open_cl_utils.h"
@@ -384,7 +384,7 @@ void OpenCLInteropArm::prepare_pipelines()
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
 	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
-        vertex_input_attributes.size());
+	         vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =

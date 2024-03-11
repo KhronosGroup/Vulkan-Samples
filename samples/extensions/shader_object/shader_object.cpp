@@ -1,6 +1,6 @@
 /*
- * Copyright 2023 Nintendo
- * Copyright 2023, Sascha Willems
+ * Copyright 2023-2024-2024 Nintendo
+ * Copyright 2023-2024-2024, Sascha Willems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 #include <glsl_compiler.h>
 #include <heightmap.h>
 #include <unordered_map>
+
+#include <json.hpp>
 
 ShaderObject::ShaderObject()
 {
