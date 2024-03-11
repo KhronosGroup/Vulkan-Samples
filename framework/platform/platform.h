@@ -44,6 +44,7 @@ namespace vkb
 enum class ExitCode
 {
 	Success = 0, /* App executed as expected */
+	NoSample,    /* App should show help how to run a sample */
 	Help,        /* App should show help */
 	Close,       /* App has been requested to close at initialization */
 	FatalError   /* App encountered an unexpected error */
