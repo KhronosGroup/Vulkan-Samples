@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
- * Copyright (c) 2020-2022, Broadcom Inc.
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2020-2024, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -191,6 +191,9 @@ class Stats
 
 	/// Updates circular buffers for CPU and GPU counters
 	void push_sample(const StatsProvider::Counters &sample);
+
+	// Push counters to external profilers
+	void profile_counters() const;
 };
 
 }        // namespace vkb
