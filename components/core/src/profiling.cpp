@@ -19,6 +19,7 @@
 
 #include <cstdlib>
 
+#ifdef TRACY_ENABLE
 void *operator new(size_t count)
 {
 	auto ptr = malloc(count);
@@ -31,3 +32,4 @@ void operator delete(void *ptr) noexcept
 	TracyFree(ptr);
 	free(ptr);
 }
+#endif

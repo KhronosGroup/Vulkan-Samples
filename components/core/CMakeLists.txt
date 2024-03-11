@@ -31,8 +31,13 @@ vkb__register_component(
         src/profiling.cpp
     LINK_LIBS
         spdlog::spdlog
-        TracyClient
 )
+
+if (VKB_PROFILING)
+    target_link_libraries(vkb__core PUBLIC TracyClient)
+    target_compile_definitions(vkb__core PUBLIC TRACY_ENABLE)
+endif()
+
 
 vkb__register_tests(
     COMPONENT core
