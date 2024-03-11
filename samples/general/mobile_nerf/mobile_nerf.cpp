@@ -1469,9 +1469,6 @@ void MobileNerf::create_texture_helper(std::string const &texturePath, Texture &
 	texture_input = load_texture(texturePath, vkb::sg::Image::Color);
 	vkDestroySampler(get_device().get_handle(), texture_input.sampler, nullptr);
 
-	VkSamplerCreateInfo samplerCreateInfo = {};
-	samplerCreateInfo.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
 	// Calculate valid filter
 	VkFilter filter = using_original_nerf_models[0] ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture_input.image->get_format(), &filter);
