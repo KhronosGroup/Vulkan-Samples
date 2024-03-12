@@ -1,4 +1,5 @@
 /* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +23,7 @@
 
 #include "hpp_mesh_shading.h"
 
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 
 HPPMeshShading::HPPMeshShading()
 {
@@ -35,7 +36,7 @@ HPPMeshShading::HPPMeshShading()
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
+	vkb::ShaderCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 
 HPPMeshShading::~HPPMeshShading()

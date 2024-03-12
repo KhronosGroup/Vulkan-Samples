@@ -1,5 +1,6 @@
 ////
 - Copyright (c) 2019-2024, Arm Limited and Contributors
+- Copyright (c) 2024, Mobica Limited
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -160,6 +161,7 @@ Please make sure, when running any sample, that you either:
 
 * Enable https://docs.microsoft.com/en-us/windows/uwp/get-started/enable-your-device-for-development[Developer Mode]
 * Run Command Prompt or Visual Studio as administrator
+
 ____
 
 `Step 1.` The following command will generate the VS project

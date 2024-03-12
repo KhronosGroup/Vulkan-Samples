@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,8 +18,8 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include "gltf_loader.h"
+#include "shader_compiler.h"
 
 class GshaderToMshader : public ApiVulkanSample
 {

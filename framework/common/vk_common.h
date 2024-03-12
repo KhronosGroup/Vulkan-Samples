@@ -241,6 +241,43 @@ void image_layout_transition(VkCommandBuffer                                    
                              std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
                              VkImageLayout                                                   old_layout,
                              VkImageLayout                                                   new_layout);
+/**
+ * @brief Put an image memory barrier for setting an image layout on the sub resource into the given command buffer
+ */
+void set_image_layout(
+    VkCommandBuffer         command_buffer,
+    VkImage                 image,
+    VkImageLayout           old_layout,
+    VkImageLayout           new_layout,
+    VkImageSubresourceRange subresource_range,
+    VkPipelineStageFlags    src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    VkPipelineStageFlags    dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+/**
+ * @brief Uses a fixed sub resource layout with first mip level and layer
+ */
+void set_image_layout(
+    VkCommandBuffer      command_buffer,
+    VkImage              image,
+    VkImageAspectFlags   aspect_mask,
+    VkImageLayout        old_layout,
+    VkImageLayout        new_layout,
+    VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+/**
+ * @brief Insert an image memory barrier into the command buffer
+ */
+void insert_image_memory_barrier(
+    VkCommandBuffer         command_buffer,
+    VkImage                 image,
+    VkAccessFlags           src_access_mask,
+    VkAccessFlags           dst_access_mask,
+    VkImageLayout           old_layout,
+    VkImageLayout           new_layout,
+    VkPipelineStageFlags    src_stage_mask,
+    VkPipelineStageFlags    dst_stage_mask,
+    VkImageSubresourceRange subresource_range);
 
 /**
  * @brief Load and store info for a render pass attachment.

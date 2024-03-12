@@ -1,6 +1,7 @@
 /*
- * Copyright 2023-2024-2024 Nintendo
- * Copyright 2023-2024-2024, Sascha Willems
+ * Copyright 2023-2024 Nintendo
+ * Copyright 2023-2024, Sascha Willems
+ * Copyright (c) 2024, Mobica Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +17,8 @@
  */
 
 #include "shader_object.h"
-#include <glsl_compiler.h>
 #include <heightmap.h>
+#include <hpp_shader_compiler.h>
 #include <unordered_map>
 
 #include <json.hpp>
@@ -537,10 +538,10 @@ void ShaderObject::create_shaders()
 	using json = nlohmann::json;
 
 	// Initialize a GLSL compiler and load shaders from the shader json file
-	vkb::GLSLCompiler glsl_compiler;
-	std::string       shaders     = vkb::fs::read_shader("shader_object/shaders.json");
-	json              shader_data = json::parse(shaders);
-	VkDevice          device      = get_device().get_handle();
+	vkb::HPPShaderCompiler shader_compiler;
+	std::string            shaders     = vkb::fs::read_shader("shader_object/shaders.json");
+	json                   shader_data = json::parse(shaders);
+	VkDevice               device      = get_device().get_handle();
 
 	// Pre calc string lengths
 	const int unlinked_post_process_prefix_size = strlen("post_process_");
@@ -1970,11 +1971,11 @@ ShaderObject::Shader::Shader(VkShaderStageFlagBits        stage_,
 	shader_name = shader_name_;
 	next_stage  = next_stage_;
 
-	vkb::GLSLCompiler glsl_compiler;
-	std::string       info_log;
+	vkb::HPPShaderCompiler shader_compiler;
+	std::string            info_log;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(stage, vert_glsl_source, "main", {}, spirv, info_log))
+	if (!shader_compiler.compile_to_spirv(static_cast<vk::ShaderStageFlagBits>(stage), vert_glsl_source, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 	}

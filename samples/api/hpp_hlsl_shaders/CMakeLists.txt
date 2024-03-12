@@ -1,4 +1,5 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -25,6 +26,7 @@ add_sample_with_tags(
     AUTHOR "Sascha Willems"
     NAME "HPP Using HLSL shaders in Vulkan with glslang"
     DESCRIPTION "Shows how to generate SPIR-V from HLSL shaders that can be used in Vulkan, using vulkan.hpp"
-    SHADER_FILES_GLSL
-        "hlsl_shaders/hlsl_shader.vert"
-        "hlsl_shaders/hlsl_shader.frag")
+    SHADER_FILES_HLSL
+        "hlsl_shaders/hlsl/hlsl_shader.vert"
+        "hlsl_shaders/hlsl/hlsl_shader.frag"
+	)

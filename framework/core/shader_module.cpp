@@ -1,4 +1,5 @@
 /* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +21,7 @@
 #include "core/util/logging.hpp"
 #include "device.h"
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 #include "spirv_reflection.h"
 
 namespace vkb
@@ -103,9 +104,9 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	auto glsl_final_source = precompile_shader(source);
 
 	// Compile the GLSL source
-	GLSLCompiler glsl_compiler;
+	ShaderCompiler shader_compiler;
 
-	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
+	if (!shader_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
 	{
 		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
 		LOGE("{}", info_log);

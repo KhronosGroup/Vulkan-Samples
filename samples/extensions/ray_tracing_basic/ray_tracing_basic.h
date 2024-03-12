@@ -1,4 +1,5 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +23,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 
 // Holds data for a scratch buffer used as a temporary storage during acceleration structure builds
 struct ScratchBuffer
@@ -94,13 +95,14 @@ class RaytracingBasic : public ApiVulkanSample
 	void          create_scene();
 	void          create_shader_binding_tables();
 	void          create_descriptor_sets();
-	void          create_ray_tracing_pipeline();
+	void          create_ray_tracing_pipeline(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<VkShaderStageFlagBits, std::string>> &list_of_shaders);
 	void          create_uniform_buffer();
 	void          build_command_buffers() override;
 	void          update_uniform_buffers();
 	void          draw();
 	bool          prepare(const vkb::ApplicationOptions &options) override;
 	virtual void  render(float delta_time) override;
+	virtual void  change_shader(const vkb::ShaderSourceLanguage &shader_language) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic();

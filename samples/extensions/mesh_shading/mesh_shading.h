@@ -1,4 +1,5 @@
-/* Copyright (c) 2023 Holochip Corporation
+/* Copyright (c) 2023-2024 Holochip Corporation
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +24,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 
 class MeshShading : public ApiVulkanSample
 {

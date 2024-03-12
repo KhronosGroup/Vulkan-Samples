@@ -1,5 +1,6 @@
 /* Copyright (c) 2018-2024, Arm Limited and Contributors
  * Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +22,7 @@
 #include <fmt/format.h>
 
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
@@ -376,22 +377,17 @@ int32_t get_bits_per_pixel(VkFormat format)
 
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
-	vkb::GLSLCompiler glsl_compiler;
-
 	auto                  buffer = vkb::fs::read_shader_binary(filename);
 	std::vector<uint32_t> spirv;
 
-	if (vkb::ShaderSourceLanguage::GLSL == src_language)
+	if (src_language == vkb::ShaderSourceLanguage::GLSL || src_language == vkb::ShaderSourceLanguage::HLSL)
 	{
-		std::string file_ext = filename;
-
-		// Extract extension name from the glsl shader file
+		std::string         file_ext = filename;
+		std::string         info_log;
+		vkb::ShaderCompiler shader_compiler;
+		// Extract extension name from the shader file
 		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-		std::string info_log;
-
-		// Compile the GLSL source
-		if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+		if (!shader_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log, src_language))
 		{
 			LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 			return VK_NULL_HANDLE;

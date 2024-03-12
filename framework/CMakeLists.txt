@@ -1,4 +1,5 @@
 # Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,8 +23,8 @@ project(framework LANGUAGES C CXX)
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
+    shader_compiler.h
     drawer.h
-    glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
     buffer_pool.h
@@ -42,7 +43,7 @@ set(FRAMEWORK_FILES
     hpp_api_vulkan_sample.h
     hpp_buffer_pool.h
     hpp_fence_pool.h
-    hpp_glsl_compiler.h
+    hpp_shader_compiler.h
     hpp_gltf_loader.h
     hpp_gui.h
     hpp_resource_binding_state.h
@@ -53,8 +54,8 @@ set(FRAMEWORK_FILES
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
+    shader_compiler.cpp
     drawer.cpp
-    glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp

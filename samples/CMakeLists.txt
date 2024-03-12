@@ -1,4 +1,5 @@
 # Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -88,6 +89,7 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
+    "hlsl_raytracing_basic"
     "sparse_image"
 
     #Performance Samples

@@ -1,4 +1,5 @@
 # Copyright (c) 2020-2024, Arm Limited and Contributors
+# Copyright (c) 2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -29,6 +30,35 @@ if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUN
 endif()
 
 cmake_minimum_required(VERSION 3.16)
+
+include(FindVulkan)
+
+# If CMake has the FindVulkan module and it works, use it.
+find_package(Vulkan QUIET)
+
+if(DEFINED ENV{VULKAN_SDK})
+    message("Found VULKAN_SDK under $ENV{VULKAN_SDK}")
+    if(WIN32)
+        find_program(DXC_EXECUTABLE
+                    NAMES dxc
+                    HINTS
+                    "$ENV{VULKAN_SDK}/Bin"
+                    )
+    else()
+        find_program(DXC_EXECUTABLE
+                    NAMES dxc
+                    HINTS
+                    "$ENV{VULKAN_SDK}/bin"
+                    )
+    endif()
+    if(DEFINED DXC_EXECUTABLE)
+        message("Found DirectX Shader Compiler under ${DXC_EXECUTABLE}")
+    elseif()
+        message("Couldn't find DirectX Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_dxc_EXECUTABLE env variable")
+    endif()
+else()
+    message("VULKAN_SDK path not found, HLSL shaders won't be compiled")
+endif()
 
 # globally add VKB_DEBUG for the debug build
 add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)

@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +21,8 @@
 #include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
 #include "platform/window.h"
+#include "shader_compiler.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
@@ -646,7 +647,7 @@ void HelloTriangle::init_render_pass(Context &context)
  */
 VkShaderModule HelloTriangle::load_shader_module(Context &context, const char *path)
 {
-	vkb::GLSLCompiler glsl_compiler;
+	vkb::ShaderCompiler shader_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
 
@@ -659,7 +660,7 @@ VkShaderModule HelloTriangle::load_shader_module(Context &context, const char *p
 	std::string           info_log;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	if (!shader_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return VK_NULL_HANDLE;

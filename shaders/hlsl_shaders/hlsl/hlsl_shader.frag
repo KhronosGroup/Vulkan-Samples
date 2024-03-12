@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
