@@ -49,7 +49,7 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	scene->clear_components<vkb::sg::Light>();
+	get_scene().clear_components<vkb::sg::Light>();
 
 	auto light_pos   = glm::vec3(0.0f, 128.0f, -225.0f);
 	auto light_color = glm::vec3(1.0, 1.0, 1.0);
@@ -76,18 +76,18 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 				props.color     = light_color;
 				props.intensity = 0.2f;
 
-				vkb::add_point_light(*scene, pos, props);
+				vkb::add_point_light(get_scene(), pos, props);
 			}
 		}
 	}
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert"};
 	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag"};
 
-	auto gbuffer_pass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	auto gbuffer_pass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 	gbuffer_pass->set_output_attachments({1, 2, 3});
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
 	gbuffer_pipeline.set_load_store(vkb::gbuffer::get_clear_store_all());
@@ -95,17 +95,17 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 	auto lighting_vs = vkb::ShaderSource{"deferred/lighting.vert"};
 	auto lighting_fs = vkb::ShaderSource{"deferred/lighting.frag"};
 
-	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, *scene);
+	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, get_scene());
 	lighting_subpass->set_input_attachments({1, 2, 3});
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	stats->request_stats({vkb::StatIndex::frame_times,
-	                      vkb::StatIndex::gpu_vertex_cycles,
-	                      vkb::StatIndex::gpu_fragment_cycles},
-	                     vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
+	get_stats().request_stats({vkb::StatIndex::frame_times,
+	                           vkb::StatIndex::gpu_vertex_cycles,
+	                           vkb::StatIndex::gpu_fragment_cycles},
+	                          vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -297,9 +297,9 @@ void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarge
 
 	lighting_pipeline.draw(command_buffer, get_render_context().get_active_frame().get_render_target());
 
-	if (gui)
+	if (has_gui())
 	{
-		gui->draw(command_buffer);
+		get_gui().draw(command_buffer);
 	}
 
 	command_buffer.end_render_pass();
@@ -327,7 +327,7 @@ void PipelineBarriers::draw_gui()
 		lines++;
 	}
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this, portrait_mode]() {
 		    ImGui::Text("Pipeline barrier stages:");
 		    ImGui::RadioButton("Bottom to top", reinterpret_cast<int *>(&dependency_type), DependencyType::BOTTOM_TO_TOP);
@@ -344,7 +344,7 @@ void PipelineBarriers::draw_gui()
 	    /* lines = */ lines);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_pipeline_barriers()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_pipeline_barriers()
 {
 	return std::make_unique<PipelineBarriers>();
 }

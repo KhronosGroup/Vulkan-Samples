@@ -30,7 +30,7 @@ Instancing::Instancing()
 
 Instancing::~Instancing()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.instanced_rocks, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.planet, nullptr);
@@ -407,7 +407,7 @@ void Instancing::prepare_instance_data()
 	instance_buffer.buffer = std::make_unique<vkb::core::Buffer>(get_device(), instance_buffer.size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy to staging buffer
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 	copy_region.size         = instance_buffer.size;
@@ -418,7 +418,7 @@ void Instancing::prepare_instance_data()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	instance_buffer.descriptor.range  = instance_buffer.size;
 	instance_buffer.descriptor.buffer = instance_buffer.buffer->get_handle();

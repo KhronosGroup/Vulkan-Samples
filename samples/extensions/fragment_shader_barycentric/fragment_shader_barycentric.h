@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -85,4 +85,4 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	void draw();
 };
 
-std::unique_ptr<vkb::VulkanSample> create_fragment_shader_barycentric();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shader_barycentric();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -112,7 +112,7 @@ class HPPVulkanResource
 
 		if (device && !debug_name.empty())
 		{
-			device->get_debug_utils().set_debug_name(device->get_handle(), HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
+			get_device().get_debug_utils().set_debug_name(get_device().get_handle(), HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
 		}
 	}
 

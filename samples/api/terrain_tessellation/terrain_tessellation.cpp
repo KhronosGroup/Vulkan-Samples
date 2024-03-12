@@ -30,7 +30,7 @@ TerrainTessellation::TerrainTessellation()
 
 TerrainTessellation::~TerrainTessellation()
 {
-	if (device)
+	if (has_device())
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
@@ -337,7 +337,7 @@ void TerrainTessellation::generate_terrain()
 	                                                      VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
@@ -357,7 +357,7 @@ void TerrainTessellation::generate_terrain()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 void TerrainTessellation::setup_descriptor_pool()

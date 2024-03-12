@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Sascha Willems
+/* Copyright (c) 2020-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -104,4 +104,4 @@ class FragmentShadingRate : public ApiVulkanSample
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate();
