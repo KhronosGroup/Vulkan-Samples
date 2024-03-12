@@ -50,7 +50,6 @@ set(FRAMEWORK_FILES
     hpp_resource_record.h
     hpp_resource_replay.h
     hpp_semaphore_pool.h
-    hpp_vulkan_sample.h
     # Source Files
     gui.cpp
     drawer.cpp
@@ -66,14 +65,12 @@ set(FRAMEWORK_FILES
     resource_cache.cpp
     resource_record.cpp
     resource_replay.cpp
-    vulkan_sample.cpp
     api_vulkan_sample.cpp
     timer.cpp
     camera.cpp
-    hpp_gui.cpp
     hpp_api_vulkan_sample.cpp
-    hpp_resource_cache.cpp
-	hpp_vulkan_sample.cpp)
+    hpp_gui.cpp
+    hpp_resource_cache.cpp)
 
 set(COMMON_FILES
     # Header Files

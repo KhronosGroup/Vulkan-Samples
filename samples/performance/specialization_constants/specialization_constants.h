@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ struct alignas(16) CustomForwardLights
 /**
  * @brief Using specialization constants
  */
-class SpecializationConstants : public vkb::VulkanSample
+class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	SpecializationConstants();
@@ -121,4 +121,4 @@ class SpecializationConstants : public vkb::VulkanSample
 	int specialization_constants_enabled{0};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_specialization_constants();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_specialization_constants();

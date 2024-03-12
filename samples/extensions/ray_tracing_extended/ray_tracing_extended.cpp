@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023 Holochip Corporation
+/* Copyright (c) 2021-2024 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -111,7 +111,7 @@ RaytracingExtended::RaytracingExtended() :
 
 RaytracingExtended::~RaytracingExtended()
 {
-	if (device)
+	if (has_device())
 	{
 		flame_texture.image.reset();
 		vkDestroySampler(get_device().get_handle(), flame_texture.sampler, nullptr);
@@ -217,7 +217,7 @@ uint64_t RaytracingExtended::get_buffer_device_address(VkBuffer buffer)
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer = buffer;
-	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
+	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 }
 
 void RaytracingExtended::create_flame_model()
@@ -297,7 +297,7 @@ void RaytracingExtended::create_static_object_buffers()
 	// now transfer over to the end buffer
 	if (scene_options.use_vertex_staging_buffer)
 	{
-		auto &cmd = device->request_command_buffer();
+		auto &cmd = get_device().request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 		auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
@@ -315,9 +315,9 @@ void RaytracingExtended::create_static_object_buffers()
 		index_buffer  = copy(*staging_index_buffer);
 
 		cmd.end();
-		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-		queue.submit(cmd, device->request_fence());
-		device->get_fence_pool().wait();
+		auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+		queue.submit(cmd, get_device().request_fence());
+		get_device().get_fence_pool().wait();
 	}
 	else
 	{
@@ -460,7 +460,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 		auto &acceleration_structure_build_sizes_info = model_buffer.buildSize;
 		acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 		vkGetAccelerationStructureBuildSizesKHR(
-		    device->get_handle(),
+		    get_device().get_handle(),
 		    VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 		    &acceleration_structure_build_geometry_info,
 		    &primitive_count,
@@ -484,7 +484,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 			acceleration_structure_create_info.buffer = bottom_level_acceleration_structure.buffer->get_handle();
 			acceleration_structure_create_info.size   = model_buffer.buildSize.accelerationStructureSize;
 			acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-			vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr,
+			vkCreateAccelerationStructureKHR(get_device().get_handle(), &acceleration_structure_create_info, nullptr,
 			                                 &bottom_level_acceleration_structure.handle);
 		}
 		// The actual build process starts here
@@ -525,9 +525,10 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 
 		// Get the bottom acceleration structure's handle, which will be used during the top level acceleration build
 		VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
-		acceleration_device_address_info.sType                         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-		acceleration_device_address_info.accelerationStructure         = bottom_level_acceleration_structure.handle;
-		bottom_level_acceleration_structure.device_address             = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+		acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+		acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
+		bottom_level_acceleration_structure.device_address =
+		    vkGetAccelerationStructureDeviceAddressKHR(get_device().get_handle(), &acceleration_device_address_info);
 #endif
 	}
 }
@@ -686,7 +687,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
 	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 	vkGetAccelerationStructureBuildSizesKHR(
-	    device->get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+	    get_device().get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 	    &acceleration_structure_build_geometry_info,
 	    &primitive_count,
 	    &acceleration_structure_build_sizes_info);
@@ -710,7 +711,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 		acceleration_structure_create_info.buffer = top_level_acceleration_structure.buffer->get_handle();
 		acceleration_structure_create_info.size = acceleration_structure_build_sizes_info.accelerationStructureSize;
 		acceleration_structure_create_info.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-		vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr,
+		vkCreateAccelerationStructureKHR(get_device().get_handle(), &acceleration_structure_create_info, nullptr,
 		                                 &top_level_acceleration_structure.handle);
 	}
 	else
@@ -763,7 +764,8 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
 	acceleration_device_address_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	acceleration_device_address_info.accelerationStructure = top_level_acceleration_structure.handle;
-	top_level_acceleration_structure.device_address = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+	top_level_acceleration_structure.device_address =
+	    vkGetAccelerationStructureDeviceAddressKHR(get_device().get_handle(), &acceleration_device_address_info);
 #endif
 }
 
@@ -818,7 +820,7 @@ void RaytracingExtended::create_scene()
                                        0.f, sponza_scale, 0.f, 0.f,
                                        0.f, 0.f, 0.f, 1.f};
 	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", sponza_transform, ObjectType::OBJECT_NORMAL);
-	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
+	raytracing_scene = std::make_unique<RaytracingScene>(get_device(), std::move(scenesToLoad));
 
 	create_flame_model();
 	create_static_object_buffers();
@@ -1195,7 +1197,7 @@ void RaytracingExtended::delete_acceleration_structure(AccelerationStructureExte
 	}
 	if (acceleration_structure.handle)
 	{
-		vkDestroyAccelerationStructureKHR(device->get_handle(), acceleration_structure.handle, nullptr);
+		vkDestroyAccelerationStructureKHR(get_device().get_handle(), acceleration_structure.handle, nullptr);
 	}
 }
 #endif
@@ -1235,8 +1237,8 @@ void RaytracingExtended::build_command_buffers()
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	auto device_ptr   = device->get_handle();
-	auto command_pool = device->get_command_pool().get_handle();
+	auto device_ptr   = get_device().get_handle();
+	auto command_pool = get_device().get_command_pool().get_handle();
 	if (!raytracing_command_buffers.empty())
 	{
 		vkFreeCommandBuffers(device_ptr, command_pool, raytracing_command_buffers.size(), &raytracing_command_buffers[0]);
@@ -1246,7 +1248,7 @@ void RaytracingExtended::build_command_buffers()
 	raytracing_command_buffers.resize(draw_cmd_buffers.size());
 	for (auto &&command_buffer : raytracing_command_buffers)
 	{
-		command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, false);
+		command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, false);
 	}
 
 	for (auto &raytracing_command_buffer : raytracing_command_buffers)
@@ -1384,8 +1386,8 @@ bool RaytracingExtended::prepare(const vkb::ApplicationOptions &options)
 
 void RaytracingExtended::draw()
 {
-	device->get_fence_pool().wait();
-	device->get_fence_pool().reset();
+	get_device().get_fence_pool().wait();
+	get_device().get_fence_pool().reset();
 	ASSERT_LOG(raytracing_command_buffers.size() == draw_cmd_buffers.size(), "The number of raytracing command buffers must match the render queue size")
 	ApiVulkanSample::prepare_frame();
 	size_t i = current_buffer;
@@ -1394,8 +1396,8 @@ void RaytracingExtended::draw()
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers    = &raytracing_command_buffers[i];
 
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
-	device->get_fence_pool().wait();
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit, get_device().request_fence()));
+	get_device().get_fence_pool().wait();
 
 	recreate_current_command_buffer();
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
@@ -1451,8 +1453,8 @@ void RaytracingExtended::draw()
 
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, device->request_fence()));
-	device->get_fence_pool().wait();
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, get_device().request_fence()));
+	get_device().get_fence_pool().wait();
 	ApiVulkanSample::submit_frame();
 }
 
@@ -1476,7 +1478,7 @@ void RaytracingExtended::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_ray_tracing_extended()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_extended()
 {
 	return std::make_unique<RaytracingExtended>();
 }

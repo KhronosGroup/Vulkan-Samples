@@ -37,7 +37,7 @@ DynamicUniformBuffers::DynamicUniformBuffers()
 
 DynamicUniformBuffers ::~DynamicUniformBuffers()
 {
-	if (device)
+	if (has_device())
 	{
 		if (ubo_data_dynamic.model)
 		{

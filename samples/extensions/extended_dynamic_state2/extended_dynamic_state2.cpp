@@ -36,7 +36,7 @@ ExtendedDynamicState2::ExtendedDynamicState2()
 
 ExtendedDynamicState2::~ExtendedDynamicState2()
 {
-	if (device)
+	if (has_device())
 	{
 		uniform_buffers.common.reset();
 		uniform_buffers.baseline.reset();
@@ -95,7 +95,7 @@ void ExtendedDynamicState2::load_assets()
 	load_scene("scenes/primitives/primitives.gltf");
 
 	std::vector<SceneNode>       scene_elements;
-	std::vector<vkb::sg::Node *> node_scene_list = {&(scene->get_root_node())};
+	std::vector<vkb::sg::Node *> node_scene_list = {&(get_scene().get_root_node())};
 	vkb::sg::Node               *node            = nullptr;
 
 	for (size_t list_it = 0; node_scene_list.size() > list_it; ++list_it)
@@ -1031,7 +1031,7 @@ void ExtendedDynamicState2::model_data_creation()
 	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
@@ -1058,7 +1058,7 @@ void ExtendedDynamicState2::model_data_creation()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 /**
@@ -1115,7 +1115,7 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_extended_dynamic_state2()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_extended_dynamic_state2()
 {
 	return std::make_unique<ExtendedDynamicState2>();
 }

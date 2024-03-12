@@ -33,7 +33,7 @@ BufferDeviceAddress::BufferDeviceAddress()
 
 BufferDeviceAddress::~BufferDeviceAddress()
 {
-	if (device)
+	if (has_device())
 	{
 		VkDevice vk_device = get_device().get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.compute_pipeline_layout, nullptr);
@@ -433,7 +433,7 @@ void BufferDeviceAddress::request_gpu_features(vkb::PhysicalDevice &gpu)
 	features.bufferDeviceAddress = VK_TRUE;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_buffer_device_address()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_buffer_device_address()
 {
 	return std::make_unique<BufferDeviceAddress>();
 }

@@ -43,7 +43,7 @@ Profiles::Profiles()
 
 Profiles::~Profiles()
 {
-	if (device)
+	if (has_device())
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
@@ -58,10 +58,8 @@ Profiles::~Profiles()
 
 // This sample overrides the device creation part of the framework
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
-void Profiles::create_device()
+std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 {
-	auto &gpu = instance->get_suitable_gpu(surface);
-
 	// Simplified queue setup (only graphics)
 	uint32_t                selected_queue_family   = 0;
 	const auto             &queue_family_properties = gpu.get_queue_family_properties();
@@ -89,7 +87,7 @@ void Profiles::create_device()
 
 	// Check if the profile is supported at device level
 	VkBool32 profile_supported;
-	vpGetPhysicalDeviceProfileSupport(instance->get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
+	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
 	if (!profile_supported)
 	{
 		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
@@ -109,16 +107,20 @@ void Profiles::create_device()
 	}
 
 	// Post device setup required for the framework
-	device = std::make_unique<vkb::Device>(gpu, vulkan_device, surface);
+	auto device = std::make_unique<vkb::Device>(gpu, vulkan_device, get_surface());
 	device->add_queue(0, queue_create_info.queueFamilyIndex, queue_family_properties[selected_queue_family], true);
 	device->prepare_memory_allocator();
 	device->create_internal_command_pool();
 	device->create_internal_fence_pool();
+
+	return device;
+
+	return device;
 }
 
 // This sample overrides the instance creation part of the framework
 // Instead of manually setting up all properties we use the Vulkan Profiles library to simplify instance setup
-void Profiles::create_instance()
+std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 {
 	// Initialize Volk Vulkan Loader
 	VkResult result = volkInitialize();
@@ -137,7 +139,7 @@ void Profiles::create_instance()
 		throw std::runtime_error{"The selected profile is not supported (error at creating the instance)!"};
 	}
 
-	// Even when using profiles we still need to provide the platform specific surface extension
+	// Even when using profiles we still need to provide the platform specific get_surface() extension
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -170,7 +172,7 @@ void Profiles::create_instance()
 
 	volkLoadInstance(vulkan_instance);
 
-	instance = std::make_unique<vkb::Instance>(vulkan_instance);
+	return std::make_unique<vkb::Instance>(vulkan_instance);
 }
 
 void Profiles::generate_textures()

@@ -47,13 +47,14 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert"};
 	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag"};
 
-	std::unique_ptr<vkb::Subpass> gbuffer_pass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	std::unique_ptr<vkb::Subpass> gbuffer_pass =
+	    std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 	gbuffer_pass->set_output_attachments({1, 2, 3});
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
 	gbuffer_pipeline.set_load_store(vkb::gbuffer::get_clear_store_all());
@@ -61,15 +62,16 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 	auto lighting_vs = vkb::ShaderSource{"deferred/lighting.vert"};
 	auto lighting_fs = vkb::ShaderSource{"deferred/lighting.frag"};
 
-	std::unique_ptr<vkb::Subpass> lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, *scene);
+	std::unique_ptr<vkb::Subpass> lighting_subpass =
+	    std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, get_scene());
 	lighting_subpass->set_input_attachments({1, 2, 3});
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	stats->request_stats({vkb::StatIndex::gpu_killed_tiles,
-	                      vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::gpu_killed_tiles,
+	                           vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -221,9 +223,9 @@ void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarg
 
 	lighting_pipeline.draw(command_buffer, get_render_context().get_active_frame().get_render_target());
 
-	if (gui)
+	if (has_gui())
 	{
-		gui->draw(command_buffer);
+		get_gui().draw(command_buffer);
 	}
 
 	command_buffer.end_render_pass();
@@ -242,7 +244,7 @@ void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarg
 
 void LayoutTransitions::draw_gui()
 {
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this]() {
 		    ImGui::Text("Transition images from:");
 		    ImGui::RadioButton("Undefined layout", reinterpret_cast<int *>(&layout_transition_type), LayoutTransitionType::UNDEFINED);
@@ -253,7 +255,7 @@ void LayoutTransitions::draw_gui()
 	    /* lines = */ 2);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_layout_transitions()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_layout_transitions()
 {
 	return std::make_unique<LayoutTransitions>();
 }

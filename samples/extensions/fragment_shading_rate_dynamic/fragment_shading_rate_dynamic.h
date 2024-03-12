@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip
+/* Copyright (c) 2021-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -149,4 +149,4 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	} push_const_block;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate_dynamic();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate_dynamic();

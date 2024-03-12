@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip
+/* Copyright (c) 2021-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 #include "api_vulkan_sample.h"
 #include "scene_graph/components/camera.h"
 
-class TextureCompressionComparison : public vkb::VulkanSample
+class TextureCompressionComparison : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	TextureCompressionComparison()           = default;

@@ -144,7 +144,7 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
-	// from HPPVulkanSample
+	// from vkb::VulkanSample
 	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample

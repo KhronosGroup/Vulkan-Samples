@@ -59,21 +59,22 @@ bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 
 	load_scene("scenes/bonza/Bonza4X.gltf");
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<ForwardSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass =
+	    std::make_unique<ForwardSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	// Adjust the maximum number of secondary command buffers
 	// In this sample, only the recording of opaque meshes will be multi-threaded
@@ -83,7 +84,7 @@ bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 	auto count_opaque_submeshes = [is_opaque](uint32_t accumulated, const vkb::sg::Mesh *mesh) -> uint32_t {
 		return accumulated + vkb::to_u32(mesh->get_nodes().size() * std::count_if(mesh->get_submeshes().begin(), mesh->get_submeshes().end(), is_opaque));
 	};
-	const auto    &mesh_components   = scene->get_components<vkb::sg::Mesh>();
+	const auto    &mesh_components   = get_scene().get_components<vkb::sg::Mesh>();
 	const uint32_t opaque_mesh_count = std::accumulate(mesh_components.begin(), mesh_components.end(), 0, count_opaque_submeshes);
 
 	max_secondary_command_buffer_count = std::min(opaque_mesh_count, max_secondary_command_buffer_count);
@@ -102,7 +103,7 @@ void CommandBufferUsage::prepare_render_context()
 
 void CommandBufferUsage::update(float delta_time)
 {
-	auto &subpass_state = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get())->get_state();
+	auto &subpass_state = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get())->get_state();
 
 	// Process GUI input
 	subpass_state.secondary_cmd_buf_count = vkb::to_u32(gui_secondary_cmd_buf_count);
@@ -127,11 +128,11 @@ void CommandBufferUsage::update(float delta_time)
 	update_stats(delta_time);
 
 	primary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->begin_sampling(primary_command_buffer);
+	get_stats().begin_sampling(primary_command_buffer);
 
 	draw(primary_command_buffer, render_context.get_active_frame().get_render_target());
 
-	stats->end_sampling(primary_command_buffer);
+	get_stats().end_sampling(primary_command_buffer);
 	primary_command_buffer.end();
 
 	render_context.submit(primary_command_buffer);
@@ -142,9 +143,9 @@ void CommandBufferUsage::draw_gui()
 	const bool landscape = camera->get_aspect_ratio() > 1.0f;
 	uint32_t   lines     = landscape ? 3 : 5;
 
-	const auto &subpass = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
+	const auto &subpass = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get());
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [&]() {
 		    // Secondary command buffer count
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
@@ -175,24 +176,25 @@ void CommandBufferUsage::draw_gui()
 
 void CommandBufferUsage::render(vkb::CommandBuffer &primary_command_buffer)
 {
-	if (render_pipeline)
+	if (has_render_pipeline())
 	{
 		if (use_secondary_command_buffers)
 		{
 			// The user will set the number of secondary command buffers used for opaque meshes
 			// There will be additional buffers for transparent meshes and for the GUI
-			render_pipeline->draw(primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+			get_render_pipeline().draw(
+			    primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 		}
 		else
 		{
-			render_pipeline->draw(primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_INLINE);
+			get_render_pipeline().draw(primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_INLINE);
 		}
 	}
 }
 
 void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target)
 {
-	const auto &subpass = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
+	const auto &subpass = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get());
 	auto       &extent  = render_target.get_extent();
 
 	VkViewport viewport{};
@@ -211,11 +213,11 @@ void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buf
 	render(primary_command_buffer);
 
 	// Draw gui
-	if (gui)
+	if (has_gui())
 	{
 		if (use_secondary_command_buffers)
 		{
-			const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+			const auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
 			auto &secondary_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue, subpass->get_state().command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
@@ -225,7 +227,7 @@ void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buf
 
 			secondary_command_buffer.set_scissor(0, {scissor});
 
-			gui->draw(secondary_command_buffer);
+			get_gui().draw(secondary_command_buffer);
 
 			secondary_command_buffer.end();
 
@@ -233,7 +235,7 @@ void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buf
 		}
 		else
 		{
-			gui->draw(primary_command_buffer);
+			get_gui().draw(primary_command_buffer);
 		}
 	}
 
@@ -424,7 +426,7 @@ CommandBufferUsage::ForwardSubpassSecondaryState &CommandBufferUsage::ForwardSub
 	return state;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_command_buffer_usage()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_command_buffer_usage()
 {
 	return std::make_unique<CommandBufferUsage>();
 }

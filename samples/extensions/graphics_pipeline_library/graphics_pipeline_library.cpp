@@ -68,7 +68,7 @@ void GraphicsPipelineLibrary::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 GraphicsPipelineLibrary::~GraphicsPipelineLibrary()
 {
-	if (device)
+	if (has_device())
 	{
 		for (auto pipeline : pipelines)
 		{

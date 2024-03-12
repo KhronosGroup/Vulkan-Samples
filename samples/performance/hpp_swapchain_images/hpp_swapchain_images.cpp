@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,28 +31,28 @@ HPPSwapchainImages::HPPSwapchainImages()
 
 bool HPPSwapchainImages::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPVulkanSample::prepare(options))
+	if (!VulkanSample<vkb::BindingType::Cpp>::prepare(options))
 	{
 		return false;
 	}
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = vkb::common::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::common::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass =
-	    std::make_unique<vkb::rendering::subpasses::HPPForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::HPPForwardSubpass>(
+        get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::rendering::HPPRenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::rendering::HPPRenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	stats->request_stats({vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::HPPGui>(*this, *window, stats.get());
+	get_stats().request_stats({vkb::StatIndex::frame_times});
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -62,20 +62,20 @@ void HPPSwapchainImages::update(float delta_time)
 	// Process GUI input
 	if (swapchain_image_count != last_swapchain_image_count)
 	{
-		get_device()->get_handle().waitIdle();
+		get_device().get_handle().waitIdle();
 
 		// Create a new swapchain with a new swapchain image count
-		render_context->update_swapchain(swapchain_image_count);
+		get_render_context().update_swapchain(swapchain_image_count);
 
 		last_swapchain_image_count = swapchain_image_count;
 	}
 
-	HPPVulkanSample::update(delta_time);
+	VulkanSample<vkb::BindingType::Cpp>::update(delta_time);
 }
 
 void HPPSwapchainImages::draw_gui()
 {
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */
 	    [this]() {
 		    ImGui::RadioButton("Double buffering", &swapchain_image_count, 2);
