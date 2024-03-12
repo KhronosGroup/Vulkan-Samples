@@ -1591,8 +1591,7 @@ const std::string image_compression_flags_to_string(VkImageCompressionFlagsEXT f
 {
 	return 0 == flags ? "VK_IMAGE_COMPRESSION_DEFAULT_EXT" :
 	                    to_string<VkImageCompressionFlagsEXT>(flags,
-	                                                          {{VK_IMAGE_COMPRESSION_DEFAULT_EXT, "VK_IMAGE_COMPRESSION_DEFAULT_EXT"},
-	                                                           {VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT"},
+	                                                          {{VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT"},
 	                                                           {VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT"},
 	                                                           {VK_IMAGE_COMPRESSION_DISABLED_EXT, "VK_IMAGE_COMPRESSION_DISABLED_EXT"}});
 }
@@ -1601,8 +1600,7 @@ const std::string image_compression_fixed_rate_flags_to_string(VkImageCompressio
 {
 	return 0 == flags ? "VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT" :
 	                    to_string<VkImageCompressionFixedRateFlagsEXT>(flags,
-	                                                                   {{VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT"},
+	                                                                   {{VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT"},
 	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT"},
 	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT"},
 	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT"},

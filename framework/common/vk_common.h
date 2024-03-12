@@ -253,7 +253,7 @@ void image_layout_transition(VkCommandBuffer                                    
  */
 std::vector<VkImageCompressionFixedRateFlagBitsEXT> fixed_rate_compression_flags_to_vector(VkImageCompressionFixedRateFlagsEXT flags);
 
-VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, VkImageCreateInfo create_info);
+VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, const VkImageCreateInfo &create_info);
 
 VkImageCompressionPropertiesEXT query_applied_compression(VkDevice device, VkImage image);
 

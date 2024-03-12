@@ -606,7 +606,7 @@ std::vector<VkImageCompressionFixedRateFlagBitsEXT> fixed_rate_compression_flags
 	return flags_vector;
 }
 
-VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, VkImageCreateInfo create_info)
+VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, const VkImageCreateInfo &create_info)
 {
 	VkImageCompressionPropertiesEXT supported_compression_properties{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
 

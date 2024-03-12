@@ -444,8 +444,8 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 	create_info.oldSwapchain     = properties.old_swapchain;
 	create_info.surface          = surface;
 
-	VkImageCompressionFixedRateFlagsEXT fixed_rate_flags[1] = {requested_compression_fixed_rate};
-	VkImageCompressionControlEXT        compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
+	auto                         fixed_rate_flags = requested_compression_fixed_rate;
+	VkImageCompressionControlEXT compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
 	compression_control.flags = requested_compression;
 	if (device.is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
 	{
@@ -455,7 +455,7 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 		{
 			// Do not support compression for multi-planar formats
 			compression_control.compressionControlPlaneCount = 1;
-			compression_control.pFixedRateFlags              = &fixed_rate_flags[0];
+			compression_control.pFixedRateFlags              = &fixed_rate_flags;
 		}
 		else if (VK_IMAGE_COMPRESSION_DISABLED_EXT == requested_compression)
 		{

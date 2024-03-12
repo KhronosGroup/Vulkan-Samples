@@ -59,7 +59,7 @@ class ImageCompressionControlSample : public vkb::VulkanSample<vkb::BindingType:
 
 	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
-	enum Attachments : int
+	enum class Attachments : int
 	{
 		Swapchain = 0,
 		Depth     = 1,
@@ -98,7 +98,7 @@ class ImageCompressionControlSample : public vkb::VulkanSample<vkb::BindingType:
 	/**
 	 * @brief Possible compression schemes
 	 */
-	enum TargetCompression : int
+	enum class TargetCompression : int
 	{
 		Default   = 0,
 		FixedRate = 1,
@@ -177,11 +177,11 @@ class ImageCompressionControlSample : public vkb::VulkanSample<vkb::BindingType:
 
 	/* Helpers for managing GUI input */
 
-	int gui_target_compression{TargetCompression::Default};
+	int gui_target_compression{(int) TargetCompression::Default};
 
 	int last_gui_target_compression{gui_target_compression};
 
-	int gui_fixed_rate_compression_level{FixedRateCompressionLevel::High};
+	int gui_fixed_rate_compression_level{(int) FixedRateCompressionLevel::High};
 
 	int last_gui_fixed_rate_compression_level{gui_fixed_rate_compression_level};
 };

@@ -75,7 +75,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	vkb::ShaderSource scene_vs("base.vert");
 	vkb::ShaderSource scene_fs("base.frag");
 	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
-	scene_subpass->set_output_attachments({Attachments::Color});
+	scene_subpass->set_output_attachments({(int) Attachments::Color});
 
 	// Forward rendering pass
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
@@ -99,7 +99,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	// Hide GUI compression options other than default if the required extension is not supported
 	if (!get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 	{
-		for (int i = 0; i < TargetCompression::Count; i++)
+		for (int i = 0; i < (int) TargetCompression::Count; i++)
 		{
 			if (static_cast<TargetCompression>(i) != TargetCompression::Default)
 			{
@@ -254,7 +254,7 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 			if (result != VK_ERROR_FORMAT_NOT_SUPPORTED &&
 			    fixed_rate_flags.size() > 0)
 			{
-				if (VK_FORMAT_UNDEFINED == chosen_format)
+				if ((VK_FORMAT_UNDEFINED == chosen_format) || (fixed_rate_flags.size() > 1))
 				{
 					chosen_format                    = candidate_format;
 					supported_fixed_rate_flags_color = fixed_rate_flags;
@@ -262,8 +262,6 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 
 				if (fixed_rate_flags.size() > 1)
 				{
-					chosen_format                    = candidate_format;
-					supported_fixed_rate_flags_color = fixed_rate_flags;
 					break;
 				}
 			}
@@ -304,8 +302,8 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 	    .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Prepare compression control structure
-	VkImageCompressionFixedRateFlagsEXT color_fixed_rate_flags[1] = {compression_fixed_rate_flag_color};
-	VkImageCompressionControlEXT        color_compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
+	auto                         color_fixed_rate_flags = compression_fixed_rate_flag_color;
+	VkImageCompressionControlEXT color_compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
 
 	if (VK_IMAGE_COMPRESSION_DEFAULT_EXT != compression_flag)
 	{
@@ -315,7 +313,7 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 		    VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT != compression_fixed_rate_flag_color)
 		{
 			color_compression_control.compressionControlPlaneCount = 1;
-			color_compression_control.pFixedRateFlags              = color_fixed_rate_flags;
+			color_compression_control.pFixedRateFlags              = &color_fixed_rate_flags;
 		}
 
 		color_image_builder.with_extension<VkImageCompressionControlEXT>(color_compression_control);
@@ -337,8 +335,9 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 	}
 
 	// Update memory footprint values in GUI (displayed in MB)
-	footprint_swapchain = swapchain_image.get_image_allocated_size() / 1e6;
-	footprint_color     = color_image.get_image_allocated_size() / 1e6;
+	const float bytes_in_mb = 1024 * 1024;
+	footprint_swapchain     = swapchain_image.get_image_allocated_size() / bytes_in_mb;
+	footprint_color         = color_image.get_image_allocated_size() / bytes_in_mb;
 
 	scene_load_store.clear();
 	std::vector<vkb::core::Image> images;
@@ -386,17 +385,17 @@ void ImageCompressionControlSample::update_render_targets()
 	 */
 	switch (gui_target_compression)
 	{
-		case TargetCompression::FixedRate:
+		case (int) TargetCompression::FixedRate:
 		{
 			compression_flag = VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT;
 			break;
 		}
-		case TargetCompression::None:
+		case (int) TargetCompression::None:
 		{
 			compression_flag = VK_IMAGE_COMPRESSION_DISABLED_EXT;
 			break;
 		}
-		case TargetCompression::Default:
+		case (int) TargetCompression::Default:
 		default:
 		{
 			compression_flag = VK_IMAGE_COMPRESSION_DEFAULT_EXT;
@@ -463,7 +462,7 @@ void ImageCompressionControlSample::render(vkb::CommandBuffer &command_buffer)
 	postprocessing_pass.set_uniform_data(sin(elapsed_time));
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
-	postprocessing_subpass.bind_sampled_image("color_sampler", Attachments::Color);
+	postprocessing_subpass.bind_sampled_image("color_sampler", (int) Attachments::Color);
 
 	postprocessing_pipeline->draw(command_buffer, get_render_context().get_active_frame().get_render_target());
 }
@@ -565,7 +564,7 @@ void ImageCompressionControlSample::draw_gui()
 			    ImGui::SameLine();
 		    }
 
-		    if (gui_skip_compression_values.size() >= TargetCompression::Count - 1)
+		    if (gui_skip_compression_values.size() >= (int) TargetCompression::Count - 1)
 		    {
 			    // Single or no compression options available on this device
 			    ImGui::Text("(Extensions are not supported)");
