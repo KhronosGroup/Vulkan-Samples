@@ -290,33 +290,36 @@ endif()
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
 
-
-# On an x86_64 macbook, AVX2 is selected, but linking fails with this message,
-# `ld: object file .../libastcdec-avx2-static.a was built for different x86_64 sub-type (8) than link command line (3)`
-# so we fallback to native. If we're on an ARM based mac, there's no need for any SIMD extension, because they support
-# ASTC_LDR natively, so this library won't even be used.
-if (APPLE)
-    set(ASTC_ARCH NATIVE)
-else()
-    include( FindAVX2 )
-    include( FindSSE41 )
-    include( FindSSE2 )
-    include( FindNEON )
-    if (${AVX2_FOUND})
-        set(ASTC_ARCH AVX2)
-    elseif(${SSE41_FOUND})
-        set(ASTC_ARCH SSE41)
-    elseif(${SSE2_FOUND})
-        set(ASTC_ARCH SSE2)
-    elseif(${NEON_FOUND})
-        set(ASTC_ARCH NEON)
-    else()
+# Allow the user to specify the ASTC architecture explicitly if building for a platform
+# other than the host architecture (i.e. x86 on an x64 CPU)
+if (NOT (DEFINED ASTC_ARCH))
+    # On an x86_64 macbook, AVX2 is selected, but linking fails with this message,
+    # `ld: object file .../libastcdec-avx2-static.a was built for different x86_64 sub-type (8) than link command line (3)`
+    # so we fallback to native. If we're on an ARM based mac, there's no need for any SIMD extension, because they support
+    # ASTC_LDR natively, so this library won't even be used.
+    if (APPLE)
         set(ASTC_ARCH NATIVE)
+    else()
+        include( FindAVX2 )
+        include( FindSSE41 )
+        include( FindSSE2 )
+        include( FindNEON )
+        if (${AVX2_FOUND})
+            set(ASTC_ARCH AVX2)
+        elseif(${SSE41_FOUND})
+            set(ASTC_ARCH SSE41)
+        elseif(${SSE2_FOUND})
+            set(ASTC_ARCH SSE2)
+        elseif(${NEON_FOUND})
+            set(ASTC_ARCH NEON)
+        else()
+            set(ASTC_ARCH NATIVE)
+        endif()
     endif()
 endif()
 
+string(TOUPPER ${ASTC_ARCH} ASTC_ARCH)
 string(TOLOWER ${ASTC_ARCH} ASTC_ARCH_LOWER)
-
 
 set(ASTCENC_ISA_${ASTC_ARCH} ON)
 set(ASTCENC_CLI OFF)
