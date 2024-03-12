@@ -18,9 +18,9 @@
 #include "multithreading_render_passes.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"

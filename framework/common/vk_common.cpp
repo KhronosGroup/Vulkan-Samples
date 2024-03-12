@@ -20,8 +20,8 @@
 
 #include <fmt/format.h>
 
+#include "filesystem/legacy.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {

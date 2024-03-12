@@ -19,7 +19,7 @@
 
 #include "common/vk_common.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_format_traits.hpp"
 

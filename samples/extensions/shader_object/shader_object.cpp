@@ -1,6 +1,6 @@
 /*
  * Copyright 2023-2024 Nintendo
- * Copyright 2023, Sascha Willems
+ * Copyright 2023-2024, Sascha Willems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 #include <glsl_compiler.h>
 #include <heightmap.h>
 #include <unordered_map>
+
+#include <json.hpp>
 
 ShaderObject::ShaderObject()
 {
@@ -910,11 +912,8 @@ void ShaderObject::generate_terrain()
 	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
 
 	// Create staging buffers
-	vkb::core::Buffer vertex_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_staging.update(vertices);
-
-	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_staging.update(indices);
+	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	terrain.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                       vertex_buffer_size,

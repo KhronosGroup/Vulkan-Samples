@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Sascha Willems
+/* Copyright (c) 2022-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -201,10 +201,7 @@ void Profiles::generate_textures()
 	image_view.subresourceRange.baseArrayLayer = 0;
 	image_view.subresourceRange.layerCount     = 1;
 
-	auto staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                          image_info.extent.width * image_info.extent.height * sizeof(uint32_t),
-	                                                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
 
 	textures.resize(32);
 	for (size_t i = 0; i < textures.size(); i++)
@@ -225,7 +222,7 @@ void Profiles::generate_textures()
 		std::default_random_engine           rnd_engine(rnd_device());
 		std::uniform_int_distribution<short> rnd_dist(0, 255);
 		const size_t                         buffer_size = dim * dim * 4;
-		uint8_t                             *buffer      = staging_buffer->map();
+		uint8_t                             *buffer      = staging_buffer.map();
 		for (size_t i = 0; i < dim * dim; i++)
 		{
 			buffer[i * 4]     = static_cast<uint8_t>(rnd_dist(rnd_engine));
@@ -233,6 +230,9 @@ void Profiles::generate_textures()
 			buffer[i * 4 + 2] = static_cast<uint8_t>(rnd_dist(rnd_engine));
 			buffer[i * 4 + 3] = 255;
 		}
+
+		staging_buffer.unmap();
+		staging_buffer.flush();
 
 		auto &cmd = get_device().request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -242,7 +242,7 @@ void Profiles::generate_textures()
 		VkBufferImageCopy copy_info{};
 		copy_info.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 		copy_info.imageExtent      = image_info.extent;
-		vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer->get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
+		vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer.get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
 
 		vkb::image_layout_transition(cmd.get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 

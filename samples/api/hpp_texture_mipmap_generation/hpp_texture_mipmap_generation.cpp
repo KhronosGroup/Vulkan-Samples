@@ -267,8 +267,7 @@ void HPPTextureMipMapGeneration::load_assets()
 	check_format_features(format);
 
 	// Create a host-visible staging buffer that contains the raw image data
-	vkb::core::HPPBuffer staging_buffer(*device, ktx_texture->dataSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_buffer.update(ktx_texture->pData, ktx_texture->dataSize);
+	vkb::core::HPPBuffer staging_buffer = vkb::core::HPPBuffer::create_staging_buffer(*device, ktx_texture->dataSize, ktx_texture->pData);
 
 	// now, the ktx_texture can be destroyed
 	ktxTexture_Destroy(ktx_texture);

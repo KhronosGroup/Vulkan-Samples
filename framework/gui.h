@@ -30,7 +30,7 @@
 #include "core/sampler.h"
 #include "debug_info.h"
 #include "drawer.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/input_events.h"
 #include "rendering/render_context.h"
 #include "stats/stats.h"

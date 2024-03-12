@@ -30,12 +30,12 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
-#include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
-#include "platform/filesystem.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/image/astc.h"
@@ -587,14 +587,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 			auto &image = image_components[image_index];
 
-			core::Buffer stage_buffer{device,
-			                          image->get_data().size(),
-			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			                          VMA_MEMORY_USAGE_CPU_ONLY};
+			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, image->get_data());
 
 			batch_size += image->get_data().size();
-
-			stage_buffer.update(image->get_data());
 
 			upload_image_to_gpu(command_buffer, stage_buffer, *image);
 
@@ -1161,12 +1156,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			aligned_vertex_data.push_back(vert);
 		}
 
-		core::Buffer stage_buffer{device,
-		                          aligned_vertex_data.size() * sizeof(AlignedVertex),
-		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-		stage_buffer.update(aligned_vertex_data.data(), aligned_vertex_data.size() * sizeof(AlignedVertex));
+		core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, aligned_vertex_data);
 
 		core::Buffer buffer{device,
 		                    aligned_vertex_data.size() * sizeof(AlignedVertex),
@@ -1194,12 +1184,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			vertex_data.push_back(vert);
 		}
 
-		core::Buffer stage_buffer{device,
-		                          vertex_data.size() * sizeof(Vertex),
-		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-		stage_buffer.update(vertex_data.data(), vertex_data.size() * sizeof(Vertex));
+		core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, vertex_data);
 
 		core::Buffer buffer{device,
 		                    vertex_data.size() * sizeof(Vertex),
@@ -1256,12 +1241,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			// vertex_indices and index_buffer are used for meshlets now
 			submesh->vertex_indices = (uint32_t) meshlets.size();
 
-			core::Buffer stage_buffer{device,
-			                          meshlets.size() * sizeof(Meshlet),
-			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-			stage_buffer.update(meshlets.data(), meshlets.size() * sizeof(Meshlet));
+			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, meshlets);
 
 			submesh->index_buffer = std::make_unique<core::Buffer>(device,
 			                                                       meshlets.size() * sizeof(Meshlet),
@@ -1274,12 +1254,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		}
 		else
 		{
-			core::Buffer stage_buffer{device,
-			                          index_data.size(),
-			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-			stage_buffer.update(index_data);
+			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, index_data);
 
 			submesh->index_buffer = std::make_unique<core::Buffer>(device,
 			                                                       index_data.size(),

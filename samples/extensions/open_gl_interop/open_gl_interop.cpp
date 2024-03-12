@@ -19,9 +19,9 @@
 #include "open_gl_interop.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 
@@ -30,11 +30,11 @@
 constexpr const char *OPENGL_VERTEX_SHADER =
     R"SHADER(
 const vec4 VERTICES[] = vec4[](
-    vec4(-1.0, -1.0, 0.0, 1.0), 
-    vec4( 1.0, -1.0, 0.0, 1.0),    
+    vec4(-1.0, -1.0, 0.0, 1.0),
+    vec4( 1.0, -1.0, 0.0, 1.0),
     vec4(-1.0,  1.0, 0.0, 1.0),
     vec4( 1.0,  1.0, 0.0, 1.0)
-);   
+);
 void main() { gl_Position = VERTICES[gl_VertexID]; }
 )SHADER";
 
@@ -42,14 +42,14 @@ void main() { gl_Position = VERTICES[gl_VertexID]; }
 // https://www.shadertoy.com/view/Xd23Dh
 constexpr const char *OPENGL_FRAGMENT_SHADER =
     R"SHADER(
-const vec4 iMouse = vec4(0.0); 
+const vec4 iMouse = vec4(0.0);
 layout(location = 0) out vec4 outColor;
 layout(location = 0) uniform vec3 iResolution;
 layout(location = 1) uniform float iTime;
 vec3 hash3( vec2 p )
 {
-    vec3 q = vec3( dot(p,vec2(127.1,311.7)), 
-                   dot(p,vec2(269.5,183.3)), 
+    vec3 q = vec3( dot(p,vec2(127.1,311.7)),
+                   dot(p,vec2(269.5,183.3)),
                    dot(p,vec2(419.2,371.9)) );
     return fract(sin(q)*43758.5453);
 }
@@ -57,9 +57,9 @@ float iqnoise( in vec2 x, float u, float v )
 {
     vec2 p = floor(x);
     vec2 f = fract(x);
-        
+
     float k = 1.0+63.0*pow(1.0-v,4.0);
-    
+
     float va = 0.0;
     float wt = 0.0;
     for( int j=-2; j<=2; j++ )
@@ -73,22 +73,22 @@ float iqnoise( in vec2 x, float u, float v )
         va += o.z*ww;
         wt += ww;
     }
-    
+
     return va/wt;
 }
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     vec2 uv = fragCoord.xy / iResolution.xx;
     vec2 p = 0.5 - 0.5*sin( iTime*vec2(1.01,1.71) );
-    
+
     if( iMouse.w>0.001 ) p = vec2(0.0,1.0) + vec2(1.0,-1.0)*iMouse.xy/iResolution.xy;
-    
+
     p = p*p*(3.0-2.0*p);
     p = p*p*(3.0-2.0*p);
     p = p*p*(3.0-2.0*p);
-    
+
     float f = iqnoise( 24.0*uv, p.x, p.y );
-    
+
     fragColor = vec4( f, f, f, 1.0 );
 }
 void main() { mainImage(outColor, gl_FragCoord.xy); }

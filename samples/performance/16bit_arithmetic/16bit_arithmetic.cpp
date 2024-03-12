@@ -103,13 +103,11 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	blob_buffer         = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16),
                                                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                                       VMA_MEMORY_USAGE_GPU_ONLY);
-	auto staging_buffer = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_buffer->update(initial_data_fp16, sizeof(initial_data_fp16));
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(device, initial_data_fp16);
 
 	auto &cmd = device.request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	cmd.copy_buffer(*staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
+	cmd.copy_buffer(staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
 
 	vkb::BufferMemoryBarrier barrier;
 	barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;

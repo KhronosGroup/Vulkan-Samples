@@ -18,8 +18,8 @@
 #include "open_cl_interop_arm.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #define CL_FUNCTION_DEFINITIONS
 #include "../open_cl_common/open_cl_utils.h"

@@ -19,9 +19,9 @@
 
 #include "api_vulkan_sample.h"
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "scene_graph/components/orthographic_camera.h"
 #include "stats/stats.h"

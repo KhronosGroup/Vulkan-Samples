@@ -1181,11 +1181,8 @@ void SparseImage::create_vertex_buffer()
 	vertices[2].uv = {1.0f, 1.0f};
 	vertices[3].uv = {0.0f, 1.0f};
 
-	std::unique_ptr<vkb::core::Buffer> staging_buffer;
-	staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	staging_buffer->update(vertices.data(), vertices_size);
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vertex_buffer       = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1194,7 +1191,7 @@ void SparseImage::create_vertex_buffer()
 	copy_buffer_info.dstOffset = 0U;
 	copy_buffer_info.size      = vertices_size;
 
-	vkCmdCopyBuffer(command_buffer, staging_buffer->get_handle(), vertex_buffer->get_handle(), 1U, &copy_buffer_info);
+	vkCmdCopyBuffer(command_buffer, staging_buffer.get_handle(), vertex_buffer->get_handle(), 1U, &copy_buffer_info);
 	device->flush_command_buffer(command_buffer, queue, true);
 }
 
@@ -1207,11 +1204,8 @@ void SparseImage::create_index_buffer()
 	VkDeviceSize             indices_size = sizeof(indices[0]) * indices.size();
 	index_count                           = indices.size();
 
-	std::unique_ptr<vkb::core::Buffer> staging_buffer;
-	staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_buffer   = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	staging_buffer->update(indices.data(), indices_size);
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
+	index_buffer        = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1220,7 +1214,7 @@ void SparseImage::create_index_buffer()
 	copy_buffer_info.dstOffset = 0U;
 	copy_buffer_info.size      = indices_size;
 
-	vkCmdCopyBuffer(command_buffer, staging_buffer->get_handle(), index_buffer->get_handle(), 1U, &copy_buffer_info);
+	vkCmdCopyBuffer(command_buffer, staging_buffer.get_handle(), index_buffer->get_handle(), 1U, &copy_buffer_info);
 	device->flush_command_buffer(command_buffer, queue, true);
 }
 

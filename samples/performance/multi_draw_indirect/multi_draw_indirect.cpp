@@ -338,10 +338,7 @@ void MultiDrawIndirect::load_scene()
 		                                                   VK_IMAGE_TILING_OPTIMAL,
 		                                                   0);
 
-		const auto &data        = image->get_data();
-		auto        data_buffer = std::make_unique<vkb::core::Buffer>(*device, data.size() * sizeof(data[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
-		data_buffer->update(data.data(), data.size() * sizeof(data[0]), 0);
-		data_buffer->flush();
+		auto data_buffer = vkb::core::Buffer::create_staging_buffer(*device, image->get_data());
 
 		auto &texture_cmd = device->get_command_pool().request_command_buffer();
 		texture_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
@@ -362,7 +359,7 @@ void MultiDrawIndirect::load_scene()
 		region.imageExtent                     = image->get_extent();
 		region.bufferOffset                    = offsets[0][0];
 
-		texture_cmd.copy_buffer_to_image(*data_buffer, *texture.image, {region});
+		texture_cmd.copy_buffer_to_image(data_buffer, *texture.image, {region});
 		texture_cmd.end();
 
 		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -456,9 +453,9 @@ void MultiDrawIndirect::initialize_resources()
 	}
 
 	assert(vertex_buffer_size && index_buffer_size && model_buffer_size);
-	auto staging_vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	auto staging_index_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	auto staging_model_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), model_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	auto staging_vertex_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertex_buffer_size, nullptr);
+	auto staging_index_buffer  = vkb::core::Buffer::create_staging_buffer(get_device(), index_buffer_size, nullptr);
+	auto staging_model_buffer  = vkb::core::Buffer::create_staging_buffer(get_device(), model_buffer_size, nullptr);
 
 	// We will store the GPU commands in the indirect call buffer
 	constexpr auto default_indirect_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -487,8 +484,8 @@ void MultiDrawIndirect::initialize_resources()
 	for (size_t i = 0; i < models.size(); ++i)
 	{
 		auto &model = models[i];
-		staging_vertex_buffer->update(model.vertices.data(), model.vertices.size() * sizeof(Vertex), model.vertex_buffer_offset);
-		staging_index_buffer->update(model.triangles.data(), model.triangles.size() * sizeof(model.triangles[0]), model.index_buffer_offset);
+		staging_vertex_buffer.update(model.vertices.data(), model.vertices.size() * sizeof(Vertex), model.vertex_buffer_offset);
+		staging_index_buffer.update(model.triangles.data(), model.triangles.size() * sizeof(model.triangles[0]), model.index_buffer_offset);
 
 		GpuModelInformation model_information;
 		model_information.bounding_sphere_center = model.bounding_sphere.center;
@@ -496,12 +493,12 @@ void MultiDrawIndirect::initialize_resources()
 		model_information.texture_index          = model.texture_index;
 		model_information.firstIndex             = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
 		model_information.indexCount             = static_cast<uint32_t>(model.triangles.size());
-		staging_model_buffer->update(&model_information, sizeof(GpuModelInformation), i * sizeof(GpuModelInformation));
+		staging_model_buffer.update(&model_information, sizeof(GpuModelInformation), i * sizeof(GpuModelInformation));
 	}
 
-	staging_vertex_buffer->flush();
-	staging_index_buffer->flush();
-	staging_model_buffer->flush();
+	staging_vertex_buffer.flush();
+	staging_index_buffer.flush();
+	staging_model_buffer.flush();
 
 	auto &cmd = device->request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
@@ -517,9 +514,9 @@ void MultiDrawIndirect::initialize_resources()
 		cmd.buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
 		return output_buffer;
 	};
-	vertex_buffer            = copy(*staging_vertex_buffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	index_buffer             = copy(*staging_index_buffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-	model_information_buffer = copy(*staging_model_buffer, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+	vertex_buffer            = copy(staging_vertex_buffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	index_buffer             = copy(staging_index_buffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+	model_information_buffer = copy(staging_model_buffer, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	if (m_supports_buffer_device)
 	{
 		// In this sample, we use a staging buffer for the device address buffer (i.e. for device exclusive memory).
