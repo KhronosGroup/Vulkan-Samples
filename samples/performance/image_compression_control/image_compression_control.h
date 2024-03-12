@@ -33,7 +33,7 @@
  * The UI shows the impact compression has on image size and bandwidth,
  * illustrating the benefits of fixed-rate (visually lossless) compression.
  */
-class ImageCompressionControlSample : public vkb::VulkanSample
+class ImageCompressionControlSample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	ImageCompressionControlSample();
@@ -186,4 +186,4 @@ class ImageCompressionControlSample : public vkb::VulkanSample
 	int last_gui_fixed_rate_compression_level{gui_fixed_rate_compression_level};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_image_compression_control();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_image_compression_control();

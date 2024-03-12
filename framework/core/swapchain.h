@@ -157,7 +157,7 @@ class Swapchain
 		VkImageCompressionPropertiesEXT compression_properties{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
 	};
 
-	static std::vector<SurfaceFormatCompression> query_supported_fixed_rate_compression(Device &device, VkSurfaceKHR &surface);
+	static std::vector<SurfaceFormatCompression> query_supported_fixed_rate_compression(Device &device, const VkSurfaceKHR &surface);
 
   private:
 	Device &device;

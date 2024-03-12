@@ -121,7 +121,7 @@ void AFBCSample::draw_gui()
 	    /* body = */ [this]() {
 		    ImGui::Checkbox("Enable AFBC", &afbc_enabled);
 
-		    if (device->is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+		    if (get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 		    {
 			    ImGui::SameLine();
 			    ImGui::Text("(%s)", vkb::image_compression_flags_to_string(get_render_context().get_swapchain().get_applied_compression()).c_str());

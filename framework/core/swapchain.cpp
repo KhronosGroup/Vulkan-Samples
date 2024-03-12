@@ -601,7 +601,7 @@ VkImageCompressionFlagsEXT Swapchain::get_applied_compression() const
 	return vkb::query_applied_compression(device.get_handle(), get_images()[0]).imageCompressionFlags;
 }
 
-std::vector<Swapchain::SurfaceFormatCompression> Swapchain::query_supported_fixed_rate_compression(Device &device, VkSurfaceKHR &surface)
+std::vector<Swapchain::SurfaceFormatCompression> Swapchain::query_supported_fixed_rate_compression(Device &device, const VkSurfaceKHR &surface)
 {
 	std::vector<SurfaceFormatCompression> surface_format_compression_list;
 
