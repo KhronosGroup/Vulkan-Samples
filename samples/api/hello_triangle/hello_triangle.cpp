@@ -18,9 +18,9 @@
 
 #include "hello_triangle.h"
 
-#include "common/logging.h"
 #include "common/vk_common.h"
-#include "platform/filesystem.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "platform/window.h"
 #include "shader_compiler.h"
 

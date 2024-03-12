@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2023, Bradley Austin Davis
- * Copyright (c) 2020-2023, Arm Limited
+/* Copyright (c) 2020-2024, Bradley Austin Davis
+ * Copyright (c) 2020-2024, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,9 +19,9 @@
 #include "open_gl_interop.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 
@@ -467,7 +467,7 @@ void OpenGLInterop::prepare_pipelines()
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
 	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
-        vertex_input_attributes.size());
+	         vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =

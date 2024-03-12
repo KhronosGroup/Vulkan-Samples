@@ -21,6 +21,8 @@
 #include "api_vulkan_sample.h"
 #include <core/acceleration_structure.h>
 
+#include <json.hpp>
+
 using json = nlohmann::json;
 
 namespace vkb

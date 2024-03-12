@@ -18,9 +18,9 @@
 
 #include "swapchain_recreation.h"
 
-#include "common/logging.h"
 #include "common/vk_common.h"
-#include "platform/filesystem.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "shader_compiler.h"
 
 static constexpr uint32_t INVALID_IMAGE_INDEX = std::numeric_limits<uint32_t>::max();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Sascha Willems
+/* Copyright (c) 2020-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,6 +41,7 @@ FragmentShadingRate::~FragmentShadingRate()
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroySampler(get_device().get_handle(), textures.scene.sampler, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 		uniform_buffers.scene.reset();
 		invalidate_shading_rate_attachment();
@@ -178,11 +179,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	}
 
 	// Move shading rate pattern data to staging buffer
-	std::unique_ptr<vkb::core::Buffer> staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                                        buffer_size,
-	                                                                                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_buffer->update(shading_rate_pattern_data, buffer_size);
+	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), buffer_size, shading_rate_pattern_data);
 	delete[] shading_rate_pattern_data;
 
 	// Upload the buffer containing the shading rates to the image that'll be used as the shading rate attachment inside our renderpass
@@ -196,15 +193,13 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	buffer_copy_region.imageExtent.width           = image_extent.width;
 	buffer_copy_region.imageExtent.height          = image_extent.height;
 	buffer_copy_region.imageExtent.depth           = 1;
-	vkCmdCopyBufferToImage(copy_cmd, staging_buffer->get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
+	vkCmdCopyBufferToImage(copy_cmd, staging_buffer.get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 	// Transfer image layout to fragment shading rate attachment layout required to access this in the renderpass
 	vkb::image_layout_transition(
 	    copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
 
 	device->flush_command_buffer(copy_cmd, queue, true);
-
-	staging_buffer.reset();
 }
 
 /*

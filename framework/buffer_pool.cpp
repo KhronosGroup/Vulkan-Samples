@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,8 +19,8 @@
 
 #include <cstddef>
 
-#include "common/logging.h"
 #include "core/device.h"
+#include "core/util/logging.hpp"
 
 namespace vkb
 {

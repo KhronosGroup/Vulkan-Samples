@@ -21,7 +21,7 @@
 
 #include <fmt/format.h>
 
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "shader_compiler.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)

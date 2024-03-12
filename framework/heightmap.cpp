@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@ VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 VKBP_ENABLE_WARNINGS()
 
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 
 namespace vkb
 {

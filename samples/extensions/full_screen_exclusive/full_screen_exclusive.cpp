@@ -18,7 +18,7 @@
 
 #include "full_screen_exclusive.h"
 
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/window.h"
 #include "shader_compiler.h"
 

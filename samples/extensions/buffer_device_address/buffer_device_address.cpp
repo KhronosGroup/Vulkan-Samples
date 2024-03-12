@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -185,12 +185,8 @@ std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
 	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
 
-	auto staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                          size,
-	                                                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	auto *buffer = reinterpret_cast<uint16_t *>(staging_buffer->map());
+	auto  staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), size, nullptr);
+	auto *buffer         = reinterpret_cast<uint16_t *>(staging_buffer.map());
 	for (unsigned strip = 0; strip < mesh_strips; strip++)
 	{
 		for (unsigned x = 0; x < mesh_width; x++)
@@ -200,11 +196,12 @@ std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
 		}
 		*buffer++ = 0xffff;
 	}
-	staging_buffer->unmap();
+	staging_buffer.flush();
+	staging_buffer.unmap();
 
 	auto &cmd = get_device().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	cmd.copy_buffer(*staging_buffer, *index_buffer, size);
+	cmd.copy_buffer(staging_buffer, *index_buffer, size);
 
 	vkb::BufferMemoryBarrier memory_barrier;
 	memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;

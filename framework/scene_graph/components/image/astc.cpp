@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,7 @@ VKBP_DISABLE_WARNINGS()
 // Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
 #	undef IGNORE
 #endif
-#include <astc_codec_internals.h>
+#include <astcenc.h>
 VKBP_ENABLE_WARNINGS()
 
 #define MAGIC_FILE_CONSTANT 0x5CA1AB13
@@ -100,80 +100,62 @@ struct AstcHeader
 
 void Astc::init()
 {
-	// Initializes ASTC library
-	static bool                  initialized{false};
-	static std::mutex            initialization;
-	std::unique_lock<std::mutex> lock{initialization};
-	if (!initialized)
-	{
-		// Init stuff
-		prepare_angular_tables();
-		build_quantization_mode_table();
-		initialized = true;
-	}
 }
 
-void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
+void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *compressed_data, uint32_t compressed_size)
 {
 	// Actual decoding
-	astc_decode_mode decode_mode = DECODE_LDR_SRGB;
-	uint32_t         bitness     = 8;
-	swizzlepattern   swz_decode  = {0, 1, 2, 3};
+	astcenc_swizzle swizzle = {ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A};
+	// Configure the compressor run
+	astcenc_config astc_config;
+	auto           atscresult = astcenc_config_init(
+        ASTCENC_PRF_LDR_SRGB,
+        blockdim.x,
+        blockdim.y,
+        blockdim.z,
+        ASTCENC_PRE_FAST,
+        ASTCENC_FLG_DECOMPRESS_ONLY,
+        &astc_config);
 
-	int xdim = blockdim.x;
-	int ydim = blockdim.y;
-	int zdim = blockdim.z;
-
-	if ((xdim < 3 || xdim > 6 || ydim < 3 || ydim > 6 || zdim < 3 || zdim > 6) &&
-	    (xdim < 4 || xdim == 7 || xdim == 9 || xdim == 11 || xdim > 12 ||
-	     ydim < 4 || ydim == 7 || ydim == 9 || ydim == 11 || ydim > 12 || zdim != 1))
+	if (atscresult != ASTCENC_SUCCESS)
 	{
-		throw std::runtime_error{"Error reading astc: invalid block"};
+		throw std::runtime_error{"Error initializing astc"};
 	}
 
-	int xsize = extent.width;
-	int ysize = extent.height;
-	int zsize = extent.depth;
-
-	if (xsize == 0 || ysize == 0 || zsize == 0)
+	if (extent.width == 0 || extent.height == 0 || extent.depth == 0)
 	{
 		throw std::runtime_error{"Error reading astc: invalid size"};
 	}
 
-	int xblocks = (xsize + xdim - 1) / xdim;
-	int yblocks = (ysize + ydim - 1) / ydim;
-	int zblocks = (zsize + zdim - 1) / zdim;
+	// Allocate working state given config and thread_count
+	astcenc_context *astc_context;
+	astcenc_context_alloc(&astc_config, 1, &astc_context);
 
-	auto astc_image = allocate_image(bitness, xsize, ysize, zsize, 0);
-	initialize_image(astc_image);
+	astcenc_image decoded{};
+	decoded.dim_x     = extent.width;
+	decoded.dim_y     = extent.height;
+	decoded.dim_z     = extent.depth;
+	decoded.data_type = ASTCENC_TYPE_U8;
 
-	imageblock pb;
-	for (int z = 0; z < zblocks; z++)
+	// allocate storage for the decoded image
+	// The astcenc_decompress_image function will write directly to the image data vector
+	auto  uncompressed_size = decoded.dim_x * decoded.dim_y * decoded.dim_z * 4;
+	auto &decoded_data      = get_mut_data();
+	decoded_data.resize(uncompressed_size);
+	void *data_ptr = static_cast<void *>(decoded_data.data());
+	decoded.data   = &data_ptr;
+
+	atscresult = astcenc_decompress_image(astc_context, compressed_data, compressed_size, &decoded, &swizzle, 0);
+	if (atscresult != ASTCENC_SUCCESS)
 	{
-		for (int y = 0; y < yblocks; y++)
-		{
-			for (int x = 0; x < xblocks; x++)
-			{
-				int            offset = (((z * yblocks + y) * xblocks) + x) * 16;
-				const uint8_t *bp     = data_ + offset;
-
-				physical_compressed_block pcb = *reinterpret_cast<const physical_compressed_block *>(bp);
-				symbolic_compressed_block scb;
-
-				physical_to_symbolic(xdim, ydim, zdim, pcb, &scb);
-				decompress_symbolic_block(decode_mode, xdim, ydim, zdim, x * xdim, y * ydim, z * zdim, &scb, &pb);
-				write_imageblock(astc_image, &pb, xdim, ydim, zdim, x * xdim, y * ydim, z * zdim, swz_decode);
-			}
-		}
+		throw std::runtime_error("Error decoding astc");
 	}
+	astcenc_context_free(astc_context);
 
-	set_data(astc_image->imagedata8[0][0], astc_image->xsize * astc_image->ysize * astc_image->zsize * 4);
 	set_format(VK_FORMAT_R8G8B8A8_SRGB);
-	set_width(static_cast<uint32_t>(astc_image->xsize));
-	set_height(static_cast<uint32_t>(astc_image->ysize));
-	set_depth(static_cast<uint32_t>(astc_image->zsize));
-
-	destroy_image(astc_image);
+	set_width(decoded.dim_x);
+	set_height(decoded.dim_y);
+	set_depth(decoded.dim_z);
 }
 
 Astc::Astc(const Image &image) :
@@ -189,8 +171,10 @@ Astc::Astc(const Image &image) :
 	// When decoding ASTC on CPU (as it is the case in here), we don't decode all mips in the mip chain.
 	// Instead, we just decode mip #0 and re-generate the other LODs later (via image->generate_mipmaps()).
 	const auto     blockdim = to_blockdim(image.get_format());
+	const auto    &extent   = mip_it->extent;
+	auto           size     = extent.width * extent.height * extent.depth * 4;
 	const uint8_t *data_ptr = image.get_data().data() + mip_it->offset;
-	decode(blockdim, mip_it->extent, data_ptr);
+	decode(blockdim, mip_it->extent, data_ptr, size);
 }
 
 Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
@@ -221,7 +205,7 @@ Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
 	    /* height = */ static_cast<uint32_t>(header.ysize[0] + 256 * header.ysize[1] + 65536 * header.ysize[2]),
 	    /* depth  = */ static_cast<uint32_t>(header.zsize[0] + 256 * header.zsize[1] + 65536 * header.zsize[2])};
 
-	decode(blockdim, extent, data.data() + sizeof(AstcHeader));
+	decode(blockdim, extent, data.data() + sizeof(AstcHeader), to_u32(data.size() - sizeof(AstcHeader)));
 }
 
 }        // namespace sg

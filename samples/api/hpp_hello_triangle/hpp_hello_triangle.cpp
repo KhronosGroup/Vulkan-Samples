@@ -20,9 +20,9 @@
 
 #include <common/hpp_error.h>
 #include <common/hpp_vk_common.h>
-#include <common/logging.h>
+#include <core/util/logging.hpp>
+#include <filesystem/legacy.h>
 #include <hpp_shader_compiler.h>
-#include <platform/filesystem.h>
 #include <platform/window.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.

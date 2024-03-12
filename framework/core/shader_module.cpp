@@ -18,9 +18,9 @@
 
 #include "shader_module.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "device.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "shader_compiler.h"
 #include "spirv_reflection.h"
 

@@ -837,9 +837,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 
 	vk::CommandBuffer command_buffer = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer{*get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(*get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> bufferCopyRegions;
@@ -897,9 +895,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 
 	vk::CommandBuffer command_buffer = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer{*get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(*get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
@@ -963,9 +959,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 	vk::CommandBuffer command_buffer = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer{*get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(*get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;

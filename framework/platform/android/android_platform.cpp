@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,8 +34,8 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "apps.h"
-#include "common/logging.h"
 #include "common/strings.h"
+#include "core/util/logging.hpp"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"
 
@@ -334,17 +334,6 @@ bool motion_event_filter(const GameActivityMotionEvent *event)
 	return false;
 }
 }        // namespace
-
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
 
 AndroidPlatform::AndroidPlatform(const PlatformContext &context) :
     Platform{context}

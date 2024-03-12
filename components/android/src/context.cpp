@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Thomas Atkinson
+/* Copyright (c) 2023-2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,18 +21,7 @@
 
 extern "C"
 {
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
-	{
-		const char *external_dir_cstr                                   = env->GetStringUTFChars(external_dir, 0);
-		vkb::AndroidPlatformContext::android_external_storage_directory = std::string(external_dir_cstr) + "/";
-		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
-
-		const char *temp_dir_cstr                           = env->GetStringUTFChars(temp_dir, 0);
-		vkb::AndroidPlatformContext::android_temp_directory = std::string(temp_dir_cstr) + "/";
-		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
-	}
-
+	// TODO: Arguments can be parsed from the bundle
 	JNIEXPORT void JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
 	{
@@ -53,17 +42,44 @@ extern "C"
 	}
 }
 
+namespace details
+{
+std::string get_external_storage_directory(android_app *app)
+{
+	return app->activity->externalDataPath;
+}
+
+std::string get_external_cache_directory(android_app *app)
+{
+	JNIEnv *env;
+	app->activity->vm->AttachCurrentThread(&env, NULL);
+
+	jclass    cls         = env->FindClass("android/app/NativeActivity");
+	jmethodID getCacheDir = env->GetMethodID(cls, "getCacheDir", "()Ljava/io/File;");
+	jobject   cache_dir   = env->CallObjectMethod(app->activity->javaGameActivity, getCacheDir);
+
+	jclass    fcls        = env->FindClass("java/io/File");
+	jmethodID getPath     = env->GetMethodID(fcls, "getPath", "()Ljava/lang/String;");
+	jstring   path_string = (jstring) env->CallObjectMethod(cache_dir, getPath);
+
+	const char *path_chars = env->GetStringUTFChars(path_string, NULL);
+	std::string temp_folder(path_chars);
+
+	env->ReleaseStringUTFChars(path_string, path_chars);
+	app->activity->vm->DetachCurrentThread();
+	return temp_folder;
+}
+}        // namespace details
+
 namespace vkb
 {
-std::string              AndroidPlatformContext::android_external_storage_directory = {};
-std::string              AndroidPlatformContext::android_temp_directory             = {};
-std::vector<std::string> AndroidPlatformContext::android_arguments                  = {};
+std::vector<std::string> AndroidPlatformContext::android_arguments = {};
 
 AndroidPlatformContext::AndroidPlatformContext(android_app *app) :
     PlatformContext{}, app{app}
 {
-	_external_storage_directory = android_external_storage_directory;
-	_temp_directory             = android_temp_directory;
+	_external_storage_directory = details::get_external_storage_directory(app);
+	_temp_directory             = details::get_external_cache_directory(app);
 	_arguments                  = android_arguments;
 }
 }        // namespace vkb

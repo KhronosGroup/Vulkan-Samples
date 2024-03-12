@@ -290,44 +290,68 @@ endif()
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
 
+
+# On an x86_64 macbook, AVX2 is selected, but linking fails with this message,
+# `ld: object file .../libastcdec-avx2-static.a was built for different x86_64 sub-type (8) than link command line (3)`
+# so we fallback to native. If we're on an ARM based mac, there's no need for any SIMD extension, because they support
+# ASTC_LDR natively, so this library won't even be used.
+if (APPLE)
+    set(ASTC_ARCH NATIVE)
+else()
+    include( FindAVX2 )
+    include( FindSSE41 )
+    include( FindSSE2 )
+    include( FindNEON )
+    if (${AVX2_FOUND})
+        set(ASTC_ARCH AVX2)
+    elseif(${SSE41_FOUND})
+        set(ASTC_ARCH SSE41)
+    elseif(${SSE2_FOUND})
+        set(ASTC_ARCH SSE2)
+    elseif(${NEON_FOUND})
+        set(ASTC_ARCH NEON)
+    else()
+        set(ASTC_ARCH NATIVE)
+    endif()
+endif()
+
+string(TOLOWER ${ASTC_ARCH} ASTC_ARCH_LOWER)
+
+
+set(ASTCENC_ISA_${ASTC_ARCH} ON)
+set(ASTCENC_CLI OFF)
+set(ASTCENC_UNITTEST OFF)
+set(ASTCENC_DECOMPRESSOR ON)
+set(ASTCENC_UNIVERSAL_BUILD OFF)
+set(ASTC_RAW_TARGET astcdec-${ASTC_ARCH_LOWER}-static)
+set(ASTC_TARGET ${ASTC_RAW_TARGET} PARENT_SCOPE)
+
 # astc
-set(ASTC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/astc)
-set(ASTC_INCLUDE_DIR ${ASTC_DIR}/Source)
-set(ASTC_SOURCE_DIR ${ASTC_DIR}/Source)
+add_subdirectory(astc)
 
-set(ASTC_SOURCES
-    ${ASTC_SOURCE_DIR}/astc_image_load_store.cpp
-    ${ASTC_SOURCE_DIR}/astc_pick_best_endpoint_format.cpp
-    ${ASTC_SOURCE_DIR}/astc_color_quantize.cpp
-    ${ASTC_SOURCE_DIR}/astc_weight_align.cpp
-    ${ASTC_SOURCE_DIR}/astc_integer_sequence.cpp
-    ${ASTC_SOURCE_DIR}/astc_ideal_endpoints_and_weights.cpp
-    ${ASTC_SOURCE_DIR}/astc_find_best_partitioning.cpp
-    ${ASTC_SOURCE_DIR}/astc_compress_symbolic.cpp
-    ${ASTC_SOURCE_DIR}/astc_decompress_symbolic.cpp
-    ${ASTC_SOURCE_DIR}/astc_symbolic_physical.cpp
-    ${ASTC_SOURCE_DIR}/astc_toplevel.cpp
-    ${ASTC_SOURCE_DIR}/astc_stb_tga.cpp
-    ${ASTC_SOURCE_DIR}/softfloat.cpp
-    ${ASTC_SOURCE_DIR}/mathlib.cpp
-    ${ASTC_SOURCE_DIR}/astc_quantization.cpp
-    ${ASTC_SOURCE_DIR}/astc_block_sizes2.cpp
-    ${ASTC_SOURCE_DIR}/astc_percentile_tables.cpp
-    ${ASTC_SOURCE_DIR}/astc_averages_and_directions.cpp
-    ${ASTC_SOURCE_DIR}/astc_partition_tables.cpp
-    ${ASTC_SOURCE_DIR}/astc_color_unquantize.cpp
-    ${ASTC_SOURCE_DIR}/astc_encoding_choice_error.cpp
-    ${ASTC_SOURCE_DIR}/astc_kmeans_partitioning.cpp
-    ${ASTC_SOURCE_DIR}/astc_weight_quant_xfer_tables.cpp
-    ${ASTC_SOURCE_DIR}/astc_compute_variance.cpp
-    ${ASTC_SOURCE_DIR}/astc_ktx_dds.cpp
-)
+# ASTC apparently tries to build for x86_64 even on Mac arm64 architectures,
+# but we can force it to build for the correct arch
+# Upstream bug: https://github.com/ARM-software/astc-encoder/issues/458
+if (APPLE AND (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
+    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
+endif()
 
-add_library(astc STATIC ${ASTC_SOURCES})
-target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
-target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
-set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(astc PUBLIC stb)
+# astc doesn't have separate directories for it's source code and public interface.  Additionally, it includes it's
+# own copy of STB. In order to avoid conflicts, we copy the only header we need to the build directory and alter the
+# INTERFACE_INCLUDE_DIRECTORIES of the target
+if (NOT TARGET ${ASTC_RAW_TARGET})
+    message(FATAL_ERROR "Couldn't find expected ASTC library target")
+endif()
+
+get_target_property(ASTC_BINARY_DIR ${ASTC_RAW_TARGET} BINARY_DIR)
+file(
+    COPY astc/Source/astcenc.h
+    DESTINATION ${ASTC_BINARY_DIR}/Include)
+set_target_properties(
+    ${ASTC_RAW_TARGET} PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${ASTC_BINARY_DIR}/Include)
+set_property(TARGET ${ASTC_RAW_TARGET} PROPERTY FOLDER "ThirdParty")
+
 
 if(NOT ANDROID)
     if (NOT DIRECT_TO_DISPLAY)
@@ -378,7 +402,7 @@ set(CLI11_FORCE_LIBCXX OFF)
 set(CLI11_CUDA_TESTS OFF)
 set(CLI11_CLANG_TIDY OFF)
 add_subdirectory(cli11)
-if (TARGET CLI11)
+if (TARGET CLI11 AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
     set_property(TARGET CLI11 PROPERTY FOLDER "ThirdParty")
 endif()
 
