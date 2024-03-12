@@ -491,17 +491,17 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 	    VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == requested_compression)
 	{
 		// Check if fixed-rate compression was applied
-		const auto applied_fixed_rate_compression = vkb::query_applied_compression(device.get_handle(), images[0]).imageCompressionFixedRateFlags;
+		const auto applied_compression_fixed_rate = vkb::query_applied_compression(device.get_handle(), images[0]).imageCompressionFixedRateFlags;
 
-		if (applied_fixed_rate_compression != requested_compression_fixed_rate)
+		if (applied_compression_fixed_rate != requested_compression_fixed_rate)
 		{
 			LOGW("(Swapchain) Requested fixed-rate compression ({}) was not applied, instead images use {}",
 			     image_compression_fixed_rate_flags_to_string(requested_compression_fixed_rate),
-			     image_compression_fixed_rate_flags_to_string(applied_fixed_rate_compression));
+			     image_compression_fixed_rate_flags_to_string(applied_compression_fixed_rate));
 
-			this->requested_compression_fixed_rate = applied_fixed_rate_compression;
+			this->requested_compression_fixed_rate = applied_compression_fixed_rate;
 
-			if (VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT == applied_fixed_rate_compression)
+			if (VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT == applied_compression_fixed_rate)
 			{
 				this->requested_compression = VK_IMAGE_COMPRESSION_DEFAULT_EXT;
 			}
@@ -509,7 +509,7 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 		else
 		{
 			LOGI("(Swapchain) Applied fixed-rate compression: {}",
-			     image_compression_fixed_rate_flags_to_string(applied_fixed_rate_compression));
+			     image_compression_fixed_rate_flags_to_string(applied_compression_fixed_rate));
 		}
 	}
 }

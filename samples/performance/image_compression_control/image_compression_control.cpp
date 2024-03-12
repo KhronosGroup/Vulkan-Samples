@@ -221,48 +221,46 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 		                                  VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM, VK_FORMAT_B8G8R8A8_SRGB};
 
 		VkFormat chosen_format{VK_FORMAT_UNDEFINED};
-		for (auto &candidate_format : format_list)
+		if (get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 		{
-			color_image_info.format = candidate_format;
-
-			if (!get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+			for (auto &candidate_format : format_list)
 			{
-				break;
-			}
+				color_image_info.format = candidate_format;
 
-			/**
-			 * To query for compression support, VK_EXT_image_compression_control allows to
-			 * add a VkImageCompressionPropertiesEXT to the pNext chain of VkImageFormatProperties2 when
-			 * calling vkGetPhysicalDeviceImageFormatProperties2KHR.
-			 * See the implementation of this helper function in vkb::core::Image.
-			 */
-			VkImageCompressionPropertiesEXT supported_compression_properties = vkb::query_supported_fixed_rate_compression(get_device().get_gpu().get_handle(), color_image_info);
+				/**
+				 * To query for compression support, VK_EXT_image_compression_control allows to
+				 * add a VkImageCompressionPropertiesEXT to the pNext chain of VkImageFormatProperties2 when
+				 * calling vkGetPhysicalDeviceImageFormatProperties2KHR.
+				 * See the implementation of this helper function in vkb::core::Image.
+				 */
+				VkImageCompressionPropertiesEXT supported_compression_properties = vkb::query_supported_fixed_rate_compression(get_device().get_gpu().get_handle(), color_image_info);
 
-			auto fixed_rate_flags = vkb::fixed_rate_compression_flags_to_vector(supported_compression_properties.imageCompressionFixedRateFlags);
+				auto fixed_rate_flags = vkb::fixed_rate_compression_flags_to_vector(supported_compression_properties.imageCompressionFixedRateFlags);
 
-			VkImageFormatProperties format_properties;
-			auto                    result = vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(),
-			                                                                          color_image_info.format,
-			                                                                          color_image_info.imageType,
-			                                                                          color_image_info.tiling,
-			                                                                          color_image_info.usage,
-			                                                                          0,        // no create flags
-			                                                                          &format_properties);
+				VkImageFormatProperties format_properties;
+				auto                    result = vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(),
+				                                                                          color_image_info.format,
+				                                                                          color_image_info.imageType,
+				                                                                          color_image_info.tiling,
+				                                                                          color_image_info.usage,
+				                                                                          0,        // no create flags
+				                                                                          &format_properties);
 
-			// Pick the first format that supports at least 2 or more levels of fixed-rate compression, otherwise
-			// pick the first format that supports at least 1 level
-			if (result != VK_ERROR_FORMAT_NOT_SUPPORTED &&
-			    fixed_rate_flags.size() > 0)
-			{
-				if ((VK_FORMAT_UNDEFINED == chosen_format) || (fixed_rate_flags.size() > 1))
+				// Pick the first format that supports at least 2 or more levels of fixed-rate compression, otherwise
+				// pick the first format that supports at least 1 level
+				if (result != VK_ERROR_FORMAT_NOT_SUPPORTED &&
+				    fixed_rate_flags.size() > 0)
 				{
-					chosen_format                    = candidate_format;
-					supported_fixed_rate_flags_color = fixed_rate_flags;
-				}
+					if ((VK_FORMAT_UNDEFINED == chosen_format) || (fixed_rate_flags.size() > 1))
+					{
+						chosen_format                    = candidate_format;
+						supported_fixed_rate_flags_color = fixed_rate_flags;
+					}
 
-				if (fixed_rate_flags.size() > 1)
-				{
-					break;
+					if (fixed_rate_flags.size() > 1)
+					{
+						break;
+					}
 				}
 			}
 		}
