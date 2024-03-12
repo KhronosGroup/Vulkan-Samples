@@ -426,9 +426,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	struct ImageData
 	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
+		VkImage        image{VK_NULL_HANDLE};
+		VkDeviceMemory mem{VK_NULL_HANDLE};
+		VkImageView    view{VK_NULL_HANDLE};
 	} depth_stencil;
 
 	struct

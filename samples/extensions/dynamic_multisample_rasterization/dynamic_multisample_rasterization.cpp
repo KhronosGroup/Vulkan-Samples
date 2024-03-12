@@ -28,7 +28,6 @@ DynamicMultisampleRasterization::DynamicMultisampleRasterization()
 	title = "DynamicState3 Multisample Rasterization";
 
 	set_api_version(VK_API_VERSION_1_2);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
@@ -52,22 +51,9 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 
 void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Query the extended dynamic state support
-	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
-	extended_dynamic_state_3_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
-
-	VkPhysicalDeviceFeatures2 features2{};
-	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	features2.pNext = &extended_dynamic_state_3_features;
-	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
-
-	if (extended_dynamic_state_3_features.extendedDynamicState3RasterizationSamples)
-	{
-		// Only request the features that we support
-		auto &features = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
-
-		features.extendedDynamicState3RasterizationSamples = VK_TRUE;
-	}
+	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT requested_feature                                                                                        = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT};
+	requested_feature.extendedDynamicState3RasterizationSamples                                                                                               = VK_TRUE;
+	gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT) = requested_feature;
 
 	// Dynamic Rendering
 	auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
@@ -135,17 +121,6 @@ bool DynamicMultisampleRasterization::prepare(const vkb::ApplicationOptions &opt
 	{
 		return false;
 	}
-
-#if VK_NO_PROTOTYPES
-	VkInstance instance = get_device().get_gpu().get_instance().get_handle();
-	assert(!!instance);
-	vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR"));
-	vkCmdEndRenderingKHR   = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR"));
-	if (!vkCmdBeginRenderingKHR || !vkCmdEndRenderingKHR)
-	{
-		throw std::runtime_error("Unable to dynamically load vkCmdBeginRenderingKHR and vkCmdEndRenderingKHR");
-	}
-#endif
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(1.9f, 10.f, -18.f));
@@ -228,12 +203,12 @@ void DynamicMultisampleRasterization::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
+	std::vector<VkClearValue> clear_values(2);
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values[2].depthStencil = {0.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	std::vector<VkRenderingAttachmentInfoKHR> attachments(2);
-	attachments_setup(attachments);
+	attachments_setup(attachments, clear_values);
 
 	VkImageSubresourceRange range{};
 	range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -451,7 +426,7 @@ void DynamicMultisampleRasterization::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void DynamicMultisampleRasterization::attachments_setup(std::vector<VkRenderingAttachmentInfoKHR> &attachments)
+void DynamicMultisampleRasterization::attachments_setup(std::vector<VkRenderingAttachmentInfoKHR> &attachments, std::vector<VkClearValue> &clear_values)
 {
 	prepare_supported_sample_count_list();
 	destroy_image_data(color_attachment);
@@ -485,7 +460,7 @@ void DynamicMultisampleRasterization::attachments_setup(std::vector<VkRenderingA
 	attachments[1].imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	attachments[1].loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[1].storeOp     = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[1].clearValue  = clear_values[2];
+	attachments[1].clearValue  = clear_values[1];
 	attachments[1].pNext       = VK_NULL_HANDLE;
 }
 
@@ -930,8 +905,12 @@ void DynamicMultisampleRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 
 bool DynamicMultisampleRasterization::resize(const uint32_t _width, const uint32_t _height)
 {
+	sample_count = VK_SAMPLE_COUNT_1_BIT;
+
 	if (!ApiVulkanSample::resize(_width, _height))
 		return false;
+
+	sample_count = supported_sample_count_list[gui_settings.sample_count_index];
 
 	prepared = false;
 
