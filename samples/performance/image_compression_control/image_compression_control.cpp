@@ -37,9 +37,9 @@ ImageCompressionControlSample::ImageCompressionControlSample()
 	auto &config = get_configuration();
 
 	// Batch mode will test the toggle between different compression modes
-	config.insert<vkb::IntSetting>(0, gui_target_compression, 0);
-	config.insert<vkb::IntSetting>(1, gui_target_compression, 1);
-	config.insert<vkb::IntSetting>(2, gui_target_compression, 2);
+	config.insert<vkb::IntSetting>(0, static_cast<int>(gui_target_compression), 0);
+	config.insert<vkb::IntSetting>(1, static_cast<int>(gui_target_compression), 1);
+	config.insert<vkb::IntSetting>(2, static_cast<int>(gui_target_compression), 2);
 }
 
 void ImageCompressionControlSample::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -299,7 +299,6 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 	    .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Prepare compression control structure
-	auto                         color_fixed_rate_flags = compression_fixed_rate_flag_color;
 	VkImageCompressionControlEXT color_compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
 
 	if (VK_IMAGE_COMPRESSION_DEFAULT_EXT != compression_flag)
@@ -310,7 +309,7 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 		    VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT != compression_fixed_rate_flag_color)
 		{
 			color_compression_control.compressionControlPlaneCount = 1;
-			color_compression_control.pFixedRateFlags              = &color_fixed_rate_flags;
+			color_compression_control.pFixedRateFlags              = &compression_fixed_rate_flag_color;
 		}
 
 		color_image_builder.with_extension<VkImageCompressionControlEXT>(color_compression_control);
@@ -382,17 +381,17 @@ void ImageCompressionControlSample::update_render_targets()
 	 */
 	switch (gui_target_compression)
 	{
-		case (int) TargetCompression::FixedRate:
+		case TargetCompression::FixedRate:
 		{
 			compression_flag = VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT;
 			break;
 		}
-		case (int) TargetCompression::None:
+		case TargetCompression::None:
 		{
 			compression_flag = VK_IMAGE_COMPRESSION_DISABLED_EXT;
 			break;
 		}
-		case (int) TargetCompression::Default:
+		case TargetCompression::Default:
 		default:
 		{
 			compression_flag = VK_IMAGE_COMPRESSION_DEFAULT_EXT;
@@ -529,13 +528,12 @@ void ImageCompressionControlSample::draw_gui()
 		    ImGui::Text("Compression:");
 		    ImGui::SameLine();
 
-		    const TargetCompression current_compression = static_cast<TargetCompression>(gui_target_compression);
-		    const TargetCompression compression         = generate_combo(current_compression, "##compression",
-		                                                                 {{TargetCompression::FixedRate, "Fixed-rate"}, {TargetCompression::None, "None"}, {TargetCompression::Default, "Default"}},
-		                                                                 window_width * 0.2f,
-		                                                                 &gui_skip_compression_values);
+		    const TargetCompression compression = generate_combo(gui_target_compression, "##compression",
+		                                                         {{TargetCompression::FixedRate, "Fixed-rate"}, {TargetCompression::None, "None"}, {TargetCompression::Default, "Default"}},
+		                                                         window_width * 0.2f,
+		                                                         &gui_skip_compression_values);
 
-		    gui_target_compression = static_cast<int>(compression);
+		    gui_target_compression = compression;
 
 		    if (compression == TargetCompression::FixedRate && supported_fixed_rate_flags_color.size() > 1)
 		    {
@@ -548,12 +546,11 @@ void ImageCompressionControlSample::draw_gui()
 			    ImGui::Text("Level:");
 
 			    ImGui::SameLine();
-			    const FixedRateCompressionLevel current_compression_level = static_cast<FixedRateCompressionLevel>(gui_fixed_rate_compression_level);
-			    const FixedRateCompressionLevel compression_level         = generate_combo(current_compression_level, "##compression-level",
-			                                                                               {{FixedRateCompressionLevel::High, "High"}, {FixedRateCompressionLevel::Low, "Low"}},
-			                                                                               window_width * 0.2f);
+			    const FixedRateCompressionLevel compression_level = generate_combo(gui_fixed_rate_compression_level, "##compression-level",
+			                                                                       {{FixedRateCompressionLevel::High, "High"}, {FixedRateCompressionLevel::Low, "Low"}},
+			                                                                       window_width * 0.2f);
 
-			    gui_fixed_rate_compression_level = static_cast<int>(compression_level);
+			    gui_fixed_rate_compression_level = compression_level;
 		    }
 
 		    if (landscape)

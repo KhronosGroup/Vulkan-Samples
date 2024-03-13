@@ -177,13 +177,13 @@ class ImageCompressionControlSample : public vkb::VulkanSample<vkb::BindingType:
 
 	/* Helpers for managing GUI input */
 
-	int gui_target_compression{(int) TargetCompression::Default};
+	TargetCompression gui_target_compression{TargetCompression::Default};
 
-	int last_gui_target_compression{gui_target_compression};
+	TargetCompression last_gui_target_compression{gui_target_compression};
 
-	int gui_fixed_rate_compression_level{(int) FixedRateCompressionLevel::High};
+	FixedRateCompressionLevel gui_fixed_rate_compression_level{FixedRateCompressionLevel::High};
 
-	int last_gui_fixed_rate_compression_level{gui_fixed_rate_compression_level};
+	FixedRateCompressionLevel last_gui_fixed_rate_compression_level{gui_fixed_rate_compression_level};
 };
 
 std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_image_compression_control();
