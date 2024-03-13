@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip
+/* Copyright (c) 2021-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,13 +73,13 @@ bool TextureCompressionComparison::prepare(const vkb::ApplicationOptions &option
 
 	load_assets();
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	create_subpass();
 
-	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_read_bytes});
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_read_bytes});
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -112,7 +112,7 @@ void TextureCompressionComparison::draw_gui()
 		return in.c_str();
 	});
 
-	gui->show_options_window([this, &name_pointers]() {
+	get_gui().show_options_window([this, &name_pointers]() {
 		if (ImGui::Combo("Compressed Format", &current_gui_format, name_pointers.data(), static_cast<int>(name_pointers.size())))
 		{
 			require_redraw     = true;
@@ -206,12 +206,12 @@ void TextureCompressionComparison::load_assets()
 {
 	get_available_texture_formats();
 	load_scene("scenes/sponza/Sponza01.gltf");
-	if (!scene)
+	if (!has_scene())
 	{
 		throw std::runtime_error("Unable to load Sponza scene");
 	}
 
-	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+	for (auto &&mesh : get_scene().get_components<vkb::sg::Mesh>())
 	{
 		for (auto &&sub_mesh : mesh->get_submeshes())
 		{
@@ -230,10 +230,10 @@ void TextureCompressionComparison::create_subpass()
 {
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_sub_pass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_sub_pass));
 
 	set_render_pipeline(std::move(render_pipeline));
 }
@@ -327,28 +327,13 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	VkImageMemoryBarrier initial_image_memory_barrier = vkb::initializers::image_memory_barrier();
-	initial_image_memory_barrier.image                = image;
-	initial_image_memory_barrier.subresourceRange     = subresource_range;
-	initial_image_memory_barrier.srcAccessMask        = 0;
-	initial_image_memory_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-	initial_image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-	initial_image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &initial_image_memory_barrier);
+	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, buffer_copies.size(), buffer_copies.data());
 
-	VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-	image_memory_barrier.image                = image;
-	image_memory_barrier.subresourceRange     = subresource_range;
-	image_memory_barrier.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-	image_memory_barrier.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-	image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
-	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &image_memory_barrier);
-	device->flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle(), true);
+	get_device().flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle(), true);
 
 	return image_out;
 }

@@ -1,0 +1,68 @@
+////
+- Copyright (c) 2023-2024, Mobica Limited
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+= Dynamic line rasterization
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/dynamic_line_rasterization[Khronos Vulkan samples github repository].
+endif::[]
+
+
+image::./screenshot.png[]
+
+== Overview
+
+This sample demonstrates functions from various extensions related to dynamic line rasterization. These functions can be useful for developing CAD applications.
+
+* From the `VK_EXT_line_rasterization` extension:
+** `vkCmdSetLineStippleEXT` - sets the stipple pattern.
+* From the `VK_EXT_extended_dynamic_state3` extension:
+** `vkCmdSetPolygonModeEXT` - sets how defined primitives should be rasterized.
+** `vkCmdSetLineRasterizationModeEXT` - sets the algorithm for line rasterization.
+** `vkCmdSetLineStippleEnableEXT` - toggles stippling for lines.
+* And also from the core Vulkan:
+** `vkCmdSetLineWidth` - sets the line width.
+** `vkCmdSetPrimitiveTopologyEXT` - defines which type of primitives is being drawn.
+
+== The sample
+
+Dynamic line rasterization contains a wireframed cube whose appearance can be modified by the user. The cube edges and filling are rendered in a single pipeline, using a different set of indices. The `vkCmdSetPrimitiveTopologyEXT` and `vkCmdSetPolygonModeEXT` functions are used to change the way they are rendered.
+
+Users can modify the line width (`vkCmdSetLineWidth`) and choose how the line is drawn (`vkCmdSetLineRasterizationModeEXT`). The sample also demonstrates the ability to stipple the line. Stippling is defined by two variables:
+
+** `lineStipplePattern` - a `uint16_t` where each bit represents whether a point on the line is colored (1) or transparent (0).
+** `lineStippleFactor` - a factor used to determine how many consecutive points are affected by a single pattern bit.
+
+The sample also contains a grid rendered beneath the cube using a different pipeline. This grid represents another approach to line rasterization based on the fragment shader. Consequently, the appearance of the gridlines cannot be modified by the user.
+
+== Credits
+
+The infinite grid shader is based on the code from the https://asliceofrendering.com/scene%20helper/2020/01/05/InfiniteGrid/[asliceofrendering.com] blog.
+
+== Documentation links
+
+https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetLineStippleEXT.html
+
+https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetPolygonModeEXT.html
+
+https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetLineRasterizationModeEXT.html
+
+https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetLineStippleEnableEXT.html
+
+https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetLineWidth.html

@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2023, Bradley Austin Davis
- * Copyright (c) 2020-2023, Arm Limited
+/* Copyright (c) 2020-2024, Bradley Austin Davis
+ * Copyright (c) 2020-2024, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,9 +19,9 @@
 #include "open_gl_interop.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 
@@ -130,8 +130,8 @@ OpenGLInterop::OpenGLInterop()
 
 void OpenGLInterop::prepare_shared_resources()
 {
-	auto deviceHandle         = device->get_handle();
-	auto physicalDeviceHandle = device->get_gpu().get_handle();
+	auto deviceHandle         = get_device().get_handle();
+	auto physicalDeviceHandle = get_device().get_gpu().get_handle();
 
 	{
 		VkExternalSemaphoreHandleTypeFlagBits flags[] = {
@@ -215,7 +215,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkCreateImage(deviceHandle, &imageCreateInfo, nullptr, &sharedTexture.image));
 
 		VkMemoryRequirements memReqs{};
-		vkGetImageMemoryRequirements(device->get_handle(), sharedTexture.image, &memReqs);
+		vkGetImageMemoryRequirements(get_device().get_handle(), sharedTexture.image, &memReqs);
 
 		VkExportMemoryAllocateInfo exportAllocInfo{
 		    VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO, nullptr,
@@ -223,8 +223,8 @@ void OpenGLInterop::prepare_shared_resources()
 		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &exportAllocInfo};
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
-		memAllocInfo.memoryTypeIndex                               = device->get_memory_type(memReqs.memoryTypeBits,
-		                                                                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memAllocInfo.memoryTypeIndex                               = get_device().get_memory_type(memReqs.memoryTypeBits,
+		                                                                                          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
@@ -260,28 +260,9 @@ void OpenGLInterop::prepare_shared_resources()
 		                                                          0, 1};
 		vkCreateImageView(deviceHandle, &viewCreateInfo, nullptr, &sharedTexture.view);
 
-		with_command_buffer([&](VkCommandBuffer image_command_buffer) {
-			VkImageMemoryBarrier image_memory_barrier  = vkb::initializers::image_memory_barrier();
-			image_memory_barrier.image                 = sharedTexture.image;
-			image_memory_barrier.srcAccessMask         = 0;
-			image_memory_barrier.dstAccessMask         = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			image_memory_barrier.oldLayout             = VK_IMAGE_LAYOUT_UNDEFINED;
-			image_memory_barrier.newLayout             = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			VkImageSubresourceRange &subresource_range = image_memory_barrier.subresourceRange;
-			subresource_range.aspectMask               = VK_IMAGE_ASPECT_COLOR_BIT;
-			subresource_range.levelCount               = 1;
-			subresource_range.layerCount               = 1;
-
-			vkCmdPipelineBarrier(
-			    image_command_buffer,
-			    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    0,
-			    0, nullptr,
-			    0, nullptr,
-			    1, &image_memory_barrier);
-		},
-		                    sharedSemaphores.gl_ready);
+		with_command_buffer(
+		    [&](VkCommandBuffer image_command_buffer) { vkb::image_layout_transition(image_command_buffer, sharedTexture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); },
+		    sharedSemaphores.gl_ready);
 	}
 }
 
@@ -486,7 +467,7 @@ void OpenGLInterop::prepare_pipelines()
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
 	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
-        vertex_input_attributes.size());
+	         vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
@@ -700,24 +681,7 @@ void OpenGLInterop::build_command_buffers()
 
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
-		{
-			VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-			image_memory_barrier.image                = sharedTexture.image;
-			image_memory_barrier.srcAccessMask        = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			image_memory_barrier.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-			image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkImageSubresourceRange &subresource_range = image_memory_barrier.subresourceRange;
-			subresource_range.aspectMask               = VK_IMAGE_ASPECT_COLOR_BIT;
-			subresource_range.levelCount               = 1;
-			subresource_range.layerCount               = 1;
-			vkCmdPipelineBarrier(
-			    draw_cmd_buffers[i],
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-			    0, nullptr, 0, nullptr, 1, &image_memory_barrier);
-		}
+		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info,
 		                     VK_SUBPASS_CONTENTS_INLINE);
@@ -744,31 +708,8 @@ void OpenGLInterop::build_command_buffers()
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
-		{
-			VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-			image_memory_barrier.image                = sharedTexture.image;
-			image_memory_barrier.srcAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-			image_memory_barrier.dstAccessMask        = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-			VkImageSubresourceRange &subresource_range = image_memory_barrier.subresourceRange;
-			subresource_range.aspectMask               = VK_IMAGE_ASPECT_COLOR_BIT;
-			subresource_range.levelCount               = 1;
-			subresource_range.layerCount               = 1;
-
-			// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-			// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
-			// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
-			vkCmdPipelineBarrier(
-			    draw_cmd_buffers[i],
-			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    0,
-			    0, nullptr,
-			    0, nullptr,
-			    1, &image_memory_barrier);
-		}
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }
@@ -799,10 +740,10 @@ OpenGLInterop::~OpenGLInterop()
 	index_buffer.reset();
 	uniform_buffer_vs.reset();
 
-	if (device)
+	if (has_device())
 	{
-		device->wait_idle();
-		auto deviceHandle = device->get_handle();
+		get_device().wait_idle();
+		auto deviceHandle = get_device().get_handle();
 		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_ready, nullptr);
 		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_complete, nullptr);
 		vkDestroyImage(deviceHandle, sharedTexture.image, nullptr);
@@ -815,7 +756,7 @@ OpenGLInterop::~OpenGLInterop()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_open_gl_interop()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_gl_interop()
 {
 	return std::make_unique<OpenGLInterop>();
 }

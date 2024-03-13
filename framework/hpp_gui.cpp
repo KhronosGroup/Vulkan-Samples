@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,20 +16,22 @@
  */
 
 #include "hpp_gui.h"
+#include "vulkan_sample.h"
 #include <common/hpp_utils.h>
 #include <core/hpp_buffer.h>
 #include <core/hpp_command_pool.h>
-#include <hpp_vulkan_sample.h>
 #include <imgui_internal.h>
+
+#include <numeric>
 
 namespace vkb
 {
 namespace
 {
-void upload_draw_data(const ImDrawData *draw_data, const uint8_t *vertex_data, const uint8_t *index_data)
+void upload_draw_data(const ImDrawData *draw_data, uint8_t *vertex_data, uint8_t *index_data)
 {
-	ImDrawVert *vtx_dst = (ImDrawVert *) vertex_data;
-	ImDrawIdx  *idx_dst = (ImDrawIdx *) index_data;
+	ImDrawVert *vtx_dst = reinterpret_cast<ImDrawVert *>(vertex_data);
+	ImDrawIdx  *idx_dst = reinterpret_cast<ImDrawIdx *>(index_data);
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -66,7 +68,7 @@ const ImGuiWindowFlags HPPGui::common_flags  = ImGuiWindowFlags_NoMove |
 const ImGuiWindowFlags HPPGui::options_flags = HPPGui::common_flags;
 const ImGuiWindowFlags HPPGui::info_flags    = HPPGui::common_flags | ImGuiWindowFlags_NoInputs;
 
-HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
+HPPGui::HPPGui(VulkanSample<BindingType::Cpp> &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
     sample{sample_}, content_scale_factor{window.get_content_scale_factor()}, dpi_factor{window.get_dpi_factor() * content_scale_factor}, explicit_update{explicit_update}, stats_view(stats)
 {
 	ImGui::CreateContext();
@@ -114,6 +116,7 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 	io.KeyMap[ImGuiKey_UpArrow]    = static_cast<int>(KeyCode::Up);
 	io.KeyMap[ImGuiKey_DownArrow]  = static_cast<int>(KeyCode::Down);
 	io.KeyMap[ImGuiKey_Tab]        = static_cast<int>(KeyCode::Tab);
+	io.KeyMap[ImGuiKey_Escape]     = static_cast<int>(KeyCode::Backspace);
 
 	// Default font
 	fonts.emplace_back(default_font, font_size * dpi_factor);
@@ -130,20 +133,19 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 	auto &device = sample.get_render_context().get_device();
 
 	// Create target image for copy
-	vk::Extent3D font_extent(to_u32(tex_width), to_u32(tex_height), 1u);
-
-	font_image = std::make_unique<vkb::core::HPPImage>(device, font_extent, vk::Format::eR8G8B8A8Unorm,
-	                                                   vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
-	font_image->set_debug_name("GUI font image");
+	font_image =
+	    vkb::core::HPPImageBuilder(to_u32(tex_width), to_u32(tex_height))
+	        .with_format(vk::Format::eR8G8B8A8Unorm)
+	        .with_usage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst)
+	        .with_debug_name("GUI font image")
+	        .build_unique(device);
 
 	font_image_view = std::make_unique<vkb::core::HPPImageView>(*font_image, vk::ImageViewType::e2D);
 	font_image_view->set_debug_name("View on GUI font image");
 
 	// Upload font data into the vulkan image memory
 	{
-		vkb::core::HPPBuffer stage_buffer(device, upload_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY, 0);
-		stage_buffer.update({font_data, font_data + upload_size});
+		vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(device, upload_size, font_data);
 
 		auto &command_buffer = device.get_command_pool().request_command_buffer();
 
@@ -224,11 +226,21 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 
 	if (explicit_update)
 	{
-		vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(sample.get_render_context().get_device(), 1, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
-		vertex_buffer->set_debug_name("GUI vertex buffer");
+		auto &device = sample.get_render_context().get_device();
 
-		index_buffer = std::make_unique<vkb::core::HPPBuffer>(sample.get_render_context().get_device(), 1, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
-		index_buffer->set_debug_name("GUI index buffer");
+		vertex_buffer =
+		    vkb::core::HPPBufferBuilder(1)
+		        .with_usage(vk::BufferUsageFlagBits::eVertexBuffer)
+		        .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
+		        .with_debug_name("GUI vertex buffer")
+		        .build_unique(device);
+
+		index_buffer =
+		    vkb::core::HPPBufferBuilder(1)
+		        .with_usage(vk::BufferUsageFlagBits::eIndexBuffer)
+		        .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
+		        .with_debug_name("GUI index buffer")
+		        .build_unique(device);
 	}
 }
 
@@ -391,7 +403,7 @@ bool HPPGui::update_buffers()
 
 void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
 {
-	ImDrawData                     *draw_data    = ImGui::GetDrawData();
+	ImDrawData	                 *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
 
 	if (!draw_data || (draw_data->TotalVtxCount == 0) || (draw_data->TotalIdxCount == 0))
@@ -660,7 +672,7 @@ const HPPGui::StatsView &HPPGui::get_stats_view() const
 	return stats_view;
 }
 
-HPPDrawer &HPPGui::get_drawer()
+Drawer &HPPGui::get_drawer()
 {
 	return drawer;
 }
@@ -690,7 +702,9 @@ bool HPPGui::is_debug_view_active() const
 HPPGui::StatsView::StatsView(const vkb::stats::HPPStats *stats)
 {
 	if (stats == nullptr)
+	{
 		return;
+	}
 
 	// Request graph data information for each stat and record it in graph_map
 	const std::set<StatIndex> &indices = stats->get_requested_stats();
@@ -721,11 +735,11 @@ void HPPGui::show_top_window(const std::string &app_name, const vkb::stats::HPPS
 	// Transparent background
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
 	ImVec2 size{ImGui::GetIO().DisplaySize.x, 0.0f};
-	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+	ImGui::SetNextWindowSize(size, ImGuiSetCond_Always);
 
 	// Top left
 	ImVec2 pos{0.0f, 0.0f};
-	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiSetCond_Always);
 
 	bool is_open = true;
 	ImGui::Begin("Top", &is_open, common_flags);
@@ -779,7 +793,7 @@ void HPPGui::show_debug_window(const DebugInfo &debug_info, const ImVec2 &positi
 	}
 
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
-	ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(position, ImGuiSetCond_FirstUseEver);
 	ImGui::SetNextWindowContentSize(ImVec2{io.DisplaySize.x, 0.0f});
 
 	bool                   is_open = true;
@@ -875,7 +889,7 @@ void HPPGui::show_options_window(std::function<void()> body, const uint32_t line
 	const ImVec2 size = ImVec2(window_width, 0);
 	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 	const ImVec2 pos = ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - window_height);
-	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiSetCond_Always);
 	const ImGuiWindowFlags flags   = (ImGuiWindowFlags_NoMove |
                                     ImGuiWindowFlags_NoScrollbar |
                                     ImGuiWindowFlags_NoTitleBar |
@@ -898,7 +912,7 @@ void HPPGui::show_simple_window(const std::string &name, uint32_t last_fps, std:
 	ImGui::NewFrame();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
-	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
 	ImGui::TextUnformatted(sample.get_render_context().get_device().get_gpu().get_properties().deviceName.data());
@@ -1020,141 +1034,6 @@ bool HPPGui::input_event(const InputEvent &input_event)
 	}
 
 	return capture_move_event;
-}
-
-void HPPDrawer::clear()
-{
-	dirty = false;
-}
-
-bool HPPDrawer::is_dirty() const
-{
-	return dirty;
-}
-
-void HPPDrawer::set_dirty(bool dirty)
-{
-	this->dirty = dirty;
-}
-
-bool HPPDrawer::header(const std::string &caption) const
-{
-	return ImGui::CollapsingHeader(caption.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
-}
-
-bool HPPDrawer::checkbox(const std::string &caption, bool *value)
-{
-	bool res = ImGui::Checkbox(caption.c_str(), value);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::checkbox(const std::string &caption, int32_t *value)
-{
-	bool val = (*value == 1);
-	bool res = ImGui::Checkbox(caption.c_str(), &val);
-	*value   = val;
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::input_float(const std::string &caption, float *value, float step, const char *fmt)
-{
-	bool res = ImGui::InputFloat(caption.c_str(), value, step, step * 10.0f, fmt);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::slider_float(const std::string &caption, float *value, float min, float max)
-{
-	bool res = ImGui::SliderFloat(caption.c_str(), value, min, max);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::slider_int(const std::string &caption, int32_t *value, int32_t min, int32_t max)
-{
-	bool res = ImGui::SliderInt(caption.c_str(), value, min, max);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::combo_box(const std::string &caption, int32_t *itemindex, std::vector<std::string> items)
-{
-	if (items.empty())
-	{
-		return false;
-	}
-	std::vector<const char *> charitems;
-	charitems.reserve(items.size());
-	for (size_t i = 0; i < items.size(); i++)
-	{
-		charitems.push_back(items[i].c_str());
-	}
-	uint32_t itemCount = static_cast<uint32_t>(charitems.size());
-	bool     res       = ImGui::Combo(caption.c_str(), itemindex, &charitems[0], itemCount, itemCount);
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-bool HPPDrawer::button(const std::string &caption)
-{
-	bool res = ImGui::Button(caption.c_str());
-	if (res)
-	{
-		dirty = true;
-	};
-	return res;
-}
-
-void HPPDrawer::text(const char *formatstr, ...)
-{
-	va_list args;
-	va_start(args, formatstr);
-	ImGui::TextV(formatstr, args);
-	va_end(args);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorEdit3(caption, colors, flags);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorEdit4(caption, colors, flags);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorPicker3(caption, colors, flags);
-}
-
-template <>
-bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
-{
-	return ImGui::ColorPicker4(caption, colors, flags);
 }
 
 }        // namespace vkb

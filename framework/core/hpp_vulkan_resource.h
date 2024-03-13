@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,11 +25,6 @@ namespace vkb
 namespace core
 {
 class HPPDevice;
-
-namespace detail
-{
-void set_debug_name(const HPPDevice *device, vk::ObjectType object_type, uint64_t handle, const char *debug_name);
-}
 
 /// Inherit this for any Vulkan object with a handle of type `HPPHandle`.
 ///
@@ -114,7 +109,11 @@ class HPPVulkanResource
 	inline void set_debug_name(const std::string &name)
 	{
 		debug_name = name;
-		detail::set_debug_name(device, HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
+
+		if (device && !debug_name.empty())
+		{
+			get_device().get_debug_utils().set_debug_name(get_device().get_handle(), HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
+		}
 	}
 
   private:

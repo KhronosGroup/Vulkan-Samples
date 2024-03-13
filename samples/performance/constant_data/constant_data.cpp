@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,9 @@
 #include "constant_data.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
@@ -89,9 +89,9 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	// If descriptor indexing and its dependencies were enabled, then we can mark the update after bind method as supported
-	if (instance->is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) &&
-	    device->is_enabled(VK_KHR_MAINTENANCE3_EXTENSION_NAME) &&
-	    device->is_enabled(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
+	if (get_instance().is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) &&
+	    get_device().is_enabled(VK_KHR_MAINTENANCE3_EXTENSION_NAME) &&
+	    get_device().is_enabled(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
 	{
 		methods[Method::UpdateAfterBindDescriptorSets].supported = true;
 	}
@@ -104,7 +104,7 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	load_scene("scenes/bonza/Bonza4X.gltf");
 
 	// Attach a move script to the camera component in the scene
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	// Create the render pipelines
@@ -113,8 +113,8 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert", "constant_data/buffer_array.frag");
 
 	// Add a GUI with the stats you want to monitor
-	stats->request_stats(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::gpu_load_store_cycles});
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	get_stats().request_stats(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::gpu_load_store_cycles});
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -200,9 +200,9 @@ void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::Rend
 			descriptor_set_render_pipeline->draw(command_buffer, render_target);
 		}
 
-		if (gui)
+		if (has_gui())
 		{
-			gui->draw(command_buffer);
+			get_gui().draw(command_buffer);
 		}
 
 		// Update the remaining bindings on all the descriptor sets
@@ -237,7 +237,7 @@ void ConstantData::draw_gui()
 		lines = lines * 2;
 	}
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this]() {
 		    // Create a line for every config
 		    ImGui::Text("Method of pushing MVP to shader:");
@@ -276,7 +276,7 @@ void ConstantData::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-std::unique_ptr<vkb::VulkanSample> create_constant_data()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_constant_data()
 {
 	return std::make_unique<ConstantData>();
 }

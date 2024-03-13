@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,26 +49,28 @@ class HPPTextureMipMapGeneration : public HPPApiVulkanSample
 	};
 
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
-	// from HPPVulkanSample
+	// from vkb::VulkanSample
 	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample
 	void build_command_buffers() override;
-	void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
 	void view_changed() override;
 
-	void draw();
-	void load_assets();
-	void load_texture_generate_mipmaps(std::string file_name);
-	void prepare_pipelines();
-	void prepare_uniform_buffers();
-	void setup_descriptor_pool();
-	void setup_descriptor_set();
-	void setup_descriptor_set_layout();
-	void update_uniform_buffers(float delta_time = 0.0f);
+	void                    check_format_features(vk::Format) const;
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::DescriptorSetLayout create_descriptor_set_layout();
+	vk::Pipeline            create_pipeline();
+	void                    draw();
+	void                    load_assets();
+	void                    prepare_camera();
+	void                    prepare_uniform_buffers();
+	void                    update_descriptor_set();
+	void                    update_uniform_buffers(float delta_time = 0.0f);
 
   private:
 	vk::DescriptorSet       descriptor_set;

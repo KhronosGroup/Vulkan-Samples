@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -78,4 +78,4 @@ class DescriptorIndexing : public ApiVulkanSample
 	float                                           accumulated_time{};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_indexing();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_indexing();

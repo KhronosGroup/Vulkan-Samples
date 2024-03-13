@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,10 +39,9 @@ class HPPInstancing : public HPPApiVulkanSample
 	// Contains the instanced data
 	struct InstanceBuffer
 	{
-		vk::Buffer               buffer = nullptr;
-		vk::DeviceMemory         memory = nullptr;
-		size_t                   size   = 0;
-		vk::DescriptorBufferInfo descriptor;
+		std::unique_ptr<vkb::core::HPPBuffer> buffer;
+		vk::DescriptorBufferInfo              descriptor;
+		size_t                                size = 0;
 	};
 
 	// Per-instance data block
@@ -54,16 +53,19 @@ class HPPInstancing : public HPPApiVulkanSample
 		uint32_t  texIndex;
 	};
 
-	struct Models
+	struct Model
 	{
-		std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> rock;
-		std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> planet;
-	};
+		vk::DescriptorSet                                         descriptor_set;
+		std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> mesh;
+		vk::Pipeline                                              pipeline;
+		HPPTexture                                                texture;
 
-	struct Textures
-	{
-		HPPTexture rocks;
-		HPPTexture planet;
+		void destroy(vk::Device device)
+		{
+			mesh.reset();
+			device.destroyPipeline(pipeline);
+			device.destroySampler(texture.sampler);
+		}
 	};
 
 	struct UBOVS
@@ -80,49 +82,40 @@ class HPPInstancing : public HPPApiVulkanSample
 		std::unique_ptr<vkb::core::HPPBuffer> scene;
 	};
 
-	struct Pipelines
-	{
-		vk::Pipeline instanced_rocks;
-		vk::Pipeline planet;
-		vk::Pipeline starfield;
-	};
-
-	struct DescriptorSets
-	{
-		vk::DescriptorSet instanced_rocks;
-		vk::DescriptorSet planet;
-	};
-
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
-	// from HPPVulkanSample
+	// from vkb::VulkanSample
 	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample
 	void build_command_buffers() override;
-	void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
 
-	void draw();
-	void load_assets();
-	void prepare_instance_data();
-	void prepare_pipelines();
-	void prepare_uniform_buffers();
-	void setup_descriptor_pool();
-	void setup_descriptor_set();
-	void setup_descriptor_set_layout();
-	void update_uniform_buffer(float delta_time);
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::DescriptorSetLayout create_descriptor_set_layout();
+	vk::Pipeline            create_planet_pipeline();
+	vk::Pipeline            create_rocks_pipeline();
+	vk::Pipeline            create_starfield_pipeline();
+	void                    draw();
+	void                    load_assets();
+	void                    initialize_camera();
+	void                    prepare_instance_data();
+	void                    prepare_uniform_buffers();
+	void                    update_uniform_buffer(float delta_time);
+	void                    update_planet_descriptor_set();
+	void                    update_rocks_descriptor_set();
 
   private:
 	vk::DescriptorSetLayout descriptor_set_layout;
-	DescriptorSets          descriptor_sets;
 	InstanceBuffer          instance_buffer;
-	Models                  models;
+	Model                   planet;
+	Model                   rocks;
 	vk::PipelineLayout      pipeline_layout;
-	Pipelines               pipelines;
-	Textures                textures;
+	vk::Pipeline            starfield_pipeline;
 	UBOVS                   ubo_vs;
 	UniformBuffers          uniform_buffers;
 };

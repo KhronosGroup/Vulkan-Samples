@@ -8,6 +8,7 @@
 .ttf
 .github
 .jar
+.json
 doxyfile
 download_vvl.gradle
 build.gradle.in
@@ -26,3 +27,5 @@ khrplatform.h
 clang_format.py
 run-clang-tidy.py
 package-list.txt
+.spv
+.pre-commit-config.yaml

@@ -33,6 +33,9 @@ namespace core
 class HPPDescriptorSet : private vkb::DescriptorSet
 {
   public:
+	using vkb::DescriptorSet::apply_writes;
+	using vkb::DescriptorSet::update;
+
 	HPPDescriptorSet(vkb::core::HPPDevice                       &device,
 	                 const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
 	                 vkb::core::HPPDescriptorPool               &descriptor_pool,

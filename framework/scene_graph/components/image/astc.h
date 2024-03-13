@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "astcenc.h"
 #include "common/vk_common.h"
 #include "scene_graph/components/image.h"
 
@@ -57,15 +56,12 @@ class Astc : public Image
 	 * @param extent Extent of the image
 	 * @param data Pointer to ASTC image data
 	 */
-	void decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data);
+	void decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data, uint32_t size);
 
 	/**
 	 * @brief Initializes ASTC library
 	 */
 	void init();
-
-	astcenc_config config;
-	astcenc_error  status;
 };
 }        // namespace sg
 }        // namespace vkb

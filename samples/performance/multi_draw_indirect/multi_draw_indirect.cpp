@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Holochip Corporation
+/* Copyright (c) 2021-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,25 +65,25 @@ MultiDrawIndirect::MultiDrawIndirect()
 
 MultiDrawIndirect::~MultiDrawIndirect()
 {
-	if (device)
+	if (has_device())
 	{
 		vertex_buffer.reset();
 		index_buffer.reset();
 		model_information_buffer.reset();
 		scene_uniform_buffer.reset();
 
-		vkDestroyPipeline(device->get_handle(), pipeline, VK_NULL_HANDLE);
-		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, VK_NULL_HANDLE);
-		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
-		vkDestroySampler(device->get_handle(), sampler, VK_NULL_HANDLE);
+		vkDestroyPipeline(get_device().get_handle(), pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
+		vkDestroySampler(get_device().get_handle(), sampler, VK_NULL_HANDLE);
 
-		vkDestroyPipeline(device->get_handle(), gpu_cull_pipeline, VK_NULL_HANDLE);
-		vkDestroyPipelineLayout(device->get_handle(), gpu_cull_pipeline_layout, VK_NULL_HANDLE);
-		vkDestroyDescriptorSetLayout(device->get_handle(), gpu_cull_descriptor_set_layout, VK_NULL_HANDLE);
+		vkDestroyPipeline(get_device().get_handle(), gpu_cull_pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(get_device().get_handle(), gpu_cull_pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), gpu_cull_descriptor_set_layout, VK_NULL_HANDLE);
 
-		vkDestroyPipeline(device->get_handle(), device_address_pipeline, VK_NULL_HANDLE);
-		vkDestroyPipelineLayout(device->get_handle(), device_address_pipeline_layout, VK_NULL_HANDLE);
-		vkDestroyDescriptorSetLayout(device->get_handle(), device_address_descriptor_set_layout, VK_NULL_HANDLE);
+		vkDestroyPipeline(get_device().get_handle(), device_address_pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(get_device().get_handle(), device_address_pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), device_address_descriptor_set_layout, VK_NULL_HANDLE);
 
 		device_address_buffer.reset();
 
@@ -211,14 +211,14 @@ void MultiDrawIndirect::on_update_ui_overlay(vkb::Drawer &drawer)
 			assert(!!indirect_call_buffer && !!cpu_staging_buffer && indirect_call_buffer->get_size() == cpu_staging_buffer->get_size());
 			assert(cpu_commands.size() * sizeof(cpu_commands[0]) == cpu_staging_buffer->get_size());
 
-			auto &cmd = device->request_command_buffer();
+			auto &cmd = get_device().request_command_buffer();
 			cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 			cmd.copy_buffer(*indirect_call_buffer, *cpu_staging_buffer, cpu_staging_buffer->get_size());
 			cmd.end();
 
-			auto &queue = device->get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
-			queue.submit(cmd, device->request_fence());
-			device->get_fence_pool().wait();
+			auto &queue = get_device().get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
+			queue.submit(cmd, get_device().request_fence());
+			get_device().get_fence_pool().wait();
 
 			memcpy(cpu_commands.data(), cpu_staging_buffer->get_data(), cpu_staging_buffer->get_size());
 		}
@@ -272,13 +272,13 @@ bool MultiDrawIndirect::prepare(const vkb::ApplicationOptions &options)
 
 	if (!compute_queue)
 	{
-		compute_queue = &device->get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
+		compute_queue = &get_device().get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
 	}
 
 	queue_families.clear();
 	for (auto &&queue_bit : {VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT})
 	{
-		const auto index = device->get_queue_by_flags(queue_bit, 0).get_family_index();
+		const auto index = get_device().get_queue_by_flags(queue_bit, 0).get_family_index();
 		if (std::find(queue_families.cbegin(), queue_families.cend(), index) == queue_families.cend())
 		{
 			queue_families.emplace_back(index);
@@ -303,12 +303,12 @@ bool MultiDrawIndirect::prepare(const vkb::ApplicationOptions &options)
 
 void MultiDrawIndirect::load_scene()
 {
-	assert(!!device);
-	vkb::GLTFLoader   loader{*device};
+	assert(has_device());
+	vkb::GLTFLoader   loader{get_device()};
 	const std::string scene_path = "scenes/vokselia/";
 	auto              scene      = loader.read_scene_from_file(scene_path + "vokselia.gltf");
 
-	assert(!!scene);
+	assert(has_scene());
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		const size_t texture_index = textures.size();
@@ -316,11 +316,11 @@ void MultiDrawIndirect::load_scene()
 		auto         image_name    = scene_path + short_name + ".ktx";
 		auto         image         = vkb::sg::Image::load(image_name, image_name, vkb::sg::Image::Color);
 
-		image->create_vk_image(*device);
+		image->create_vk_image(get_device());
 		Texture texture;
 		texture.n_mip_maps = static_cast<uint32_t>(image->get_mipmaps().size());
 		assert(texture.n_mip_maps == 1);
-		texture.image = std::make_unique<vkb::core::Image>(*device,
+		texture.image = std::make_unique<vkb::core::Image>(get_device(),
 		                                                   image->get_extent(),
 		                                                   image->get_format(),
 		                                                   VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
@@ -331,27 +331,17 @@ void MultiDrawIndirect::load_scene()
 		                                                   VK_IMAGE_TILING_OPTIMAL,
 		                                                   0);
 
-		const auto &data        = image->get_data();
-		auto        data_buffer = std::make_unique<vkb::core::Buffer>(*device, data.size() * sizeof(data[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
-		data_buffer->update(data.data(), data.size() * sizeof(data[0]), 0);
-		data_buffer->flush();
+		auto data_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image->get_data());
 
-		auto &texture_cmd = device->get_command_pool().request_command_buffer();
+		auto &texture_cmd = get_device().get_command_pool().request_command_buffer();
 		texture_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 		subresource_range.baseMipLevel            = 0;
 		subresource_range.levelCount              = texture.n_mip_maps;
 
-		VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
-		image_barrier.srcAccessMask        = 0;
-		image_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-		image_barrier.image                = texture.image->get_handle();
-		image_barrier.subresourceRange     = subresource_range;
-		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-		image_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-		vkCmdPipelineBarrier(texture_cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+		vkb::image_layout_transition(
+		    texture_cmd.get_handle(), texture.image->get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 		auto              offsets              = image->get_offsets();
 		VkBufferImageCopy region               = {};
@@ -362,13 +352,13 @@ void MultiDrawIndirect::load_scene()
 		region.imageExtent                     = image->get_extent();
 		region.bufferOffset                    = offsets[0][0];
 
-		texture_cmd.copy_buffer_to_image(*data_buffer, *texture.image, {region});
+		texture_cmd.copy_buffer_to_image(data_buffer, *texture.image, {region});
 		texture_cmd.end();
 
-		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-		queue.submit(texture_cmd, device->request_fence());
-		device->get_fence_pool().wait();
-		device->get_fence_pool().reset();
+		auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+		queue.submit(texture_cmd, get_device().request_fence());
+		get_device().get_fence_pool().wait();
+		get_device().get_fence_pool().reset();
 
 		texture.image_view = std::make_unique<vkb::core::ImageView>(*texture.image, VK_IMAGE_VIEW_TYPE_2D);
 
@@ -420,31 +410,21 @@ void MultiDrawIndirect::load_scene()
 		}
 	}
 
-	auto &cmd = device->get_command_pool().request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	std::vector<VkImageMemoryBarrier> image_barriers;
-	image_barriers.reserve(textures.size());
-	for (auto &&texture : textures)
+	std::vector<std::pair<VkImage, VkImageSubresourceRange>> imagesAndRanges;
+	imagesAndRanges.reserve(textures.size());
+	for (auto const &texture : textures)
 	{
-		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		subresource_range.baseMipLevel            = 0;
-		subresource_range.levelCount              = texture.n_mip_maps;
-
-		VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
-		image_barrier.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-		image_barrier.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-		image_barrier.image                = texture.image->get_handle();
-		image_barrier.subresourceRange     = subresource_range;
-		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		image_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		image_barriers.emplace_back(image_barrier);
+		imagesAndRanges.emplace_back(
+		    std::make_pair(texture.image->get_handle(), VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, texture.n_mip_maps, 0, 1}));
 	}
-	vkCmdPipelineBarrier(cmd.get_handle(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, static_cast<uint32_t>(image_barriers.size()), image_barriers.data());
+
+	auto &cmd = get_device().get_command_pool().request_command_buffer();
+	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	vkb::image_layout_transition(cmd.get_handle(), imagesAndRanges, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	cmd.end();
-	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(cmd, device->request_fence());
-	device->get_fence_pool().wait();
+	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	queue.submit(cmd, get_device().request_fence());
+	get_device().get_fence_pool().wait();
 }
 
 void MultiDrawIndirect::initialize_resources()
@@ -461,9 +441,9 @@ void MultiDrawIndirect::initialize_resources()
 	}
 
 	assert(vertex_buffer_size && index_buffer_size && model_buffer_size);
-	auto staging_vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	auto staging_index_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	auto staging_model_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), model_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	auto staging_vertex_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertex_buffer_size, nullptr);
+	auto staging_index_buffer  = vkb::core::Buffer::create_staging_buffer(get_device(), index_buffer_size, nullptr);
+	auto staging_model_buffer  = vkb::core::Buffer::create_staging_buffer(get_device(), model_buffer_size, nullptr);
 
 	// We will store the GPU commands in the indirect call buffer
 	constexpr auto default_indirect_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -484,7 +464,7 @@ void MultiDrawIndirect::initialize_resources()
 
 		VkBufferDeviceAddressInfoKHR address_info{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR};
 		address_info.buffer    = indirect_call_buffer->get_handle();
-		VkDeviceAddress srcPtr = vkGetBufferDeviceAddressKHR(device->get_handle(), &address_info);
+		VkDeviceAddress srcPtr = vkGetBufferDeviceAddressKHR(get_device().get_handle(), &address_info);
 
 		*destPtr = srcPtr;
 	}
@@ -492,8 +472,8 @@ void MultiDrawIndirect::initialize_resources()
 	for (size_t i = 0; i < models.size(); ++i)
 	{
 		auto &model = models[i];
-		staging_vertex_buffer->update(model.vertices.data(), model.vertices.size() * sizeof(Vertex), model.vertex_buffer_offset);
-		staging_index_buffer->update(model.triangles.data(), model.triangles.size() * sizeof(model.triangles[0]), model.index_buffer_offset);
+		staging_vertex_buffer.update(model.vertices.data(), model.vertices.size() * sizeof(Vertex), model.vertex_buffer_offset);
+		staging_index_buffer.update(model.triangles.data(), model.triangles.size() * sizeof(model.triangles[0]), model.index_buffer_offset);
 
 		GpuModelInformation model_information;
 		model_information.bounding_sphere_center = model.bounding_sphere.center;
@@ -501,14 +481,14 @@ void MultiDrawIndirect::initialize_resources()
 		model_information.texture_index          = model.texture_index;
 		model_information.firstIndex             = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
 		model_information.indexCount             = static_cast<uint32_t>(model.triangles.size());
-		staging_model_buffer->update(&model_information, sizeof(GpuModelInformation), i * sizeof(GpuModelInformation));
+		staging_model_buffer.update(&model_information, sizeof(GpuModelInformation), i * sizeof(GpuModelInformation));
 	}
 
-	staging_vertex_buffer->flush();
-	staging_index_buffer->flush();
-	staging_model_buffer->flush();
+	staging_vertex_buffer.flush();
+	staging_index_buffer.flush();
+	staging_model_buffer.flush();
 
-	auto &cmd = device->request_command_buffer();
+	auto &cmd = get_device().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 	auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer, VkBufferUsageFlags buffer_usage_flags) {
 		auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
@@ -522,9 +502,9 @@ void MultiDrawIndirect::initialize_resources()
 		cmd.buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
 		return output_buffer;
 	};
-	vertex_buffer            = copy(*staging_vertex_buffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	index_buffer             = copy(*staging_index_buffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-	model_information_buffer = copy(*staging_model_buffer, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+	vertex_buffer            = copy(staging_vertex_buffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	index_buffer             = copy(staging_index_buffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+	model_information_buffer = copy(staging_model_buffer, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	if (m_supports_buffer_device)
 	{
 		// In this sample, we use a staging buffer for the device address buffer (i.e. for device exclusive memory).
@@ -534,9 +514,9 @@ void MultiDrawIndirect::initialize_resources()
 	}
 
 	cmd.end();
-	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(cmd, device->request_fence());
-	device->get_fence_pool().wait();
+	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	queue.submit(cmd, get_device().request_fence());
+	get_device().get_fence_pool().wait();
 }
 
 void MultiDrawIndirect::create_pipeline()
@@ -758,7 +738,8 @@ void MultiDrawIndirect::update_scene_uniform()
 {
 	if (!scene_uniform_buffer)
 	{
-		scene_uniform_buffer = std::make_unique<vkb::core::Buffer>(*device, sizeof(SceneUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
+		scene_uniform_buffer = std::make_unique<vkb::core::Buffer>(
+		    get_device(), sizeof(SceneUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 	}
 	scene_uniform.proj        = camera.matrices.perspective;
 	scene_uniform.view        = camera.matrices.view;
@@ -798,7 +779,7 @@ void MultiDrawIndirect::render(float delta_time)
 
 	if (m_requires_rebuild)
 	{
-		build_command_buffers();
+		rebuild_command_buffers();
 		m_requires_rebuild = false;
 	}
 
@@ -810,8 +791,8 @@ void MultiDrawIndirect::render(float delta_time)
 	{
 		run_cull();
 	}
-	device->get_fence_pool().wait();
-	device->get_fence_pool().reset();
+	get_device().get_fence_pool().wait();
+	get_device().get_fence_pool().reset();
 }
 
 void MultiDrawIndirect::finish()
@@ -835,7 +816,7 @@ void MultiDrawIndirect::run_cull()
 void MultiDrawIndirect::run_gpu_cull()
 {
 	assert(!!gpu_cull_pipeline);
-	auto                     cmd   = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+	auto                     cmd   = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 
 	vkBeginCommandBuffer(cmd, &begin);
@@ -861,11 +842,11 @@ void MultiDrawIndirect::run_gpu_cull()
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers    = &cmd;
 
-	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, device->request_fence());
-	device->get_fence_pool().wait();
-	device->get_fence_pool().reset();
+	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, get_device().request_fence());
+	get_device().get_fence_pool().wait();
+	get_device().get_fence_pool().reset();
 	// we're done so dealloc it from the pool.
-	vkFreeCommandBuffers(device->get_handle(), device->get_command_pool().get_handle(), 1, &cmd);
+	vkFreeCommandBuffers(get_device().get_handle(), get_device().get_command_pool().get_handle(), 1, &cmd);
 }
 
 namespace
@@ -947,17 +928,17 @@ void MultiDrawIndirect::cpu_cull()
 	cpu_staging_buffer->update(cpu_commands.data(), call_buffer_size, 0);
 	cpu_staging_buffer->flush();
 
-	auto &transfer_cmd = device->get_command_pool().request_command_buffer();
+	auto &transfer_cmd = get_device().get_command_pool().request_command_buffer();
 	transfer_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 	transfer_cmd.copy_buffer(*cpu_staging_buffer, *indirect_call_buffer, call_buffer_size);
 	transfer_cmd.end();
 
-	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(transfer_cmd, device->request_fence());
-	device->get_fence_pool().wait();
+	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	queue.submit(transfer_cmd, get_device().request_fence());
+	get_device().get_fence_pool().wait();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_multi_draw_indirect()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multi_draw_indirect()
 {
 	return std::make_unique<MultiDrawIndirect>();
 }

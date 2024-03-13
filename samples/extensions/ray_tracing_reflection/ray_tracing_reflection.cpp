@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2024, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * SPDX-FileCopyrightText: Copyright (c) 2014-2023 NVIDIA CORPORATION
+ * SPDX-FileCopyrightText: Copyright (c) 2014-2024 NVIDIA CORPORATION
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -101,7 +101,7 @@ RaytracingReflection::RaytracingReflection()
 
 RaytracingReflection::~RaytracingReflection()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -187,10 +187,15 @@ void RaytracingReflection::create_storage_image()
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &storage_image.view));
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkb::set_image_layout(command_buffer, storage_image.image,
-	                      VK_IMAGE_LAYOUT_UNDEFINED,
-	                      VK_IMAGE_LAYOUT_GENERAL,
-	                      {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+	vkb::image_layout_transition(command_buffer,
+	                             storage_image.image,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             {},
+	                             {},
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_GENERAL,
+	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	get_device().flush_command_buffer(command_buffer, queue);
 }
 
@@ -244,7 +249,7 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModelGp
 	const uint32_t triangle_count = obj_model.nb_indices / 3;
 
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
-	vkGetAccelerationStructureBuildSizesKHR(device->get_handle(),
+	vkGetAccelerationStructureBuildSizesKHR(get_device().get_handle(),
 	                                        VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 	                                        &acceleration_structure_build_geometry_info,
 	                                        &triangle_count,
@@ -259,7 +264,7 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModelGp
 	acceleration_structure_create_info.buffer = blas.buffer->get_handle();
 	acceleration_structure_create_info.size   = acceleration_structure_build_sizes_info.accelerationStructureSize;
 	acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-	vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &blas.handle);
+	vkCreateAccelerationStructureKHR(get_device().get_handle(), &acceleration_structure_create_info, nullptr, &blas.handle);
 
 	// The actual build process starts here
 
@@ -334,7 +339,7 @@ void RaytracingReflection::create_top_level_acceleration_structure(std::vector<V
 
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
 	vkGetAccelerationStructureBuildSizesKHR(
-	    device->get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+	    get_device().get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 	    &acceleration_structure_build_geometry_info,
 	    &primitive_count,
 	    &acceleration_structure_build_sizes_info);
@@ -351,7 +356,7 @@ void RaytracingReflection::create_top_level_acceleration_structure(std::vector<V
 	acceleration_structure_create_info.buffer = top_level_acceleration_structure.buffer->get_handle();
 	acceleration_structure_create_info.size   = acceleration_structure_build_sizes_info.accelerationStructureSize;
 	acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &top_level_acceleration_structure.handle);
+	vkCreateAccelerationStructureKHR(get_device().get_handle(), &acceleration_structure_create_info, nullptr, &top_level_acceleration_structure.handle);
 
 	// The actual build process starts here
 
@@ -424,11 +429,11 @@ void RaytracingReflection::create_model(ObjModelCpu &obj, const std::vector<ObjM
 	model.vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	model.vertex_buffer->update(obj.vertices.data(), vertex_buffer_size);
 
-	// Acceleration structure flag is not needed for the rest
-	buffer_usage_flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-
 	model.index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	model.index_buffer->update(obj.indices.data(), index_buffer_size);
+
+	// Acceleration structure flag is not needed for the rest
+	buffer_usage_flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
 	model.mat_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), mat_index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	model.mat_index_buffer->update(mat_index.data(), mat_index_buffer_size);
@@ -450,7 +455,7 @@ auto RaytracingReflection::create_blas_instance(uint32_t blas_id, glm::mat4 &mat
 	// Get the bottom acceleration structure's handle, which will be used during the top level acceleration build
 	VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR};
 	acceleration_device_address_info.accelerationStructure = blas.handle;
-	auto device_address                                    = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+	auto device_address                                    = vkGetAccelerationStructureDeviceAddressKHR(get_device().get_handle(), &acceleration_device_address_info);
 
 	VkAccelerationStructureInstanceKHR blas_instance{};
 	blas_instance.transform                              = transform_matrix;
@@ -780,7 +785,7 @@ void RaytracingReflection::delete_acceleration_structure(AccelerationStructure &
 
 	if (acceleration_structure.handle)
 	{
-		vkDestroyAccelerationStructureKHR(device->get_handle(), acceleration_structure.handle, nullptr);
+		vkDestroyAccelerationStructureKHR(get_device().get_handle(), acceleration_structure.handle, nullptr);
 	}
 }
 
@@ -813,7 +818,6 @@ void RaytracingReflection::build_command_buffers()
 		image_descriptor.imageLayout            = VK_IMAGE_LAYOUT_GENERAL;
 		VkWriteDescriptorSet result_image_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 		vkUpdateDescriptorSets(get_device().get_handle(), 1, &result_image_write, 0, VK_NULL_HANDLE);
-		build_command_buffers();
 	}
 
 	VkCommandBufferBeginInfo command_buffer_begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
@@ -868,20 +872,20 @@ void RaytracingReflection::build_command_buffers()
 		*/
 
 		// Prepare current swap chain image as transfer destination
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    get_render_context().get_swapchain().get_images()[i],
-		    VK_IMAGE_LAYOUT_UNDEFINED,
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		    subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             get_render_context().get_swapchain().get_images()[i],
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		// Prepare ray tracing output image as transfer source
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    storage_image.image,
-		    VK_IMAGE_LAYOUT_GENERAL,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		    subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             storage_image.image,
+		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             {},
+		                             VK_ACCESS_TRANSFER_READ_BIT,
+		                             VK_IMAGE_LAYOUT_GENERAL,
+		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
 
 		VkImageCopy copy_region{};
 		copy_region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -893,18 +897,21 @@ void RaytracingReflection::build_command_buffers()
 		               get_render_context().get_swapchain().get_images()[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
 		// Transition swap chain image back for presentation
-		vkb::set_image_layout(draw_cmd_buffers[i],
-		                      get_render_context().get_swapchain().get_images()[i],
-		                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		                      subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             get_render_context().get_swapchain().get_images()[i],
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 		// Transition ray tracing output image back to general layout
-		vkb::set_image_layout(draw_cmd_buffers[i],
-		                      storage_image.image,
-		                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		                      VK_IMAGE_LAYOUT_GENERAL,
-		                      subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             storage_image.image,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                             VK_ACCESS_TRANSFER_READ_BIT,
+		                             {},
+		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_GENERAL,
+		                             subresource_range);
 
 		/*
 		    Start a new render pass to draw the UI overlay on top of the ray traced image
@@ -1001,7 +1008,7 @@ void RaytracingReflection::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_ray_tracing_reflection()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_reflection()
 {
 	return std::make_unique<RaytracingReflection>();
 }

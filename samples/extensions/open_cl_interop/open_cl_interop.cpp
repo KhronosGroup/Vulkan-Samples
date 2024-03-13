@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,92 +19,128 @@
 
 #include "common/vk_common.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
-#define CL_FUNCTION_DEFINITIONS
-#include <open_cl_utils.h>
-#include <strstream>
+#include <sstream>
 
-#ifdef VK_USE_PLATFORM_ANDROID_KHR
-#	include <android/hardware_buffer.h>
-#	include <android/hardware_buffer_jni.h>
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+#	include <aclapi.h>
+#	include <dxgi1_2.h>
 #endif
 
-struct CLData
+#ifdef _WIN32
+// On Windows, we need to enable some security settings to allow api interop
+// The spec states: For handles of the following types: VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT The implementation must ensure the access rights allow read and write access to the memory.
+// This class sets up the structures required for tis
+class WinSecurityAttributes
 {
-	cl_context       context{nullptr};
-	cl_device_id     device_id{nullptr};
-	cl_command_queue command_queue{nullptr};
-	cl_program       program{nullptr};
-	cl_kernel        kernel{nullptr};
-	cl_mem           image{nullptr};
+  private:
+	SECURITY_ATTRIBUTES  security_attributes;
+	PSECURITY_DESCRIPTOR security_descriptor;
+
+  public:
+	WinSecurityAttributes();
+	~WinSecurityAttributes();
+	SECURITY_ATTRIBUTES *operator&();
 };
+
+WinSecurityAttributes::WinSecurityAttributes()
+{
+	security_descriptor = (PSECURITY_DESCRIPTOR) calloc(1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void **));
+
+	PSID *ppSID = (PSID *) ((PBYTE) security_descriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
+	PACL *ppACL = (PACL *) ((PBYTE) ppSID + sizeof(PSID *));
+
+	InitializeSecurityDescriptor(security_descriptor, SECURITY_DESCRIPTOR_REVISION);
+
+	SID_IDENTIFIER_AUTHORITY sid_identifier_authority = SECURITY_WORLD_SID_AUTHORITY;
+	AllocateAndInitializeSid(&sid_identifier_authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, ppSID);
+
+	EXPLICIT_ACCESS explicit_access{};
+	ZeroMemory(&explicit_access, sizeof(EXPLICIT_ACCESS));
+	explicit_access.grfAccessPermissions = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
+	explicit_access.grfAccessMode        = SET_ACCESS;
+	explicit_access.grfInheritance       = INHERIT_ONLY;
+	explicit_access.Trustee.TrusteeForm  = TRUSTEE_IS_SID;
+	explicit_access.Trustee.TrusteeType  = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	explicit_access.Trustee.ptstrName    = (LPTSTR) *ppSID;
+	SetEntriesInAcl(1, &explicit_access, nullptr, ppACL);
+
+	SetSecurityDescriptorDacl(security_descriptor, TRUE, *ppACL, FALSE);
+
+	security_attributes.nLength              = sizeof(SECURITY_ATTRIBUTES);
+	security_attributes.lpSecurityDescriptor = security_descriptor;
+	security_attributes.bInheritHandle       = TRUE;
+}
+
+SECURITY_ATTRIBUTES *WinSecurityAttributes::operator&()
+{
+	return &security_attributes;
+}
+
+WinSecurityAttributes::~WinSecurityAttributes()
+{
+	PSID *ppSID = (PSID *) ((PBYTE) security_descriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
+	PACL *ppACL = (PACL *) ((PBYTE) ppSID + sizeof(PSID *));
+
+	if (*ppSID)
+	{
+		FreeSid(*ppSID);
+	}
+
+	if (*ppACL)
+	{
+		LocalFree(*ppACL);
+	}
+
+	free(security_descriptor);
+}
+#endif
 
 OpenCLInterop::OpenCLInterop()
 {
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
 
-	add_device_extension(VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
-
-	add_device_extension(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
-	add_device_extension(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+	// To use external memory and semaphores, we need to enable several extensions, both on the device as well as the instance
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
-	add_device_extension(VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
-	add_device_extension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
+	// Some of the extensions are platform dependent
+#ifdef _WIN32
+	add_device_extension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME);
+#else
+	add_device_extension(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+#endif
+	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
 }
 
 OpenCLInterop::~OpenCLInterop()
 {
-	device->wait_idle();
-
-	vkDestroyPipeline(device->get_handle(), pipeline, nullptr);
-	vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
-	vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
-	vkDestroyFence(device->get_handle(), rendering_finished_fence, nullptr);
-	vkDestroySampler(device->get_handle(), shared_texture.sampler, nullptr);
-	vkDestroyImageView(device->get_handle(), shared_texture.view, nullptr);
-	vkDestroyImage(device->get_handle(), shared_texture.image, nullptr);
-	vkFreeMemory(device->get_handle(), shared_texture.memory, nullptr);
-
-	if (cl_data)
+	if (has_device())
 	{
-		clReleaseMemObject(cl_data->image);
-		clReleaseContext(cl_data->context);
-		delete cl_data;
+		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroyFence(get_device().get_handle(), rendering_finished_fence, nullptr);
+		vkDestroySemaphore(get_device().get_handle(), cl_update_vk_semaphore, nullptr);
+		vkDestroySemaphore(get_device().get_handle(), vk_update_cl_semaphore, nullptr);
+		vkDestroySampler(get_device().get_handle(), shared_image.sampler, nullptr);
+		vkDestroyImageView(get_device().get_handle(), shared_image.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), shared_image.image, nullptr);
+		vkFreeMemory(get_device().get_handle(), shared_image.memory, nullptr);
+	}
+
+	if (opencl_objects.initialized)
+	{
+		clReleaseMemObject(opencl_objects.image);
+		clReleaseContext(opencl_objects.context);
+		clReleaseSemaphoreKHR(opencl_objects.cl_update_vk_semaphore);
+		clReleaseSemaphoreKHR(opencl_objects.vk_update_cl_semaphore);
 	}
 
 	unload_opencl();
-}
-
-bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
-{
-	if (!ApiVulkanSample::prepare(options))
-	{
-		return false;
-	}
-
-	cl_data = new CLData{};
-
-	prepare_open_cl_resources();
-	prepare_shared_resources();
-	generate_quad();
-	prepare_uniform_buffers();
-	setup_descriptor_set_layout();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_set();
-	build_command_buffers();
-
-	auto fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-	vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
-
-	prepared = true;
-	return true;
 }
 
 void OpenCLInterop::render(float delta_time)
@@ -116,27 +152,66 @@ void OpenCLInterop::render(float delta_time)
 
 	total_time_passed += delta_time;
 
-	// Wait until Vulkan rendering is finished and the texture can be written to
-	vkWaitForFences(device->get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device->get_handle(), 1, &rendering_finished_fence);
+	// Wait until the Vulkan command buffer displaying the image has finished execution, so we can start writing to it from OpenCL
+	vkWaitForFences(get_device().get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(get_device().get_handle(), 1, &rendering_finished_fence);
 
-	// Fill the texture using OpenCL
-	run_texture_generation();
-
-	// Wait until the texture is filled
-	// Using synchronization primitives would be better, but corresponding OpenCL extensions are not yet available
-	clFlush(cl_data->command_queue);
-	clFinish(cl_data->command_queue);
-
-	// Display the texture using Vulkan
 	ApiVulkanSample::prepare_frame();
 
-	submit_info.commandBufferCount = 1;
+	std::vector<VkPipelineStageFlags> wait_stages{};
+	std::vector<VkSemaphore>          wait_semaphores{};
+	std::vector<VkSemaphore>          signal_semaphores{};
+
+	VkSubmitInfo submit_info       = {};
+	submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+	submit_info.commandBufferCount = 1;
+
+	// As we have no way to manually signal the semaphores, we need to distinguish between the first and consecutive submits
+	// The first submit can't wait on the (yet) unsignaled OpenCL semaphore, so we only wait for that after the first submit
+
+	if (first_submit)
+	{
+		first_submit      = false;
+		wait_stages       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+		wait_semaphores   = {semaphores.acquired_image_ready};
+		signal_semaphores = {semaphores.render_complete, vk_update_cl_semaphore};
+	}
+	else
+	{
+		wait_stages       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
+		wait_semaphores   = {semaphores.acquired_image_ready, cl_update_vk_semaphore};
+		signal_semaphores = {semaphores.render_complete, vk_update_cl_semaphore};
+	}
+
+	submit_info.pWaitDstStageMask    = wait_stages.data();
+	submit_info.waitSemaphoreCount   = static_cast<uint32_t>(wait_semaphores.size());
+	submit_info.pWaitSemaphores      = wait_semaphores.data();
+	submit_info.signalSemaphoreCount = static_cast<uint32_t>(signal_semaphores.size());
+	submit_info.pSignalSemaphores    = signal_semaphores.data();
 
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, rendering_finished_fence));
 
 	ApiVulkanSample::submit_frame();
+
+	// Update the image from OpenCL
+
+	// To make sure OpenCL won't start updating the image until Vulkan has finished rendering to it, we wait for the Vulkan->OpenCL semaphore
+	CL_CHECK(clEnqueueWaitSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.vk_update_cl_semaphore, nullptr, 0, nullptr, nullptr));
+	// We also need to acquire the image (resource) so we can update it with OpenCL
+	CL_CHECK(clEnqueueAcquireExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
+
+	std::array<size_t, 2> global_size = {shared_image.width, shared_image.height};
+	std::array<size_t, 2> local_size  = {16, 16};
+
+	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
+	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
+	CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
+
+	// Release the image (resource) to Vulkan
+	CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
+	// Signal a semaphore that the next Vulkan frame can wait on (first_submit != false)
+	CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));
 }
 
 void OpenCLInterop::view_changed()
@@ -148,7 +223,7 @@ void OpenCLInterop::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkClearValue clear_values[2];
+	VkClearValue clear_values[2]{};
 	clear_values[0].color        = default_clear_color;
 	clear_values[1].depthStencil = {0.0f, 0};
 
@@ -212,15 +287,13 @@ void OpenCLInterop::generate_quad()
 	// Vertex buffer
 	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
 	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
@@ -244,70 +317,36 @@ void OpenCLInterop::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{
 	    // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_VERTEX_BIT,
-	        0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
 	    // Binding 1 : Fragment shader image sampler
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	        VK_SHADER_STAGE_FRAGMENT_BIT,
-	        1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
-
-	VkDescriptorSetLayoutCreateInfo descriptor_layout =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        vkb::to_u32(set_layout_bindings.size()));
-
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr,
-	                                     &descriptor_set_layout));
-
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(
-	    &descriptor_set_layout, 1);
-
-	VK_CHECK(
-	    vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr,
-	                           &pipeline_layout));
+	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), vkb::to_u32(set_layout_bindings.size()));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
 void OpenCLInterop::setup_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
-
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
 
 	// Setup a descriptor image info for the current texture to be used as a combined image sampler
-	VkDescriptorImageInfo image_descriptor;
-	image_descriptor.imageView   = shared_texture.view;
-	image_descriptor.sampler     = shared_texture.sampler;
+	VkDescriptorImageInfo image_descriptor{};
+	image_descriptor.imageView   = shared_image.view;
+	image_descriptor.sampler     = shared_image.sampler;
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            0,
-	            &buffer_descriptor),
-	        // Binding 1 : Fragment shader texture sampler
-	        //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
-	            1,                                                // Shader binding point 1
-	            &image_descriptor)                                // Pointer to the descriptor image for our texture
-	    };
-
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()),
-	                       write_descriptor_sets.data(), 0, nullptr);
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets{
+	    // Binding 0 : Vertex shader uniform buffer
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),
+	    // Binding 1 : Fragment shader texture sampler
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor),
+	};
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void OpenCLInterop::prepare_pipelines()
@@ -335,7 +374,7 @@ void OpenCLInterop::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -363,8 +402,8 @@ void OpenCLInterop::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("texture_loading/texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("texture_loading/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("open_cl_interop/texture_display.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("open_cl_interop/texture_display.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -372,26 +411,17 @@ void OpenCLInterop::prepare_pipelines()
 	                                                        VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
-	                                                          offsetof(VertexStructure, pos)),
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT,
-	                                                          offsetof(VertexStructure, uv)),
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32B32_SFLOAT,
-	                                                          offsetof(VertexStructure,
-	                                                                   normal)),
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStructure, pos)),
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexStructure, uv)),
+	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStructure, normal)),
 	};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
-        vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
+	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(vertex_input_attributes.size());
+	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -404,8 +434,7 @@ void OpenCLInterop::prepare_pipelines()
 	pipeline_create_info.stageCount          = vkb::to_u32(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1,
-	                                   &pipeline_create_info, nullptr, &pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
 void OpenCLInterop::prepare_uniform_buffers()
@@ -421,83 +450,123 @@ void OpenCLInterop::prepare_uniform_buffers()
 
 void OpenCLInterop::update_uniform_buffers()
 {
-	// Vertex shader
-	ubo_vs.projection = glm::perspective(glm::radians(60.0f), (float) width / (float) height, 0.001f, 256.0f);
-
+	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height, 0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
-
-	ubo_vs.model = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
-	ubo_vs.model = glm::rotate(ubo_vs.model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	ubo_vs.model = glm::rotate(ubo_vs.model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	ubo_vs.model = glm::rotate(ubo_vs.model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
-	ubo_vs.view_pos = glm::vec4(0.0f, 0.0f, -zoom, 0.0f);
-
+	ubo_vs.model          = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
+	ubo_vs.model          = glm::rotate(ubo_vs.model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	ubo_vs.model          = glm::rotate(ubo_vs.model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	ubo_vs.model          = glm::rotate(ubo_vs.model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo_vs.view_pos       = glm::vec4(0.0f, 0.0f, -zoom, 0.0f);
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-void OpenCLInterop::prepare_shared_resources()
+// These functions wraps the platform specific functions to get platform handles for Vulkan memory objects (e.g. the memory backing the image) and semaphores
+
+#ifdef _WIN32
+HANDLE OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
+{
+	HANDLE                        handle;
+	VkMemoryGetWin32HandleInfoKHR win32_handle_info{};
+	win32_handle_info.sType      = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
+	win32_handle_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+	win32_handle_info.memory     = memory;
+	vkGetMemoryWin32HandleKHR(get_device().get_handle(), &win32_handle_info, &handle);
+	return handle;
+}
+
+HANDLE OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
+{
+	HANDLE                           handle;
+	VkSemaphoreGetWin32HandleInfoKHR win32_handle_info{};
+	win32_handle_info.sType      = VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR;
+	win32_handle_info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+	win32_handle_info.semaphore  = sempahore;
+	vkGetSemaphoreWin32HandleKHR(get_device().get_handle(), &win32_handle_info, &handle);
+	return handle;
+}
+#else
+int OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
+{
+	int fd;
+	VkMemoryGetFdInfoKHR fd_info{};
+	fd_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+	fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+	fd_info.memory = memory;
+	vkGetMemoryFdKHR(get_device().get_handle(), &fd_info, &fd);
+	return fd;
+}
+
+int OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
+{
+	int fd;
+	VkSemaphoreGetFdInfoKHR fd_info{};
+	fd_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR;
+	fd_info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+	fd_info.semaphore = sempahore;
+	vkGetSemaphoreFdKHR(get_device().get_handle(), &fd_info, &fd);
+	return fd;
+}
+#endif
+
+void OpenCLInterop::prepare_shared_image()
 {
 	// This texture will be shared between both APIs: OpenCL fills it and Vulkan uses it for rendering
-	shared_texture.width  = 256;
-	shared_texture.height = 256;
-	shared_texture.depth  = 1;
+	shared_image.width  = 512;
+	shared_image.height = 512;
+
+	// We need to select the external handle type based on our target platform
+	// Note: Windows 8 and older requires the _KMT suffixed handle type, which we don't support in this sample
+	VkExternalMemoryHandleTypeFlagBits external_handle_type{};
+#ifdef _WIN32
+	external_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+#else
+	external_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+#endif
 
 	auto device_handle = get_device().get_handle();
 
 	// Setting up Vulkan resources (image, memory, image view and sampler)
 
-	// When creating a VkImage object we need to tell explicitly that it will be backed by external memory
-	// In this case it's Android Hardware Buffer, so we specify the handle type accordingly
-	VkExternalMemoryImageCreateInfo external_memory_image_create_info;
-	external_memory_image_create_info.sType       = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
-	external_memory_image_create_info.pNext       = nullptr,
-	external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID;
-
 	VkImageCreateInfo image_create_info = vkb::initializers::image_create_info();
-	image_create_info.pNext             = &external_memory_image_create_info;
 	image_create_info.imageType         = VK_IMAGE_TYPE_2D;
 	image_create_info.format            = VK_FORMAT_R8G8B8A8_UNORM;
 	image_create_info.mipLevels         = 1;
 	image_create_info.arrayLayers       = 1;
 	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
-	image_create_info.tiling            = VK_IMAGE_TILING_LINEAR;
-	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
-	image_create_info.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-	image_create_info.extent            = {shared_texture.width, shared_texture.height, shared_texture.depth};
-	image_create_info.usage             = VK_IMAGE_USAGE_SAMPLED_BIT;
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &shared_texture.image));
+	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.extent            = {shared_image.width, shared_image.height, 1};
+	image_create_info.usage             = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-	// Memory will be allocated specifically for this VkImage object
-	VkMemoryDedicatedAllocateInfo dedicated_allocate_info;
-	dedicated_allocate_info.sType  = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
-	dedicated_allocate_info.pNext  = nullptr;
-	dedicated_allocate_info.buffer = VK_NULL_HANDLE;
-	dedicated_allocate_info.image  = shared_texture.image;
+	VkExternalMemoryImageCreateInfo external_memory_image_info{};
+	external_memory_image_info.sType       = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+	external_memory_image_info.handleTypes = external_handle_type;
+
+	image_create_info.pNext = &external_memory_image_info;
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &shared_image.image));
 
 	VkMemoryRequirements memory_requirements{};
-	vkGetImageMemoryRequirements(device->get_handle(), shared_texture.image, &memory_requirements);
+	vkGetImageMemoryRequirements(get_device().get_handle(), shared_image.image, &memory_requirements);
 
-	// In order to export an external handle later, we need to tell it explicitly during memory allocation
-	VkExportMemoryAllocateInfo export_memory_allocate_Info;
-	export_memory_allocate_Info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
-	export_memory_allocate_Info.pNext       = &dedicated_allocate_info;
-	export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID;
+	VkExportMemoryAllocateInfoKHR export_memory_allocate_info{};
+	export_memory_allocate_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+	export_memory_allocate_info.handleTypes = external_handle_type;
+
+#ifdef _WIN32
+	WinSecurityAttributes            win_security_attributes;
+	VkExportMemoryWin32HandleInfoKHR export_memory_win32_handle_info{};
+	export_memory_win32_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
+	export_memory_win32_handle_info.pAttributes = &win_security_attributes;
+	export_memory_win32_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
+	export_memory_allocate_info.pNext           = &export_memory_win32_handle_info;
+#endif
 
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	memory_allocate_info.pNext                = &export_memory_allocate_Info;
-	memory_allocate_info.allocationSize       = 0;
-	memory_allocate_info.memoryTypeIndex      = device->get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.pNext                = &export_memory_allocate_info;
+	memory_allocate_info.allocationSize       = memory_requirements.size;
+	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, 0);
 
-	VK_CHECK(vkAllocateMemory(device_handle, &memory_allocate_info, nullptr, &shared_texture.memory));
-	VK_CHECK(vkBindImageMemory(device_handle, shared_texture.image, shared_texture.memory, 0));
-
-	// Once the memory is allocated and bound, we can get an Android Hardware Buffer handle
-	VkMemoryGetAndroidHardwareBufferInfoANDROID info;
-	info.sType  = VK_STRUCTURE_TYPE_MEMORY_GET_ANDROID_HARDWARE_BUFFER_INFO_ANDROID;
-	info.pNext  = nullptr;
-	info.memory = shared_texture.memory;
-	VK_CHECK(vkGetMemoryAndroidHardwareBufferANDROID(device_handle, &info, &shared_texture.hardware_buffer));
+	VK_CHECK(vkAllocateMemory(device_handle, &memory_allocate_info, nullptr, &shared_image.memory));
+	VK_CHECK(vkBindImageMemory(device_handle, shared_image.image, shared_image.memory, 0));
 
 	VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 	sampler_create_info.magFilter   = VK_FILTER_LINEAR;
@@ -505,16 +574,16 @@ void OpenCLInterop::prepare_shared_resources()
 	sampler_create_info.mipmapMode  = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	sampler_create_info.maxLod      = (float) 1;
 	sampler_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	vkCreateSampler(device_handle, &sampler_create_info, nullptr, &shared_texture.sampler);
+	vkCreateSampler(device_handle, &sampler_create_info, nullptr, &shared_image.sampler);
 
 	VkImageViewCreateInfo view_create_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
 	view_create_info.viewType         = VK_IMAGE_VIEW_TYPE_2D;
-	view_create_info.image            = shared_texture.image;
+	view_create_info.image            = shared_image.image;
 	view_create_info.format           = VK_FORMAT_R8G8B8A8_UNORM;
 	view_create_info.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-	vkCreateImageView(device_handle, &view_create_info, nullptr, &shared_texture.view);
+	vkCreateImageView(device_handle, &view_create_info, nullptr, &shared_image.view);
 
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkImageSubresourceRange subresource_range = {};
 	subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -523,7 +592,7 @@ void OpenCLInterop::prepare_shared_resources()
 	subresource_range.layerCount              = 1;
 
 	VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-	image_memory_barrier.image                = shared_texture.image;
+	image_memory_barrier.image                = shared_image.image;
 	image_memory_barrier.subresourceRange     = subresource_range;
 	image_memory_barrier.srcAccessMask        = 0;
 	image_memory_barrier.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
@@ -539,117 +608,298 @@ void OpenCLInterop::prepare_shared_resources()
 	    0, nullptr,
 	    1, &image_memory_barrier);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
-	// Setting up OpenCL resources
+	// Import the image into OpenCL
 
-	// In the list of properties CL_IMPORT_TYPE_ARM is set to Android Hardware Buffer
-	// The list is terminated with 0
-	const cl_import_properties_arm import_properties[3] = {
-	    CL_IMPORT_TYPE_ARM, CL_IMPORT_TYPE_ANDROID_HARDWARE_BUFFER_ARM,
-	    0};
+	std::vector<cl_mem_properties> mem_properties;
 
-	cl_int result  = CL_SUCCESS;
-	cl_data->image = clImportMemoryARM(cl_data->context,
-	                                   CL_MEM_READ_WRITE,
-	                                   import_properties,
-	                                   shared_texture.hardware_buffer,
-	                                   CL_IMPORT_MEMORY_WHOLE_ALLOCATION_ARM,
-	                                   &result);
+#ifdef _WIN32
+	HANDLE handle = get_vulkan_memory_handle(shared_image.memory);
+	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR);
+	mem_properties.push_back((cl_mem_properties) handle);
+#else
+	int fd = get_vulkan_memory_handle(shared_image.memory);
+	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
+	mem_properties.push_back((cl_mem_properties) fd);
+#endif
+	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
+	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
+	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
+	mem_properties.push_back(0);
 
-	if (result != CL_SUCCESS)
-	{
-		LOGE("Cannot import OpenCL memory, error code: {}.", result);
-	}
+	cl_image_format cl_img_fmt{};
+	cl_img_fmt.image_channel_order     = CL_RGBA;
+	cl_img_fmt.image_channel_data_type = CL_UNSIGNED_INT8;
+
+	cl_image_desc cl_img_desc{};
+	cl_img_desc.image_width       = shared_image.width;
+	cl_img_desc.image_height      = shared_image.height;
+	cl_img_desc.image_type        = CL_MEM_OBJECT_IMAGE2D;
+	cl_img_desc.image_slice_pitch = cl_img_desc.image_row_pitch * cl_img_desc.image_height;
+	cl_img_desc.num_mip_levels    = 1;
+	cl_img_desc.buffer            = nullptr;
+
+	int cl_result;
+	opencl_objects.image = clCreateImageWithProperties(opencl_objects.context,
+	                                                   mem_properties.data(),
+	                                                   CL_MEM_READ_WRITE,
+	                                                   &cl_img_fmt,
+	                                                   &cl_img_desc,
+	                                                   NULL,
+	                                                   &cl_result);
+	CL_CHECK(cl_result);
 }
 
-std::vector<std::string> get_available_open_cl_extensions(cl_platform_id platform_id)
+void OpenCLInterop::prepare_sync_objects()
 {
-	size_t extensions_info_size = 0;
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extensions_info_size);
+	// Just as the image, we also create the semaphores in Vulkan and export them
+	VkExportSemaphoreCreateInfoKHR export_semaphore_create_info{};
+	export_semaphore_create_info.sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO_KHR;
 
-	std::vector<char> extensions_info(extensions_info_size, '\0');
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extensions_info_size, extensions_info.data(), nullptr);
+#ifdef _WIN32
+	WinSecurityAttributes               win_security_attributes;
+	VkExportSemaphoreWin32HandleInfoKHR export_semaphore_handle_info{};
+	export_semaphore_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR;
+	export_semaphore_handle_info.pAttributes = &win_security_attributes;
+	export_semaphore_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
 
-	std::istrstream extensions_info_stream(extensions_info.data(), extensions_info.size());
-	return std::vector<std::string>(std::istream_iterator<std::string>{extensions_info_stream}, std::istream_iterator<std::string>());
+	export_semaphore_create_info.pNext       = &export_semaphore_handle_info;
+	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+#else
+	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+
+	VkSemaphoreCreateInfo semaphore_create_info{};
+	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	semaphore_create_info.pNext = &export_semaphore_create_info;
+
+	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &cl_update_vk_semaphore));
+	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &vk_update_cl_semaphore));
+
+	// We also need a fence for the Vulkan side of things, which is not shared with OpenCL
+	VkFenceCreateInfo fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+	vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
+
+	// Import the Vulkan sempahores into OpenCL
+	std::vector<cl_semaphore_properties_khr> semaphore_properties{
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
+	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+	    (cl_semaphore_properties_khr) opencl_objects.device_id,
+	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+	};
+
+	// CL to VK semaphore
+
+#ifdef _WIN32
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_WIN32_KHR);
+	HANDLE handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
+#else
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR);
+	int fd = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
+#endif
+	semaphore_properties.push_back(0);
+
+	cl_int cl_result;
+
+	opencl_objects.cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &cl_result);
+	CL_CHECK(cl_result);
+
+	// Remove the last two entries so we can push the next handle and zero terminator to the properties list and re-use the other values
+	semaphore_properties.pop_back();
+	semaphore_properties.pop_back();
+
+	// VK to CL semaphore
+#ifdef _WIN32
+	handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
+#else
+	fd = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
+#endif
+	semaphore_properties.push_back(0);
+
+	opencl_objects.vk_update_cl_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &cl_result);
+	CL_CHECK(cl_result);
 }
 
-void OpenCLInterop::prepare_open_cl_resources()
+void OpenCLInterop::prepare_opencl_resources()
 {
-	cl_platform_id platform_id = load_opencl();
-	if (platform_id == nullptr)
-	{
-		LOGE("Cannot load OpenCL library.");
-		return;
-	}
+	load_opencl();
 
-	auto                     available_extensions = get_available_open_cl_extensions(platform_id);
+	// We need to ensure that we get the same device in OpenCL as we got in Vulkan
+	// To do this, we compare the unique device identifier of the current Vulkan implementation with the list of available
+	// devices in OpenCL and then select the OpenCL platform that matches
+	// See https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceIDProperties.html
+
+	// Get the UUID of the current Vulkan device
+	VkPhysicalDeviceIDPropertiesKHR physical_device_id_propreties{};
+	physical_device_id_propreties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+	VkPhysicalDeviceProperties2 physical_device_properties_2{};
+	physical_device_properties_2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+	physical_device_properties_2.pNext = &physical_device_id_propreties;
+	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &physical_device_properties_2);
+
+	// We also need to make sure the OpenCL platform/device supports all the extensions required in this sample
 	std::vector<std::string> required_extensions{
-	    "cl_arm_import_memory",
-	    "cl_arm_import_memory_android_hardware_buffer"};
+	    // Platform independent OpenCL extensions for interop and for getting the device
+	    "cl_khr_external_memory",
+	    "cl_khr_external_semaphore",
+	    // Extension required to read the uuid of a device (see below for more information on why this is required)
+	    "cl_khr_device_uuid"};
+	// Platform specific OpenCL extensions for interop
+#if defined(_WIN32)
+	required_extensions.push_back("cl_khr_external_memory_win32");
+	required_extensions.push_back("cl_khr_external_semaphore_win32");
+#else
+	required_extensions.push_back("cl_khr_external_memory_opaque_fd");
+	required_extensions.push_back("cl_khr_external_semaphore_opaque_fd");
+#endif
 
-	for (auto extension : required_extensions)
+	// Iterate over all available OpenCL platforms and find the first that fits our requirements (extensions, device UUID)
+
+	cl_uint num_platforms;
+	clGetPlatformIDs_ptr(0, nullptr, &num_platforms);
+
+	std::vector<cl_platform_id> platform_ids(num_platforms);
+	clGetPlatformIDs_ptr(num_platforms, platform_ids.data(), nullptr);
+
+	cl_platform_id selected_platform_id{nullptr};
+	cl_device_id   selected_device_id{nullptr};
+
+	for (auto &platform_id : platform_ids)
 	{
-		if (std::find(available_extensions.begin(), available_extensions.end(), extension) == available_extensions.end())
+		cl_uint num_devices;
+		clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
+		std::vector<cl_device_id> device_ids(num_devices);
+		clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, num_devices, device_ids.data(), nullptr);
+
+		// Check if this platform supports all required extensions
+		size_t extension_string_size = 0;
+		clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extension_string_size);
+
+		std::string extension_string(extension_string_size, ' ');
+		clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extension_string_size, &extension_string[0], nullptr);
+
+		std::vector<std::string> available_extensions{};
+		std::stringstream        extension_stream(extension_string);
+		std::string              extension;
+		while (std::getline(extension_stream, extension, ' '))
 		{
-			LOGE("Required OpenCL extension '{}' is not available.", extension);
-			return;
+			// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
+			extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
+			available_extensions.push_back(extension);
+		}
+
+		bool extensions_present = true;
+
+		for (auto &extension : required_extensions)
+		{
+			if (std::find(available_extensions.begin(), available_extensions.end(), extension) == available_extensions.end())
+			{
+				extensions_present = false;
+				break;
+			}
+		}
+
+		if (!extensions_present)
+		{
+			continue;
+		}
+
+		// Check every device of this platform and see if it matches our Vulkan device UUID
+		selected_device_id = nullptr;
+		for (auto &device_id : device_ids)
+		{
+			cl_uchar uuid[CL_UUID_SIZE_KHR];
+			clGetDeviceInfo_ptr(device_id, CL_DEVICE_UUID_KHR, sizeof(uuid), &uuid, nullptr);
+
+			bool device_uuid_match = true;
+
+			for (uint32_t i = 0; i < CL_UUID_SIZE_KHR; i++)
+			{
+				if (uuid[i] != physical_device_id_propreties.deviceUUID[i])
+				{
+					device_uuid_match = false;
+					break;
+				}
+			}
+
+			if (!device_uuid_match)
+			{
+				continue;
+			}
+
+			// We found a device with a matching UUID, so use it
+			selected_device_id = device_id;
+			break;
+		}
+
+		// We found a platform that supportes the required extensions and has a device with a matching UUID
+		if (selected_device_id)
+		{
+			selected_platform_id = platform_id;
+			break;
 		}
 	}
 
-	cl_uint num_devices;
-	clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &cl_data->device_id, &num_devices);
-
-	cl_int result    = CL_SUCCESS;
-	cl_data->context = clCreateContext(NULL, 1, &cl_data->device_id, NULL, NULL, &result);
-
-	if (result != CL_SUCCESS)
+	if ((selected_platform_id == nullptr) || (selected_device_id == nullptr))
 	{
-		LOGE("Cannot create OpenCL context.");
-		return;
+		const std::string message{"Could not find an OpenCL platform + device that matches the required extensions and also matches the Vulkan device UUID "};
+		LOGE(message);
+		throw std::runtime_error(message);
 	}
 
-	cl_data->command_queue = clCreateCommandQueue(cl_data->context, cl_data->device_id, 0, &result);
+	opencl_objects.device_id = selected_device_id;
 
-	auto        kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
-	const char *kernel_source_data = kernel_source.data();
+	cl_int cl_result;
+
+	opencl_objects.context = clCreateContext(NULL, 1, &opencl_objects.device_id, nullptr, nullptr, &cl_result);
+	CL_CHECK(cl_result);
+
+	opencl_objects.command_queue = clCreateCommandQueue(opencl_objects.context, opencl_objects.device_id, 0, &cl_result);
+	CL_CHECK(cl_result);
+
+	std::string kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
+	auto        kernel_source_data = kernel_source.c_str();
 	size_t      kernel_source_size = kernel_source.size();
 
-	cl_data->program = clCreateProgramWithSource(cl_data->context, 1, &kernel_source_data, &kernel_source_size, &result);
-	clBuildProgram(cl_data->program, 1, &cl_data->device_id, NULL, NULL, NULL);
-	cl_data->kernel = clCreateKernel(cl_data->program, "generate_texture", &result);
+	opencl_objects.program = clCreateProgramWithSource(opencl_objects.context, 1, &kernel_source_data, &kernel_source_size, &cl_result);
+	CL_CHECK(cl_result);
 
-	if (result != CL_SUCCESS)
-	{
-		LOGE("Cannot create OpenCL kernel");
-		return;
-	}
+	CL_CHECK(clBuildProgram(opencl_objects.program, 1, &opencl_objects.device_id, nullptr, nullptr, nullptr));
+
+	opencl_objects.kernel = clCreateKernel(opencl_objects.program, "generate_texture", &cl_result);
+	CL_CHECK(cl_result);
 }
 
-void OpenCLInterop::run_texture_generation()
+bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
 {
-	clSetKernelArg(cl_data->kernel, 0, sizeof(cl_mem), &cl_data->image);
-	clSetKernelArg(cl_data->kernel, 1, sizeof(float), &total_time_passed);
-
-	std::array<size_t, 2> global_size = {shared_texture.width, shared_texture.height};
-	std::array<size_t, 2> local_size  = {16, 16};
-
-	cl_int result = clEnqueueNDRangeKernel(cl_data->command_queue,
-	                                       cl_data->kernel,
-	                                       global_size.size(),
-	                                       NULL,
-	                                       global_size.data(),
-	                                       local_size.data(),
-	                                       0, NULL, NULL);
-
-	if (result != CL_SUCCESS)
+	if (!ApiVulkanSample::prepare(options))
 	{
-		LOGE("Cannot execute kernel, error code: {}", result);
+		return false;
 	}
+
+	prepare_opencl_resources();
+	prepare_sync_objects();
+	prepare_shared_image();
+	generate_quad();
+	prepare_uniform_buffers();
+	setup_descriptor_set_layout();
+	prepare_pipelines();
+	setup_descriptor_pool();
+	setup_descriptor_set();
+	build_command_buffers();
+
+	opencl_objects.initialized = true;
+	prepared                   = true;
+	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_open_cl_interop()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop()
 {
 	return std::make_unique<OpenCLInterop>();
 }

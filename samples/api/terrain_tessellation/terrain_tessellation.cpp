@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ TerrainTessellation::TerrainTessellation()
 
 TerrainTessellation::~TerrainTessellation()
 {
-	if (device)
+	if (has_device())
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
@@ -60,8 +60,6 @@ TerrainTessellation::~TerrainTessellation()
 		if (query_pool != VK_NULL_HANDLE)
 		{
 			vkDestroyQueryPool(get_device().get_handle(), query_pool, nullptr);
-			vkDestroyBuffer(get_device().get_handle(), query_result.buffer, nullptr);
-			vkFreeMemory(get_device().get_handle(), query_result.memory, nullptr);
 		}
 	}
 }
@@ -102,23 +100,6 @@ void TerrainTessellation::request_gpu_features(vkb::PhysicalDevice &gpu)
 // Setup pool and buffer for storing pipeline statistics results
 void TerrainTessellation::setup_query_result_buffer()
 {
-	uint32_t buffer_size = 2 * sizeof(uint64_t);
-
-	VkMemoryRequirements memory_requirements;
-	VkMemoryAllocateInfo memory_allocation = vkb::initializers::memory_allocate_info();
-	VkBufferCreateInfo   buffer_create_info =
-	    vkb::initializers::buffer_create_info(
-	        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	        buffer_size);
-
-	// Results are saved in a host visible buffer for easy access by the application
-	VK_CHECK(vkCreateBuffer(get_device().get_handle(), &buffer_create_info, nullptr, &query_result.buffer));
-	vkGetBufferMemoryRequirements(get_device().get_handle(), query_result.buffer, &memory_requirements);
-	memory_allocation.allocationSize  = memory_requirements.size;
-	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &query_result.memory));
-	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), query_result.buffer, query_result.memory, 0));
-
 	// Create query pool
 	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 	{
@@ -270,10 +251,10 @@ void TerrainTessellation::build_command_buffers()
 // Generate a terrain quad patch for feeding to the tessellation control shader
 void TerrainTessellation::generate_terrain()
 {
-	const uint32_t patch_size   = 64;
-	const float    uv_scale     = 1.0f;
-	const uint32_t vertex_count = patch_size * patch_size;
-	Vertex        *vertices     = new Vertex[vertex_count];
+	const uint32_t      patch_size   = 64;
+	const float         uv_scale     = 1.0f;
+	const uint32_t      vertex_count = patch_size * patch_size;
+	std::vector<Vertex> vertices(vertex_count);
 
 	const float wx = 2.0f;
 	const float wy = 2.0f;
@@ -321,9 +302,9 @@ void TerrainTessellation::generate_terrain()
 	}
 
 	// Indices
-	const uint32_t w           = (patch_size - 1);
-	const uint32_t index_count = w * w * 4;
-	uint32_t      *indices     = new uint32_t[index_count];
+	const uint32_t        w           = (patch_size - 1);
+	const uint32_t        index_count = w * w * 4;
+	std::vector<uint32_t> indices(index_count);
 	for (auto x = 0; x < w; x++)
 	{
 		for (auto y = 0; y < w; y++)
@@ -340,27 +321,10 @@ void TerrainTessellation::generate_terrain()
 	uint32_t vertex_buffer_size = vertex_count * sizeof(Vertex);
 	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
 
-	struct
-	{
-		VkBuffer       buffer;
-		VkDeviceMemory memory;
-	} vertex_staging, index_staging;
-
 	// Create staging buffers
 
-	vertex_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    vertex_buffer_size,
-	    &vertex_staging.memory,
-	    vertices);
-
-	index_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    index_buffer_size,
-	    &index_staging.memory,
-	    indices);
+	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	terrain.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                       vertex_buffer_size,
@@ -373,14 +337,14 @@ void TerrainTessellation::generate_terrain()
 	                                                      VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
 	copy_region.size = vertex_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    vertex_staging.buffer,
+	    vertex_staging.get_handle(),
 	    terrain.vertices->get_handle(),
 	    1,
 	    &copy_region);
@@ -388,20 +352,12 @@ void TerrainTessellation::generate_terrain()
 	copy_region.size = index_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    index_staging.buffer,
+	    index_staging.get_handle(),
 	    terrain.indices->get_handle(),
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
-
-	vkDestroyBuffer(get_device().get_handle(), vertex_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), vertex_staging.memory, nullptr);
-	vkDestroyBuffer(get_device().get_handle(), index_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), index_staging.memory, nullptr);
-
-	delete[] vertices;
-	delete[] indices;
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 void TerrainTessellation::setup_descriptor_pool()
@@ -786,7 +742,7 @@ void TerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			if (drawer.checkbox("Wireframe", &wireframe))
 			{
-				build_command_buffers();
+				rebuild_command_buffers();
 			}
 		}
 	}

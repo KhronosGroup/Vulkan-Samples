@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,8 +18,8 @@
 #pragma once
 
 #include "core/hpp_vulkan_resource.h"
+#include "hpp_allocated.h"
 #include <unordered_set>
-#include <vk_mem_alloc.h>
 
 namespace vkb
 {
@@ -27,8 +27,93 @@ namespace core
 {
 class HPPDevice;
 class HPPImageView;
+class HPPImage;
+using HPPImagePtr = std::unique_ptr<HPPImage>;
 
-class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
+struct HPPImageBuilder : public allocated::HPPBuilder<HPPImageBuilder, vk::ImageCreateInfo>
+{
+  private:
+	using Parent = allocated::HPPBuilder<HPPImageBuilder, vk::ImageCreateInfo>;
+
+  public:
+	HPPImageBuilder(vk::Extent3D const &extent) :
+	    // Better reasonable defaults than vk::ImageCreateInfo default ctor
+	    Parent(vk::ImageCreateInfo{{}, vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm, extent, 1, 1})
+	{
+	}
+
+	HPPImageBuilder(vk::Extent2D const &extent) :
+	    HPPImageBuilder(vk::Extent3D{extent.width, extent.height, 1})
+	{
+	}
+
+	HPPImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) :
+	    HPPImageBuilder(vk::Extent3D{width, height, depth})
+	{
+	}
+
+	HPPImageBuilder &with_format(vk::Format format)
+	{
+		create_info.format = format;
+		return *this;
+	}
+
+	HPPImageBuilder &with_image_type(vk::ImageType type)
+	{
+		create_info.imageType = type;
+		return *this;
+	}
+
+	HPPImageBuilder &with_array_layers(uint32_t layers)
+	{
+		create_info.arrayLayers = layers;
+		return *this;
+	}
+
+	HPPImageBuilder &with_mip_levels(uint32_t levels)
+	{
+		create_info.mipLevels = levels;
+		return *this;
+	}
+
+	HPPImageBuilder &with_sample_count(vk::SampleCountFlagBits sample_count)
+	{
+		create_info.samples = sample_count;
+		return *this;
+	}
+
+	HPPImageBuilder &with_tiling(vk::ImageTiling tiling)
+	{
+		create_info.tiling = tiling;
+		return *this;
+	}
+
+	HPPImageBuilder &with_usage(vk::ImageUsageFlags usage)
+	{
+		create_info.usage = usage;
+		return *this;
+	}
+
+	HPPImageBuilder &with_flags(vk::ImageCreateFlags flags)
+	{
+		create_info.flags = flags;
+		return *this;
+	}
+
+	HPPImageBuilder &with_implicit_sharing_mode()
+	{
+		if (create_info.queueFamilyIndexCount != 0)
+		{
+			create_info.sharingMode = vk::SharingMode::eConcurrent;
+		}
+		return *this;
+	}
+
+	HPPImage    build(HPPDevice &device) const;
+	HPPImagePtr build_unique(HPPDevice &device) const;
+};
+
+class HPPImage : public allocated::HPPAllocated<vk::Image>
 {
   public:
 	HPPImage(HPPDevice              &device,
@@ -38,11 +123,12 @@ class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 	         vk::ImageUsageFlags     image_usage,
 	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
+	//[[deprecated("Use the HPPImageBuilder ctor instead")]]
 	HPPImage(HPPDevice              &device,
 	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,
-	         VmaMemoryUsage          memory_usage,
+	         VmaMemoryUsage          memory_usage       = VMA_MEMORY_USAGE_AUTO,
 	         vk::SampleCountFlagBits sample_count       = vk::SampleCountFlagBits::e1,
 	         uint32_t                mip_levels         = 1,
 	         uint32_t                array_layers       = 1,
@@ -51,28 +137,24 @@ class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 	         uint32_t                num_queue_families = 0,
 	         const uint32_t         *queue_families     = nullptr);
 
+	HPPImage(HPPDevice             &device,
+	         HPPImageBuilder const &builder);
+
 	HPPImage(const HPPImage &) = delete;
 
-	HPPImage(HPPImage &&other);
+	HPPImage(HPPImage &&other) noexcept;
 
-	~HPPImage() override;
+	~HPPImage();
 
 	HPPImage &operator=(const HPPImage &) = delete;
 
 	HPPImage &operator=(HPPImage &&) = delete;
-
-	VmaAllocation get_memory() const;
 
 	/**
 	 * @brief Maps vulkan memory to an host visible address
 	 * @return Pointer to host visible memory
 	 */
 	uint8_t *map();
-
-	/**
-	 * @brief Unmaps vulkan memory from the host visible address
-	 */
-	void unmap();
 
 	vk::ImageType                                  get_type() const;
 	const vk::Extent3D                            &get_extent() const;
@@ -85,18 +167,9 @@ class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 	std::unordered_set<vkb::core::HPPImageView *> &get_views();
 
   private:
-	VmaAllocation                                 memory = VK_NULL_HANDLE;
-	vk::ImageType                                 type;
-	vk::Extent3D                                  extent;
-	vk::Format                                    format;
-	vk::ImageUsageFlags                           usage;
-	vk::SampleCountFlagBits                       sample_count;
-	vk::ImageTiling                               tiling;
+	vk::ImageCreateInfo                           create_info;
 	vk::ImageSubresource                          subresource;
-	uint32_t                                      array_layer_count = 0;
 	std::unordered_set<vkb::core::HPPImageView *> views;        /// HPPImage views referring to this image
-	uint8_t                                      *mapped_data = nullptr;
-	bool                                          mapped      = false;        /// Whether it was mapped with vmaMapMemory
 };
 }        // namespace core
 }        // namespace vkb

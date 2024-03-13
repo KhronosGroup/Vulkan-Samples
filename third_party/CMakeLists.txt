@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -83,19 +83,19 @@ elseif(UNIX)
     else()
         message(FATAL_ERROR "Unknown WSI")
     endif()
-endif() 
+endif()
 
 # vma
 add_library(vma INTERFACE)
-set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/src)
+set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/include)
 target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
-target_include_directories(vma INTERFACE ${VMA_DIR})
+target_include_directories(vma SYSTEM INTERFACE ${VMA_DIR})
 target_link_libraries(vma INTERFACE vulkan)
 
 # libktx
 set(KTX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ktx)
 
-set(KTX_SOURCES  
+set(KTX_SOURCES
     ${KTX_DIR}/lib/checkheader.c
     ${KTX_DIR}/lib/dfdutils/createdfd.c
     ${KTX_DIR}/lib/dfdutils/colourspaces.c
@@ -136,7 +136,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/basisu/transcoder/basisu_transcoder.h
     ${KTX_DIR}/lib/basisu/transcoder/basisu.h
     ${KTX_DIR}/lib/basisu/zstd/zstd.c
-   
+
     # KT1
     ${KTX_DIR}/lib/texture1.c
     ${KTX_DIR}/lib/texture1.h
@@ -152,7 +152,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/vkformat_str.c
     ${KTX_DIR}/lib/vk_funcs.c
     ${KTX_DIR}/lib/vk_funcs.h
-    ${KTX_DIR}/lib/vkloader.c    
+    ${KTX_DIR}/lib/vkloader.c
 )
 
 set(KTX_INCLUDE_DIRS
@@ -235,6 +235,17 @@ endif ()
 
 add_subdirectory(glslang)
 
+if (TARGET GenericCodeGen)
+    set_target_properties(GenericCodeGen PROPERTIES FOLDER "ThirdParty")
+endif()
+if (TARGET MachineIndependent)
+    set_target_properties(MachineIndependent PROPERTIES FOLDER "ThirdParty")
+endif()
+if (TARGET HLSL)
+    set_target_properties(HLSL PROPERTIES FOLDER "ThirdParty")
+endif()
+
+
 if (NOT TARGET glslang-default-resource-limits)
     add_library(glslang-default-resource-limits
                 glslang/StandAlone/ResourceLimits.cpp)
@@ -264,6 +275,7 @@ set_target_properties(SPIRV PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_
 add_subdirectory(spirv-cross)
 
 set_target_properties(spirv-cross PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-c PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-core PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-glsl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-cpp PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
@@ -272,50 +284,78 @@ set_target_properties(spirv-cross-msl PROPERTIES FOLDER "ThirdParty" POSITION_IN
 set_target_properties(spirv-cross-reflect PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-util PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
+if(ANDROID)
 # hwcpipe
 add_subdirectory(hwcpipe)
-
 set_target_properties(hwcpipe PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # stb
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
 
+
+# On an x86_64 macbook, AVX2 is selected, but linking fails with this message,
+# `ld: object file .../libastcdec-avx2-static.a was built for different x86_64 sub-type (8) than link command line (3)`
+# so we fallback to native. If we're on an ARM based mac, there's no need for any SIMD extension, because they support
+# ASTC_LDR natively, so this library won't even be used.
+if (APPLE)
+    set(ASTC_ARCH NATIVE)
+else()
+    include( FindAVX2 )
+    include( FindSSE41 )
+    include( FindSSE2 )
+    include( FindNEON )
+    if (${AVX2_FOUND})
+        set(ASTC_ARCH AVX2)
+    elseif(${SSE41_FOUND})
+        set(ASTC_ARCH SSE41)
+    elseif(${SSE2_FOUND})
+        set(ASTC_ARCH SSE2)
+    elseif(${NEON_FOUND})
+        set(ASTC_ARCH NEON)
+    else()
+        set(ASTC_ARCH NATIVE)
+    endif()
+endif()
+
+string(TOLOWER ${ASTC_ARCH} ASTC_ARCH_LOWER)
+
+
+set(ASTCENC_ISA_${ASTC_ARCH} ON)
+set(ASTCENC_CLI OFF)
+set(ASTCENC_UNITTEST OFF)
+set(ASTCENC_DECOMPRESSOR ON)
+set(ASTCENC_UNIVERSAL_BUILD OFF)
+set(ASTC_RAW_TARGET astcdec-${ASTC_ARCH_LOWER}-static)
+set(ASTC_TARGET ${ASTC_RAW_TARGET} PARENT_SCOPE)
+
 # astc
-set(ASTC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/astc)
-set(ASTC_INCLUDE_DIR ${ASTC_DIR}/Source)
-set(ASTC_SOURCE_DIR ${ASTC_DIR}/Source)
+add_subdirectory(astc)
 
-set(ASTC_SOURCES
-        ${ASTC_SOURCE_DIR}/astcenc_averages_and_directions.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_block_sizes.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_color_quantize.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_color_unquantize.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_compress_symbolic.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_compute_variance.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_decompress_symbolic.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_diagnostic_trace.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_entry.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_find_best_partitioning.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_ideal_endpoints_and_weights.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_image.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_integer_sequence.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_mathlib.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_mathlib_softfloat.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_partition_tables.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_percentile_tables.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_pick_best_endpoint_format.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_quantization.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_symbolic_physical.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_weight_align.cpp
-        ${ASTC_SOURCE_DIR}/astcenc_weight_quant_xfer_tables.cpp
-)
+# ASTC apparently tries to build for x86_64 even on Mac arm64 architectures,
+# but we can force it to build for the correct arch
+# Upstream bug: https://github.com/ARM-software/astc-encoder/issues/458
+if (APPLE AND (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
+    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
+endif()
 
-add_library(astc STATIC ${ASTC_SOURCES})
-target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
-target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
-set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(astc PUBLIC stb)
+# astc doesn't have separate directories for it's source code and public interface.  Additionally, it includes it's
+# own copy of STB. In order to avoid conflicts, we copy the only header we need to the build directory and alter the
+# INTERFACE_INCLUDE_DIRECTORIES of the target
+if (NOT TARGET ${ASTC_RAW_TARGET})
+    message(FATAL_ERROR "Couldn't find expected ASTC library target")
+endif()
+
+get_target_property(ASTC_BINARY_DIR ${ASTC_RAW_TARGET} BINARY_DIR)
+file(
+    COPY astc/Source/astcenc.h
+    DESTINATION ${ASTC_BINARY_DIR}/Include)
+set_target_properties(
+    ${ASTC_RAW_TARGET} PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${ASTC_BINARY_DIR}/Include)
+set_property(TARGET ${ASTC_RAW_TARGET} PROPERTY FOLDER "ThirdParty")
+
 
 if(NOT ANDROID AND NOT IOS)
     if (NOT DIRECT_TO_DISPLAY)
@@ -332,13 +372,21 @@ if(NOT ANDROID AND NOT IOS)
 
         add_subdirectory(glfw)
 
+        if (TARGET update_mappings)
+            set_target_properties(update_mappings PROPERTIES FOLDER "ThirdParty")
+        endif()
         set_property(TARGET glfw PROPERTY FOLDER "ThirdParty")
     endif()
 endif()
 
+# fmt
+add_subdirectory(fmt)
+set_property(TARGET fmt PROPERTY FOLDER "ThirdParty")
+
 # spdlog
+set(SPDLOG_FMT_EXTERNAL ON)
 add_subdirectory(spdlog)
-set_property(TARGET spdlog_headers_for_ide PROPERTY FOLDER "ThirdParty")
+set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
 
 # ctpl
 add_library(ctpl INTERFACE)
@@ -358,6 +406,9 @@ set(CLI11_FORCE_LIBCXX OFF)
 set(CLI11_CUDA_TESTS OFF)
 set(CLI11_CLANG_TIDY OFF)
 add_subdirectory(cli11)
+if (TARGET CLI11 AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+    set_property(TARGET CLI11 PROPERTY FOLDER "ThirdParty")
+endif()
 
 # OpenCL
 add_library(opencl INTERFACE)

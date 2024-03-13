@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/allocated.h"
 #include "core/vulkan_resource.h"
 
 namespace vkb
@@ -27,9 +28,65 @@ class Device;
 
 namespace core
 {
-class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Device>
+
+class Buffer;
+using BufferPtr = std::unique_ptr<Buffer>;
+
+struct BufferBuilder : public allocated::Builder<BufferBuilder, VkBufferCreateInfo>
+{
+	BufferBuilder(VkDeviceSize size) :
+	    Builder(VkBufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, nullptr, 0, size})
+	{
+	}
+
+	BufferBuilder &with_flags(VkBufferCreateFlags flags)
+	{
+		create_info.flags = flags;
+		return *this;
+	}
+
+	BufferBuilder &with_usage(VkBufferUsageFlags usage)
+	{
+		create_info.usage = usage;
+		return *this;
+	}
+
+	BufferBuilder &with_sharing_mode(VkSharingMode sharing_mode)
+	{
+		create_info.sharingMode = sharing_mode;
+		return *this;
+	}
+
+	BufferBuilder &with_implicit_sharing_mode()
+	{
+		if (create_info.queueFamilyIndexCount != 0)
+		{
+			create_info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+		}
+		return *this;
+	}
+
+	Buffer    build(Device const &device) const;
+	BufferPtr build_unique(Device const &device) const;
+};
+
+class Buffer : public allocated::Allocated<VkBuffer>
 {
   public:
+	static Buffer create_staging_buffer(Device const &device, VkDeviceSize size, const void *data);
+
+	template <typename T>
+	static Buffer create_staging_buffer(Device const &device, const std::vector<T> &data)
+	{
+		return create_staging_buffer(device, data.size() * sizeof(T), data.data());
+	}
+
+	template <typename T>
+	static Buffer create_staging_buffer(Device const &device, const T &data)
+	{
+		return create_staging_buffer(device, sizeof(T), &data);
+	}
+
 	/**
 	 * @brief Creates a buffer using VMA
 	 * @param device A valid Vulkan device
@@ -39,16 +96,19 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 	 * @param flags The allocation create flags
 	 * @param queue_family_indices optional queue family indices
 	 */
-	Buffer(Device const &               device,
+	// [[deprecated]]
+	Buffer(Device const                &device,
 	       VkDeviceSize                 size,
 	       VkBufferUsageFlags           buffer_usage,
 	       VmaMemoryUsage               memory_usage,
-	       VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	       VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
 	       const std::vector<uint32_t> &queue_family_indices = {});
+
+	Buffer(Device const &device, const BufferBuilder &builder);
 
 	Buffer(const Buffer &) = delete;
 
-	Buffer(Buffer &&other);
+	Buffer(Buffer &&other) noexcept;
 
 	~Buffer();
 
@@ -56,6 +116,9 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 
 	Buffer &operator=(Buffer &&) = delete;
 
+	// FIXME should include a stride parameter, because if you want to copy out of a
+	// uniform buffer that's dynamically indexed, you need to account for the aligned
+	// offset of the T values
 	template <typename T>
 	static std::vector<T> copy(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *buffer_name)
 	{
@@ -64,7 +127,7 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -82,71 +145,10 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 		return out;
 	}
 
-	const VkBuffer *get() const;
-
-	VmaAllocation get_allocation() const;
-
-	VkDeviceMemory get_memory() const;
-
-	/**
-	 * @brief Flushes memory if it is HOST_VISIBLE and not HOST_COHERENT
-	 */
-	void flush() const;
-
-	/**
-	 * @brief Maps vulkan memory if it isn't already mapped to an host visible address
-	 * @return Pointer to host visible memory
-	 */
-	uint8_t *map();
-
-	/**
-	 * @brief Unmaps vulkan memory from the host visible address
-	 */
-	void unmap();
-
 	/**
 	 * @return The size of the buffer
 	 */
 	VkDeviceSize get_size() const;
-
-	const uint8_t *get_data() const
-	{
-		return mapped_data;
-	}
-
-	/**
-	 * @brief Copies byte data into the buffer
-	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(const uint8_t *data, size_t size, size_t offset = 0);
-
-	/**
-	 * @brief Converts any non byte data into bytes and then updates the buffer
-	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(void *data, size_t size, size_t offset = 0);
-
-	/**
-	 * @brief Copies a vector of bytes into the buffer
-	 * @param data The data vector to upload
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(const std::vector<uint8_t> &data, size_t offset = 0);
-
-	/**
-	 * @brief Copies an object as byte data into the buffer
-	 * @param object The object to convert into byte data
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	template <class T>
-	void convert_and_update(const T &object, size_t offset = 0)
-	{
-		update(reinterpret_cast<const uint8_t *>(&object), sizeof(T), offset);
-	}
 
 	/**
 	 * @return Return the buffer's device address (note: requires that the buffer has been created with the VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage fla)
@@ -154,19 +156,7 @@ class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Devi
 	uint64_t get_device_address();
 
   private:
-	VmaAllocation allocation{VK_NULL_HANDLE};
-
-	VkDeviceMemory memory{VK_NULL_HANDLE};
-
 	VkDeviceSize size{0};
-
-	uint8_t *mapped_data{nullptr};
-
-	/// Whether the buffer is persistently mapped or not
-	bool persistent{false};
-
-	/// Whether the buffer has been mapped with vmaMapMemory
-	bool mapped{false};
 };
 }        // namespace core
 }        // namespace vkb

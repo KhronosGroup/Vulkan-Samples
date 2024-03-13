@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,15 +30,13 @@ Instancing::Instancing()
 
 Instancing::~Instancing()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.instanced_rocks, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.planet, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.starfield, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
-		vkDestroyBuffer(get_device().get_handle(), instance_buffer.buffer, nullptr);
-		vkFreeMemory(get_device().get_handle(), instance_buffer.memory, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.rocks.sampler, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.planet.sampler, nullptr);
 	}
@@ -122,7 +120,7 @@ void Instancing::build_command_buffers()
 		// Binding point 0 : Mesh vertex buffer
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, rock_vertex_buffer.get(), offsets);
 		// Binding point 1 : Instance data buffer
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, &instance_buffer.buffer, offsets);
+		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, &instance_buffer.buffer->get_handle(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], rock_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 		// Render instances
 		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
@@ -404,46 +402,27 @@ void Instancing::prepare_instance_data()
 	// On devices with separate memory types for host visible and device local memory this will result in better performance
 	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary and you could skip the staging
 
-	struct
-	{
-		VkDeviceMemory memory;
-		VkBuffer       buffer;
-	} staging_buffer;
+	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), instance_data);
 
-	staging_buffer.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    instance_buffer.size,
-	    &staging_buffer.memory,
-	    instance_data.data());
-
-	instance_buffer.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-	    instance_buffer.size,
-	    &instance_buffer.memory);
+	instance_buffer.buffer = std::make_unique<vkb::core::Buffer>(get_device(), instance_buffer.size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy to staging buffer
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 	copy_region.size         = instance_buffer.size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    staging_buffer.buffer,
-	    instance_buffer.buffer,
+	    staging_buffer.get_handle(),
+	    instance_buffer.buffer->get_handle(),
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	instance_buffer.descriptor.range  = instance_buffer.size;
-	instance_buffer.descriptor.buffer = instance_buffer.buffer;
+	instance_buffer.descriptor.buffer = instance_buffer.buffer->get_handle();
 	instance_buffer.descriptor.offset = 0;
-
-	// Destroy staging resources
-	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
 }
 
 void Instancing::prepare_uniform_buffers()
@@ -533,7 +512,7 @@ void Instancing::on_update_ui_overlay(vkb::Drawer &drawer)
 bool Instancing::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
-	build_command_buffers();
+	rebuild_command_buffers();
 	return true;
 }
 

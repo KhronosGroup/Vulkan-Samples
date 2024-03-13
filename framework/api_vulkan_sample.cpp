@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,16 +32,16 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	depth_format = vkb::get_suitable_depth_format(device->get_gpu().get_handle());
+	depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
 
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
 	// Create a semaphore used to synchronize image presentation
 	// Ensures that the current swapchain render target has completed presentation and has been released by the presentation engine, ready for rendering
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &semaphores.acquired_image_ready));
+	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &semaphores.acquired_image_ready));
 	// Create a semaphore used to synchronize command submission
 	// Ensures that the image is not presented until all commands have been sumbitted and executed
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &semaphores.render_complete));
+	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &semaphores.render_complete));
 
 	// Set up submit info structure
 	// Semaphores will stay the same during application lifetime
@@ -57,7 +57,7 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 		submit_info.pSignalSemaphores    = &semaphores.render_complete;
 	}
 
-	queue = device->get_suitable_graphics_queue().get_handle();
+	queue = get_device().get_suitable_graphics_queue().get_handle();
 
 	create_swapchain_buffers();
 	create_command_pool();
@@ -78,10 +78,10 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 void ApiVulkanSample::prepare_gui()
 {
-	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
-	gui->prepare(pipeline_cache, render_pass,
-	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	create_gui(*window, nullptr, 15.0f, true);
+	get_gui().prepare(pipeline_cache, render_pass,
+	                  {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	                   load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void ApiVulkanSample::update(float delta_time)
@@ -91,8 +91,6 @@ void ApiVulkanSample::update(float delta_time)
 		view_updated = false;
 		view_changed();
 	}
-
-	update_overlay(delta_time);
 
 	render(delta_time);
 	camera.update(delta_time);
@@ -123,37 +121,33 @@ bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 	prepared = false;
 
 	// Ensure all operations on the device have been finished before destroying resources
-	device->wait_idle();
+	get_device().wait_idle();
 
 	create_swapchain_buffers();
 
 	// Recreate the frame buffers
-	vkDestroyImageView(device->get_handle(), depth_stencil.view, nullptr);
-	vkDestroyImage(device->get_handle(), depth_stencil.image, nullptr);
-	vkFreeMemory(device->get_handle(), depth_stencil.mem, nullptr);
+	vkDestroyImageView(get_device().get_handle(), depth_stencil.view, nullptr);
+	vkDestroyImage(get_device().get_handle(), depth_stencil.image, nullptr);
+	vkFreeMemory(get_device().get_handle(), depth_stencil.mem, nullptr);
 	setup_depth_stencil();
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
-		vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+		vkDestroyFramebuffer(get_device().get_handle(), framebuffers[i], nullptr);
 		framebuffers[i] = VK_NULL_HANDLE;
 	}
 	setup_framebuffer();
 
 	if ((width > 0.0f) && (height > 0.0f))
 	{
-		if (gui)
+		if (has_gui())
 		{
-			gui->resize(width, height);
+			get_gui().resize(width, height);
 		}
 	}
 
-	// Command buffers need to be recreated as they may store
-	// references to the recreated frame buffer
-	destroy_command_buffers();
-	create_command_buffers();
-	build_command_buffers();
+	rebuild_command_buffers();
 
-	device->wait_idle();
+	get_device().wait_idle();
 
 	if ((width > 0.0f) && (height > 0.0f))
 	{
@@ -167,11 +161,6 @@ bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 	return true;
 }
 
-vkb::Device &ApiVulkanSample::get_device()
-{
-	return *device;
-}
-
 void ApiVulkanSample::create_render_context()
 {
 	// We always want an sRGB surface to match the display.
@@ -182,20 +171,15 @@ void ApiVulkanSample::create_render_context()
 	VulkanSample::create_render_context(surface_priority_list);
 }
 
-void ApiVulkanSample::prepare_render_context()
-{
-	VulkanSample::prepare_render_context();
-}
-
 void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 {
-	Application::input_event(input_event);
+	VulkanSample::input_event(input_event);
 
 	bool gui_captures_event = false;
 
-	if (gui)
+	if (has_gui())
 	{
-		gui_captures_event = gui->input_event(input_event);
+		gui_captures_event = get_gui().input_event(input_event);
 	}
 
 	if (!gui_captures_event)
@@ -266,7 +250,7 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 			else if (touch_event.get_action() == vkb::TouchAction::Move)
 			{
 				bool handled = false;
-				if (gui)
+				if (has_gui())
 				{
 					ImGuiIO &io = ImGui::GetIO();
 					handled     = io.WantCaptureMouse;
@@ -316,9 +300,9 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 						paused = !paused;
 						break;
 					case vkb::KeyCode::F1:
-						if (gui)
+						if (has_gui())
 						{
-							gui->visible = !gui->visible;
+							get_gui().visible = !get_gui().visible;
 						}
 					default:
 						break;
@@ -355,7 +339,7 @@ void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 
 	bool handled = false;
 
-	if (gui)
+	if (has_gui())
 	{
 		ImGuiIO &io = ImGui::GetIO();
 		handled     = io.WantCaptureMouse;
@@ -409,7 +393,7 @@ bool ApiVulkanSample::check_command_buffers()
 void ApiVulkanSample::create_command_buffers()
 {
 	// Create one command buffer for each swap chain image and reuse for rendering
-	draw_cmd_buffers.resize(render_context->get_render_frames().size());
+	draw_cmd_buffers.resize(get_render_context().get_render_frames().size());
 
 	VkCommandBufferAllocateInfo allocate_info =
 	    vkb::initializers::command_buffer_allocate_info(
@@ -417,71 +401,81 @@ void ApiVulkanSample::create_command_buffers()
 	        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 	        static_cast<uint32_t>(draw_cmd_buffers.size()));
 
-	VK_CHECK(vkAllocateCommandBuffers(device->get_handle(), &allocate_info, draw_cmd_buffers.data()));
+	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &allocate_info, draw_cmd_buffers.data()));
 }
 
 void ApiVulkanSample::destroy_command_buffers()
 {
-	vkFreeCommandBuffers(device->get_handle(), cmd_pool, static_cast<uint32_t>(draw_cmd_buffers.size()), draw_cmd_buffers.data());
+	vkFreeCommandBuffers(get_device().get_handle(), cmd_pool, static_cast<uint32_t>(draw_cmd_buffers.size()), draw_cmd_buffers.data());
+}
+
+void ApiVulkanSample::recreate_current_command_buffer()
+{
+	auto &cmd = draw_cmd_buffers[current_buffer];
+	assert(cmd);
+	vkFreeCommandBuffers(get_device().get_handle(), cmd_pool, 1, &cmd);
+	VkCommandBufferAllocateInfo command_buffer_allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr, cmd_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1};
+	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &cmd));
 }
 
 void ApiVulkanSample::create_pipeline_cache()
 {
 	VkPipelineCacheCreateInfo pipeline_cache_create_info = {};
 	pipeline_cache_create_info.sType                     = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-	VK_CHECK(vkCreatePipelineCache(device->get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
+	VK_CHECK(vkCreatePipelineCache(get_device().get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
 }
 
-VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage);
+	shader_stage.module                          = vkb::load_shader(file.c_str(), get_device().get_handle(), stage, src_language);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
 	return shader_stage;
 }
 
-void ApiVulkanSample::update_overlay(float delta_time)
+void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
-	if (gui)
+	if (has_gui())
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
-			on_update_ui_overlay(gui->get_drawer());
+		get_gui().show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() {
+			on_update_ui_overlay(get_gui().get_drawer());
+			additional_ui();
 		});
 
-		gui->update(delta_time);
+		get_gui().update(delta_time);
 
-		if (gui->update_buffers() || gui->get_drawer().is_dirty())
+		if (get_gui().update_buffers() || get_gui().get_drawer().is_dirty())
 		{
-			build_command_buffers();
-			gui->get_drawer().clear();
+			rebuild_command_buffers();
+			get_gui().get_drawer().clear();
 		}
 	}
 }
 
 void ApiVulkanSample::draw_ui(const VkCommandBuffer command_buffer)
 {
-	if (gui)
+	if (has_gui())
 	{
 		const VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		const VkRect2D   scissor  = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
-		gui->draw(command_buffer);
+		get_gui().draw(command_buffer);
 	}
 }
 
 void ApiVulkanSample::prepare_frame()
 {
-	if (render_context->has_swapchain())
+	if (get_render_context().has_swapchain())
 	{
 		handle_surface_changes();
 		// Acquire the next image from the swap chain
-		VkResult result = render_context->get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
+		VkResult result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
 		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
@@ -498,11 +492,11 @@ void ApiVulkanSample::prepare_frame()
 
 void ApiVulkanSample::submit_frame()
 {
-	if (render_context->has_swapchain())
+	if (get_render_context().has_swapchain())
 	{
-		const auto &queue = device->get_queue_by_present(0);
+		const auto &queue = get_device().get_queue_by_present(0);
 
-		VkSwapchainKHR sc = render_context->get_swapchain().get_handle();
+		VkSwapchainKHR sc = get_render_context().get_swapchain().get_handle();
 
 		VkPresentInfoKHR present_info = {};
 		present_info.sType            = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -512,7 +506,7 @@ void ApiVulkanSample::submit_frame()
 		present_info.pImageIndices    = &current_buffer;
 
 		VkDisplayPresentInfoKHR disp_present_info{};
-		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		if (get_device().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
 		    window->get_display_present_info(&disp_present_info, width, height))
 		{
 			// Add display present info if supported and wanted
@@ -546,53 +540,51 @@ void ApiVulkanSample::submit_frame()
 	// DO NOT USE
 	// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
 	// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
-	VK_CHECK(device->get_queue_by_present(0).wait_idle());
+	VK_CHECK(get_device().get_queue_by_present(0).wait_idle());
 }
 
 ApiVulkanSample::~ApiVulkanSample()
 {
-	if (device)
+	if (has_device())
 	{
-		device->wait_idle();
+		get_device().wait_idle();
 
 		// Clean up Vulkan resources
 		if (descriptor_pool != VK_NULL_HANDLE)
 		{
-			vkDestroyDescriptorPool(device->get_handle(), descriptor_pool, nullptr);
+			vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
 		}
 		destroy_command_buffers();
-		vkDestroyRenderPass(device->get_handle(), render_pass, nullptr);
+		vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
 		for (uint32_t i = 0; i < framebuffers.size(); i++)
 		{
-			vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+			vkDestroyFramebuffer(get_device().get_handle(), framebuffers[i], nullptr);
 		}
 
 		for (auto &swapchain_buffer : swapchain_buffers)
 		{
-			vkDestroyImageView(device->get_handle(), swapchain_buffer.view, nullptr);
+			vkDestroyImageView(get_device().get_handle(), swapchain_buffer.view, nullptr);
 		}
 
 		for (auto &shader_module : shader_modules)
 		{
-			vkDestroyShaderModule(device->get_handle(), shader_module, nullptr);
+			vkDestroyShaderModule(get_device().get_handle(), shader_module, nullptr);
 		}
-		vkDestroyImageView(device->get_handle(), depth_stencil.view, nullptr);
-		vkDestroyImage(device->get_handle(), depth_stencil.image, nullptr);
-		vkFreeMemory(device->get_handle(), depth_stencil.mem, nullptr);
+		vkDestroyImageView(get_device().get_handle(), depth_stencil.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), depth_stencil.image, nullptr);
+		vkFreeMemory(get_device().get_handle(), depth_stencil.mem, nullptr);
 
-		vkDestroyPipelineCache(device->get_handle(), pipeline_cache, nullptr);
+		vkDestroyPipelineCache(get_device().get_handle(), pipeline_cache, nullptr);
 
-		vkDestroyCommandPool(device->get_handle(), cmd_pool, nullptr);
+		vkDestroyCommandPool(get_device().get_handle(), cmd_pool, nullptr);
 
-		vkDestroySemaphore(device->get_handle(), semaphores.acquired_image_ready, nullptr);
-		vkDestroySemaphore(device->get_handle(), semaphores.render_complete, nullptr);
+		vkDestroySemaphore(get_device().get_handle(), semaphores.acquired_image_ready, nullptr);
+		vkDestroySemaphore(get_device().get_handle(), semaphores.render_complete, nullptr);
 		for (auto &fence : wait_fences)
 		{
-			vkDestroyFence(device->get_handle(), fence, nullptr);
+			vkDestroyFence(get_device().get_handle(), fence, nullptr);
 		}
 	}
-
-	gui.reset();
 }
 
 void ApiVulkanSample::view_changed()
@@ -601,6 +593,12 @@ void ApiVulkanSample::view_changed()
 void ApiVulkanSample::build_command_buffers()
 {}
 
+void ApiVulkanSample::rebuild_command_buffers()
+{
+	vkResetCommandPool(get_device().get_handle(), cmd_pool, 0);
+	build_command_buffers();
+}
+
 void ApiVulkanSample::create_synchronization_primitives()
 {
 	// Wait fences to sync command buffer access
@@ -608,7 +606,7 @@ void ApiVulkanSample::create_synchronization_primitives()
 	wait_fences.resize(draw_cmd_buffers.size());
 	for (auto &fence : wait_fences)
 	{
-		VK_CHECK(vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &fence));
+		VK_CHECK(vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &fence));
 	}
 }
 
@@ -616,9 +614,8 @@ void ApiVulkanSample::create_command_pool()
 {
 	VkCommandPoolCreateInfo command_pool_info = {};
 	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_info.queueFamilyIndex        = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
-	command_pool_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	VK_CHECK(vkCreateCommandPool(device->get_handle(), &command_pool_info, nullptr, &cmd_pool));
+	command_pool_info.queueFamilyIndex        = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
+	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_info, nullptr, &cmd_pool));
 }
 
 void ApiVulkanSample::setup_depth_stencil()
@@ -634,16 +631,16 @@ void ApiVulkanSample::setup_depth_stencil()
 	image_create_info.tiling      = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.usage       = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
-	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &depth_stencil.image));
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &depth_stencil.image));
 	VkMemoryRequirements memReqs{};
-	vkGetImageMemoryRequirements(device->get_handle(), depth_stencil.image, &memReqs);
+	vkGetImageMemoryRequirements(get_device().get_handle(), depth_stencil.image, &memReqs);
 
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
-	memory_allocation.memoryTypeIndex = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
-	VK_CHECK(vkBindImageMemory(device->get_handle(), depth_stencil.image, depth_stencil.mem, 0));
+	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
+	VK_CHECK(vkBindImageMemory(get_device().get_handle(), depth_stencil.image, depth_stencil.mem, 0));
 
 	VkImageViewCreateInfo image_view_create_info{};
 	image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -660,7 +657,7 @@ void ApiVulkanSample::setup_depth_stencil()
 	{
 		image_view_create_info.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
-	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &depth_stencil.view));
+	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &depth_stencil.view));
 }
 
 void ApiVulkanSample::setup_framebuffer()
@@ -687,17 +684,17 @@ void ApiVulkanSample::setup_framebuffer()
 		{
 			if (framebuffers[i] != VK_NULL_HANDLE)
 			{
-				vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+				vkDestroyFramebuffer(get_device().get_handle(), framebuffers[i], nullptr);
 			}
 		}
 	}
 
 	// Create frame buffers for every swap chain image
-	framebuffers.resize(render_context->get_render_frames().size());
+	framebuffers.resize(get_render_context().get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		attachments[0] = swapchain_buffers[i].view;
-		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
+		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
 	}
 }
 
@@ -705,7 +702,7 @@ void ApiVulkanSample::setup_render_pass()
 {
 	std::array<VkAttachmentDescription, 2> attachments = {};
 	// Color attachment
-	attachments[0].format         = render_context->get_format();
+	attachments[0].format         = get_render_context().get_format();
 	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -770,12 +767,12 @@ void ApiVulkanSample::setup_render_pass()
 	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 	render_pass_create_info.pDependencies          = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass));
 }
 
 void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 {
-	vkDestroyRenderPass(device->get_handle(), render_pass, nullptr);
+	vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
 
 	VkAttachmentLoadOp  color_attachment_load_op      = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	VkAttachmentStoreOp color_attachment_store_op     = VK_ATTACHMENT_STORE_OP_STORE;
@@ -790,7 +787,7 @@ void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 
 	std::array<VkAttachmentDescription, 2> attachments = {};
 	// Color attachment
-	attachments[0].format         = render_context->get_format();
+	attachments[0].format         = get_render_context().get_format();
 	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp         = color_attachment_load_op;
 	attachments[0].storeOp        = color_attachment_store_op;
@@ -855,7 +852,7 @@ void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 	render_pass_create_info.pDependencies          = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass));
 }
 
 void ApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -863,14 +860,14 @@ void ApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void ApiVulkanSample::create_swapchain_buffers()
 {
-	if (render_context->has_swapchain())
+	if (get_render_context().has_swapchain())
 	{
-		auto &images = render_context->get_swapchain().get_images();
+		auto &images = get_render_context().get_swapchain().get_images();
 
 		// Get the swap chain buffers containing the image and imageview
 		for (auto &swapchain_buffer : swapchain_buffers)
 		{
-			vkDestroyImageView(device->get_handle(), swapchain_buffer.view, nullptr);
+			vkDestroyImageView(get_device().get_handle(), swapchain_buffer.view, nullptr);
 		}
 		swapchain_buffers.clear();
 		swapchain_buffers.resize(images.size());
@@ -879,7 +876,7 @@ void ApiVulkanSample::create_swapchain_buffers()
 			VkImageViewCreateInfo color_attachment_view = {};
 			color_attachment_view.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			color_attachment_view.pNext                 = NULL;
-			color_attachment_view.format                = render_context->get_swapchain().get_format();
+			color_attachment_view.format                = get_render_context().get_swapchain().get_format();
 			color_attachment_view.components            = {
                 VK_COMPONENT_SWIZZLE_R,
                 VK_COMPONENT_SWIZZLE_G,
@@ -897,12 +894,12 @@ void ApiVulkanSample::create_swapchain_buffers()
 
 			color_attachment_view.image = swapchain_buffers[i].image;
 
-			VK_CHECK(vkCreateImageView(device->get_handle(), &color_attachment_view, nullptr, &swapchain_buffers[i].view));
+			VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_attachment_view, nullptr, &swapchain_buffers[i].view));
 		}
 	}
 	else
 	{
-		auto &frames = render_context->get_render_frames();
+		auto &frames = get_render_context().get_render_frames();
 
 		// Get the swap chain buffers containing the image and imageview
 		swapchain_buffers.clear();
@@ -927,7 +924,7 @@ void ApiVulkanSample::update_swapchain_image_usage_flags(std::set<VkImageUsageFl
 void ApiVulkanSample::handle_surface_changes()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->get_gpu().get_handle(),
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(),
 	                                                   get_render_context().get_swapchain().get_surface(),
 	                                                   &surface_properties));
 
@@ -964,6 +961,7 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 			}
 			else
 			{
+				assert(!vkb::is_depth_format(texture.image->get_vk_image_view().get_format()));
 				descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			}
 			break;
@@ -983,18 +981,13 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	Texture texture{};
 
 	texture.image = vkb::sg::Image::load(file, file, content_type);
-	texture.image->create_vk_image(*device);
+	texture.image->create_vk_image(get_device());
 
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	const auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer{*device,
-	                               texture.image->get_data().size(),
-	                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                               VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> bufferCopyRegions;
@@ -1024,12 +1017,11 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_UNDEFINED,
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -1041,14 +1033,13 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	    bufferCopyRegions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 
-	device->flush_command_buffer(command_buffer, queue.get_handle());
+	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
@@ -1068,10 +1059,10 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	// Note that for simplicity, we will always be using max. available anisotropy level for the current device
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_requested_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
 	return texture;
 }
@@ -1081,18 +1072,13 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	Texture texture{};
 
 	texture.image = vkb::sg::Image::load(file, file, content_type);
-	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_2D_ARRAY);
+	texture.image->create_vk_image(get_device(), VK_IMAGE_VIEW_TYPE_2D_ARRAY);
 
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	const auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer{*device,
-	                               texture.image->get_data().size(),
-	                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                               VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
@@ -1128,12 +1114,11 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_UNDEFINED,
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -1145,14 +1130,13 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	    buffer_copy_regions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 
-	device->flush_command_buffer(command_buffer, queue.get_handle());
+	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
@@ -1172,7 +1156,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
 	return texture;
 }
@@ -1182,18 +1166,13 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	Texture texture{};
 
 	texture.image = vkb::sg::Image::load(file, file, content_type);
-	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+	texture.image->create_vk_image(get_device(), VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	const auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer{*device,
-	                               texture.image->get_data().size(),
-	                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                               VMA_MEMORY_USAGE_CPU_ONLY};
-
-	stage_buffer.update(texture.image->get_data());
+	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
@@ -1229,12 +1208,11 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_UNDEFINED,
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -1246,14 +1224,13 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	    buffer_copy_regions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 
-	device->flush_command_buffer(command_buffer, queue.get_handle());
+	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
@@ -1273,14 +1250,14 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
 	return texture;
 }
 
 std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer)
 {
-	vkb::GLTFLoader loader{*device};
+	vkb::GLTFLoader loader{get_device()};
 
 	std::unique_ptr<vkb::sg::SubMesh> model = loader.read_model_from_file(file, index, storage_buffer);
 
@@ -1293,7 +1270,7 @@ std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string 
 	return model;
 }
 
-void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer)
+void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer, uint32_t instance_count)
 {
 	VkDeviceSize offsets[1] = {0};
 
@@ -1302,12 +1279,23 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 
 	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer.get(), offsets);
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);
-	vkCmdDrawIndexed(command_buffer, model->vertex_indices, 1, 0, 0, 0);
+	vkCmdDrawIndexed(command_buffer, model->vertex_indices, instance_count, 0, 0, 0);
 }
 
 void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore)
 {
-	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	f(command_buffer);
-	device->flush_command_buffer(command_buffer, queue, true, signalSemaphore);
+	get_device().flush_command_buffer(command_buffer, queue, true, signalSemaphore);
+}
+
+void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f)
+{
+	auto &cmd = get_device().request_command_buffer();
+	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	f(cmd);
+	cmd.end();
+	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	queue.submit(cmd, get_device().request_fence());
+	get_device().get_fence_pool().wait();
 }

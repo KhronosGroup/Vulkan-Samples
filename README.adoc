@@ -1,0 +1,181 @@
+////
+- Copyright (c) 2019-2024, Arm Limited and Contributors
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Vulkan Samples
+// omit in toc
+:pp: {plus}{plus}
+ifndef::site-gen-antora[]
+:toc:
+endif::[]
+
+image::banner.jpg[Vulkan Samples banner]
+
+ifndef::site-gen-antora[]
+== Renaming Default Branch
+
+We have recently transitioned the repository to use the `main` branch by default.
+All remote git usage is handled automatically.
+To update your local repository to use main please use the following commands
+
+----
+git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a
+----
+endif::[]
+
+== Introduction
+
+The Vulkan Samples is collection of resources to help you develop optimized Vulkan applications.
+
+If you are new to Vulkan the xref:samples/api/README.adoc[API samples] are the right place to start.
+Additionally you may find the following links useful:
+
+ifdef::site-gen-antora[]
+* xref:guide:ROOT:index.adoc[Vulkan Guide]
+* xref:tutorial:ROOT:00_Introduction.adoc[Get Started in Vulkan]
+endif::[]
+
+ifndef::site-gen-antora[]
+* https://github.com/KhronosGroup/Vulkan-Guide[Vulkan Guide]
+* https://vulkan-tutorial.com/[Get Started in Vulkan]
+endif::[]
+
+xref:samples/performance/README.adoc[Performance samples] show the recommended best practice together with real-time profiling information.
+They are more advanced but also contain a detailed tutorial with more in-detail explanations.
+
+=== Goals
+
+* Create a collection of resources that demonstrate best-practice recommendations in Vulkan
+* Create tutorials that explain the implementation of best-practices and include performance analysis guides
+* Create a xref:framework/README.adoc[framework] that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
+
+== Samples
+
+* xref:./samples/README.adoc[Listing of all samples available in this repository]
+
+== General information
+
+* *Project Basics*
+ ** xref:./docs/misc.adoc#controls[Controls]
+ ** xref:./docs/misc.adoc#debug-window[Debug window]
+ ** xref:./scripts/README.adoc[Create a Sample]
+* *Vulkan Essentials*
+ ** xref:./samples/vulkan_basics.adoc[How does Vulkan compare to OpenGL ES?
+What should you expect when targeting Vulkan?]
+* *Misc*
+ ** xref:./docs/misc.adoc#driver-version[Driver version]
+ ** xref:./docs/memory_limits.adoc[Memory limits]
+
+== Setup
+
+Prerequisites: https://git-scm.com/downloads[git] with https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage[git large file storage (git-lfs)].
+
+Clone the repo with submodules using the following command:
+
+----
+git clone --recurse-submodules https://github.com/KhronosGroup/Vulkan-Samples.git
+cd Vulkan-Samples
+----
+
+Follow build instructions for your platform below.
+
+== Build
+
+=== Supported Platforms
+
+* Windows - xref:./docs/build.adoc#windows[Build Guide]
+* Linux - xref:./docs/build.adoc#linux[Build Guide]
+* macOS - xref:./docs/build.adoc#macos[Build Guide]
+* Android - xref:./docs/build.adoc#android[Build Guide]
+
+== Usage
+
+The following shows some example command line usage on how to configure and run the Vulkan Samples.
+
+> Make sure that you are running the samples from the root directory of the repository.
+> Otherwise the samples will not be able to find the assets.
+> ./build/app/bin/<BuildType>/<Arch>/vulkan_samples
+
+----
+# For the entire usage use
+vulkan_samples --help
+
+# For subcommand usage use
+vulkan_samples <sub_command> --help
+
+# Run Swapchain Images sample
+vulkan_samples sample swapchain_images
+
+# Run AFBC sample in benchmark mode for 5000 frames
+vulkan_samples sample afbc --benchmark --stop-after-frame 5000
+
+# Run bonza test offscreen
+vulkan_samples test bonza --headless
+
+# Run all the performance samples for 10 seconds in each configuration
+vulkan_samples batch --category performance --duration 10
+
+# Run Swapchain Images sample on an Android device
+adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
+----
+
+== Tests
+
+* System Test - xref:docs/testing.adoc#system-test[Usage Guide]
+* Generate Sample - xref:docs/testing.adoc#generate-sample-test[Usage Guide]
+
+== License
+
+See link:LICENSE[LICENSE].
+
+This project has some third-party dependencies, each of which may have independent licensing:
+
+* https://github.com/ARM-software/astc-encoder[astc-encoder]: ASTC Evaluation Codec
+* https://github.com/vit-vit/CTPL[CTPL]: Thread Pool Library
+* https://github.com/docopt/docopt.cpp[docopt]: A C{pp}11 port of the Python argument parsing library
+* https://github.com/glfw/glfw[glfw]: A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
+* https://github.com/g-truc/glm[glm]: OpenGL Mathematics
+* https://github.com/KhronosGroup/glslang[glslang]: Shader front end and validator
+* https://github.com/ocornut/imgui[dear imgui]: Immediate Mode Graphical User Interface
+* https://github.com/ARM-software/HWCPipe[HWCPipe]: Interface to mobile Hardware Counters
+* https://github.com/KhronosGroup/KTX-Software[KTX-Software]: Khronos Texture Library and Tools
+* https://github.com/gabime/spdlog[spdlog]: Fast C{pp} logging library
+* https://github.com/KhronosGroup/SPIRV-Cross[SPIRV-Cross]: Parses and converts SPIR-V to other shader languages
+* https://github.com/nothings/stb[stb]: Single-file public domain (or MIT licensed) libraries
+* https://github.com/syoyo/tinygltf[tinygltf]: Header only C{pp}11 glTF 2.0 file parser
+* https://github.com/nlohmann/json[nlohmann json]: C{pp} JSON Library (included by https://github.com/syoyo/tinygltf[tinygltf])
+* https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator[vma]: Vulkan Memory Allocator
+* https://github.com/zeux/volk[volk]: Meta loader for Vulkan API
+* https://github.com/KhronosGroup/Vulkan-Docs[vulkan]: Sources for the formal documentation of the Vulkan API
+
+This project uses assets from https://github.com/KhronosGroup/Vulkan-Samples-Assets[vulkan-samples-assets].
+Each one has its own license.
+
+=== Trademarks
+
+Vulkan is a registered trademark of the Khronos Group Inc.
+
+== Contributions
+
+Donated to Khronos by Arm, with further contributions by Sascha Willems and Adam Sawicki.
+See xref:CONTRIBUTORS.adoc[CONTRIBUTORS] for the full contributor list.
+
+Also see xref:CONTRIBUTING.adoc[CONTRIBUTING] for contribution guidelines.
+
+== Related resources
+
+* https://developer.arm.com/documentation/101897/latest/[Mali GPU Best Practices]: A document with recommendations for efficient API usage

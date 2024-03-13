@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Sascha Willems
+/* Copyright (c) 2020-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ DebugUtils::DebugUtils()
 
 DebugUtils::~DebugUtils()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.sphere, nullptr);
@@ -71,7 +71,7 @@ DebugUtils::~DebugUtils()
  */
 void DebugUtils::debug_check_extension()
 {
-	std::vector<const char *> enabled_instance_extensions = instance->get_extensions();
+	std::vector<const char *> enabled_instance_extensions = get_instance().get_extensions();
 	for (auto &enabled_extension : enabled_instance_extensions)
 	{
 		if (strcmp(enabled_extension, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
@@ -187,7 +187,7 @@ void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handl
 	name_info.objectType                    = object_type;
 	name_info.objectHandle                  = object_handle;
 	name_info.pObjectName                   = object_name;
-	vkSetDebugUtilsObjectNameEXT(device->get_handle(), &name_info);
+	vkSetDebugUtilsObjectNameEXT(get_device().get_handle(), &name_info);
 }
 
 /*
@@ -199,7 +199,7 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage);
+	shader_stage.module                          = vkb::load_shader(file.c_str(), get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
@@ -217,7 +217,7 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 		info.tagName                      = 1;
 		info.tagSize                      = buffer.size() * sizeof(uint8_t);
 		info.pTag                         = buffer.data();
-		vkSetDebugUtilsObjectTagEXT(device->get_handle(), &info);
+		vkSetDebugUtilsObjectTagEXT(get_device().get_handle(), &info);
 	}
 
 	return shader_stage;
@@ -1113,11 +1113,11 @@ void DebugUtils::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.checkbox("Bloom", &bloom))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("skysphere", &display_skysphere))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }

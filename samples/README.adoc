@@ -1,0 +1,49 @@
+////
+- Copyright (c) 2020-2024, Arm Limited and Contributors
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+ifndef::performance_samplespath[:performance_samplespath: ./performance/]
+ifndef::extension_samplespath[:extension_samplespath: ./extensions/]
+ifndef::api_samplespath[:api_samplespath: ./api/]
+ifndef::general_samplespath[:general_samplespath: ./general/]
+ifndef::tooling_samplespath[:tooling_samplespath: ./tooling/]
+
+= Samples overview
+:pp: {plus}{plus}
+:toc:
+:toclevels: 1
+
+== Introduction
+
+This readme lists all Vulkan samples currently available in this repository.
+They are grouped into multiple categories.
+Many samples come with a tutorial, which can be found in their respective folders.
+
+[[performance-samples]]
+include::./performance/README.adoc[]
+
+[[api-samples]]
+include::./api/README.adoc[]
+
+[[extension-samples]]
+include::./extensions/README.adoc[]
+
+[[tooling-samples]]
+include::./tooling/README.adoc[]
+
+[[general-samples]]
+include::./general/README.adoc[]

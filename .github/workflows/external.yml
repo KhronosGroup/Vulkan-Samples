@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   external_project:
     name: Build as external project
@@ -24,4 +28,4 @@ jobs:
           sudo apt-get update
           sudo apt install xorg-dev libglu1-mesa-dev
 
-      - run: cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+      - run: cmake tests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF

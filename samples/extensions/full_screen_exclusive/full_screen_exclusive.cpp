@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2023-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,8 @@
 
 #include "full_screen_exclusive.h"
 
+#include "filesystem/legacy.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -369,27 +369,9 @@ void FullScreenExclusive::init_swapchain()
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	uint32_t surface_format_count;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, nullptr);
-	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, supported_surface_formats.data());
-
-	// We want to get an SRGB image format that matches our list of preferred format candidates
-	// We initialize to the first supported format, which will be the fallback in case none of the preferred formats is available
-	VkSurfaceFormatKHR format                = supported_surface_formats[0];
-	auto               preferred_format_list = std::vector<VkFormat>{VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32};
-
-	for (auto &candidate : supported_surface_formats)
-	{
-		if (std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end())
-		{
-			format = candidate;
-			break;
-		}
-	}
+	VkSurfaceFormatKHR format = vkb::select_surface_format(context.gpu, context.surface);
 
 	VkExtent2D swapchain_size;
-
 	if (is_full_screen_exclusive)
 	{
 		swapchain_size = surface_properties.maxImageExtent;

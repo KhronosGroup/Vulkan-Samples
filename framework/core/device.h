@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,6 @@
 #pragma once
 
 #include "common/helpers.h"
-#include "common/logging.h"
 #include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"
@@ -35,6 +34,7 @@
 #include "core/render_pass.h"
 #include "core/shader_module.h"
 #include "core/swapchain.h"
+#include "core/util/logging.hpp"
 #include "core/vulkan_resource.h"
 #include "fence_pool.h"
 #include "rendering/pipeline_state.h"
@@ -50,7 +50,7 @@ struct DriverVersion
 	uint16_t patch;
 };
 
-class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
+class Device : public core::VulkanResource<VkDevice>
 {
   public:
 	/**
@@ -60,9 +60,9 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	 * @param debug_utils The debug utils to be associated to this device
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
 	 */
-	Device(PhysicalDevice &                       gpu,
+	Device(PhysicalDevice                        &gpu,
 	       VkSurfaceKHR                           surface,
-	       std::unique_ptr<DebugUtils> &&         debug_utils,
+	       std::unique_ptr<DebugUtils>          &&debug_utils,
 	       std::unordered_map<const char *, bool> requested_extensions = {});
 
 	/**
@@ -72,7 +72,7 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	 * @param surface The surface
 	 */
 	Device(PhysicalDevice &gpu,
-	       VkDevice &      vulkan_device,
+	       VkDevice       &vulkan_device,
 	       VkSurfaceKHR    surface);
 
 	Device(const Device &) = delete;
@@ -86,8 +86,6 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	Device &operator=(Device &&) = delete;
 
 	const PhysicalDevice &get_gpu() const;
-
-	VmaAllocator get_memory_allocator() const;
 
 	/**
 	 * @brief Returns the debug utils associated with this Device.
@@ -128,9 +126,9 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	 */
 	const Queue &get_suitable_graphics_queue() const;
 
-	bool is_extension_supported(const std::string &extension);
+	bool is_extension_supported(const std::string &extension) const;
 
-	bool is_enabled(const char *extension);
+	bool is_enabled(const char *extension) const;
 
 	uint32_t get_queue_family_index(VkQueueFlagBits queue_flag);
 
@@ -148,23 +146,12 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	uint32_t get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found = nullptr) const;
 
 	/**
-	* @brief Creates a vulkan buffer
-	* @param usage The buffer usage
-	* @param properties The memory properties
-	* @param size The size of the buffer
-	* @param memory The pointer to the buffer memory
-	* @param data The data to place inside the buffer
-	* @returns A valid VkBuffer
-	*/
-	VkBuffer create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceSize size, VkDeviceMemory *memory, void *data = nullptr);
-
-	/**
-	* @brief Copies a buffer from one to another
-	* @param src The buffer to copy from
-	* @param dst The buffer to copy to
-	* @param queue The queue to submit the copy command to
-	* @param copy_region The amount to copy, if null copies the entire buffer
-	*/
+	 * @brief Copies a buffer from one to another
+	 * @param src The buffer to copy from
+	 * @param dst The buffer to copy to
+	 * @param queue The queue to submit the copy command to
+	 * @param copy_region The amount to copy, if null copies the entire buffer
+	 */
 	void copy_buffer(vkb::core::Buffer &src, vkb::core::Buffer &dst, VkQueue queue, VkBufferCopy *copy_region = nullptr);
 
 	/**
@@ -173,7 +160,7 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	 * @param flags The command pool flags
 	 * @returns A valid VkCommandPool
 	 */
-	VkCommandPool create_command_pool(uint32_t queue_index, VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	VkCommandPool create_command_pool(uint32_t queue_index, VkCommandPoolCreateFlags flags = 0);
 
 	/**
 	 * @brief Requests a command buffer from the device's command pool
@@ -235,8 +222,6 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	std::vector<VkExtensionProperties> device_extensions;
 
 	std::vector<const char *> enabled_extensions{};
-
-	VmaAllocator memory_allocator{VK_NULL_HANDLE};
 
 	std::vector<std::vector<Queue>> queues;
 

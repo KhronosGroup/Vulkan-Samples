@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
@@ -43,12 +47,12 @@ jobs:
         name: Configure and build
         shell: pwsh
         run: |
-          cmake -H"." -B"build/${{ matrix.platform }}" -G"NMake Makefiles" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake -B"build/${{ matrix.platform }}" -G"Ninja" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
         run: |
-          cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_d2d:
@@ -69,7 +73,7 @@ jobs:
         with:
           key: ${{ github.job }}-${{ matrix.os }}
       - name: Configure
-        run: cmake -H"." -B"build/ubuntu-latest-d2d" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DVKB_WSI_SELECTION=D2D
+        run: cmake -B"build/ubuntu-latest-d2d" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DVKB_WSI_SELECTION=D2D
       - name: "Build Ubuntu in Release with VKB_WSI_SELECTION=D2D"
         run: cmake --build "build/ubuntu-latest-d2d" --target vulkan_samples --config Release ${{ env.PARALLEL }}
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@
 
 namespace vkbtest
 {
-class VulkanTest : public vkb::VulkanSample
+class VulkanTest : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	VulkanTest() = default;

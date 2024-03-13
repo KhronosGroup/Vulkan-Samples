@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,21 +34,21 @@ HPPPipelineCache::~HPPPipelineCache()
 	if (pipeline_cache)
 	{
 		/* Get data of pipeline cache */
-		std::vector<uint8_t> data = device->get_handle().getPipelineCacheData(pipeline_cache);
+		std::vector<uint8_t> data = get_device().get_handle().getPipelineCacheData(pipeline_cache);
 
 		/* Write pipeline cache data to a file in binary format */
 		vkb::fs::write_temp(data, "pipeline_cache.data");
 
 		/* Destroy Vulkan pipeline cache */
-		device->get_handle().destroyPipelineCache(pipeline_cache);
+		get_device().get_handle().destroyPipelineCache(pipeline_cache);
 	}
 
-	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
+	vkb::fs::write_temp(get_device().get_resource_cache().serialize(), "hpp_cache.data");
 }
 
 bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPVulkanSample::prepare(options))
+	if (!VulkanSample<vkb::BindingType::Cpp>::prepare(options))
 	{
 		return false;
 	}
@@ -73,9 +73,9 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, pipeline_data.size(), pipeline_data.data());
 
 	/* Create Vulkan pipeline cache */
-	pipeline_cache = device->get_handle().createPipelineCache(pipeline_cache_create_info);
+	pipeline_cache = get_device().get_handle().createPipelineCache(pipeline_cache_create_info);
 
-	vkb::HPPResourceCache &resource_cache = device->get_resource_cache();
+	vkb::HPPResourceCache &resource_cache = get_device().get_resource_cache();
 
 	/* Use pipeline cache to store pipelines */
 	resource_cache.set_pipeline_cache(pipeline_cache);
@@ -83,7 +83,7 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	std::vector<uint8_t> data_cache;
 	try
 	{
-		data_cache = vkb::fs::read_temp("cache.data");
+		data_cache = vkb::fs::read_temp("hpp_cache.data");
 	}
 	catch (std::runtime_error &ex)
 	{
@@ -93,27 +93,27 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	/* Build all pipelines from a previous run */
 	resource_cache.warmup(data_cache);
 
-	stats->request_stats({vkb::StatIndex::frame_times});
+	get_stats().request_stats({vkb::StatIndex::frame_times});
 
 	float dpi_factor = window->get_dpi_factor();
 
 	button_size.x = button_size.x * dpi_factor;
 	button_size.y = button_size.y * dpi_factor;
 
-	gui = std::make_unique<vkb::HPPGui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = vkb::common::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::common::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass =
-	    std::make_unique<vkb::rendering::subpasses::HPPForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::HPPForwardSubpass>(
+        get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::rendering::HPPRenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::rendering::HPPRenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
@@ -122,19 +122,19 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 
 void HPPPipelineCache::draw_gui()
 {
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this]() {
 		    if (ImGui::Checkbox("Pipeline cache", &enable_pipeline_cache))
 		    {
-			    device->get_resource_cache().set_pipeline_cache(enable_pipeline_cache ? pipeline_cache : nullptr);
+			    get_device().get_resource_cache().set_pipeline_cache(enable_pipeline_cache ? pipeline_cache : nullptr);
 		    }
 
 		    ImGui::SameLine();
 
 		    if (ImGui::Button("Destroy Pipelines", button_size))
 		    {
-			    device->get_handle().waitIdle();
-			    device->get_resource_cache().clear_pipelines();
+			    get_device().get_handle().waitIdle();
+			    get_device().get_resource_cache().clear_pipelines();
 			    record_frame_time_next_frame = true;
 		    }
 
@@ -158,10 +158,10 @@ void HPPPipelineCache::update(float delta_time)
 		record_frame_time_next_frame    = false;
 	}
 
-	HPPVulkanSample::update(delta_time);
+	VulkanSample<vkb::BindingType::Cpp>::update(delta_time);
 }
 
-std::unique_ptr<vkb::HPPVulkanSample> create_hpp_pipeline_cache()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_pipeline_cache()
 {
 	return std::make_unique<HPPPipelineCache>();
 }

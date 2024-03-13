@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "platform/platform.h"
 #include "plugins/plugins.h"
 
 #include <core/platform/entrypoint.hpp>
+#include <filesystem/filesystem.hpp>
 
 #if defined(PLATFORM__MACOS)
 #	include <TargetConditionals.h>
@@ -41,6 +42,8 @@
 
 CUSTOM_MAIN(context)
 {
+	vkb::filesystem::init_with_context(context);
+
 #if defined(PLATFORM__ANDROID)
 	vkb::AndroidPlatform platform{context};
 #elif defined(PLATFORM__WINDOWS)
