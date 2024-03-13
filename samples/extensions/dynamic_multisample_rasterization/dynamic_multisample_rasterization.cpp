@@ -34,7 +34,7 @@ DynamicMultisampleRasterization::DynamicMultisampleRasterization()
 
 DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline_inversed_rasterizer, nullptr);
@@ -315,9 +315,9 @@ void DynamicMultisampleRasterization::build_command_buffers()
 
 void DynamicMultisampleRasterization::draw_ui(VkCommandBuffer &cmd_buffer)
 {
-	if (gui)
+	if (has_gui())
 	{
-		gui->draw(cmd_buffer, pipeline_gui, pipeline_layout_gui, descriptor_set_gui);
+		get_gui().draw(cmd_buffer, pipeline_gui, pipeline_layout_gui, descriptor_set_gui);
 	}
 }
 
@@ -470,7 +470,7 @@ void DynamicMultisampleRasterization::setup_color_attachment()
 	VkImageCreateInfo image_create_info{};
 	image_create_info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image_create_info.imageType   = VK_IMAGE_TYPE_2D;
-	image_create_info.format      = render_context->get_format();
+	image_create_info.format      = get_render_context().get_format();
 	image_create_info.extent      = {get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1};
 	image_create_info.mipLevels   = 1;
 	image_create_info.arrayLayers = 1;
@@ -478,22 +478,22 @@ void DynamicMultisampleRasterization::setup_color_attachment()
 	image_create_info.tiling      = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.usage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 
-	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &color_attachment.image));
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &color_attachment.image));
 	VkMemoryRequirements memReqs{};
-	vkGetImageMemoryRequirements(device->get_handle(), color_attachment.image, &memReqs);
+	vkGetImageMemoryRequirements(get_device().get_handle(), color_attachment.image, &memReqs);
 
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
-	memory_allocation.memoryTypeIndex = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocation, nullptr, &color_attachment.mem));
-	VK_CHECK(vkBindImageMemory(device->get_handle(), color_attachment.image, color_attachment.mem, 0));
+	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &color_attachment.mem));
+	VK_CHECK(vkBindImageMemory(get_device().get_handle(), color_attachment.image, color_attachment.mem, 0));
 
 	VkImageViewCreateInfo image_view_create_info{};
 	image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
 	image_view_create_info.image                           = color_attachment.image;
-	image_view_create_info.format                          = render_context->get_format();
+	image_view_create_info.format                          = get_render_context().get_format();
 	image_view_create_info.subresourceRange.baseMipLevel   = 0;
 	image_view_create_info.subresourceRange.levelCount     = 1;
 	image_view_create_info.subresourceRange.baseArrayLayer = 0;
@@ -504,7 +504,7 @@ void DynamicMultisampleRasterization::setup_color_attachment()
 	{
 		image_view_create_info.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
-	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &color_attachment.view));
+	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &color_attachment.view));
 }
 
 void DynamicMultisampleRasterization::setup_depth_stencil()
@@ -520,16 +520,16 @@ void DynamicMultisampleRasterization::setup_depth_stencil()
 	image_create_info.tiling      = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.usage       = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
-	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &depth_stencil.image));
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &depth_stencil.image));
 	VkMemoryRequirements memReqs{};
-	vkGetImageMemoryRequirements(device->get_handle(), depth_stencil.image, &memReqs);
+	vkGetImageMemoryRequirements(get_device().get_handle(), depth_stencil.image, &memReqs);
 
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
-	memory_allocation.memoryTypeIndex = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
-	VK_CHECK(vkBindImageMemory(device->get_handle(), depth_stencil.image, depth_stencil.mem, 0));
+	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
+	VK_CHECK(vkBindImageMemory(get_device().get_handle(), depth_stencil.image, depth_stencil.mem, 0));
 
 	VkImageViewCreateInfo image_view_create_info{};
 	image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -546,7 +546,7 @@ void DynamicMultisampleRasterization::setup_depth_stencil()
 	{
 		image_view_create_info.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
-	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &depth_stencil.view));
+	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &depth_stencil.view));
 }
 
 void DynamicMultisampleRasterization::prepare_pipelines()
@@ -620,7 +620,7 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
 
 	// Create graphics pipeline for dynamic rendering
-	VkFormat color_rendering_format = render_context->get_format();
+	VkFormat color_rendering_format = get_render_context().get_format();
 
 	// Provide information for dynamic rendering
 	VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
@@ -702,8 +702,8 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 	VkDescriptorSetAllocateInfo descriptor_allocation = vkb::initializers::descriptor_set_allocate_info(descriptor_pool_gui, &descriptor_set_layout_gui, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_allocation, &descriptor_set_gui));
 	VkDescriptorImageInfo font_descriptor = vkb::initializers::descriptor_image_info(
-	    gui->get_sampler(),
-	    gui->get_font_image_view(),
+	    get_gui().get_sampler(),
+	    get_gui().get_font_image_view(),
 	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_set_gui, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &font_descriptor)};
@@ -758,7 +758,7 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 	pipeline_layout_gui = get_device().get_resource_cache().request_pipeline_layout(shader_modules).get_handle();
 
 	// Create graphics pipeline for dynamic rendering
-	VkFormat color_rendering_format = render_context->get_format();
+	VkFormat color_rendering_format = get_render_context().get_format();
 
 	// Provide information for dynamic rendering
 	VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
@@ -826,7 +826,8 @@ void DynamicMultisampleRasterization::prepare_uniform_buffers()
 
 void DynamicMultisampleRasterization::prepare_gui()
 {
-	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
+	// gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
+	create_gui(*window, /*stats=*/nullptr, 15.0f, true);
 
 	prepare_gui_pipeline();
 
@@ -881,9 +882,9 @@ void DynamicMultisampleRasterization::update_resources()
 {
 	prepared = false;
 
-	if (device)
+	if (has_device())
 	{
-		device->wait_idle();
+		get_device().wait_idle();
 		rebuild_command_buffers();
 	}
 
@@ -920,7 +921,7 @@ bool DynamicMultisampleRasterization::resize(const uint32_t _width, const uint32
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_multisample_rasterization()
 {
 	return std::make_unique<DynamicMultisampleRasterization>();
 }

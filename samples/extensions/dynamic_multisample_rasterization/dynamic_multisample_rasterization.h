@@ -125,4 +125,4 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	void         attachments_setup(std::vector<VkRenderingAttachmentInfoKHR> &attachments, std::vector<VkClearValue> &clear_values);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_multisample_rasterization();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_multisample_rasterization();
