@@ -29,7 +29,6 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
-#include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "common/vk_initializers.h"
@@ -38,8 +37,9 @@ VKBP_ENABLE_WARNINGS()
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "imgui_internal.h"
-#include "platform/filesystem.h"
 #include "platform/window.h"
 #include "rendering/render_context.h"
 #include "timer.h"
@@ -49,10 +49,10 @@ namespace vkb
 {
 namespace
 {
-void upload_draw_data(ImDrawData *draw_data, const uint8_t *vertex_data, const uint8_t *index_data)
+void upload_draw_data(const ImDrawData *draw_data, uint8_t *vertex_data, uint8_t *index_data)
 {
-	ImDrawVert *vtx_dst = (ImDrawVert *) vertex_data;
-	ImDrawIdx  *idx_dst = (ImDrawIdx *) index_data;
+	ImDrawVert *vtx_dst = reinterpret_cast<ImDrawVert *>(vertex_data);
+	ImDrawIdx  *idx_dst = reinterpret_cast<ImDrawIdx *>(index_data);
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -95,8 +95,7 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
-         const float font_size, bool explicit_update) :
+Gui::Gui(VulkanSample<vkb::BindingType::C> &sample_, const Window &window, const Stats *stats, const float font_size, bool explicit_update) :
     sample{sample_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},
@@ -177,8 +176,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 
 	// Upload font data into the vulkan image memory
 	{
-		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, 0};
-		stage_buffer.update({font_data, font_data + upload_size});
+		core::Buffer stage_buffer = core::Buffer::create_staging_buffer(device, upload_size, font_data);
 
 		auto &command_buffer = device.request_command_buffer();
 

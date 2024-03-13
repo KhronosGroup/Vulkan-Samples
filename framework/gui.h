@@ -30,10 +30,11 @@
 #include "core/sampler.h"
 #include "debug_info.h"
 #include "drawer.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "platform/input_events.h"
 #include "rendering/render_context.h"
 #include "stats/stats.h"
+#include "vulkan_sample.h"
 
 namespace vkb
 {
@@ -75,8 +76,6 @@ struct Font
 
 	float size{};
 };
-
-class VulkanSample;
 
 /**
  * @brief Vulkan helper class for Dear ImGui
@@ -149,8 +148,7 @@ class Gui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	Gui(VulkanSample &sample, const Window &window, const Stats *stats = nullptr,
-	    const float font_size = 21.0f, bool explicit_update = false);
+	Gui(VulkanSample<vkb::BindingType::C> &sample, const Window &window, const Stats *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
@@ -272,7 +270,7 @@ class Gui
 
 	static const ImGuiWindowFlags info_flags;
 
-	VulkanSample &sample;
+	VulkanSample<vkb::BindingType::C> &sample;
 
 	std::unique_ptr<core::Buffer> vertex_buffer;
 

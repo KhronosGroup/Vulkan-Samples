@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ SponzaTest::SponzaTest() :
 {
 }
 
-std::unique_ptr<vkb::VulkanSample> create_sponza_test()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_sponza_test()
 {
 	return std::make_unique<SponzaTest>();
 }

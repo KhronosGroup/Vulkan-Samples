@@ -40,9 +40,9 @@ HPPMeshShading::HPPMeshShading()
 
 HPPMeshShading::~HPPMeshShading()
 {
-	if (get_device() && get_device()->get_handle())
+	if (has_device() && get_device().get_handle())
 	{
-		vk::Device const &device = get_device()->get_handle();
+		vk::Device const &device = get_device().get_handle();
 
 		device.destroyPipeline(pipeline);
 		device.destroyPipelineLayout(pipeline_layout);
@@ -56,7 +56,7 @@ bool HPPMeshShading::prepare(const vkb::ApplicationOptions &options)
 
 	if (HPPApiVulkanSample::prepare(options))
 	{
-		vk::Device device = get_device()->get_handle();
+		vk::Device device = get_device().get_handle();
 
 		descriptor_pool       = device.createDescriptorPool({{}, 2, {}});
 		descriptor_set_layout = device.createDescriptorSetLayout({});
@@ -176,7 +176,7 @@ vk::Pipeline HPPMeshShading::create_pipeline()
 
 	vk::Result   result;
 	vk::Pipeline pipeline;
-	std::tie(result, pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, graphics_pipeline_create_info);
+	std::tie(result, pipeline) = get_device().get_handle().createGraphicsPipeline(pipeline_cache, graphics_pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
 
 	return pipeline;
@@ -193,7 +193,7 @@ void HPPMeshShading::draw()
 	HPPApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::HPPVulkanSample> create_hpp_mesh_shading()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_mesh_shading()
 {
 	return std::make_unique<HPPMeshShading>();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,7 +33,7 @@ BufferDeviceAddress::BufferDeviceAddress()
 
 BufferDeviceAddress::~BufferDeviceAddress()
 {
-	if (device)
+	if (has_device())
 	{
 		VkDevice vk_device = get_device().get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.compute_pipeline_layout, nullptr);
@@ -185,12 +185,8 @@ std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
 	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
 
-	auto staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                          size,
-	                                                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	auto *buffer = reinterpret_cast<uint16_t *>(staging_buffer->map());
+	auto  staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), size, nullptr);
+	auto *buffer         = reinterpret_cast<uint16_t *>(staging_buffer.map());
 	for (unsigned strip = 0; strip < mesh_strips; strip++)
 	{
 		for (unsigned x = 0; x < mesh_width; x++)
@@ -200,11 +196,12 @@ std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
 		}
 		*buffer++ = 0xffff;
 	}
-	staging_buffer->unmap();
+	staging_buffer.flush();
+	staging_buffer.unmap();
 
 	auto &cmd = get_device().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	cmd.copy_buffer(*staging_buffer, *index_buffer, size);
+	cmd.copy_buffer(staging_buffer, *index_buffer, size);
 
 	vkb::BufferMemoryBarrier memory_barrier;
 	memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -436,7 +433,7 @@ void BufferDeviceAddress::request_gpu_features(vkb::PhysicalDevice &gpu)
 	features.bufferDeviceAddress = VK_TRUE;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_buffer_device_address()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_buffer_device_address()
 {
 	return std::make_unique<BufferDeviceAddress>();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -56,7 +56,7 @@ class Astc : public Image
 	 * @param extent Extent of the image
 	 * @param data Pointer to ASTC image data
 	 */
-	void decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data);
+	void decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data, uint32_t size);
 
 	/**
 	 * @brief Initializes ASTC library

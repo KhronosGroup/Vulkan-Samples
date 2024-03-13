@@ -1,4 +1,4 @@
-/* Copyright (c) 2023 Holochip Corporation
+/* Copyright (c) 2023-2024 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,7 +38,7 @@ MeshShading::MeshShading() :
 
 MeshShading::~MeshShading()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -238,7 +238,7 @@ void MeshShading::render(float delta_time)
 	draw();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_mesh_shading()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shading()
 {
 	return std::make_unique<MeshShading>();
 }

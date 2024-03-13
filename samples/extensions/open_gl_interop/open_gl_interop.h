@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2023, Bradley Austin Davis
- * Copyright (c) 2020-2023, Arm Limited
+/* Copyright (c) 2020-2024, Bradley Austin Davis
+ * Copyright (c) 2020-2024, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -113,4 +113,4 @@ class OpenGLInterop : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_open_gl_interop();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_gl_interop();

@@ -28,10 +28,9 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "force_close/force_close.h"
-#include "hpp_vulkan_sample.h"
-#include "platform/filesystem.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
@@ -118,8 +117,7 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 
 	if (!app_requested())
 	{
-		LOGE("An app was not requested, can not continue");
-		return ExitCode::Help;
+		return ExitCode::NoSample;
 	}
 
 	create_window(window_properties);
@@ -137,8 +135,7 @@ ExitCode Platform::main_loop()
 {
 	if (!app_requested())
 	{
-		LOGE("An app was not requested, can not continue");
-		return ExitCode::Close;
+		return ExitCode::NoSample;
 	}
 
 	while (!window->should_close() && !close_requested)
@@ -209,18 +206,18 @@ void Platform::update()
 		});
 		active_app->update(delta_time);
 
-		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
-		{
-			if (app->has_render_context())
-			{
-				on_post_draw(app->get_render_context());
-			}
-		}
-		else if (auto *app = dynamic_cast<HPPVulkanSample *>(active_app.get()))
+		if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::Cpp> *>(active_app.get()))
 		{
 			if (app->has_render_context())
 			{
 				on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+			}
+		}
+		else if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::C> *>(active_app.get()))
+		{
+			if (app->has_render_context())
+			{
+				on_post_draw(app->get_render_context());
 			}
 		}
 	}
@@ -235,6 +232,20 @@ void Platform::terminate(ExitCode code)
 		{
 			LOGI(line);
 		}
+	}
+
+	if (code == ExitCode::NoSample)
+	{
+		LOGI("");
+		LOGI("No sample was requested or the selected sample does not exist");
+		LOGI("");
+		LOGI("To run a specific sample use the \"sample\" argument, e.g.");
+		LOGI("");
+		LOGI("\tvulkan_samples sample hello_triangle");
+		LOGI("");
+		LOGI("To get a list of available samples, use the \"samples\" argument")
+		LOGI("To get a list of available command line options, use the \"-h\" or \"--help\" argument");
+		LOGI("");
 	}
 
 	if (active_app)

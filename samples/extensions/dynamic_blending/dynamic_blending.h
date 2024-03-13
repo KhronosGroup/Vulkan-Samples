@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica
+/* Copyright (c) 2023-2024, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -143,4 +143,4 @@ class DynamicBlending : public ApiVulkanSample
 	void randomize_color(std::array<float, 4> &color, bool alpha = false);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_blending();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_blending();

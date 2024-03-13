@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,9 @@
 #include "msaa.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "rendering/postprocessing_renderpass.h"
 #include "rendering/subpasses/forward_subpass.h"
@@ -100,7 +100,7 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 
 	prepare_supported_sample_count_list();
 
-	depth_writeback_resolve_supported = device->is_enabled(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
+	depth_writeback_resolve_supported = get_device().is_enabled(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
 	if (depth_writeback_resolve_supported)
 	{
 		prepare_depth_resolve_mode_list();
@@ -108,12 +108,12 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 
 	load_scene("scenes/space_module/SpaceModule.gltf");
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource scene_vs("base.vert");
 	vkb::ShaderSource scene_fs("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
 	scene_pipeline                  = std::make_unique<vkb::RenderPipeline>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
@@ -124,11 +124,11 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 
 	update_pipelines();
 
-	stats->request_stats({vkb::StatIndex::frame_times,
-	                      vkb::StatIndex::gpu_ext_read_bytes,
-	                      vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::frame_times,
+	                           vkb::StatIndex::gpu_ext_read_bytes,
+	                           vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -530,9 +530,9 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 	{
 		// If postprocessing is enabled the GUI will be drawn
 		// at the end of the postprocessing renderpass
-		if (gui)
+		if (has_gui())
 		{
-			gui->draw(command_buffer);
+			get_gui().draw(command_buffer);
 		}
 	}
 
@@ -602,9 +602,9 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	// NOTE: Color and depth attachments are automatically transitioned to be bound as textures
 	postprocessing_pipeline->draw(command_buffer, render_target);
 
-	if (gui)
+	if (has_gui())
 	{
-		gui->draw(command_buffer);
+		get_gui().draw(command_buffer);
 	}
 
 	command_buffer.end_render_pass();
@@ -719,7 +719,7 @@ void MSAASample::prepare_supported_sample_count_list()
 
 void MSAASample::prepare_depth_resolve_mode_list()
 {
-	if (instance->is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+	if (get_instance().is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
 		VkPhysicalDeviceProperties2KHR gpu_properties{};
 		gpu_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
@@ -764,7 +764,7 @@ void MSAASample::draw_gui()
 	const bool landscape    = camera->get_aspect_ratio() > 1.0f;
 	uint32_t   lines        = landscape ? 3 : 4;
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    [this, msaa_enabled, landscape]() {
 		    ImGui::AlignTextToFramePadding();
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.4f);
@@ -844,7 +844,7 @@ void MSAASample::draw_gui()
 	    lines);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_msaa()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_msaa()
 {
 	return std::make_unique<MSAASample>();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@
 /**
  * @brief Using pipeline barriers efficiently
  */
-class PipelineBarriers : public vkb::VulkanSample
+class PipelineBarriers : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	PipelineBarriers();
@@ -59,4 +59,4 @@ class PipelineBarriers : public vkb::VulkanSample
 	DependencyType dependency_type{DependencyType::BOTTOM_TO_TOP};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_pipeline_barriers();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_pipeline_barriers();

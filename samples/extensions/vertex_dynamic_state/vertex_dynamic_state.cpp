@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Mobica Limited
+/* Copyright (c) 2022-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,7 @@ VertexDynamicState::VertexDynamicState()
 
 VertexDynamicState::~VertexDynamicState()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, VK_NULL_HANDLE);
 		textures = {};
@@ -218,7 +218,7 @@ void VertexDynamicState::create_pipeline()
 	shader_stages[1] = load_shader("vertex_dynamic_state/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Create graphics pipeline for dynamic rendering */
-	VkFormat color_rendering_format = render_context->get_format();
+	VkFormat color_rendering_format = get_render_context().get_format();
 
 	/* Provide information for dynamic rendering */
 	VkPipelineRenderingCreateInfoKHR pipeline_create{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
@@ -531,11 +531,8 @@ void VertexDynamicState::model_data_creation()
 	                                          3, 7, 6,
 	                                          6, 2, 3};
 
-	vkb::core::Buffer vertex_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_staging.update(vertices);
-
-	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_staging.update(indices);
+	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	cube.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
@@ -548,7 +545,7 @@ void VertexDynamicState::model_data_creation()
 	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
@@ -568,10 +565,10 @@ void VertexDynamicState::model_data_creation()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_vertex_dynamic_state()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_vertex_dynamic_state()
 {
 	return std::make_unique<VertexDynamicState>();
 }

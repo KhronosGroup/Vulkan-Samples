@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2023, Bradley Austin Davis
- * Copyright (c) 2020-2023, Arm Limited
+/* Copyright (c) 2020-2024, Bradley Austin Davis
+ * Copyright (c) 2020-2024, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,9 +19,9 @@
 #include "open_gl_interop.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 
@@ -130,8 +130,8 @@ OpenGLInterop::OpenGLInterop()
 
 void OpenGLInterop::prepare_shared_resources()
 {
-	auto deviceHandle         = device->get_handle();
-	auto physicalDeviceHandle = device->get_gpu().get_handle();
+	auto deviceHandle         = get_device().get_handle();
+	auto physicalDeviceHandle = get_device().get_gpu().get_handle();
 
 	{
 		VkExternalSemaphoreHandleTypeFlagBits flags[] = {
@@ -215,7 +215,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkCreateImage(deviceHandle, &imageCreateInfo, nullptr, &sharedTexture.image));
 
 		VkMemoryRequirements memReqs{};
-		vkGetImageMemoryRequirements(device->get_handle(), sharedTexture.image, &memReqs);
+		vkGetImageMemoryRequirements(get_device().get_handle(), sharedTexture.image, &memReqs);
 
 		VkExportMemoryAllocateInfo exportAllocInfo{
 		    VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO, nullptr,
@@ -223,8 +223,8 @@ void OpenGLInterop::prepare_shared_resources()
 		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &exportAllocInfo};
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
-		memAllocInfo.memoryTypeIndex                               = device->get_memory_type(memReqs.memoryTypeBits,
-		                                                                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memAllocInfo.memoryTypeIndex                               = get_device().get_memory_type(memReqs.memoryTypeBits,
+		                                                                                          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
@@ -467,7 +467,7 @@ void OpenGLInterop::prepare_pipelines()
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
 	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
-        vertex_input_attributes.size());
+	         vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
@@ -740,10 +740,10 @@ OpenGLInterop::~OpenGLInterop()
 	index_buffer.reset();
 	uniform_buffer_vs.reset();
 
-	if (device)
+	if (has_device())
 	{
-		device->wait_idle();
-		auto deviceHandle = device->get_handle();
+		get_device().wait_idle();
+		auto deviceHandle = get_device().get_handle();
 		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_ready, nullptr);
 		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_complete, nullptr);
 		vkDestroyImage(deviceHandle, sharedTexture.image, nullptr);
@@ -756,7 +756,7 @@ OpenGLInterop::~OpenGLInterop()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_open_gl_interop()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_gl_interop()
 {
 	return std::make_unique<OpenGLInterop>();
 }

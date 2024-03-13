@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ PatchControlPoints::PatchControlPoints()
 
 PatchControlPoints::~PatchControlPoints()
 {
-	if (device)
+	if (has_device())
 	{
 		uniform_buffers.common.reset();
 		uniform_buffers.dynamic_tessellation.reset();
@@ -603,7 +603,7 @@ void PatchControlPoints::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_patch_control_points()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_patch_control_points()
 {
 	return std::make_unique<PatchControlPoints>();
 }

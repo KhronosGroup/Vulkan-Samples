@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Sascha Willems
- * Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2023-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,7 +38,7 @@ MemoryBudget::MemoryBudget()
 
 MemoryBudget::~MemoryBudget()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.instanced_rocks, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.planet, nullptr);
@@ -473,13 +473,12 @@ void MemoryBudget::prepare_instance_data()
 	// On devices with separate memory types for host visible and device local memory this will result in better performance
 	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary, and you could skip the staging
 
-	vkb::core::Buffer staging_buffer(get_device(), instance_buffer.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_buffer.update(instance_data);
+	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), instance_data);
 
 	instance_buffer.buffer = std::make_unique<vkb::core::Buffer>(get_device(), instance_buffer.size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy to staging buffer
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 	copy_region.size         = instance_buffer.size;
@@ -490,7 +489,7 @@ void MemoryBudget::prepare_instance_data()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	instance_buffer.descriptor.range  = instance_buffer.size;
 	instance_buffer.descriptor.buffer = instance_buffer.buffer->get_handle();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Google
+/* Copyright (c) 2023-2024, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@
  * @brief A sample that implements best practices in handling present resources and swapchain
  * recreation, for example due to window resizing or present mode changes.
  */
-class SwapchainRecreation : public vkb::VulkanSample
+class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
 {
 	struct SwapchainObjects
 	{

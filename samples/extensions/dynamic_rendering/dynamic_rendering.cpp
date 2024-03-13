@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Holochip Corporation
+ * Copyright (c) 2021-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ DynamicRendering::DynamicRendering() :
 
 DynamicRendering::~DynamicRendering()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, VK_NULL_HANDLE);
 		textures = {};
@@ -254,7 +254,7 @@ void DynamicRendering::create_pipeline()
 	shader_stages[1] = load_shader("dynamic_rendering/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Create graphics pipeline for dynamic rendering
-	VkFormat color_rendering_format = render_context->get_format();
+	VkFormat color_rendering_format = get_render_context().get_format();
 
 	// Provide information for dynamic rendering
 	VkPipelineRenderingCreateInfoKHR pipeline_create{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
@@ -459,7 +459,7 @@ void DynamicRendering::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 }
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_rendering()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering()
 {
 	return std::make_unique<DynamicRendering>();
 }

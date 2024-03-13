@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@ SparseImage::SparseImage()
 
 SparseImage::~SparseImage()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroySemaphore(get_device().get_handle(), submit_semaphore, nullptr);
 		vkDestroySemaphore(get_device().get_handle(), bound_semaphore, nullptr);
@@ -58,7 +58,7 @@ void SparseImage::load_assets()
  */
 void SparseImage::create_sparse_bind_queue()
 {
-	const auto &queue_family_properties = device->get_gpu().get_queue_family_properties();
+	const auto &queue_family_properties = get_device().get_gpu().get_queue_family_properties();
 
 	uint8_t sparse_queue_family_index = 0xFF;
 	for (uint32_t i = 0; i < static_cast<uint32_t>(queue_family_properties.size()); i++)
@@ -674,7 +674,7 @@ void SparseImage::update_and_generate()
 		}
 	}
 
-	device->flush_command_buffer(command_buffer, queue, true);
+	get_device().flush_command_buffer(command_buffer, queue, true);
 
 	for (auto &page : virtual_texture.page_table)
 	{
@@ -774,7 +774,7 @@ void SparseImage::free_unused_memory()
 
 		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
 		vkCmdCopyImageToBuffer(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, reallocation_buffer->get_handle(), static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
-		device->flush_command_buffer(command_buffer, queue, true);
+		get_device().flush_command_buffer(command_buffer, queue, true);
 
 		std::vector<std::shared_ptr<MemSector>> temp_sectors;
 		for (auto &page_index : pages_to_reallocate)
@@ -796,7 +796,7 @@ void SparseImage::free_unused_memory()
 		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 		vkCmdCopyBufferToImage(command_buffer, reallocation_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
 		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
-		device->flush_command_buffer(command_buffer, queue, true);
+		get_device().flush_command_buffer(command_buffer, queue, true);
 
 		for (auto &page_index : pages_to_reallocate)
 		{
@@ -940,7 +940,7 @@ void SparseImage::render(float delta_time)
 	draw();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_sparse_image()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_sparse_image()
 {
 	return std::make_unique<SparseImage>();
 }
@@ -1181,11 +1181,8 @@ void SparseImage::create_vertex_buffer()
 	vertices[2].uv = {1.0f, 1.0f};
 	vertices[3].uv = {0.0f, 1.0f};
 
-	std::unique_ptr<vkb::core::Buffer> staging_buffer;
-	staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	staging_buffer->update(vertices.data(), vertices_size);
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vertex_buffer       = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1194,8 +1191,8 @@ void SparseImage::create_vertex_buffer()
 	copy_buffer_info.dstOffset = 0U;
 	copy_buffer_info.size      = vertices_size;
 
-	vkCmdCopyBuffer(command_buffer, staging_buffer->get_handle(), vertex_buffer->get_handle(), 1U, &copy_buffer_info);
-	device->flush_command_buffer(command_buffer, queue, true);
+	vkCmdCopyBuffer(command_buffer, staging_buffer.get_handle(), vertex_buffer->get_handle(), 1U, &copy_buffer_info);
+	get_device().flush_command_buffer(command_buffer, queue, true);
 }
 
 /**
@@ -1207,11 +1204,8 @@ void SparseImage::create_index_buffer()
 	VkDeviceSize             indices_size = sizeof(indices[0]) * indices.size();
 	index_count                           = indices.size();
 
-	std::unique_ptr<vkb::core::Buffer> staging_buffer;
-	staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_buffer   = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	staging_buffer->update(indices.data(), indices_size);
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
+	index_buffer        = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1220,8 +1214,8 @@ void SparseImage::create_index_buffer()
 	copy_buffer_info.dstOffset = 0U;
 	copy_buffer_info.size      = indices_size;
 
-	vkCmdCopyBuffer(command_buffer, staging_buffer->get_handle(), index_buffer->get_handle(), 1U, &copy_buffer_info);
-	device->flush_command_buffer(command_buffer, queue, true);
+	vkCmdCopyBuffer(command_buffer, staging_buffer.get_handle(), index_buffer->get_handle(), 1U, &copy_buffer_info);
+	get_device().flush_command_buffer(command_buffer, queue, true);
 }
 
 /**
@@ -1455,9 +1449,11 @@ void SparseImage::create_sparse_texture_image()
 	uint32_t sparse_memory_req_count;
 	uint32_t memory_req_count;
 
-	vkGetImageSparseMemoryRequirements(device->get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
+	vkGetImageSparseMemoryRequirements(
+	    get_device().get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
 	sparse_image_memory_requirements.resize(sparse_memory_req_count);
-	vkGetImageSparseMemoryRequirements(device->get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
+	vkGetImageSparseMemoryRequirements(
+	    get_device().get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
 
 	vkGetImageMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &memory_requirements);
 
@@ -1559,7 +1555,7 @@ void SparseImage::create_sparse_texture_image()
 	subresource_range.baseMipLevel   = virtual_texture.base_mip_level;
 
 	vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
-	device->flush_command_buffer(command_buffer, queue, true);
+	get_device().flush_command_buffer(command_buffer, queue, true);
 
 	//==================================================================================================
 	// Synchronization primitives

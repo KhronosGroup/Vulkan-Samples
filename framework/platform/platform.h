@@ -28,8 +28,8 @@
 #include "common/optional.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "platform/application.h"
-#include "platform/filesystem.h"
 #include "platform/parser.h"
 #include "platform/plugins/plugin.h"
 #include "platform/window.h"
@@ -44,6 +44,7 @@ namespace vkb
 enum class ExitCode
 {
 	Success = 0, /* App executed as expected */
+	NoSample,    /* App should show help how to run a sample */
 	Help,        /* App should show help */
 	Close,       /* App has been requested to close at initialization */
 	FatalError   /* App encountered an unexpected error */

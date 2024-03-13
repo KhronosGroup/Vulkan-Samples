@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,20 +16,22 @@
  */
 
 #include "hpp_gui.h"
+#include "vulkan_sample.h"
 #include <common/hpp_utils.h>
 #include <core/hpp_buffer.h>
 #include <core/hpp_command_pool.h>
-#include <hpp_vulkan_sample.h>
 #include <imgui_internal.h>
+
+#include <numeric>
 
 namespace vkb
 {
 namespace
 {
-void upload_draw_data(const ImDrawData *draw_data, const uint8_t *vertex_data, const uint8_t *index_data)
+void upload_draw_data(const ImDrawData *draw_data, uint8_t *vertex_data, uint8_t *index_data)
 {
-	ImDrawVert *vtx_dst = (ImDrawVert *) vertex_data;
-	ImDrawIdx  *idx_dst = (ImDrawIdx *) index_data;
+	ImDrawVert *vtx_dst = reinterpret_cast<ImDrawVert *>(vertex_data);
+	ImDrawIdx  *idx_dst = reinterpret_cast<ImDrawIdx *>(index_data);
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -66,7 +68,7 @@ const ImGuiWindowFlags HPPGui::common_flags  = ImGuiWindowFlags_NoMove |
 const ImGuiWindowFlags HPPGui::options_flags = HPPGui::common_flags;
 const ImGuiWindowFlags HPPGui::info_flags    = HPPGui::common_flags | ImGuiWindowFlags_NoInputs;
 
-HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
+HPPGui::HPPGui(VulkanSample<BindingType::Cpp> &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
     sample{sample_}, content_scale_factor{window.get_content_scale_factor()}, dpi_factor{window.get_dpi_factor() * content_scale_factor}, explicit_update{explicit_update}, stats_view(stats)
 {
 	ImGui::CreateContext();
@@ -131,20 +133,19 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 	auto &device = sample.get_render_context().get_device();
 
 	// Create target image for copy
-	vk::Extent3D font_extent(to_u32(tex_width), to_u32(tex_height), 1u);
-
-	font_image = std::make_unique<vkb::core::HPPImage>(device, font_extent, vk::Format::eR8G8B8A8Unorm,
-	                                                   vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
-	font_image->set_debug_name("GUI font image");
+	font_image =
+	    vkb::core::HPPImageBuilder(to_u32(tex_width), to_u32(tex_height))
+	        .with_format(vk::Format::eR8G8B8A8Unorm)
+	        .with_usage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst)
+	        .with_debug_name("GUI font image")
+	        .build_unique(device);
 
 	font_image_view = std::make_unique<vkb::core::HPPImageView>(*font_image, vk::ImageViewType::e2D);
 	font_image_view->set_debug_name("View on GUI font image");
 
 	// Upload font data into the vulkan image memory
 	{
-		vkb::core::HPPBuffer stage_buffer(device, upload_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY, 0);
-		stage_buffer.update({font_data, font_data + upload_size});
+		vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(device, upload_size, font_data);
 
 		auto &command_buffer = device.get_command_pool().request_command_buffer();
 
@@ -225,11 +226,21 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 
 	if (explicit_update)
 	{
-		vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(sample.get_render_context().get_device(), 1, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
-		vertex_buffer->set_debug_name("GUI vertex buffer");
+		auto &device = sample.get_render_context().get_device();
 
-		index_buffer = std::make_unique<vkb::core::HPPBuffer>(sample.get_render_context().get_device(), 1, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
-		index_buffer->set_debug_name("GUI index buffer");
+		vertex_buffer =
+		    vkb::core::HPPBufferBuilder(1)
+		        .with_usage(vk::BufferUsageFlagBits::eVertexBuffer)
+		        .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
+		        .with_debug_name("GUI vertex buffer")
+		        .build_unique(device);
+
+		index_buffer =
+		    vkb::core::HPPBufferBuilder(1)
+		        .with_usage(vk::BufferUsageFlagBits::eIndexBuffer)
+		        .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
+		        .with_debug_name("GUI index buffer")
+		        .build_unique(device);
 	}
 }
 
@@ -392,7 +403,7 @@ bool HPPGui::update_buffers()
 
 void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
 {
-	ImDrawData                     *draw_data    = ImGui::GetDrawData();
+	ImDrawData	                 *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
 
 	if (!draw_data || (draw_data->TotalVtxCount == 0) || (draw_data->TotalIdxCount == 0))
@@ -691,7 +702,9 @@ bool HPPGui::is_debug_view_active() const
 HPPGui::StatsView::StatsView(const vkb::stats::HPPStats *stats)
 {
 	if (stats == nullptr)
+	{
 		return;
+	}
 
 	// Request graph data information for each stat and record it in graph_map
 	const std::set<StatIndex> &indices = stats->get_requested_stats();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,7 @@ namespace vkbtest
 {
 bool VulkanTest::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!vkb::VulkanSample::prepare(options))
+	if (!vkb::VulkanSample<vkb::BindingType::C>::prepare(options))
 	{
 		return false;
 	}
@@ -39,7 +39,7 @@ bool VulkanTest::prepare(const vkb::ApplicationOptions &options)
 
 void VulkanTest::update(float delta_time)
 {
-	VulkanSample::update(delta_time);
+	VulkanSample<vkb::BindingType::C>::update(delta_time);
 
 	screenshot(get_render_context(), get_name());
 

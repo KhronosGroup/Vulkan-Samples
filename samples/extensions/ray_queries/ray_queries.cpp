@@ -17,8 +17,8 @@
  */
 
 #include "ray_queries.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
-#include "platform/filesystem.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
@@ -99,9 +99,9 @@ RayQueries::RayQueries()
 
 RayQueries::~RayQueries()
 {
-	if (device)
+	if (has_device())
 	{
-		auto device_ptr = device->get_handle();
+		auto device_ptr = get_device().get_handle();
 		vertex_buffer.reset();
 		index_buffer.reset();
 		uniform_buffer.reset();
@@ -214,7 +214,7 @@ uint64_t RayQueries::get_buffer_device_address(VkBuffer buffer)
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer = buffer;
-	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
+	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 }
 
 void RayQueries::create_top_level_acceleration_structure()
@@ -291,7 +291,7 @@ void RayQueries::load_scene()
 {
 	model = {};
 
-	vkb::GLTFLoader loader{*device};
+	vkb::GLTFLoader loader{get_device()};
 	auto            scene = loader.read_scene_from_file("scenes/sponza/Sponza01.gltf");
 
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
@@ -518,7 +518,7 @@ void RayQueries::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_ray_queries()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_queries()
 {
 	return std::make_unique<RayQueries>();
 }
