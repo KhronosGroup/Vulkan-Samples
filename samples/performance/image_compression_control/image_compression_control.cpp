@@ -21,7 +21,6 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/platform.h"
-
 #include "rendering/postprocessing_renderpass.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
@@ -117,7 +116,7 @@ void ImageCompressionControlSample::create_render_context()
 	 * The framework expects a prioritized list of surface formats. For this sample, include
 	 * only those that can be compressed.
 	 */
-	std::vector<vk::SurfaceFormatKHR> surface_formats_that_support_compression;
+	std::vector<VkSurfaceFormatKHR> surface_formats_that_support_compression;
 
 	/**
 	 * To query for compression support, VK_EXT_image_compression_control_swapchain allows to
@@ -132,11 +131,11 @@ void ImageCompressionControlSample::create_render_context()
 	{
 		if (surface_compression_properties.compression_properties.imageCompressionFixedRateFlags != VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT)
 		{
-			vk::SurfaceFormatKHR surface_format({surface_compression_properties.surface_format.surfaceFormat.format,
-			                                     surface_compression_properties.surface_format.surfaceFormat.colorSpace});
+			VkSurfaceFormatKHR surface_format = {surface_compression_properties.surface_format.surfaceFormat.format,
+			                                     surface_compression_properties.surface_format.surfaceFormat.colorSpace};
 
 			LOGI("  \t{}:\t{}",
-			     vkb::to_string(static_cast<VkSurfaceFormatKHR>(surface_format)),
+			     vkb::to_string(surface_format),
 			     vkb::image_compression_fixed_rate_flags_to_string(surface_compression_properties.compression_properties.imageCompressionFixedRateFlags));
 
 			surface_formats_that_support_compression.push_back(surface_format);
@@ -153,13 +152,13 @@ void ImageCompressionControlSample::create_render_context()
 	else
 	{
 		// Filter default list to those formats that support compression
-		std::vector<vk::SurfaceFormatKHR> new_surface_priority_list;
+		std::vector<VkSurfaceFormatKHR> new_surface_priority_list;
 
-		for (size_t i = 0; i < default_surface_priority_list.size(); i++)
+		for (size_t i = 0; i < get_surface_priority_list().size(); i++)
 		{
 			auto it = std::find_if(surface_formats_that_support_compression.begin(), surface_formats_that_support_compression.end(),
-			                       [&](vk::SurfaceFormatKHR &sf) { return default_surface_priority_list[i].format == sf.format &&
-				                                                          default_surface_priority_list[i].colorSpace == sf.colorSpace; });
+			                       [&](VkSurfaceFormatKHR &sf) { return get_surface_priority_list()[i].format == sf.format &&
+				                                                        get_surface_priority_list()[i].colorSpace == sf.colorSpace; });
 			if (it != surface_formats_that_support_compression.end())
 			{
 				new_surface_priority_list.push_back(*it);
@@ -174,7 +173,7 @@ void ImageCompressionControlSample::create_render_context()
 			new_surface_priority_list.push_back(remaining_format);
 		}
 
-		VulkanSample::create_render_context(reinterpret_cast<std::vector<VkSurfaceFormatKHR> const &>(new_surface_priority_list));
+		VulkanSample<vkb::BindingType::C>::create_render_context(new_surface_priority_list);
 	}
 
 	/**
@@ -334,8 +333,8 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 
 	// Update memory footprint values in GUI (displayed in MB)
 	const float bytes_in_mb = 1024 * 1024;
-	footprint_swapchain     = swapchain_image.get_image_allocated_size() / bytes_in_mb;
-	footprint_color         = color_image.get_image_allocated_size() / bytes_in_mb;
+	footprint_swapchain     = swapchain_image.get_image_required_size() / bytes_in_mb;
+	footprint_color         = color_image.get_image_required_size() / bytes_in_mb;
 
 	scene_load_store.clear();
 	std::vector<vkb::core::Image> images;

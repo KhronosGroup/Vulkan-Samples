@@ -194,7 +194,7 @@ std::unordered_set<ImageView *> &Image::get_views()
 	return views;
 }
 
-VkDeviceSize Image::get_image_allocated_size() const
+VkDeviceSize Image::get_image_required_size() const
 {
 	VkMemoryRequirements memory_requirements;
 

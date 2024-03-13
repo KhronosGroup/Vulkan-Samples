@@ -253,21 +253,23 @@ class VulkanSample : public vkb::Application
 	 */
 	void create_render_context(const std::vector<SurfaceFormatType> &surface_priority_list);
 
-	DeviceType               &get_device();
-	DeviceType const         &get_device() const;
-	GuiType                  &get_gui();
-	GuiType const            &get_gui() const;
-	InstanceType             &get_instance();
-	InstanceType const       &get_instance() const;
-	RenderPipelineType       &get_render_pipeline();
-	RenderPipelineType const &get_render_pipeline() const;
-	sg::Scene                &get_scene();
-	StatsType                &get_stats();
-	SurfaceType               get_surface() const;
-	bool                      has_device() const;
-	bool                      has_gui() const;
-	bool                      has_render_pipeline() const;
-	bool                      has_scene();
+	DeviceType                           &get_device();
+	DeviceType const                     &get_device() const;
+	GuiType                              &get_gui();
+	GuiType const                        &get_gui() const;
+	std::vector<SurfaceFormatType>       &get_surface_priority_list();
+	std::vector<SurfaceFormatType> const &get_surface_priority_list() const;
+	InstanceType                         &get_instance();
+	InstanceType const                   &get_instance() const;
+	RenderPipelineType                   &get_render_pipeline();
+	RenderPipelineType const             &get_render_pipeline() const;
+	sg::Scene                            &get_scene();
+	StatsType                            &get_stats();
+	SurfaceType                           get_surface() const;
+	bool                                  has_device() const;
+	bool                                  has_gui() const;
+	bool                                  has_render_pipeline() const;
+	bool                                  has_scene();
 
 	/**
 	 * @brief Loads the scene
@@ -326,13 +328,6 @@ class VulkanSample : public vkb::Application
 	 * @brief Set viewport and scissor state in command buffer for a given extent
 	 */
 	static void set_viewport_and_scissor(CommandBufferType const &command_buffer, Extent2DType const &extent);
-
-	/**
-	 * @brief A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	 */
-	std::vector<vk::SurfaceFormatKHR> default_surface_priority_list = {
-	    {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	    {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	/// <summary>
 	/// PRIVATE INTERFACE
@@ -397,6 +392,13 @@ class VulkanSample : public vkb::Application
 	 * @brief The Vulkan surface
 	 */
 	vk::SurfaceKHR surface;
+
+	/**
+	 * @brief A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
+	 */
+	std::vector<vk::SurfaceFormatKHR> surface_priority_list = {
+	    {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	    {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	/**
 	 * @brief The configuration of the sample
@@ -477,7 +479,7 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanS
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::create_render_context()
 {
-	create_render_context_impl(default_surface_priority_list);
+	create_render_context_impl(surface_priority_list);
 }
 
 template <vkb::BindingType bindingType>
@@ -696,6 +698,32 @@ inline typename VulkanSample<bindingType>::GuiType const &VulkanSample<bindingTy
 	else
 	{
 		return reinterpret_cast<vkb::Gui const &>(*gui);
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline std::vector<typename VulkanSample<bindingType>::SurfaceFormatType> &VulkanSample<bindingType>::get_surface_priority_list()
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return surface_priority_list;
+	}
+	else
+	{
+		return reinterpret_cast<std::vector<VkSurfaceFormatKHR> &>(surface_priority_list);
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline std::vector<typename VulkanSample<bindingType>::SurfaceFormatType> const &VulkanSample<bindingType>::get_surface_priority_list() const
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return surface_priority_list;
+	}
+	else
+	{
+		return reinterpret_cast<std::vector<VkSurfaceFormatKHR> const &>(surface_priority_list);
 	}
 }
 

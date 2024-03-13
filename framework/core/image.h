@@ -191,7 +191,7 @@ class Image : public allocated::Allocated<VkImage>
 
 	std::unordered_set<ImageView *> &get_views();
 
-	VkDeviceSize get_image_allocated_size() const;
+	VkDeviceSize get_image_required_size() const;
 
 	VkImageCompressionPropertiesEXT get_applied_compression() const;
 
