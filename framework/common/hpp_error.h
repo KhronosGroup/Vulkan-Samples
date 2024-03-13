@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ namespace common
  *
  * See vkb::VulkanException for documentation
  */
-class HPPVulkanException : private vkb::VulkanException
+class HPPVulkanException : public vkb::VulkanException
 {
   public:
 	HPPVulkanException(vk::Result result, std::string const &msg = "Vulkan error") :

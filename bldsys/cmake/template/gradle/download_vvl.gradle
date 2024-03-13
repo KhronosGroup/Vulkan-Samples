@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 /*
- * Copyright (c) 2022, The Android Open Source Project.
+ * Copyright (c) 2022-2024, The Android Open Source Project.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ apply plugin: 'com.android.application'
  */
 
 // get the validation layer version.
-def VVL_VER = "1.3.231.1"
+def VVL_VER = "1.3.275.0"
 if (ext.has("vvl_version")) {
     VVL_VER = ext.vvl_version
 }
@@ -49,7 +49,7 @@ def VVL_SO_NAME = "libVkLayer_khronos_validation.so"
 
 // download the release zip file to ${VVL_LIB_ROOT}/
 task download {
-    def VVL_ZIP_NAME = "releases/download/sdk-${VVL_VER}/android-binaries-${VVL_VER}.zip"
+    def VVL_ZIP_NAME = "releases/download/vulkan-sdk-${VVL_VER}/android-binaries-${VVL_VER}.zip"
     mkdir "${VVL_LIB_ROOT}"
     def f = new File("${VVL_LIB_ROOT}/android-binaries-${VVL_VER}.zip")
     new URL("${VVL_SITE}/${VVL_ZIP_NAME}")
@@ -62,7 +62,7 @@ task unzip(dependsOn: download, type: Copy) {
     into file("${VVL_JNILIB_DIR}")
 }
 android.sourceSets.main.jniLibs {
-        srcDirs += ["${VVL_JNILIB_DIR}"]
+        srcDirs += ["${VVL_JNILIB_DIR}/android-binaries-${VVL_VER}"]
 }
 
 // add vvl download as an application dependency.
@@ -75,3 +75,6 @@ dependencies {
     }
 }
 
+project.afterEvaluate{
+    project.getTasks().getByName("mergeReleaseJniLibFolders").dependsOn(unzip)
+}

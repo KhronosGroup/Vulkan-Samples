@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@
 /**
  * @brief Using multiple queues to achieve more parallelism on the GPU
  */
-class AsyncComputeSample : public vkb::VulkanSample
+class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	AsyncComputeSample();
@@ -118,4 +118,4 @@ class AsyncComputeSample : public vkb::VulkanSample
 	vkb::RenderTarget &get_current_forward_render_target();
 };
 
-std::unique_ptr<vkb::VulkanSample> create_async_compute();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_async_compute();

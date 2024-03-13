@@ -1,5 +1,6 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,6 +41,12 @@ using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
 
 namespace vkb
 {
+enum class BindingType
+{
+	C,
+	Cpp
+};
+
 /**
  * @brief Helper function to determine if a Vulkan format is depth only.
  * @param format Vulkan format to check.
@@ -77,6 +84,14 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
                                        VK_FORMAT_D16_UNORM});
 
 /**
+ * @brief Helper function to pick a blendable format from a priority ordered list
+ * @param physical_device The physical device to check the formats against
+ * @param format_priority_list List of formats in order of priority
+ * @return The selected format
+ */
+VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &format_priority_list);
+
+/**
  * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
  * @param descriptor_type Vulkan descriptor type to check.
  * @return True if type is dynamic buffer, false otherwise.
@@ -97,14 +112,22 @@ bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
  */
 int32_t get_bits_per_pixel(VkFormat format);
 
+enum class ShaderSourceLanguage
+{
+	GLSL,
+	HLSL,
+	SPV,
+};
+
 /**
  * @brief Helper function to create a VkShaderModule
  * @param filename The shader location
  * @param device The logical device
  * @param stage The shader stage
+ * @param src_language The shader language
  * @return The string to return.
  */
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage);
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL);
 
 /**
  * @brief Helper function to select a VkSurfaceFormatKHR

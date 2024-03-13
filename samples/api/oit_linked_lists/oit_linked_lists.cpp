@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Google
+/* Copyright (c) 2023-2024, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,7 @@ OITLinkedLists::OITLinkedLists()
 
 OITLinkedLists::~OITLinkedLists()
 {
-	if (!device)
+	if (!has_device())
 	{
 		return;
 	}
@@ -75,9 +75,12 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 
 bool OITLinkedLists::resize(const uint32_t width, const uint32_t height)
 {
-	destroy_sized_objects();
-	create_sized_objects(width, height);
-	update_descriptors();
+	if ((width != this->width) || (height != this->height))
+	{
+		destroy_sized_objects();
+		create_sized_objects(width, height);
+		update_descriptors();
+	}
 	ApiVulkanSample::resize(width, height);
 	return true;
 }
@@ -515,7 +518,7 @@ void OITLinkedLists::fill_instance_data()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_linked_lists()
 {
 	return std::make_unique<OITLinkedLists>();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@
 /**
  * @brief Pipeline creation and caching
  */
-class PipelineCache : public vkb::VulkanSample
+class PipelineCache : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	PipelineCache();
@@ -53,4 +53,4 @@ class PipelineCache : public vkb::VulkanSample
 	virtual void draw_gui() override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_pipeline_cache();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_pipeline_cache();

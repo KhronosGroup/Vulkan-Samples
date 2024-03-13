@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -33,7 +33,7 @@ All remote git usage is handled automatically.
 To update your local repository to use main please use the following commands
 
 ----
-git branch -m master main git fetch origin git branch -u origin/main main git remote set-head origin -a
+git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a
 ----
 endif::[]
 

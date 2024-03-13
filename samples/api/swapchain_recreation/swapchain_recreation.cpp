@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Google
+/* Copyright (c) 2023-2024, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,10 +17,10 @@
 
 #include "swapchain_recreation.h"
 
-#include "common/logging.h"
 #include "common/vk_common.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 
 static constexpr uint32_t INVALID_IMAGE_INDEX = std::numeric_limits<uint32_t>::max();
 

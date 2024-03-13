@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,7 +42,7 @@ DescriptorBufferBasic::DescriptorBufferBasic()
 
 DescriptorBufferBasic::~DescriptorBufferBasic()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -304,7 +304,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 		VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
 		image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
-		vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * uniform_binding_descriptor.size + uniform_binding_descriptor.offset);
+		vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_binding_descriptor.size + image_binding_descriptor.offset);
 	}
 
 	// For uniform buffers we only need to put their buffer device addresses into the descriptor buffers
@@ -466,7 +466,7 @@ void DescriptorBufferBasic::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_buffer_basic()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_buffer_basic()
 {
 	return std::make_unique<DescriptorBufferBasic>();
 }

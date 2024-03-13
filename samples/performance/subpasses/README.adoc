@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -25,7 +25,7 @@ endif::[]
 
 == Overview
 
-Vulkan introduces the concept of _subpasses_ to subdivide a single xref:../render_passes/README.adoc[render pass] into separate logical phases.
+Vulkan introduces the concept of _subpasses_ to subdivide a single xref:samples/performance/render_passes/README.adoc[render pass] into separate logical phases.
 The benefit of using subpasses over multiple render passes is that a GPU is able to perform various optimizations.
 Tile-based renderers, for example, can take advantage of tile memory, which being on chip is decisively faster than external memory, potentially saving a considerable amount of bandwidth.
 
@@ -151,7 +151,7 @@ As you can see in the above screenshot, we see roughly a double in fragment jobs
 * Keep your G-buffer budget for color small.
 * Use `DEPTH_STENCIL_READ_ONLY` image layout for depth after the geometry pass is done.
 * Use `LAZILY_ALLOCATED` memory to back images for every attachment except for the light buffer, which is the only texture written out to memory.
-* Follow the basic xref:../render_passes/README.adoc[render pass best practices], with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.
+* Follow the basic xref:samples/performance/render_passes/README.adoc[render pass best practices], with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.
 
 *Don't*
 

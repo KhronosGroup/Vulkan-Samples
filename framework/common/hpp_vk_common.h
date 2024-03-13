@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,7 @@
 
 #include "common/vk_common.h"
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_format_traits.hpp"
 
@@ -102,9 +102,9 @@ inline bool is_dynamic_buffer_descriptor_type(vk::DescriptorType descriptor_type
 	return vkb::is_dynamic_buffer_descriptor_type(static_cast<VkDescriptorType>(descriptor_type));
 }
 
-inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
+inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL)
 {
-	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
+	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage), src_language));
 }
 
 inline void image_layout_transition(vk::CommandBuffer command_buffer,
@@ -112,7 +112,7 @@ inline void image_layout_transition(vk::CommandBuffer command_buffer,
                                     vk::ImageLayout   old_layout,
                                     vk::ImageLayout   new_layout)
 {
-	vkb::image_layout_transition(command_buffer,
+	vkb::image_layout_transition(static_cast<VkCommandBuffer>(command_buffer),
 	                             static_cast<VkImage>(image),
 	                             static_cast<VkImageLayout>(old_layout),
 	                             static_cast<VkImageLayout>(new_layout));
@@ -124,11 +124,32 @@ inline void image_layout_transition(vk::CommandBuffer         command_buffer,
                                     vk::ImageLayout           new_layout,
                                     vk::ImageSubresourceRange subresource_range)
 {
-	vkb::image_layout_transition(command_buffer,
+	vkb::image_layout_transition(static_cast<VkCommandBuffer>(command_buffer),
 	                             static_cast<VkImage>(image),
 	                             static_cast<VkImageLayout>(old_layout),
 	                             static_cast<VkImageLayout>(new_layout),
 	                             static_cast<VkImageSubresourceRange>(subresource_range));
+}
+
+inline void image_layout_transition(vk::CommandBuffer                command_buffer,
+                                    vk::Image                        image,
+                                    vk::PipelineStageFlags           src_stage_mask,
+                                    vk::PipelineStageFlags           dst_stage_mask,
+                                    vk::AccessFlags                  src_access_mask,
+                                    vk::AccessFlags                  dst_access_mask,
+                                    vk::ImageLayout                  old_layout,
+                                    vk::ImageLayout                  new_layout,
+                                    vk::ImageSubresourceRange const &subresource_range)
+{
+	vkb::image_layout_transition(static_cast<VkCommandBuffer>(command_buffer),
+	                             static_cast<VkImage>(image),
+	                             static_cast<VkPipelineStageFlags>(src_stage_mask),
+	                             static_cast<VkPipelineStageFlags>(dst_stage_mask),
+	                             static_cast<VkAccessFlags>(src_access_mask),
+	                             static_cast<VkAccessFlags>(dst_access_mask),
+	                             static_cast<VkImageLayout>(old_layout),
+	                             static_cast<VkImageLayout>(new_layout),
+	                             static_cast<VkImageSubresourceRange const &>(subresource_range));
 }
 
 inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice             gpu,
@@ -149,6 +170,19 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice            
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
+}
+
+inline vk::Format choose_blendable_format(vk::PhysicalDevice gpu, const std::vector<vk::Format> &format_priority_list)
+{
+	for (const auto &format : format_priority_list)
+	{
+		vk::FormatProperties fmt_props = gpu.getFormatProperties(format);
+
+		if (fmt_props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
+			return format;
+	}
+
+	throw std::runtime_error("No suitable blendable format could be determined");
 }
 
 // helper functions not backed by vk_common.h

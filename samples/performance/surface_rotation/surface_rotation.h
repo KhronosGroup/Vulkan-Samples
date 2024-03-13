@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@
 /**
  * @brief Appropriate use of surface rotation
  */
-class SurfaceRotation : public vkb::VulkanSample
+class SurfaceRotation : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	SurfaceRotation();
@@ -65,4 +65,4 @@ class SurfaceRotation : public vkb::VulkanSample
 	void handle_no_resize_rotations();
 };
 
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_surface_rotation();

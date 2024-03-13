@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,10 +28,9 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "force_close/force_close.h"
-#include "hpp_vulkan_sample.h"
-#include "platform/filesystem.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
@@ -116,6 +115,11 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 		return ExitCode::Close;
 	}
 
+	if (!app_requested())
+	{
+		return ExitCode::NoSample;
+	}
+
 	create_window(window_properties);
 
 	if (!window)
@@ -131,8 +135,7 @@ ExitCode Platform::main_loop()
 {
 	if (!app_requested())
 	{
-		LOGI("An app was not requested, can not continue");
-		return ExitCode::Close;
+		return ExitCode::NoSample;
 	}
 
 	while (!window->should_close() && !close_requested)
@@ -198,20 +201,23 @@ void Platform::update()
 			delta_time = simulation_frame_time;
 		}
 
+		active_app->update_overlay(delta_time, [=]() {
+			on_update_ui_overlay(*active_app->get_drawer());
+		});
 		active_app->update(delta_time);
 
-		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
-		{
-			if (app->has_render_context())
-			{
-				on_post_draw(app->get_render_context());
-			}
-		}
-		else if (auto *app = dynamic_cast<HPPVulkanSample *>(active_app.get()))
+		if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::Cpp> *>(active_app.get()))
 		{
 			if (app->has_render_context())
 			{
 				on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+			}
+		}
+		else if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::C> *>(active_app.get()))
+		{
+			if (app->has_render_context())
+			{
+				on_post_draw(app->get_render_context());
 			}
 		}
 	}
@@ -228,6 +234,20 @@ void Platform::terminate(ExitCode code)
 		}
 	}
 
+	if (code == ExitCode::NoSample)
+	{
+		LOGI("");
+		LOGI("No sample was requested or the selected sample does not exist");
+		LOGI("");
+		LOGI("To run a specific sample use the \"sample\" argument, e.g.");
+		LOGI("");
+		LOGI("\tvulkan_samples sample hello_triangle");
+		LOGI("");
+		LOGI("To get a list of available samples, use the \"samples\" argument")
+		LOGI("To get a list of available command line options, use the \"-h\" or \"--help\" argument");
+		LOGI("");
+	}
+
 	if (active_app)
 	{
 		std::string id = active_app->get_name();
@@ -242,14 +262,14 @@ void Platform::terminate(ExitCode code)
 
 	on_platform_close();
 
+#ifdef PLATFORM__WINDOWS
 	// Halt on all unsuccessful exit codes unless ForceClose is in use
 	if (code != ExitCode::Success && !using_plugin<::plugins::ForceClose>())
 	{
-#ifndef ANDROID
 		std::cout << "Press return to continue";
 		std::cin.get();
-#endif
 	}
+#endif
 }
 
 void Platform::close()
@@ -446,6 +466,11 @@ void Platform::on_app_close(const std::string &app_id)
 void Platform::on_platform_close()
 {
 	HOOK(Hook::OnPlatformClose, on_platform_close());
+}
+
+void Platform::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	HOOK(Hook::OnUpdateUi, on_update_ui_overlay(drawer));
 }
 
 #undef HOOK

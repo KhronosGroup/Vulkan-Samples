@@ -1,5 +1,6 @@
 /*
- * Copyright 2023 Nintendo
+ * Copyright 2023-2024 Nintendo
+ * Copyright 2023-2024, Sascha Willems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +19,8 @@
 #include <glsl_compiler.h>
 #include <heightmap.h>
 #include <unordered_map>
+
+#include <json.hpp>
 
 ShaderObject::ShaderObject()
 {
@@ -42,7 +45,7 @@ ShaderObject::ShaderObject()
 
 ShaderObject::~ShaderObject()
 {
-	if (device)
+	if (has_device())
 	{
 		auto vkdevice = get_device().get_handle();
 
@@ -111,7 +114,7 @@ const std::vector<const char *> ShaderObject::get_validation_layers()
 
 bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)
 {
-	if (!device)
+	if (!has_device())
 	{
 		return false;
 	}
@@ -119,7 +122,7 @@ bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)
 	ApiVulkanSample::resize(width, height);
 
 	auto vkdevice = get_device().get_handle();
-	device->wait_idle();
+	get_device().wait_idle();
 
 	// Destroy Post Processing Image
 	vkDestroyImageView(vkdevice, post_process_image.image_view, nullptr);
@@ -171,10 +174,6 @@ bool ShaderObject::prepare(const vkb::ApplicationOptions &options)
 	camera.set_rotation({19.f, 312.f, 0.f});
 	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 1024.f, 0.1f);
 
-	// For UI need to setup FBO and render pass
-	setup_framebuffer();
-	setup_render_pass();
-
 	// Setup resources for sample
 	create_default_sampler();
 	load_assets();
@@ -205,12 +204,12 @@ void ShaderObject::setup_framebuffer()
 	{
 		if (framebuffers[i] != VK_NULL_HANDLE)
 		{
-			vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+			vkDestroyFramebuffer(get_device().get_handle(), framebuffers[i], nullptr);
 		}
 	}
 
 	// Create frame buffer for every swap chain image
-	framebuffers.resize(render_context->get_render_frames().size());
+	framebuffers.resize(get_render_context().get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		VkFramebufferCreateInfo framebuffer_create_info = {};
@@ -223,7 +222,7 @@ void ShaderObject::setup_framebuffer()
 		framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 		framebuffer_create_info.layers                  = 1;
 
-		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
+		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
 	}
 }
 
@@ -233,7 +232,7 @@ void ShaderObject::setup_render_pass()
 	VkAttachmentDescription color_attachment{};
 
 	// Color attachment set to load color and ignore stencil
-	color_attachment.format         = render_context->get_format();
+	color_attachment.format         = get_render_context().get_format();
 	color_attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
 	color_attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
 	color_attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -281,7 +280,7 @@ void ShaderObject::setup_render_pass()
 	render_pass_create_info.pDependencies          = &dependency;
 
 	// Create the render pass
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass));
 }
 
 void ShaderObject::create_default_sampler()
@@ -307,7 +306,7 @@ void ShaderObject::create_default_sampler()
 	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &standard_sampler));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &standard_sampler));
 }
 
 void ShaderObject::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -410,6 +409,7 @@ void ShaderObject::load_assets()
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
 	// Setup a mirroring sampler for the height map
+	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
 	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
 	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
 	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -423,6 +423,7 @@ void ShaderObject::load_assets()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &heightmap_texture.sampler));
 
 	// Setup a repeating sampler for the terrain texture layers
+	vkDestroySampler(get_device().get_handle(), terrain_array_textures.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
 	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
 	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
@@ -901,11 +902,8 @@ void ShaderObject::generate_terrain()
 	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
 
 	// Create staging buffers
-	vkb::core::Buffer vertex_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_staging.update(vertices);
-
-	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_staging.update(indices);
+	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	terrain.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                       vertex_buffer_size,
@@ -918,7 +916,7 @@ void ShaderObject::generate_terrain()
 	                                                      VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
@@ -938,7 +936,7 @@ void ShaderObject::generate_terrain()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 void ShaderObject::build_command_buffers()
@@ -1426,8 +1424,8 @@ void ShaderObject::set_initial_state(VkCommandBuffer cmd)
 		const VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		const VkRect2D   scissor  = vkb::initializers::rect2D(width, height, 0, 0);
 
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
+		vkCmdSetViewportWithCountEXT(cmd, 1, &viewport);
+		vkCmdSetScissorWithCountEXT(cmd, 1, &scissor);
 	}
 
 	// Rasterization is always enabled
@@ -2008,7 +2006,7 @@ void ShaderObject::Shader::destroy(VkDevice device)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_shader_object()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_shader_object()
 {
 	return std::make_unique<ShaderObject>();
 }

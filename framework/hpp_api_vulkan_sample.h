@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <hpp_vulkan_sample.h>
-
 #include <camera.h>
 #include <common/hpp_error.h>
 #include <hpp_gui.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
+
+#include "vulkan_sample.h"
 
 /**
  * @brief A swapchain buffer
@@ -60,7 +60,7 @@ struct HPPVertex
  *
  * See vkb::ApiVulkanSample for documentation
  */
-class HPPApiVulkanSample : public vkb::HPPVulkanSample
+class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 {
   public:
 	HPPApiVulkanSample() = default;
@@ -206,8 +206,9 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Records the necessary drawing commands to a command buffer
 	 * @param model The model to draw
 	 * @param command_buffer The command buffer to record to
+	 * @param instance_count The number of instances (default: 1)
 	 */
-	void draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer);
+	void draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer, uint32_t instance_count = 1);
 
 	/**
 	 * @brief Synchronously execute a block code within a command buffer, then submit the command buffer and wait for completion.
@@ -298,14 +299,16 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Load a SPIR-V shader
 	 * @param file The file location of the shader relative to the shaders folder
 	 * @param stage The shader stage
+	 * @param src_language The shader language
 	 */
-	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage);
+	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
 
 	/**
 	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
 	 */
-	void update_overlay(float delta_time);
+	void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
 
 	/**
 	 * @brief If the gui is enabled, then record the drawing commands to a command buffer
@@ -328,7 +331,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Called when the UI overlay is updating, can be used to add custom elements to the overlay
 	 * @param drawer The drawer from the gui to draw certain elements
 	 */
-	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer);
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
 
 	/**
 	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
