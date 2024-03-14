@@ -257,8 +257,6 @@ class VulkanSample : public vkb::Application
 	DeviceType const                     &get_device() const;
 	GuiType                              &get_gui();
 	GuiType const                        &get_gui() const;
-	std::vector<SurfaceFormatType>       &get_surface_priority_list();
-	std::vector<SurfaceFormatType> const &get_surface_priority_list() const;
 	InstanceType                         &get_instance();
 	InstanceType const                   &get_instance() const;
 	RenderPipelineType                   &get_render_pipeline();
@@ -266,6 +264,8 @@ class VulkanSample : public vkb::Application
 	sg::Scene                            &get_scene();
 	StatsType                            &get_stats();
 	SurfaceType                           get_surface() const;
+	std::vector<SurfaceFormatType>       &get_surface_priority_list();
+	std::vector<SurfaceFormatType> const &get_surface_priority_list() const;
 	bool                                  has_device() const;
 	bool                                  has_gui() const;
 	bool                                  has_render_pipeline() const;
