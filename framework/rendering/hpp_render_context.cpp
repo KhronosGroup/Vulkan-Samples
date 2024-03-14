@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,18 +33,18 @@ HPPRenderContext::HPPRenderContext(vkb::core::HPPDevice                    &devi
                                    std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list) :
     device{device}, window{window}, queue{device.get_suitable_graphics_queue()}, surface_extent{window.get_extent().width, window.get_extent().height}
 {
+	vkb::core::HPPSwapchain::set_present_mode_priority_list(present_mode_priority_list);
+	vkb::core::HPPSwapchain::set_surface_format_priority_list(surface_format_priority_list);
 	if (surface)
 	{
 		vk::SurfaceCapabilitiesKHR surface_properties = device.get_gpu().get_handle().getSurfaceCapabilitiesKHR(surface);
-
 		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 		{
-			swapchain =
-			    std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
+			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, surface_extent);
 		}
 		else
 		{
-			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list);
+			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode);
 		}
 	}
 }
@@ -123,7 +123,7 @@ void HPPRenderContext::update_swapchain(const uint32_t image_count)
 	recreate();
 }
 
-void HPPRenderContext::update_swapchain(const std::set<vk::ImageUsageFlagBits> &image_usage_flags)
+void HPPRenderContext::update_swapchain(const vk::ImageUsageFlags &image_usage_flags)
 {
 	if (!swapchain)
 	{

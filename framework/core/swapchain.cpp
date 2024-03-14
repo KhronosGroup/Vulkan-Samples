@@ -77,17 +77,28 @@ inline VkExtent2D choose_extent(
 }
 
 inline VkPresentModeKHR choose_present_mode(
-    VkPresentModeKHR                     request_present_mode,
-    const std::vector<VkPresentModeKHR> &available_present_modes,
-    const std::vector<VkPresentModeKHR> &present_mode_priority_list)
+    const Device    &device,
+    VkSurfaceKHR     surface,
+    VkPresentModeKHR request_present_mode)
 {
+	std::vector<VkPresentModeKHR> available_present_modes;
+	uint32_t                      present_mode_count{0U};
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(device.get_gpu().get_handle(), surface, &present_mode_count, nullptr));
+	available_present_modes.resize(present_mode_count);
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(device.get_gpu().get_handle(), surface, &present_mode_count, available_present_modes.data()));
+	LOGI("Surface supports the following present modes:");
+	for (auto &present_mode : available_present_modes)
+	{
+		LOGI("  \t{}", to_string(present_mode));
+	}
+
 	auto present_mode_it = std::find(available_present_modes.begin(), available_present_modes.end(), request_present_mode);
 
 	if (present_mode_it == available_present_modes.end())
 	{
 		// If nothing found, always default to FIFO
-		VkPresentModeKHR chosen_present_mode = VK_PRESENT_MODE_FIFO_KHR;
-
+		VkPresentModeKHR chosen_present_mode        = VK_PRESENT_MODE_FIFO_KHR;
+		const auto      &present_mode_priority_list = Swapchain::get_present_mode_priority_list();
 		for (auto &present_mode : present_mode_priority_list)
 		{
 			if (std::find(available_present_modes.begin(), available_present_modes.end(), present_mode) != available_present_modes.end())
@@ -108,10 +119,22 @@ inline VkPresentModeKHR choose_present_mode(
 }
 
 inline VkSurfaceFormatKHR choose_surface_format(
-    const VkSurfaceFormatKHR               requested_surface_format,
-    const std::vector<VkSurfaceFormatKHR> &available_surface_formats,
-    const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list)
+    const Device            &device,
+    VkSurfaceKHR             surface,
+    const VkSurfaceFormatKHR requested_surface_format)
 {
+	uint32_t                        surface_format_count{0U};
+	std::vector<VkSurfaceFormatKHR> available_surface_formats;
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(device.get_gpu().get_handle(), surface, &surface_format_count, nullptr));
+	available_surface_formats.resize(surface_format_count);
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(device.get_gpu().get_handle(), surface, &surface_format_count, available_surface_formats.data()));
+
+	LOGI("Surface supports the following surface formats:");
+	for (auto &surface_format : available_surface_formats)
+	{
+		LOGI("  \t{}", to_string(surface_format));
+	}
+
 	// Try to find the requested surface format in the supported surface formats
 	auto surface_format_it = std::find_if(
 	    available_surface_formats.begin(),
@@ -129,6 +152,7 @@ inline VkSurfaceFormatKHR choose_surface_format(
 	// If the requested surface format isn't found, then try to request a format from the priority list
 	if (surface_format_it == available_surface_formats.end())
 	{
+		auto &surface_format_priority_list = Swapchain::get_surface_format_priority_list();
 		for (auto &surface_format : surface_format_priority_list)
 		{
 			surface_format_it = std::find_if(
@@ -213,14 +237,31 @@ inline bool validate_format_feature(VkImageUsageFlagBits image_usage, VkFormatFe
 	}
 }
 
-inline std::set<VkImageUsageFlagBits> choose_image_usage(const std::set<VkImageUsageFlagBits> &requested_image_usage_flags, VkImageUsageFlags supported_image_usage, VkFormatFeatureFlags supported_features)
+static std::set<VkImageUsageFlagBits> flags_in(const VkImageUsageFlags &flags)
 {
-	std::set<VkImageUsageFlagBits> validated_image_usage_flags;
-	for (auto flag : requested_image_usage_flags)
+	std::set<VkImageUsageFlagBits> result;
+	using IntType    = std::underlying_type<VkImageUsageFlagBits>::type;
+	IntType test_bit = 1;
+	while (test_bit != 0)
+	{
+		VkImageUsageFlagBits m = static_cast<VkImageUsageFlagBits>(test_bit);
+		if (flags & m)
+		{
+			result.insert(m);
+		}
+		test_bit <<= 1;
+	}
+	return result;
+}
+
+inline VkImageUsageFlags choose_image_usage(const VkImageUsageFlags &requested_image_usage_flags, VkImageUsageFlags supported_image_usage, VkFormatFeatureFlags supported_features)
+{
+	VkImageUsageFlags validated_image_usage_flags;
+	for (auto flag : flags_in(requested_image_usage_flags))
 	{
 		if ((flag & supported_image_usage) && validate_format_feature(flag, supported_features))
 		{
-			validated_image_usage_flags.insert(flag);
+			validated_image_usage_flags |= flag;
 		}
 		else
 		{
@@ -228,30 +269,31 @@ inline std::set<VkImageUsageFlagBits> choose_image_usage(const std::set<VkImageU
 		}
 	}
 
-	if (validated_image_usage_flags.empty())
+	if (!validated_image_usage_flags)
 	{
 		// Pick the first format from list of defaults, if supported
-		static const std::vector<VkImageUsageFlagBits> image_usage_flags = {
+		static constexpr std::array<VkImageUsageFlagBits, 4> image_usage_flags = {
 		    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		    VK_IMAGE_USAGE_STORAGE_BIT,
 		    VK_IMAGE_USAGE_SAMPLED_BIT,
-		    VK_IMAGE_USAGE_TRANSFER_DST_BIT};
+		    VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+		};
 
 		for (VkImageUsageFlagBits image_usage : image_usage_flags)
 		{
 			if ((image_usage & supported_image_usage) && validate_format_feature(image_usage, supported_features))
 			{
-				validated_image_usage_flags.insert(image_usage);
+				validated_image_usage_flags |= image_usage;
 				break;
 			}
 		}
 	}
 
-	if (!validated_image_usage_flags.empty())
+	if (!validated_image_usage_flags)
 	{
 		// Log image usage flags used
 		std::string usage_list;
-		for (VkImageUsageFlagBits image_usage : validated_image_usage_flags)
+		for (auto image_usage : flags_in(validated_image_usage_flags))
 		{
 			usage_list += to_string(image_usage) + " ";
 		}
@@ -265,7 +307,7 @@ inline std::set<VkImageUsageFlagBits> choose_image_usage(const std::set<VkImageU
 	return validated_image_usage_flags;
 }
 
-inline VkImageUsageFlags composite_image_flags(std::set<VkImageUsageFlagBits> &image_usage_flags)
+inline VkImageUsageFlags composite_image_flags(const std::set<VkImageUsageFlagBits> &image_usage_flags)
 {
 	VkImageUsageFlags image_usage{};
 	for (auto flag : image_usage_flags)
@@ -277,159 +319,154 @@ inline VkImageUsageFlags composite_image_flags(std::set<VkImageUsageFlagBits> &i
 
 }        // namespace
 
-Swapchain::Swapchain(Swapchain &old_swapchain, const VkExtent2D &extent) :
-    Swapchain{old_swapchain,
-              old_swapchain.device,
-              old_swapchain.surface,
-              old_swapchain.properties.present_mode,
-              old_swapchain.present_mode_priority_list,
-              old_swapchain.surface_format_priority_list,
-              extent,
-              old_swapchain.properties.image_count,
-              old_swapchain.properties.pre_transform,
-              old_swapchain.image_usage_flags,
-              old_swapchain.requested_compression,
-              old_swapchain.requested_compression_fixed_rate}
-{}
-
-Swapchain::Swapchain(Swapchain &old_swapchain, const uint32_t image_count) :
-    Swapchain{old_swapchain,
-              old_swapchain.device,
-              old_swapchain.surface,
-              old_swapchain.properties.present_mode,
-              old_swapchain.present_mode_priority_list,
-              old_swapchain.surface_format_priority_list,
-              old_swapchain.properties.extent,
-              image_count,
-              old_swapchain.properties.pre_transform,
-              old_swapchain.image_usage_flags,
-              old_swapchain.requested_compression,
-              old_swapchain.requested_compression_fixed_rate}
-{}
-
-Swapchain::Swapchain(Swapchain &old_swapchain, const std::set<VkImageUsageFlagBits> &image_usage_flags) :
-    Swapchain{old_swapchain,
-              old_swapchain.device,
-              old_swapchain.surface,
-              old_swapchain.properties.present_mode,
-              old_swapchain.present_mode_priority_list,
-              old_swapchain.surface_format_priority_list,
-              old_swapchain.properties.extent,
-              old_swapchain.properties.image_count,
-              old_swapchain.properties.pre_transform,
-              image_usage_flags,
-              old_swapchain.requested_compression,
-              old_swapchain.requested_compression_fixed_rate}
-{}
-
-Swapchain::Swapchain(Swapchain &old_swapchain, const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform) :
-    Swapchain{old_swapchain,
-              old_swapchain.device,
-              old_swapchain.surface,
-              old_swapchain.properties.present_mode,
-              old_swapchain.present_mode_priority_list,
-              old_swapchain.surface_format_priority_list,
-              extent,
-              old_swapchain.properties.image_count,
-              transform,
-              old_swapchain.image_usage_flags,
-              old_swapchain.requested_compression,
-              old_swapchain.requested_compression_fixed_rate}
-{}
-
-Swapchain::Swapchain(Swapchain &old_swapchain, const VkImageCompressionFlagsEXT requested_compression, const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
-    Swapchain{old_swapchain,
-              old_swapchain.device,
-              old_swapchain.surface,
-              old_swapchain.properties.present_mode,
-              old_swapchain.present_mode_priority_list,
-              old_swapchain.surface_format_priority_list,
-              old_swapchain.properties.extent,
-              old_swapchain.properties.image_count,
-              old_swapchain.properties.pre_transform,
-              old_swapchain.image_usage_flags,
-              requested_compression,
-              requested_compression_fixed_rate}
-{}
-
-Swapchain::Swapchain(Device                                   &device,
-                     VkSurfaceKHR                              surface,
-                     const VkPresentModeKHR                    present_mode,
-                     std::vector<VkPresentModeKHR> const      &present_mode_priority_list,
-                     const std::vector<VkSurfaceFormatKHR>    &surface_format_priority_list,
-                     const VkExtent2D                         &extent,
-                     const uint32_t                            image_count,
-                     const VkSurfaceTransformFlagBitsKHR       transform,
-                     const std::set<VkImageUsageFlagBits>     &image_usage_flags,
-                     const VkImageCompressionFlagsEXT          requested_compression,
-                     const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
-    Swapchain{*this, device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, extent, image_count, transform, image_usage_flags}
+SwapchainProperties &SwapchainProperties::with_image_count(uint32_t image_count)
 {
+	this->image_count = image_count;
+	return *this;
 }
 
-Swapchain::Swapchain(Swapchain                                &old_swapchain,
-                     Device                                   &device,
-                     VkSurfaceKHR                              surface,
-                     const VkPresentModeKHR                    present_mode,
-                     std::vector<VkPresentModeKHR> const      &present_mode_priority_list,
-                     const std::vector<VkSurfaceFormatKHR>    &surface_format_priority_list,
-                     const VkExtent2D                         &extent,
-                     const uint32_t                            image_count,
-                     const VkSurfaceTransformFlagBitsKHR       transform,
-                     const std::set<VkImageUsageFlagBits>     &image_usage_flags,
-                     const VkImageCompressionFlagsEXT          requested_compression,
-                     const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
-    device{device},
-    surface{surface},
-    requested_compression{requested_compression},
-    requested_compression_fixed_rate{requested_compression_fixed_rate}
+SwapchainProperties &SwapchainProperties::with_extent(const VkExtent2D &extent)
 {
-	this->present_mode_priority_list   = present_mode_priority_list;
-	this->surface_format_priority_list = surface_format_priority_list;
+	this->extent = extent;
+	return *this;
+}
 
+SwapchainProperties &SwapchainProperties::with_extent_and_transform(const VkExtent2D &extent, VkSurfaceTransformFlagBitsKHR transform)
+{
+	this->extent        = extent;
+	this->pre_transform = transform;
+	return *this;
+}
+
+SwapchainProperties &SwapchainProperties::with_image_usage(const std::set<VkImageUsageFlagBits> &image_usage)
+{
+	this->image_usage = composite_image_flags(image_usage);
+	return *this;
+}
+
+SwapchainProperties &SwapchainProperties::with_compression(VkImageCompressionFlagBitsEXT requested_compression, VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate)
+{
+	this->requested_compression            = requested_compression;
+	this->requested_compression_fixed_rate = requested_compression_fixed_rate;
+	return *this;
+}
+
+SwapchainProperties &SwapchainProperties::validate(vkb::Device &device, VkSurfaceKHR surface)
+{
 	VkSurfaceCapabilitiesKHR surface_capabilities{};
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->device.get_gpu().get_handle(), surface, &surface_capabilities);
-
-	uint32_t surface_format_count{0U};
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_gpu().get_handle(), surface, &surface_format_count, nullptr));
-	surface_formats.resize(surface_format_count);
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_gpu().get_handle(), surface, &surface_format_count, surface_formats.data()));
-
-	LOGI("Surface supports the following surface formats:");
-	for (auto &surface_format : surface_formats)
-	{
-		LOGI("  \t{}", to_string(surface_format));
-	}
-
-	uint32_t present_mode_count{0U};
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_gpu().get_handle(), surface, &present_mode_count, nullptr));
-	present_modes.resize(present_mode_count);
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_gpu().get_handle(), surface, &present_mode_count, present_modes.data()));
-
-	LOGI("Surface supports the following present modes:");
-	for (auto &pm : present_modes)
-	{
-		LOGI("  \t{}", to_string(pm));
-	}
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_gpu().get_handle(), surface, &surface_capabilities);
 
 	// Chose best properties based on surface capabilities
-	properties.image_count    = choose_image_count(image_count, surface_capabilities.minImageCount, surface_capabilities.maxImageCount);
-	properties.extent         = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
-	properties.array_layers   = choose_image_array_layers(1U, surface_capabilities.maxImageArrayLayers);
-	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
+	image_count    = choose_image_count(image_count, surface_capabilities.minImageCount, surface_capabilities.maxImageCount);
+	extent         = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
+	array_layers   = choose_image_array_layers(1U, surface_capabilities.maxImageArrayLayers);
+	surface_format = choose_surface_format(device, surface, surface_format);
 	VkFormatProperties format_properties;
-	vkGetPhysicalDeviceFormatProperties(this->device.get_gpu().get_handle(), properties.surface_format.format, &format_properties);
-	this->image_usage_flags    = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
-	properties.image_usage     = composite_image_flags(this->image_usage_flags);
-	properties.pre_transform   = choose_transform(transform, surface_capabilities.supportedTransforms, surface_capabilities.currentTransform);
-	properties.composite_alpha = choose_composite_alpha(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, surface_capabilities.supportedCompositeAlpha);
+	vkGetPhysicalDeviceFormatProperties(device.get_gpu().get_handle(), surface_format.format, &format_properties);
+	image_usage     = choose_image_usage(image_usage, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
+	pre_transform   = choose_transform(pre_transform, surface_capabilities.supportedTransforms, surface_capabilities.currentTransform);
+	composite_alpha = choose_composite_alpha(composite_alpha, surface_capabilities.supportedCompositeAlpha);
 
 	// Pass through defaults to the create function
-	properties.old_swapchain = old_swapchain.get_handle();
-	properties.present_mode  = present_mode;
+	present_mode = choose_present_mode(device, surface, present_mode);
 
-	properties.present_mode   = choose_present_mode(properties.present_mode, present_modes, present_mode_priority_list);
-	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
+	return *this;
+}
+
+std::vector<VkPresentModeKHR> Swapchain::present_mode_priority_list = {
+    VK_PRESENT_MODE_FIFO_KHR,
+    VK_PRESENT_MODE_MAILBOX_KHR,
+};
+
+std::vector<VkSurfaceFormatKHR> Swapchain::surface_format_priority_list = {
+    {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+    {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+};
+
+void Swapchain::set_present_mode_priority_list(const std::vector<VkPresentModeKHR> &present_mode_priority_list)
+{
+	Swapchain::present_mode_priority_list = present_mode_priority_list;
+}
+
+void Swapchain::set_surface_format_priority_list(const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list)
+{
+	Swapchain::surface_format_priority_list = surface_format_priority_list;
+}
+
+const std::vector<VkPresentModeKHR> &Swapchain::get_present_mode_priority_list()
+{
+	return present_mode_priority_list;
+}
+
+const std::vector<VkSurfaceFormatKHR> &Swapchain::get_surface_format_priority_list()
+{
+	return surface_format_priority_list;
+}
+
+Swapchain::Swapchain(const Swapchain &old_swapchain, const VkExtent2D &extent) :
+    Swapchain{
+        old_swapchain.device, old_swapchain.surface,
+        old_swapchain.old_swapchain_properties().with_extent(extent)}
+{}
+
+Swapchain::Swapchain(const Swapchain &old_swapchain, const uint32_t image_count) :
+    Swapchain{
+        old_swapchain.device, old_swapchain.surface,
+        old_swapchain.old_swapchain_properties().with_image_count(image_count)}
+{}
+
+Swapchain::Swapchain(const Swapchain &old_swapchain, const std::set<VkImageUsageFlagBits> &image_usage_flags) :
+    Swapchain{
+        old_swapchain.device, old_swapchain.surface,
+        old_swapchain.old_swapchain_properties().with_image_usage(image_usage_flags)}
+{}
+
+Swapchain::Swapchain(const Swapchain &old_swapchain, const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform) :
+    Swapchain{
+        old_swapchain.device, old_swapchain.surface,
+        old_swapchain.old_swapchain_properties().with_extent_and_transform(extent, transform)}
+{}
+
+Swapchain::Swapchain(const Swapchain &old_swapchain, const VkImageCompressionFlagBitsEXT requested_compression, const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
+    Swapchain{
+        old_swapchain.device, old_swapchain.surface,
+        old_swapchain.old_swapchain_properties().with_compression(requested_compression, requested_compression_fixed_rate)}
+{}
+
+Swapchain::Swapchain(
+    Device &device, VkSurfaceKHR surface,
+    const VkPresentModeKHR                    present_mode,
+    const VkExtent2D                         &extent,
+    const uint32_t                            image_count,
+    const VkSurfaceTransformFlagBitsKHR       transform,
+    const std::set<VkImageUsageFlagBits>     &image_usage_flags,
+    const VkImageCompressionFlagBitsEXT       requested_compression,
+    const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
+    Swapchain{
+        device,
+        surface,
+        SwapchainProperties{
+            VK_NULL_HANDLE,
+            image_count,
+            extent,
+            {},
+            1,
+            composite_image_flags(image_usage_flags),
+            transform,
+            VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+            present_mode}
+            .validate(device, surface)}
+{}
+
+Swapchain::Swapchain(Device                    &device,
+                     VkSurfaceKHR               surface,
+                     const SwapchainProperties &initial_properties) :
+    device{device},
+    surface{surface},
+    properties{initial_properties}
+{
+	// By the time flow gets here, all the values in properties have been validated, because they had to go through the
+	// Swapchain::Swapchain() which calls SwapchainProperties::validate() (even if it was via a previous swapchain instance)
 
 	VkSwapchainCreateInfoKHR create_info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
 	create_info.minImageCount    = properties.image_count;
@@ -444,32 +481,31 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 	create_info.oldSwapchain     = properties.old_swapchain;
 	create_info.surface          = surface;
 
-	auto                         fixed_rate_flags = requested_compression_fixed_rate;
 	VkImageCompressionControlEXT compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
-	compression_control.flags = requested_compression;
+	compression_control.flags = properties.requested_compression;
 	if (device.is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
 	{
 		create_info.pNext = &compression_control;
 
-		if (VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == requested_compression)
+		if (VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == properties.requested_compression)
 		{
 			// Do not support compression for multi-planar formats
 			compression_control.compressionControlPlaneCount = 1;
-			compression_control.pFixedRateFlags              = &fixed_rate_flags;
+			compression_control.pFixedRateFlags              = &properties.requested_compression_fixed_rate;
 		}
-		else if (VK_IMAGE_COMPRESSION_DISABLED_EXT == requested_compression)
+		else if (VK_IMAGE_COMPRESSION_DISABLED_EXT == properties.requested_compression)
 		{
 			LOGW("(Swapchain) Disabling default (lossless) compression, which can negatively impact performance")
 		}
 	}
 	else
 	{
-		if (VK_IMAGE_COMPRESSION_DEFAULT_EXT != requested_compression)
+		if (VK_IMAGE_COMPRESSION_DEFAULT_EXT != properties.requested_compression)
 		{
 			LOGW("(Swapchain) Compression cannot be controlled because VK_EXT_image_compression_control_swapchain is not enabled")
 
-			this->requested_compression            = VK_IMAGE_COMPRESSION_DEFAULT_EXT;
-			this->requested_compression_fixed_rate = VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT;
+			properties.requested_compression            = VK_IMAGE_COMPRESSION_DEFAULT_EXT;
+			properties.requested_compression_fixed_rate = VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT;
 		}
 	}
 
@@ -488,22 +524,22 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 	VK_CHECK(vkGetSwapchainImagesKHR(device.get_handle(), handle, &image_available, images.data()));
 
 	if (device.is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME) &&
-	    VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == requested_compression)
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == properties.requested_compression)
 	{
 		// Check if fixed-rate compression was applied
 		const auto applied_compression_fixed_rate = vkb::query_applied_compression(device.get_handle(), images[0]).imageCompressionFixedRateFlags;
 
-		if (applied_compression_fixed_rate != requested_compression_fixed_rate)
+		if (applied_compression_fixed_rate != properties.requested_compression_fixed_rate)
 		{
 			LOGW("(Swapchain) Requested fixed-rate compression ({}) was not applied, instead images use {}",
-			     image_compression_fixed_rate_flags_to_string(requested_compression_fixed_rate),
+			     image_compression_fixed_rate_flags_to_string(properties.requested_compression_fixed_rate),
 			     image_compression_fixed_rate_flags_to_string(applied_compression_fixed_rate));
 
-			this->requested_compression_fixed_rate = applied_compression_fixed_rate;
+			properties.requested_compression_fixed_rate = applied_compression_fixed_rate;
 
 			if (VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT == applied_compression_fixed_rate)
 			{
-				this->requested_compression = VK_IMAGE_COMPRESSION_DEFAULT_EXT;
+				properties.requested_compression = VK_IMAGE_COMPRESSION_DEFAULT_EXT;
 			}
 		}
 		else
@@ -522,17 +558,19 @@ Swapchain::~Swapchain()
 	}
 }
 
-Swapchain::Swapchain(Swapchain &&other) :
+SwapchainProperties Swapchain::old_swapchain_properties() const
+{
+	SwapchainProperties result{properties};
+	result.old_swapchain = get_handle();
+	return result;
+}
+
+Swapchain::Swapchain(Swapchain &&other) noexcept :
     device{other.device},
     surface{std::exchange(other.surface, VK_NULL_HANDLE)},
     handle{std::exchange(other.handle, VK_NULL_HANDLE)},
     images{std::exchange(other.images, {})},
-    surface_formats{std::exchange(other.surface_formats, {})},
-    present_modes{std::exchange(other.present_modes, {})},
-    properties{std::exchange(other.properties, {})},
-    present_mode_priority_list{std::exchange(other.present_mode_priority_list, {})},
-    surface_format_priority_list{std::exchange(other.surface_format_priority_list, {})},
-    image_usage_flags{std::move(other.image_usage_flags)}
+    properties{std::exchange(other.properties, {})}
 {
 }
 

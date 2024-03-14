@@ -156,7 +156,7 @@ class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 	 * @brief Updates the swapchains image usage, if a swapchain exists and recreates all resources based on swapchain images
 	 * @param image_usage_flags The usage flags the new swapchain images will have
 	 */
-	void update_swapchain_image_usage_flags(std::set<vk::ImageUsageFlagBits> const &image_usage_flags);
+	void update_swapchain_image_usage_flags(vk::ImageUsageFlags const &image_usage_flags);
 
 	/**
 	 * @brief Handles changes to the surface, e.g. on resize

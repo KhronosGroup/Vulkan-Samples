@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,15 +28,23 @@ class HPPDevice;
 
 struct HPPSwapchainProperties
 {
-	vk::SwapchainKHR                old_swapchain;
-	uint32_t                        image_count{3};
-	vk::Extent2D                    extent;
-	vk::SurfaceFormatKHR            surface_format;
-	uint32_t                        array_layers;
-	vk::ImageUsageFlags             image_usage;
-	vk::SurfaceTransformFlagBitsKHR pre_transform;
-	vk::CompositeAlphaFlagBitsKHR   composite_alpha;
-	vk::PresentModeKHR              present_mode;
+	vk::SwapchainKHR                      old_swapchain;
+	uint32_t                              image_count{3};
+	vk::Extent2D                          extent;
+	vk::SurfaceFormatKHR                  surface_format;
+	uint32_t                              array_layers;
+	vk::ImageUsageFlags                   image_usage;
+	vk::SurfaceTransformFlagBitsKHR       pre_transform;
+	vk::CompositeAlphaFlagBitsKHR         composite_alpha;
+	vk::PresentModeKHR                    present_mode;
+	vk::ImageCompressionFlagBitsEXT       requested_compression{vk::ImageCompressionFlagBitsEXT::eDefault};
+	vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate{vk::ImageCompressionFixedRateFlagBitsEXT::eNone};
+
+	HPPSwapchainProperties &with_image_count(uint32_t image_count);
+	HPPSwapchainProperties &with_extent(const vk::Extent2D &extent);
+	HPPSwapchainProperties &with_extent_and_transform(const vk::Extent2D &extent, vk::SurfaceTransformFlagBitsKHR transform);
+	HPPSwapchainProperties &with_image_usage(const vk::ImageUsageFlags &image_usage);
+	HPPSwapchainProperties &validate(HPPDevice &device, vk::SurfaceKHR surface);
 };
 
 class HPPSwapchain
@@ -58,7 +66,7 @@ class HPPSwapchain
 	 * @brief Constructor to create a swapchain by changing the image usage
 	 * only and preserving the configuration from the old swapchain.
 	 */
-	HPPSwapchain(HPPSwapchain &old_swapchain, const std::set<vk::ImageUsageFlagBits> &image_usage_flags);
+	HPPSwapchain(HPPSwapchain &old_swapchain, const vk::ImageUsageFlags &image_usage_flags);
 
 	/**
 	 * @brief Constructor to create a swapchain by changing the extent
@@ -69,17 +77,15 @@ class HPPSwapchain
 	/**
 	 * @brief Constructor to create a swapchain.
 	 */
-	HPPSwapchain(HPPDevice                               &device,
-	             vk::SurfaceKHR                           surface,
-	             const vk::PresentModeKHR                 present_mode,
-	             const std::vector<vk::PresentModeKHR>   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
-	             const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                                                      {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}},
-	             const vk::Extent2D                      &extent                       = {},
-	             const uint32_t                           image_count                  = 3,
-	             const vk::SurfaceTransformFlagBitsKHR    transform                    = vk::SurfaceTransformFlagBitsKHR::eIdentity,
-	             const std::set<vk::ImageUsageFlagBits>  &image_usage_flags            = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
-	             vk::SwapchainKHR                         old_swapchain                = nullptr);
+	HPPSwapchain(HPPDevice                                  &device,
+	             vk::SurfaceKHR                              surface,
+	             vk::PresentModeKHR                          present_mode,
+	             const vk::Extent2D                         &extent                           = {},
+	             const uint32_t                              image_count                      = 3,
+	             const vk::SurfaceTransformFlagBitsKHR       transform                        = vk::SurfaceTransformFlagBitsKHR::eIdentity,
+	             const vk::ImageUsageFlags                  &image_usage_flags                = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+	             const vk::ImageCompressionFlagBitsEXT       requested_compression            = vk::ImageCompressionFlagBitsEXT::eDefault,
+	             const vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate = vk::ImageCompressionFixedRateFlagBitsEXT::eNone);
 
 	HPPSwapchain(const HPPSwapchain &) = delete;
 
@@ -113,7 +119,20 @@ class HPPSwapchain
 
 	vk::PresentModeKHR get_present_mode() const;
 
+	static void set_present_mode_priority_list(const std::vector<vk::PresentModeKHR> &present_modes);
+
+	static void set_surface_format_priority_list(const std::vector<vk::SurfaceFormatKHR> &surface_formats);
+
+	static const std::vector<vk::PresentModeKHR> &get_present_mode_priority_list();
+
+	static const std::vector<vk::SurfaceFormatKHR> &get_surface_format_priority_list();
+
   private:
+	HPPSwapchain(HPPDevice                    &device,
+	             vk::SurfaceKHR                surface,
+	             const HPPSwapchainProperties &properties);
+	HPPSwapchainProperties old_swapchain_properties() const;
+
 	HPPDevice &device;
 
 	vk::SurfaceKHR surface;
@@ -122,19 +141,13 @@ class HPPSwapchain
 
 	std::vector<vk::Image> images;
 
-	std::vector<vk::SurfaceFormatKHR> surface_formats;
-
-	std::vector<vk::PresentModeKHR> present_modes;
-
 	HPPSwapchainProperties properties;
 
 	// A list of present modes in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	std::vector<vk::PresentModeKHR> present_mode_priority_list;
+	static std::vector<vk::PresentModeKHR> present_mode_priority_list;
 
 	// A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	std::vector<vk::SurfaceFormatKHR> surface_format_priority_list;
-
-	std::set<vk::ImageUsageFlagBits> image_usage_flags;
+	static std::vector<vk::SurfaceFormatKHR> surface_format_priority_list;
 };
 }        // namespace core
 }        // namespace vkb
