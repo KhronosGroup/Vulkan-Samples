@@ -107,4 +107,4 @@ class OITDepthPeeling : public ApiVulkanSample
 	int32_t back_layer_index     = kLayerMaxCount - 1;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_oit_depth_peeling();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_depth_peeling();

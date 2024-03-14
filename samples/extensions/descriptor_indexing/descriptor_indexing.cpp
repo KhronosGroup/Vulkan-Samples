@@ -35,7 +35,7 @@ DescriptorIndexing::DescriptorIndexing()
 
 DescriptorIndexing::~DescriptorIndexing()
 {
-	if (device)
+	if (has_device())
 	{
 		VkDevice vk_device = get_device().get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.pipeline_layout, nullptr);
@@ -519,7 +519,7 @@ void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	// There are lot of properties associated with descriptor_indexing, grab them here.
 	auto vkGetPhysicalDeviceProperties2KHR =
-	    reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
+	    reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(get_instance().get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
 	assert(vkGetPhysicalDeviceProperties2KHR);
 	VkPhysicalDeviceProperties2KHR device_properties{};
 
@@ -529,7 +529,7 @@ void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
 	vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_indexing()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_indexing()
 {
 	return std::make_unique<DescriptorIndexing>();
 }

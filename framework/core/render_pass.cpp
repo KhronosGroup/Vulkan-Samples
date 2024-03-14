@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -449,7 +449,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 	create_info.dependencyCount = to_u32(subpass_dependencies.size());
 	create_info.pDependencies   = subpass_dependencies.data();
 
-	auto result = create_vk_renderpass(device->get_handle(), create_info, &handle);
+	auto result = create_vk_renderpass(get_device().get_handle(), create_info, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -490,7 +490,7 @@ RenderPass::~RenderPass()
 	// Destroy render pass
 	if (handle != VK_NULL_HANDLE)
 	{
-		vkDestroyRenderPass(device->get_handle(), handle, nullptr);
+		vkDestroyRenderPass(get_device().get_handle(), handle, nullptr);
 	}
 }
 
@@ -502,7 +502,7 @@ const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
 const VkExtent2D RenderPass::get_render_area_granularity() const
 {
 	VkExtent2D render_area_granularity = {};
-	vkGetRenderAreaGranularity(device->get_handle(), get_handle(), &render_area_granularity);
+	vkGetRenderAreaGranularity(get_device().get_handle(), get_handle(), &render_area_granularity);
 
 	return render_area_granularity;
 }

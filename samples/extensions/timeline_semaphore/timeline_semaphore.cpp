@@ -59,7 +59,7 @@ TimelineSemaphore::TimelineSemaphore()
 
 TimelineSemaphore::~TimelineSemaphore()
 {
-	if (device)
+	if (has_device())
 	{
 		VkDevice vk_device = get_device().get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.compute_pipeline_layout, nullptr);
@@ -87,7 +87,7 @@ void TimelineSemaphore::on_update_ui_overlay(vkb::Drawer &)
 
 void TimelineSemaphore::finish()
 {
-	if (!device)
+	if (!has_device())
 	{
 		return;
 	}
@@ -222,7 +222,7 @@ void TimelineSemaphore::wait_timeline_cpu(const Timeline &timeline)
 	wait_info.pSemaphores    = &timeline.semaphore;
 	wait_info.semaphoreCount = 1;
 	wait_info.pValues        = &timeline.timeline;
-	VK_CHECK(vkWaitSemaphoresKHR(device->get_handle(), &wait_info, UINT64_MAX));
+	VK_CHECK(vkWaitSemaphoresKHR(get_device().get_handle(), &wait_info, UINT64_MAX));
 }
 
 void TimelineSemaphore::signal_timeline_cpu(const Timeline &timeline, TimelineLock &lock)
@@ -230,7 +230,7 @@ void TimelineSemaphore::signal_timeline_cpu(const Timeline &timeline, TimelineLo
 	VkSemaphoreSignalInfoKHR signal_info{VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO_KHR};
 	signal_info.semaphore = timeline.semaphore;
 	signal_info.value     = timeline.timeline;
-	VK_CHECK(vkSignalSemaphoreKHR(device->get_handle(), &signal_info));
+	VK_CHECK(vkSignalSemaphoreKHR(get_device().get_handle(), &signal_info));
 
 	// This is a special case to handle a scenario where async_queue == queue as well.
 	// Out-of-order submit is not possible with a single queue since the queue will deadlock itself.
@@ -302,14 +302,14 @@ void TimelineSemaphore::async_compute_loop()
 	timer.start();
 
 	// We're going to be recording commands on a thread, so make sure we have our own command pool.
-	VkCommandPool pool = device->create_command_pool(device->get_queue_family_index(VK_QUEUE_COMPUTE_BIT),
-	                                                 VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	VkCommandPool pool = get_device().create_command_pool(get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT),
+	                                                      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 	// Pre-allocate N command buffers. We will however re-record them every iteration.
 	VkCommandBufferAllocateInfo alloc_info =
 	    vkb::initializers::command_buffer_allocate_info(pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, NumAsyncFrames);
 	VkCommandBuffer cmds[NumAsyncFrames];
-	VK_CHECK(vkAllocateCommandBuffers(device->get_handle(), &alloc_info, cmds));
+	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &alloc_info, cmds));
 
 	while (async_compute_worker.alive)
 	{
@@ -418,7 +418,7 @@ void TimelineSemaphore::async_compute_loop()
 	}
 
 	// This also frees command buffers allocated from the pool.
-	vkDestroyCommandPool(device->get_handle(), pool, nullptr);
+	vkDestroyCommandPool(get_device().get_handle(), pool, nullptr);
 }
 
 void TimelineSemaphore::create_timeline_workers()
@@ -462,17 +462,17 @@ void TimelineSemaphore::create_resources()
 
 	// Need CONCURRENT usage here since we will sample from the image
 	// in both graphics and compute queues.
-	if (device->get_queue_family_index(VK_QUEUE_COMPUTE_BIT) !=
-	    device->get_queue_by_present(0).get_family_index())
+	if (get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT) !=
+	    get_device().get_queue_by_present(0).get_family_index())
 	{
-		queue_families[0]  = device->get_queue_by_present(0).get_family_index();
-		queue_families[1]  = device->get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+		queue_families[0]  = get_device().get_queue_by_present(0).get_family_index();
+		queue_families[1]  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 		num_queue_families = 2;
 	}
 
 	for (int i = 0; i < NumAsyncFrames; i++)
 	{
-		images[i] = std::make_unique<vkb::core::Image>(*device, VkExtent3D{grid_width, grid_height, 1},
+		images[i] = std::make_unique<vkb::core::Image>(get_device(), VkExtent3D{grid_width, grid_height, 1},
 		                                               VK_FORMAT_R8G8B8A8_UNORM,
 		                                               VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		                                               VMA_MEMORY_USAGE_GPU_ONLY,
@@ -493,7 +493,7 @@ void TimelineSemaphore::create_resources()
 	sampler_create_info.magFilter    = VK_FILTER_NEAREST;
 	sampler_create_info.maxLod       = VK_LOD_CLAMP_NONE;
 	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	immutable_sampler                = std::make_unique<vkb::core::Sampler>(*device, sampler_create_info);
+	immutable_sampler                = std::make_unique<vkb::core::Sampler>(get_device(), sampler_create_info);
 	VkSampler vk_immutable_sampler   = immutable_sampler->get_handle();
 
 	VkDescriptorSetLayoutBinding storage_binding            = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0);
@@ -502,22 +502,22 @@ void TimelineSemaphore::create_resources()
 	VkDescriptorSetLayoutCreateInfo storage_set_layout_info = vkb::initializers::descriptor_set_layout_create_info(&storage_binding, 1);
 	VkDescriptorSetLayoutCreateInfo sampled_set_layout_info = vkb::initializers::descriptor_set_layout_create_info(&sampled_binding, 1);
 
-	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &storage_set_layout_info, nullptr, &descriptors.storage_layout));
-	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &sampled_set_layout_info, nullptr, &descriptors.sampled_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &storage_set_layout_info, nullptr, &descriptors.storage_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &sampled_set_layout_info, nullptr, &descriptors.sampled_layout));
 
 	VkDescriptorPoolSize pool_sizes[2] = {
 	    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, NumAsyncFrames},
 	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, NumAsyncFrames},
 	};
 	VkDescriptorPoolCreateInfo pool_info = vkb::initializers::descriptor_pool_create_info(2, pool_sizes, NumAsyncFrames * 2);
-	VK_CHECK(vkCreateDescriptorPool(device->get_handle(), &pool_info, nullptr, &descriptors.descriptor_pool));
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &pool_info, nullptr, &descriptors.descriptor_pool));
 
 	VkDescriptorSetAllocateInfo storage_alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptors.descriptor_pool, &descriptors.storage_layout, 1);
 	VkDescriptorSetAllocateInfo sampled_alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptors.descriptor_pool, &descriptors.sampled_layout, 1);
 	for (int i = 0; i < NumAsyncFrames; i++)
 	{
-		VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &storage_alloc_info, &descriptors.storage_images[i]));
-		VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &sampled_alloc_info, &descriptors.sampled_images[i]));
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &storage_alloc_info, &descriptors.storage_images[i]));
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &sampled_alloc_info, &descriptors.sampled_images[i]));
 
 		auto general_info  = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, image_views[i]->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
 		auto readonly_info = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, image_views[i]->get_handle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -526,7 +526,7 @@ void TimelineSemaphore::create_resources()
 		    vkb::initializers::write_descriptor_set(descriptors.storage_images[i], VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0, &general_info),
 		    vkb::initializers::write_descriptor_set(descriptors.sampled_images[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &readonly_info),
 		};
-		vkUpdateDescriptorSets(device->get_handle(), 2, writes, 0, nullptr);
+		vkUpdateDescriptorSets(get_device().get_handle(), 2, writes, 0, nullptr);
 	}
 }
 
@@ -708,7 +708,7 @@ void TimelineSemaphore::request_gpu_features(vkb::PhysicalDevice &gpu)
 	features.timelineSemaphore = VK_TRUE;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_timeline_semaphore()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_timeline_semaphore()
 {
 	return std::make_unique<TimelineSemaphore>();
 }

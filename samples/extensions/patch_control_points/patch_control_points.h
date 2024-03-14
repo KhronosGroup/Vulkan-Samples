@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -105,4 +105,4 @@ class PatchControlPoints : public ApiVulkanSample
 	void create_descriptor_sets();
 };
 
-std::unique_ptr<vkb::VulkanSample> create_patch_control_points();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_patch_control_points();

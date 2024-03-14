@@ -24,9 +24,9 @@ HPPOITLinkedLists::HPPOITLinkedLists()
 
 HPPOITLinkedLists::~HPPOITLinkedLists()
 {
-	if (get_device() && get_device()->get_handle())
+	if (has_device() && get_device().get_handle())
 	{
-		vk::Device device = get_device()->get_handle();
+		vk::Device device = get_device().get_handle();
 
 		device.destroyPipeline(combine_pipeline);
 		device.destroyPipeline(background_pipeline);
@@ -188,7 +188,7 @@ void HPPOITLinkedLists::render(float delta_time)
 
 void HPPOITLinkedLists::clear_sized_resources()
 {
-	vk::CommandBuffer command_buffer = vkb::common::allocate_command_buffer(get_device()->get_handle(), cmd_pool);
+	vk::CommandBuffer command_buffer = vkb::common::allocate_command_buffer(get_device().get_handle(), cmd_pool);
 
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 	command_buffer.begin(command_buffer_begin_info);
@@ -217,13 +217,15 @@ void HPPOITLinkedLists::clear_sized_resources()
 		queue.waitIdle();
 	}
 
-	get_device()->get_handle().freeCommandBuffers(cmd_pool, command_buffer);
+	get_device().get_handle().freeCommandBuffers(cmd_pool, command_buffer);
 }
 
 void HPPOITLinkedLists::create_constant_buffers()
 {
-	scene_constants = std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(SceneConstants), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instance_data   = std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(Instance) * kInstanceCount, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	scene_constants =
+	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(SceneConstants), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_data = std::make_unique<vkb::core::HPPBuffer>(
+	    get_device(), sizeof(Instance) * kInstanceCount, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 vk::DescriptorPool HPPOITLinkedLists::create_descriptor_pool()
@@ -234,7 +236,7 @@ vk::DescriptorPool HPPOITLinkedLists::create_descriptor_pool()
 	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 1, pool_sizes);
-	return get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
+	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 vk::DescriptorSetLayout HPPOITLinkedLists::create_descriptor_set_layout()
@@ -246,21 +248,21 @@ vk::DescriptorSetLayout HPPOITLinkedLists::create_descriptor_set_layout()
 	     {3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment},
 	     {4, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment},
 	     {5, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-	return get_device()->get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
+	return get_device().get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
 }
 
 void HPPOITLinkedLists::create_descriptors()
 {
 	descriptor_set_layout = create_descriptor_set_layout();
 	descriptor_pool       = create_descriptor_pool();
-	descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
+	descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, descriptor_set_layout);
 }
 
 void HPPOITLinkedLists::create_fragment_resources(vk::Extent2D const &extent)
 {
 	const vk::Extent3D image_extent{extent, 1};
 	const vk::Format   image_format{vk::Format::eR32Uint};
-	linked_list_head_image      = std::make_unique<vkb::core::HPPImage>(*get_device(),
+	linked_list_head_image      = std::make_unique<vkb::core::HPPImage>(get_device(),
                                                                    image_extent,
                                                                    image_format,
                                                                    vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferDst,
@@ -271,23 +273,23 @@ void HPPOITLinkedLists::create_fragment_resources(vk::Extent2D const &extent)
 	fragment_max_count                  = extent.width * extent.height * kFragmentsPerPixelAverage;
 	const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
 	fragment_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), fragment_buffer_size, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+	    std::make_unique<vkb::core::HPPBuffer>(get_device(), fragment_buffer_size, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	fragment_counter = std::make_unique<vkb::core::HPPBuffer>(
-	    *get_device(), sizeof(glm::uint), vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
+	    get_device(), sizeof(glm::uint), vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 }
 
 void HPPOITLinkedLists::create_gather_pass_objects(vk::Extent2D const &extent)
 {
 	vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics);
-	gather_render_pass = get_device()->get_handle().createRenderPass({{}, nullptr, subpass});
+	gather_render_pass = get_device().get_handle().createRenderPass({{}, nullptr, subpass});
 
-	gather_framebuffer = vkb::common::create_framebuffer(get_device()->get_handle(), gather_render_pass, {}, extent);
+	gather_framebuffer = vkb::common::create_framebuffer(get_device().get_handle(), gather_render_pass, {}, extent);
 }
 
 void HPPOITLinkedLists::create_pipelines()
 {
-	pipeline_layout = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
+	pipeline_layout = get_device().get_handle().createPipelineLayout({{}, descriptor_set_layout});
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state;
 	blend_attachment_state.colorWriteMask =
@@ -307,7 +309,7 @@ void HPPOITLinkedLists::create_pipelines()
 	vk::VertexInputAttributeDescription    gather_vertex_input_attribute(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos));
 	vk::PipelineVertexInputStateCreateInfo gather_vertex_input_state({}, gather_vertex_input_binding, gather_vertex_input_attribute);
 
-	gather_pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	gather_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                        pipeline_cache,
 	                                                        gather_shader_stages,
 	                                                        gather_vertex_input_state,
@@ -325,7 +327,7 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                                           load_shader("oit_linked_lists/background.frag", vk::ShaderStageFlagBits::eFragment)};
 	vk::PipelineVertexInputStateCreateInfo         vertex_input_state;
 
-	background_pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	background_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                            pipeline_cache,
 	                                                            background_shader_stages,
 	                                                            vertex_input_state,
@@ -352,7 +354,7 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                                     vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
 	                                                                         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
 
-	combine_pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	combine_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                         pipeline_cache,
 	                                                         combine_shader_stages,
 	                                                         vertex_input_state,
@@ -376,8 +378,8 @@ void HPPOITLinkedLists::create_sized_objects(vk::Extent2D const &extent)
 
 void HPPOITLinkedLists::destroy_sized_objects()
 {
-	get_device()->get_handle().destroyFramebuffer(gather_framebuffer);
-	get_device()->get_handle().destroyRenderPass(gather_render_pass);
+	get_device().get_handle().destroyFramebuffer(gather_framebuffer);
+	get_device().get_handle().destroyRenderPass(gather_render_pass);
 
 	fragment_counter.reset();
 	fragment_buffer.reset();
@@ -447,7 +449,7 @@ void HPPOITLinkedLists::update_descriptors()
 	     {descriptor_set, 3, 0, vk::DescriptorType::eStorageBuffer, {}, fragment_buffer_descriptor},
 	     {descriptor_set, 4, 0, vk::DescriptorType::eStorageBuffer, {}, fragment_counter_descriptor},
 	     {descriptor_set, 5, 0, vk::DescriptorType::eCombinedImageSampler, background_texture_descriptor}}};
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPOITLinkedLists::update_scene_constants()

@@ -37,7 +37,7 @@ class HPPMeshShading : public HPPApiVulkanSample
 	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
-	// from vkb::HPPVulkanSample
+	// from vkb::VulkanSample
 	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample
@@ -54,4 +54,4 @@ class HPPMeshShading : public HPPApiVulkanSample
 	vk::DescriptorSetLayout descriptor_set_layout = nullptr;
 };
 
-std::unique_ptr<vkb::HPPVulkanSample> create_hpp_mesh_shading();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_mesh_shading();

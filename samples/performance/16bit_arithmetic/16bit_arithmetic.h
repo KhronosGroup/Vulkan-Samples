@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@
 /**
  * @brief Using 16-bit arithmetic extension to improve arithmetic throughput
  */
-class KHR16BitArithmeticSample : public vkb::VulkanSample
+class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	KHR16BitArithmeticSample();
@@ -69,4 +69,4 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 	};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_16bit_arithmetic();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic();

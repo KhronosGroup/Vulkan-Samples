@@ -30,7 +30,7 @@ TextureCompressionBasisu::TextureCompressionBasisu()
 
 TextureCompressionBasisu::~TextureCompressionBasisu()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -221,7 +221,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &texture.device_memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
 
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	// Image memory barriers for the texture image
 
@@ -253,7 +253,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	// Store current layout for later reuse
 	texture.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	// Clean up staging resources
 	vkFreeMemory(get_device().get_handle(), staging_memory, nullptr);

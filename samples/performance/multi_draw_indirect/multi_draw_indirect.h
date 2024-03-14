@@ -150,4 +150,4 @@ class MultiDrawIndirect : public ApiVulkanSample
 	bool m_supports_buffer_device  = false;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_multi_draw_indirect();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multi_draw_indirect();

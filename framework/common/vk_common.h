@@ -41,6 +41,12 @@ using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
 
 namespace vkb
 {
+enum class BindingType
+{
+	C,
+	Cpp
+};
+
 /**
  * @brief Helper function to determine if a Vulkan format is depth only.
  * @param format Vulkan format to check.

@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <hpp_vulkan_sample.h>
-
 #include <camera.h>
 #include <common/hpp_error.h>
 #include <hpp_gui.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
+
+#include "vulkan_sample.h"
 
 /**
  * @brief A swapchain buffer
@@ -60,7 +60,7 @@ struct HPPVertex
  *
  * See vkb::ApiVulkanSample for documentation
  */
-class HPPApiVulkanSample : public vkb::HPPVulkanSample
+class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 {
   public:
 	HPPApiVulkanSample() = default;

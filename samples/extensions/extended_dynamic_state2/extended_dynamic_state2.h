@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -157,4 +157,4 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	void      cube_animation(float delta_time);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_extended_dynamic_state2();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_extended_dynamic_state2();
