@@ -16,6 +16,7 @@
  */
 
 #include "hpp_render_frame.h"
+#include "hpp_buffer_pool.h"
 #include <common/hpp_resource_caching.h>
 
 constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
@@ -117,8 +118,8 @@ std::vector<uint32_t> HPPRenderFrame::collect_bindings_to_update(const vkb::core
 	return {bindings_to_update.begin(), bindings_to_update.end()};
 }
 
-std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &HPPRenderFrame::get_command_pools(const vkb::core::HPPQueue             &queue,
-                                                                                           vkb::core::HPPCommandBuffer::ResetMode reset_mode)
+std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &
+    HPPRenderFrame::get_command_pools(const vkb::core::HPPQueue &queue, vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode reset_mode)
 {
 	auto command_pool_it = command_pools.find(queue.get_family_index());
 
@@ -183,10 +184,10 @@ void HPPRenderFrame::release_owned_semaphore(vk::Semaphore semaphore)
 	semaphore_pool.release_owned_semaphore(semaphore);
 }
 
-vkb::core::HPPCommandBuffer &HPPRenderFrame::request_command_buffer(const vkb::core::HPPQueue             &queue,
-                                                                    vkb::core::HPPCommandBuffer::ResetMode reset_mode,
-                                                                    vk::CommandBufferLevel                 level,
-                                                                    size_t                                 thread_index)
+vkb::core::CommandBuffer<vkb::BindingType::Cpp> &HPPRenderFrame::request_command_buffer(const vkb::core::HPPQueue                                 &queue,
+                                                                                        vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode reset_mode,
+                                                                                        vk::CommandBufferLevel                                     level,
+                                                                                        size_t                                                     thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 

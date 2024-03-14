@@ -182,7 +182,7 @@ class Gui
 	 * @brief Draws the Gui
 	 * @param command_buffer Command buffer to register draw-commands
 	 */
-	void draw(CommandBuffer &command_buffer);
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer);
 
 	/**
 	 * @brief Draws the Gui
@@ -258,7 +258,7 @@ class Gui
 	 * @brief Updates Vulkan buffers
 	 * @param frame Frame to render into
 	 */
-	void update_buffers(CommandBuffer &command_buffer, RenderFrame &render_frame);
+	void update_buffers(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderFrame &render_frame);
 
 	static const double press_time_ms;
 

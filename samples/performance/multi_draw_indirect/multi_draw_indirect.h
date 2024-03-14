@@ -124,9 +124,9 @@ class MultiDrawIndirect : public ApiVulkanSample
 	VkDescriptorSet                    device_address_descriptor_set{VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> device_address_buffer{nullptr};
 
-	std::vector<vkb::CommandBuffer> compute_command_buffers{};
-	const vkb::Queue               *compute_queue{nullptr};
-	std::vector<uint32_t>           queue_families;
+	std::vector<vkb::core::CommandBuffer<vkb::BindingType::C>> compute_command_buffers{};
+	const vkb::Queue                                          *compute_queue{nullptr};
+	std::vector<uint32_t>                                      queue_families;
 
 	// CPU Draw Calls
 	void                                      cpu_cull();

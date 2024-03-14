@@ -335,7 +335,7 @@ const StatGraphData &VulkanStatsProvider::get_graph_data(StatIndex index) const
 	return default_graph_map[index];
 }
 
-void VulkanStatsProvider::begin_sampling(CommandBuffer &cb)
+void VulkanStatsProvider::begin_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb)
 {
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 	if (timestamp_pool)
@@ -355,7 +355,7 @@ void VulkanStatsProvider::begin_sampling(CommandBuffer &cb)
 	}
 }
 
-void VulkanStatsProvider::end_sampling(CommandBuffer &cb)
+void VulkanStatsProvider::end_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb)
 {
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 

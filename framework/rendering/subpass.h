@@ -18,19 +18,27 @@
 #pragma once
 
 #include "buffer_pool.h"
-#include "common/helpers.h"
 #include "core/shader_module.h"
 #include "rendering/pipeline_state.h"
-#include "rendering/render_context.h"
-#include "rendering/render_frame.h"
 #include "scene_graph/components/light.h"
 #include "scene_graph/node.h"
 
-#include "common/glm_common.h"
-
 namespace vkb
 {
+class RenderContext;
+class RenderTarget;
+class ShaderSource;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
 class CommandBuffer;
+}
+
+namespace sg
+{
+class Light;
+}
 
 struct alignas(16) Light
 {
@@ -96,7 +104,7 @@ class Subpass
 	 * @brief Draw virtual function
 	 * @param command_buffer Command buffer to use to record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) = 0;
+	virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) = 0;
 
 	RenderContext &get_render_context();
 

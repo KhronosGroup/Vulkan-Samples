@@ -23,8 +23,12 @@
 
 namespace vkb
 {
-class Device;
+namespace core
+{
+template <vkb::BindingType bindingType>
 class CommandBuffer;
+}
+class Device;
 
 class Queue
 {
@@ -53,7 +57,7 @@ class Queue
 
 	VkResult submit(const std::vector<VkSubmitInfo> &submit_infos, VkFence fence) const;
 
-	VkResult submit(const CommandBuffer &command_buffer, VkFence fence) const;
+	VkResult submit(const vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, VkFence fence) const;
 
 	VkResult present(const VkPresentInfoKHR &present_infos) const;
 

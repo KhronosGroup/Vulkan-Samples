@@ -29,9 +29,11 @@ class RenderFrame;
 class CommandPool
 {
   public:
-	CommandPool(Device &device, uint32_t queue_family_index, RenderFrame *render_frame = nullptr,
-	            size_t                   thread_index = 0,
-	            CommandBuffer::ResetMode reset_mode   = CommandBuffer::ResetMode::ResetPool);
+	CommandPool(vkb::Device                                             &device,
+	            uint32_t                                                 queue_family_index,
+	            vkb::RenderFrame                                        *render_frame = nullptr,
+	            size_t                                                   thread_index = 0,
+	            vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode reset_mode   = vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode::ResetPool);
 
 	CommandPool(const CommandPool &) = delete;
 
@@ -55,9 +57,9 @@ class CommandPool
 
 	VkResult reset_pool();
 
-	CommandBuffer &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+	vkb::core::CommandBuffer<vkb::BindingType::C> &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-	const CommandBuffer::ResetMode get_reset_mode() const;
+	const vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode get_reset_mode() const;
 
   private:
 	Device &device;
@@ -70,15 +72,15 @@ class CommandPool
 
 	uint32_t queue_family_index{0};
 
-	std::vector<std::unique_ptr<CommandBuffer>> primary_command_buffers;
+	std::vector<std::unique_ptr<vkb::core::CommandBuffer<vkb::BindingType::C>>> primary_command_buffers;
 
 	uint32_t active_primary_command_buffer_count{0};
 
-	std::vector<std::unique_ptr<CommandBuffer>> secondary_command_buffers;
+	std::vector<std::unique_ptr<vkb::core::CommandBuffer<vkb::BindingType::C>>> secondary_command_buffers;
 
 	uint32_t active_secondary_command_buffer_count{0};
 
-	CommandBuffer::ResetMode reset_mode{CommandBuffer::ResetMode::ResetPool};
+	vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode reset_mode{vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode::ResetPool};
 
 	VkResult reset_command_buffers();
 };

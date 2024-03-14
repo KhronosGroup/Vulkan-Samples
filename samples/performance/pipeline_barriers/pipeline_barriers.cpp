@@ -155,7 +155,7 @@ std::unique_ptr<vkb::RenderTarget> PipelineBarriers::create_render_target(vkb::c
 	return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
-void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void PipelineBarriers::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target)
 {
 	// POI
 	//

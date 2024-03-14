@@ -16,8 +16,8 @@
  */
 
 #include "subpass.h"
-
 #include "render_context.h"
+#include "scene_graph/components/light.h"
 
 namespace vkb
 {

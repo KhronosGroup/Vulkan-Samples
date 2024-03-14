@@ -43,8 +43,6 @@ std::string get_extension(const std::string &uri);
  */
 std::string to_snake_case(const std::string &name);
 
-class CommandBuffer;
-
 /**
  * @brief Takes a screenshot of the app by writing the swapchain image to file (slow function)
  * @param render_context The RenderContext to use

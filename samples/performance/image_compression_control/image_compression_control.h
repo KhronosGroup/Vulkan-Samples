@@ -46,7 +46,7 @@ class ImageCompressionControlSample : public vkb::VulkanSample<vkb::BindingType:
 
 	virtual void update(float delta_time) override;
 
-	virtual void render(vkb::CommandBuffer &command_buffer) override;
+	virtual void render(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 
 	void draw_gui() override;
 

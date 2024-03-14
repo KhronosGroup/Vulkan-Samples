@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "core/command_buffer.h"
 #include <common/glm_common.h>
 #include <vulkan/vulkan.hpp>
 
@@ -24,8 +25,6 @@ namespace vkb
 {
 namespace core
 {
-class HPPCommandBuffer;
-
 /**
  * @brief An interface over platform-specific debug extensions.
  */
@@ -136,7 +135,7 @@ class HPPScopedDebugLabel final
   public:
 	HPPScopedDebugLabel(const vkb::core::HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const color = {});
 
-	HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const color = {});
+	HPPScopedDebugLabel(const vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer, std::string const &name, glm::vec4 const color = {});
 
 	~HPPScopedDebugLabel();
 

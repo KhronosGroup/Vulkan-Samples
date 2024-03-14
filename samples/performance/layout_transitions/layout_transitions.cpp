@@ -128,7 +128,7 @@ VkImageLayout LayoutTransitions::pick_old_layout(VkImageLayout last_layout)
 	           last_layout;
 }
 
-void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void LayoutTransitions::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target)
 {
 	// POI
 	//

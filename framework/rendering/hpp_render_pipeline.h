@@ -38,11 +38,11 @@ class HPPRenderPipeline : private vkb::RenderPipeline
 		vkb::RenderPipeline::add_subpass(std::move(subpass));
 	}
 
-	void draw(vkb::core::HPPCommandBuffer     &command_buffer,
-	          vkb::rendering::HPPRenderTarget &render_target,
-	          vk::SubpassContents              contents = vk::SubpassContents::eInline)
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer,
+	          vkb::rendering::HPPRenderTarget                 &render_target,
+	          vk::SubpassContents                              contents = vk::SubpassContents::eInline)
 	{
-		vkb::RenderPipeline::draw(reinterpret_cast<vkb::CommandBuffer &>(command_buffer),
+		vkb::RenderPipeline::draw(reinterpret_cast<vkb::core::CommandBuffer<vkb::BindingType::C> &>(command_buffer),
 		                          reinterpret_cast<vkb::RenderTarget &>(render_target),
 		                          static_cast<VkSubpassContents>(contents));
 	}

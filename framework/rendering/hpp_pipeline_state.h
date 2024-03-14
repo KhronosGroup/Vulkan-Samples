@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "pipeline_state.h"
+#include "rendering/pipeline_state.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
@@ -25,7 +25,8 @@ namespace vkb
 namespace core
 {
 class HPPPipelineLayout;
-}
+class HPPRenderPass;
+}        // namespace core
 
 namespace rendering
 {

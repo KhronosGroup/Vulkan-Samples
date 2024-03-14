@@ -26,7 +26,7 @@ PostProcessingPipeline::PostProcessingPipeline(RenderContext &render_context, Sh
     triangle_vs{std::move(triangle_vs)}
 {}
 
-void PostProcessingPipeline::draw(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+void PostProcessingPipeline::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target)
 {
 	for (current_pass_index = 0; current_pass_index < passes.size(); current_pass_index++)
 	{

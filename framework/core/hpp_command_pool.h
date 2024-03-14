@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <core/hpp_command_buffer.h>
+#include "core/command_buffer.h"
 #include <cstdint>
 
 namespace vkb
@@ -34,11 +34,12 @@ class HPPDevice;
 class HPPCommandPool
 {
   public:
-	HPPCommandPool(HPPDevice                      &device,
-	               uint32_t                        queue_family_index,
-	               vkb::rendering::HPPRenderFrame *render_frame = nullptr,
-	               size_t                          thread_index = 0,
-	               HPPCommandBuffer::ResetMode     reset_mode   = HPPCommandBuffer::ResetMode::ResetPool);
+	HPPCommandPool(HPPDevice                                                 &device,
+	               uint32_t                                                   queue_family_index,
+	               vkb::rendering::HPPRenderFrame                            *render_frame = nullptr,
+	               size_t                                                     thread_index = 0,
+	               vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode reset_mode =
+	                   vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode::ResetPool);
 	HPPCommandPool(const HPPCommandPool &) = delete;
 	HPPCommandPool(HPPCommandPool &&other);
 	~HPPCommandPool();
@@ -46,29 +47,29 @@ class HPPCommandPool
 	HPPCommandPool &operator=(const HPPCommandPool &) = delete;
 	HPPCommandPool &operator=(HPPCommandPool &&)      = delete;
 
-	HPPDevice                      &get_device();
-	vk::CommandPool                 get_handle() const;
-	uint32_t                        get_queue_family_index() const;
-	vkb::rendering::HPPRenderFrame *get_render_frame();
-	HPPCommandBuffer::ResetMode     get_reset_mode() const;
-	size_t                          get_thread_index() const;
-	HPPCommandBuffer               &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
-	void                            reset_pool();
+	HPPDevice                                                 &get_device();
+	vk::CommandPool                                            get_handle() const;
+	uint32_t                                                   get_queue_family_index() const;
+	vkb::rendering::HPPRenderFrame                            *get_render_frame();
+	vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode get_reset_mode() const;
+	size_t                                                     get_thread_index() const;
+	vkb::core::CommandBuffer<vkb::BindingType::Cpp>           &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
+	void                                                       reset_pool();
 
   private:
 	void reset_command_buffers();
 
   private:
-	HPPDevice                                     &device;
-	vk::CommandPool                                handle             = nullptr;
-	vkb::rendering::HPPRenderFrame                *render_frame       = nullptr;
-	size_t                                         thread_index       = 0;
-	uint32_t                                       queue_family_index = 0;
-	std::vector<std::unique_ptr<HPPCommandBuffer>> primary_command_buffers;
-	uint32_t                                       active_primary_command_buffer_count = 0;
-	std::vector<std::unique_ptr<HPPCommandBuffer>> secondary_command_buffers;
-	uint32_t                                       active_secondary_command_buffer_count = 0;
-	HPPCommandBuffer::ResetMode                    reset_mode                            = HPPCommandBuffer::ResetMode::ResetPool;
+	HPPDevice                                                                    &device;
+	vk::CommandPool                                                               handle             = nullptr;
+	vkb::rendering::HPPRenderFrame                                               *render_frame       = nullptr;
+	size_t                                                                        thread_index       = 0;
+	uint32_t                                                                      queue_family_index = 0;
+	std::vector<std::unique_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> primary_command_buffers;
+	uint32_t                                                                      active_primary_command_buffer_count = 0;
+	std::vector<std::unique_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> secondary_command_buffers;
+	uint32_t                                                                      active_secondary_command_buffer_count = 0;
+	vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode                    reset_mode                            = vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode::ResetPool;
 };
 }        // namespace core
 }        // namespace vkb

@@ -438,7 +438,7 @@ VkImageCompressionFixedRateFlagBitsEXT ImageCompressionControlSample::select_fix
 	return VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT;
 }
 
-void ImageCompressionControlSample::render(vkb::CommandBuffer &command_buffer)
+void ImageCompressionControlSample::render(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	// Scene (forward rendering) pass
 	VulkanSample::render(command_buffer);

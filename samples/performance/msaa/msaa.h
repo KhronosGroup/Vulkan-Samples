@@ -71,7 +71,7 @@ class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 
 	virtual void update(float delta_time) override;
 
-	virtual void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target) override;
 
 	void draw_gui() override;
 
@@ -126,8 +126,8 @@ class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 	 *        and depth attachments and uses them to apply a screen-based effect
 	 *        It also draws the GUI
 	 */
-	void postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target,
-	                    VkImageLayout &swapchain_layout, bool msaa_enabled);
+	void postprocessing(
+	    vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target, VkImageLayout &swapchain_layout, bool msaa_enabled);
 
 	/**
 	 * @brief Enables MSAA if set to more than 1 sample per pixel
@@ -181,8 +181,10 @@ class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 	 *        color_layout is an in-out parameter that holds the last known layout
 	 *        of the resolve attachment, and may be used for any further transitions
 	 */
-	void resolve_color_separate_pass(vkb::CommandBuffer &command_buffer, const std::vector<vkb::core::ImageView> &views,
-	                                 uint32_t color_destination, VkImageLayout &color_layout);
+	void resolve_color_separate_pass(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+	                                 const std::vector<vkb::core::ImageView>       &views,
+	                                 uint32_t                                       color_destination,
+	                                 VkImageLayout                                 &color_layout);
 
 	/**
 	 * @brief If true, the platform supports the VK_KHR_depth_stencil_resolve extension

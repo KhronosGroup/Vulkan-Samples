@@ -81,7 +81,7 @@ void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 	}
 }
 
-void SpecializationConstants::render(vkb::CommandBuffer &command_buffer)
+void SpecializationConstants::render(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	// POI
 	//
@@ -136,7 +136,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_re
 	return standard_pipeline;
 }
 
-void SpecializationConstants::ForwardSubpassCustomLights::draw(vkb::CommandBuffer &command_buffer)
+void SpecializationConstants::ForwardSubpassCustomLights::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	// Override forward light subpass draw function to provide a custom number of lights
 	auto lights_buffer = allocate_custom_lights<CustomForwardLights>(command_buffer, scene.get_components<vkb::sg::Light>(), LIGHT_COUNT);

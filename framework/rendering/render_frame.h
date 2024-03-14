@@ -118,14 +118,15 @@ class RenderFrame
 	 * @param thread_index Selects the thread's command pool used to manage the buffer
 	 * @return A command buffer related to the current active frame
 	 */
-	CommandBuffer &request_command_buffer(const Queue &            queue,
-	                                      CommandBuffer::ResetMode reset_mode   = CommandBuffer::ResetMode::ResetPool,
-	                                      VkCommandBufferLevel     level        = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	                                      size_t                   thread_index = 0);
+	vkb::core::CommandBuffer<vkb::BindingType::C> &request_command_buffer(const Queue                                             &queue,
+	                                                                      vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode reset_mode =
+	                                                                          vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode::ResetPool,
+	                                                                      VkCommandBufferLevel level        = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	                                                                      size_t               thread_index = 0);
 
-	VkDescriptorSet request_descriptor_set(const DescriptorSetLayout &               descriptor_set_layout,
+	VkDescriptorSet request_descriptor_set(const DescriptorSetLayout                &descriptor_set_layout,
 	                                       const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-	                                       const BindingMap<VkDescriptorImageInfo> & image_infos,
+	                                       const BindingMap<VkDescriptorImageInfo>  &image_infos,
 	                                       bool                                      update_after_bind,
 	                                       size_t                                    thread_index = 0);
 
@@ -166,7 +167,7 @@ class RenderFrame
 	 *        may trigger a pool re-creation to set necessary flags
 	 * @return The frame's command pool(s)
 	 */
-	std::vector<std::unique_ptr<CommandPool>> &get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode);
+	std::vector<std::unique_ptr<CommandPool>> &get_command_pools(const Queue &queue, vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode reset_mode);
 
 	/// Commands pools associated to the frame
 	std::map<uint32_t, std::vector<std::unique_ptr<CommandPool>>> command_pools;

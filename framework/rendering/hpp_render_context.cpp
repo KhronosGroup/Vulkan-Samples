@@ -230,7 +230,7 @@ bool HPPRenderContext::handle_surface_changes(bool force_update)
 	return false;
 }
 
-vkb::core::HPPCommandBuffer &HPPRenderContext::begin(vkb::core::HPPCommandBuffer::ResetMode reset_mode)
+vkb::core::CommandBuffer<vkb::BindingType::Cpp> &HPPRenderContext::begin(vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode reset_mode)
 {
 	assert(prepared && "HPPRenderContext not prepared for rendering, call prepare()");
 
@@ -248,12 +248,12 @@ vkb::core::HPPCommandBuffer &HPPRenderContext::begin(vkb::core::HPPCommandBuffer
 	return get_active_frame().request_command_buffer(queue, reset_mode);
 }
 
-void HPPRenderContext::submit(vkb::core::HPPCommandBuffer &command_buffer)
+void HPPRenderContext::submit(vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer)
 {
 	submit({&command_buffer});
 }
 
-void HPPRenderContext::submit(const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers)
+void HPPRenderContext::submit(const std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &command_buffers)
 {
 	assert(frame_active && "HPPRenderContext is inactive, cannot submit command buffer. Please call begin()");
 
@@ -324,13 +324,16 @@ void HPPRenderContext::begin_frame()
 	wait_frame();
 }
 
-vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                        &queue,
-                                       const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
-                                       vk::Semaphore                                     wait_semaphore,
-                                       vk::PipelineStageFlags                            wait_pipeline_stage)
+vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                                            &queue,
+                                       const std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &command_buffers,
+                                       vk::Semaphore                                                         wait_semaphore,
+                                       vk::PipelineStageFlags                                                wait_pipeline_stage)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::HPPCommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(),
+	               command_buffers.end(),
+	               cmd_buf_handles.begin(),
+	               [](const vkb::core::CommandBuffer<vkb::BindingType::Cpp> *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 
@@ -350,10 +353,13 @@ vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                
 	return signal_semaphore;
 }
 
-void HPPRenderContext::submit(const vkb::core::HPPQueue &queue, const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers)
+void HPPRenderContext::submit(const vkb::core::HPPQueue &queue, const std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &command_buffers)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::HPPCommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(),
+	               command_buffers.end(),
+	               cmd_buf_handles.begin(),
+	               [](const vkb::core::CommandBuffer<vkb::BindingType::Cpp> *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 

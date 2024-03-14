@@ -529,7 +529,7 @@ void Device::prepare_memory_allocator()
 	vkb::allocated::init(*this);
 }
 
-CommandBuffer &Device::request_command_buffer() const
+vkb::core::CommandBuffer<vkb::BindingType::C> &Device::request_command_buffer() const
 {
 	return command_pool->request_command_buffer();
 }

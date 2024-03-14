@@ -30,22 +30,22 @@ namespace vkb
 using SampledImageMap = std::unordered_map<std::string, core::SampledImage>;
 
 /**
-* @brief A compute pass in a vkb::PostProcessingPipeline.
-*/
+ * @brief A compute pass in a vkb::PostProcessingPipeline.
+ */
 class PostProcessingComputePass : public PostProcessingPass<PostProcessingComputePass>
 {
   public:
 	PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant = {},
 	                          std::shared_ptr<core::Sampler> &&default_sampler = {});
 
-	PostProcessingComputePass(const PostProcessingComputePass &to_copy) = delete;
+	PostProcessingComputePass(const PostProcessingComputePass &to_copy)            = delete;
 	PostProcessingComputePass &operator=(const PostProcessingComputePass &to_copy) = delete;
 
-	PostProcessingComputePass(PostProcessingComputePass &&to_move) = default;
+	PostProcessingComputePass(PostProcessingComputePass &&to_move)            = default;
 	PostProcessingComputePass &operator=(PostProcessingComputePass &&to_move) = default;
 
-	void prepare(CommandBuffer &command_buffer, RenderTarget &default_render_target) override;
-	void draw(CommandBuffer &command_buffer, RenderTarget &default_render_target) override;
+	void prepare(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target) override;
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target) override;
 
 	/**
 	 * @brief Sets the number of workgroups to be dispatched each draw().
@@ -65,21 +65,21 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	}
 
 	/**
-	* @brief Maps the names of samplers in the shader to vkb::core::SampledImage.
-	*        These are given as samplers to the subpass, at set 0; they are bound automatically according to their name.
-	* @remarks PostProcessingPipeline::get_sampler() is used as the default sampler if none is specified.
-	*          The RenderTarget for the current PostprocessingStep is used if none is specified for attachment images.
-	*/
+	 * @brief Maps the names of samplers in the shader to vkb::core::SampledImage.
+	 *        These are given as samplers to the subpass, at set 0; they are bound automatically according to their name.
+	 * @remarks PostProcessingPipeline::get_sampler() is used as the default sampler if none is specified.
+	 *          The RenderTarget for the current PostprocessingStep is used if none is specified for attachment images.
+	 */
 	inline const SampledImageMap &get_sampled_images() const
 	{
 		return sampled_images;
 	}
 
 	/**
-	* @brief Maps the names of storage images in the shader to vkb::core::SampledImage.
-	*        These are given as image2D / image2DArray / ... to the subpass, at set 0;
-	*        they are bound automatically according to their name.
-	*/
+	 * @brief Maps the names of storage images in the shader to vkb::core::SampledImage.
+	 *        These are given as image2D / image2DArray / ... to the subpass, at set 0;
+	 *        they are bound automatically according to their name.
+	 */
 	inline const SampledImageMap &get_storage_images() const
 	{
 		return storage_images;
@@ -163,7 +163,7 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	 * @brief Transitions sampled_images (to SHADER_READ_ONLY_OPTIMAL)
 	 *        and storage_images (to GENERAL) as appropriate.
 	 */
-	void transition_images(CommandBuffer &command_buffer, RenderTarget &default_render_target);
+	void transition_images(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target);
 
 	BarrierInfo get_src_barrier_info() const override;
 	BarrierInfo get_dst_barrier_info() const override;

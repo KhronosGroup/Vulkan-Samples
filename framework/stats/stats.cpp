@@ -283,7 +283,7 @@ void Stats::push_sample(const StatsProvider::Counters &sample)
 	}
 }
 
-void Stats::begin_sampling(CommandBuffer &cb)
+void Stats::begin_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
@@ -292,7 +292,7 @@ void Stats::begin_sampling(CommandBuffer &cb)
 	}
 }
 
-void Stats::end_sampling(CommandBuffer &cb)
+void Stats::end_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)

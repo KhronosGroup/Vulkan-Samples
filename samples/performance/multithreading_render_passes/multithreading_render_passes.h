@@ -68,11 +68,13 @@ class MultithreadingRenderPasses : public vkb::VulkanSample<vkb::BindingType::C>
 		              vkb::sg::Camera    &camera);
 
 	  protected:
-		virtual void prepare_pipeline_state(vkb::CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material) override;
+		virtual void prepare_pipeline_state(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, VkFrontFace front_face, bool double_sided_material)
+		    override;
 
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+		                                                     const std::vector<vkb::ShaderModule *>        &shader_modules) override;
 
-		virtual void prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void prepare_push_constants(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 	};
 
 	/**
@@ -92,7 +94,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSample<vkb::BindingType::C>
 
 		virtual void prepare() override;
 
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 
 	  private:
 		std::unique_ptr<vkb::core::Sampler> shadowmap_sampler{};
@@ -161,21 +163,23 @@ class MultithreadingRenderPasses : public vkb::VulkanSample<vkb::BindingType::C>
 	 * @param main_command_buffer Already allocated command buffer for the main pass
 	 * @return Single or multiple recorded command buffers
 	 */
-	std::vector<vkb::CommandBuffer *> record_command_buffers(vkb::CommandBuffer &main_command_buffer);
+	std::vector<vkb::core::CommandBuffer<vkb::BindingType::C> *> record_command_buffers(vkb::core::CommandBuffer<vkb::BindingType::C> &main_command_buffer);
 
-	void record_separate_primary_command_buffers(std::vector<vkb::CommandBuffer *> &command_buffers, vkb::CommandBuffer &main_command_buffer);
+	void record_separate_primary_command_buffers(std::vector<vkb::core::CommandBuffer<vkb::BindingType::C> *> &command_buffers,
+	                                             vkb::core::CommandBuffer<vkb::BindingType::C>                &main_command_buffer);
 
-	void record_separate_secondary_command_buffers(std::vector<vkb::CommandBuffer *> &command_buffers, vkb::CommandBuffer &main_command_buffer);
+	void record_separate_secondary_command_buffers(std::vector<vkb::core::CommandBuffer<vkb::BindingType::C> *> &command_buffers,
+	                                               vkb::core::CommandBuffer<vkb::BindingType::C>                &main_command_buffer);
 
-	void record_main_pass_image_memory_barriers(vkb::CommandBuffer &command_buffer);
+	void record_main_pass_image_memory_barriers(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer);
 
-	void record_shadow_pass_image_memory_barrier(vkb::CommandBuffer &command_buffer);
+	void record_shadow_pass_image_memory_barrier(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer);
 
-	void record_present_image_memory_barrier(vkb::CommandBuffer &command_buffer);
+	void record_present_image_memory_barrier(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer);
 
-	void draw_shadow_pass(vkb::CommandBuffer &command_buffer);
+	void draw_shadow_pass(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer);
 
-	void draw_main_pass(vkb::CommandBuffer &command_buffer);
+	void draw_main_pass(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer);
 };
 
 std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multithreading_render_passes();

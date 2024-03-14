@@ -93,7 +93,8 @@ void RenderFrame::reset()
 	}
 }
 
-std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode)
+std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const Queue                                             &queue,
+                                                                          vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode reset_mode)
 {
 	auto command_pool_it = command_pools.find(queue.get_family_index());
 
@@ -193,7 +194,10 @@ const RenderTarget &RenderFrame::get_render_target_const() const
 	return *swapchain_render_target;
 }
 
-CommandBuffer &RenderFrame::request_command_buffer(const Queue &queue, CommandBuffer::ResetMode reset_mode, VkCommandBufferLevel level, size_t thread_index)
+vkb::core::CommandBuffer<vkb::BindingType::C> &RenderFrame::request_command_buffer(const Queue                                             &queue,
+                                                                                   vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode reset_mode,
+                                                                                   VkCommandBufferLevel                                     level,
+                                                                                   size_t                                                   thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 

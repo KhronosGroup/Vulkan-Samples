@@ -18,11 +18,23 @@
 #pragma once
 
 #include <core/hpp_device.h>
+#include <hpp_buffer_pool.h>
+#include <hpp_fence_pool.h>
 #include <hpp_semaphore_pool.h>
 #include <vulkan/vulkan_hash.hpp>
 
 namespace vkb
 {
+class HPPBufferAllocation;
+class HPPBufferBlock;
+
+namespace core
+{
+class HPPDescriptorPool;
+class HPPDescriptorSet;
+class HPPQueue;
+}        // namespace core
+
 namespace rendering
 {
 enum class BufferAllocationStrategy
@@ -100,10 +112,11 @@ class HPPRenderFrame
 	 * @param thread_index Selects the thread's command pool used to manage the buffer
 	 * @return A command buffer related to the current active frame
 	 */
-	vkb::core::HPPCommandBuffer &request_command_buffer(const vkb::core::HPPQueue             &queue,
-	                                                    vkb::core::HPPCommandBuffer::ResetMode reset_mode   = vkb::core::HPPCommandBuffer::ResetMode::ResetPool,
-	                                                    vk::CommandBufferLevel                 level        = vk::CommandBufferLevel::ePrimary,
-	                                                    size_t                                 thread_index = 0);
+	vkb::core::CommandBuffer<vkb::BindingType::Cpp> &request_command_buffer(const vkb::core::HPPQueue                                 &queue,
+	                                                                        vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode reset_mode =
+	                                                                            vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode::ResetPool,
+	                                                                        vk::CommandBufferLevel level        = vk::CommandBufferLevel::ePrimary,
+	                                                                        size_t                 thread_index = 0);
 
 	/**
 	 * @brief Sets a new buffer allocation strategy
@@ -136,8 +149,8 @@ class HPPRenderFrame
 	 *        may trigger a pool re-creation to set necessary flags
 	 * @return The frame's command pool(s)
 	 */
-	std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &get_command_pools(const vkb::core::HPPQueue             &queue,
-	                                                                           vkb::core::HPPCommandBuffer::ResetMode reset_mode);
+	std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &get_command_pools(const vkb::core::HPPQueue                                 &queue,
+	                                                                           vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode reset_mode);
 
 	static std::vector<uint32_t> collect_bindings_to_update(const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
 	                                                        const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,

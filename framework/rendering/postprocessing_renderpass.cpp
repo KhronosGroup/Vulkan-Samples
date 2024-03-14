@@ -119,7 +119,7 @@ void PostProcessingSubpass::prepare()
 	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), fs_variant);
 }
 
-void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
+void PostProcessingSubpass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	// Get shaders from cache
 	auto &resource_cache     = command_buffer.get_device().get_resource_cache();
@@ -194,7 +194,7 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 	draw_func(command_buffer, render_target);
 }
 
-void PostProcessingSubpass::default_draw_func(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &)
+void PostProcessingSubpass::default_draw_func(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &)
 {
 	command_buffer.draw(3, 1, 0, 0);
 }
@@ -330,12 +330,11 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 	}
 }
 
-void PostProcessingRenderPass::transition_attachments(
-    const AttachmentSet        &input_attachments,
-    const SampledAttachmentSet &sampled_attachments,
-    const AttachmentSet        &output_attachments,
-    CommandBuffer              &command_buffer,
-    RenderTarget               &fallback_render_target)
+void PostProcessingRenderPass::transition_attachments(const AttachmentSet                           &input_attachments,
+                                                      const SampledAttachmentSet                    &sampled_attachments,
+                                                      const AttachmentSet                           &output_attachments,
+                                                      vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+                                                      RenderTarget                                  &fallback_render_target)
 {
 	auto       &render_target = this->render_target ? *this->render_target : fallback_render_target;
 	const auto &views         = render_target.get_views();
@@ -457,7 +456,7 @@ void PostProcessingRenderPass::transition_attachments(
 	//       so we don't want to transition them to UNDEFINED layout here
 }
 
-void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, RenderTarget &fallback_render_target)
+void PostProcessingRenderPass::prepare_draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &fallback_render_target)
 {
 	// Collect all input, output, and sampled-from attachments from all subpasses (steps)
 	AttachmentSet        input_attachments, output_attachments;
@@ -501,7 +500,7 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 	                   fallback_render_target);
 }
 
-void PostProcessingRenderPass::draw(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+void PostProcessingRenderPass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target)
 {
 	prepare_draw(command_buffer, default_render_target);
 

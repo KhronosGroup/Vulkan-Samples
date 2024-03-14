@@ -196,7 +196,7 @@ KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::Render
 	set_output_attachments({0});
 }
 
-void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::CommandBuffer &command_buffer)
+void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	command_buffer.bind_pipeline_layout(*layout);
 
@@ -236,7 +236,7 @@ void KHR16BitArithmeticSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 	supports_push_constant16 = storage_16bit_features.storagePushConstant16 == VK_TRUE;
 }
 
-void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (khr_16bit_arith_enabled)
 	{

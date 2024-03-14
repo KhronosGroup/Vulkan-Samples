@@ -25,6 +25,7 @@
 #include <set>
 #include <vector>
 
+#include "common/vk_common.h"
 #include "stats_common.h"
 #include "stats_provider.h"
 #include "timer.h"
@@ -32,8 +33,13 @@
 namespace vkb
 {
 class Device;
-class CommandBuffer;
 class RenderContext;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+}
 
 /*
  * @brief Helper class for querying statistics about the CPU and the GPU
@@ -117,7 +123,7 @@ class Stats
 	 * when this method is called.
 	 * @param cb The command buffer
 	 */
-	void begin_sampling(CommandBuffer &cb);
+	void begin_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb);
 
 	/**
 	 * @brief A command buffer that we want to collect stats about is about to be ended
@@ -131,7 +137,7 @@ class Stats
 	 * state when this method is called.
 	 * @param cb The command buffer
 	 */
-	void end_sampling(CommandBuffer &cb);
+	void end_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb);
 
   private:
 	/// The render context

@@ -16,7 +16,7 @@
  */
 
 #include "hpp_debug.h"
-#include "core/hpp_command_buffer.h"
+#include "core/command_buffer.h"
 #include "core/hpp_device.h"
 
 namespace vkb
@@ -98,7 +98,9 @@ HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
 	}
 }
 
-HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const color) :
+HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer,
+                                         std::string const                                     &name,
+                                         glm::vec4 const                                        color) :
     HPPScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
 {
 }

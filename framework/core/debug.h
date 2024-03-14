@@ -23,6 +23,12 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+}
+
 /**
  * @brief An interface over platform-specific debug extensions.
  */
@@ -32,31 +38,31 @@ class DebugUtils
 	virtual ~DebugUtils() = default;
 
 	/**
-     * @brief Sets the debug name for a Vulkan object.
-     */
+	 * @brief Sets the debug name for a Vulkan object.
+	 */
 	virtual void set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle,
 	                            const char *name) const = 0;
 
 	/**
-     * @brief Tags the given Vulkan object with some data.
-     */
+	 * @brief Tags the given Vulkan object with some data.
+	 */
 	virtual void set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle,
 	                           uint64_t tag_name, const void *tag_data, size_t tag_data_size) const = 0;
 
 	/**
-     * @brief Inserts a command to begin a new debug label/marker scope.
-     */
+	 * @brief Inserts a command to begin a new debug label/marker scope.
+	 */
 	virtual void cmd_begin_label(VkCommandBuffer command_buffer,
 	                             const char *name, glm::vec4 color = {}) const = 0;
 
 	/**
-     * @brief Inserts a command to end the current debug label/marker scope.
-     */
+	 * @brief Inserts a command to end the current debug label/marker scope.
+	 */
 	virtual void cmd_end_label(VkCommandBuffer command_buffer) const = 0;
 
 	/**
-     * @brief Inserts a (non-scoped) debug label/marker in the command buffer.
-     */
+	 * @brief Inserts a (non-scoped) debug label/marker in the command buffer.
+	 */
 	virtual void cmd_insert_label(VkCommandBuffer command_buffer,
 	                              const char *name, glm::vec4 color = {}) const = 0;
 };
@@ -134,8 +140,6 @@ class DummyDebugUtils final : public DebugUtils
 	{}
 };
 
-class CommandBuffer;
-
 /**
  * @brief A RAII debug label.
  *        If any of EXT_debug_utils or EXT_debug_marker is available, this:
@@ -148,8 +152,7 @@ class ScopedDebugLabel final
 	ScopedDebugLabel(const DebugUtils &debug_utils, VkCommandBuffer command_buffer,
 	                 const char *name, glm::vec4 color = {});
 
-	ScopedDebugLabel(const CommandBuffer &command_buffer,
-	                 const char *name, glm::vec4 color = {});
+	ScopedDebugLabel(const vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, const char *name, glm::vec4 color = {});
 
 	~ScopedDebugLabel();
 

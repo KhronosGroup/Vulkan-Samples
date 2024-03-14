@@ -84,7 +84,7 @@ class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 		DepthMapSubpass(vkb::RenderContext &render_context,
 		                vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
 		                vkb::sg::Scene &scene, vkb::sg::Camera &camera);
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 	};
 
 	struct ShadowMapForwardSubpass : vkb::ForwardSubpass
@@ -93,7 +93,7 @@ class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 		                        vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
 		                        vkb::sg::Scene &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera);
 		void         set_shadow_map(const vkb::core::ImageView *view, const vkb::core::Sampler *sampler);
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 
 		const vkb::core::ImageView *shadow_view{nullptr};
 		const vkb::core::Sampler   *shadow_sampler{nullptr};
@@ -106,7 +106,7 @@ class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 		                 vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);
 		void         set_texture(const vkb::core::ImageView *hdr_view, const vkb::core::ImageView *bloom_view,
 		                         const vkb::core::Sampler *sampler);
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 		virtual void prepare() override;
 
 		const vkb::core::ImageView *hdr_view{nullptr};

@@ -62,7 +62,7 @@ class LightingSubpass : public Subpass
 
 	virtual void prepare() override;
 
-	void draw(CommandBuffer &command_buffer) override;
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 
   private:
 	sg::Camera &camera;

@@ -746,7 +746,7 @@ AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::RenderContext &render_
 	base_rasterization_state.depth_bias_enable = VK_TRUE;
 }
 
-void AsyncComputeSample::DepthMapSubpass::draw(vkb::CommandBuffer &command_buffer)
+void AsyncComputeSample::DepthMapSubpass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	// Negative bias since we're using inverted Z.
 	command_buffer.set_depth_bias(-1.0f, 0.0f, -2.0f);
@@ -767,7 +767,7 @@ void AsyncComputeSample::ShadowMapForwardSubpass::set_shadow_map(const vkb::core
 	shadow_sampler = sampler;
 }
 
-void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::CommandBuffer &command_buffer)
+void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	auto shadow_matrix = vkb::vulkan_style_projection(shadow_camera.get_projection()) * shadow_camera.get_view();
 
@@ -807,7 +807,7 @@ void AsyncComputeSample::CompositeSubpass::prepare()
 	layout         = &device.get_resource_cache().request_pipeline_layout({&vertex, &fragment});
 }
 
-void AsyncComputeSample::CompositeSubpass::draw(vkb::CommandBuffer &command_buffer)
+void AsyncComputeSample::CompositeSubpass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	command_buffer.bind_image(*hdr_view, *sampler, 0, 0, 0);
 	command_buffer.bind_image(*bloom_view, *sampler, 0, 1, 0);

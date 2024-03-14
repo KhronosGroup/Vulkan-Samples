@@ -48,7 +48,7 @@ class Subpasses : public vkb::VulkanSample<vkb::BindingType::C>
 	 * @brief Draws to a render target using the right pipeline based on the sample selection
 	 *        Not to be confused with `draw_renderpasses` which uses the bad practice
 	 */
-	virtual void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	virtual void draw_renderpass(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target) override;
 
 	/**
 	 * @return A good pipeline
@@ -68,12 +68,12 @@ class Subpasses : public vkb::VulkanSample<vkb::BindingType::C>
 	/**
 	 * @brief Draws using the good pipeline: one render pass with two subpasses
 	 */
-	void draw_subpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
+	void draw_subpasses(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target);
 
 	/**
 	 * @brief Draws using the bad practice: two separate render passes
 	 */
-	void draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
+	void draw_renderpasses(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target);
 
 	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 

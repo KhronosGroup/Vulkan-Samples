@@ -444,7 +444,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 
 	vkb::image_layout_transition(cmd.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	VK_CHECK(cmd.end());
+	cmd.end();
 
 	// Not very optimal, but it's the simplest solution.
 	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);

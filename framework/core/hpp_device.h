@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include "core/vulkan_resource.h"
-#include <core/hpp_command_buffer.h>
 #include <core/hpp_command_pool.h>
 #include <core/hpp_debug.h>
 #include <core/hpp_physical_device.h>
@@ -32,6 +30,8 @@ namespace vkb
 namespace core
 {
 class HPPBuffer;
+class HPPDebugUtils;
+class HPPQueue;
 
 class HPPDevice : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::Device>
 {

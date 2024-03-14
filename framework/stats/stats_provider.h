@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include "stats_common.h"
 
 #include <map>
@@ -25,7 +26,11 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class CommandBuffer;
+}
 
 /**
  * @brief Abstract interface for all StatsProvider classes
@@ -87,14 +92,14 @@ class StatsProvider
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
 	 */
-	virtual void begin_sampling(CommandBuffer &cb)
+	virtual void begin_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb)
 	{}
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
 	 */
-	virtual void end_sampling(CommandBuffer &cb)
+	virtual void end_sampling(vkb::core::CommandBuffer<vkb::BindingType::C> &cb)
 	{}
 
   protected:

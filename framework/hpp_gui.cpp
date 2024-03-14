@@ -408,7 +408,7 @@ bool HPPGui::update_buffers()
 	return updated;
 }
 
-void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
+void HPPGui::update_buffers(vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer) const
 {
 	ImDrawData                     *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
@@ -454,7 +454,7 @@ void HPPGui::new_frame() const
 	ImGui::NewFrame();
 }
 
-void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
+void HPPGui::draw(vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer)
 {
 	if (!visible)
 	{
@@ -742,11 +742,11 @@ void HPPGui::show_top_window(const std::string &app_name, const vkb::stats::HPPS
 	// Transparent background
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
 	ImVec2 size{ImGui::GetIO().DisplaySize.x, 0.0f};
-    ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
 	// Top left
 	ImVec2 pos{0.0f, 0.0f};
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 
 	bool is_open = true;
 	ImGui::Begin("Top", &is_open, common_flags);
@@ -800,7 +800,7 @@ void HPPGui::show_debug_window(const DebugInfo &debug_info, const ImVec2 &positi
 	}
 
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
-    ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowContentSize(ImVec2{io.DisplaySize.x, 0.0f});
 
 	bool                   is_open = true;
@@ -896,7 +896,7 @@ void HPPGui::show_options_window(std::function<void()> body, const uint32_t line
 	const ImVec2 size = ImVec2(window_width, 0);
 	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 	const ImVec2 pos = ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - window_height);
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 	const ImGuiWindowFlags flags   = (ImGuiWindowFlags_NoMove |
                                     ImGuiWindowFlags_NoScrollbar |
                                     ImGuiWindowFlags_NoTitleBar |
@@ -919,7 +919,7 @@ void HPPGui::show_simple_window(const std::string &name, uint32_t last_fps, std:
 	ImGui::NewFrame();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
 	ImGui::TextUnformatted(sample.get_render_context().get_device().get_gpu().get_properties().deviceName.data());

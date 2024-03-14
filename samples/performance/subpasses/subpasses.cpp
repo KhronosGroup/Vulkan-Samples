@@ -358,7 +358,10 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	return lighting_render_pipeline;
 }
 
-void draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target, vkb::RenderPipeline &render_pipeline, vkb::Gui *gui = nullptr)
+void draw_pipeline(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+                   vkb::RenderTarget                             &render_target,
+                   vkb::RenderPipeline                           &render_pipeline,
+                   vkb::Gui                                      *gui = nullptr)
 {
 	auto &extent = render_target.get_extent();
 
@@ -383,12 +386,12 @@ void draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render
 	command_buffer.end_render_pass();
 }
 
-void Subpasses::draw_subpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_subpasses(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target)
 {
 	draw_pipeline(command_buffer, render_target, *render_pipeline, &get_gui());
 }
 
-void Subpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_renderpasses(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target)
 {
 	// First render pass (no gui)
 	draw_pipeline(command_buffer, render_target, *geometry_render_pipeline);
@@ -427,7 +430,7 @@ void Subpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::Rende
 	draw_pipeline(command_buffer, render_target, *lighting_render_pipeline, &get_gui());
 }
 
-void Subpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_renderpass(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (configs[Config::RenderTechnique].value == 0)
 	{

@@ -64,7 +64,7 @@ class ForwardSubpass : public GeometrySubpass
 	/**
 	 * @brief Record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) override;
+	virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 };
 
 }        // namespace vkb

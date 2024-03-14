@@ -87,7 +87,8 @@ class RenderPipeline
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
-	void draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+	void draw(
+	    vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &render_target, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	/**
 	 * @return Subpass currently being recorded, or the first one

@@ -17,7 +17,7 @@
 
 #include <core/hpp_queue.h>
 
-#include <core/hpp_command_buffer.h>
+#include <core/command_buffer.h>
 #include <core/hpp_device.h>
 
 namespace vkb
@@ -73,7 +73,7 @@ vk::Bool32 HPPQueue::support_present() const
 	return can_present;
 }
 
-void HPPQueue::submit(const HPPCommandBuffer &command_buffer, vk::Fence fence) const
+void HPPQueue::submit(const vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer, vk::Fence fence) const
 {
 	vk::CommandBuffer commandBuffer = command_buffer.get_handle();
 	vk::SubmitInfo    submit_info({}, {}, commandBuffer);

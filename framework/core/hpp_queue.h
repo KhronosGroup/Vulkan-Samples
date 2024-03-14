@@ -17,13 +17,13 @@
 
 #pragma once
 
+#include "core/command_buffer.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
-class HPPCommandBuffer;
 class HPPDevice;
 
 /**
@@ -55,7 +55,7 @@ class HPPQueue
 
 	vk::Bool32 support_present() const;
 
-	void submit(const HPPCommandBuffer &command_buffer, vk::Fence fence) const;
+	void submit(const vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer, vk::Fence fence) const;
 
 	vk::Result present(const vk::PresentInfoKHR &present_infos) const;
 

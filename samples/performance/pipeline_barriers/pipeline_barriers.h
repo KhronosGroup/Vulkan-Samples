@@ -48,7 +48,7 @@ class PipelineBarriers : public vkb::VulkanSample<vkb::BindingType::C>
 
 	virtual void prepare_render_context() override;
 
-	void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target) override;
 
 	virtual void draw_gui() override;
 

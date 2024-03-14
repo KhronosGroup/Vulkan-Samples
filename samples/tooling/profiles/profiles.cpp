@@ -246,7 +246,7 @@ void Profiles::generate_textures()
 
 		vkb::image_layout_transition(cmd.get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-		VK_CHECK(cmd.end());
+		cmd.end();
 
 		get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
 		get_device().get_suitable_graphics_queue().wait_idle();

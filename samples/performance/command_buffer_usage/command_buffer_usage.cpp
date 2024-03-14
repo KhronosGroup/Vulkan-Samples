@@ -113,7 +113,7 @@ void CommandBufferUsage::update(float delta_time)
 	// If there are not enough command buffers to keep all threads busy, use fewer threads
 	subpass_state.thread_count = std::min(subpass_state.secondary_cmd_buf_count, max_thread_count);
 
-	subpass_state.command_buffer_reset_mode = static_cast<vkb::CommandBuffer::ResetMode>(gui_command_buffer_reset_mode);
+	subpass_state.command_buffer_reset_mode = static_cast<vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode>(gui_command_buffer_reset_mode);
 
 	subpass_state.multi_threading = gui_multi_threading;
 
@@ -146,7 +146,8 @@ void CommandBufferUsage::draw_gui()
 	const auto &subpass = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get());
 
 	get_gui().show_options_window(
-	    /* body = */ [&]() {
+	    /* body = */
+	    [&]() {
 		    // Secondary command buffer count
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
 		    ImGui::SliderInt("", &gui_secondary_cmd_buf_count, 0, max_secondary_command_buffer_count, "Secondary CmdBuffs: %d");
@@ -159,22 +160,25 @@ void CommandBufferUsage::draw_gui()
 		    ImGui::Text("(%d threads)", subpass->get_state().thread_count);
 
 		    // Buffer management options
-		    ImGui::RadioButton("Allocate and free", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBuffer::ResetMode::AlwaysAllocate));
+		    ImGui::RadioButton(
+		        "Allocate and free", &gui_command_buffer_reset_mode, static_cast<int>(vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode::AlwaysAllocate));
 		    if (landscape)
 		    {
 			    ImGui::SameLine();
 		    }
-		    ImGui::RadioButton("Reset buffer", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBuffer::ResetMode::ResetIndividually));
+		    ImGui::RadioButton(
+		        "Reset buffer", &gui_command_buffer_reset_mode, static_cast<int>(vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode::ResetIndividually));
 		    if (landscape)
 		    {
 			    ImGui::SameLine();
 		    }
-		    ImGui::RadioButton("Reset pool", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBuffer::ResetMode::ResetPool));
+		    ImGui::RadioButton(
+		        "Reset pool", &gui_command_buffer_reset_mode, static_cast<int>(vkb::core::CommandBuffer<vkb::BindingType::C>::ResetMode::ResetPool));
 	    },
 	    /* lines = */ lines);
 }
 
-void CommandBufferUsage::render(vkb::CommandBuffer &primary_command_buffer)
+void CommandBufferUsage::render(vkb::core::CommandBuffer<vkb::BindingType::C> &primary_command_buffer)
 {
 	if (has_render_pipeline())
 	{
@@ -192,7 +196,7 @@ void CommandBufferUsage::render(vkb::CommandBuffer &primary_command_buffer)
 	}
 }
 
-void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target)
+void CommandBufferUsage::draw_renderpass(vkb::core::CommandBuffer<vkb::BindingType::C> &primary_command_buffer, vkb::RenderTarget &render_target)
 {
 	const auto &subpass = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get());
 	auto       &extent  = render_target.get_extent();
@@ -248,9 +252,11 @@ CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::Render
 {
 }
 
-void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer                                                &command_buffer,
+void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::CommandBuffer<vkb::BindingType::C>                     &command_buffer,
                                                               const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-                                                              uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
+                                                              uint32_t                                                           mesh_start,
+                                                              uint32_t                                                           mesh_end,
+                                                              size_t                                                             thread_index)
 {
 	command_buffer.set_color_blend_state(color_blend_state);
 
@@ -267,9 +273,12 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer
 	}
 }
 
-vkb::CommandBuffer *CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::CommandBuffer                                                &primary_command_buffer,
-                                                                                       const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-                                                                                       uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
+vkb::core::CommandBuffer<vkb::BindingType::C> *
+    CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::core::CommandBuffer<vkb::BindingType::C>                     &primary_command_buffer,
+                                                                       const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
+                                                                       uint32_t                                                           mesh_start,
+                                                                       uint32_t                                                           mesh_end,
+                                                                       size_t                                                             thread_index)
 {
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -288,7 +297,7 @@ vkb::CommandBuffer *CommandBufferUsage::ForwardSubpassSecondary::record_draw_sec
 	return &secondary_command_buffer;
 }
 
-void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &primary_command_buffer)
+void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &primary_command_buffer)
 {
 	std::multimap<float, std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> opaque_nodes;
 
@@ -321,8 +330,8 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 
 	// Draw opaque objects. Depending on the subpass state, use one or multiple
 	// command buffers, and one or multiple threads
-	const bool                        use_secondary_command_buffers = state.secondary_cmd_buf_count > 0;
-	std::vector<vkb::CommandBuffer *> secondary_command_buffers;
+	const bool                                                   use_secondary_command_buffers = state.secondary_cmd_buf_count > 0;
+	std::vector<vkb::core::CommandBuffer<vkb::BindingType::C> *> secondary_command_buffers;
 	avg_draws_per_buffer = (state.secondary_cmd_buf_count > 0) ? static_cast<float>(opaque_submeshes) / state.secondary_cmd_buf_count : 0;
 
 	if (state.thread_count != thread_pool.size())
@@ -332,7 +341,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 
 	if (use_secondary_command_buffers)
 	{
-		std::vector<std::future<vkb::CommandBuffer *>> secondary_cmd_buf_futures;
+		std::vector<std::future<vkb::core::CommandBuffer<vkb::BindingType::C> *>> secondary_cmd_buf_futures;
 
 		// Save the number of draws left over, these will be distributed among the first buffers
 		uint32_t draws_per_buffer = vkb::to_u32(std::floor(avg_draws_per_buffer));

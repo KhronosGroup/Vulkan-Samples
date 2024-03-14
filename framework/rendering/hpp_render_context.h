@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "rendering/hpp_render_target.h"
 #include <core/hpp_device.h>
 #include <core/hpp_swapchain.h>
 #include <platform/window.h>
@@ -117,34 +118,35 @@ class HPPRenderContext
 	 * @returns A valid command buffer to record commands to be submitted
 	 * Also ensures that there is an active frame if there is no existing active frame already
 	 */
-	vkb::core::HPPCommandBuffer &begin(vkb::core::HPPCommandBuffer::ResetMode reset_mode = vkb::core::HPPCommandBuffer::ResetMode::ResetPool);
+	vkb::core::CommandBuffer<vkb::BindingType::Cpp> &begin(vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode reset_mode =
+	                                                           vkb::core::CommandBuffer<vkb::BindingType::Cpp>::ResetMode::ResetPool);
 
 	/**
 	 * @brief Submits the command buffer to the right queue
 	 * @param command_buffer A command buffer containing recorded commands
 	 */
-	void submit(vkb::core::HPPCommandBuffer &command_buffer);
+	void submit(vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer);
 
 	/**
 	 * @brief Submits multiple command buffers to the right queue
 	 * @param command_buffers Command buffers containing recorded commands
 	 */
-	void submit(const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers);
+	void submit(const std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &command_buffers);
 
 	/**
 	 * @brief begin_frame
 	 */
 	void begin_frame();
 
-	vk::Semaphore submit(const vkb::core::HPPQueue                        &queue,
-	                     const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
-	                     vk::Semaphore                                     wait_semaphore,
-	                     vk::PipelineStageFlags                            wait_pipeline_stage);
+	vk::Semaphore submit(const vkb::core::HPPQueue                                            &queue,
+	                     const std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &command_buffers,
+	                     vk::Semaphore                                                         wait_semaphore,
+	                     vk::PipelineStageFlags                                                wait_pipeline_stage);
 
 	/**
 	 * @brief Submits a command buffer related to a frame to a queue
 	 */
-	void submit(const vkb::core::HPPQueue &queue, const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers);
+	void submit(const vkb::core::HPPQueue &queue, const std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &command_buffers);
 
 	/**
 	 * @brief Waits a frame to finish its rendering

@@ -283,7 +283,7 @@ inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uin
 	return result;
 }
 
-inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &staging_buffer, sg::Image &image)
+inline void upload_image_to_gpu(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, core::Buffer &staging_buffer, sg::Image &image)
 {
 	// Clean up the image data, as they are copied in the staging buffer
 	image.clear_data();

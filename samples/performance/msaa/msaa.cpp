@@ -465,7 +465,7 @@ void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::Subpass> &
 	subpass->set_depth_stencil_resolve_mode(VK_RESOLVE_MODE_NONE);
 }
 
-void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void MSAASample::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target)
 {
 	auto &views = render_target.get_views();
 
@@ -572,8 +572,10 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 	}
 }
 
-void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target,
-                                VkImageLayout &swapchain_layout, bool msaa_enabled)
+void MSAASample::postprocessing(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+                                vkb::RenderTarget                             &render_target,
+                                VkImageLayout                                 &swapchain_layout,
+                                bool                                           msaa_enabled)
 {
 	auto        depth_attachment   = (msaa_enabled && depth_writeback_resolve_supported && resolve_depth_on_writeback) ? i_depth_resolve : i_depth;
 	bool        multisampled_depth = msaa_enabled && !(depth_writeback_resolve_supported && resolve_depth_on_writeback);
@@ -610,8 +612,10 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	command_buffer.end_render_pass();
 }
 
-void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer, const std::vector<vkb::core::ImageView> &views,
-                                             uint32_t color_destination, VkImageLayout &color_layout)
+void MSAASample::resolve_color_separate_pass(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+                                             const std::vector<vkb::core::ImageView>       &views,
+                                             uint32_t                                       color_destination,
+                                             VkImageLayout                                 &color_layout)
 {
 	{
 		// The multisampled color is the source of the resolve operation

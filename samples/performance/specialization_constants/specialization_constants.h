@@ -58,7 +58,7 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 
 		virtual void prepare() override;
 
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 
 		/**
 		 * @brief Create a buffer allocation from scene graph lights for the specialization constants sample
@@ -71,7 +71,8 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 		 * @return BufferAllocation A buffer allocation created for use in shaders
 		 */
 		template <typename T>
-		vkb::BufferAllocation allocate_custom_lights(vkb::CommandBuffer &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
+		vkb::BufferAllocation allocate_custom_lights(
+		    vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
 		{
 			T light_info;
 			light_info.count = vkb::to_u32(light_count);
@@ -108,7 +109,7 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 
 	virtual void draw_gui() override;
 
-	virtual void render(vkb::CommandBuffer &command_buffer) override;
+	virtual void render(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 
 	std::unique_ptr<vkb::RenderPipeline> create_specialization_renderpass();
 

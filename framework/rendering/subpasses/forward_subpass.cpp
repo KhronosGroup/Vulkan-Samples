@@ -57,7 +57,7 @@ void ForwardSubpass::prepare()
 	}
 }
 
-void ForwardSubpass::draw(CommandBuffer &command_buffer)
+void ForwardSubpass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	allocate_lights<ForwardLights>(scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);

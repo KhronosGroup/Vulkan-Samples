@@ -56,7 +56,7 @@ PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline *par
 	}
 }
 
-void PostProcessingComputePass::prepare(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+void PostProcessingComputePass::prepare(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target)
 {
 	// Build the compute shader upfront
 	auto &resource_cache = get_render_context().get_device().get_resource_cache();
@@ -93,7 +93,7 @@ PostProcessingComputePass &PostProcessingComputePass::bind_storage_image(const s
 	return *this;
 }
 
-void PostProcessingComputePass::transition_images(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+void PostProcessingComputePass::transition_images(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target)
 {
 	BarrierInfo fallback_barrier_src{};
 	fallback_barrier_src.pipeline_stage     = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
@@ -195,7 +195,7 @@ void PostProcessingComputePass::transition_images(CommandBuffer &command_buffer,
 	}
 }
 
-void PostProcessingComputePass::draw(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+void PostProcessingComputePass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target)
 {
 	transition_images(command_buffer, default_render_target);
 

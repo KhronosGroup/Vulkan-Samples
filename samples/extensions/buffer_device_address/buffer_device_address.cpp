@@ -209,7 +209,7 @@ std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
 	memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
 	cmd.buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
-	VK_CHECK(cmd.end());
+	cmd.end();
 
 	// Not very optimal, but it's the simplest solution.
 	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);

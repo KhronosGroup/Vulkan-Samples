@@ -85,7 +85,7 @@ void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *
 	}
 }
 
-void GeometrySubpass::draw(CommandBuffer &command_buffer)
+void GeometrySubpass::draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)
 {
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
@@ -139,7 +139,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	}
 }
 
-void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
+void GeometrySubpass::update_uniform(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::Node &node, size_t thread_index)
 {
 	GlobalUniform global_uniform;
 
@@ -160,7 +160,7 @@ void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &no
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
+void GeometrySubpass::draw_submesh(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
 {
 	auto &device = command_buffer.get_device();
 
@@ -246,7 +246,9 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 	draw_submesh_command(command_buffer, sub_mesh);
 }
 
-void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material)
+void GeometrySubpass::prepare_pipeline_state(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+                                             VkFrontFace                                    front_face,
+                                             bool                                           double_sided_material)
 {
 	RasterizationState rasterization_state = base_rasterization_state;
 	rasterization_state.front_face         = front_face;
@@ -263,7 +265,8 @@ void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFr
 	command_buffer.set_multisample_state(multisample_state);
 }
 
-PipelineLayout &GeometrySubpass::prepare_pipeline_layout(CommandBuffer &command_buffer, const std::vector<ShaderModule *> &shader_modules)
+PipelineLayout &GeometrySubpass::prepare_pipeline_layout(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+                                                         const std::vector<ShaderModule *>             &shader_modules)
 {
 	// Sets any specified resource modes
 	for (auto &shader_module : shader_modules)
@@ -277,7 +280,7 @@ PipelineLayout &GeometrySubpass::prepare_pipeline_layout(CommandBuffer &command_
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout(shader_modules);
 }
 
-void GeometrySubpass::prepare_push_constants(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void GeometrySubpass::prepare_push_constants(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::SubMesh &sub_mesh)
 {
 	auto pbr_material = dynamic_cast<const sg::PBRMaterial *>(sub_mesh.get_material());
 
@@ -294,7 +297,7 @@ void GeometrySubpass::prepare_push_constants(CommandBuffer &command_buffer, sg::
 	}
 }
 
-void GeometrySubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void GeometrySubpass::draw_submesh_command(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::SubMesh &sub_mesh)
 {
 	// Draw submesh indexed if indices exists
 	if (sub_mesh.vertex_indices != 0)

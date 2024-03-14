@@ -19,7 +19,6 @@
 
 #include <imgui.h>
 
-#include "core/hpp_command_buffer.h"
 #include "core/hpp_image_view.h"
 #include "core/hpp_pipeline_layout.h"
 #include "debug_info.h"
@@ -62,7 +61,7 @@ struct HPPFont
 	}
 
 	std::vector<uint8_t> data;
-	ImFont	          *handle = nullptr;
+	ImFont              *handle = nullptr;
 	std::string          name;
 	float                size = 0.0f;
 };
@@ -155,7 +154,7 @@ class HPPGui
 	 * @brief Draws the HPPGui
 	 * @param command_buffer Command buffer to register draw-commands
 	 */
-	void draw(vkb::core::HPPCommandBuffer &command_buffer);
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer);
 
 	/**
 	 * @brief Draws the HPPGui
@@ -224,7 +223,7 @@ class HPPGui
 	 * @brief Updates Vulkan buffers
 	 * @param frame Frame to render into
 	 */
-	void update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const;
+	void update_buffers(vkb::core::CommandBuffer<vkb::BindingType::Cpp> &command_buffer) const;
 
   private:
 	/**

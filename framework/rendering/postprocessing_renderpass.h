@@ -183,7 +183,7 @@ class PostProcessingSubpass : public Subpass
 	 * @brief A functor used to draw the primitives for a post-processing step.
 	 * @see default_draw_func()
 	 */
-	using DrawFunc = std::function<void(CommandBuffer &command_buffer, RenderTarget &render_target)>;
+	using DrawFunc = std::function<void(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &render_target)>;
 
 	/**
 	 * @brief Sets the function used to draw this postprocessing step.
@@ -194,7 +194,7 @@ class PostProcessingSubpass : public Subpass
 	/**
 	 * @brief The default function used to draw a step; it draws 1 instance with 3 vertices.
 	 */
-	static void default_draw_func(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
+	static void default_draw_func(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, vkb::RenderTarget &render_target);
 
   private:
 	PostProcessingRenderPass *parent;
@@ -210,7 +210,7 @@ class PostProcessingSubpass : public Subpass
 	DrawFunc draw_func{&PostProcessingSubpass::default_draw_func};
 
 	void prepare() override;
-	void draw(CommandBuffer &command_buffer) override;
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 };
 
 /**
@@ -229,7 +229,7 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	PostProcessingRenderPass(PostProcessingRenderPass &&to_move)            = default;
 	PostProcessingRenderPass &operator=(PostProcessingRenderPass &&to_move) = default;
 
-	void draw(CommandBuffer &command_buffer, RenderTarget &default_render_target) override;
+	void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target) override;
 
 	/**
 	 * @brief Gets the step at the given index.
@@ -288,11 +288,11 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	 * @brief Transition input, sampled and output attachments as appropriate.
 	 * @remarks If a RenderTarget is not explicitly set for this pass, fallback_render_target is used.
 	 */
-	void transition_attachments(const AttachmentSet        &input_attachments,
-	                            const SampledAttachmentSet &sampled_attachments,
-	                            const AttachmentSet        &output_attachments,
-	                            CommandBuffer              &command_buffer,
-	                            RenderTarget               &fallback_render_target);
+	void transition_attachments(const AttachmentSet                           &input_attachments,
+	                            const SampledAttachmentSet                    &sampled_attachments,
+	                            const AttachmentSet                           &output_attachments,
+	                            vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+	                            RenderTarget                                  &fallback_render_target);
 
 	/**
 	 * @brief Select appropriate load/store operations for each buffer of render_target,
@@ -308,7 +308,7 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	/**
 	 * @brief Transition images and prepare load/stores before draw()ing.
 	 */
-	void prepare_draw(CommandBuffer &command_buffer, RenderTarget &fallback_render_target);
+	void prepare_draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &fallback_render_target);
 
 	BarrierInfo get_src_barrier_info() const override;
 	BarrierInfo get_dst_barrier_info() const override;

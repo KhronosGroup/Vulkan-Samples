@@ -50,7 +50,7 @@ class PostProcessingPassBase
 	 * @remarks Passes that that do not explicitly have a vkb::RenderTarget set will render
 	 *          to default_render_target.
 	 */
-	virtual void prepare(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+	virtual void prepare(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target)
 	{
 		prepared = true;
 	}
@@ -60,7 +60,7 @@ class PostProcessingPassBase
 	 * @remarks Passes that that do not explicitly have a vkb::RenderTarget set will render
 	 *          to default_render_target.
 	 */
-	virtual void draw(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+	virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, RenderTarget &default_render_target)
 	{}
 
 	/**

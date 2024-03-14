@@ -1304,7 +1304,7 @@ void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuff
 	get_device().flush_command_buffer(command_buffer, queue, true, signalSemaphore);
 }
 
-void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f)
+void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer)> &f)
 {
 	auto &cmd = get_device().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);

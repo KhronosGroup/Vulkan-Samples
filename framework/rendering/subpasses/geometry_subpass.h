@@ -81,7 +81,7 @@ class GeometrySubpass : public Subpass
 	/**
 	 * @brief Record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) override;
+	virtual void draw(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer) override;
 
 	/**
 	 * @brief Thread index to use for allocating resources
@@ -89,17 +89,19 @@ class GeometrySubpass : public Subpass
 	void set_thread_index(uint32_t index);
 
   protected:
-	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index);
+	virtual void update_uniform(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::Node &node, size_t thread_index);
 
-	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
+	void draw_submesh(
+	    vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-	virtual void prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material);
+	virtual void prepare_pipeline_state(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, VkFrontFace front_face, bool double_sided_material);
 
-	virtual PipelineLayout &prepare_pipeline_layout(CommandBuffer &command_buffer, const std::vector<ShaderModule *> &shader_modules);
+	virtual PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer,
+	                                                const std::vector<ShaderModule *>             &shader_modules);
 
-	virtual void prepare_push_constants(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+	virtual void prepare_push_constants(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::SubMesh &sub_mesh);
 
-	virtual void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+	virtual void draw_submesh_command(vkb::core::CommandBuffer<vkb::BindingType::C> &command_buffer, sg::SubMesh &sub_mesh);
 
 	/**
 	 * @brief Sorts objects based on distance from camera and classifies them
