@@ -119,6 +119,16 @@ struct ImageBuilder : public allocated::Builder<ImageBuilder, VkImageCreateInfo>
 		return *this;
 	}
 
+	template <typename ExtensionType>
+	ImageBuilder &with_extension(ExtensionType &extension)
+	{
+		extension.pNext = create_info.pNext;
+
+		create_info.pNext = &extension;
+
+		return *this;
+	}
+
 	Image    build(const Device &device) const;
 	ImagePtr build_unique(const Device &device) const;
 };
@@ -178,6 +188,10 @@ class Image : public allocated::Allocated<VkImage>
 	uint32_t get_array_layer_count() const;
 
 	std::unordered_set<ImageView *> &get_views();
+
+	VkDeviceSize get_image_required_size() const;
+
+	VkImageCompressionPropertiesEXT get_applied_compression() const;
 
   private:
 	/// Image views referring to this image
