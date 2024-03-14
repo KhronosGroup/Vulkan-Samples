@@ -258,6 +258,15 @@ void image_layout_transition(VkCommandBuffer                                    
                              VkImageLayout                                                   new_layout);
 
 /**
+ * @brief Helper functions for compression controls
+ */
+std::vector<VkImageCompressionFixedRateFlagBitsEXT> fixed_rate_compression_flags_to_vector(VkImageCompressionFixedRateFlagsEXT flags);
+
+VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, const VkImageCreateInfo &create_info);
+
+VkImageCompressionPropertiesEXT query_applied_compression(VkDevice device, VkImage image);
+
+/**
  * @brief Load and store info for a render pass attachment.
  */
 struct LoadStoreInfo
