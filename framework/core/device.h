@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -183,7 +183,7 @@ class Device : public vkb::core::VulkanResourceC<VkDevice>
 	 * @brief Requests a command buffer from the general command_pool
 	 * @return A new command buffer
 	 */
-	CommandBuffer &request_command_buffer() const;
+	vkb::core::CommandBufferC &request_command_buffer() const;
 
 	FencePool &get_fence_pool() const;
 

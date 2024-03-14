@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,18 @@
 
 #pragma once
 
-#include "core/hpp_device.h"
 #include "scene_graph/component.h"
 #include <vulkan/vulkan.hpp>
+
+namespace vkb
+{
+namespace core
+{
+class HPPDevice;
+class HPPImage;
+class HPPImageView;
+}        // namespace core
+}        // namespace vkb
 
 namespace vkb::scene_graph::components
 {
@@ -100,4 +109,4 @@ class HPPImage : public vkb::sg::Component
 	std::unique_ptr<vkb::core::HPPImageView>             vk_image_view;
 };
 
-} // namespace vkb::scene_graph::components
+}        // namespace vkb::scene_graph::components

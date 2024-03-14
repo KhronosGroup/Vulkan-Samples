@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2020-2024, Broadcom Inc.
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2020-2025, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,8 +32,14 @@
 namespace vkb
 {
 class Device;
-class CommandBuffer;
 class RenderContext;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
+}        // namespace core
 
 /*
  * @brief Helper class for querying statistics about the CPU and the GPU
@@ -117,7 +123,7 @@ class Stats
 	 * when this method is called.
 	 * @param cb The command buffer
 	 */
-	void begin_sampling(CommandBuffer &cb);
+	void begin_sampling(vkb::core::CommandBufferC &cb);
 
 	/**
 	 * @brief A command buffer that we want to collect stats about is about to be ended
@@ -131,7 +137,7 @@ class Stats
 	 * state when this method is called.
 	 * @param cb The command buffer
 	 */
-	void end_sampling(CommandBuffer &cb);
+	void end_sampling(vkb::core::CommandBufferC &cb);
 
   private:
 	/// The render context

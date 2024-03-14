@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,11 +16,9 @@
  */
 
 #include "hpp_gui.h"
+#include "core/hpp_queue.h"
 #include "vulkan_sample.h"
-#include <common/hpp_utils.h>
-#include <core/hpp_command_pool.h>
 #include <imgui_internal.h>
-
 #include <numeric>
 
 namespace vkb
@@ -455,7 +453,7 @@ void HPPGui::new_frame() const
 	ImGui::NewFrame();
 }
 
-void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
+void HPPGui::draw(vkb::core::CommandBufferCpp &command_buffer)
 {
 	if (!visible)
 	{

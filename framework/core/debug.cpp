@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -191,8 +191,7 @@ ScopedDebugLabel::ScopedDebugLabel(const DebugUtils &debug_utils, VkCommandBuffe
 	}
 }
 
-ScopedDebugLabel::ScopedDebugLabel(const CommandBuffer &command_buffer,
-                                   const char *name, glm::vec4 color) :
+ScopedDebugLabel::ScopedDebugLabel(const vkb::core::CommandBufferC &command_buffer, const char *name, glm::vec4 color) :
     ScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
 {
 }

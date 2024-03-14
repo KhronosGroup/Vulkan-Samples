@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +16,12 @@
  * limitations under the License.
  */
 
-#include "device.h"
+#include "core/device.h"
+#include "core/buffer.h"
+#include "core/command_pool.h"
+#include "core/physical_device.h"
+#include "core/queue.h"
+#include "fence_pool.h"
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -535,7 +540,7 @@ void Device::prepare_memory_allocator()
 	vkb::allocated::init(*this);
 }
 
-CommandBuffer &Device::request_command_buffer() const
+vkb::core::CommandBufferC &Device::request_command_buffer() const
 {
 	return command_pool->request_command_buffer();
 }

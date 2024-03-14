@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,11 @@
 
 namespace vkb
 {
-CommandPool::CommandPool(Device &d, uint32_t queue_family_index, RenderFrame *render_frame, size_t thread_index, CommandBuffer::ResetMode reset_mode) :
+CommandPool::CommandPool(vkb::Device                &d,
+                         uint32_t                    queue_family_index,
+                         vkb::RenderFrame           *render_frame,
+                         size_t                      thread_index,
+                         vkb::CommandBufferResetMode reset_mode) :
     device{d},
     render_frame{render_frame},
     thread_index{thread_index},
@@ -31,11 +35,11 @@ CommandPool::CommandPool(Device &d, uint32_t queue_family_index, RenderFrame *re
 	VkCommandPoolCreateFlags flags;
 	switch (reset_mode)
 	{
-		case CommandBuffer::ResetMode::ResetIndividually:
-		case CommandBuffer::ResetMode::AlwaysAllocate:
+		case vkb::CommandBufferResetMode::ResetIndividually:
+		case vkb::CommandBufferResetMode::AlwaysAllocate:
 			flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			break;
-		case CommandBuffer::ResetMode::ResetPool:
+		case vkb::CommandBufferResetMode::ResetPool:
 		default:
 			flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 			break;
@@ -118,13 +122,13 @@ VkResult CommandPool::reset_pool()
 
 	switch (reset_mode)
 	{
-		case CommandBuffer::ResetMode::ResetIndividually:
+		case vkb::CommandBufferResetMode::ResetIndividually:
 		{
 			result = reset_command_buffers();
 
 			break;
 		}
-		case CommandBuffer::ResetMode::ResetPool:
+		case vkb::CommandBufferResetMode::ResetPool:
 		{
 			result = vkResetCommandPool(device.get_handle(), handle, 0);
 
@@ -137,7 +141,7 @@ VkResult CommandPool::reset_pool()
 
 			break;
 		}
-		case CommandBuffer::ResetMode::AlwaysAllocate:
+		case vkb::CommandBufferResetMode::AlwaysAllocate:
 		{
 			primary_command_buffers.clear();
 			active_primary_command_buffer_count = 0;
@@ -185,7 +189,7 @@ VkResult CommandPool::reset_command_buffers()
 	return result;
 }
 
-CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
+vkb::core::CommandBufferC &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 {
 	if (level == VK_COMMAND_BUFFER_LEVEL_PRIMARY)
 	{
@@ -194,7 +198,7 @@ CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 			return *primary_command_buffers[active_primary_command_buffer_count++];
 		}
 
-		primary_command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));
+		primary_command_buffers.emplace_back(std::make_unique<vkb::core::CommandBufferC>(*this, level));
 
 		active_primary_command_buffer_count++;
 
@@ -207,7 +211,7 @@ CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 			return *secondary_command_buffers[active_secondary_command_buffer_count++];
 		}
 
-		secondary_command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));
+		secondary_command_buffers.emplace_back(std::make_unique<vkb::core::CommandBufferC>(*this, level));
 
 		active_secondary_command_buffer_count++;
 
@@ -215,7 +219,7 @@ CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 	}
 }
 
-CommandBuffer::ResetMode const CommandPool::get_reset_mode() const
+vkb::CommandBufferResetMode const CommandPool::get_reset_mode() const
 {
 	return reset_mode;
 }

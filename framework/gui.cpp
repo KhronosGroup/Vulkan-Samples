@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -489,7 +489,7 @@ void Gui::resize(const uint32_t width, const uint32_t height) const
 	io.DisplaySize.y = static_cast<float>(height);
 }
 
-void Gui::draw(CommandBuffer &command_buffer)
+void Gui::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	if (!visible)
 	{
