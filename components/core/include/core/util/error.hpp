@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Thomas Atkinson
+/* Copyright (c) 2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,10 +50,8 @@
 		__pragma(warning(pop))
 #endif
 
-VKBP_DISABLE_WARNINGS()
 // TODO: replace with a direct fmt submodule
 #include <fmt/format.h>
-VKBP_ENABLE_WARNINGS()
 
 #include <stdexcept>
 
