@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -165,8 +165,14 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 	{
 		if (auto layout_binding = bindings.get_layout_binding(it.first))
 		{
-			const auto &view    = it.second.get_image_view(render_target);
-			const auto &sampler = it.second.get_sampler() ? *it.second.get_sampler() : *parent->default_sampler;
+			const auto &view = it.second.get_image_view(render_target);
+
+			// Get the properties for the image format. We need to check whether a linear sampler is valid.
+			const VkFormatProperties fmtProps          = get_render_context().get_device().get_gpu().get_format_properties(view.get_format());
+			bool                     has_linear_filter = (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
+
+			const auto &sampler = it.second.get_sampler() ? *it.second.get_sampler() :
+			                                                (has_linear_filter ? *parent->default_sampler : *parent->default_sampler_nearest);
 
 			command_buffer.bind_image(view, sampler, 0, layout_binding->binding, 0);
 		}
@@ -216,6 +222,12 @@ PostProcessingRenderPass::PostProcessingRenderPass(PostProcessingPipeline *paren
 		sampler_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
 		this->default_sampler = std::make_unique<vkb::core::Sampler>(get_render_context().get_device(), sampler_info);
+
+		// Also create a nearest filtering version as a fallback
+		sampler_info.minFilter = VK_FILTER_NEAREST;
+		sampler_info.magFilter = VK_FILTER_NEAREST;
+
+		this->default_sampler_nearest = std::make_unique<vkb::core::Sampler>(get_render_context().get_device(), sampler_info);
 	}
 }
 

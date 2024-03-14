@@ -244,7 +244,9 @@ vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<v
 vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
 {
 	return vkb::common::create_sampler(
+	    get_device().get_gpu().get_handle(),
 	    get_device().get_handle(),
+	    texture.image->get_format(),
 	    filter,
 	    vk::SamplerAddressMode::eRepeat,
 	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,

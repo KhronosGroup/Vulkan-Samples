@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -315,6 +315,7 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 
 	RenderPipeline                    pipeline{};
 	std::unique_ptr<core::Sampler>    default_sampler{};
+	std::unique_ptr<core::Sampler>    default_sampler_nearest{};
 	RenderTarget                     *draw_render_target{nullptr};
 	std::vector<LoadStoreInfo>        load_stores{};
 	bool                              load_stores_dirty{true};
