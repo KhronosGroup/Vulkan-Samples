@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ class LayoutTransitions : public vkb::VulkanSampleC
 
 	virtual void prepare_render_context() override;
 
-	void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
 
 	virtual void draw_gui() override;
 

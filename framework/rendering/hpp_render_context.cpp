@@ -1,5 +1,5 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,9 +16,12 @@
  * limitations under the License.
  */
 
-#include "hpp_render_context.h"
-
-#include <core/hpp_image.h>
+#include "rendering/hpp_render_context.h"
+#include "buffer_pool.h"
+#include "core/command_buffer.h"
+#include "core/hpp_physical_device.h"
+#include "core/hpp_queue.h"
+#include "platform/window.h"
 
 namespace vkb
 {
@@ -231,7 +234,7 @@ bool HPPRenderContext::handle_surface_changes(bool force_update)
 	return false;
 }
 
-vkb::core::HPPCommandBuffer &HPPRenderContext::begin(vkb::core::HPPCommandBuffer::ResetMode reset_mode)
+vkb::core::CommandBufferCpp &HPPRenderContext::begin(vkb::CommandBufferResetMode reset_mode)
 {
 	assert(prepared && "HPPRenderContext not prepared for rendering, call prepare()");
 
@@ -249,12 +252,12 @@ vkb::core::HPPCommandBuffer &HPPRenderContext::begin(vkb::core::HPPCommandBuffer
 	return get_active_frame().request_command_buffer(queue, reset_mode);
 }
 
-void HPPRenderContext::submit(vkb::core::HPPCommandBuffer &command_buffer)
+void HPPRenderContext::submit(vkb::core::CommandBufferCpp &command_buffer)
 {
 	submit({&command_buffer});
 }
 
-void HPPRenderContext::submit(const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers)
+void HPPRenderContext::submit(const std::vector<vkb::core::CommandBufferCpp *> &command_buffers)
 {
 	assert(frame_active && "HPPRenderContext is inactive, cannot submit command buffer. Please call begin()");
 
@@ -335,12 +338,15 @@ void HPPRenderContext::begin_frame()
 }
 
 vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                        &queue,
-                                       const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
+                                       const std::vector<vkb::core::CommandBufferCpp *> &command_buffers,
                                        vk::Semaphore                                     wait_semaphore,
                                        vk::PipelineStageFlags                            wait_pipeline_stage)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::HPPCommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(),
+	               command_buffers.end(),
+	               cmd_buf_handles.begin(),
+	               [](const vkb::core::CommandBufferCpp *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 
@@ -360,10 +366,13 @@ vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                
 	return signal_semaphore;
 }
 
-void HPPRenderContext::submit(const vkb::core::HPPQueue &queue, const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers)
+void HPPRenderContext::submit(const vkb::core::HPPQueue &queue, const std::vector<vkb::core::CommandBufferCpp *> &command_buffers)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::HPPCommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(),
+	               command_buffers.end(),
+	               cmd_buf_handles.begin(),
+	               [](const vkb::core::CommandBufferCpp *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 

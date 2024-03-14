@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -86,7 +86,7 @@ void RenderPipeline::set_clear_value(const std::vector<VkClearValue> &cv)
 	clear_value = cv;
 }
 
-void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents)
+void RenderPipeline::draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &render_target, VkSubpassContents contents)
 {
 	assert(!subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 

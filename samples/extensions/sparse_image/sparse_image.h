@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include <list>
 
 class SparseImage : public ApiVulkanSample
 {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2025, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,15 +17,17 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include "stats_common.h"
-
-#include <map>
-#include <set>
-#include <unordered_map>
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class CommandBuffer;
+using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
+}        // namespace core
 
 /**
  * @brief Abstract interface for all StatsProvider classes
@@ -87,14 +89,14 @@ class StatsProvider
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
 	 */
-	virtual void begin_sampling(CommandBuffer &cb)
+	virtual void begin_sampling(vkb::core::CommandBufferC &cb)
 	{}
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
 	 */
-	virtual void end_sampling(CommandBuffer &cb)
+	virtual void end_sampling(vkb::core::CommandBufferC &cb)
 	{}
 
   protected:

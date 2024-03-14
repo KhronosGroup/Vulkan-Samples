@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2022, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,7 +50,7 @@ class PostProcessingPassBase
 	 * @remarks Passes that that do not explicitly have a vkb::RenderTarget set will render
 	 *          to default_render_target.
 	 */
-	virtual void prepare(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+	virtual void prepare(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)
 	{
 		prepared = true;
 	}
@@ -60,7 +60,7 @@ class PostProcessingPassBase
 	 * @remarks Passes that that do not explicitly have a vkb::RenderTarget set will render
 	 *          to default_render_target.
 	 */
-	virtual void draw(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+	virtual void draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)
 	{}
 
 	/**

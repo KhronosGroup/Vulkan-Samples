@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,9 +15,12 @@
  * limitations under the License.
  */
 
-#include "hpp_render_frame.h"
+#include "rendering/hpp_render_frame.h"
 #include "buffer_pool.h"
-#include <common/hpp_resource_caching.h>
+#include "common/hpp_resource_caching.h"
+#include "core/hpp_command_pool.h"
+#include "core/hpp_device.h"
+#include "core/hpp_queue.h"
 
 constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
 
@@ -118,8 +121,8 @@ std::vector<uint32_t> HPPRenderFrame::collect_bindings_to_update(const vkb::core
 	return {bindings_to_update.begin(), bindings_to_update.end()};
 }
 
-std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &HPPRenderFrame::get_command_pools(const vkb::core::HPPQueue             &queue,
-                                                                                           vkb::core::HPPCommandBuffer::ResetMode reset_mode)
+std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &HPPRenderFrame::get_command_pools(const vkb::core::HPPQueue  &queue,
+                                                                                           vkb::CommandBufferResetMode reset_mode)
 {
 	auto command_pool_it = command_pools.find(queue.get_family_index());
 
@@ -184,10 +187,10 @@ void HPPRenderFrame::release_owned_semaphore(vk::Semaphore semaphore)
 	semaphore_pool.release_owned_semaphore(semaphore);
 }
 
-vkb::core::HPPCommandBuffer &HPPRenderFrame::request_command_buffer(const vkb::core::HPPQueue             &queue,
-                                                                    vkb::core::HPPCommandBuffer::ResetMode reset_mode,
-                                                                    vk::CommandBufferLevel                 level,
-                                                                    size_t                                 thread_index)
+vkb::core::CommandBufferCpp &HPPRenderFrame::request_command_buffer(const vkb::core::HPPQueue  &queue,
+                                                                    vkb::CommandBufferResetMode reset_mode,
+                                                                    vk::CommandBufferLevel      level,
+                                                                    size_t                      thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 

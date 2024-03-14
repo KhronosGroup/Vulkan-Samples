@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-#include <core/hpp_queue.h>
-
-#include <core/hpp_command_buffer.h>
-#include <core/hpp_device.h>
+#include "core/hpp_queue.h"
+#include "core/command_buffer.h"
 
 namespace vkb
 {
@@ -73,7 +71,7 @@ vk::Bool32 HPPQueue::support_present() const
 	return can_present;
 }
 
-void HPPQueue::submit(const HPPCommandBuffer &command_buffer, vk::Fence fence) const
+void HPPQueue::submit(const vkb::core::CommandBufferCpp &command_buffer, vk::Fence fence) const
 {
 	vk::CommandBuffer commandBuffer = command_buffer.get_handle();
 	vk::SubmitInfo    submit_info({}, {}, commandBuffer);

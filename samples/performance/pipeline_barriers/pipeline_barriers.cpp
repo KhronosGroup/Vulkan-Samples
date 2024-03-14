@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -155,7 +155,7 @@ std::unique_ptr<vkb::RenderTarget> PipelineBarriers::create_render_target(vkb::c
 	return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
-void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
 {
 	// POI
 	//

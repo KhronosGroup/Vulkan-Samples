@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,13 +17,17 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
-class HPPCommandBuffer;
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
+
 class HPPDevice;
 
 /**
@@ -55,7 +59,7 @@ class HPPQueue
 
 	vk::Bool32 support_present() const;
 
-	void submit(const HPPCommandBuffer &command_buffer, vk::Fence fence) const;
+	void submit(const vkb::core::CommandBufferCpp &command_buffer, vk::Fence fence) const;
 
 	vk::Result present(const vk::PresentInfoKHR &present_infos) const;
 
