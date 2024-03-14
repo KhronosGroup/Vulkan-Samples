@@ -126,8 +126,6 @@ struct ImageBuilder : public allocated::Builder<ImageBuilder, VkImageCreateInfo>
 class ImageView;
 class Image : public allocated::Allocated<VkImage>
 {
-	VkImageCreateInfo create_info;
-
   public:
 	Image(Device const         &device,
 	      VkImage               handle,
@@ -183,8 +181,9 @@ class Image : public allocated::Allocated<VkImage>
 
   private:
 	/// Image views referring to this image
-	std::unordered_set<ImageView *> views;
+	VkImageCreateInfo               create_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 	VkImageSubresource              subresource{};
+	std::unordered_set<ImageView *> views;
 };
 }        // namespace core
 }        // namespace vkb
