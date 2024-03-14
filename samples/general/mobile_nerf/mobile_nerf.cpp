@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,9 +16,9 @@
  */
 
 #include "mobile_nerf.h"
+#include "filesystem/legacy.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "gltf_loader.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
@@ -104,22 +104,22 @@ MobileNerf::MobileNerf()
 
 MobileNerf::~MobileNerf()
 {
-	if (device)
+	if (has_device())
 	{
 		if (render_pass_nerf)
 		{
-			vkDestroyRenderPass(device->get_handle(), render_pass_nerf, nullptr);
+			vkDestroyRenderPass(get_device().get_handle(), render_pass_nerf, nullptr);
 		}
 
 		for (uint32_t i = 0; i < nerf_framebuffers.size(); i++)
 		{
 			if (nerf_framebuffers[i])
 			{
-				vkDestroyFramebuffer(device->get_handle(), nerf_framebuffers[i], nullptr);
+				vkDestroyFramebuffer(get_device().get_handle(), nerf_framebuffers[i], nullptr);
 			}
 		}
 
-		auto device_ptr = device->get_handle();
+		auto device_ptr = get_device().get_handle();
 
 		for (auto &model : models)
 		{
@@ -127,14 +127,7 @@ MobileNerf::~MobileNerf()
 			model.index_buffer.reset();
 
 			vkDestroySampler(get_device().get_handle(), model.texture_input_0.sampler, nullptr);
-			vkDestroyImageView(get_device().get_handle(), model.texture_input_0.view, nullptr);
-			vkDestroyImage(get_device().get_handle(), model.texture_input_0.image, nullptr);
-			vkFreeMemory(get_device().get_handle(), model.texture_input_0.memory, nullptr);
-
 			vkDestroySampler(get_device().get_handle(), model.texture_input_1.sampler, nullptr);
-			vkDestroyImageView(get_device().get_handle(), model.texture_input_1.view, nullptr);
-			vkDestroyImage(get_device().get_handle(), model.texture_input_1.image, nullptr);
-			vkFreeMemory(get_device().get_handle(), model.texture_input_1.memory, nullptr);
 
 			vkDestroyPipeline(device_ptr, model.pipeline_first_pass, nullptr);
 		}
@@ -155,22 +148,11 @@ MobileNerf::~MobileNerf()
 			vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout_baseline, nullptr);
 		}
 
-		for (auto attachment : frameAttachments)
+		for (auto &attachment : frameAttachments)
 		{
-			vkDestroySampler(get_device().get_handle(), attachment.feature_0.sampler, nullptr);
-			vkDestroyImageView(get_device().get_handle(), attachment.feature_0.view, nullptr);
-			vkDestroyImage(get_device().get_handle(), attachment.feature_0.image, nullptr);
-			vkFreeMemory(get_device().get_handle(), attachment.feature_0.memory, nullptr);
-
-			vkDestroySampler(get_device().get_handle(), attachment.feature_1.sampler, nullptr);
-			vkDestroyImageView(get_device().get_handle(), attachment.feature_1.view, nullptr);
-			vkDestroyImage(get_device().get_handle(), attachment.feature_1.image, nullptr);
-			vkFreeMemory(get_device().get_handle(), attachment.feature_1.memory, nullptr);
-
-			vkDestroySampler(get_device().get_handle(), attachment.feature_2.sampler, nullptr);
-			vkDestroyImageView(get_device().get_handle(), attachment.feature_2.view, nullptr);
-			vkDestroyImage(get_device().get_handle(), attachment.feature_2.image, nullptr);
-			vkFreeMemory(get_device().get_handle(), attachment.feature_2.memory, nullptr);
+			attachment.feature_0.destroy();
+			attachment.feature_1.destroy();
+			attachment.feature_2.destroy();
 		}
 	}
 }
@@ -199,10 +181,10 @@ void MobileNerf::read_json_map()
 	const std::string nerf_obj_json =
 	    R"V0G0N(
         {
-            "width": 0, 
+            "width": 0,
 
-            "height": 0, 
-    
+            "height": 0,
+
             "texture_type": "8bit",
 
             "target_model": "lego_combo",
@@ -257,7 +239,7 @@ void MobileNerf::read_json_map()
 
             "lego_combo":{
                 "combo": true,
-                "models": ["scenes/morpheus_team/lego_ball_phone/", "scenes/morpheus_team/lego_boba_fett_phone/", 
+                "models": ["scenes/morpheus_team/lego_ball_phone/", "scenes/morpheus_team/lego_boba_fett_phone/",
                             "scenes/morpheus_team/lego_monster_truck_phone/", "scenes/morpheus_team/lego_tractor_phone/"],
                 "original": [false, false, false, false],
                 "camera": [-0.0381453, 1.84186, -1.51744],
@@ -514,76 +496,60 @@ inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
+void MobileNerf::FrameBufferAttachment::destroy()
+{
+	if (!image)
+	{
+		return;
+	}
+
+	auto &device = image->get_device();
+	vkDestroySampler(device.get_handle(), sampler, nullptr);
+	sampler = VK_NULL_HANDLE;
+	vkDestroyImageView(device.get_handle(), view, nullptr);
+	image.reset();
+}
+
 void MobileNerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment &attachment)
 {
-	if (attachment.image != VK_NULL_HANDLE)
+	if (attachment)
 	{
-		vkDestroySampler(get_device().get_handle(), attachment.sampler, nullptr);
-		vkDestroyImageView(get_device().get_handle(), attachment.view, nullptr);
-		vkDestroyImage(get_device().get_handle(), attachment.image, nullptr);
-		vkFreeMemory(get_device().get_handle(), attachment.memory, nullptr);
+		attachment.destroy();
 	}
 
-	attachment.format = format;
-	attachment.width  = get_render_context().get_surface_extent().width;
-	attachment.height = get_render_context().get_surface_extent().height;
-
-	VkImageAspectFlags aspectMask = 0;
-	VkImageLayout      imageLayout;
-
-	attachment.format = format;
-
-	if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-	{
-		aspectMask  = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	}
+	VkImageAspectFlags aspectMask  = VK_IMAGE_ASPECT_COLOR_BIT;
+	VkImageLayout      imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	{
 		aspectMask  = VK_IMAGE_ASPECT_DEPTH_BIT;
 		imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
-	VkImageCreateInfo image = vkb::initializers::image_create_info();
-	image.imageType         = VK_IMAGE_TYPE_2D;
-	image.format            = attachment.format;
-	image.extent.width      = attachment.width;
-	image.extent.height     = attachment.height;
-	image.extent.depth      = 1;
-	image.mipLevels         = 1;
-	image.arrayLayers       = 1;
-	image.samples           = VK_SAMPLE_COUNT_1_BIT;
-	image.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	image.usage             = usage;
-	image.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment.image));
+	auto surfaceExtent = get_render_context().get_surface_extent();
+	attachment.image   = std::make_unique<vkb::core::Image>(
+        get_device(),
+        VkExtent3D{surfaceExtent.width, surfaceExtent.height, 1},
+        format,
+        usage,
+        VMA_MEMORY_USAGE_GPU_ONLY);
 
-	VkMemoryRequirements memory_requirements;
-	vkGetImageMemoryRequirements(get_device().get_handle(), attachment.image, &memory_requirements);
-	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment.memory));
-	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment.image, attachment.memory, 0));
+	with_command_buffer([&](VkCommandBuffer command_buffer) {
+		vkb::image_layout_transition(command_buffer, attachment.image->get_handle(),
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_GENERAL,
+		                             {aspectMask, 0, 1, 0, 1});
+	});
 
 	VkImageViewCreateInfo color_image_view           = vkb::initializers::image_view_create_info();
 	color_image_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
 	color_image_view.format                          = format;
-	color_image_view.subresourceRange                = {};
 	color_image_view.subresourceRange.aspectMask     = aspectMask;
 	color_image_view.subresourceRange.baseMipLevel   = 0;
 	color_image_view.subresourceRange.levelCount     = 1;
 	color_image_view.subresourceRange.baseArrayLayer = 0;
 	color_image_view.subresourceRange.layerCount     = 1;
-	color_image_view.image                           = attachment.image;
+	color_image_view.image                           = attachment.image->get_handle();
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &attachment.view));
-
-	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkb::image_layout_transition(command_buffer, attachment.image,
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_GENERAL,
-	                             {aspectMask, 0, 1, 0, 1});
-	get_device().flush_command_buffer(command_buffer, queue);
 
 	VkSamplerCreateInfo samplerCreateInfo = {};
 
@@ -604,7 +570,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 {
 	if (use_deferred)
 	{
-		frameAttachments.resize(render_context->get_render_frames().size());
+		frameAttachments.resize(get_render_context().get_render_frames().size());
 
 		for (auto i = 0; i < frameAttachments.size(); i++)
 		{
@@ -621,7 +587,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 		{
 			if (nerf_framebuffers[i] != VK_NULL_HANDLE)
 			{
-				vkDestroyFramebuffer(device->get_handle(), nerf_framebuffers[i], nullptr);
+				vkDestroyFramebuffer(get_device().get_handle(), nerf_framebuffers[i], nullptr);
 			}
 		}
 	}
@@ -667,7 +633,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 			views[1] = swapchain_buffers[i].view;
 		}
 
-		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &nerf_framebuffers[i]));
+		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &nerf_framebuffers[i]));
 	}
 }
 
@@ -834,7 +800,7 @@ void MobileNerf::load_scene(int model_index, int sub_model_index, int models_ent
 {
 	Model &model = models[models_entry];
 
-	vkb::GLTFLoader loader{*device};
+	vkb::GLTFLoader loader{get_device()};
 	int             total_sub_sub_model = using_original_nerf_models[model_index] ? 8 : 1;
 
 	for (int sub_model = 0; sub_model < total_sub_sub_model; sub_model++)
@@ -988,11 +954,11 @@ void MobileNerf::create_descriptor_sets_first_pass(Model &model)
 		std::array<VkDescriptorImageInfo, 2> texture_input_descriptors;
 
 		texture_input_descriptors[0].sampler     = model.texture_input_0.sampler;
-		texture_input_descriptors[0].imageView   = model.texture_input_0.view;
+		texture_input_descriptors[0].imageView   = model.texture_input_0.image->get_vk_image_view().get_handle();
 		texture_input_descriptors[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		texture_input_descriptors[1].sampler     = model.texture_input_1.sampler;
-		texture_input_descriptors[1].imageView   = model.texture_input_1.view;
+		texture_input_descriptors[1].imageView   = model.texture_input_1.image->get_vk_image_view().get_handle();
 		texture_input_descriptors[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(**model.uniform_buffer_ref);
@@ -1167,39 +1133,41 @@ void MobileNerf::create_static_object_buffers(int model_index, int sub_model_ind
 	auto   vertex_buffer_size = model.vertices.size() * sizeof(Vertex);
 	auto   index_buffer_size  = model.indices.size() * sizeof(model.indices[0]);
 
-	// Create a staging buffer
-	const VkBufferUsageFlags           staging_flags         = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	const VkBufferUsageFlags           vertex_flags          = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	const VkBufferUsageFlags           index_flags           = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, staging_flags | vertex_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	std::unique_ptr<vkb::core::Buffer> staging_index_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, staging_flags | index_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	// Create destination buffers
+	model.vertex_buffer = std::make_unique<vkb::core::Buffer>(
+	    get_device(),
+	    vertex_buffer_size,
+	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	    VMA_MEMORY_USAGE_GPU_ONLY);
+	model.vertex_buffer->set_debug_name(fmt::format("Model #{} Sub-Model #{} vertices", model_index, sub_model_index));
+	model.index_buffer = std::make_unique<vkb::core::Buffer>(
+	    get_device(),
+	    index_buffer_size,
+	    VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	    VMA_MEMORY_USAGE_GPU_ONLY);
+	model.index_buffer->set_debug_name(fmt::format("Model #{} Sub-Model #{} indices", model_index, sub_model_index));
+
+	// Create staging buffers
+	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = std::make_unique<vkb::core::Buffer>(
+	    get_device(),
+	    vertex_buffer_size,
+	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_vertex_buffer->update(model.vertices);
+
+	std::unique_ptr<vkb::core::Buffer> staging_index_buffer = std::make_unique<vkb::core::Buffer>(
+	    get_device(),
+	    index_buffer_size,
+	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_index_buffer->update(model.indices);
 
 	// Copy over the data for each of the models
-	staging_vertex_buffer->update(model.vertices.data(), vertex_buffer_size);
-	staging_index_buffer->update(model.indices.data(), index_buffer_size);
+	with_vkb_command_buffer([&](vkb::CommandBuffer &cmd) {
+		cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
+		cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
+	});
 
-	// now transfer over to the end buffer
-	auto &cmd = device->request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer, const VkBufferUsageFlags buffer_usage_flags) {
-		auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-		cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
-
-		vkb::BufferMemoryBarrier barrier;
-		barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-		cmd.buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
-		return output_buffer;
-	};
-	model.vertex_buffer = copy(*staging_vertex_buffer, vertex_flags);
-	model.index_buffer  = copy(*staging_index_buffer, index_flags);
-
-	cmd.end();
-	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(cmd, device->request_fence());
-	device->get_fence_pool().wait();
 	LOGI("Done Creating static object buffers");
 }
 
@@ -1422,54 +1390,43 @@ void MobileNerf::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(ii.dim.x * ii.dim.y * ii.dim.z);
 
-	glm::vec3 corner_pos = -ii.interval * 0.5f * (glm::vec3(ii.dim - 1));
-	int       idx        = 0;
+	const glm::vec3 corner_pos = -ii.interval * 0.5f * (glm::vec3(ii.dim - 1));
+	int             idx        = 0;
+	glm::vec3       offset;
 	for (int x = 0; x < ii.dim.x; ++x)
 	{
+		offset.x = corner_pos.x + ii.interval.x * x;
 		for (int y = 0; y < ii.dim.y; ++y)
 		{
+			offset.y = corner_pos.y + ii.interval.y * y;
 			for (int z = 0; z < ii.dim.z; ++z)
 			{
-				instance_data[idx++].pos_offset = glm::vec3(
-				    corner_pos.x + ii.interval.x * x,
-				    corner_pos.y + ii.interval.y * y,
-				    corner_pos.z + ii.interval.z * z);
+				offset.z                        = corner_pos.z + ii.interval.z * z;
+				instance_data[idx++].pos_offset = offset;
 			}
 		}
 	}
 
 	auto instance_buffer_size = instance_data.size() * sizeof(InstanceData);
 
-	// Note that in contrast to a typical pipeline, our vertex/index buffer requires the acceleration structure build flag in rayquery
-	// Create a staging buffer
-	const VkBufferUsageFlags           buffer_usage_flags      = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	const VkBufferUsageFlags           staging_flags           = buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	std::unique_ptr<vkb::core::Buffer> staging_instance_buffer = std::make_unique<vkb::core::Buffer>(get_device(), instance_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_buffer = std::make_unique<vkb::core::Buffer>(
+	    get_device(),
+	    instance_buffer_size,
+	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy over the data for each of the models
-	staging_instance_buffer->update(instance_data.data(), instance_buffer_size);
+	auto staging_instance_buffer = std::make_unique<vkb::core::Buffer>(
+	    get_device(),
+	    instance_buffer_size,
+	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_instance_buffer->update(instance_data);
 
 	// now transfer over to the end buffer
-	auto &cmd = device->request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer, const VkBufferUsageFlags buffer_usage_flags) {
-		auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-		cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
-
-		vkb::BufferMemoryBarrier barrier;
-		barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-		cmd.buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
-		return output_buffer;
-	};
-	instance_buffer = copy(*staging_instance_buffer, buffer_usage_flags);
-
-	cmd.end();
-	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(cmd, device->request_fence());
-	device->get_fence_pool().wait();
+	with_vkb_command_buffer([&](vkb::CommandBuffer &cmd) {
+		cmd.copy_buffer(*staging_instance_buffer, *instance_buffer, staging_instance_buffer->get_size());
+	});
 }
 
 void MobileNerf::draw()
@@ -1491,9 +1448,8 @@ void MobileNerf::create_texture(int model_index, int sub_model_index, int models
 	// Set up the input texture image
 
 	// TODO should load different scenes's feature map from command line
-	std::string assetBase      = vkb::fs::path::get(vkb::fs::path::Type::Assets);
-	std::string feature_0_path = assetBase + model_path[model_index] + "shape" + std::to_string(sub_model_index) + ".pngfeat0.png";
-	std::string feature_1_path = assetBase + model_path[model_index] + "shape" + std::to_string(sub_model_index) + ".pngfeat1.png";
+	std::string feature_0_path = model_path[model_index] + "shape" + std::to_string(sub_model_index) + ".pngfeat0.png";
+	std::string feature_1_path = model_path[model_index] + "shape" + std::to_string(sub_model_index) + ".pngfeat1.png";
 
 	LOGI("Creating feature texture 0");
 	create_texture_helper(feature_0_path, models[models_entry].texture_input_0);
@@ -1504,103 +1460,13 @@ void MobileNerf::create_texture(int model_index, int sub_model_index, int models
 	LOGI("Done Creating feature texture 0");
 }
 
-void MobileNerf::create_texture_helper(std::string texturePath, Texture_Input &texture_input)
+void MobileNerf::create_texture_helper(std::string const &texturePath, Texture &texture_input)
 {
-	// Copy data to an optimal tiled image
-	// This loads the texture data into a host local buffer that is copied to the optimal tiled image on the device
-
-	// Create a host-visible staging buffer that contains the raw image data
-	// This buffer will be the data source for copying texture data to the optimal tiled image on the device
-	// This buffer is used as a transfer source for the buffer copy
-	int texture_width  = 0;
-	int texture_height = 0;
-	int channel        = 0;
-
-	uint8_t *data = stbi_load(texturePath.c_str(), &texture_width, &texture_height, &channel, 0);
-
-	size_t dataSize = texture_width * texture_height * channel;
-
-	std::unique_ptr<vkb::core::Buffer> stage_buffer = std::make_unique<vkb::core::Buffer>(get_device(), dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	VkImageSubresourceLayers resourcesLayer = {};
-	resourcesLayer.aspectMask               = VK_IMAGE_ASPECT_COLOR_BIT;
-	resourcesLayer.mipLevel                 = 0;
-	resourcesLayer.baseArrayLayer           = 0;
-	resourcesLayer.layerCount               = 1;
-
-	VkOffset3D offset = {0};
-	VkExtent3D extent = {(uint32_t) texture_width, (uint32_t) texture_height, 1};
-
-	// Setup buffer copy regions for each mip level
-	VkBufferImageCopy buffer_copy_region = {};
-
-	buffer_copy_region.bufferOffset      = 0;
-	buffer_copy_region.bufferRowLength   = 0;
-	buffer_copy_region.bufferImageHeight = 0;
-	buffer_copy_region.imageSubresource  = resourcesLayer;
-	buffer_copy_region.imageOffset       = offset;
-	buffer_copy_region.imageExtent       = extent;
-
-	// Copy texture data into host local staging buffer
-	stage_buffer->update(data, dataSize);
-
-	texture_input.width  = texture_width;
-	texture_input.height = texture_height;
-
-	VkImageCreateInfo image = vkb::initializers::image_create_info();
-	image.imageType         = VK_IMAGE_TYPE_2D;
-	image.format            = VK_FORMAT_R8G8B8A8_UNORM;
-	image.extent.width      = texture_input.width;
-	image.extent.height     = texture_input.height;
-	image.extent.depth      = 1;
-	image.mipLevels         = 1;
-	image.arrayLayers       = 1;
-	image.samples           = VK_SAMPLE_COUNT_1_BIT;
-	image.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	image.usage             = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-	image.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &texture_input.image));
-
-	texture_input.format = VK_FORMAT_R8G8B8A8_UNORM;
-
-	VkMemoryRequirements memory_requirements;
-	vkGetImageMemoryRequirements(get_device().get_handle(), texture_input.image, &memory_requirements);
-	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &texture_input.memory));
-	VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture_input.image, texture_input.memory, 0));
-
-	VkImageViewCreateInfo color_image_view           = vkb::initializers::image_view_create_info();
-	color_image_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	color_image_view.format                          = VK_FORMAT_R8G8B8A8_UNORM;
-	color_image_view.subresourceRange                = {};
-	color_image_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	color_image_view.subresourceRange.baseMipLevel   = 0;
-	color_image_view.subresourceRange.levelCount     = 1;
-	color_image_view.subresourceRange.baseArrayLayer = 0;
-	color_image_view.subresourceRange.layerCount     = 1;
-	color_image_view.image                           = texture_input.image;
-	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &texture_input.view));
-
-	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkb::image_layout_transition(command_buffer, texture_input.image,
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-
-	vkCmdCopyBufferToImage(command_buffer, *(stage_buffer->get()), texture_input.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
-
-	vkb::image_layout_transition(command_buffer, texture_input.image,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-	get_device().flush_command_buffer(command_buffer, queue);
+	texture_input = load_texture(texturePath, vkb::sg::Image::Color);
+	vkDestroySampler(get_device().get_handle(), texture_input.sampler, nullptr);
 
 	VkSamplerCreateInfo samplerCreateInfo = {};
-
-	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
+	samplerCreateInfo.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	if (using_original_nerf_models[0])
 	{
 		samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
@@ -1619,7 +1485,6 @@ void MobileNerf::create_texture_helper(std::string texturePath, Texture_Input &t
 	samplerCreateInfo.minLod                  = 0.0f;
 	samplerCreateInfo.maxLod                  = 16.0f;
 	samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
-
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &samplerCreateInfo, 0, &texture_input.sampler));
 }
 
@@ -1674,7 +1539,7 @@ void MobileNerf::update_render_pass_nerf_forward()
 	render_pass_create_info.subpassCount           = 1;
 	render_pass_create_info.pSubpasses             = &subpass;
 
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
 }
 
 void MobileNerf::update_render_pass_nerf_baseline()
@@ -1812,10 +1677,10 @@ void MobileNerf::update_render_pass_nerf_baseline()
 	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 	render_pass_create_info.pDependencies          = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
 }
 
-std::unique_ptr<vkb::VulkanSample> create_mobile_nerf()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mobile_nerf()
 {
 	return std::make_unique<MobileNerf>();
 }

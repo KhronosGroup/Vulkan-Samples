@@ -20,8 +20,8 @@
 
 #include <fmt/format.h>
 
+#include "filesystem/legacy.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
@@ -374,24 +374,37 @@ int32_t get_bits_per_pixel(VkFormat format)
 	}
 }
 
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage)
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	auto buffer = vkb::fs::read_shader_binary(filename);
-
-	std::string file_ext = filename;
-
-	// Extract extension name from the glsl shader file
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
+	auto                  buffer = vkb::fs::read_shader_binary(filename);
 	std::vector<uint32_t> spirv;
-	std::string           info_log;
 
-	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	if (vkb::ShaderSourceLanguage::GLSL == src_language)
 	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
+		std::string file_ext = filename;
+
+		// Extract extension name from the glsl shader file
+		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+
+		std::string info_log;
+
+		// Compile the GLSL source
+		if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+		{
+			LOGE("Failed to compile shader, Error: {}", info_log.c_str());
+			return VK_NULL_HANDLE;
+		}
+	}
+	else if (vkb::ShaderSourceLanguage::SPV == src_language)
+	{
+		spirv = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
+		                              reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	}
+	else
+	{
+		LOGE("The format is not supported");
 		return VK_NULL_HANDLE;
 	}
 

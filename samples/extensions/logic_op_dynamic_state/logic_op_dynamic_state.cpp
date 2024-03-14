@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,7 +39,7 @@ LogicOpDynamicState::LogicOpDynamicState()
 
 LogicOpDynamicState::~LogicOpDynamicState()
 {
-	if (device)
+	if (has_device())
 	{
 		uniform_buffers.common.reset();
 		uniform_buffers.baseline.reset();
@@ -609,14 +609,9 @@ void LogicOpDynamicState::model_data_creation()
 	                                          UINT32_MAX,
 	                                          2, 3, 6, 7};
 
-	vkb::core::Buffer vertex_pos_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_pos_staging.update(vertices_pos);
-
-	vkb::core::Buffer vertex_norm_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_norm_staging.update(vertices_norm);
-
-	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_staging.update(indices);
+	vkb::core::Buffer vertex_pos_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), vertices_pos);
+	vkb::core::Buffer vertex_norm_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices_norm);
+	vkb::core::Buffer index_staging       = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	cube.vertices_pos = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                        vertex_buffer_size,
@@ -634,7 +629,7 @@ void LogicOpDynamicState::model_data_creation()
 	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
@@ -661,7 +656,7 @@ void LogicOpDynamicState::model_data_creation()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 /**
@@ -694,7 +689,7 @@ void LogicOpDynamicState::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_logic_op_dynamic_state()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_logic_op_dynamic_state()
 {
 	return std::make_unique<LogicOpDynamicState>();
 }

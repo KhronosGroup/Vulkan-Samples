@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,7 +49,7 @@ class HPPHlslShaders : public HPPApiVulkanSample
 	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
-	// from HPPVulkanSample
+	// from vkb::VulkanSample
 	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample
@@ -57,17 +57,17 @@ class HPPHlslShaders : public HPPApiVulkanSample
 	void render(float delta_time) override;
 	void view_changed() override;
 
-	vk::DescriptorSetLayout           create_base_descriptor_set_layout();
-	vk::DescriptorPool                create_descriptor_pool();
-	vk::Pipeline                      create_pipeline();
-	vk::PipelineLayout                create_pipeline_layout();
-	vk::DescriptorSetLayout           create_sampler_descriptor_set_layout();
-	vk::ShaderModule                  create_shader_module(const std::string &file, vk::ShaderStageFlagBits stage);
-	void                              draw();
-	void                              generate_quad();
-	void                              load_assets();
-	void                              update_descriptor_sets();
-	void                              update_uniform_buffers();
+	vk::DescriptorSetLayout create_base_descriptor_set_layout();
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::Pipeline            create_pipeline();
+	vk::PipelineLayout      create_pipeline_layout();
+	vk::DescriptorSetLayout create_sampler_descriptor_set_layout();
+	vk::ShaderModule        create_shader_module(const std::string &file, vk::ShaderStageFlagBits stage);
+	void                    draw();
+	void                    generate_quad();
+	void                    load_assets();
+	void                    update_descriptor_sets();
+	void                    update_uniform_buffers();
 
   private:
 	vk::DescriptorSet                     base_descriptor_set;

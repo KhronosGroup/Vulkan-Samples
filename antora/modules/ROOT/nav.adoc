@@ -45,7 +45,7 @@
 ** xref:samples/api/timestamp_queries/README.adoc[Timestamp queries]
 *** xref:samples/api/hpp_timestamp_queries/README.adoc[Timestamp queries (Vulkan-Hpp)]
 ** xref:samples/api/oit_linked_lists/README.adoc[OIT linked lists]
-** xref:samples/api/hpp_oit_linked_lists/README.adoc[OIT linked lists (Vulkan-Hpp)]
+*** xref:samples/api/hpp_oit_linked_lists/README.adoc[OIT linked lists (Vulkan-Hpp)]
 ** xref:samples/api/oit_depth_peeling/README.adoc[OIT depth peeling]
 * xref:samples/extensions/README.adoc[Extension usage samples]
 ** xref:samples/extensions/buffer_device_address/README.adoc[Buffer device address]

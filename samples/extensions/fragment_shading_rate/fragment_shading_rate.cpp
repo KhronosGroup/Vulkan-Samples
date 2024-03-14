@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Sascha Willems
+/* Copyright (c) 2020-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,12 +35,13 @@ FragmentShadingRate::FragmentShadingRate()
 
 FragmentShadingRate::~FragmentShadingRate()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.sphere, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroySampler(get_device().get_handle(), textures.scene.sampler, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 		uniform_buffers.scene.reset();
 		invalidate_shading_rate_attachment();
@@ -71,7 +72,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	// Check if the requested format for the shading rate attachment supports the required flag
 	VkFormat           requested_format = VK_FORMAT_R8_UINT;
 	VkFormatProperties format_properties;
-	vkGetPhysicalDeviceFormatProperties(device->get_gpu().get_handle(), requested_format, &format_properties);
+	vkGetPhysicalDeviceFormatProperties(get_device().get_gpu().get_handle(), requested_format, &format_properties);
 	if (!(format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR))
 	{
 		throw std::runtime_error("Selected shading rate attachment image format does not support required formate featureflag");
@@ -96,16 +97,16 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	image_create_info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
 	image_create_info.usage         = VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &shading_rate_image.image));
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &shading_rate_image.image));
 	VkMemoryRequirements memory_requirements{};
-	vkGetImageMemoryRequirements(device->get_handle(), shading_rate_image.image, &memory_requirements);
+	vkGetImageMemoryRequirements(get_device().get_handle(), shading_rate_image.image, &memory_requirements);
 
 	VkMemoryAllocateInfo memory_allocate_info{};
 	memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = device->get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocate_info, nullptr, &shading_rate_image.memory));
-	VK_CHECK(vkBindImageMemory(device->get_handle(), shading_rate_image.image, shading_rate_image.memory, 0));
+	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &shading_rate_image.memory));
+	VK_CHECK(vkBindImageMemory(get_device().get_handle(), shading_rate_image.image, shading_rate_image.memory, 0));
 
 	VkImageViewCreateInfo image_view_create_info{};
 	image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -117,7 +118,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	image_view_create_info.subresourceRange.baseArrayLayer = 0;
 	image_view_create_info.subresourceRange.layerCount     = 1;
 	image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &shading_rate_image.view));
+	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &shading_rate_image.view));
 
 	// Allocate a buffer that stores the shading rates
 	VkDeviceSize buffer_size = image_extent.width * image_extent.height * sizeof(uint8_t);
@@ -178,15 +179,11 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	}
 
 	// Move shading rate pattern data to staging buffer
-	std::unique_ptr<vkb::core::Buffer> staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                                        buffer_size,
-	                                                                                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_buffer->update(shading_rate_pattern_data, buffer_size);
+	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), buffer_size, shading_rate_pattern_data);
 	delete[] shading_rate_pattern_data;
 
 	// Upload the buffer containing the shading rates to the image that'll be used as the shading rate attachment inside our renderpass
-	VkCommandBuffer copy_cmd = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_cmd = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	vkb::image_layout_transition(copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -196,15 +193,13 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	buffer_copy_region.imageExtent.width           = image_extent.width;
 	buffer_copy_region.imageExtent.height          = image_extent.height;
 	buffer_copy_region.imageExtent.depth           = 1;
-	vkCmdCopyBufferToImage(copy_cmd, staging_buffer->get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
+	vkCmdCopyBufferToImage(copy_cmd, staging_buffer.get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 	// Transfer image layout to fragment shading rate attachment layout required to access this in the renderpass
 	vkb::image_layout_transition(
 	    copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
 
-	device->flush_command_buffer(copy_cmd, queue, true);
-
-	staging_buffer.reset();
+	get_device().flush_command_buffer(copy_cmd, queue, true);
 }
 
 /*
@@ -212,10 +207,10 @@ void FragmentShadingRate::create_shading_rate_attachment()
  */
 void FragmentShadingRate::invalidate_shading_rate_attachment()
 {
-	device->wait_idle();
-	vkDestroyImageView(device->get_handle(), shading_rate_image.view, nullptr);
-	vkDestroyImage(device->get_handle(), shading_rate_image.image, nullptr);
-	vkFreeMemory(device->get_handle(), shading_rate_image.memory, nullptr);
+	get_device().wait_idle();
+	vkDestroyImageView(get_device().get_handle(), shading_rate_image.view, nullptr);
+	vkDestroyImage(get_device().get_handle(), shading_rate_image.image, nullptr);
+	vkFreeMemory(get_device().get_handle(), shading_rate_image.memory, nullptr);
 	shading_rate_image.view   = VK_NULL_HANDLE;
 	shading_rate_image.image  = VK_NULL_HANDLE;
 	shading_rate_image.memory = VK_NULL_HANDLE;
@@ -236,7 +231,7 @@ void FragmentShadingRate::setup_render_pass()
 	std::array<VkAttachmentDescription2KHR, 3> attachments = {};
 	// Color attachment
 	attachments[0].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
-	attachments[0].format         = render_context->get_format();
+	attachments[0].format         = get_render_context().get_format();
 	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -333,7 +328,7 @@ void FragmentShadingRate::setup_render_pass()
 	render_pass_create_info.dependencyCount            = static_cast<uint32_t>(dependencies.size());
 	render_pass_create_info.pDependencies              = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass2KHR(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
+	VK_CHECK(vkCreateRenderPass2KHR(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass));
 }
 
 /*
@@ -369,17 +364,17 @@ void FragmentShadingRate::setup_framebuffer()
 		{
 			if (framebuffer != VK_NULL_HANDLE)
 			{
-				vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
+				vkDestroyFramebuffer(get_device().get_handle(), framebuffer, nullptr);
 			}
 		}
 	}
 
 	// Create frame buffers for every swap chain image
-	framebuffers.resize(render_context->get_render_frames().size());
+	framebuffers.resize(get_render_context().get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		attachments[0] = swapchain_buffers[i].view;
-		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
+		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
 	}
 }
 
@@ -745,7 +740,7 @@ bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate()
 {
 	return std::make_unique<FragmentShadingRate>();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,7 +35,7 @@ DescriptorIndexing::DescriptorIndexing()
 
 DescriptorIndexing::~DescriptorIndexing()
 {
-	if (device)
+	if (has_device())
 	{
 		VkDevice vk_device = get_device().get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.pipeline_layout, nullptr);
@@ -355,15 +355,11 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	image_view.image                           = test_image.image;
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view, nullptr, &test_image.image_view));
 
-	auto staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                          image_info.extent.width * image_info.extent.height * sizeof(uint32_t),
-	                                                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t), nullptr);
 
 	// Generate a random texture.
 	// Fairly simple, create different colors and some different patterns.
-
-	uint8_t *buffer = staging_buffer->map();
+	uint8_t *buffer = staging_buffer.map();
 	for (uint32_t y = 0; y < image_info.extent.height; y++)
 	{
 		for (uint32_t x = 0; x < image_info.extent.width; x++)
@@ -429,7 +425,8 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 			rgba[3] = 0xff;
 		}
 	}
-	staging_buffer->unmap();
+	staging_buffer.flush();
+	staging_buffer.unmap();
 
 	auto &cmd = get_device().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -439,7 +436,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	VkBufferImageCopy copy_info{};
 	copy_info.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 	copy_info.imageExtent      = image_info.extent;
-	vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer->get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
+	vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
 
 	vkb::image_layout_transition(cmd.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -518,7 +515,7 @@ void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	// There are lot of properties associated with descriptor_indexing, grab them here.
 	auto vkGetPhysicalDeviceProperties2KHR =
-	    reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
+	    reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(get_instance().get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
 	assert(vkGetPhysicalDeviceProperties2KHR);
 	VkPhysicalDeviceProperties2KHR device_properties{};
 
@@ -528,7 +525,7 @@ void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
 	vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_indexing()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_indexing()
 {
 	return std::make_unique<DescriptorIndexing>();
 }

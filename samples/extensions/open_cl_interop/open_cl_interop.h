@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -129,4 +129,4 @@ class OpenCLInterop : public ApiVulkanSample
 	float total_time_passed{0};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_open_cl_interop();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop();

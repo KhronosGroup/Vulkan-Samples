@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -99,7 +99,7 @@ struct Meshlet
  *
  * See vkb::VulkanSample for documentation
  */
-class ApiVulkanSample : public vkb::VulkanSample
+class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	ApiVulkanSample() = default;
@@ -112,11 +112,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	virtual void update(float delta_time) override;
 
+	virtual void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
+
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	virtual void render(float delta_time) = 0;
-
-	vkb::Device &get_device();
 
 	enum RenderPassCreateFlags
 	{
@@ -128,7 +128,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::vector<SwapchainBuffer> swapchain_buffers;
 
 	virtual void create_render_context() override;
-	virtual void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
 	VkQueue queue;
@@ -254,6 +253,12 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 */
 	void with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore = VK_NULL_HANDLE);
 
+	/**
+	 * @brief Synchronously execute a block code within a command buffer vkb wrapper, then submit the command buffer and wait for completion.
+	 * @param f a block of code which is passed a command buffer which is already in the begin state.
+	 */
+	void with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f);
+
   public:
 	/**
 	 * @brief Called when a view change occurs, can be overriden in derived samples to handle updating uniforms
@@ -341,8 +346,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Load a SPIR-V shader
 	 * @param file The file location of the shader relative to the shaders folder
 	 * @param stage The shader stage
+	 * @param src_language The shader language
 	 */
-	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
+	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
 
 	/**
 	 * @brief Updates the overlay

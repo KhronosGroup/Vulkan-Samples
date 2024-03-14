@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@ DynamicLineRasterization::DynamicLineRasterization()
 
 DynamicLineRasterization::~DynamicLineRasterization()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 
@@ -509,7 +509,7 @@ bool DynamicLineRasterization::resize(const uint32_t width, const uint32_t heigh
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_line_rasterization()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_line_rasterization()
 {
 	return std::make_unique<DynamicLineRasterization>();
 }

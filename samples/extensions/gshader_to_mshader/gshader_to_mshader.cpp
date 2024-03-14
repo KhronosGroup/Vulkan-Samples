@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ GshaderToMshader::GshaderToMshader()
 
 GshaderToMshader::~GshaderToMshader()
 {
-	if (device)
+	if (has_device())
 	{
 		uniform_buffer_vs.reset();
 		uniform_buffer_gs.reset();

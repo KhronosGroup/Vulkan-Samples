@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -112,4 +112,4 @@ class TimelineSemaphore : public ApiVulkanSample
 	void wait_pending(TimelineLock &lock, uint64_t timeline);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_timeline_semaphore();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_timeline_semaphore();

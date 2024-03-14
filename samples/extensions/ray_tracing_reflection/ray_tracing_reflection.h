@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2024, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * SPDX-FileCopyrightText: Copyright (c) 2014-2023 NVIDIA CORPORATION
+ * SPDX-FileCopyrightText: Copyright (c) 2014-2024 NVIDIA CORPORATION
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -136,4 +136,4 @@ class RaytracingReflection : public ApiVulkanSample
 	void render(float delta_time) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_ray_tracing_reflection();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_reflection();
