@@ -250,6 +250,10 @@ void DynamicMultisampleRasterization::build_command_buffers()
 
 		vkb::image_layout_transition(draw_cmd_buffers[i],
 		                             swapchain_buffers[i].image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		                             VK_IMAGE_LAYOUT_UNDEFINED,
 		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		                             range);
@@ -826,7 +830,6 @@ void DynamicMultisampleRasterization::prepare_uniform_buffers()
 
 void DynamicMultisampleRasterization::prepare_gui()
 {
-	// gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
 	create_gui(*window, /*stats=*/nullptr, 15.0f, true);
 
 	prepare_gui_pipeline();
