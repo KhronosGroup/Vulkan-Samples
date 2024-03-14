@@ -372,6 +372,10 @@ void DynamicRendering::build_command_buffers()
 		{
 			vkb::image_layout_transition(draw_cmd_buffer,
 			                             swapchain_buffers[i].image,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             0,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			                             VK_IMAGE_LAYOUT_UNDEFINED,
 			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			                             range);

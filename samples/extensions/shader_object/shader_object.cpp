@@ -968,7 +968,7 @@ void ShaderObject::build_command_buffers()
 		// Barriers for images that are rendered to
 		vkb::image_layout_transition(draw_cmd_buffer,
 		                             output_images[current_output_format].image,
-		                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		                             0,
 		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
