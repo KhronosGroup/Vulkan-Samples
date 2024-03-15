@@ -63,10 +63,10 @@ class Instance
 	/**
 	 * @brief Queries the GPUs of a VkInstance that is already created
 	 * @param instance A valid VkInstance
-	 * @param enabled_extensions List of extensions that have been enabled, used for following checks e.g. during device creation
+	 * @param externally_enabled_extensions List of extensions that have been enabled, used for following checks e.g. during device creation
 	 */
 	Instance(VkInstance                       instance,
-	         const std::vector<const char *> &required_extensions = {});
+	         const std::vector<const char *> &externally_enabled_extensions = {});
 
 	Instance(const Instance &) = delete;
 

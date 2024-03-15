@@ -409,12 +409,12 @@ Instance::Instance(const std::string                            &application_nam
 }
 
 Instance::Instance(VkInstance                       instance,
-                   const std::vector<const char *> &required_extensions) :
+                   const std::vector<const char *> &externally_enabled_extensions) :
     handle{instance}
 {
 	// Some parts of the framework will check for certain extensions to be enabled
 	// To make those work we need to copy over externall enabled extensions into this class
-	for (auto extension : required_extensions)
+	for (auto extension : externally_enabled_extensions)
 	{
 		enabled_extensions.push_back(extension);
 	}
