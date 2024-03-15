@@ -413,7 +413,7 @@ Instance::Instance(VkInstance                       instance,
     handle{instance}
 {
 	// Some parts of the framework will check for certain extensions to be enabled
-	// To make those work we need to copy over externall enabled extensions into this class
+	// To make those work we need to copy over externally enabled extensions into this class
 	for (auto extension : externally_enabled_extensions)
 	{
 		enabled_extensions.push_back(extension);
