@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -63,8 +63,10 @@ class Instance
 	/**
 	 * @brief Queries the GPUs of a VkInstance that is already created
 	 * @param instance A valid VkInstance
+	 * @param enabled_extensions List of extensions that have been enabled, used for following checks e.g. during device creation
 	 */
-	Instance(VkInstance instance);
+	Instance(VkInstance                       instance,
+	         const std::vector<const char *> &required_extensions = {});
 
 	Instance(const Instance &) = delete;
 
