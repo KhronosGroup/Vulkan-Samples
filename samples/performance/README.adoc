@@ -53,6 +53,11 @@ This sample will explore a few options to improve both descriptor and buffer man
 
 A transcoded version of the Performance sample <<swapchain_images,Swapchain images>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
+=== xref:./performance/image_compression_control/README.adoc[Image compression control]
+
+This sample shows how to use the extensions https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control[`VK_EXT_image_compression_control`] and https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control_swapchain[`VK_EXT_image_compression_control_swapchain`] to select between different levels of image compression.
+The UI shows the impact compression has on image size and bandwidth, illustrating the benefits of fixed-rate (visually lossless) compression.
+
 === xref:./{performance_samplespath}layout_transitions/README.adoc[Layout transitions]
 
 Vulkan requires the application to manage image layouts, so that all render pass attachments are in the correct layout when the render pass begins.

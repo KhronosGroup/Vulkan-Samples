@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <hpp_vulkan_sample.h>
-
 #include <camera.h>
 #include <common/hpp_error.h>
 #include <hpp_gui.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
+
+#include "vulkan_sample.h"
 
 /**
  * @brief A swapchain buffer
@@ -60,7 +60,7 @@ struct HPPVertex
  *
  * See vkb::ApiVulkanSample for documentation
  */
-class HPPApiVulkanSample : public vkb::HPPVulkanSample
+class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 {
   public:
 	HPPApiVulkanSample() = default;
@@ -142,9 +142,10 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Creates a vulkan sampler
 	 * @param address_mode The samplers address mode
 	 * @param mipmaps_count The samplers mipmaps count
+	 * @param format The image format that will be sampled
 	 * @returns A valid vk::Sampler
 	 */
-	vk::Sampler create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count);
+	vk::Sampler create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count, vk::Format format);
 
 	/**
 	 * @brief Populates the swapchain_buffers vector with the image and imageviews

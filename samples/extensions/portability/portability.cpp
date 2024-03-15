@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Holochip
+/* Copyright (c) 2022-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,7 +41,7 @@ Portability::Portability() :
 
 Portability::~Portability()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.sphere, nullptr);
@@ -85,7 +85,7 @@ VkPipelineShaderStageCreateInfo Portability::debug_load_shader(const std::string
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file, device->get_handle(), stage);
+	shader_stage.module                          = vkb::load_shader(file, get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);

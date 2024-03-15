@@ -16,10 +16,10 @@
  */
 
 #include "hpp_gui.h"
+#include "vulkan_sample.h"
 #include <common/hpp_utils.h>
 #include <core/hpp_buffer.h>
 #include <core/hpp_command_pool.h>
-#include <hpp_vulkan_sample.h>
 #include <imgui_internal.h>
 
 #include <numeric>
@@ -68,7 +68,7 @@ const ImGuiWindowFlags HPPGui::common_flags  = ImGuiWindowFlags_NoMove |
 const ImGuiWindowFlags HPPGui::options_flags = HPPGui::common_flags;
 const ImGuiWindowFlags HPPGui::info_flags    = HPPGui::common_flags | ImGuiWindowFlags_NoInputs;
 
-HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
+HPPGui::HPPGui(VulkanSample<BindingType::Cpp> &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
     sample{sample_}, content_scale_factor{window.get_content_scale_factor()}, dpi_factor{window.get_dpi_factor() * content_scale_factor}, explicit_update{explicit_update}, stats_view(stats)
 {
 	ImGui::CreateContext();
@@ -210,11 +210,18 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 
 	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
 
+	// Determine the filtering to be used, based on what is supported for the format
+	const vk::FormatProperties fmt_props = device.get_gpu().get_handle().getFormatProperties(font_image_view->get_format());
+
+	vk::Filter filter = (fmt_props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear) ?
+	                        vk::Filter::eLinear :
+	                        vk::Filter::eNearest;
+
 	// Create texture sampler
 	vk::SamplerCreateInfo sampler_info;
 	sampler_info.maxAnisotropy = 1.0f;
-	sampler_info.magFilter     = vk::Filter::eLinear;
-	sampler_info.minFilter     = vk::Filter::eLinear;
+	sampler_info.magFilter     = filter;
+	sampler_info.minFilter     = filter;
 	sampler_info.mipmapMode    = vk::SamplerMipmapMode::eNearest;
 	sampler_info.addressModeU  = vk::SamplerAddressMode::eClampToEdge;
 	sampler_info.addressModeV  = vk::SamplerAddressMode::eClampToEdge;
@@ -403,7 +410,7 @@ bool HPPGui::update_buffers()
 
 void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
 {
-	ImDrawData	                 *draw_data    = ImGui::GetDrawData();
+	ImDrawData                     *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
 
 	if (!draw_data || (draw_data->TotalVtxCount == 0) || (draw_data->TotalIdxCount == 0))

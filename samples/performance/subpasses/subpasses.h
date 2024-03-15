@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@
  *        implements deferred rendering with and without sub-passes, giving the
  *        user the possibility to change some key settings.
  */
-class Subpasses : public vkb::VulkanSample
+class Subpasses : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	Subpasses();
@@ -137,4 +137,4 @@ class Subpasses : public vkb::VulkanSample
 	     /* value       = */ 0}};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_subpasses();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_subpasses();

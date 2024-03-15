@@ -24,7 +24,7 @@ OITDepthPeeling::OITDepthPeeling()
 
 OITDepthPeeling::~OITDepthPeeling()
 {
-	if (!device)
+	if (!has_device())
 	{
 		return;
 	}
@@ -45,7 +45,7 @@ OITDepthPeeling::~OITDepthPeeling()
 	vkDestroyDescriptorSetLayout(get_device().get_handle(), gather_descriptor_set_layout, nullptr);
 	vkDestroyDescriptorSetLayout(get_device().get_handle(), combine_descriptor_set_layout, nullptr);
 
-	vkDestroySampler(device->get_handle(), point_sampler, VK_NULL_HANDLE);
+	vkDestroySampler(get_device().get_handle(), point_sampler, VK_NULL_HANDLE);
 	vkDestroySampler(get_device().get_handle(), background_texture.sampler, nullptr);
 	object.reset();
 }
@@ -572,7 +572,7 @@ void OITDepthPeeling::update_scene_constants()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<vkb::VulkanSample> create_oit_depth_peeling()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_depth_peeling()
 {
 	return std::make_unique<OITDepthPeeling>();
 }

@@ -42,7 +42,7 @@ DescriptorBufferBasic::DescriptorBufferBasic()
 
 DescriptorBufferBasic::~DescriptorBufferBasic()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -466,7 +466,7 @@ void DescriptorBufferBasic::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_buffer_basic()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_buffer_basic()
 {
 	return std::make_unique<DescriptorBufferBasic>();
 }

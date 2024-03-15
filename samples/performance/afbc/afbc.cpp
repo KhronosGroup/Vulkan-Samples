@@ -35,6 +35,9 @@
 
 AFBCSample::AFBCSample()
 {
+	// Extension that may be used to query if AFBC is enabled
+	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME, true);
+
 	auto &config = get_configuration();
 
 	config.insert<vkb::BoolSetting>(0, afbc_enabled, false);
@@ -54,21 +57,21 @@ bool AFBCSample::prepare(const vkb::ApplicationOptions &options)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	stats->request_stats({vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	// Store the start time to calculate rotation
 	start_time = std::chrono::system_clock::now();
@@ -114,14 +117,20 @@ void AFBCSample::recreate_swapchain()
 
 void AFBCSample::draw_gui()
 {
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this]() {
 		    ImGui::Checkbox("Enable AFBC", &afbc_enabled);
+
+		    if (get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+		    {
+			    ImGui::SameLine();
+			    ImGui::Text("(%s)", vkb::image_compression_flags_to_string(get_render_context().get_swapchain().get_applied_compression()).c_str());
+		    }
 	    },
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_afbc()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_afbc()
 {
 	return std::make_unique<AFBCSample>();
 }

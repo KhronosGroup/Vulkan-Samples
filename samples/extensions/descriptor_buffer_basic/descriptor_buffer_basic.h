@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -87,4 +87,4 @@ class DescriptorBufferBasic : public ApiVulkanSample
 	void         on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_buffer_basic();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_buffer_basic();

@@ -99,7 +99,7 @@ struct Meshlet
  *
  * See vkb::VulkanSample for documentation
  */
-class ApiVulkanSample : public vkb::VulkanSample
+class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	ApiVulkanSample() = default;
@@ -118,8 +118,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	virtual void render(float delta_time) = 0;
 
-	vkb::Device &get_device();
-
 	enum RenderPassCreateFlags
 	{
 		ColorAttachmentLoad = 0x00000001
@@ -130,7 +128,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::vector<SwapchainBuffer> swapchain_buffers;
 
 	virtual void create_render_context() override;
-	virtual void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
 	VkQueue queue;
