@@ -47,7 +47,7 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 
 ShaderDebugPrintf::~ShaderDebugPrintf()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.sphere, nullptr);
@@ -59,9 +59,9 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 	}
 
-	if (instance)
+	if (has_instance())
 	{
-		vkDestroyDebugUtilsMessengerEXT(instance->get_handle(), debug_utils_messenger, nullptr);
+		vkDestroyDebugUtilsMessengerEXT(get_instance().get_handle(), debug_utils_messenger, nullptr);
 	}
 }
 
@@ -394,7 +394,7 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 }
 
 // This sample overrides the instance creation part of the framework to chain in additional structures
-void ShaderDebugPrintf::create_instance()
+std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 {
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
@@ -446,7 +446,7 @@ void ShaderDebugPrintf::create_instance()
 
 	VK_CHECK(vkCreateDebugUtilsMessengerEXT(vulkan_instance, &debug_utils_messenger_create_info, nullptr, &debug_utils_messenger));
 
-	instance = std::make_unique<vkb::Instance>(vulkan_instance);
+	return std::make_unique<vkb::Instance>(vulkan_instance, enabled_extensions);
 }
 
 void ShaderDebugPrintf::render(float delta_time)
