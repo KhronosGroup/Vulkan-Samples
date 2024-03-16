@@ -136,9 +136,10 @@ if(IOS)
     find_package(Vulkan COMPONENTS MoltenVK)
     set(FRAMEWORKS_TO_EMBED)
     list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_MoltenVK_LIBRARY};${Vulkan_LIBRARIES};")
-    if(VKB_VALIDATION_LAYERS)
+    # trouble is can't turn this on/off if XCode decides to build debug and we're configured for release.  Need to revist
+    #if(("${VKB_DEBUG}" STREQUAL "ON") OR ("${VKB_VALIDATION_LAYERS}" STREQUAL "ON"))
         list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_Layer_VALIDATION}")
-    endif ()
+    #endif ()
     set_target_properties(${PROJECT_NAME} PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/ios/Info.plist
     )
