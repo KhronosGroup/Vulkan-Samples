@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -98,7 +98,7 @@ class GLTFLoader
 
 	virtual std::unique_ptr<sg::PBRMaterial> create_default_material();
 
-	virtual std::unique_ptr<sg::Sampler> create_default_sampler();
+	virtual std::unique_ptr<sg::Sampler> create_default_sampler(int filter);
 
 	virtual std::unique_ptr<sg::Camera> create_default_camera();
 

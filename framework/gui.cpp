@@ -232,11 +232,15 @@ Gui::Gui(VulkanSample<vkb::BindingType::C> &sample_, const Window &window, const
 		device.get_command_pool().reset_pool();
 	}
 
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(device.get_gpu().get_handle(), font_image->get_format(), &filter);
+
 	// Create texture sampler
 	VkSamplerCreateInfo sampler_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 	sampler_info.maxAnisotropy = 1.0f;
-	sampler_info.magFilter     = VK_FILTER_LINEAR;
-	sampler_info.minFilter     = VK_FILTER_LINEAR;
+	sampler_info.magFilter     = filter;
+	sampler_info.minFilter     = filter;
 	sampler_info.mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	sampler_info.addressModeU  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.addressModeV  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

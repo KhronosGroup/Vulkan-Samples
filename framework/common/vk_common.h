@@ -92,6 +92,15 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
 VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &format_priority_list);
 
 /**
+ * @brief Helper function to check support for linear filtering and adjust its parameters if required
+ * @param physical_device The physical device to check the depth formats against
+ * @param format The format to check against
+ * @param filter The preferred filter to adjust
+ * @param mipmapMode (Optional) The preferred mipmap mode to adjust
+ */
+void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFilter *filter, VkSamplerMipmapMode *mipmapMode = nullptr);
+
+/**
  * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
  * @param descriptor_type Vulkan descriptor type to check.
  * @return True if type is dynamic buffer, false otherwise.
@@ -247,6 +256,15 @@ void image_layout_transition(VkCommandBuffer                                    
                              std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
                              VkImageLayout                                                   old_layout,
                              VkImageLayout                                                   new_layout);
+
+/**
+ * @brief Helper functions for compression controls
+ */
+std::vector<VkImageCompressionFixedRateFlagBitsEXT> fixed_rate_compression_flags_to_vector(VkImageCompressionFixedRateFlagsEXT flags);
+
+VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, const VkImageCreateInfo &create_info);
+
+VkImageCompressionPropertiesEXT query_applied_compression(VkDevice device, VkImage image);
 
 /**
  * @brief Load and store info for a render pass attachment.

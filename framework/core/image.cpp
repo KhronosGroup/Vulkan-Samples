@@ -194,5 +194,18 @@ std::unordered_set<ImageView *> &Image::get_views()
 	return views;
 }
 
+VkDeviceSize Image::get_image_required_size() const
+{
+	VkMemoryRequirements memory_requirements;
+
+	vkGetImageMemoryRequirements(device->get_handle(), handle, &memory_requirements);
+
+	return memory_requirements.size;
+}
+
+VkImageCompressionPropertiesEXT Image::get_applied_compression() const
+{
+	return query_applied_compression(device->get_handle(), handle);
+}
 }        // namespace core
 }        // namespace vkb

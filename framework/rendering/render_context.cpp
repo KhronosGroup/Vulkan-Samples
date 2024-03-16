@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -171,6 +171,21 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 
 	// Save the preTransform attribute for future rotations
 	pre_transform = transform;
+
+	recreate();
+}
+
+void RenderContext::update_swapchain(const VkImageCompressionFlagsEXT compression, const VkImageCompressionFixedRateFlagsEXT compression_fixed_rate)
+{
+	if (!swapchain)
+	{
+		LOGW("Can't update the swapchains compression in headless mode, skipping.");
+		return;
+	}
+
+	device.get_resource_cache().clear_framebuffers();
+
+	swapchain = std::make_unique<Swapchain>(*swapchain, compression, compression_fixed_rate);
 
 	recreate();
 }
