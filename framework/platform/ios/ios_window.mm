@@ -56,7 +56,6 @@ VkSurfaceKHR IosWindow::create_surface(VkInstance instance, VkPhysicalDevice)
 
 void IosWindow::process_events()
 {
-	//	process_android_events(platform->get_android_app());
 }
 
 bool IosWindow::should_close()
@@ -66,13 +65,12 @@ bool IosWindow::should_close()
 
 void IosWindow::close()
 {
-	//	GameActivity_finish(platform->get_activity());
 	finish_called = true;
 }
 
 float IosWindow::get_dpi_factor() const
 {
-	//	return AConfiguration_getDensity(platform->get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
+	return 0.0f;
 }
 
 std::vector<const char *> IosWindow::get_required_surface_extensions() const

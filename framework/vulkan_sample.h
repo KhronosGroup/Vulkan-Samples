@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#define VK_USE_PLATFORM_METAL_EXT
 
 #include "common/hpp_utils.h"
 #include "hpp_gltf_loader.h"
