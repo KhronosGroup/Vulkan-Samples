@@ -149,10 +149,6 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
 	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
 };
 
-#if __APPLE__
-    #include "TargetConditionals.h"
-#endif
-
 /**
  * @brief Initializes the Vulkan instance.
  *
@@ -978,8 +974,6 @@ void HelloTriangle::teardown_framebuffers(Context &context)
 void HelloTriangle::teardown(Context &context)
 {
 	// Don't release anything until the GPU is completely idle.
-    if(context.device == VK_NULL_HANDLE)
-        return;
 	vkDeviceWaitIdle(context.device);
 
 	teardown_framebuffers(context);
