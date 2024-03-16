@@ -166,16 +166,9 @@ void HelloTriangle::init_instance(Context                         &context,
 {
 	LOGI("Initializing vulkan instance.");
 
-    bool useLoader = true;
-#if TARGET_OS_IPHONE
-    useLoader = false;
-#endif
-  
-    if(useLoader) {
-        if (volkInitialize())
-        {
-            throw std::runtime_error("Failed to initialize volk.");
-        }
+    if (volkInitialize())
+    {
+        throw std::runtime_error("Failed to initialize volk.");
     }
 
 	uint32_t instance_extension_count;

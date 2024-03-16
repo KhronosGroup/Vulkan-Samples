@@ -42,14 +42,12 @@ VkSurfaceKHR IosWindow::create_surface(VkInstance instance, VkPhysicalDevice)
 	}
 
 	// Create a window that is the same size as the screen
-	UIWindow *window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-	[window makeKeyAndVisible];
-
 	VkSurfaceKHR surface{};
 
 	VkMetalSurfaceCreateInfoEXT info{VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT};
 
-	info.pLayer = (CAMetalLayer *) [window layer];
+    view = (VulkanView*)platform->view;
+	info.pLayer = (CAMetalLayer *) [view layer];
 
 	VK_CHECK(vkCreateMetalSurfaceEXT(instance, &info, nullptr, &surface));
 
@@ -82,3 +80,7 @@ std::vector<const char *> IosWindow::get_required_surface_extensions() const
 	return {};
 }
 }        // namespace vkb
+
+@implementation VulkanView
++(Class) layerClass { return [CAMetalLayer class]; }
+@end

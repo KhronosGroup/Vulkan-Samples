@@ -33,5 +33,7 @@ class IosPlatformContext final : public PlatformContext
   public:
 	IosPlatformContext(int argc, char **argv);
 	~IosPlatformContext() override = default;
+    void * view;
+    void* userPlatform;
 };
 }        // namespace vkb

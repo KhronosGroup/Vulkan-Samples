@@ -23,6 +23,10 @@
 // Applications should use CUSTOM_MAIN to define their own main function
 // Definitions added by core/CMakeLists.txt
 
+#if defined(PLATFORM__MACOS)
+#include <TargetConditionals.h>
+#endif
+
 #if defined(PLATFORM__ANDROID)
 #	include <game-activity/native_app_glue/android_native_app_glue.h>
 extern std::unique_ptr<vkb::PlatformContext> create_platform_context(android_app *state);

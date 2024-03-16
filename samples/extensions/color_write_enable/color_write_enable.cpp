@@ -544,7 +544,7 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 		                                                ImGuiColorEditFlags_NoSidePreview |
 		                                                    ImGuiColorEditFlags_NoSmallPreview |
 		                                                    ImGuiColorEditFlags_Float |
-		                                                    ImGuiColorEditFlags_InputRGB))
+		                                                    ImGuiColorEditFlags_RGB))
 		{
 			rebuild_command_buffers();
 		}

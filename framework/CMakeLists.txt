@@ -67,7 +67,7 @@ set(FRAMEWORK_FILES
     resource_replay.cpp
     api_vulkan_sample.cpp
     timer.cpp
-    camera.cpp
+    camera_core.cpp
     hpp_api_vulkan_sample.cpp
     hpp_gui.cpp
     hpp_resource_cache.cpp)
@@ -278,7 +278,7 @@ set(CORE_FILES
     core/physical_device.cpp
     core/device.cpp
     core/debug.cpp
-    core/image.cpp
+    core/image_core.cpp
     core/shader_module.cpp
     core/pipeline_layout.cpp
     core/pipeline.cpp
@@ -291,11 +291,11 @@ set(CORE_FILES
     core/command_buffer.cpp
     core/allocated.cpp
     core/buffer.cpp
-    core/image.cpp
+    core/image_core.cpp
     core/image_view.cpp
     core/sampled_image.cpp
     core/instance.cpp
-    core/sampler.cpp
+    core/sampler_core.cpp
     core/framebuffer.cpp
     core/render_pass.cpp
     core/query_pool.cpp
@@ -306,7 +306,7 @@ set(CORE_FILES
     core/hpp_command_pool.cpp
     core/hpp_debug.cpp
     core/hpp_device.cpp
-    core/hpp_image.cpp
+    core/hpp_image_core.cpp
     core/hpp_image_view.cpp
     core/hpp_instance.cpp
     core/hpp_physical_device.cpp

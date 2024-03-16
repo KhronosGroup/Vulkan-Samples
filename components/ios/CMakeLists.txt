@@ -21,7 +21,7 @@ vkb__register_component(
         HEADERS
         include/ios/context.hpp
         SRC
-        src/context.cpp
+        src/context.mm
         src/entrypoint.cpp
         LINK_LIBS
         vkb__core

@@ -16,6 +16,7 @@
  */
 
 #include "ios/context.hpp"
+#import <UIKit/UIKit.h>
 
 namespace vkb
 {
@@ -30,7 +31,9 @@ IosPlatformContext::IosPlatformContext(int argc, char **argv) :
 	}
 
 	const char *env_temp_dir    = std::getenv("TMPDIR");
+	const char *env_get_home_dir = std::getenv("HOME");
+    const char *bundle_dir = [[[NSBundle mainBundle] resourcePath] UTF8String];
 	_temp_directory             = env_temp_dir ? std::string(env_temp_dir) + "/" : "/tmp/";
-	_external_storage_directory = "";
+	_external_storage_directory = bundle_dir;
 }
 }        // namespace vkb

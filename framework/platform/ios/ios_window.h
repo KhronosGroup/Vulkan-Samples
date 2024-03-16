@@ -20,6 +20,11 @@
 #include "common/vk_common.h"
 #include "platform/window.h"
 
+#import <UIKit/UIKit.h>
+
+@interface VulkanView : UIView
+@end
+
 namespace vkb
 {
 class IosPlatform;
@@ -61,8 +66,12 @@ class IosWindow : public Window
 	float get_dpi_factor() const override;
 
 	std::vector<const char *> get_required_surface_extensions() const override;
+    
+    VulkanView * get_vulkan_view() {return view;}
+    void set_vulkan_view(VulkanView* _view) { view = _view; }
 
   private:
+    VulkanView * view;
 	IosPlatform *platform;
 
 	bool finish_called{false};

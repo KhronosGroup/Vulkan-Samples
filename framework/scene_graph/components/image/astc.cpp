@@ -159,9 +159,7 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *compresse
 }
 
 Astc::Astc(const Image &image) :
-    Image{image.get_name()},
-    config(),
-    status()
+    Image{image.get_name()}
 {
 	init();
 

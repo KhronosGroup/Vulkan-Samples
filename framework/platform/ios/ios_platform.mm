@@ -18,7 +18,7 @@
 #include "ios_platform.h"
 
 #include "common/error.h"
-
+#include "ios/context.hpp"
 #include "platform/headless_window.h"
 #include "platform/ios/ios_window.h"
 
@@ -63,20 +63,11 @@ inline const std::string get_temp_path_from_environment()
 }
 }        // namespace
 
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
-
 IosPlatform::IosPlatform(const PlatformContext &context)
     : Platform{context}
 {
+        IosPlatformContext * cont = (IosPlatformContext*)&context;
+        view = cont->view;
 }
 
 const char *IosPlatform::get_surface_extension()
@@ -93,6 +84,7 @@ void IosPlatform::create_window(const Window::Properties &properties)
 	else
 	{
 		window = std::make_unique<IosWindow>(this, properties);
+        ((IosWindow*)window.get())->set_vulkan_view((VulkanView*) view);
 	}
 }
 }        // namespace vkb

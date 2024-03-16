@@ -734,7 +734,7 @@ void TerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			update_uniform_buffers();
 		}
-		if (drawer.input_float("Factor", &ubo_tess.tessellation_factor, 0.05f, "%0.2f"))
+		if (drawer.input_float("Factor", &ubo_tess.tessellation_factor, 0.05f, 2))
 		{
 			update_uniform_buffers();
 		}

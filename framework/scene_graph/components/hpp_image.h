@@ -21,11 +21,7 @@
 #include "scene_graph/component.h"
 #include <vulkan/vulkan.hpp>
 
-namespace vkb
-{
-namespace scene_graph
-{
-namespace components
+namespace vkb::scene_graph::components
 {
 /**
  * @param format Vulkan format
@@ -104,6 +100,4 @@ class HPPImage : public vkb::sg::Component
 	std::unique_ptr<vkb::core::HPPImageView>             vk_image_view;
 };
 
-}        // namespace components
-}        // namespace scene_graph
-}        // namespace vkb
+} // namespace vkb::scene_graph::components
