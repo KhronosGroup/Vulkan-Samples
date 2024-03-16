@@ -75,18 +75,6 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 	}
 
 	// Check extensions to enable Vma Dedicated Allocation
-	device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
-
-	// Display supported extensions
-	if (device_extensions.size() > 0)
-	{
-		LOGD("HPPDevice supports the following extensions:");
-		for (auto &extension : device_extensions)
-		{
-			LOGD("  \t{}", extension.extensionName.data());
-		}
-	}
-
 	bool can_get_memory_requirements = is_extension_supported(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 	bool has_dedicated_allocation    = is_extension_supported(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 
@@ -204,9 +192,7 @@ HPPDevice::~HPPDevice()
 
 bool HPPDevice::is_extension_supported(std::string const &requested_extension) const
 {
-	return std::find_if(device_extensions.begin(),
-	                    device_extensions.end(),
-	                    [requested_extension](auto &device_extension) { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
+	return gpu.is_extension_supported(requested_extension);
 }
 
 bool HPPDevice::is_enabled(std::string const &extension) const

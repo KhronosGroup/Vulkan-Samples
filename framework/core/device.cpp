@@ -75,21 +75,6 @@ Device::Device(PhysicalDevice                        &gpu,
 	}
 
 	// Check extensions to enable Vma Dedicated Allocation
-	uint32_t device_extension_count;
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, nullptr));
-	device_extensions = std::vector<VkExtensionProperties>(device_extension_count);
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, device_extensions.data()));
-
-	// Display supported extensions
-	if (device_extensions.size() > 0)
-	{
-		LOGD("Device supports the following extensions:");
-		for (auto &extension : device_extensions)
-		{
-			LOGD("  \t{}", extension.extensionName);
-		}
-	}
-
 	bool can_get_memory_requirements = is_extension_supported("VK_KHR_get_memory_requirements2");
 	bool has_dedicated_allocation    = is_extension_supported("VK_KHR_dedicated_allocation");
 
@@ -228,10 +213,7 @@ Device::~Device()
 
 bool Device::is_extension_supported(const std::string &requested_extension) const
 {
-	return std::find_if(device_extensions.begin(), device_extensions.end(),
-	                    [requested_extension](auto &device_extension) {
-		                    return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0;
-	                    }) != device_extensions.end();
+	return gpu.is_extension_supported(requested_extension);
 }
 
 bool Device::is_enabled(const char *extension) const

@@ -35,6 +35,9 @@
 
 AFBCSample::AFBCSample()
 {
+	// Extension that may be used to query if AFBC is enabled
+	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME, true);
+
 	auto &config = get_configuration();
 
 	config.insert<vkb::BoolSetting>(0, afbc_enabled, false);
@@ -117,6 +120,12 @@ void AFBCSample::draw_gui()
 	get_gui().show_options_window(
 	    /* body = */ [this]() {
 		    ImGui::Checkbox("Enable AFBC", &afbc_enabled);
+
+		    if (get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+		    {
+			    ImGui::SameLine();
+			    ImGui::Text("(%s)", vkb::image_compression_flags_to_string(get_render_context().get_swapchain().get_applied_compression()).c_str());
+		    }
 	    },
 	    /* lines = */ 1);
 }
