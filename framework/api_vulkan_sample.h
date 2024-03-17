@@ -102,6 +102,58 @@ struct Meshlet
 class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
+	bool     prepared = false;
+	uint32_t width    = 1280;
+	uint32_t height   = 720;
+
+	VkClearColorValue default_clear_color = {{0.002f, 0.002f, 0.002f, 1.0f}};
+
+	float zoom = 0;
+
+	// Defines a frame rate independent timer value clamped from -1.0...1.0
+	// For use in animations, rotations, etc.
+	float timer = 0.0f;
+	// Multiplier for speeding up (or slowing down) the global timer
+	float timer_speed = 0.0025f;
+
+	bool paused = false;
+
+	// Use to adjust mouse rotation speed
+	float rotation_speed = 1.0f;
+	// Use to adjust mouse zoom speed
+	float zoom_speed = 1.0f;
+
+	vkb::Camera camera;
+
+	glm::vec3 rotation   = glm::vec3();
+	glm::vec3 camera_pos = glm::vec3();
+	glm::vec2 mouse_pos;
+
+	std::string title = "Vulkan Example";
+	std::string name  = "vulkanExample";
+
+	struct
+	{
+		VkImage        image;
+		VkDeviceMemory mem;
+		VkImageView    view;
+	} depth_stencil;
+
+	struct
+	{
+		bool left   = false;
+		bool right  = false;
+		bool middle = false;
+	} mouse_buttons;
+
+	struct TouchPos
+	{
+		int32_t x;
+		int32_t y;
+	} touch_pos;
+	bool   touch_down  = false;
+	double touch_timer = 0.0;
+
 	ApiVulkanSample() = default;
 
 	virtual ~ApiVulkanSample();
@@ -112,8 +164,6 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 
 	virtual void update(float delta_time) override;
 
-	virtual void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
-
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	virtual void render(float delta_time) = 0;
@@ -122,6 +172,131 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	{
 		ColorAttachmentLoad = 0x00000001
 	};
+
+	/**
+	 * @brief Called when a view change occurs, can be overriden in derived samples to handle updating uniforms
+	 */
+	virtual void view_changed();
+
+	/**
+	 * @brief Called after the mouse cursor is moved and before internal events (like camera rotation) is handled
+	 * @param x The width from the origin
+	 * @param y The height from the origin
+	 * @param handled Whether the event was handled
+	 */
+	virtual void mouse_moved(double x, double y, bool &handled);
+
+	/**
+	 * @brief To be overridden by the derived class. Records the relevant commands to the rendering command buffers
+	 *        Called when the framebuffers need to be rebuilt
+	 */
+	virtual void build_command_buffers() = 0;
+
+	/**
+	 * @brief Rebuild the command buffers by first resetting the corresponding command pool and then building the command buffers.
+	 */
+	void rebuild_command_buffers();
+
+	/**
+	 * @brief Creates the fences for rendering
+	 */
+	void create_synchronization_primitives();
+
+	/**
+	 * @brief Creates a new (graphics) command pool object storing command buffers
+	 */
+	void create_command_pool();
+
+	/**
+	 * @brief Setup default depth and stencil views
+	 */
+	virtual void setup_depth_stencil();
+
+	/**
+	 * @brief Create framebuffers for all requested swap chain images
+	 *        Can be overriden in derived class to setup a custom framebuffer (e.g. for MSAA)
+	 */
+	virtual void setup_framebuffer();
+
+	/**
+	 * @brief Setup a default render pass
+	 *        Can be overriden in derived class to setup a custom render pass (e.g. for MSAA)
+	 */
+	virtual void setup_render_pass();
+
+	/**
+	 * @brief Updates the overlay
+	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
+	 */
+	virtual void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
+
+	/**
+	 * @brief Update flags for the default render pass and recreate it
+	 * @param flags Optional flags for render pass creation
+	 */
+	void update_render_pass_flags(uint32_t flags = 0);
+
+	/**
+	 * @brief Check if command buffers are valid (!= VK_NULL_HANDLE)
+	 */
+	bool check_command_buffers();
+
+	/**
+	 * @brief Create command buffers for drawing commands
+	 */
+	void create_command_buffers();
+
+	/**
+	 * @brief Destroy all command buffers, may be necessary during runtime if options are toggled
+	 */
+	void destroy_command_buffers();
+
+	/**
+	 * @brief Recreate the current command buffer draw_cmd_buffer[current_buffer]
+	 */
+	void recreate_current_command_buffer();
+
+	/**
+	 * @brief Create a cache pool for rendering pipelines
+	 */
+	void create_pipeline_cache();
+
+	/**
+	 * @brief Load a SPIR-V shader
+	 * @param file The file location of the shader relative to the shaders folder
+	 * @param stage The shader stage
+	 * @param src_language The shader language
+	 */
+	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
+
+	/**
+	 * @brief If the gui is enabled, then record the drawing commands to a command buffer
+	 * @param command_buffer A valid command buffer that is ready to be recorded to
+	 */
+	void draw_ui(const VkCommandBuffer command_buffer);
+
+	/**
+	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
+	 *        sets the default wait and signal semaphores
+	 */
+	void prepare_frame();
+
+	/**
+	 * @brief Submit the frames' workload
+	 */
+	void submit_frame();
+
+	/**
+	 * @brief Called when the UI overlay is updating, can be used to add custom elements to the overlay
+	 * @param drawer The drawer from the gui to draw certain elements
+	 */
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
+
+	/**
+	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
+	 */
+	virtual void prepare_gui();
 
   protected:
 	/// Stores the swapchain image buffers
@@ -259,131 +434,6 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	 */
 	void with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f);
 
-  public:
-	/**
-	 * @brief Called when a view change occurs, can be overriden in derived samples to handle updating uniforms
-	 */
-	virtual void view_changed();
-
-	/**
-	 * @brief Called after the mouse cursor is moved and before internal events (like camera rotation) is handled
-	 * @param x The width from the origin
-	 * @param y The height from the origin
-	 * @param handled Whether the event was handled
-	 */
-	virtual void mouse_moved(double x, double y, bool &handled);
-
-	/**
-	 * @brief To be overridden by the derived class. Records the relevant commands to the rendering command buffers
-	 *        Called when the framebuffers need to be rebuilt
-	 */
-	virtual void build_command_buffers() = 0;
-
-	/**
-	 * @brief Rebuild the command buffers by first resetting the corresponding command pool and then building the command buffers.
-	 */
-	void rebuild_command_buffers();
-
-	/**
-	 * @brief Creates the fences for rendering
-	 */
-	void create_synchronization_primitives();
-
-	/**
-	 * @brief Creates a new (graphics) command pool object storing command buffers
-	 */
-	void create_command_pool();
-
-	/**
-	 * @brief Setup default depth and stencil views
-	 */
-	virtual void setup_depth_stencil();
-
-	/**
-	 * @brief Create framebuffers for all requested swap chain images
-	 *        Can be overriden in derived class to setup a custom framebuffer (e.g. for MSAA)
-	 */
-	virtual void setup_framebuffer();
-
-	/**
-	 * @brief Setup a default render pass
-	 *        Can be overriden in derived class to setup a custom render pass (e.g. for MSAA)
-	 */
-	virtual void setup_render_pass();
-
-	/**
-	 * @brief Update flags for the default render pass and recreate it
-	 * @param flags Optional flags for render pass creation
-	 */
-	void update_render_pass_flags(uint32_t flags = 0);
-
-	/**
-	 * @brief Check if command buffers are valid (!= VK_NULL_HANDLE)
-	 */
-	bool check_command_buffers();
-
-	/**
-	 * @brief Create command buffers for drawing commands
-	 */
-	void create_command_buffers();
-
-	/**
-	 * @brief Destroy all command buffers, may be necessary during runtime if options are toggled
-	 */
-	void destroy_command_buffers();
-
-	/**
-	 * @brief Recreate the current command buffer draw_cmd_buffer[current_buffer]
-	 */
-	void recreate_current_command_buffer();
-
-	/**
-	 * @brief Create a cache pool for rendering pipelines
-	 */
-	void create_pipeline_cache();
-
-	/**
-	 * @brief Load a SPIR-V shader
-	 * @param file The file location of the shader relative to the shaders folder
-	 * @param stage The shader stage
-	 * @param src_language The shader language
-	 */
-	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
-
-	/**
-	 * @brief Updates the overlay
-	 * @param delta_time The time taken since the last frame
-	 */
-	void update_overlay(float delta_time);
-
-	/**
-	 * @brief If the gui is enabled, then record the drawing commands to a command buffer
-	 * @param command_buffer A valid command buffer that is ready to be recorded to
-	 */
-	void draw_ui(const VkCommandBuffer command_buffer);
-
-	/**
-	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
-	 *        sets the default wait and signal semaphores
-	 */
-	void prepare_frame();
-
-	/**
-	 * @brief Submit the frames' workload
-	 */
-	void submit_frame();
-
-	/**
-	 * @brief Called when the UI overlay is updating, can be used to add custom elements to the overlay
-	 * @param drawer The drawer from the gui to draw certain elements
-	 */
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
-
-	/**
-	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
-	 */
-	virtual void prepare_gui();
-
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */
 	bool view_updated = false;
@@ -398,57 +448,4 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	/// The debug report callback
 	VkDebugReportCallbackEXT debug_report_callback{VK_NULL_HANDLE};
 #endif
-
-  public:
-	bool     prepared = false;
-	uint32_t width    = 1280;
-	uint32_t height   = 720;
-
-	VkClearColorValue default_clear_color = {{0.002f, 0.002f, 0.002f, 1.0f}};
-
-	float zoom = 0;
-
-	// Defines a frame rate independent timer value clamped from -1.0...1.0
-	// For use in animations, rotations, etc.
-	float timer = 0.0f;
-	// Multiplier for speeding up (or slowing down) the global timer
-	float timer_speed = 0.0025f;
-
-	bool paused = false;
-
-	// Use to adjust mouse rotation speed
-	float rotation_speed = 1.0f;
-	// Use to adjust mouse zoom speed
-	float zoom_speed = 1.0f;
-
-	vkb::Camera camera;
-
-	glm::vec3 rotation   = glm::vec3();
-	glm::vec3 camera_pos = glm::vec3();
-	glm::vec2 mouse_pos;
-
-	std::string title = "Vulkan Example";
-	std::string name  = "vulkanExample";
-
-	struct
-	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
-	} depth_stencil;
-
-	struct
-	{
-		bool left   = false;
-		bool right  = false;
-		bool middle = false;
-	} mouse_buttons;
-
-	struct TouchPos
-	{
-		int32_t x;
-		int32_t y;
-	} touch_pos;
-	bool   touch_down  = false;
-	double touch_timer = 0.0;
 };
