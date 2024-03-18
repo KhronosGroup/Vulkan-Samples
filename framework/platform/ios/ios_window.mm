@@ -75,7 +75,7 @@ float IosWindow::get_dpi_factor() const
 
 std::vector<const char *> IosWindow::get_required_surface_extensions() const
 {
-	return {};
+	return {VK_EXT_METAL_SURFACE_EXTENSION_NAME};
 }
 }        // namespace vkb
 
