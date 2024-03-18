@@ -98,22 +98,6 @@ endif()
 if(IOS)
     set(CMAKE_MACOSX_BUNDLE YES)
     set(MACOSX_BUNDLE_GUI_IDENTIFIER com.khronos.vulkansamples)
-    target_sources(${PROJECT_NAME} PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/../assets
-            ${CMAKE_CURRENT_SOURCE_DIR}/../shaders
-            ${CMAKE_CURRENT_SOURCE_DIR}/ios/launch.storyboard
-            ${CMAKE_CURRENT_SOURCE_DIR}/ios/Storyboard.storyboard
-            $ENV{VULKAN_SDK}/iOS/share/vulkan)
-    set_source_files_properties(
-            ${CMAKE_CURRENT_SOURCE_DIR}/ios/launch.storyboard
-            ${CMAKE_CURRENT_SOURCE_DIR}/ios/Storyboard.storyboard
-            ${CMAKE_CURRENT_SOURCE_DIR}/../assets
-            ${CMAKE_CURRENT_SOURCE_DIR}/../shaders
-            $ENV{VULKAN_SDK}/iOS/share/vulkan
-            PROPERTIES
-            MACOSX_PACKAGE_LOCATION Resources
-    )
-
     if(NOT DEFINED CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM)
         if(CMAKE_OSX_SYSROOT STREQUAL ios)
             message(FATAL_ERROR "BUILDING for iOS device requires setting the CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM,
@@ -134,6 +118,30 @@ if(IOS)
         )
     endif ()
     find_package(Vulkan COMPONENTS MoltenVK)
+    if(${Vulkan_VERSION} VERSION_GREATER_EQUAL 1.3.278)
+        target_sources(${PROJECT_NAME} PRIVATE
+                $ENV{VULKAN_SDK}/iOS/share/vulkan
+        )
+        set_source_files_properties(
+                $ENV{VULKAN_SDK}/iOS/share/vulkan
+                PROPERTIES
+                MACOSX_PACKAGE_LOCATION Resources
+        )
+    endif ()
+    target_sources(${PROJECT_NAME} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/../assets
+            ${CMAKE_CURRENT_SOURCE_DIR}/../shaders
+            ${CMAKE_CURRENT_SOURCE_DIR}/ios/launch.storyboard
+            ${CMAKE_CURRENT_SOURCE_DIR}/ios/Storyboard.storyboard
+            )
+    set_source_files_properties(
+            ${CMAKE_CURRENT_SOURCE_DIR}/ios/launch.storyboard
+            ${CMAKE_CURRENT_SOURCE_DIR}/ios/Storyboard.storyboard
+            ${CMAKE_CURRENT_SOURCE_DIR}/../assets
+            ${CMAKE_CURRENT_SOURCE_DIR}/../shaders
+            PROPERTIES
+            MACOSX_PACKAGE_LOCATION Resources
+    )
     set(FRAMEWORKS_TO_EMBED)
     list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_MoltenVK_LIBRARY};${Vulkan_LIBRARIES};")
     # trouble is can't turn this on/off if XCode decides to build debug and we're configured for release.  Need to revist
