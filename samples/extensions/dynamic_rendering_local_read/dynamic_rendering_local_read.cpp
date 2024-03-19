@@ -314,12 +314,13 @@ void DynamicRenderingLocalRead::setup_render_pass()
 
 void DynamicRenderingLocalRead::prepare_gui()
 {
-	// @todo
-	// gui = std::make_unique<vkb::Gui>(*this, *window, nullptr, 15.0f, true);
-	// gui->set_subpass(2);
-	// gui->prepare(pipeline_cache, render_pass,
-	//             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	//              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+#if !defined(USE_DYNAMIC_RENDERING)
+	create_gui(*window, nullptr, 15.0f, true);
+	get_gui().set_subpass(2);
+	get_gui().prepare(pipeline_cache, render_pass,
+	                  {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	                   load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+#endif
 }
 
 void DynamicRenderingLocalRead::load_assets()
