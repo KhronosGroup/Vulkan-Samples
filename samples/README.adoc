@@ -16,6 +16,12 @@
 - limitations under the License.
 -
 ////
+ifndef::performance_samplespath[:performance_samplespath: ./performance/]
+ifndef::extension_samplespath[:extension_samplespath: ./extensions/]
+ifndef::api_samplespath[:api_samplespath: ./api/]
+ifndef::general_samplespath[:general_samplespath: ./general/]
+ifndef::tooling_samplespath[:tooling_samplespath: ./tooling/]
+
 = Samples overview
 :pp: {plus}{plus}
 :toc:
@@ -27,17 +33,19 @@ This readme lists all Vulkan samples currently available in this repository.
 They are grouped into multiple categories.
 Many samples come with a tutorial, which can be found in their respective folders.
 
-== Performance samples
+[[performance-samples]]
+include::./performance/README.adoc[]
 
-The goal of these samples is to demonstrate how to use certain features and functions to achieve optimal performance.
-To visualize this, they also include real-time profiling information.
+[[api-samples]]
+include::./api/README.adoc[]
 
-=== xref:./performance/afbc/README.adoc[AFBC]
+[[extension-samples]]
+include::./extensions/README.adoc[]
 
-AFBC (Arm Frame Buffer Compression) is a real-time lossless compression algorithm found in Arm Mali GPUs, designed to tackle the ever-growing demand for higher resolution graphics.
-This format is applied to the framebuffers that are to be written to the GPU.
-This technology can offer bandwidth reductions of https://developer.arm.com/technologies/graphics-technologies/arm-frame-buffer-compression[up to 50%].
+[[tooling-samples]]
+include::./tooling/README.adoc[]
 
+<<<<<<< HEAD
 === xref:./performance/command_buffer_usage/README.adoc[Command buffer usage]
 
 This sample demonstrates how to use and manage secondary command buffers, and how to record them concurrently.
@@ -526,3 +534,7 @@ The goal of these samples is to demonstrate different techniques or showcase com
 === xref:./general/mobile_nerf/README.adoc[Mobile NeRF]
 
 A Neural Radiance Field synthesizer sample, based on textured polygons.
+=======
+[[general-samples]]
+include::./general/README.adoc[]
+>>>>>>> upstream/main

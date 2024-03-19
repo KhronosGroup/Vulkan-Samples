@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Sascha Willems
+/* Copyright (c) 2022-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,7 +33,7 @@ TimestampQueries::TimestampQueries()
 
 TimestampQueries::~TimestampQueries()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyQueryPool(get_device().get_handle(), query_pool_timestamps, nullptr);
 
@@ -419,11 +419,16 @@ void TimestampQueries::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &offscreen.framebuffer));
 
+		// Calculate valid filter and mipmap modes
+		VkFilter            filter      = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		vkb::make_filters_valid(get_device().get_gpu().get_handle(), offscreen.color[0].format, &filter, &mipmap_mode);
+
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler.magFilter           = filter;
+		sampler.minFilter           = filter;
+		sampler.mipmapMode          = mipmap_mode;
 		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		sampler.addressModeV        = sampler.addressModeU;
 		sampler.addressModeW        = sampler.addressModeU;
@@ -440,10 +445,16 @@ void TimestampQueries::prepare_offscreen_buffer()
 		filter_pass.width  = width;
 		filter_pass.height = height;
 
-		// Color attachments
+		// Color attachments - needs to be a blendable format, so choose from a priority ordered list
+		const std::vector<VkFormat> float_format_priority_list = {
+		    VK_FORMAT_R32G32B32A32_SFLOAT,
+		    VK_FORMAT_R16G16B16A16_SFLOAT        // Guaranteed blend support for this
+		};
+
+		VkFormat color_format = vkb::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 		// Two floating point color buffers
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
 		// Set up separate renderpass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
@@ -517,11 +528,16 @@ void TimestampQueries::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
 
+		// Calculate valid filter and mipmap modes
+		VkFilter            filter      = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		vkb::make_filters_valid(get_device().get_gpu().get_handle(), filter_pass.color[0].format, &filter, &mipmap_mode);
+
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler.magFilter           = filter;
+		sampler.minFilter           = filter;
+		sampler.mipmapMode          = mipmap_mode;
 		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		sampler.addressModeV        = sampler.addressModeU;
 		sampler.addressModeW        = sampler.addressModeU;
@@ -882,7 +898,7 @@ void TimestampQueries::prepare_time_stamp_queries()
 	query_pool_info.queryType = VK_QUERY_TYPE_TIMESTAMP;
 	// Set the no. of queries in this pool
 	query_pool_info.queryCount = static_cast<uint32_t>(time_stamps.size());
-	VK_CHECK(vkCreateQueryPool(device->get_handle(), &query_pool_info, nullptr, &query_pool_timestamps));
+	VK_CHECK(vkCreateQueryPool(get_device().get_handle(), &query_pool_info, nullptr, &query_pool_timestamps));
 }
 
 void TimestampQueries::get_time_stamp_results()
@@ -895,7 +911,7 @@ void TimestampQueries::get_time_stamp_results()
 	//	VK_QUERY_RESULT_64_BIT: Results will have 64 bits. As time stamp values are on nano-seconds, this flag should always be used to avoid 32 bit overflows
 	//  VK_QUERY_RESULT_WAIT_BIT: Since we want to immediately display the results, we use this flag to have the CPU wait until the results are available
 	vkGetQueryPoolResults(
-	    device->get_handle(),
+	    get_device().get_handle(),
 	    query_pool_timestamps,
 	    0,
 	    count,
@@ -938,7 +954,7 @@ bool TimestampQueries::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	// Check if the selected device supports timestamps. A value of zero means no support.
-	VkPhysicalDeviceLimits device_limits = device->get_gpu().get_properties().limits;
+	VkPhysicalDeviceLimits device_limits = get_device().get_gpu().get_properties().limits;
 	if (device_limits.timestampPeriod == 0)
 	{
 		throw std::runtime_error{"The selected device does not support timestamp queries!"};
@@ -948,7 +964,7 @@ bool TimestampQueries::prepare(const vkb::ApplicationOptions &options)
 	if (!device_limits.timestampComputeAndGraphics)
 	{
 		// Check if the graphics queue used in this sample supports time stamps
-		VkQueueFamilyProperties graphics_queue_family_properties = device->get_suitable_graphics_queue().get_properties();
+		VkQueueFamilyProperties graphics_queue_family_properties = get_device().get_suitable_graphics_queue().get_properties();
 		if (graphics_queue_family_properties.timestampValidBits == 0)
 		{
 			throw std::runtime_error{"The selected graphics queue family does not support timestamp queries!"};
@@ -1014,7 +1030,7 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		// Timestamps don't have a time unit themselves, but are read as timesteps
 		// The timestampPeriod property of the device tells how many nanoseconds such a timestep translates to on the selected device
-		float timestampFrequency = device->get_gpu().get_properties().limits.timestampPeriod;
+		float timestampFrequency = get_device().get_gpu().get_properties().limits.timestampPeriod;
 
 		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", static_cast<float>(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
 		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"), static_cast<float>(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);

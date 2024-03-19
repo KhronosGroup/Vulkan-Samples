@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ TextureMipMapGeneration::TextureMipMapGeneration()
 
 TextureMipMapGeneration::~TextureMipMapGeneration()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -142,7 +142,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &texture.device_memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
 
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	// Optimal image will be used as destination for the copy, so we must transfer from our initial undefined image layout to the transfer destination layout
 	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -161,17 +161,17 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	// Transition first mip level to transfer source so we can blit(read) from it
 	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	// Clean up staging resources
-	vkDestroyBuffer(device->get_handle(), staging_buffer, nullptr);
-	vkFreeMemory(device->get_handle(), staging_memory, nullptr);
+	vkDestroyBuffer(get_device().get_handle(), staging_buffer, nullptr);
+	vkFreeMemory(get_device().get_handle(), staging_memory, nullptr);
 
 	// Generate the mip chain
 	// ---------------------------------------------------------------
 	// We copy down the whole mip chain doing a blit from mip-1 to mip
 	// An alternative way would be to always blit from the first mip level and sample that one down
-	VkCommandBuffer blit_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer blit_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	// Copy down mips from n-1 to n
 	for (uint32_t i = 1; i < texture.mip_levels; i++)
@@ -227,15 +227,20 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture.mip_levels, 0, 1});
 
-	device->flush_command_buffer(blit_command, queue, true);
+	get_device().flush_command_buffer(blit_command, queue, true);
 	// ---------------------------------------------------------------
+
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
 
 	// Create samplers for different mip map demonstration cases
 	samplers.resize(3);
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-	sampler.magFilter           = VK_FILTER_LINEAR;
-	sampler.minFilter           = VK_FILTER_LINEAR;
-	sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler.magFilter           = filter;
+	sampler.minFilter           = filter;
+	sampler.mipmapMode          = mipmap_mode;
 	sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -248,11 +253,11 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	sampler.anisotropyEnable    = VK_FALSE;
 
 	// Without mip mapping
-	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler, nullptr, &samplers[0]));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &samplers[0]));
 
 	// With mip mapping
 	sampler.maxLod = static_cast<float>(texture.mip_levels);
-	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler, nullptr, &samplers[1]));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &samplers[1]));
 
 	// With mip mapping and anisotropic filtering (when supported)
 	if (get_device().get_gpu().get_features().samplerAnisotropy)
@@ -260,7 +265,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 		sampler.anisotropyEnable = VK_TRUE;
 	}
-	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler, nullptr, &samplers[2]));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &samplers[2]));
 
 	// Create image view
 	VkImageViewCreateInfo view           = vkb::initializers::image_view_create_info();
@@ -273,7 +278,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	view.subresourceRange.baseArrayLayer = 0;
 	view.subresourceRange.layerCount     = 1;
 	view.subresourceRange.levelCount     = texture.mip_levels;
-	VK_CHECK(vkCreateImageView(device->get_handle(), &view, nullptr, &texture.view));
+	VK_CHECK(vkCreateImageView(get_device().get_handle(), &view, nullptr, &texture.view));
 }
 
 // Free all Vulkan resources used by a texture object

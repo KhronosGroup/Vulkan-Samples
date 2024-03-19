@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -82,7 +82,7 @@ Enable https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/sy
 
 Enable VK_EXT_debug_utils or VK_EXT_debug_marker, if supported.
 This enables debug names for Vulkan objects, and markers/labels in command buffers.
-+ See the xref:samples/extensions/debug_utils/debug_utils_tutorial.adoc[debug utils sample] for more information.
++ See the xref:../samples/extensions/debug_utils/README.adoc[debug utils sample] for more information.
 
 *Default:* `ON`
 

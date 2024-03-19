@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,88 +23,59 @@ namespace vkb
 {
 namespace core
 {
-Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags, const std::vector<uint32_t> &queue_family_indices) :
-    VulkanResource{VK_NULL_HANDLE, &device},
-    size{size}
+
+Buffer BufferBuilder::build(Device const &device) const
 {
-#ifdef VK_USE_PLATFORM_METAL_EXT
-	// Workaround for Mac (MoltenVK requires unmapping https://github.com/KhronosGroup/MoltenVK/issues/175)
-	// Force cleares the flag VMA_ALLOCATION_CREATE_MAPPED_BIT
-	flags &= ~VMA_ALLOCATION_CREATE_MAPPED_BIT;
-#endif
+	return Buffer(device, *this);
+}
 
-	persistent = (flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0;
+BufferPtr BufferBuilder::build_unique(Device const &device) const
+{
+	return std::make_unique<Buffer>(device, *this);
+}
 
-	VkBufferCreateInfo buffer_info{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
-	buffer_info.usage = buffer_usage;
-	buffer_info.size  = size;
-	if (queue_family_indices.size() >= 2)
+Buffer Buffer::create_staging_buffer(Device const &device, VkDeviceSize size, const void *data)
+{
+	BufferBuilder builder{size};
+	builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+	builder.with_usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	Buffer result(device, builder);
+	if (data != nullptr)
 	{
-		buffer_info.sharingMode           = VK_SHARING_MODE_CONCURRENT;
-		buffer_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
-		buffer_info.pQueueFamilyIndices   = queue_family_indices.data();
+		result.update(data, size);
 	}
+	return result;
+}
 
-	VmaAllocationCreateInfo memory_info{};
-	memory_info.flags = flags;
-	memory_info.usage = memory_usage;
+Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags, const std::vector<uint32_t> &queue_family_indices) :
+    Buffer(device,
+           BufferBuilder(size)
+               .with_usage(buffer_usage)
+               .with_vma_usage(memory_usage)
+               .with_vma_flags(flags)
+               .with_queue_families(queue_family_indices)
+               .with_implicit_sharing_mode())
+{}
 
-	VmaAllocationInfo allocation_info{};
-	auto              result = vmaCreateBuffer(device.get_memory_allocator(),
-	                                           &buffer_info, &memory_info,
-	                                           &handle, &allocation,
-	                                           &allocation_info);
-
-	if (result != VK_SUCCESS)
+Buffer::Buffer(Device const &device, const BufferBuilder &builder) :
+    Allocated{builder.alloc_create_info, VK_NULL_HANDLE, &device}, size(builder.create_info.size)
+{
+	handle = create_buffer(builder.create_info);
+	if (!builder.debug_name.empty())
 	{
-		throw VulkanException{result, "Cannot create Buffer"};
-	}
-
-	memory = allocation_info.deviceMemory;
-
-	if (persistent)
-	{
-		mapped_data = static_cast<uint8_t *>(allocation_info.pMappedData);
+		set_debug_name(builder.debug_name);
 	}
 }
 
-Buffer::Buffer(Buffer &&other) :
-    VulkanResource{other.handle, other.device},
-    allocation{other.allocation},
-    memory{other.memory},
-    size{other.size},
-    mapped_data{other.mapped_data},
-    mapped{other.mapped}
+Buffer::Buffer(Buffer &&other) noexcept :
+    Allocated{std::move(other)},
+    size{std::exchange(other.size, {})}
 {
-	// Reset other handles to avoid releasing on destruction
-	other.allocation  = VK_NULL_HANDLE;
-	other.memory      = VK_NULL_HANDLE;
-	other.mapped_data = nullptr;
-	other.mapped      = false;
 }
 
 Buffer::~Buffer()
 {
-	if (handle != VK_NULL_HANDLE && allocation != VK_NULL_HANDLE)
-	{
-		unmap();
-		vmaDestroyBuffer(device->get_memory_allocator(), handle, allocation);
-	}
-}
-
-const VkBuffer *Buffer::get() const
-{
-	return &handle;
-}
-
-VmaAllocation Buffer::get_allocation() const
-{
-	return allocation;
-}
-
-VkDeviceMemory Buffer::get_memory() const
-{
-	return memory;
+	destroy_buffer(get_handle());
 }
 
 VkDeviceSize Buffer::get_size() const
@@ -112,63 +83,12 @@ VkDeviceSize Buffer::get_size() const
 	return size;
 }
 
-uint8_t *Buffer::map()
-{
-	if (!mapped && !mapped_data)
-	{
-		VK_CHECK(vmaMapMemory(device->get_memory_allocator(), allocation, reinterpret_cast<void **>(&mapped_data)));
-		mapped = true;
-	}
-	return mapped_data;
-}
-
-void Buffer::unmap()
-{
-	if (mapped)
-	{
-		vmaUnmapMemory(device->get_memory_allocator(), allocation);
-		mapped_data = nullptr;
-		mapped      = false;
-	}
-}
-
-void Buffer::flush() const
-{
-	vmaFlushAllocation(device->get_memory_allocator(), allocation, 0, size);
-}
-
-void Buffer::update(const std::vector<uint8_t> &data, size_t offset)
-{
-	update(data.data(), data.size(), offset);
-}
-
 uint64_t Buffer::get_device_address()
 {
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer = handle;
-	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
-}
-
-void Buffer::update(void const *data, size_t size, size_t offset)
-{
-	update(reinterpret_cast<const uint8_t *>(data), size, offset);
-}
-
-void Buffer::update(const uint8_t *data, const size_t size, const size_t offset)
-{
-	if (persistent)
-	{
-		std::copy(data, data + size, mapped_data + offset);
-		flush();
-	}
-	else
-	{
-		map();
-		std::copy(data, data + size, mapped_data + offset);
-		flush();
-		unmap();
-	}
+	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 }
 
 }        // namespace core

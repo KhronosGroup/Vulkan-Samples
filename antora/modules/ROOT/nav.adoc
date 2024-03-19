@@ -1,6 +1,11 @@
 ////
+<<<<<<< HEAD
 - Copyright (c) 2024, Holochip Inc
 - Copyright (c) 2024, Sascha Willems
+=======
+- Copyright (c) 2023, Holochip Inc
+- Copyright (c) 2023-2024, Sascha Willems
+>>>>>>> upstream/main
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,8 +22,10 @@
 - limitations under the License.
 -
 ////
+* xref:samples/README.adoc[Samples overview]
 * xref:samples/vulkan_basics.adoc[Vulkan basics]
 * xref:framework/README.adoc[Sample framework]
+** xref:components/README.adoc[Framework components]
 * xref:samples/api/README.adoc[Api usage samples]
 ** xref:samples/api/compute_nbody/README.adoc[Compute N-body]
 *** xref:samples/api/hpp_compute_nbody/README.adoc[Compute N-body (Vulkan-Hpp)]
@@ -43,7 +50,8 @@
 ** xref:samples/api/timestamp_queries/README.adoc[Timestamp queries]
 *** xref:samples/api/hpp_timestamp_queries/README.adoc[Timestamp queries (Vulkan-Hpp)]
 ** xref:samples/api/oit_linked_lists/README.adoc[OIT linked lists]
-** xref:samples/api/hpp_oit_linked_lists/README.adoc[OIT linked lists (Vulkan-Hpp)]
+*** xref:samples/api/hpp_oit_linked_lists/README.adoc[OIT linked lists (Vulkan-Hpp)]
+** xref:samples/api/oit_depth_peeling/README.adoc[OIT depth peeling]
 * xref:samples/extensions/README.adoc[Extension usage samples]
 ** xref:samples/extensions/buffer_device_address/README.adoc[Buffer device address]
 ** xref:samples/extensions/calibrated_timestamps/README.adoc[Calibrated timestamps]
@@ -71,8 +79,8 @@
 ** xref:samples/extensions/open_gl_interop/README.adoc[OpenGL interop]
 ** xref:samples/extensions/portability/README.adoc[Portability]
 ** xref:samples/extensions/push_descriptors/README.adoc[Push descriptors]
-** xref:samples/extensions/raytracing_basic/README.adoc[Raytracing basic]
-** xref:samples/extensions/raytracing_extended/README.adoc[Raytracing extended]
+** xref:samples/extensions/ray_tracing_basic/README.adoc[Raytracing basic]
+** xref:samples/extensions/ray_tracing_extended/README.adoc[Raytracing extended]
 ** xref:samples/extensions/ray_queries/README.adoc[Ray queries]
 ** xref:samples/extensions/ray_tracing_reflection/README.adoc[Ray tracing reflection]
 ** xref:samples/extensions/shader_object/README.adoc[Shader Object]
@@ -88,6 +96,7 @@
 ** xref:samples/performance/command_buffer_usage/README.adoc[Command buffer usage]
 ** xref:samples/performance/constant_data/README.adoc[Constant data]
 ** xref:samples/performance/descriptor_management/README.adoc[Descriptor management]
+** xref:samples/performance/image_compression_control/README.adoc[Image compression control]
 ** xref:samples/performance/layout_transitions/README.adoc[Layout transitions]
 ** xref:samples/performance/msaa/README.adoc[MSAA]
 ** xref:samples/performance/multithreading_render_passes/README.adoc[Multithreading render passes]

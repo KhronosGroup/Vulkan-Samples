@@ -30,12 +30,12 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
-#include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
-#include "platform/filesystem.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/image/astc.h"
@@ -586,14 +586,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 			auto &image = image_components[image_index];
 
-			core::Buffer stage_buffer{device,
-			                          image->get_data().size(),
-			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			                          VMA_MEMORY_USAGE_CPU_ONLY};
+			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, image->get_data());
 
 			batch_size += image->get_data().size();
-
-			stage_buffer.update(image->get_data());
 
 			upload_image_to_gpu(command_buffer, stage_buffer, *image);
 
@@ -624,9 +619,11 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count);
 
 	// Load textures
-	auto images          = scene.get_components<sg::Image>();
-	auto samplers        = scene.get_components<sg::Sampler>();
-	auto default_sampler = create_default_sampler();
+	auto images                  = scene.get_components<sg::Image>();
+	auto samplers                = scene.get_components<sg::Sampler>();
+	auto default_sampler_linear  = create_default_sampler(TINYGLTF_TEXTURE_FILTER_LINEAR);
+	auto default_sampler_nearest = create_default_sampler(TINYGLTF_TEXTURE_FILTER_NEAREST);
+	bool used_nearest_sampler    = false;
 
 	for (auto &gltf_texture : model.textures)
 	{
@@ -646,13 +643,26 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				gltf_texture.name = images[gltf_texture.source]->get_name();
 			}
 
-			texture->set_sampler(*default_sampler);
+			// Get the properties for the image format. We'll need to check whether a linear sampler is valid.
+			const VkFormatProperties fmtProps = device.get_gpu().get_format_properties(images[gltf_texture.source]->get_format());
+
+			if (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
+			{
+				texture->set_sampler(*default_sampler_linear);
+			}
+			else
+			{
+				texture->set_sampler(*default_sampler_nearest);
+				used_nearest_sampler = true;
+			}
 		}
 
 		scene.add_component(std::move(texture));
 	}
 
-	scene.add_component(std::move(default_sampler));
+	scene.add_component(std::move(default_sampler_linear));
+	if (used_nearest_sampler)
+		scene.add_component(std::move(default_sampler_nearest));
 
 	// Load materials
 	bool                            has_textures = scene.has_component<sg::Texture>();
@@ -1160,12 +1170,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			aligned_vertex_data.push_back(vert);
 		}
 
-		core::Buffer stage_buffer{device,
-		                          aligned_vertex_data.size() * sizeof(AlignedVertex),
-		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-		stage_buffer.update(aligned_vertex_data.data(), aligned_vertex_data.size() * sizeof(AlignedVertex));
+		core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, aligned_vertex_data);
 
 		core::Buffer buffer{device,
 		                    aligned_vertex_data.size() * sizeof(AlignedVertex),
@@ -1206,12 +1211,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			vertex_data.push_back(vert);
 		}
 
-		core::Buffer stage_buffer{device,
-		                          vertex_data.size() * sizeof(Vertex),
-		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-		stage_buffer.update(vertex_data.data(), vertex_data.size() * sizeof(Vertex));
+		core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, vertex_data);
 
 		core::Buffer buffer{device,
 		                    vertex_data.size() * sizeof(Vertex),
@@ -1268,12 +1268,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			// vertex_indices and index_buffer are used for meshlets now
 			submesh->vertex_indices = (uint32_t) meshlets.size();
 
-			core::Buffer stage_buffer{device,
-			                          meshlets.size() * sizeof(Meshlet),
-			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-			stage_buffer.update(meshlets.data(), meshlets.size() * sizeof(Meshlet));
+			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, meshlets);
 
 			submesh->index_buffer = std::make_unique<core::Buffer>(device,
 			                                                       meshlets.size() * sizeof(Meshlet),
@@ -1286,12 +1281,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		}
 		else
 		{
-			core::Buffer stage_buffer{device,
-			                          index_data.size(),
-			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-			stage_buffer.update(index_data);
+			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, index_data);
 
 			submesh->index_buffer = std::make_unique<core::Buffer>(device,
 			                                                       index_data.size(),
@@ -1528,12 +1518,12 @@ std::unique_ptr<sg::PBRMaterial> GLTFLoader::create_default_material()
 	return parse_material(gltf_material);
 }
 
-std::unique_ptr<sg::Sampler> GLTFLoader::create_default_sampler()
+std::unique_ptr<sg::Sampler> GLTFLoader::create_default_sampler(int filter)
 {
 	tinygltf::Sampler gltf_sampler;
 
-	gltf_sampler.minFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
-	gltf_sampler.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
+	gltf_sampler.minFilter = filter;
+	gltf_sampler.magFilter = filter;
 
 	gltf_sampler.wrapS = TINYGLTF_TEXTURE_WRAP_REPEAT;
 	gltf_sampler.wrapT = TINYGLTF_TEXTURE_WRAP_REPEAT;

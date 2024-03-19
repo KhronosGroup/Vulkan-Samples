@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,6 +43,17 @@ inline vk::ImageType find_image_type(vk::Extent3D const &extent)
 
 namespace core
 {
+
+HPPImage HPPImageBuilder::build(HPPDevice &device) const
+{
+	return HPPImage(device, *this);
+}
+
+HPPImagePtr HPPImageBuilder::build_unique(HPPDevice &device) const
+{
+	return std::make_unique<HPPImage>(device, *this);
+}
+
 HPPImage::HPPImage(HPPDevice              &device,
                    const vk::Extent3D     &extent,
                    vk::Format              format,
@@ -55,48 +66,27 @@ HPPImage::HPPImage(HPPDevice              &device,
                    vk::ImageCreateFlags    flags,
                    uint32_t                num_queue_families,
                    const uint32_t         *queue_families) :
-    HPPVulkanResource{nullptr, &device},
-    type{find_image_type(extent)},
-    extent{extent},
-    format{format},
-    sample_count{sample_count},
-    usage{image_usage},
-    array_layer_count{array_layers},
-    tiling{tiling}
+    HPPImage{device,
+             HPPImageBuilder{extent}
+                 .with_format(format)
+                 .with_mip_levels(mip_levels)
+                 .with_array_layers(array_layers)
+                 .with_sample_count(sample_count)
+                 .with_tiling(tiling)
+                 .with_flags(flags)
+                 .with_usage(image_usage)
+                 .with_queue_families(num_queue_families, queue_families)}
+{}
+
+HPPImage::HPPImage(HPPDevice &device, HPPImageBuilder const &builder) :
+    HPPAllocated{builder.alloc_create_info, nullptr, &device}, create_info{builder.create_info}
 {
-	assert(0 < mip_levels && "HPPImage should have at least one level");
-	assert(0 < array_layers && "HPPImage should have at least one layer");
-
-	subresource.mipLevel   = mip_levels;
-	subresource.arrayLayer = array_layers;
-
-	vk::ImageCreateInfo image_info(flags, type, format, extent, mip_levels, array_layers, sample_count, tiling, image_usage);
-
-	if (num_queue_families != 0)
+	get_handle()           = create_image(create_info.operator const VkImageCreateInfo &());
+	subresource.arrayLayer = create_info.arrayLayers;
+	subresource.mipLevel   = create_info.mipLevels;
+	if (!builder.debug_name.empty())
 	{
-		image_info.sharingMode           = vk::SharingMode::eConcurrent;
-		image_info.queueFamilyIndexCount = num_queue_families;
-		image_info.pQueueFamilyIndices   = queue_families;
-	}
-
-	VmaAllocationCreateInfo memory_info{};
-	memory_info.usage = memory_usage;
-
-	if (image_usage & vk::ImageUsageFlagBits::eTransientAttachment)
-	{
-		memory_info.preferredFlags = VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
-	}
-
-	auto result = vmaCreateImage(device.get_memory_allocator(),
-	                             reinterpret_cast<VkImageCreateInfo const *>(&image_info),
-	                             &memory_info,
-	                             const_cast<VkImage *>(reinterpret_cast<VkImage const *>(&get_handle())),
-	                             &memory,
-	                             nullptr);
-
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException{result, "Cannot create HPPImage"};
+		set_debug_name(builder.debug_name);
 	}
 }
 
@@ -106,25 +96,23 @@ HPPImage::HPPImage(HPPDevice              &device,
                    vk::Format              format,
                    vk::ImageUsageFlags     image_usage,
                    vk::SampleCountFlagBits sample_count) :
-    HPPVulkanResource{handle, &device}, type{find_image_type(extent)}, extent{extent}, format{format}, sample_count{sample_count}, usage{image_usage}
+    HPPAllocated{handle, &device}
 {
-	subresource.mipLevel   = 1;
-	subresource.arrayLayer = 1;
+	create_info.samples     = sample_count;
+	create_info.format      = format;
+	create_info.extent      = extent;
+	create_info.imageType   = find_image_type(extent);
+	create_info.arrayLayers = 1;
+	create_info.mipLevels   = 1;
+	subresource.mipLevel    = 1;
+	subresource.arrayLayer  = 1;
 }
 
-HPPImage::HPPImage(HPPImage &&other) :
-    HPPVulkanResource{std::move(other)},
-    memory(std::exchange(other.memory, {})),
-    type(std::exchange(other.type, {})),
-    extent(std::exchange(other.extent, {})),
-    format(std::exchange(other.format, {})),
-    sample_count(std::exchange(other.sample_count, {})),
-    usage(std::exchange(other.usage, {})),
-    tiling(std::exchange(other.tiling, {})),
+HPPImage::HPPImage(HPPImage &&other) noexcept :
+    HPPAllocated{std::move(other)},
+    create_info(std::exchange(other.create_info, {})),
     subresource(std::exchange(other.subresource, {})),
-    views(std::exchange(other.views, {})),
-    mapped_data(std::exchange(other.mapped_data, {})),
-    mapped(std::exchange(other.mapped, {}))
+    views(std::exchange(other.views, {}))
 {
 	// Update image views references to this image to avoid dangling pointers
 	for (auto &view : views)
@@ -135,70 +123,46 @@ HPPImage::HPPImage(HPPImage &&other) :
 
 HPPImage::~HPPImage()
 {
-	if (get_handle() && memory)
-	{
-		unmap();
-		vmaDestroyImage(get_device().get_memory_allocator(), static_cast<VkImage>(get_handle()), memory);
-	}
-}
-
-VmaAllocation HPPImage::get_memory() const
-{
-	return memory;
+	destroy_image(get_handle());
 }
 
 uint8_t *HPPImage::map()
 {
-	if (!mapped_data)
+	if (create_info.tiling != vk::ImageTiling::eLinear)
 	{
-		if (tiling != vk::ImageTiling::eLinear)
-		{
-			LOGW("Mapping image memory that is not linear");
-		}
-		VK_CHECK(vmaMapMemory(get_device().get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
-		mapped = true;
+		LOGW("Mapping image memory that is not linear");
 	}
-	return mapped_data;
-}
-
-void HPPImage::unmap()
-{
-	if (mapped)
-	{
-		vmaUnmapMemory(get_device().get_memory_allocator(), memory);
-		mapped_data = nullptr;
-		mapped      = false;
-	}
+	return Allocated::map();
 }
 
 vk::ImageType HPPImage::get_type() const
 {
-	return type;
+	return create_info.imageType;
 }
 
 const vk::Extent3D &HPPImage::get_extent() const
 {
-	return extent;
+	return create_info.extent;
 }
 
 vk::Format HPPImage::get_format() const
 {
-	return format;
+	return create_info.format;
 }
 
 vk::SampleCountFlagBits HPPImage::get_sample_count() const
 {
-	return sample_count;
+	return create_info.samples;
 }
 
 vk::ImageUsageFlags HPPImage::get_usage() const
 {
-	return usage;
+	return create_info.usage;
 }
 
 vk::ImageTiling HPPImage::get_tiling() const
 {
-	return tiling;
+	return create_info.tiling;
 }
 
 vk::ImageSubresource HPPImage::get_subresource() const
@@ -208,7 +172,7 @@ vk::ImageSubresource HPPImage::get_subresource() const
 
 uint32_t HPPImage::get_array_layer_count() const
 {
-	return array_layer_count;
+	return create_info.arrayLayers;
 }
 
 std::unordered_set<vkb::core::HPPImageView *> &HPPImage::get_views()

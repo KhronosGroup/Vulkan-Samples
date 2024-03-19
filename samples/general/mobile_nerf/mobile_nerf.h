@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,8 @@
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
+
+#include <json.hpp>
 
 using json = nlohmann::json;
 
@@ -85,26 +87,6 @@ class MobileNerf : public ApiVulkanSample
 		}
 	};
 
-	struct VertexHash
-	{
-		size_t operator()(Vertex const &vertex) const
-		{
-			return std::hash<glm::vec3>()(vertex.position) ^
-			       (std::hash<glm::vec2>()(vertex.tex_coord) << 1);
-		}
-	};
-
-	struct Texture_Input
-	{
-		VkSampler      sampler;
-		VkDeviceMemory memory;
-		VkImage        image = VK_NULL_HANDLE;
-		VkImageView    view;
-		VkFormat       format;
-		uint32_t       width;
-		uint32_t       height;
-	};
-
 	struct InstancingInfo
 	{
 		glm::ivec3 dim;
@@ -118,13 +100,17 @@ class MobileNerf : public ApiVulkanSample
 
 	struct FrameBufferAttachment
 	{
-		VkSampler      sampler;
-		VkDeviceMemory memory;
-		VkImage        image = VK_NULL_HANDLE;
-		VkImageView    view;
-		VkFormat       format;
-		uint32_t       width;
-		uint32_t       height;
+		using ImagePtr = std::unique_ptr<vkb::core::Image>;
+		ImagePtr    image;
+		VkSampler   sampler;
+		VkImageView view;
+
+		operator bool() const
+		{
+			return image && image->get_handle() != VK_NULL_HANDLE;
+		}
+
+		void destroy();
 	};
 
 	struct Model
@@ -132,7 +118,7 @@ class MobileNerf : public ApiVulkanSample
 		std::vector<Vertex>                  vertices;
 		std::vector<std::array<uint32_t, 3>> indices;
 
-		Texture_Input texture_input_0, texture_input_1;
+		Texture texture_input_0, texture_input_1;
 
 		// Vulkan Buffers for each model
 		std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
@@ -176,7 +162,7 @@ class MobileNerf : public ApiVulkanSample
 	void update_uniform_buffers();
 
 	void     create_texture(int model_index, int sub_model_index, int models_entry);
-	void     create_texture_helper(std::string texturePath, Texture_Input &texture);
+	void     create_texture_helper(std::string const &texturePath, Texture &texture);
 	VkFormat feature_map_format = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 	// Helper function
@@ -240,4 +226,4 @@ class MobileNerf : public ApiVulkanSample
 	bool     use_native_screen_size = false;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_mobile_nerf();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mobile_nerf();

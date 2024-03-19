@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,18 +75,6 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 	}
 
 	// Check extensions to enable Vma Dedicated Allocation
-	device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
-
-	// Display supported extensions
-	if (device_extensions.size() > 0)
-	{
-		LOGD("HPPDevice supports the following extensions:");
-		for (auto &extension : device_extensions)
-		{
-			LOGD("  \t{}", extension.extensionName.data());
-		}
-	}
-
 	bool can_get_memory_requirements = is_extension_supported(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 	bool has_dedicated_allocation    = is_extension_supported(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 
@@ -180,50 +168,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 		}
 	}
 
-	VmaVulkanFunctions vma_vulkan_func{};
-	vma_vulkan_func.vkAllocateMemory                    = reinterpret_cast<PFN_vkAllocateMemory>(get_handle().getProcAddr("vkAllocateMemory"));
-	vma_vulkan_func.vkBindBufferMemory                  = reinterpret_cast<PFN_vkBindBufferMemory>(get_handle().getProcAddr("vkBindBufferMemory"));
-	vma_vulkan_func.vkBindImageMemory                   = reinterpret_cast<PFN_vkBindImageMemory>(get_handle().getProcAddr("vkBindImageMemory"));
-	vma_vulkan_func.vkCreateBuffer                      = reinterpret_cast<PFN_vkCreateBuffer>(get_handle().getProcAddr("vkCreateBuffer"));
-	vma_vulkan_func.vkCreateImage                       = reinterpret_cast<PFN_vkCreateImage>(get_handle().getProcAddr("vkCreateImage"));
-	vma_vulkan_func.vkDestroyBuffer                     = reinterpret_cast<PFN_vkDestroyBuffer>(get_handle().getProcAddr("vkDestroyBuffer"));
-	vma_vulkan_func.vkDestroyImage                      = reinterpret_cast<PFN_vkDestroyImage>(get_handle().getProcAddr("vkDestroyImage"));
-	vma_vulkan_func.vkFlushMappedMemoryRanges           = reinterpret_cast<PFN_vkFlushMappedMemoryRanges>(get_handle().getProcAddr("vkFlushMappedMemoryRanges"));
-	vma_vulkan_func.vkFreeMemory                        = reinterpret_cast<PFN_vkFreeMemory>(get_handle().getProcAddr("vkFreeMemory"));
-	vma_vulkan_func.vkGetBufferMemoryRequirements       = reinterpret_cast<PFN_vkGetBufferMemoryRequirements>(get_handle().getProcAddr("vkGetBufferMemoryRequirements"));
-	vma_vulkan_func.vkGetImageMemoryRequirements        = reinterpret_cast<PFN_vkGetImageMemoryRequirements>(get_handle().getProcAddr("vkGetImageMemoryRequirements"));
-	vma_vulkan_func.vkGetPhysicalDeviceMemoryProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceMemoryProperties>(get_handle().getProcAddr("vkGetPhysicalDeviceMemoryProperties"));
-	vma_vulkan_func.vkGetPhysicalDeviceProperties       = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties>(get_handle().getProcAddr("vkGetPhysicalDeviceProperties"));
-	vma_vulkan_func.vkInvalidateMappedMemoryRanges      = reinterpret_cast<PFN_vkInvalidateMappedMemoryRanges>(get_handle().getProcAddr("vkInvalidateMappedMemoryRanges"));
-	vma_vulkan_func.vkMapMemory                         = reinterpret_cast<PFN_vkMapMemory>(get_handle().getProcAddr("vkMapMemory"));
-	vma_vulkan_func.vkUnmapMemory                       = reinterpret_cast<PFN_vkUnmapMemory>(get_handle().getProcAddr("vkUnmapMemory"));
-	vma_vulkan_func.vkCmdCopyBuffer                     = reinterpret_cast<PFN_vkCmdCopyBuffer>(get_handle().getProcAddr("vkCmdCopyBuffer"));
-
-	VmaAllocatorCreateInfo allocator_info{};
-	allocator_info.physicalDevice = static_cast<VkPhysicalDevice>(gpu.get_handle());
-	allocator_info.device         = static_cast<VkDevice>(get_handle());
-	allocator_info.instance       = static_cast<VkInstance>(gpu.get_instance().get_handle());
-
-	if (can_get_memory_requirements && has_dedicated_allocation)
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
-		vma_vulkan_func.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR;
-		vma_vulkan_func.vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR;
-	}
-
-	if (is_extension_supported(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) && is_enabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
-	}
-
-	allocator_info.pVulkanFunctions = &vma_vulkan_func;
-
-	VkResult result = vmaCreateAllocator(&allocator_info, &memory_allocator);
-
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException{result, "Cannot create allocator"};
-	}
+	vkb::allocated::init(*this);
 
 	command_pool = std::make_unique<vkb::core::HPPCommandPool>(
 	    *this, get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index());
@@ -237,15 +182,7 @@ HPPDevice::~HPPDevice()
 	command_pool.reset();
 	fence_pool.reset();
 
-	if (memory_allocator != VK_NULL_HANDLE)
-	{
-		VmaStats stats;
-		vmaCalculateStats(memory_allocator, &stats);
-
-		LOGI("Total device memory leaked: {} bytes.", stats.total.usedBytes);
-
-		vmaDestroyAllocator(memory_allocator);
-	}
+	vkb::allocated::shutdown();
 
 	if (get_handle())
 	{
@@ -255,9 +192,7 @@ HPPDevice::~HPPDevice()
 
 bool HPPDevice::is_extension_supported(std::string const &requested_extension) const
 {
-	return std::find_if(device_extensions.begin(),
-	                    device_extensions.end(),
-	                    [requested_extension](auto &device_extension) { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
+	return gpu.is_extension_supported(requested_extension);
 }
 
 bool HPPDevice::is_enabled(std::string const &extension) const
@@ -270,11 +205,6 @@ bool HPPDevice::is_enabled(std::string const &extension) const
 vkb::core::HPPPhysicalDevice const &HPPDevice::get_gpu() const
 {
 	return gpu;
-}
-
-VmaAllocator const &HPPDevice::get_memory_allocator() const
-{
-	return memory_allocator;
 }
 
 vkb::core::HPPDebugUtils const &HPPDevice::get_debug_utils() const

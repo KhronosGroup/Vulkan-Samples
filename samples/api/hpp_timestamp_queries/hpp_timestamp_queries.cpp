@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,9 +31,9 @@ HPPTimestampQueries::HPPTimestampQueries()
 
 HPPTimestampQueries::~HPPTimestampQueries()
 {
-	if (get_device() && get_device()->get_handle())
+	if (has_device() && get_device().get_handle())
 	{
-		vk::Device device = get_device()->get_handle();
+		vk::Device device = get_device().get_handle();
 
 		time_stamps.destroy(device);
 		bloom.destroy(device);
@@ -51,7 +51,7 @@ bool HPPTimestampQueries::prepare(const vkb::ApplicationOptions &options)
 	if (HPPApiVulkanSample::prepare(options))
 	{
 		// Check if the selected device supports timestamps. A value of zero means no support.
-		vk::PhysicalDeviceLimits const &device_limits = device->get_gpu().get_properties().limits;
+		vk::PhysicalDeviceLimits const &device_limits = get_device().get_gpu().get_properties().limits;
 		if (device_limits.timestampPeriod == 0)
 		{
 			throw std::runtime_error{"The selected device does not support timestamp queries!"};
@@ -61,7 +61,7 @@ bool HPPTimestampQueries::prepare(const vkb::ApplicationOptions &options)
 		if (!device_limits.timestampComputeAndGraphics)
 		{
 			// Check if the graphics queue used in this sample supports time stamps
-			vk::QueueFamilyProperties const &graphics_queue_family_properties = device->get_suitable_graphics_queue().get_properties();
+			vk::QueueFamilyProperties const &graphics_queue_family_properties = get_device().get_suitable_graphics_queue().get_properties();
 			if (graphics_queue_family_properties.timestampValidBits == 0)
 			{
 				throw std::runtime_error{"The selected graphics queue family does not support timestamp queries!"};
@@ -228,7 +228,7 @@ void HPPTimestampQueries::build_command_buffers()
 	}
 }
 
-void HPPTimestampQueries::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPTimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
@@ -254,7 +254,7 @@ void HPPTimestampQueries::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 	{
 		// Timestamps don't have a time unit themselves, but are read as timesteps
 		// The timestampPeriod property of the device tells how many nanoseconds such a timestep translates to on the selected device
-		float timestampFrequency = device->get_gpu().get_properties().limits.timestampPeriod;
+		float timestampFrequency = get_device().get_gpu().get_properties().limits.timestampPeriod;
 
 		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", float(time_stamps.values[1] - time_stamps.values[0]) * timestampFrequency / 1000000.0f);
 		drawer.text("Pass 2: %s %.3f ms", (bloom.enabled ? "First bloom pass" : "Scene display"), float(time_stamps.values[3] - time_stamps.values[2]) * timestampFrequency / 1000000.0f);
@@ -280,21 +280,21 @@ void HPPTimestampQueries::render(float delta_time)
 
 vk::DeviceMemory HPPTimestampQueries::allocate_memory(vk::Image image)
 {
-	vk::MemoryRequirements memory_requirements = get_device()->get_handle().getImageMemoryRequirements(image);
+	vk::MemoryRequirements memory_requirements = get_device().get_handle().getImageMemoryRequirements(image);
 
 	vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size,
-	                                            get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
+	                                            get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
 
-	return get_device()->get_handle().allocateMemory(memory_allocate_info);
+	return get_device().get_handle().allocateMemory(memory_allocate_info);
 }
 
 HPPTimestampQueries::FramebufferAttachment HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage)
 {
 	vk::Image        image  = create_image(format, usage);
 	vk::DeviceMemory memory = allocate_memory(image);
-	get_device()->get_handle().bindImageMemory(image, memory, 0);
+	get_device().get_handle().bindImageMemory(image, memory, 0);
 	vk::ImageView view =
-	    vkb::common::create_image_view(get_device()->get_handle(), image, vk::ImageViewType::e2D, format, vkb::common::get_image_aspect_flags(usage, format));
+	    vkb::common::create_image_view(get_device().get_handle(), image, vk::ImageViewType::e2D, format, vkb::common::get_image_aspect_flags(usage, format));
 
 	return {format, image, memory, view};
 }
@@ -302,7 +302,7 @@ HPPTimestampQueries::FramebufferAttachment HPPTimestampQueries::create_attachmen
 vk::DescriptorPool HPPTimestampQueries::create_descriptor_pool()
 {
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}}};
-	return get_device()->get_handle().createDescriptorPool({{}, 4, pool_sizes});
+	return get_device().get_handle().createDescriptorPool({{}, 4, pool_sizes});
 }
 
 vk::Pipeline HPPTimestampQueries::create_bloom_pipeline(uint32_t direction)
@@ -334,7 +334,7 @@ vk::Pipeline HPPTimestampQueries::create_bloom_pipeline(uint32_t direction)
 	depth_stencil_state.front          = depth_stencil_state.back;
 
 	// Empty vertex input state, full screen triangles are generated by the vertex shader
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             {},
@@ -365,7 +365,7 @@ vk::Pipeline HPPTimestampQueries::create_composition_pipeline()
 	depth_stencil_state.front          = depth_stencil_state.back;
 
 	// Empty vertex input state, full screen triangles are generated by the vertex shader
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             {},
@@ -411,7 +411,7 @@ vk::Image HPPTimestampQueries::create_image(vk::Format format, vk::ImageUsageFla
 	image_create_info.tiling      = vk::ImageTiling::eOptimal;
 	image_create_info.usage       = usage | vk::ImageUsageFlagBits::eSampled;
 
-	return get_device()->get_handle().createImage(image_create_info);
+	return get_device().get_handle().createImage(image_create_info);
 }
 
 vk::Pipeline HPPTimestampQueries::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
@@ -450,7 +450,7 @@ vk::Pipeline HPPTimestampQueries::create_models_pipeline(uint32_t shaderType, vk
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             vertex_input_state,
@@ -526,7 +526,7 @@ vk::RenderPass HPPTimestampQueries::create_render_pass(std::vector<vk::Attachmen
 
 	vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass_description, subpass_dependencies);
 
-	return get_device()->get_handle().createRenderPass(render_pass_create_info);
+	return get_device().get_handle().createRenderPass(render_pass_create_info);
 }
 
 void HPPTimestampQueries::draw()
@@ -551,13 +551,13 @@ void HPPTimestampQueries::get_time_stamp_results()
 	// A note on the flags used:
 	//	vk::QueryResultFlagBits::e64: Results will have 64 bits. As time stamp values are on nano-seconds, this flag should always be used to avoid 32 bit overflows
 	//  vk::QueryResultFlagBits::eWait: Since we want to immediately display the results, we use this flag to have the CPU wait until the results are available
-	vk::Result result = device->get_handle().getQueryPoolResults(time_stamps.query_pool,
-	                                                             0,
-	                                                             count,
-	                                                             time_stamps.values.size() * sizeof(uint64_t),
-	                                                             time_stamps.values.data(),
-	                                                             sizeof(uint64_t),
-	                                                             vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
+	vk::Result result = get_device().get_handle().getQueryPoolResults(time_stamps.query_pool,
+	                                                                  0,
+	                                                                  count,
+	                                                                  time_stamps.values.size() * sizeof(uint64_t),
+	                                                                  time_stamps.values.data(),
+	                                                                  sizeof(uint64_t),
+	                                                                  vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
 	assert(result == vk::Result::eSuccess);
 }
 
@@ -593,7 +593,7 @@ void HPPTimestampQueries::prepare_bloom()
 	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	vk::Device device           = get_device()->get_handle();
+	vk::Device device           = get_device().get_handle();
 	bloom.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
 	bloom.pipeline_layout       = device.createPipelineLayout({{}, bloom.descriptor_set_layout});
 	bloom.pipelines[0]          = create_bloom_pipeline(1);
@@ -617,7 +617,7 @@ void HPPTimestampQueries::prepare_composition()
 	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	vk::Device device                 = get_device()->get_handle();
+	vk::Device device                 = get_device().get_handle();
 	composition.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
 	composition.pipeline_layout       = device.createPipelineLayout({{}, composition.descriptor_set_layout});
 	composition.pipeline              = create_composition_pipeline();
@@ -631,7 +631,7 @@ void HPPTimestampQueries::prepare_models()
 	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	vk::Device device            = get_device()->get_handle();
+	vk::Device device            = get_device().get_handle();
 	models.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
 	models.pipeline_layout       = device.createPipelineLayout({{}, models.descriptor_set_layout});
 
@@ -662,44 +662,53 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 		offscreen.render_pass = create_offscreen_render_pass();
 
 		offscreen.framebuffer = vkb::common::create_framebuffer(
-		    get_device()->get_handle(), offscreen.render_pass, {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view}, offscreen.extent);
+		    get_device().get_handle(), offscreen.render_pass, {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view}, offscreen.extent);
 
 		// Create sampler to sample from the color attachments
-		offscreen.sampler = vkb::common::create_sampler(get_device()->get_handle(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
+		offscreen.sampler = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(),
+		                                                offscreen.color[0].format, vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 
 	// Bloom separable filter pass
 	{
 		filter_pass.extent = extent;
 
-		// Color attachments
+		// Color attachments - needs to be a blendable format, so choose from a priority ordered list
+		const std::vector<vk::Format> float_format_priority_list = {
+		    vk::Format::eR32G32B32A32Sfloat,
+		    vk::Format::eR16G16B16A16Sfloat        // Guaranteed blend support for this
+		};
+
+		vk::Format color_format = vkb::common::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 		// One floating point color buffer
-		filter_pass.color = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
+		filter_pass.color = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 
 		filter_pass.render_pass = create_filter_render_pass();
-		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device()->get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
-		filter_pass.sampler     = vkb::common::create_sampler(get_device()->get_handle(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
+		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device().get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
+		filter_pass.sampler     = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(),
+		                                                      filter_pass.color.format, vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 }
 
 void HPPTimestampQueries::prepare_time_stamps()
 {
 	// Create the query pool object used to get the GPU time tamps
-	time_stamps.query_pool = vkb::common::create_query_pool(get_device()->get_handle(), vk::QueryType::eTimestamp, static_cast<uint32_t>(time_stamps.values.size()));
+	time_stamps.query_pool =
+	    vkb::common::create_query_pool(get_device().get_handle(), vk::QueryType::eTimestamp, static_cast<uint32_t>(time_stamps.values.size()));
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
 void HPPTimestampQueries::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	uniform_buffers.matrices = std::make_unique<vkb::core::HPPBuffer>(get_device(),
 	                                                                  sizeof(ubo_matrices),
 	                                                                  vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	uniform_buffers.params = std::make_unique<vkb::core::HPPBuffer>(get_device(),
 	                                                                sizeof(ubo_params),
 	                                                                vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -717,7 +726,7 @@ void HPPTimestampQueries::update_composition_descriptor_set()
 	    {{composition.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
 	     {composition.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
 
-	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
 }
 
 void HPPTimestampQueries::update_bloom_descriptor_set()
@@ -729,7 +738,7 @@ void HPPTimestampQueries::update_bloom_descriptor_set()
 	    {{bloom.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
 	     {bloom.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
 
-	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
 }
 
 void HPPTimestampQueries::update_model_descriptor_set(vk::DescriptorSet descriptor_set)
@@ -748,7 +757,7 @@ void HPPTimestampQueries::update_model_descriptor_set(vk::DescriptorSet descript
 	     {descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, environment_image_descriptor},
 	     {descriptor_set, 2, 0, vk::DescriptorType::eUniformBuffer, {}, params_buffer_descriptor}}};
 
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPTimestampQueries::update_params()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ TerrainTessellation::TerrainTessellation()
 
 TerrainTessellation::~TerrainTessellation()
 {
-	if (device)
+	if (has_device())
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
@@ -142,11 +142,16 @@ void TerrainTessellation::load_assets()
 
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.heightmap.image->get_format(), &filter, &mipmap_mode);
+
 	// Setup a mirroring sampler for the height map
 	vkDestroySampler(get_device().get_handle(), textures.heightmap.sampler, nullptr);
-	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter    = filter;
+	sampler_create_info.minFilter    = filter;
+	sampler_create_info.mipmapMode   = mipmap_mode;
 	sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
 	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
 	sampler_create_info.addressModeW = sampler_create_info.addressModeU;
@@ -156,12 +161,16 @@ void TerrainTessellation::load_assets()
 	sampler_create_info.borderColor  = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &textures.heightmap.sampler));
 
+	filter      = VK_FILTER_LINEAR;
+	mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.terrain_array.image->get_format(), &filter, &mipmap_mode);
+
 	// Setup a repeating sampler for the terrain texture layers
 	vkDestroySampler(get_device().get_handle(), textures.terrain_array.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
-	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter    = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter    = filter;
+	sampler_create_info.minFilter    = filter;
+	sampler_create_info.mipmapMode   = mipmap_mode;
 	sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
 	sampler_create_info.addressModeW = sampler_create_info.addressModeU;
@@ -323,11 +332,8 @@ void TerrainTessellation::generate_terrain()
 
 	// Create staging buffers
 
-	vkb::core::Buffer vertex_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_staging.update(vertices);
-
-	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_staging.update(indices);
+	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
+	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	terrain.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                       vertex_buffer_size,
@@ -340,7 +346,7 @@ void TerrainTessellation::generate_terrain()
 	                                                      VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
@@ -360,7 +366,7 @@ void TerrainTessellation::generate_terrain()
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 void TerrainTessellation::setup_descriptor_pool()

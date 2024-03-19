@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -88,4 +88,4 @@ class DynamicLineRasterization : public ApiVulkanSample
 	static uint16_t array_to_uint16(const std::array<bool, 16> &array);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_line_rasterization();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_line_rasterization();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica
+/* Copyright (c) 2023-2024, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ DynamicBlending::DynamicBlending()
 
 DynamicBlending::~DynamicBlending()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -668,7 +668,7 @@ bool DynamicBlending::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_blending()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_blending()
 {
 	return std::make_unique<DynamicBlending>();
 }

@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Thomas Atkinson
+# Copyright (c) 2023-2024, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -25,3 +25,6 @@ elseif(APPLE OR UNIX)
 else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
+
+
+add_subdirectory(filesystem)

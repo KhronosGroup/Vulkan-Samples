@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,6 @@
 #include "common/helpers.h"
 #include "common/vk_common.h"
 #include "core/buffer.h"
-#include "core/scratch_buffer.h"
 
 namespace vkb
 {
@@ -39,7 +38,7 @@ class AccelerationStructure
 	 * @param device A valid Vulkan device
 	 * @param type The type of the acceleration structure (top- or bottom-level)
 	 */
-	AccelerationStructure(Device &                       device,
+	AccelerationStructure(Device                        &device,
 	                      VkAccelerationStructureTypeKHR type);
 
 	~AccelerationStructure();
@@ -54,7 +53,7 @@ class AccelerationStructure
 	 * @param max_vertex Index of the last vertex in the geometry
 	 * @param vertex_stride Stride of the vertex structure
 	 * @param transform_offset Offset of this geometry in the transform data buffer
-	 * @param vertex_format Format of the vertex structure 
+	 * @param vertex_format Format of the vertex structure
 	 * @param flags Ray tracing geometry flags
 	 * @param vertex_buffer_data_address set this if don't want the vertex_buffer data_address
 	 * @param index_buffer_data_address set this if don't want the index_buffer data_address
@@ -149,7 +148,7 @@ class AccelerationStructure
 		bool                               updated = false;
 	};
 
-	std::unique_ptr<vkb::core::ScratchBuffer> scratch_buffer;
+	std::unique_ptr<vkb::core::Buffer> scratch_buffer;
 
 	std::map<uint64_t, Geometry> geometries{};
 

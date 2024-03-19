@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Arm Limited and Contributors
+# Copyright (c) 2019-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,6 +22,7 @@ project(framework LANGUAGES C CXX)
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
+    drawer.h
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
@@ -49,9 +50,9 @@ set(FRAMEWORK_FILES
     hpp_resource_record.h
     hpp_resource_replay.h
     hpp_semaphore_pool.h
-    hpp_vulkan_sample.h
     # Source Files
     gui.cpp
+    drawer.cpp
     glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
@@ -64,23 +65,20 @@ set(FRAMEWORK_FILES
     resource_cache.cpp
     resource_record.cpp
     resource_replay.cpp
-    vulkan_sample.cpp
     api_vulkan_sample.cpp
     timer.cpp
     camera.cpp
-    hpp_gui.cpp
     hpp_api_vulkan_sample.cpp
-    hpp_resource_cache.cpp
-	hpp_vulkan_sample.cpp)
+    hpp_gui.cpp
+    hpp_resource_cache.cpp)
 
 set(COMMON_FILES
     # Header Files
     common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
-    common/glm_common.h 
+    common/glm_common.h
     common/resource_caching.h
-    common/logging.h
     common/helpers.h
     common/error.h
     common/utils.h
@@ -215,7 +213,6 @@ set(STATS_FILES
     stats/stats_common.h
     stats/stats_provider.h
     stats/frame_time_stats_provider.h
-    stats/hwcpipe_stats_provider.h
     stats/vulkan_stats_provider.h
     stats/hpp_stats.h
 
@@ -223,7 +220,6 @@ set(STATS_FILES
     stats/stats.cpp
     stats/stats_provider.cpp
     stats/frame_time_stats_provider.cpp
-    stats/hwcpipe_stats_provider.cpp
     stats/vulkan_stats_provider.cpp)
 
 set(CORE_FILES
@@ -242,6 +238,7 @@ set(CORE_FILES
     core/command_pool.h
     core/swapchain.h
     core/command_buffer.h
+    core/allocated.h
     core/buffer.h
     core/image.h
     core/image_view.h
@@ -251,9 +248,8 @@ set(CORE_FILES
     core/framebuffer.h
     core/render_pass.h
     core/query_pool.h
-    core/scratch_buffer.h
     core/acceleration_structure.h
-    core/shader_binding_table.h
+    core/hpp_allocated.h
     core/hpp_buffer.h
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
@@ -293,6 +289,7 @@ set(CORE_FILES
     core/command_pool.cpp
     core/swapchain.cpp
     core/command_buffer.cpp
+    core/allocated.cpp
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
@@ -302,9 +299,7 @@ set(CORE_FILES
     core/framebuffer.cpp
     core/render_pass.cpp
     core/query_pool.cpp
-    core/scratch_buffer.cpp
     core/acceleration_structure.cpp
-    core/shader_binding_table.cpp
     core/vulkan_resource.cpp
     core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
@@ -326,7 +321,6 @@ set(PLATFORM_FILES
     platform/application.h
     platform/platform.h
     platform/window.h
-    platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
     platform/parser.h
@@ -339,7 +333,6 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/platform.cpp
     platform/window.cpp
-    platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
     platform/parser.cpp
@@ -365,9 +358,11 @@ set(ANDROID_FILES
     # Header Files
     platform/android/android_platform.h
     platform/android/android_window.h
+    stats/hwcpipe_stats_provider.h
     # Source Files
     platform/android/android_platform.cpp
-    platform/android/android_window.cpp)
+    platform/android/android_window.cpp
+    stats/hwcpipe_stats_provider.cpp)
 
 set(WINDOWS_FILES
     # Header Files
@@ -387,7 +382,7 @@ set(LINUX_D2D_FILES
     platform/unix/direct_window.h
     # Source Files
     platform/unix/unix_d2d_platform.cpp
-    platform/unix/direct_window.cpp) 
+    platform/unix/direct_window.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
@@ -511,17 +506,17 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
     vkb__core
+    vkb__filesystem
     volk
     ktx
     stb
-    astc
+    ${ASTC_TARGET}
     imgui
     tinygltf
     glm
     glslang
     SPIRV
     vma
-    hwcpipe
     spirv-cross-glsl
     glslang-default-resource-limits
     spdlog
@@ -537,7 +532,7 @@ endif()
 if(ANDROID)
     # Import game-activity static lib inside the game-activity_static prefab module.
     find_package(game-activity REQUIRED CONFIG)
-    target_link_libraries(${PROJECT_NAME} PUBLIC log android game-activity::game-activity_static)
+    target_link_libraries(${PROJECT_NAME} PUBLIC hwcpipe log android game-activity::game-activity_static)
 else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)

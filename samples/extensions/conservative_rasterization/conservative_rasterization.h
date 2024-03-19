@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -125,4 +125,4 @@ class ConservativeRasterization : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_conservative_rasterization();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_conservative_rasterization();

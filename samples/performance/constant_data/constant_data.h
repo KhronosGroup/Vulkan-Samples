@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ struct alignas(16) MVPUniform
  *
  * The shaders will be compiled with a definition to handle this difference.
  */
-class ConstantData : public vkb::VulkanSample
+class ConstantData : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	/**
@@ -223,7 +223,7 @@ class ConstantData : public vkb::VulkanSample
 		vkb::ShaderSource vert_shader(vertex_shader);
 		vkb::ShaderSource frag_shader(fragment_shader);
 
-		auto subpass = std::make_unique<T>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+		auto subpass = std::make_unique<T>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 		// We want to check if the push constants limit can support the full 256 bytes
 		auto push_constant_limit = get_device().get_gpu().get_properties().limits.maxPushConstantsSize;
@@ -274,4 +274,4 @@ class ConstantData : public vkb::VulkanSample
 	int last_gui_method_value{static_cast<int>(Method::PushConstants)};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_constant_data();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_constant_data();

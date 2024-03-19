@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,9 +31,9 @@ HPPSeparateImageSampler::HPPSeparateImageSampler()
 
 HPPSeparateImageSampler::~HPPSeparateImageSampler()
 {
-	if (get_device() && get_device()->get_handle())
+	if (has_device() && get_device().get_handle())
 	{
-		vk::Device device = get_device()->get_handle();
+		vk::Device device = get_device().get_handle();
 
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
@@ -69,14 +69,14 @@ bool HPPSeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
 		// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
 		// Descriptors set for the uniform buffer and the image
 		base_descriptor_set_layout = create_base_descriptor_set_layout();
-		base_descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
+		base_descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, base_descriptor_set_layout);
 		update_base_descriptor_set();
 
 		// Sets for each of the sampler
 		sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
 		for (size_t i = 0; i < sampler_descriptor_sets.size(); i++)
 		{
-			sampler_descriptor_sets[i] = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, sampler_descriptor_set_layout);
+			sampler_descriptor_sets[i] = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, sampler_descriptor_set_layout);
 			update_sampler_descriptor_set(i);
 		}
 
@@ -146,7 +146,7 @@ void HPPSeparateImageSampler::build_command_buffers()
 	}
 }
 
-void HPPSeparateImageSampler::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPSeparateImageSampler::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
@@ -181,7 +181,7 @@ vk::DescriptorSetLayout HPPSeparateImageSampler::create_base_descriptor_set_layo
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_bindings_buffer_and_image);
 
-	return get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	return get_device().get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
 }
 
 vk::DescriptorPool HPPSeparateImageSampler::create_descriptor_pool()
@@ -191,7 +191,7 @@ vk::DescriptorPool HPPSeparateImageSampler::create_descriptor_pool()
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 3, pool_sizes);
 
-	return get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
+	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
@@ -220,7 +220,7 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
 
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             input_state,
@@ -238,16 +238,18 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<vk::DescriptorSetLayout> const &descriptor_set_layouts)
 {
 	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, descriptor_set_layouts);
-	return get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
+	return get_device().get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 
 vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
 {
 	return vkb::common::create_sampler(
-	    get_device()->get_handle(),
+	    get_device().get_gpu().get_handle(),
+	    get_device().get_handle(),
+	    texture.image->get_format(),
 	    filter,
 	    vk::SamplerAddressMode::eRepeat,
-	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
+	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(texture.image->get_mipmaps().size()));
 }
 
@@ -258,7 +260,7 @@ vk::DescriptorSetLayout HPPSeparateImageSampler::create_sampler_descriptor_set_l
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_binding_sampler);
 
-	return get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	return get_device().get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
 }
 
 void HPPSeparateImageSampler::draw()
@@ -294,13 +296,13 @@ void HPPSeparateImageSampler::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
 	                                                       vertex_buffer_size,
 	                                                       vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
 	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	index_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
 	                                                      index_buffer_size,
 	                                                      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
 	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -317,7 +319,7 @@ void HPPSeparateImageSampler::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
 	uniform_buffer_vs =
-	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -336,7 +338,7 @@ void HPPSeparateImageSampler::update_base_descriptor_set()
 	    {base_descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
 	    image_write_descriptor_set                                                                     // Binding 1 : Fragment shader sampled image
 	}};
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPSeparateImageSampler::update_sampler_descriptor_set(size_t index)
@@ -348,7 +350,7 @@ void HPPSeparateImageSampler::update_sampler_descriptor_set(size_t index)
 
 	vk::WriteDescriptorSet sampler_write_descriptor_set(sampler_descriptor_sets[index], 0, 0, vk::DescriptorType::eSampler, sampler_info);
 
-	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_set, {});
+	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_set, {});
 }
 
 void HPPSeparateImageSampler::update_uniform_buffers()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2023-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ CalibratedTimestamps::CalibratedTimestamps() :
 
 CalibratedTimestamps::~CalibratedTimestamps()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
@@ -244,26 +244,12 @@ void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBi
 
 void CalibratedTimestamps::prepare_offscreen_buffer()
 {
-	VkFormat color_format{VK_FORMAT_UNDEFINED};
-
 	const std::vector<VkFormat> float_format_priority_list = {
 	    VK_FORMAT_R32G32B32A32_SFLOAT,
-	    VK_FORMAT_R16G16B16A16_SFLOAT};
+	    VK_FORMAT_R16G16B16A16_SFLOAT        // Guaranteed blend support for this
+	};
 
-	for (auto &format : float_format_priority_list)
-	{
-		const VkFormatProperties properties = get_device().get_gpu().get_format_properties(format);
-		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
-		{
-			color_format = format;
-			break;
-		}
-	}
-
-	if (color_format == VK_FORMAT_UNDEFINED)
-	{
-		throw std::runtime_error("No suitable float format could be determined");
-	}
+	VkFormat color_format = vkb::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 	{
 		offscreen.width  = static_cast<int32_t>(width);
@@ -886,7 +872,7 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	// Timestamps period extracted in runtime
-	float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
+	float timestamp_period = get_device().get_gpu().get_properties().limits.timestampPeriod;
 	drawer.text("Timestamps Period:\n %.1f Nanoseconds", timestamp_period);
 
 	// Adjustment Handles:

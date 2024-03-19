@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,18 +17,61 @@
 
 #pragma once
 
+#include "allocated.h"
+#include "buffer.h"
+#include "common/hpp_error.h"
+#include "hpp_allocated.h"
 #include "hpp_vulkan_resource.h"
-
 #include <unordered_map>
-#include <vk_mem_alloc.h>
 
 namespace vkb
 {
 namespace core
 {
-class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
+
+class HPPBuffer;
+using HPPBufferPtr = std::unique_ptr<HPPBuffer>;
+
+struct HPPBufferBuilder : public allocated::HPPBuilder<HPPBufferBuilder, vk::BufferCreateInfo>
 {
+  private:
+	using Parent = HPPBuilder<HPPBufferBuilder, vk::BufferCreateInfo>;
+
   public:
+	HPPBufferBuilder(vk::DeviceSize size) :
+	    HPPBuilder(vk::BufferCreateInfo{{}, size})
+	{
+	}
+
+	HPPBufferBuilder &with_usage(vk::BufferUsageFlags usage)
+	{
+		create_info.usage = usage;
+		return *this;
+	}
+
+	HPPBufferBuilder &with_flags(vk::BufferCreateFlags flags)
+	{
+		create_info.flags = flags;
+		return *this;
+	}
+
+	HPPBuffer    build(HPPDevice &device) const;
+	HPPBufferPtr build_unique(HPPDevice &device) const;
+};
+
+class HPPBuffer : public allocated::HPPAllocated<vk::Buffer>
+{
+	using Parent = allocated::HPPAllocated<vk::Buffer>;
+
+  public:
+	static HPPBuffer create_staging_buffer(HPPDevice &device, vk::DeviceSize size, const void *data);
+
+	template <typename T>
+	static HPPBuffer create_staging_buffer(HPPDevice &device, std::vector<T> const &data)
+	{
+		return create_staging_buffer(device, data.size() * sizeof(T), data.data());
+	}
+
 	/**
 	 * @brief Creates a buffer using VMA
 	 * @param device A valid Vulkan device
@@ -38,24 +81,24 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 	 * @param flags The allocation create flags
 	 * @param queue_family_indices optional queue family indices
 	 */
-	HPPBuffer(vkb::core::HPPDevice        &device,
+	// [[deprecated("Use the HPPBufferBuilder ctor instead")]]
+	HPPBuffer(HPPDevice                   &device,
 	          vk::DeviceSize               size,
 	          vk::BufferUsageFlags         buffer_usage,
 	          VmaMemoryUsage               memory_usage,
-	          VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	          VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
 	          const std::vector<uint32_t> &queue_family_indices = {});
 
+	HPPBuffer(vkb::core::HPPDevice   &device,
+	          HPPBufferBuilder const &builder);
+
 	HPPBuffer(const HPPBuffer &) = delete;
-	HPPBuffer(HPPBuffer &&other);
+	HPPBuffer(HPPBuffer &&other) noexcept;
 
 	~HPPBuffer();
 
 	HPPBuffer &operator=(const HPPBuffer &) = delete;
 	HPPBuffer &operator=(HPPBuffer &&)      = delete;
-
-	VmaAllocation    get_allocation() const;
-	const uint8_t   *get_data() const;
-	vk::DeviceMemory get_memory() const;
 
 	/**
 	 * @return Return the buffer's device address (note: requires that the buffer has been created with the VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage fla)
@@ -67,69 +110,9 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 	 */
 	vk::DeviceSize get_size() const;
 
-	/**
-	 * @brief Flushes memory if it is HOST_VISIBLE and not HOST_COHERENT
-	 */
-	void flush();
-
-	/**
-	 * @brief Maps vulkan memory if it isn't already mapped to an host visible address
-	 * @return Pointer to host visible memory
-	 */
-	uint8_t *map();
-
-	/**
-	 * @brief Unmaps vulkan memory from the host visible address
-	 */
-	void unmap();
-
-	/**
-	 * @brief Copies byte data into the buffer
-	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(const uint8_t *data, size_t size, size_t offset = 0);
-
-	/**
-	 * @brief Converts any non byte data into bytes and then updates the buffer
-	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(void const *data, size_t size, size_t offset = 0);
-
-	/**
-	 * @brief Copies a vector of bytes into the buffer
-	 * @param data The data vector to upload
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(const std::vector<uint8_t> &data, size_t offset = 0);
-
-	template <typename T>
-	void update(std::vector<T> const &data, size_t offset = 0)
-	{
-		update(data.data(), data.size() * sizeof(T), offset);
-	}
-
-	/**
-	 * @brief Copies an object as byte data into the buffer
-	 * @param object The object to convert into byte data
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	template <class T>
-	void convert_and_update(const T &object, size_t offset = 0)
-	{
-		update(reinterpret_cast<const uint8_t *>(&object), sizeof(T), offset);
-	}
-
   private:
-	VmaAllocation    allocation  = VK_NULL_HANDLE;
-	vk::DeviceMemory memory      = nullptr;
-	vk::DeviceSize   size        = 0;
-	uint8_t         *mapped_data = nullptr;
-	bool             persistent  = false;        // Whether the buffer is persistently mapped or not
-	bool             mapped      = false;        // Whether the buffer has been mapped with vmaMapMemory
+	vk::DeviceSize size = 0;
 };
+
 }        // namespace core
 }        // namespace vkb

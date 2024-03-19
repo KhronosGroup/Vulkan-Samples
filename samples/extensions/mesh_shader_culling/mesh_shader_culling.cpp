@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2023-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,7 +37,7 @@ MeshShaderCulling::MeshShaderCulling()
 
 MeshShaderCulling::~MeshShaderCulling()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -377,7 +377,7 @@ bool MeshShaderCulling::resize(uint32_t width, uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shader_culling()
 {
 	return std::make_unique<MeshShaderCulling>();
 }
