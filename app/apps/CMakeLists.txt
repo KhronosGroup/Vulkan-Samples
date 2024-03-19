@@ -96,10 +96,6 @@ foreach(ID ${PROJECT_ID_LIST})
 endforeach()
 
 if (IOS)
-    if(DEFINED ENV{VULKAN_SDK})
-        find_library(moltenVK MoltenVK "$ENV{VULKAN_SDK}/MoltenVK/dylib/iOS")
-        target_link_libraries(${PROJECT_NAME} PUBLIC ${MoltenVK})
-    endif ()
     target_link_libraries(${PROJECT_NAME} PRIVATE
             "-framework UIKit"
             "-framework Foundation"

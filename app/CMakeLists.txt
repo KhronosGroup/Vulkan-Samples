@@ -39,7 +39,7 @@ if(ANDROID)
     add_library(${PROJECT_NAME} SHARED ${SRC})
 elseif (APPLE)
     if(IOS)
-        list(REMOVE_AT SRC main.cpp)
+        list(REMOVE_AT SRC 0)
         list(APPEND SRC
                 ${CMAKE_CURRENT_SOURCE_DIR}/ios/main.mm
                 ${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.h
