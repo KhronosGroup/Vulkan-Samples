@@ -114,4 +114,4 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	void draw_scene(std::unique_ptr<vkb::sg::Scene> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_rendering_local_read();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering_local_read();

@@ -48,7 +48,7 @@ DynamicRenderingLocalRead::DynamicRenderingLocalRead()
 
 DynamicRenderingLocalRead::~DynamicRenderingLocalRead()
 {
-	if (device)
+	if (has_device())
 	{
 		for (Pass pass : {scene_opaque_pass, scene_transparent_pass, composition_pass})
 		{
@@ -129,7 +129,7 @@ void DynamicRenderingLocalRead::setup_framebuffer()
 	framebuffer_ci.layers          = 1;
 
 	// Create frame buffers for every swap chain image
-	framebuffers.resize(render_context->get_render_frames().size());
+	framebuffers.resize(get_render_context().get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		attachment_views[0] = swapchain_buffers[i].view;
@@ -155,7 +155,7 @@ void DynamicRenderingLocalRead::setup_render_pass()
 
 	std::array<VkAttachmentDescription, 5> attachments{};
 	// Color attachment
-	attachments[0].format         = render_context->get_swapchain().get_format();
+	attachments[0].format         = get_render_context().get_swapchain().get_format();
 	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -314,16 +314,17 @@ void DynamicRenderingLocalRead::setup_render_pass()
 
 void DynamicRenderingLocalRead::prepare_gui()
 {
-	gui = std::make_unique<vkb::Gui>(*this, *window, nullptr, 15.0f, true);
-	gui->set_subpass(2);
-	gui->prepare(pipeline_cache, render_pass,
-	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	// @todo
+	//gui = std::make_unique<vkb::Gui>(*this, *window, nullptr, 15.0f, true);
+	//gui->set_subpass(2);
+	//gui->prepare(pipeline_cache, render_pass,
+	//             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	//              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void DynamicRenderingLocalRead::load_assets()
 {
-	vkb::GLTFLoader loader{*device};
+	vkb::GLTFLoader loader{get_device()};
 	scenes.opaque      = loader.read_scene_from_file("scenes/subpass_scene_opaque.gltf");
 	scenes.transparent = loader.read_scene_from_file("scenes/subpass_scene_transparent.gltf");
 
@@ -371,7 +372,7 @@ void DynamicRenderingLocalRead::create_attachment(VkFormat format, VkImageUsageF
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_ci, nullptr, &attachment.image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment.image, &memory_requirements);
 	memory_ai.allocationSize  = memory_requirements.size;
-	memory_ai.memoryTypeIndex = device->get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_ai.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_ai, nullptr, &attachment.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment.image, attachment.memory, 0));
 
@@ -390,7 +391,7 @@ void DynamicRenderingLocalRead::create_attachment(VkFormat format, VkImageUsageF
 #if defined(USE_DYNAMIC_RENDERING)
 	// Without render passes and their implicit layout transitions, we need to explicitly transition the attachments
 	// We use a new layout introduced by this extension that makes writes to images visible via input attachments
-	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkImageMemoryBarrier2KHR imageMemoryBarrier{};
 	imageMemoryBarrier.sType            = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
@@ -408,7 +409,7 @@ void DynamicRenderingLocalRead::create_attachment(VkFormat format, VkImageUsageF
 	dependencyInfo.pImageMemoryBarriers    = &imageMemoryBarrier;
 	vkCmdPipelineBarrier2KHR(command_buffer, &dependencyInfo);
 
-	device->flush_command_buffer(command_buffer, queue);
+	get_device().flush_command_buffer(command_buffer, queue);
 #endif
 }
 
@@ -674,7 +675,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 #if defined(USE_DYNAMIC_RENDERING)
 	// For dynamic rendering, additional information muss be set at pipeline creation
 	VkFormat color_attachment_formats[4] = {
-	    render_context->get_format(),
+	    get_render_context().get_format(),
 	    attachments.positionDepth.format,
 	    attachments.normal.format,
 	    attachments.albedo.format};
@@ -1041,12 +1042,12 @@ void DynamicRenderingLocalRead::on_update_ui_overlay(vkb::Drawer &drawer)
 #endif
 	if (drawer.button("Randomize lights"))
 	{
-		device->wait_idle();
+		get_device().wait_idle();
 		update_lights_buffer();
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_dynamic_rendering_local_read()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering_local_read()
 {
 	return std::make_unique<DynamicRenderingLocalRead>();
 }
