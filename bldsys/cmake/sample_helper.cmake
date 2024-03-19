@@ -66,20 +66,14 @@ function(add_sample_with_tags)
     endif()
 
     # Add GLSL shader files for this sample
-    if (TARGET_SHADER_FILES_GLSL)    
-        list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
-        foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
-            list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
-        endforeach()        
-    endif()
+    foreach(SHADER_FILE_GLSL ${TARGET_SHADER_FILES_GLSL})
+        list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
+    endforeach()
 
     # Add HLSL shader files for this sample
-    if (TARGET_SHADER_FILES_HLSL)
-        list(APPEND SHADER_FILES_HLSL ${TARGET_SHADER_FILES_HLSL})
-        foreach(SHADER_FILE_HLSL ${SHADER_FILES_HLSL})
-            list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
-        endforeach()
-    endif()
+    foreach(SHADER_FILE_HLSL ${TARGET_SHADER_FILES_HLSL})
+        list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
+    endforeach()
 
     add_project(
         TYPE "Sample"
@@ -149,12 +143,12 @@ function(add_project)
     source_group("\\" FILES ${TARGET_FILES})
 
     # Add GLSL shaders to project group
-    if (SHADERS_GLSL)
+    if (TARGET_SHADERS_GLSL)
         source_group("\\Shaders" FILES ${SHADERS_GLSL})
     endif()
 
     #Add HLSL shaders to project group
-    if (SHADERS_HLSL)
+    if (TARGET_SHADERS_HLSL)
         source_group("\\Shaders" FILES ${SHADERS_HLSL})
     endif()
 
@@ -201,12 +195,20 @@ endif()
     endif()
 
     if(DEFINED Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
-        compile_hlsl_shaders()
+        compile_hlsl_shaders(
+            SHADERS_HLSL ${TARGET_SHADERS_HLSL}
+        )
     endif()
 endfunction()
 
 function(compile_hlsl_shaders)
-    foreach(SHADER_FILE_HLSL ${SHADERS_HLSL})
+    set(options)
+    set(oneValueArgs)
+    set(multiValueArgs SHADERS_HLSL)
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
         set(HLSL_SPV_FILE ${SHADER_FILE_HLSL}.spv)
 
         if(${SHADER_FILE_HLSL} MATCHES "[^-]+.vert.hlsl")
@@ -225,10 +227,11 @@ function(compile_hlsl_shaders)
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.tese.hlsl")
             set(DXC_PROFILE "ds_6_1")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.mesh.hlsl")
-            set(DXC_PROFILE "cs_6_1")
+            set(DXC_PROFILE "ms_6_1")
             set(DXC_TARGET "-fspv-target-env=vulkan1.2")
         endif()
 
         execute_process(COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${HLSL_SPV_FILE})
     endforeach()
+    message("Compiled HLSL shaders for ${PROJECT_NAME}")
 endfunction()

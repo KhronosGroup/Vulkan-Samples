@@ -36,19 +36,12 @@ find_package(Vulkan)
 
 if(VULKAN_FOUND)
     if(NOT Vulkan_dxc_EXECUTABLE)
-        if(WIN32)
-            find_program(Vulkan_dxc_EXECUTABLE
-                        NAMES dxc
-                        HINTS
-                        "$ENV{VULKAN_SDK}/Bin"
-                        )
-        else()
-            find_program(Vulkan_dxc_EXECUTABLE
-                        NAMES dxc
-                        HINTS
-                        "$ENV{VULKAN_SDK}/bin"
-                        )
-        endif()
+        find_program(Vulkan_dxc_EXECUTABLE
+                    NAMES dxc
+                    HINTS
+                    "$ENV{VULKAN_SDK}/Bin"
+                    "$ENV{VULKAN_SDK}/bin"
+                    )
     endif()
     if(DEFINED Vulkan_dxc_EXECUTABLE)
         message("Found DirectX Shader Compiler under ${Vulkan_dxc_EXECUTABLE}")
