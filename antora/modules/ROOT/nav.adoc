@@ -1,11 +1,6 @@
 ////
-<<<<<<< HEAD
-- Copyright (c) 2024, Holochip Inc
-- Copyright (c) 2024, Sascha Willems
-=======
 - Copyright (c) 2023, Holochip Inc
 - Copyright (c) 2023-2024, Sascha Willems
->>>>>>> upstream/main
 -
 - SPDX-License-Identifier: Apache-2.0
 -
