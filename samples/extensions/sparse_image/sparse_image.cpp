@@ -107,7 +107,7 @@ bool SparseImage::prepare(const vkb::ApplicationOptions &options)
 
 	load_least_detailed_level();
 
-	mesh_data = CalculateMipLevelData(current_mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), num_vertical_blocks, num_horizontal_blocks, virtual_texture.mip_levels);
+	mesh_data = CalculateMipLevelData(current_mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), static_cast<uint32_t>(num_vertical_blocks), static_cast<uint32_t>(num_horizontal_blocks), virtual_texture.mip_levels);
 
 	next_stage = Stages::Idle;
 
@@ -501,7 +501,7 @@ void SparseImage::build_command_buffers()
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0U, 1U, &vertex_buffer->get_handle(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0U, VK_INDEX_TYPE_UINT16);
-		vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1U, 0U, 0U, 0U);
+		vkCmdDrawIndexed(draw_cmd_buffers[i], static_cast<uint32_t>(index_count), 1U, 0U, 0U, 0U);
 
 		// Draw user interface.
 		draw_ui(draw_cmd_buffers[i]);
@@ -956,7 +956,7 @@ void SparseImage::calculate_mips_table()
 		num_horizontal_blocks = num_horizontal_blocks_upd;
 
 		reset_mip_table();
-		mesh_data = CalculateMipLevelData(current_mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), num_vertical_blocks, num_horizontal_blocks, virtual_texture.mip_levels);
+		mesh_data = CalculateMipLevelData(current_mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), static_cast<uint32_t>(num_vertical_blocks), static_cast<uint32_t>(num_horizontal_blocks), virtual_texture.mip_levels);
 	}
 	else
 	{
@@ -1525,13 +1525,13 @@ void SparseImage::create_sparse_texture_image()
 		memory_bind_info.subresource.mipLevel   = mipLevel;
 		memory_bind_info.flags                  = 0U;
 
-		memory_bind_info.offset.x = ((page_index - mip_properties.mip_base_page_index) % mip_properties.num_columns) * virtual_texture.format_properties.imageGranularity.width;
-		memory_bind_info.offset.y = ((page_index - mip_properties.mip_base_page_index) / mip_properties.num_columns) * virtual_texture.format_properties.imageGranularity.height;
+		memory_bind_info.offset.x = static_cast<uint32_t>(((page_index - mip_properties.mip_base_page_index) % mip_properties.num_columns) * virtual_texture.format_properties.imageGranularity.width);
+		memory_bind_info.offset.y = static_cast<uint32_t>(((page_index - mip_properties.mip_base_page_index) / mip_properties.num_columns) * virtual_texture.format_properties.imageGranularity.height);
 		memory_bind_info.offset.z = 0;
 
 		memory_bind_info.extent.depth  = virtual_texture.format_properties.imageGranularity.depth;
-		memory_bind_info.extent.width  = (mip_properties.width - memory_bind_info.offset.x < virtual_texture.format_properties.imageGranularity.width) ? mip_properties.width - memory_bind_info.offset.x : virtual_texture.format_properties.imageGranularity.width;
-		memory_bind_info.extent.height = (mip_properties.height - memory_bind_info.offset.y < virtual_texture.format_properties.imageGranularity.height) ? mip_properties.height - memory_bind_info.offset.y : virtual_texture.format_properties.imageGranularity.height;
+		memory_bind_info.extent.width  = (mip_properties.width - memory_bind_info.offset.x < virtual_texture.format_properties.imageGranularity.width) ? static_cast<uint32_t>(mip_properties.width - memory_bind_info.offset.x) : virtual_texture.format_properties.imageGranularity.width;
+		memory_bind_info.extent.height = (mip_properties.height - memory_bind_info.offset.y < virtual_texture.format_properties.imageGranularity.height) ? static_cast<uint32_t>(mip_properties.height - memory_bind_info.offset.y) : virtual_texture.format_properties.imageGranularity.height;
 	}
 
 	//==================================================================================================

@@ -308,13 +308,13 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 			VkBufferImageCopy buffer_image_copy = {};
 			buffer_image_copy.imageSubresource  = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, mip_level, 0, 1};
 			buffer_image_copy.imageExtent       = mip_extent;
-			buffer_image_copy.bufferOffset      = offset;
+			buffer_image_copy.bufferOffset      = static_cast<uint32_t>(offset);
 			buffer_copies.push_back(buffer_image_copy);
 
 			vkb::sg::Mipmap mip_map;
 			mip_map.extent = buffer_image_copy.imageExtent;
 			mip_map.level  = mip_level;
-			mip_map.offset = offset;
+			mip_map.offset = static_cast<uint32_t>(offset);
 			mip_maps.push_back(mip_map);
 		}
 
@@ -329,7 +329,7 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 
 	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
-	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, buffer_copies.size(), buffer_copies.data());
+	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(buffer_copies.size()), buffer_copies.data());
 
 	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
