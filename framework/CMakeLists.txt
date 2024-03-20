@@ -411,6 +411,20 @@ source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
 source_group("stats\\" FILES ${STATS_FILES})
 
+# Adding scene graph files to a seperate library. Libtool doens't support having multiple files sharing the same name.
+set(PROJECT_SCENE_GRAPH_FILES
+    ${SCENE_GRAPH_FILES}
+    ${SCENE_GRAPH_COMPONENT_FILES}
+    ${SCENE_GRAPH_SCRIPTS_FILES}
+)
+
+add_library(framework_scene_graph ${PROJECT_SCENE_GRAPH_FILES})
+target_include_directories(framework_scene_graph PUBLIC $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(framework_scene_graph PUBLIC
+    volk
+    glm
+)
+
 set(PROJECT_FILES
     ${PLATFORM_FILES}
     ${PARSER_FILES}
@@ -420,10 +434,8 @@ set(PROJECT_FILES
     ${GEOMETRY_FILES}
     ${RENDERING_FILES}
     ${RENDERING_SUBPASSES_FILES}
-    ${SCENE_GRAPH_FILES}
-    ${SCENE_GRAPH_COMPONENT_FILES}
-    ${SCENE_GRAPH_SCRIPTS_FILES}
     ${STATS_FILES})
+
 
 # No need for explicit casts from vk::HandleType to VkHandleType on ANDROID
 if(ANDROID)
@@ -465,17 +477,20 @@ endif()
 add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+set(PUBLIC_COMPILE_OPTIONS)
+set(PRIVATE_COMPILE_OPTIONS)
+
 # compiler flags based on compiler type
 if(NOT MSVC)
-    target_compile_options(${PROJECT_NAME} PUBLIC -fexceptions)
+    list(APPEND ${PUBLIC_COMPILE_OPTIONS} -fexceptions)
 endif()
 
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PUBLIC /MP)
+    list(APPEND ${PUBLIC_COMPILE_OPTIONS} /MP)
 endif()
 
 if(${VKB_VALIDATION_LAYERS})
-    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
+    list(APPEND ${PUBLIC_COMPILE_OPTIONS} VKB_VALIDATION_LAYERS)
 endif()
 
 # GPU assisted validation layers are not available on macOS.
@@ -483,38 +498,46 @@ if(${VKB_VALIDATION_LAYERS_GPU_ASSISTED})
     if (APPLE)
         message(WARNING "GPU assisted validation layers are not currently available on macOS.")
     else()
-        target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
-        target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+        list(APPEND ${PUBLIC_COMPILE_OPTIONS}
+            VKB_VALIDATION_LAYERS
+            VKB_VALIDATION_LAYERS_GPU_ASSISTED)
     endif()
 endif()
 
 if(${VKB_VALIDATION_LAYERS_BEST_PRACTICES})
-    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_BEST_PRACTICES)
+    list(APPEND ${PUBLIC_COMPILE_OPTIONS}
+        VKB_VALIDATION_LAYERS
+        VKB_VALIDATION_LAYERS_BEST_PRACTICES)
 endif()
 
 if(${VKB_VALIDATION_LAYERS_SYNCHRONIZATION})
-    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
+    list(APPEND ${PUBLIC_COMPILE_OPTIONS}
+        VKB_VALIDATION_LAYERS
+        VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
 endif()
 
 if(${VKB_VULKAN_DEBUG})
-    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VULKAN_DEBUG)
+    list(APPEND ${PUBLIC_COMPILE_OPTIONS} PUBLIC VKB_VULKAN_DEBUG)
 endif()
 
 if(${VKB_ENABLE_PORTABILITY})
     message(STATUS "Vulkan Portability extension is enabled")
-    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_ENABLE_PORTABILITY)
+    list(APPEND ${PUBLIC_COMPILE_OPTIONS} PUBLIC VKB_ENABLE_PORTABILITY)
 endif()
 
 if(${VKB_WARNINGS_AS_ERRORS})
     message(STATUS "Warnings as Errors Enabled")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
+        list(APPEND ${PRIVATE_COMPILE_OPTIONS} -Werror)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX)
+        list(APPEND ${PRIVATE_COMPILE_OPTIONS} /W3 /WX)
     endif()
 endif()
+
+target_compile_options(${PROJECT_NAME} PUBLIC ${PUBLIC_COMPILE_OPTIONS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${PRIVATE_COMPILE_OPTIONS})
+target_compile_options(framework_scene_graph PUBLIC ${PUBLIC_COMPILE_OPTIONS})
+target_compile_options(framework_scene_graph PRIVATE ${PRIVATE_COMPILE_OPTIONS})
 
 target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -522,13 +545,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 target_link_libraries(${PROJECT_NAME} PUBLIC
     vkb__core
     vkb__filesystem
-    volk
     ktx
     stb
     ${ASTC_TARGET}
     imgui
     tinygltf
-    glm
     glslang
     SPIRV
     vma
@@ -537,10 +558,12 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     spdlog
     ctpl
     CLI11::CLI11
-    plugins)
+    plugins
+    framework_scene_graph)
 
 if(${NEED_LINK_ATOMIC})
     target_link_libraries(${PROJECT_NAME} PUBLIC atomic)
+    target_link_libraries(framework_scene_graph PUBLIC atomic)
 endif()
 
 # Link platform specific libraries
@@ -560,4 +583,5 @@ endif()
 
 if(VKB_DO_CLANG_TIDY)
     set_target_properties(framework PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
+    set_target_properties(framework_scene_graph PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
 endif()
