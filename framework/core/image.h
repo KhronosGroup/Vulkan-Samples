@@ -119,6 +119,16 @@ struct ImageBuilder : public allocated::Builder<ImageBuilder, VkImageCreateInfo>
 		return *this;
 	}
 
+	template <typename ExtensionType>
+	ImageBuilder &with_extension(ExtensionType &extension)
+	{
+		extension.pNext = create_info.pNext;
+
+		create_info.pNext = &extension;
+
+		return *this;
+	}
+
 	Image    build(const Device &device) const;
 	ImagePtr build_unique(const Device &device) const;
 };
@@ -126,8 +136,6 @@ struct ImageBuilder : public allocated::Builder<ImageBuilder, VkImageCreateInfo>
 class ImageView;
 class Image : public allocated::Allocated<VkImage>
 {
-	VkImageCreateInfo create_info;
-
   public:
 	Image(Device const         &device,
 	      VkImage               handle,
@@ -181,10 +189,15 @@ class Image : public allocated::Allocated<VkImage>
 
 	std::unordered_set<ImageView *> &get_views();
 
+	VkDeviceSize get_image_required_size() const;
+
+	VkImageCompressionPropertiesEXT get_applied_compression() const;
+
   private:
 	/// Image views referring to this image
-	std::unordered_set<ImageView *> views;
+	VkImageCreateInfo               create_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 	VkImageSubresource              subresource{};
+	std::unordered_set<ImageView *> views;
 };
 }        // namespace core
 }        // namespace vkb

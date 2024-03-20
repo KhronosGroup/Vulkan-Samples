@@ -454,13 +454,18 @@ void MultithreadingRenderPasses::MainSubpass::prepare()
 {
 	ForwardSubpass::prepare();
 
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_render_context().get_device().get_gpu().get_handle(),
+	                        vkb::get_suitable_depth_format(get_render_context().get_device().get_gpu().get_handle()), &filter);
+
 	// Create a sampler for sampling the shadowmap during the lighting process
 	// Address mode and border color are used to put everything outside of the shadow camera frustum into shadow
 	// Depth is closer to 1 for near objects and closer to 0 for distant objects
 	// If we sample outside the shadowmap range [0,0]-[1,1], sampler clamps to border and returns 1 (opaque white)
 	VkSamplerCreateInfo shadowmap_sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-	shadowmap_sampler_create_info.minFilter     = VK_FILTER_LINEAR;
-	shadowmap_sampler_create_info.magFilter     = VK_FILTER_LINEAR;
+	shadowmap_sampler_create_info.minFilter     = filter;
+	shadowmap_sampler_create_info.magFilter     = filter;
 	shadowmap_sampler_create_info.addressModeU  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	shadowmap_sampler_create_info.addressModeV  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	shadowmap_sampler_create_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
@@ -480,7 +485,7 @@ void MultithreadingRenderPasses::MainSubpass::draw(vkb::CommandBuffer &command_b
 	assert(!shadow_render_target.get_views().empty());
 	command_buffer.bind_image(shadow_render_target.get_views()[0], *shadowmap_sampler, 0, 5, 0);
 
-	auto	             &render_frame  = get_render_context().get_active_frame();
+	auto                 &render_frame  = get_render_context().get_active_frame();
 	vkb::BufferAllocation shadow_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4));
 	shadow_buffer.update(shadow_uniform);
 	// Bind the shadowmap uniform to the proper set nd binding in shader

@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -159,3 +159,5 @@ for compute on a specific image).
 *Debugging*
 
 * To test if AFBC is enabled or disabled, you can use a profiler such as Streamline and record the bandwidth values when AFBC is enabled or when AFBC is disabled.
+* You may also use the extension https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control[`VK_EXT_image_compression_control`] to query if AFBC is enabled.
+See the xref:/samples/performance/image_compression_control/README.adoc[Image Compression Control sample] for more details.
