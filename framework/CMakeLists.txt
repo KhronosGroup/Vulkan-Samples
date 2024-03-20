@@ -482,7 +482,7 @@ set(PRIVATE_COMPILE_OPTIONS)
 
 # compiler flags based on compiler type
 if(NOT MSVC)
-    list(APPEND ${PUBLIC_COMPILE_OPTIONS} -fexceptions)
+    list(APPEND PUBLIC_COMPILE_OPTIONS -fexceptions)
 endif()
 
 if(MSVC)
