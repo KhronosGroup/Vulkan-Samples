@@ -117,7 +117,7 @@ if(IOS)
                 XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY		"YES"
         )
     endif ()
-    find_package(Vulkan COMPONENTS MoltenVK)
+    find_package(Vulkan COMPONENTS MoltenVK REQUIRED)
     if(${Vulkan_VERSION} VERSION_GREATER_EQUAL 1.3.278)
         target_sources(${PROJECT_NAME} PRIVATE
                 $ENV{VULKAN_SDK}/iOS/share/vulkan
