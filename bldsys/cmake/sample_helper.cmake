@@ -233,5 +233,4 @@ function(compile_hlsl_shaders)
 
         execute_process(COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${HLSL_SPV_FILE})
     endforeach()
-    message("Compiled HLSL shaders for ${PROJECT_NAME}")
 endfunction()
