@@ -1,3 +1,4 @@
+# Updates for iOS Copyright (c) 2024, Holochip Inc.
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
