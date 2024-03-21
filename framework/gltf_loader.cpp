@@ -1198,8 +1198,10 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 				{
 					case 3:
 						vert.color = glm::vec4(glm::make_vec3(&colors[v * 3]), 1.0f);
+						break;
 					case 4:
 						vert.color = glm::make_vec4(&colors[v * 4]);
+						break;
 				}
 			}
 			else
