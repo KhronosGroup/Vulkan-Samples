@@ -24,10 +24,8 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 #include <glm/gtc/type_ptr.hpp>
-VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
 #include "common/utils.h"

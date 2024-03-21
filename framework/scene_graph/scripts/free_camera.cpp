@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
- * Copyright (c) 2020-2021, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2020-2024, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,11 +20,9 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/quaternion.hpp>
-VKBP_ENABLE_WARNINGS()
 
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/transform.h"

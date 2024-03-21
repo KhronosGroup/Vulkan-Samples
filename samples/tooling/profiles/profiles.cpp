@@ -28,9 +28,7 @@
 #include "fence_pool.h"
 
 // The Vulkan Profiles library is part of the SDK and has been copied to the sample's folder for convenience
-VKBP_DISABLE_WARNINGS()
 #include "vulkan_profiles.hpp"
-VKBP_ENABLE_WARNINGS()
 
 // This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux
 #define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME

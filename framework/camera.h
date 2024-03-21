@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,11 +19,9 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

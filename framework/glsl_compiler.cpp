@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,14 +17,12 @@
 
 #include "glsl_compiler.h"
 
-VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/DirStackFileIncluder.h>
 #include <glslang/Include/ShHandle.h>
 #include <glslang/OSDependent/osinclude.h>
 #include <glslang/Public/ResourceLimits.h>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

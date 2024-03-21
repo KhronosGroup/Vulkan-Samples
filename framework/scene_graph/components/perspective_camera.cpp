@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,7 @@
 
 #include "perspective_camera.h"
 
-VKBP_DISABLE_WARNINGS()
 #include <glm/gtc/matrix_transform.hpp>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

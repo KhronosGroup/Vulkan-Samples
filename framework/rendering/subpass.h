@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,9 +26,7 @@
 #include "scene_graph/components/light.h"
 #include "scene_graph/node.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
@@ -141,8 +139,8 @@ class Subpass
 	void set_debug_name(const std::string &name);
 
 	/**
-	 * @brief Prepares the lighting state to have its lights 
-	 * 
+	 * @brief Prepares the lighting state to have its lights
+	 *
 	 * @tparam A light structure that has 'directional_lights', 'point_lights' and 'spot_light' array fields defined.
 	 * @param scene_lights All of the light components from the scene graph
 	 * @param light_count The maximum amount of lights allowed for any given type of light.
@@ -160,7 +158,7 @@ class Subpass
 		for (auto &scene_light : scene_lights)
 		{
 			const auto &properties = scene_light->get_properties();
-			auto &      transform  = scene_light->get_node()->get_transform();
+			auto       &transform  = scene_light->get_node()->get_transform();
 
 			Light light{{transform.get_translation(), static_cast<float>(scene_light->get_light_type())},
 			            {properties.color, properties.intensity},

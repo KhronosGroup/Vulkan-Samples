@@ -21,10 +21,8 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
-VKBP_ENABLE_WARNINGS()
 
 #include "common/utils.h"
 #include "filesystem/legacy.h"

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,10 +17,8 @@
 
 #include "transform.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 #include <glm/gtx/matrix_decompose.hpp>
-VKBP_ENABLE_WARNINGS()
 
 #include "scene_graph/node.h"
 

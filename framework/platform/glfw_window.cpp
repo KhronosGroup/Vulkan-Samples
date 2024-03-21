@@ -21,13 +21,11 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <fmt/format.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-VKBP_ENABLE_WARNINGS()
 
 #include "core/util/logging.hpp"
 #include "platform/platform.h"
