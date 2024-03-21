@@ -41,7 +41,6 @@ VkSurfaceKHR IosWindow::create_surface(VkInstance instance, VkPhysicalDevice)
 		return VK_NULL_HANDLE;
 	}
 
-	// Create a window that is the same size as the screen
 	VkSurfaceKHR surface{};
 
 	VkMetalSurfaceCreateInfoEXT info{VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT};
@@ -70,7 +69,7 @@ void IosWindow::close()
 
 float IosWindow::get_dpi_factor() const
 {
-	return 0.0f;
+    return [[UIScreen mainScreen] nativeScale] * (([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? 132 : 163);
 }
 
 std::vector<const char *> IosWindow::get_required_surface_extensions() const
