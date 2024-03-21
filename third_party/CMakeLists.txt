@@ -343,6 +343,11 @@ if (APPLE AND (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
     set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
 endif()
 
+# if targeting iOS, that's always arm64 even when the host OS is x86-64
+if(IOS)
+    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
+endif ()
+
 # astc doesn't have separate directories for it's source code and public interface.  Additionally, it includes it's
 # own copy of STB. In order to avoid conflicts, we copy the only header we need to the build directory and alter the
 # INTERFACE_INCLUDE_DIRECTORIES of the target
