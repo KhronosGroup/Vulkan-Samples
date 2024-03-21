@@ -90,7 +90,7 @@ Just like local reads in subpasses, dynamic rendering local read also makes use 
 
 === Self-Dependencies
 
-With the `dynamicRenderingLocalReads` feature enabled, it#s now possible to use pipeline barriers within dynamic rendering if they include the `VK_DEPENDENCY_BY_REGION_BIT`. Such a barrier makes attachments before the barrier readable as input attachments afterwards. The extension also introduces the new image layout `VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR` that can be used for storage images and attachments to make writes to those visible via input attachments.
+With the `dynamicRenderingLocalReads` feature enabled, it's now possible to use pipeline barriers within dynamic rendering if they include the `VK_DEPENDENCY_BY_REGION_BIT`. Such a barrier makes attachments before the barrier readable as input attachments afterwards. The extension also introduces the new image layout `VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR` that can be used for storage images and attachments to make writes to those visible via input attachments.
 
 === Renderpasses with subpasses
 
