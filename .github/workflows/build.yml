@@ -142,5 +142,7 @@ jobs:
       - name: build_ios
         run: |
           source ~/VulkanSDK/setup-env.sh
+          VULKAN_SDK=~/VulkanSDK
+          export VULKAN_SDK
           cmake -H"." -B"build/ios" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
           cmake --build "build/ios" --target vulkan_samples --config ${{ matrix.build_type }} -- -sdk iphonesimulator -allowProvisioningUpdates
