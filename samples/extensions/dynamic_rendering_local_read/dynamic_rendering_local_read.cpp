@@ -943,7 +943,6 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		*/
 
 		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
-
 #else
 		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.renderPass               = render_pass;
