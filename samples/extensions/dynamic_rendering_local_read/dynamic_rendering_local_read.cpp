@@ -539,17 +539,14 @@ void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
 	// Opaque scene parts
 	allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &scene_opaque_pass.descriptor_set_layout, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &scene_opaque_pass.descriptor_set));
-	write_descriptor_sets =
-	    {
-	        // Binding 0: Vertex shader uniform buffer
-	        vkb::initializers::write_descriptor_set(scene_opaque_pass.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &ubo_vs_descriptor)};
+	write_descriptor_sets = {
+	    // Binding 0: Vertex shader uniform buffer
+	    vkb::initializers::write_descriptor_set(scene_opaque_pass.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &ubo_vs_descriptor)};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Transparent scene parts
-	// Descriptor sets
 	allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &scene_transparent_pass.descriptor_set_layout, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &scene_transparent_pass.descriptor_set));
-
 	write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &tex_descriptor_position),
 	    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &ubo_vs_descriptor),
@@ -559,16 +556,13 @@ void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
 
 	// Composition pass
 	allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &composition_pass.descriptor_set_layout, 1);
-
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &composition_pass.descriptor_set));
-
 	write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &tex_descriptor_position),
 	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, &tex_descriptor_normal),
 	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 2, &tex_descriptor_albedo),
 	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &ssbo_lights_descriptor),
 	};
-
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
@@ -705,8 +699,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 		blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
-		blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 		blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
 		blend_attachment_state.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	}
