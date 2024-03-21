@@ -43,17 +43,16 @@ class HPPVulkanResource
 	HPPVulkanResource &operator=(const HPPVulkanResource &) = delete;
 
 	HPPVulkanResource(HPPVulkanResource &&other) :
-	    handle(std::exchange(other.handle, {})), device(std::exchange(other.device, {}))
-	{
-		set_debug_name(std::exchange(other.debug_name, {}));
-	}
+	    handle(std::exchange(other.handle, {})),
+	    device(std::exchange(other.device, {})),
+	    debug_name(std::exchange(other.debug_name, {}))
+	{}
 
 	HPPVulkanResource &operator=(HPPVulkanResource &&other)
 	{
-		handle = std::exchange(other.handle, {});
-		device = std::exchange(other.device, {});
-		set_debug_name(std::exchange(other.debug_name, {}));
-
+		handle     = std::exchange(other.handle, {});
+		device     = std::exchange(other.device, {});
+		debug_name = std::exchange(other.debug_name, {});
 		return *this;
 	}
 

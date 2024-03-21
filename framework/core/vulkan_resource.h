@@ -99,21 +99,17 @@ class VulkanResource
 	VulkanResource &operator=(const VulkanResource &) = delete;
 
 	VulkanResource(VulkanResource &&other) :
-	    handle{other.handle}, device{other.device}
+	    handle(std::exchange(other.handle, VK_NULL_HANDLE)),
+	    device(std::exchange(other.device, {})),
+	    debug_name(std::exchange(other.debug_name, {}))
 	{
-		set_debug_name(other.debug_name);
-
-		other.handle = VK_NULL_HANDLE;
 	}
 
 	VulkanResource &operator=(VulkanResource &&other)
 	{
-		handle = other.handle;
-		device = other.device;
-		set_debug_name(other.debug_name);
-
-		other.handle = VK_NULL_HANDLE;
-
+		handle     = std::exchange(other.handle, {});
+		device     = std::exchange(other.device, {});
+		debug_name = std::exchange(other.debug_name, {});
 		return *this;
 	}
 
