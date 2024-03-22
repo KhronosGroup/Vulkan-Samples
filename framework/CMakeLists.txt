@@ -423,6 +423,7 @@ target_include_directories(framework_scene_graph PUBLIC $<TARGET_PROPERTY:plugin
 target_link_libraries(framework_scene_graph PUBLIC
     volk
     glm
+    ktx
 )
 
 set(PROJECT_FILES
@@ -545,7 +546,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 target_link_libraries(${PROJECT_NAME} PUBLIC
     vkb__core
     vkb__filesystem
-    ktx
     stb
     ${ASTC_TARGET}
     imgui
