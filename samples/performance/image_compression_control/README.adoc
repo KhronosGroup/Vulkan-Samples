@@ -18,15 +18,11 @@
 -
 ////
 
-////
-The following block adds linkage to this repo in the Vulkan docs site project. It's only visible if the file is viewed via the Antora framework.
-////
+= Image Compression Control
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/image_compression_control[Khronos Vulkan samples github repository].
 endif::[]
-
-= Image Compression Control
 
 == Overview
 
