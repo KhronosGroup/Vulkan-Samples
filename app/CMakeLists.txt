@@ -120,10 +120,10 @@ if(IOS)
     find_package(Vulkan COMPONENTS MoltenVK REQUIRED)
     if(${Vulkan_VERSION} VERSION_GREATER_EQUAL 1.3.278)
         target_sources(${PROJECT_NAME} PRIVATE
-                $ENV{VULKAN_SDK}/iOS/share/vulkan
+                ${Vulkan_Target_SDK}/iOS/share/vulkan
         )
         set_source_files_properties(
-                $ENV{VULKAN_SDK}/iOS/share/vulkan
+                ${Vulkan_Target_SDK}/iOS/share/vulkan
                 PROPERTIES
                 MACOSX_PACKAGE_LOCATION Resources
         )

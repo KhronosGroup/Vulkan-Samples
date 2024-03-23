@@ -233,10 +233,13 @@ if("FATAL_ERROR" IN_LIST Vulkan_FIND_COMPONENTS)
     list(REMOVE_ITEM Vulkan_FIND_COMPONENTS "FATAL_ERROR")
 endif()
 
-list(APPEND CMAKE_FRAMEWORK_PATH "$ENV{VULKAN_SDK}/iOS/lib/")
-set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
-set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
-set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+if(IOS)
+    get_filename_component(Vulkan_Target_SDK "$ENV{VULKAN_SDK}/.." REALPATH)
+    list(APPEND CMAKE_FRAMEWORK_PATH "${Vulkan_Target_SDK}/iOS/lib")
+    set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
+    set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+    set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+endif()
 
 # For backward compatibility as `FindVulkan` in previous CMake versions allow to retrieve `glslc`
 # and `glslangValidator` without requesting the corresponding component.
@@ -286,19 +289,19 @@ else()
 endif()
 if(APPLE AND DEFINED ENV{VULKAN_SDK})
     list(APPEND _Vulkan_hint_include_search_paths
-            "$ENV{VULKAN_SDK}/macOS/include"
+            "${Vulkan_Target_SDK}/macOS/include"
     )
     if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
         list(APPEND _Vulkan_hint_library_search_paths
-                "$ENV{VULKAN_SDK}/iOS/lib"
+                "${Vulkan_Target_SDK}/iOS/lib"
         )
     elseif(CMAKE_SYSTEM_NAME STREQUAL "tvOS")
         list(APPEND _Vulkan_hint_library_search_paths
-                "$ENV{VULKAN_SDK}/tvOS/lib"
+                "${Vulkan_Target_SDK}/tvOS/lib"
         )
     else()
         list(APPEND _Vulkan_hint_library_search_paths
-                "$ENV{VULKAN_SDK}}/macOS/lib"
+                "${Vulkan_Target_SDK}}/lib"
         )
     endif()
 endif()
