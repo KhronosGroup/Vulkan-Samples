@@ -478,7 +478,7 @@ if(SPIRV-Tools IN_LIST Vulkan_FIND_COMPONENTS)
 endif()
 if(MoltenVK IN_LIST Vulkan_FIND_COMPONENTS)
     # CMake has a bug in 3.28 that doesn't handle xcframeworks.  Do it by hand for now.
-    if(CMAKE_SYSTEM_NAME STREQUAL "iOS" AND CMAKE_VERSION VERSION_LESS 3.29)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
         if(CMAKE_VERSION VERSION_LESS 3.29)
             set( _Vulkan_hint_library_search_paths ${Vulkan_Target_SDK}/ios/lib/MoltenVK.xcframework/ios-arm64)
         else ()
