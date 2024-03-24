@@ -533,12 +533,10 @@ if(${VKB_WARNINGS_AS_ERRORS})
     endif()
 endif()
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC ${PUBLIC_COMPILE_DEFINITIONS})
-target_compile_options(${PROJECT_NAME} PUBLIC ${PUBLIC_COMPILE_OPTIONS})
-target_compile_options(${PROJECT_NAME} PRIVATE ${PRIVATE_COMPILE_OPTIONS})
 target_compile_definitions(framework_scene_graph PUBLIC ${PUBLIC_COMPILE_DEFINITIONS})
 target_compile_options(framework_scene_graph PUBLIC ${PUBLIC_COMPILE_OPTIONS})
 target_compile_options(framework_scene_graph PRIVATE ${PRIVATE_COMPILE_OPTIONS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${PRIVATE_COMPILE_OPTIONS})
 
 target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -562,7 +560,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     framework_scene_graph)
 
 if(${NEED_LINK_ATOMIC})
-    target_link_libraries(${PROJECT_NAME} PUBLIC atomic)
     target_link_libraries(framework_scene_graph PUBLIC atomic)
 endif()
 
