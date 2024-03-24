@@ -418,7 +418,7 @@ set(PROJECT_SCENE_GRAPH_FILES
     ${SCENE_GRAPH_SCRIPTS_FILES}
 )
 
-add_library(framework_scene_graph ${PROJECT_SCENE_GRAPH_FILES})
+add_library(framework_scene_graph STATIC ${PROJECT_SCENE_GRAPH_FILES})
 target_include_directories(framework_scene_graph PUBLIC $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(framework_scene_graph PUBLIC
     ktx
