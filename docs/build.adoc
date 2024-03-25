@@ -264,6 +264,56 @@ cmake --build build/mac --config Release --target vulkan_samples -j4
 ./build/mac/app/bin/Release/x86_64/vulkan_samples --help
 ----
 
+== iOS
+=== Dependencies
+
+* CMake v3.28+ (Apple xcframeworks require at least 3.28)
+* XCode v12 for Apple Silicon
+* Command Line Tools (CLT) for Xcode `xcode-select --install`
+* https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html[Vulkan SDK] `./install_vulkan.py`
+* Vulkan at least version 1.3.278 to get the frameworks
+* <<cmake-options,CMake Options>>
+* <<3d-models,3D models>>
+
+=== Set your environment variable
+
+`Step 1.`  edit ~/.bash_profile
+`Step 2.`  add the environment variable
+
+----
+export VULKAN_SDK=/PATH/TO/VULKAN/SDK
+----
+
+`Step 3.` reload the bash_profile
+
+----
+source ~/.bash_profile
+----
+
+=== Build with CMake
+
+`Step 1.` The following command will generate the project
+
+----
+cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_IOS_INSTALL_COMBINED=NO -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="XXXX"
+----
+NB:  You MUST change the XXXX in the above to your TeamID for code signing.  iOS will Not allow the application to run without code signing setup.
+
+`Step 2.` Build the project
+
+----
+cmake --build build/mac --config Release --target vulkan_samples -- -j 6 -sdk iphoneos -allowProvisioningUpdates
+----
+
+It's recommended to open the XCode project that is generated inside build/mac; building can be handled with command-B.
+
+`Step 3.` Run the *Vulkan Samples* application
+
+To run Vulkan Samples, one must have an iOS device provisioned and working with XCode.  Open the XCode project and ensure that can build/install to a device through XCode normally.
+Once the bundle is created from the build command in Step 2, use the edit-scheme selection in XCode and set the arguments to have --help
+Click the "Play" button and you should see the help output in the terminal.
+For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run
+
 == Android
 
 === Dependencies

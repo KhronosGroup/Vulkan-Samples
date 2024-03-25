@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,30 +15,25 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include "platform/platform.h"
+#include "ios/context.hpp"
+#import <UIKit/UIKit.h>
 
 namespace vkb
 {
-enum UnixType
+
+IosPlatformContext::IosPlatformContext(int argc, char **argv) :
+    PlatformContext{}
 {
-	Mac,
-	Ios,
-	Linux
-};
+	_arguments.reserve(argc);
+	for (int i = 1; i < argc; ++i)
+	{
+		_arguments.emplace_back(argv[i]);
+	}
 
-class UnixPlatform : public Platform
-{
-  public:
-	UnixPlatform(const PlatformContext &context, const UnixType &type);
-
-	virtual ~UnixPlatform() = default;
-
-  protected:
-	virtual void create_window(const Window::Properties &properties) override;
-
-  private:
-	UnixType type;
-};
+	const char *env_temp_dir    = std::getenv("TMPDIR");
+	const char *env_get_home_dir = std::getenv("HOME");
+    const char *bundle_dir = [[[NSBundle mainBundle] resourcePath] UTF8String];
+	_temp_directory             = env_temp_dir ? std::string(env_temp_dir) + "/" : "/tmp/";
+	_external_storage_directory = bundle_dir;
+}
 }        // namespace vkb

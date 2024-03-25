@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,28 +17,23 @@
 
 #pragma once
 
-#include "platform/platform.h"
+#include <string>
+
+#include <core/platform/context.hpp>
 
 namespace vkb
 {
-enum UnixType
-{
-	Mac,
-	Ios,
-	Linux
-};
-
-class UnixPlatform : public Platform
+/**
+ * @brief IOS platform context
+ *
+ * @warning Use in extreme circumstances with code guarded by the PLATFORM__UNIX define
+ */
+class IosPlatformContext final : public PlatformContext
 {
   public:
-	UnixPlatform(const PlatformContext &context, const UnixType &type);
-
-	virtual ~UnixPlatform() = default;
-
-  protected:
-	virtual void create_window(const Window::Properties &properties) override;
-
-  private:
-	UnixType type;
+	IosPlatformContext(int argc, char **argv);
+	~IosPlatformContext() override = default;
+    void * view;
+    void* userPlatform;
 };
 }        // namespace vkb

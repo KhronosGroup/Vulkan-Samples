@@ -70,6 +70,7 @@ class Platform
 	 * @return An exit code representing the outcome of the loop
 	 */
 	ExitCode main_loop();
+    ExitCode main_loop_frame();
 
 	/**
 	 * @brief Runs the application for one frame

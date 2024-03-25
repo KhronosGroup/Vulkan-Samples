@@ -1013,7 +1013,7 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 			update_uniform_buffers();
 			rebuild_command_buffers();
 		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, "%.3f"))
 		{
 			update_params();
 		}

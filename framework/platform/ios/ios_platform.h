@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,24 +21,18 @@
 
 namespace vkb
 {
-enum UnixType
+
+class IosPlatform : public Platform
 {
-	Mac,
-	Ios,
-	Linux
-};
+public:
+    IosPlatform(const PlatformContext &context);
+    
+    virtual ~IosPlatform() = default;
+    
+    virtual const char *get_surface_extension();
+    void* view;
 
-class UnixPlatform : public Platform
-{
-  public:
-	UnixPlatform(const PlatformContext &context, const UnixType &type);
-
-	virtual ~UnixPlatform() = default;
-
-  protected:
-	virtual void create_window(const Window::Properties &properties) override;
-
-  private:
-	UnixType type;
+protected:
+    virtual void create_window(const Window::Properties &properties) override;
 };
 }        // namespace vkb
