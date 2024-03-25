@@ -267,6 +267,7 @@ class VulkanSample : public vkb::Application
 	std::vector<SurfaceFormatType>       &get_surface_priority_list();
 	std::vector<SurfaceFormatType> const &get_surface_priority_list() const;
 	bool                                  has_device() const;
+	bool                                  has_instance() const;
 	bool                                  has_gui() const;
 	bool                                  has_render_pipeline() const;
 	bool                                  has_scene();
@@ -858,6 +859,12 @@ template <vkb::BindingType bindingType>
 inline bool VulkanSample<bindingType>::has_device() const
 {
 	return device != nullptr;
+}
+
+template <vkb::BindingType bindingType>
+inline bool VulkanSample<bindingType>::has_instance() const
+{
+	return instance != nullptr;
 }
 
 template <vkb::BindingType bindingType>
