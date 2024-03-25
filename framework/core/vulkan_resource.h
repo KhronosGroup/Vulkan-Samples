@@ -154,18 +154,17 @@ inline VulkanResource<bindingType, Handle>::VulkanResource(Handle handle_, Devic
 
 template <vkb::BindingType bindingType, typename Handle>
 inline VulkanResource<bindingType, Handle>::VulkanResource(VulkanResource &&other) :
-    handle(std::exchange(other.handle, {})), device(std::exchange(other.device, {}))
-{
-	set_debug_name(std::exchange(other.debug_name, {}));
-}
+    handle(std::exchange(other.handle, {})),
+    device(std::exchange(other.device, {})),
+    debug_name(std::exchange(other.debug_name, {}))
+{}
 
 template <vkb::BindingType bindingType, typename Handle>
 inline VulkanResource<bindingType, Handle> &VulkanResource<bindingType, Handle>::operator=(VulkanResource &&other)
 {
-	handle = std::exchange(other.handle, {});
-	device = std::exchange(other.device, {});
-	set_debug_name(std::exchange(other.debug_name, {}));
-
+	handle     = std::exchange(other.handle, {});
+	device     = std::exchange(other.device, {});
+	debug_name = std::exchange(other.debug_name, {});
 	return *this;
 }
 
