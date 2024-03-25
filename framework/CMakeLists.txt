@@ -423,6 +423,7 @@ target_include_directories(framework_scene_graph PUBLIC $<TARGET_PROPERTY:plugin
 target_link_libraries(framework_scene_graph PUBLIC
     ktx
     volk
+    ${ASTC_TARGET}
     glm
 )
 
@@ -545,7 +546,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     vkb__core
     vkb__filesystem
     stb
-    ${ASTC_TARGET}
     imgui
     tinygltf
     glslang
