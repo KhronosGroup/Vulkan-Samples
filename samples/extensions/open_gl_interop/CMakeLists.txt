@@ -1,5 +1,5 @@
-# Copyright (c) 2020-2023, Bradley Austin Davis
-# Copyright (c) 2020-2023, Arm Limited
+# Copyright (c) 2020-2024, Bradley Austin Davis
+# Copyright (c) 2020-2024, Arm Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -40,7 +40,7 @@ target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 set_target_properties(glad PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # Only Compile on platforms that support glfw
-if (NOT (ANDROID OR DIRECT_TO_DISPLAY))
+if (NOT (ANDROID OR DIRECT_TO_DISPLAY OR IOS))
     target_link_libraries( glad PUBLIC glfw )
     add_sample_with_tags(
         ID ${FOLDER_NAME}

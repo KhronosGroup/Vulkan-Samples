@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Thomas Atkinson
+/* Copyright (c) 2023-2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,6 +22,10 @@
 // Platform specific entrypoint definitions
 // Applications should use CUSTOM_MAIN to define their own main function
 // Definitions added by core/CMakeLists.txt
+
+#if defined(PLATFORM__MACOS)
+#include <TargetConditionals.h>
+#endif
 
 #if defined(PLATFORM__ANDROID)
 #	include <game-activity/native_app_glue/android_native_app_glue.h>
