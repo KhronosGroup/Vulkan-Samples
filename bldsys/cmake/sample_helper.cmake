@@ -98,9 +98,6 @@ function(add_sample_with_tags)
             ${SHADERS_GLSL}
         SHADERS_HLSL
             ${SHADERS_HLSL})
-            ${SHADERS_GLSL}
-        SHADERS_HLSL
-            ${SHADERS_HLSL})
 
 endfunction()
 
@@ -132,7 +129,6 @@ function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
     set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
-    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -162,16 +158,9 @@ function(add_project)
         set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
 
-    #Add HLSL shaders to project group
-    if (TARGET_SHADERS_HLSL)
-        source_group("\\Shaders" FILES ${SHADERS_HLSL})
-    endif()
-
 if(${TARGET_TYPE} STREQUAL "Sample")
     add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
     add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
