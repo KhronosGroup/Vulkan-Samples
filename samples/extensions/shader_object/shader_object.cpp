@@ -1441,6 +1441,10 @@ void ShaderObject::set_initial_state(VkCommandBuffer cmd)
 	// Rasterization is always enabled
 	vkCmdSetRasterizerDiscardEnableEXT(cmd, VK_FALSE);
 
+	// This also requires setting blend equations
+	VkColorBlendEquationEXT colorBlendEquationEXT{};
+	vkCmdSetColorBlendEquationEXT(cmd, 0, 1, &colorBlendEquationEXT);
+
 	{
 		// Setup vertex input with position, normals, and uv
 		const VkVertexInputBindingDescription2EXT vertex_binding[] =
