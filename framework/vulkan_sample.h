@@ -26,6 +26,10 @@
 #include "scene_graph/components/camera.h"
 #include "scene_graph/scripts/animation.h"
 
+#if defined(PLATFORM__MACOS)
+#include <TargetConditionals.h>
+#endif
+
 namespace vkb
 {
 /**
@@ -267,6 +271,7 @@ class VulkanSample : public vkb::Application
 	std::vector<SurfaceFormatType>       &get_surface_priority_list();
 	std::vector<SurfaceFormatType> const &get_surface_priority_list() const;
 	bool                                  has_device() const;
+	bool                                  has_instance() const;
 	bool                                  has_gui() const;
 	bool                                  has_render_pipeline() const;
 	bool                                  has_scene();
@@ -861,6 +866,12 @@ inline bool VulkanSample<bindingType>::has_device() const
 }
 
 template <vkb::BindingType bindingType>
+inline bool VulkanSample<bindingType>::has_instance() const
+{
+	return instance != nullptr;
+}
+
+template <vkb::BindingType bindingType>
 inline bool VulkanSample<bindingType>::has_gui() const
 {
 	return gui != nullptr;
@@ -945,7 +956,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	LOGI("Initializing Vulkan sample");
 
 	// initialize C++-Bindings default dispatcher, first step
+#if TARGET_OS_IPHONE
+    static vk::DynamicLoader dl("vulkan.framework/vulkan");
+#else
 	static vk::DynamicLoader dl;
+#endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 
 	bool headless = window->get_window_mode() == Window::Mode::Headless;

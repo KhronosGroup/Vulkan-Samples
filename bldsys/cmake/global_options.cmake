@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2023, Arm Limited and Contributors
+ Copyright (c) 2019-2024, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -32,12 +32,12 @@ else()
 endif()
 
 if(APPLE)
-    # attempt to use Find_Vulkan at least of version 1.3 or greater.  If this is found, then enable the required portability extension so instance.cpp can get created correctly.
-    # prior to 1.3 Find_Vulkan should not return a Vulkan_FOUND variable, so should not set an extension that doesn't exist in legacy Vulkan.
-    # Note that this is only required for moltenVK implementations.  NB: this does create a warning in CMake that the range isn't supported in FindVulkan.
-    cmake_minimum_required(VERSION 3.19)
-    find_package(Vulkan 1.3...<2.0)
-    if(Vulkan_FOUND)
+    cmake_minimum_required(VERSION 3.24)
+if(IOS)
+    set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
+endif ()
+    find_package(Vulkan)
+    if(Vulkan_VERSION GREATER_EQUAL 1.3)
         set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be set if running MoltenVK and Vulkan 1.3+" FORCE)
     else()
         set(VKB_ENABLE_PORTABILITY OFF CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be off if running Vulkan less than 1.3" FORCE)
