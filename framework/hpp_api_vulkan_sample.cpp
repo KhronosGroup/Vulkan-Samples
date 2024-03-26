@@ -799,7 +799,7 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 	}
 }
 
-void HPPApiVulkanSample::update_swapchain_image_usage_flags(std::set<vk::ImageUsageFlagBits> const &image_usage_flags)
+void HPPApiVulkanSample::update_swapchain_image_usage_flags(vk::ImageUsageFlags const &image_usage_flags)
 {
 	get_render_context().update_swapchain(image_usage_flags);
 	create_swapchain_buffers();

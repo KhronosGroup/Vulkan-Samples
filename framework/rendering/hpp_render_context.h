@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -87,7 +87,7 @@ class HPPRenderContext
 	 * @brief Updates the swapchains image usage, if a swapchain exists
 	 * @param image_usage_flags The usage flags the new swapchain images will have
 	 */
-	void update_swapchain(const std::set<vk::ImageUsageFlagBits> &image_usage_flags);
+	void update_swapchain(const vk::ImageUsageFlags &image_usage_flags);
 
 	/**
 	 * @brief Updates the swapchains extent and surface transform, if a swapchain exists
@@ -216,8 +216,6 @@ class HPPRenderContext
 	const vkb::core::HPPQueue &queue;
 
 	std::unique_ptr<vkb::core::HPPSwapchain> swapchain;
-
-	vkb::core::HPPSwapchainProperties swapchain_properties;
 
 	std::vector<std::unique_ptr<HPPRenderFrame>> frames;
 
