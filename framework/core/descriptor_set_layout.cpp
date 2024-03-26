@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -156,6 +156,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &                           devi
 	create_info.pBindings    = bindings.data();
 
 	// Handle update-after-bind extensions
+	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
 	if (std::find_if(resource_set.begin(), resource_set.end(),
 	                 [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::UpdateAfterBind; }) != resource_set.end())
 	{
@@ -171,7 +172,6 @@ DescriptorSetLayout::DescriptorSetLayout(Device &                           devi
 			throw std::runtime_error("Invalid binding, couldn't create descriptor set layout.");
 		}
 
-		VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
 		binding_flags_create_info.bindingCount  = to_u32(binding_flags.size());
 		binding_flags_create_info.pBindingFlags = binding_flags.data();
 

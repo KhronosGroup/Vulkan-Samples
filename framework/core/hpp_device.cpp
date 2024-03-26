@@ -75,18 +75,6 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 	}
 
 	// Check extensions to enable Vma Dedicated Allocation
-	device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
-
-	// Display supported extensions
-	if (device_extensions.size() > 0)
-	{
-		LOGD("HPPDevice supports the following extensions:");
-		for (auto &extension : device_extensions)
-		{
-			LOGD("  \t{}", extension.extensionName.data());
-		}
-	}
-
 	bool can_get_memory_requirements = is_extension_supported(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 	bool has_dedicated_allocation    = is_extension_supported(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 
@@ -180,53 +168,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 		}
 	}
 
-	VmaVulkanFunctions vma_vulkan_func{};
-	vma_vulkan_func.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-	vma_vulkan_func.vkGetDeviceProcAddr   = reinterpret_cast<PFN_vkGetDeviceProcAddr>(get_handle().getProcAddr("vkGetDeviceProcAddr"));
-
-	VmaAllocatorCreateInfo allocator_info{};
-	allocator_info.physicalDevice = static_cast<VkPhysicalDevice>(gpu.get_handle());
-	allocator_info.device         = static_cast<VkDevice>(get_handle());
-	allocator_info.instance       = static_cast<VkInstance>(gpu.get_instance().get_handle());
-
-	if (can_get_memory_requirements && has_dedicated_allocation)
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
-	}
-
-	if (is_extension_supported(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) && is_enabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
-	}
-
-	if (is_extension_supported(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME) && is_enabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
-	}
-
-	if (is_extension_supported(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME) && is_enabled(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME))
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
-	}
-
-	if (is_extension_supported(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME) && is_enabled(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME))
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT;
-	}
-
-	if (is_extension_supported(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME) && is_enabled(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME))
-	{
-		allocator_info.flags |= VMA_ALLOCATOR_CREATE_AMD_DEVICE_COHERENT_MEMORY_BIT;
-	}
-
-	allocator_info.pVulkanFunctions = &vma_vulkan_func;
-
-	VkResult result = vmaCreateAllocator(&allocator_info, &memory_allocator);
-
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException{result, "Cannot create allocator"};
-	}
+	vkb::allocated::init(*this);
 
 	command_pool = std::make_unique<vkb::core::HPPCommandPool>(
 	    *this, get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index());
@@ -240,15 +182,7 @@ HPPDevice::~HPPDevice()
 	command_pool.reset();
 	fence_pool.reset();
 
-	if (memory_allocator != VK_NULL_HANDLE)
-	{
-		VmaTotalStatistics stats;
-		vmaCalculateStatistics(memory_allocator, &stats);
-
-		LOGI("Total device memory leaked: {} bytes.", stats.total.statistics.allocationBytes);
-
-		vmaDestroyAllocator(memory_allocator);
-	}
+	vkb::allocated::shutdown();
 
 	if (get_handle())
 	{
@@ -258,9 +192,7 @@ HPPDevice::~HPPDevice()
 
 bool HPPDevice::is_extension_supported(std::string const &requested_extension) const
 {
-	return std::find_if(device_extensions.begin(),
-	                    device_extensions.end(),
-	                    [requested_extension](auto &device_extension) { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
+	return gpu.is_extension_supported(requested_extension);
 }
 
 bool HPPDevice::is_enabled(std::string const &extension) const
@@ -273,11 +205,6 @@ bool HPPDevice::is_enabled(std::string const &extension) const
 vkb::core::HPPPhysicalDevice const &HPPDevice::get_gpu() const
 {
 	return gpu;
-}
-
-VmaAllocator const &HPPDevice::get_memory_allocator() const
-{
-	return memory_allocator;
 }
 
 vkb::core::HPPDebugUtils const &HPPDevice::get_debug_utils() const

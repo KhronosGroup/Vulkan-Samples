@@ -33,9 +33,9 @@ HPPTextureLoading::HPPTextureLoading()
 
 HPPTextureLoading::~HPPTextureLoading()
 {
-	if (get_device() && get_device()->get_handle())
+	if (has_device() && get_device().get_handle())
 	{
-		vk::Device device = get_device()->get_handle();
+		vk::Device device = get_device().get_handle();
 
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
@@ -60,10 +60,10 @@ bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
 		generate_quad();
 		prepare_uniform_buffers();
 		descriptor_set_layout = create_descriptor_set_layout();
-		pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
+		pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, descriptor_set_layout});
 		pipeline              = create_pipeline();
 		descriptor_pool       = create_descriptor_pool();
-		descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, {descriptor_set_layout});
+		descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {descriptor_set_layout});
 		update_descriptor_set();
 		build_command_buffers();
 
@@ -162,7 +162,7 @@ vk::DescriptorPool HPPTextureLoading::create_descriptor_pool()
 	// Example uses one ubo and one image sampler
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eCombinedImageSampler, 1}}};
 
-	return get_device()->get_handle().createDescriptorPool({{}, 2, pool_sizes});
+	return get_device().get_handle().createDescriptorPool({{}, 2, pool_sizes});
 }
 
 vk::DescriptorSetLayout HPPTextureLoading::create_descriptor_set_layout()
@@ -171,7 +171,7 @@ vk::DescriptorSetLayout HPPTextureLoading::create_descriptor_set_layout()
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	return get_device()->get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
+	return get_device().get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
 }
 
 vk::Pipeline HPPTextureLoading::create_pipeline()
@@ -199,7 +199,7 @@ vk::Pipeline HPPTextureLoading::create_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
 
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             vertex_input_state,
@@ -246,12 +246,12 @@ void HPPTextureLoading::generate_quad()
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
 	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(
-	    *get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
 	// Index buffer
 	index_buffer = std::make_unique<vkb::core::HPPBuffer>(
-	    *get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -293,11 +293,11 @@ void HPPTextureLoading::load_texture()
 	{
 		// Don't use linear if format is not supported for (linear) shader sampling
 		// Get device properties for the requested texture format
-		vk::FormatProperties format_properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
+		vk::FormatProperties format_properties = get_device().get_gpu().get_handle().getFormatProperties(format);
 		use_staging                            = !(format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage);
 	}
 
-	vk::Device device = get_device()->get_handle();
+	vk::Device device = get_device().get_handle();
 
 	if (use_staging)
 	{
@@ -314,8 +314,8 @@ void HPPTextureLoading::load_texture()
 		vk::MemoryRequirements memory_requirements = device.getBufferMemoryRequirements(staging_buffer);
 
 		// Get memory type index for a host visible buffer
-		uint32_t memory_type = get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
-		                                                               vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+		uint32_t memory_type = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
+		                                                              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
 		vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size, memory_type);
 		vk::DeviceMemory       staging_memory = device.allocateMemory(memory_allocate_info);
@@ -358,12 +358,12 @@ void HPPTextureLoading::load_texture()
 		texture.image                   = device.createImage(image_create_info);
 
 		memory_requirements   = device.getImageMemoryRequirements(texture.image);
-		memory_type           = get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
+		memory_type           = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 		memory_allocate_info  = {memory_requirements.size, memory_type};
 		texture.device_memory = device.allocateMemory(memory_allocate_info);
 		device.bindImageMemory(texture.image, texture.device_memory, 0);
 
-		vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(device, get_device()->get_command_pool().get_handle());
+		vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(device, get_device().get_command_pool().get_handle());
 		copy_command.begin(vk::CommandBufferBeginInfo());
 
 		// Image memory barriers for the texture image
@@ -408,7 +408,7 @@ void HPPTextureLoading::load_texture()
 		// Store current layout for later reuse
 		texture.image_layout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-		get_device()->flush_command_buffer(copy_command, queue, true);
+		get_device().flush_command_buffer(copy_command, queue, true);
 
 		// Clean up staging resources
 		device.destroyBuffer(staging_buffer);
@@ -436,8 +436,8 @@ void HPPTextureLoading::load_texture()
 		vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(mappable_image);
 
 		// Get memory type that can be mapped to host memory
-		uint32_t memory_type = get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
-		                                                               vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+		uint32_t memory_type = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
+		                                                              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
 		// Set memory allocation size to required memory size
 		vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size, memory_type);
@@ -456,7 +456,7 @@ void HPPTextureLoading::load_texture()
 		texture.image_layout  = vk::ImageLayout::eShaderReadOnlyOptimal;
 
 		// Setup image memory barrier transfer image to shader read layout
-		vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(device, get_device()->get_command_pool().get_handle());
+		vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(device, get_device().get_command_pool().get_handle());
 		copy_command.begin(vk::CommandBufferBeginInfo());
 
 		// The sub resource range describes the regions of the image we will be transition
@@ -478,7 +478,7 @@ void HPPTextureLoading::load_texture()
 		// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
 		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eHost, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, image_memory_barrier);
 
-		get_device()->flush_command_buffer(copy_command, queue, true);
+		get_device().flush_command_buffer(copy_command, queue, true);
 	}
 
 	// now, the ktx_texture can be destroyed
@@ -488,35 +488,19 @@ void HPPTextureLoading::load_texture()
 	// In Vulkan textures are accessed by samplers
 	// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different settings
 	// Note: Similar to the samplers available with OpenGL 3.3
-	vk::SamplerCreateInfo sampler;
-	sampler.magFilter     = vk::Filter::eLinear;
-	sampler.minFilter     = vk::Filter::eLinear;
-	sampler.mipmapMode    = vk::SamplerMipmapMode::eLinear;
-	sampler.addressModeU  = vk::SamplerAddressMode::eRepeat;
-	sampler.addressModeV  = vk::SamplerAddressMode::eRepeat;
-	sampler.addressModeW  = vk::SamplerAddressMode::eRepeat;
-	sampler.mipLodBias    = 0.0f;
-	sampler.compareOp     = vk::CompareOp::eNever;
-	sampler.minLod        = 0.0f;
-	sampler.maxLod        = (use_staging) ? static_cast<float>(texture.mip_levels) : 0.0f;        // Set max level-of-detail to mip level count of the texture
-	sampler.maxAnisotropy = 1.0f;
 
 	// Enable anisotropic filtering
 	// This feature is optional, so we must check if it's supported on the device
-	if (get_device()->get_gpu().get_features().samplerAnisotropy)
+	float maxAnisotropy = 1.0f;
+	if (get_device().get_gpu().get_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
-		sampler.maxAnisotropy    = get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy;
-		sampler.anisotropyEnable = true;
+		maxAnisotropy = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 	}
-	else
-	{
-		// The device does not support anisotropic filtering
-		sampler.maxAnisotropy    = 1.0;
-		sampler.anisotropyEnable = false;
-	}
-	sampler.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler     = device.createSampler(sampler);
+
+	texture.sampler = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(),
+	                                              format, vk::Filter::eLinear, vk::SamplerAddressMode::eClampToEdge,
+	                                              maxAnisotropy, (use_staging) ? static_cast<float>(texture.mip_levels) : 0.0f);
 
 	// Create image view
 	// Textures are not directly accessed by the shaders and
@@ -545,7 +529,7 @@ void HPPTextureLoading::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
 	vertex_shader_data_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(vertex_shader_data), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(vertex_shader_data), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -567,7 +551,7 @@ void HPPTextureLoading::update_descriptor_set()
 	     //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
 	     {descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};
 
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPTextureLoading::update_uniform_buffers()

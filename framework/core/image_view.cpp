@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -56,7 +56,7 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
 	view_info.format           = format;
 	view_info.subresourceRange = subresource_range;
 
-	auto result = vkCreateImageView(device->get_handle(), &view_info, nullptr, &handle);
+	auto result = vkCreateImageView(get_device().get_handle(), &view_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -86,7 +86,7 @@ ImageView::~ImageView()
 {
 	if (handle != VK_NULL_HANDLE)
 	{
-		vkDestroyImageView(device->get_handle(), handle, nullptr);
+		vkDestroyImageView(get_device().get_handle(), handle, nullptr);
 	}
 }
 

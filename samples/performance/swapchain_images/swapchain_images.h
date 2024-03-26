@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@
 /**
  * @brief Using triple buffering over double buffering
  */
-class SwapchainImages : public vkb::VulkanSample
+class SwapchainImages : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	SwapchainImages();
@@ -46,4 +46,4 @@ class SwapchainImages : public vkb::VulkanSample
 	int last_swapchain_image_count{3};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_swapchain_images();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_swapchain_images();

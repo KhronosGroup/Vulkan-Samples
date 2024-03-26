@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,17 +43,16 @@ class HPPVulkanResource
 	HPPVulkanResource &operator=(const HPPVulkanResource &) = delete;
 
 	HPPVulkanResource(HPPVulkanResource &&other) :
-	    handle(std::exchange(other.handle, {})), device(std::exchange(other.device, {}))
-	{
-		set_debug_name(std::exchange(other.debug_name, {}));
-	}
+	    handle(std::exchange(other.handle, {})),
+	    device(std::exchange(other.device, {})),
+	    debug_name(std::exchange(other.debug_name, {}))
+	{}
 
 	HPPVulkanResource &operator=(HPPVulkanResource &&other)
 	{
-		handle = std::exchange(other.handle, {});
-		device = std::exchange(other.device, {});
-		set_debug_name(std::exchange(other.debug_name, {}));
-
+		handle     = std::exchange(other.handle, {});
+		device     = std::exchange(other.device, {});
+		debug_name = std::exchange(other.debug_name, {});
 		return *this;
 	}
 
@@ -112,7 +111,7 @@ class HPPVulkanResource
 
 		if (device && !debug_name.empty())
 		{
-			device->get_debug_utils().set_debug_name(device->get_handle(), HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
+			get_device().get_debug_utils().set_debug_name(get_device().get_handle(), HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
 		}
 	}
 

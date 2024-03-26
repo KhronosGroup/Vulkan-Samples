@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,32 +22,6 @@
 
 namespace vkb
 {
-namespace
-{
-inline const std::string get_temp_path_from_environment()
-{
-	std::string temp_path = "/tmp/";
-
-	if (const char *env_ptr = std::getenv("TMPDIR"))
-	{
-		temp_path = std::string(env_ptr) + "/";
-	}
-
-	return temp_path;
-}
-}        // namespace
-
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
-
 UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) :
     Platform{context}
 {

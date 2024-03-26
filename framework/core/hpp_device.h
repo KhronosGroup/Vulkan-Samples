@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,8 +59,6 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 	HPPDevice &operator=(HPPDevice &&) = delete;
 
 	vkb::core::HPPPhysicalDevice const &get_gpu() const;
-
-	VmaAllocator const &get_memory_allocator() const;
 
 	/**
 	 * @brief Returns the debug utils associated with this HPPDevice.
@@ -135,11 +133,7 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 
 	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
 
-	std::vector<vk::ExtensionProperties> device_extensions;
-
 	std::vector<const char *> enabled_extensions{};
-
-	VmaAllocator memory_allocator{VK_NULL_HANDLE};
 
 	std::vector<std::vector<vkb::core::HPPQueue>> queues;
 

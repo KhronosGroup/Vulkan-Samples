@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,7 @@ FragmentShaderBarycentric::FragmentShaderBarycentric()
 
 FragmentShaderBarycentric::~FragmentShaderBarycentric()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, VK_NULL_HANDLE);
 		vkDestroySampler(get_device().get_handle(), textures.cube.sampler, VK_NULL_HANDLE);
@@ -398,7 +398,7 @@ void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_fragment_shader_barycentric()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shader_barycentric()
 {
 	return std::make_unique<FragmentShaderBarycentric>();
 }

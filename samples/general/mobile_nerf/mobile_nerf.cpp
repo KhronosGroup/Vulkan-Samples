@@ -16,9 +16,9 @@
  */
 
 #include "mobile_nerf.h"
+#include "filesystem/legacy.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "gltf_loader.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
@@ -104,22 +104,22 @@ MobileNerf::MobileNerf()
 
 MobileNerf::~MobileNerf()
 {
-	if (device)
+	if (has_device())
 	{
 		if (render_pass_nerf)
 		{
-			vkDestroyRenderPass(device->get_handle(), render_pass_nerf, nullptr);
+			vkDestroyRenderPass(get_device().get_handle(), render_pass_nerf, nullptr);
 		}
 
 		for (uint32_t i = 0; i < nerf_framebuffers.size(); i++)
 		{
 			if (nerf_framebuffers[i])
 			{
-				vkDestroyFramebuffer(device->get_handle(), nerf_framebuffers[i], nullptr);
+				vkDestroyFramebuffer(get_device().get_handle(), nerf_framebuffers[i], nullptr);
 			}
 		}
 
-		auto device_ptr = device->get_handle();
+		auto device_ptr = get_device().get_handle();
 
 		for (auto &model : models)
 		{
@@ -551,11 +551,15 @@ void MobileNerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, Fram
 	color_image_view.image                           = attachment.image->get_handle();
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &attachment.view));
 
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter);
+
 	VkSamplerCreateInfo samplerCreateInfo = {};
 
 	samplerCreateInfo.sType        = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerCreateInfo.magFilter    = VK_FILTER_LINEAR;
-	samplerCreateInfo.minFilter    = VK_FILTER_LINEAR;
+	samplerCreateInfo.magFilter    = filter;
+	samplerCreateInfo.minFilter    = filter;
 	samplerCreateInfo.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -570,7 +574,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 {
 	if (use_deferred)
 	{
-		frameAttachments.resize(render_context->get_render_frames().size());
+		frameAttachments.resize(get_render_context().get_render_frames().size());
 
 		for (auto i = 0; i < frameAttachments.size(); i++)
 		{
@@ -587,7 +591,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 		{
 			if (nerf_framebuffers[i] != VK_NULL_HANDLE)
 			{
-				vkDestroyFramebuffer(device->get_handle(), nerf_framebuffers[i], nullptr);
+				vkDestroyFramebuffer(get_device().get_handle(), nerf_framebuffers[i], nullptr);
 			}
 		}
 	}
@@ -633,7 +637,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 			views[1] = swapchain_buffers[i].view;
 		}
 
-		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &nerf_framebuffers[i]));
+		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &nerf_framebuffers[i]));
 	}
 }
 
@@ -800,7 +804,7 @@ void MobileNerf::load_scene(int model_index, int sub_model_index, int models_ent
 {
 	Model &model = models[models_entry];
 
-	vkb::GLTFLoader loader{*device};
+	vkb::GLTFLoader loader{get_device()};
 	int             total_sub_sub_model = using_original_nerf_models[model_index] ? 8 : 1;
 
 	for (int sub_model = 0; sub_model < total_sub_sub_model; sub_model++)
@@ -1465,19 +1469,14 @@ void MobileNerf::create_texture_helper(std::string const &texturePath, Texture &
 	texture_input = load_texture(texturePath, vkb::sg::Image::Color);
 	vkDestroySampler(get_device().get_handle(), texture_input.sampler, nullptr);
 
-	VkSamplerCreateInfo samplerCreateInfo = {};
-	samplerCreateInfo.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	if (using_original_nerf_models[0])
-	{
-		samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
-		samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
-	}
-	else
-	{
-		samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-		samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
-	}
+	// Calculate valid filter
+	VkFilter filter = using_original_nerf_models[0] ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture_input.image->get_format(), &filter);
 
+	VkSamplerCreateInfo samplerCreateInfo     = {};
+	samplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerCreateInfo.magFilter               = filter;
+	samplerCreateInfo.minFilter               = filter;
 	samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplerCreateInfo.addressModeU            = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeV            = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -1539,7 +1538,7 @@ void MobileNerf::update_render_pass_nerf_forward()
 	render_pass_create_info.subpassCount           = 1;
 	render_pass_create_info.pSubpasses             = &subpass;
 
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
 }
 
 void MobileNerf::update_render_pass_nerf_baseline()
@@ -1677,10 +1676,10 @@ void MobileNerf::update_render_pass_nerf_baseline()
 	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 	render_pass_create_info.pDependencies          = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
 }
 
-std::unique_ptr<vkb::VulkanSample> create_mobile_nerf()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mobile_nerf()
 {
 	return std::make_unique<MobileNerf>();
 }

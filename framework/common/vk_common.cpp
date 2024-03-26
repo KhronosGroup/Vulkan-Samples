@@ -20,8 +20,8 @@
 
 #include <fmt/format.h>
 
+#include "filesystem/legacy.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
@@ -191,6 +191,23 @@ VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::ve
 	}
 
 	throw std::runtime_error("No suitable blendable format could be determined");
+}
+
+void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFilter *filter, VkSamplerMipmapMode *mipmapMode)
+{
+	// Not all formats support linear filtering, so we need to adjust them if they don't
+	if (*filter == VK_FILTER_NEAREST && (mipmapMode == nullptr || *mipmapMode == VK_SAMPLER_MIPMAP_MODE_NEAREST))
+		return;        // These must already be valid
+
+	VkFormatProperties properties;
+	vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+
+	if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+	{
+		*filter = VK_FILTER_NEAREST;
+		if (mipmapMode)
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	}
 }
 
 bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
@@ -576,6 +593,72 @@ void image_layout_transition(VkCommandBuffer                                    
 	                     nullptr,
 	                     static_cast<uint32_t>(image_memory_barriers.size()),
 	                     image_memory_barriers.data());
+}
+
+std::vector<VkImageCompressionFixedRateFlagBitsEXT> fixed_rate_compression_flags_to_vector(VkImageCompressionFixedRateFlagsEXT flags)
+{
+	const std::vector<VkImageCompressionFixedRateFlagBitsEXT> all_flags = {VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT,
+	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT};
+
+	std::vector<VkImageCompressionFixedRateFlagBitsEXT> flags_vector;
+
+	for (size_t i = 0; i < all_flags.size(); i++)
+	{
+		if (all_flags[i] & flags)
+		{
+			flags_vector.push_back(all_flags[i]);
+		}
+	}
+
+	return flags_vector;
+}
+
+VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, const VkImageCreateInfo &create_info)
+{
+	VkImageCompressionPropertiesEXT supported_compression_properties{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
+
+	VkImageCompressionControlEXT compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
+	compression_control.flags = VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT;
+
+	VkPhysicalDeviceImageFormatInfo2 image_format_info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2};
+	image_format_info.format = create_info.format;
+	image_format_info.type   = create_info.imageType;
+	image_format_info.tiling = create_info.tiling;
+	image_format_info.usage  = create_info.usage;
+	image_format_info.pNext  = &compression_control;
+
+	VkImageFormatProperties2 image_format_properties{VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2};
+	image_format_properties.pNext = &supported_compression_properties;
+
+	vkGetPhysicalDeviceImageFormatProperties2KHR(gpu, &image_format_info, &image_format_properties);
+
+	return supported_compression_properties;
+}
+
+VkImageCompressionPropertiesEXT query_applied_compression(VkDevice device, VkImage image)
+{
+	VkImageSubresource2EXT image_subresource{VK_STRUCTURE_TYPE_IMAGE_SUBRESOURCE_2_KHR};
+	image_subresource.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	image_subresource.imageSubresource.mipLevel   = 0;
+	image_subresource.imageSubresource.arrayLayer = 0;
+
+	VkImageCompressionPropertiesEXT compression_properties{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
+	VkSubresourceLayout2EXT         subresource_layout{VK_STRUCTURE_TYPE_SUBRESOURCE_LAYOUT_2_KHR};
+	subresource_layout.pNext = &compression_properties;
+
+	vkGetImageSubresourceLayout2EXT(device, image, &image_subresource, &subresource_layout);
+
+	return compression_properties;
 }
 
 VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice gpu, VkSurfaceKHR surface, std::vector<VkFormat> const &preferred_formats)

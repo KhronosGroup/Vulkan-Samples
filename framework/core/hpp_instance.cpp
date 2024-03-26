@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,8 @@
 
 #include <core/hpp_instance.h>
 
-#include <common/logging.h>
 #include <core/hpp_physical_device.h>
+#include <core/util/logging.hpp>
 #include <volk.h>
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)

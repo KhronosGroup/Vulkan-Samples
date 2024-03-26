@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 #include <string>
 
 #include "common/strings.h"
-#include "logging.h"
+#include "core/util/logging.hpp"
 #include "vk_common.h"
 
 #if defined(__clang__)

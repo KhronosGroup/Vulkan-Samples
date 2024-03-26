@@ -20,7 +20,7 @@
 #include <string>
 
 #include "debug_info.h"
-#include "gui.h"
+#include "drawer.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
 #include "timer.h"

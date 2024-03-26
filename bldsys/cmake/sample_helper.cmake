@@ -1,5 +1,6 @@
 #[[
  Copyright (c) 2019-2024, Arm Limited and Contributors
+ Copyright (c) 2024, Mobica Limited
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -41,14 +42,14 @@ function(add_sample)
             ${TARGET_LIBS}
         SHADER_FILES_GLSL
             ${TARGET_SHADER_FILES_GLSL}
-        SHADER_FILES_HLSL            
+        SHADER_FILES_HLSL
             ${TARGET_SHADER_FILES_HLSL})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL) 
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -97,6 +98,9 @@ function(add_sample_with_tags)
             ${SHADERS_GLSL}
         SHADERS_HLSL
             ${SHADERS_HLSL})
+            ${SHADERS_GLSL}
+        SHADERS_HLSL
+            ${SHADERS_HLSL})
 
 endfunction()
 
@@ -128,6 +132,7 @@ function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
     set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -157,9 +162,16 @@ function(add_project)
         set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
 
+    #Add HLSL shaders to project group
+    if (TARGET_SHADERS_HLSL)
+        source_group("\\Shaders" FILES ${SHADERS_HLSL})
+    endif()
+
 if(${TARGET_TYPE} STREQUAL "Sample")
     add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 elseif(${TARGET_TYPE} STREQUAL "Test")
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
     add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
 endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -198,4 +210,44 @@ endif()
     if(VKB_DO_CLANG_TIDY)
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
+
+    if(DEFINED Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
+        compile_hlsl_shaders(
+            SHADERS_HLSL ${TARGET_SHADERS_HLSL}
+        )
+    endif()
+endfunction()
+
+function(compile_hlsl_shaders)
+    set(options)
+    set(oneValueArgs)
+    set(multiValueArgs SHADERS_HLSL)
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
+        set(HLSL_SPV_FILE ${SHADER_FILE_HLSL}.spv)
+
+        if(${SHADER_FILE_HLSL} MATCHES "[^-]+.vert.hlsl")
+            set(DXC_PROFILE "vs_6_1")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.frag.hlsl")
+            set(DXC_PROFILE "ps_6_4")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen..hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
+            set(DXC_PROFILE "lib_6_3")
+            set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.comp.hlsl")
+            set(DXC_PROFILE "cs_6_1")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.geom.hlsl")
+            set(DXC_PROFILE "gs_6_1")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.tesc.hlsl")
+            set(DXC_PROFILE "hs_6_1")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.tese.hlsl")
+            set(DXC_PROFILE "ds_6_1")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.mesh.hlsl")
+            set(DXC_PROFILE "ms_6_1")
+            set(DXC_TARGET "-fspv-target-env=vulkan1.2")
+        endif()
+
+        execute_process(COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${HLSL_SPV_FILE})
+    endforeach()
 endfunction()

@@ -106,3 +106,41 @@ jobs:
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
         run: NDK_CCACHE=1 NDK_CCACHE_BIN=ccache ./gradlew app:assemble${{ matrix.build_type }} --info
+
+  build_ios:
+    name: "Build ios in ${{ matrix.build_type }}"
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Debug]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+
+      - name: Load VulkanSDK from cache
+        id: VulkanSDK
+        uses: actions/cache@v1
+        with:
+          path: VulkanSDK
+          key: vulkan
+
+      - name: retrieve VulkanSDK
+        if: steps.VulkanSDK.outputs.cache-hit != 'true'
+        run: |
+          wget https://sdk.lunarg.com/sdk/download/1.3.280.0/mac/vulkansdk-macos-1.3.280.0.dmg
+          sudo hdiutil attach vulkansdk-macos-1.3.280.0.dmg
+          sudo /Volumes/vulkansdk-macos-1.3.280.0/InstallVulkan.app/Contents/MacOS/InstallVulkan --root ~/VulkanSDK --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.ios
+          sudo hdiutil detach /Volumes/vulkansdk-macos-1.3.280.0
+
+      - name: build_ios
+        run: |
+          source ~/VulkanSDK/setup-env.sh
+          cmake -H"." -B"build/ios" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
+          cmake --build "build/ios" --target vulkan_samples --config ${{ matrix.build_type }} -- -sdk iphoneos -allowProvisioningUpdates

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -118,18 +118,18 @@ OpenCLInterop::OpenCLInterop()
 
 OpenCLInterop::~OpenCLInterop()
 {
-	if (device)
+	if (has_device())
 	{
-		vkDestroyPipeline(device->get_handle(), pipeline, nullptr);
-		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
-		vkDestroyFence(device->get_handle(), rendering_finished_fence, nullptr);
-		vkDestroySemaphore(device->get_handle(), cl_update_vk_semaphore, nullptr);
-		vkDestroySemaphore(device->get_handle(), vk_update_cl_semaphore, nullptr);
-		vkDestroySampler(device->get_handle(), shared_image.sampler, nullptr);
-		vkDestroyImageView(device->get_handle(), shared_image.view, nullptr);
-		vkDestroyImage(device->get_handle(), shared_image.image, nullptr);
-		vkFreeMemory(device->get_handle(), shared_image.memory, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroyFence(get_device().get_handle(), rendering_finished_fence, nullptr);
+		vkDestroySemaphore(get_device().get_handle(), cl_update_vk_semaphore, nullptr);
+		vkDestroySemaphore(get_device().get_handle(), vk_update_cl_semaphore, nullptr);
+		vkDestroySampler(get_device().get_handle(), shared_image.sampler, nullptr);
+		vkDestroyImageView(get_device().get_handle(), shared_image.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), shared_image.image, nullptr);
+		vkFreeMemory(get_device().get_handle(), shared_image.memory, nullptr);
 	}
 
 	if (opencl_objects.initialized)
@@ -153,8 +153,8 @@ void OpenCLInterop::render(float delta_time)
 	total_time_passed += delta_time;
 
 	// Wait until the Vulkan command buffer displaying the image has finished execution, so we can start writing to it from OpenCL
-	vkWaitForFences(device->get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device->get_handle(), 1, &rendering_finished_fence);
+	vkWaitForFences(get_device().get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(get_device().get_handle(), 1, &rendering_finished_fence);
 
 	ApiVulkanSample::prepare_frame();
 
@@ -470,7 +470,7 @@ HANDLE OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
 	win32_handle_info.sType      = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
 	win32_handle_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 	win32_handle_info.memory     = memory;
-	vkGetMemoryWin32HandleKHR(device->get_handle(), &win32_handle_info, &handle);
+	vkGetMemoryWin32HandleKHR(get_device().get_handle(), &win32_handle_info, &handle);
 	return handle;
 }
 
@@ -481,7 +481,7 @@ HANDLE OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 	win32_handle_info.sType      = VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR;
 	win32_handle_info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
 	win32_handle_info.semaphore  = sempahore;
-	vkGetSemaphoreWin32HandleKHR(device->get_handle(), &win32_handle_info, &handle);
+	vkGetSemaphoreWin32HandleKHR(get_device().get_handle(), &win32_handle_info, &handle);
 	return handle;
 }
 #else
@@ -492,7 +492,7 @@ int OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
 	fd_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
 	fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
 	fd_info.memory = memory;
-	vkGetMemoryFdKHR(device->get_handle(), &fd_info, &fd);
+	vkGetMemoryFdKHR(get_device().get_handle(), &fd_info, &fd);
 	return fd;
 }
 
@@ -503,7 +503,7 @@ int OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 	fd_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR;
 	fd_info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
 	fd_info.semaphore = sempahore;
-	vkGetSemaphoreFdKHR(device->get_handle(), &fd_info, &fd);
+	vkGetSemaphoreFdKHR(get_device().get_handle(), &fd_info, &fd);
 	return fd;
 }
 #endif
@@ -545,7 +545,7 @@ void OpenCLInterop::prepare_shared_image()
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &shared_image.image));
 
 	VkMemoryRequirements memory_requirements{};
-	vkGetImageMemoryRequirements(device->get_handle(), shared_image.image, &memory_requirements);
+	vkGetImageMemoryRequirements(get_device().get_handle(), shared_image.image, &memory_requirements);
 
 	VkExportMemoryAllocateInfoKHR export_memory_allocate_info{};
 	export_memory_allocate_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
@@ -563,15 +563,20 @@ void OpenCLInterop::prepare_shared_image()
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.pNext                = &export_memory_allocate_info;
 	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = device->get_memory_type(memory_requirements.memoryTypeBits, 0);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, 0);
 
 	VK_CHECK(vkAllocateMemory(device_handle, &memory_allocate_info, nullptr, &shared_image.memory));
 	VK_CHECK(vkBindImageMemory(device_handle, shared_image.image, shared_image.memory, 0));
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image_create_info.format, &filter, &mipmap_mode);
+
 	VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-	sampler_create_info.magFilter   = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter   = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode  = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter   = filter;
+	sampler_create_info.minFilter   = filter;
+	sampler_create_info.mipmapMode  = mipmap_mode;
 	sampler_create_info.maxLod      = (float) 1;
 	sampler_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	vkCreateSampler(device_handle, &sampler_create_info, nullptr, &shared_image.sampler);
@@ -583,7 +588,7 @@ void OpenCLInterop::prepare_shared_image()
 	view_create_info.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 	vkCreateImageView(device_handle, &view_create_info, nullptr, &shared_image.view);
 
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkImageSubresourceRange subresource_range = {};
 	subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -608,7 +613,7 @@ void OpenCLInterop::prepare_shared_image()
 	    0, nullptr,
 	    1, &image_memory_barrier);
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 
 	// Import the image into OpenCL
 
@@ -674,12 +679,12 @@ void OpenCLInterop::prepare_sync_objects()
 	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	semaphore_create_info.pNext = &export_semaphore_create_info;
 
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &cl_update_vk_semaphore));
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &vk_update_cl_semaphore));
+	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &cl_update_vk_semaphore));
+	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &vk_update_cl_semaphore));
 
 	// We also need a fence for the Vulkan side of things, which is not shared with OpenCL
 	VkFenceCreateInfo fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-	vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
+	vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
 
 	// Import the Vulkan sempahores into OpenCL
 	std::vector<cl_semaphore_properties_khr> semaphore_properties{
@@ -741,7 +746,7 @@ void OpenCLInterop::prepare_opencl_resources()
 	VkPhysicalDeviceProperties2 physical_device_properties_2{};
 	physical_device_properties_2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	physical_device_properties_2.pNext = &physical_device_id_propreties;
-	vkGetPhysicalDeviceProperties2KHR(device->get_gpu().get_handle(), &physical_device_properties_2);
+	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &physical_device_properties_2);
 
 	// We also need to make sure the OpenCL platform/device supports all the extensions required in this sample
 	std::vector<std::string> required_extensions{
@@ -899,7 +904,7 @@ bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample> create_open_cl_interop()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop()
 {
 	return std::make_unique<OpenCLInterop>();
 }
