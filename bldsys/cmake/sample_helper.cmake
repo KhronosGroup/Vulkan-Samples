@@ -1,6 +1,7 @@
 #[[
  Copyright (c) 2019-2024, Arm Limited and Contributors
  Copyright (c) 2024, Mobica Limited
+ Copyright (c) 2024, Sascha Willems
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -221,7 +222,7 @@ function(compile_hlsl_shaders)
             set(DXC_PROFILE "vs_6_1")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.frag.hlsl")
             set(DXC_PROFILE "ps_6_4")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen..hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
             set(DXC_PROFILE "lib_6_3")
             set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.comp.hlsl")
