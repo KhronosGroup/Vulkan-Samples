@@ -217,6 +217,8 @@ function(compile_hlsl_shaders)
 
     foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
         set(HLSL_SPV_FILE ${SHADER_FILE_HLSL}.spv)
+        # Omit the .hlsl. part for the output file to make loading those easier
+        string(REPLACE ".hlsl." "." HLSL_SPV_FILE "${HLSL_SPV_FILE}")
 
         if(${SHADER_FILE_HLSL} MATCHES "[^-]+.vert.hlsl")
             set(DXC_PROFILE "vs_6_1")
