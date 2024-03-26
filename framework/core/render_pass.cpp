@@ -449,7 +449,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 	create_info.dependencyCount = to_u32(subpass_dependencies.size());
 	create_info.pDependencies   = subpass_dependencies.data();
 
-	auto result = create_vk_renderpass(get_device().get_handle(), create_info, &handle);
+	auto result = create_vk_renderpass(get_device().get_handle(), create_info, &get_handle());
 
 	if (result != VK_SUCCESS)
 	{
@@ -481,17 +481,12 @@ RenderPass::RenderPass(RenderPass &&other) :
     VulkanResource{std::move(other)},
     subpass_count{other.subpass_count},
     color_output_count{other.color_output_count}
-{
-	other.handle = VK_NULL_HANDLE;
-}
+{}
 
 RenderPass::~RenderPass()
 {
 	// Destroy render pass
-	if (handle != VK_NULL_HANDLE)
-	{
-		vkDestroyRenderPass(get_device().get_handle(), handle, nullptr);
-	}
+	vkDestroyRenderPass(get_device().get_handle(), get_handle(), nullptr);
 }
 
 const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const

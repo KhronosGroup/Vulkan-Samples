@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,13 +18,13 @@
 #pragma once
 
 #include "core/hpp_image.h"
-#include "core/hpp_vulkan_resource.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
 namespace core
 {
-class HPPImageView : public vkb::core::HPPVulkanResource<vk::ImageView>
+class HPPImageView : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::ImageView>
 {
   public:
 	HPPImageView(vkb::core::HPPImage &image,

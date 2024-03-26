@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@ namespace vkb
 namespace core
 {
 HPPCommandBuffer::HPPCommandBuffer(vkb::core::HPPCommandPool &command_pool, vk::CommandBufferLevel level) :
-    HPPVulkanResource(nullptr, &command_pool.get_device()),
+    VulkanResource(nullptr, &command_pool.get_device()),
     level(level),
     command_pool(command_pool),
     max_push_constants_size(get_device().get_gpu().get_properties().limits.maxPushConstantsSize)
@@ -37,7 +37,7 @@ HPPCommandBuffer::HPPCommandBuffer(vkb::core::HPPCommandPool &command_pool, vk::
 }
 
 HPPCommandBuffer::HPPCommandBuffer(HPPCommandBuffer &&other) :
-    HPPVulkanResource(std::move(other)),
+    VulkanResource(std::move(other)),
     level(other.level),
     command_pool(other.command_pool),
     current_render_pass(std::exchange(other.current_render_pass, {})),

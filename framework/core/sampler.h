@@ -30,7 +30,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler
  */
-class Sampler : public VulkanResource<VkSampler, const Device>
+class Sampler : public VulkanResource<vkb::BindingType::C, VkSampler>
 {
   public:
 	/**
@@ -38,7 +38,7 @@ class Sampler : public VulkanResource<VkSampler, const Device>
 	 * @param d The device to use
 	 * @param info Creation details
 	 */
-	Sampler(Device const &d, const VkSamplerCreateInfo &info);
+	Sampler(vkb::Device &d, const VkSamplerCreateInfo &info);
 
 	Sampler(const Sampler &) = delete;
 

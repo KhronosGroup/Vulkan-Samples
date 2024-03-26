@@ -275,8 +275,7 @@ class AllocatedBase
 template <
     typename HandleType,
     typename MemoryType = VkDeviceMemory,
-    typename DeviceType = const vkb::Device,
-    typename ParentType = vkb::core::VulkanResource<HandleType, DeviceType>>
+    typename ParentType = vkb::core::VulkanResource<vkb::BindingType::C, HandleType>>
 class Allocated : public ParentType, public AllocatedBase
 {
   public:

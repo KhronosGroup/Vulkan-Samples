@@ -271,7 +271,6 @@ set(CORE_FILES
     core/hpp_sampler.h
     core/hpp_shader_module.h
     core/hpp_swapchain.h
-    core/hpp_vulkan_resource.h
     core/vulkan_resource.h
     # Source Files
     core/instance.cpp
@@ -300,7 +299,6 @@ set(CORE_FILES
     core/render_pass.cpp
     core/query_pool.cpp
     core/acceleration_structure.cpp
-    core/vulkan_resource.cpp
     core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp

@@ -24,17 +24,17 @@ namespace vkb
 namespace core
 {
 
-Buffer BufferBuilder::build(Device const &device) const
+Buffer BufferBuilder::build(Device &device) const
 {
 	return Buffer(device, *this);
 }
 
-BufferPtr BufferBuilder::build_unique(Device const &device) const
+BufferPtr BufferBuilder::build_unique(Device &device) const
 {
 	return std::make_unique<Buffer>(device, *this);
 }
 
-Buffer Buffer::create_staging_buffer(Device const &device, VkDeviceSize size, const void *data)
+Buffer Buffer::create_staging_buffer(Device &device, VkDeviceSize size, const void *data)
 {
 	BufferBuilder builder{size};
 	builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
@@ -47,7 +47,12 @@ Buffer Buffer::create_staging_buffer(Device const &device, VkDeviceSize size, co
 	return result;
 }
 
-Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags, const std::vector<uint32_t> &queue_family_indices) :
+Buffer::Buffer(vkb::Device                 &device,
+               VkDeviceSize                 size,
+               VkBufferUsageFlags           buffer_usage,
+               VmaMemoryUsage               memory_usage,
+               VmaAllocationCreateFlags     flags,
+               const std::vector<uint32_t> &queue_family_indices) :
     Buffer(device,
            BufferBuilder(size)
                .with_usage(buffer_usage)
@@ -57,10 +62,10 @@ Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffe
                .with_implicit_sharing_mode())
 {}
 
-Buffer::Buffer(Device const &device, const BufferBuilder &builder) :
+Buffer::Buffer(Device &device, const BufferBuilder &builder) :
     Allocated{builder.alloc_create_info, VK_NULL_HANDLE, &device}, size(builder.create_info.size)
 {
-	handle = create_buffer(builder.create_info);
+	set_handle(create_buffer(builder.create_info));
 	if (!builder.debug_name.empty())
 	{
 		set_debug_name(builder.debug_name);
@@ -87,7 +92,7 @@ uint64_t Buffer::get_device_address()
 {
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-	buffer_device_address_info.buffer = handle;
+	buffer_device_address_info.buffer = get_handle();
 	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 }
 

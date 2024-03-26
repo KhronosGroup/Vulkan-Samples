@@ -56,7 +56,7 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
 	view_info.format           = format;
 	view_info.subresourceRange = subresource_range;
 
-	auto result = vkCreateImageView(get_device().get_handle(), &view_info, nullptr, &handle);
+	auto result = vkCreateImageView(get_device().get_handle(), &view_info, nullptr, &get_handle());
 
 	if (result != VK_SUCCESS)
 	{
@@ -78,16 +78,11 @@ ImageView::ImageView(ImageView &&other) :
 	auto &views = image->get_views();
 	views.erase(&other);
 	views.emplace(this);
-
-	other.handle = VK_NULL_HANDLE;
 }
 
 ImageView::~ImageView()
 {
-	if (handle != VK_NULL_HANDLE)
-	{
-		vkDestroyImageView(get_device().get_handle(), handle, nullptr);
-	}
+	vkDestroyImageView(get_device().get_handle(), get_handle(), nullptr);
 }
 
 const Image &ImageView::get_image() const

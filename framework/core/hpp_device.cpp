@@ -29,7 +29,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
                      vk::SurfaceKHR                              surface,
                      std::unique_ptr<vkb::core::HPPDebugUtils> &&debug_utils,
                      std::unordered_map<const char *, bool>      requested_extensions) :
-    HPPVulkanResource{nullptr, this},        // Recursive, but valid
+    VulkanResource{nullptr, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
     resource_cache{*this}

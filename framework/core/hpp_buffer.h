@@ -21,7 +21,7 @@
 #include "buffer.h"
 #include "common/hpp_error.h"
 #include "hpp_allocated.h"
-#include "hpp_vulkan_resource.h"
+#include "vulkan_resource.h"
 #include <unordered_map>
 
 namespace vkb

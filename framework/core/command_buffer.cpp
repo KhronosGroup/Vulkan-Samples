@@ -41,7 +41,7 @@ CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel lev
 	allocate_info.commandBufferCount = 1;
 	allocate_info.level              = level;
 
-	VkResult result = vkAllocateCommandBuffers(get_device().get_handle(), &allocate_info, &handle);
+	VkResult result = vkAllocateCommandBuffers(get_device().get_handle(), &allocate_info, &get_handle());
 
 	if (result != VK_SUCCESS)
 	{
@@ -52,10 +52,7 @@ CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel lev
 CommandBuffer::~CommandBuffer()
 {
 	// Destroy command buffer
-	if (handle != VK_NULL_HANDLE)
-	{
-		vkFreeCommandBuffers(command_pool.get_device().get_handle(), command_pool.get_handle(), 1, &handle);
-	}
+	vkFreeCommandBuffers(command_pool.get_device().get_handle(), command_pool.get_handle(), 1, &get_handle());
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) :
@@ -75,7 +72,7 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) :
 
 void CommandBuffer::clear(VkClearAttachment attachment, VkClearRect rect)
 {
-	vkCmdClearAttachments(handle, 1, &attachment, 1, &rect);
+	vkCmdClearAttachments(get_handle(), 1, &attachment, 1, &rect);
 }
 
 VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf)
@@ -771,7 +768,7 @@ VkResult CommandBuffer::reset(ResetMode reset_mode)
 
 	if (reset_mode == ResetMode::ResetIndividually)
 	{
-		result = vkResetCommandBuffer(handle, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+		result = vkResetCommandBuffer(get_handle(), VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	}
 
 	return result;

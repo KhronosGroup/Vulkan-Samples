@@ -69,7 +69,7 @@ struct TypeCast
 class GLTFLoader
 {
   public:
-	GLTFLoader(Device const &device);
+	GLTFLoader(Device &device);
 
 	virtual ~GLTFLoader() = default;
 
@@ -122,7 +122,7 @@ class GLTFLoader
 	 */
 	tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
 
-	Device const &device;
+	Device &device;
 
 	tinygltf::Model model;
 

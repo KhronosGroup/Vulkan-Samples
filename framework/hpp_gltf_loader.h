@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,8 +34,8 @@ class HPPGLTFLoader : private vkb::GLTFLoader
   public:
 	using vkb::GLTFLoader::read_scene_from_file;
 
-	HPPGLTFLoader(vkb::core::HPPDevice const &device) :
-	    GLTFLoader(reinterpret_cast<vkb::Device const &>(device))
+	HPPGLTFLoader(vkb::core::HPPDevice &device) :
+	    GLTFLoader(reinterpret_cast<vkb::Device &>(device))
 	{}
 
 	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> read_model_from_file(const std::string &file_name, uint32_t index)

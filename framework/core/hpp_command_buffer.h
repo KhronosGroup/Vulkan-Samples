@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ class HPPDescriptorSetLayout;
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
+class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::CommandBuffer>
 {
   public:
 	struct RenderPassBinding

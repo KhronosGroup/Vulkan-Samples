@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "core/hpp_vulkan_resource.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
@@ -26,7 +26,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler, using Vulkan-Hpp
  */
-class HPPSampler : public vkb::core::HPPVulkanResource<vk::Sampler>
+class HPPSampler : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::Sampler>
 {
   public:
 	/**

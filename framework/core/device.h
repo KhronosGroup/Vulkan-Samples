@@ -50,7 +50,7 @@ struct DriverVersion
 	uint16_t patch;
 };
 
-class Device : public core::VulkanResource<VkDevice>
+class Device : public vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>
 {
   public:
 	/**
