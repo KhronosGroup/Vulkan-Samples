@@ -51,10 +51,22 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 
 void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT requested_feature                                                                                        = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT};
-	requested_feature.extendedDynamicState3RasterizationSamples                                                                                               = VK_TRUE;
-	gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT) = requested_feature;
+	// Query the extended dynamic state support
+	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
+	extended_dynamic_state_3_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
 
+	VkPhysicalDeviceFeatures2 features2{};
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.pNext = &extended_dynamic_state_3_features;
+	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+
+	if (extended_dynamic_state_3_features.extendedDynamicState3RasterizationSamples)
+	{
+		VkPhysicalDeviceExtendedDynamicState3FeaturesEXT requested_feature = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT};
+		requested_feature.extendedDynamicState3RasterizationSamples        = VK_TRUE;
+		gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT) = requested_feature;
+	}
+	
 	// Dynamic Rendering
 	auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
 	requested_dynamic_rendering.dynamicRendering = VK_TRUE;

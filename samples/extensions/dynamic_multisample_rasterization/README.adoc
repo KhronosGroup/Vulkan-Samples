@@ -29,20 +29,13 @@ image:image/image.png[]
 == Enabling the extension
 
 To be able to use this extension in Vulkan API:
-`VK_EXT_extended_dynamic_state3` depends on `VK_KHR_get_physical_device_properties2`, which is promoted to Vulkan 1.1. That is, to use this extension, `VK_EXT_extended_dynamic_state3` and either `VK_KHR_get_physical_device_properties2` or Vulkan 1.1+ are required.
+`VK_EXT_extended_dynamic_state3` depends on `VK_KHR_get_physical_device_properties2`, which is promoted to Vulkan 1.1. That is, to use this extension, `VK_EXT_extended_dynamic_state3` and either `VK_KHR_get_physical_device_properties2` or Vulkan 1.1 are required.
 
 == Using the extension
 
 To use the extension:
 1) `VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT` must be added to `VkPipelineDynamicStateCreateInfo`.
-2) Method `void vkCmdSetRasterizationSamplesEXT(VkCommandBuffer commandBuffer, VkSampleCountFlagBits rasterizationSamples)` should be called inside active command buffer.
-
-== Known issues
-
-The extension always reports the following validation errors when enabled:
-....
-SYNC-HAZARD-WRITE-AFTER-READ: Validation Error: [ SYNC-HAZARD-WRITE-AFTER-READ ] Object 0: handle = 0x555556f0b520, type = VK_OBJECT_TYPE_QUEUE; | MessageID = 0x376bc9df | vkQueueSubmit():  Hazard WRITE_AFTER_READ for entry 0, VkCommandBuffer 0x555558e50aa0[], Submitted access info (submitted_usage: SYNC_IMAGE_LAYOUT_TRANSITION, command: vkCmdPipelineBarrier, seq_no: 1, VkImage 0xcb3ee80000000007[], reset_no: 6). Access info (prior_usage: SYNC_PRESENT_ENGINE_SYNCVAL_PRESENT_ACQUIRE_READ_SYNCVAL, read_barriers: VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT|VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, , batch_tag: 158, vkAcquireNextImageKHR aquire_tag:158: VkSwapchainKHR 0xf56c9b0000000004[], image_index: 2image: VkImage 0xcb3ee80000000007[]).
-....
+2) Method `void vkCmdSetRasterizationSamplesEXT(VkCommandBuffer commandBuffer, VkSampleCountFlagBits rasterizationSamples)` should be called with the active command buffer.
 
 == Resources
 
