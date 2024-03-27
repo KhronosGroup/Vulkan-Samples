@@ -154,7 +154,7 @@ class VulkanSample : public vkb::Application
 	bool                     has_render_context() const;
 
 	/**
-	 * @brief Set te shading language to be used for this sample (glsl, hlsl)
+	 * @brief Set the shading language to be used for this sample (glsl, hlsl)
 	 */
 	static void set_shading_language(const std::string &language);
 
@@ -339,6 +339,9 @@ class VulkanSample : public vkb::Application
 	 */
 	static void set_viewport_and_scissor(CommandBufferType const &command_buffer, Extent2DType const &extent);
 
+	/** @brief Used to select between different shader languages, static so it can be changed from a plugin */
+	inline static std::string shading_language{"glsl"};
+
 	/// <summary>
 	/// PRIVATE INTERFACE
 	/// </summary>
@@ -428,9 +431,6 @@ class VulkanSample : public vkb::Application
 	bool high_priority_graphics_queue{false};
 
 	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
-
-	/** @brief Used to select between different shader languages, static so it can be changed from a plugin */
-	inline static std::string shading_language{"glsl"};
 };
 
 template <vkb::BindingType bindingType>
