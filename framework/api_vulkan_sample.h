@@ -353,7 +353,7 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	/**
 	 * @brief Load a SPIR-V shader based on current shader language selection
 	 * @param sample_folder_name Base folder where the shaders are located (without GLSL/HLSL sub folder)
-	 * @param shader_filename Base name of the shader file 
+	 * @param shader_filename Base name of the shader file
 	 * @param stage The shader stage
 	 */
 	VkPipelineShaderStageCreateInfo load_shader(const std::string &sample_folder_name, const std::string &shader_filename, VkShaderStageFlagBits stage);
