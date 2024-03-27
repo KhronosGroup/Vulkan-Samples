@@ -440,13 +440,12 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, VkShaderStageFlagBits stage)
 {
 	// @todo: Adjust depending on global shader language selection
-	vkb::ShaderSourceLanguage src_language  = vkb::ShaderSourceLanguage::HLSL;
-	std::string               shader_folder = (src_language == vkb::ShaderSourceLanguage::HLSL ? "hlsl" : "glsl");
-	// @todo: build full name based on global shader selection
-	std::string full_file_name = sample_folder_name + "/" + shader_folder + "/" + shader_filename;
-	if ((src_language == vkb::ShaderSourceLanguage::HLSL) || (src_language == vkb::ShaderSourceLanguage::SPV))
+	// @todo: Check if sample actually has e.g. glsl shaders?
+	std::string               full_file_name = sample_folder_name + "/" + shading_language + "/" + shader_filename;
+	vkb::ShaderSourceLanguage src_language   = vkb::ShaderSourceLanguage::GLSL;
+	if (shading_language == "hlsl")
 	{
-		// @todo: Find a better solution
+		// @todo: Find a better solution (than using ::SPV)
 		src_language = vkb::ShaderSourceLanguage::SPV;
 		full_file_name += ".spv";
 	}
