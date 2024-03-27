@@ -430,11 +430,11 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	std::string title = "Vulkan Example";
 	std::string name  = "vulkanExample";
 
-	struct
+	struct ImageData
 	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
+		VkImage        image{VK_NULL_HANDLE};
+		VkDeviceMemory mem{VK_NULL_HANDLE};
+		VkImageView    view{VK_NULL_HANDLE};
 	} depth_stencil;
 
 	struct
