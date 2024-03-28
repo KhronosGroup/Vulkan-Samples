@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,12 +15,17 @@
  * limitations under the License.
  */
 
-#version 460
-#extension GL_EXT_ray_tracing : enable
+Texture2D _texture : register(t1, space0);
+SamplerState _sampler : register(t0, space1);
 
-layout(location = 0) rayPayloadInEXT vec3 hitValue;
-
-void main()
+struct VSOutput
 {
-    hitValue = vec3(0.0, 0.0, 0.2);
+    float4 Pos : SV_POSITION;
+    [[vk::location(0)]] float2 UV : TEXCOORD0;
+};
+
+float4 main(VSOutput input) : SV_TARGET
+{
+    // Sample the texture by combining the sampled image and selected sampler
+    return _texture.Sample(_sampler, input.UV);
 }

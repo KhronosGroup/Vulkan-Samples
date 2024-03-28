@@ -1,6 +1,7 @@
 #[[
  Copyright (c) 2019-2024, Arm Limited and Contributors
  Copyright (c) 2024, Mobica Limited
+ Copyright (c) 2024, Sascha Willems
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -66,14 +67,20 @@ function(add_sample_with_tags)
     endif()
 
     # Add GLSL shader files for this sample
-    foreach(SHADER_FILE_GLSL ${TARGET_SHADER_FILES_GLSL})
-        list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
-    endforeach()
+    if (TARGET_SHADER_FILES_GLSL)
+        list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
+        foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
+            list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
+        endforeach()        
+    endif()
 
     # Add HLSL shader files for this sample
-    foreach(SHADER_FILE_HLSL ${TARGET_SHADER_FILES_HLSL})
-        list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
-    endforeach()
+    if (TARGET_SHADER_FILES_HLSL)
+        list(APPEND SHADER_FILES_HLSL ${TARGET_SHADER_FILES_HLSL})
+        foreach(SHADER_FILE_HLSL ${SHADER_FILES_HLSL})
+            list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
+        endforeach()        
+    endif()
 
     add_project(
         TYPE "Sample"
@@ -131,7 +138,7 @@ function(add_project)
     endif()
 
     if(NOT ${VKB_${TARGET_ID}})
-        message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
+        # message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
         return()
     endif()
 
@@ -142,14 +149,14 @@ function(add_project)
 
     source_group("\\" FILES ${TARGET_FILES})
 
-    # Add GLSL shaders to project group
-    if (TARGET_SHADERS_GLSL)
-        source_group("\\Shaders" FILES ${SHADERS_GLSL})
+    # Add shaders to project group
+    if (SHADERS_GLSL)
+        source_group("\\Shaders\\glsl" FILES ${SHADERS_GLSL})
     endif()
-
-    #Add HLSL shaders to project group
-    if (TARGET_SHADERS_HLSL)
-        source_group("\\Shaders" FILES ${SHADERS_HLSL})
+    if (SHADERS_HLSL)
+        source_group("\\Shaders\\hlsl" FILES ${SHADERS_HLSL})
+        # Disable automatic compilation of HLSL shaders for MSVC
+        set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
@@ -210,12 +217,14 @@ function(compile_hlsl_shaders)
 
     foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
         set(HLSL_SPV_FILE ${SHADER_FILE_HLSL}.spv)
+        # Omit the .hlsl. part for the output file to make loading those easier
+        string(REPLACE ".hlsl." "." HLSL_SPV_FILE "${HLSL_SPV_FILE}")
 
         if(${SHADER_FILE_HLSL} MATCHES "[^-]+.vert.hlsl")
             set(DXC_PROFILE "vs_6_1")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.frag.hlsl")
             set(DXC_PROFILE "ps_6_4")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen..hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
             set(DXC_PROFILE "lib_6_3")
             set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.comp.hlsl")

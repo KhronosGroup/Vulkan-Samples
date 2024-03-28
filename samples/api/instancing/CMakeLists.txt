@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Sascha Willems
+# Copyright (c) 2019-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,16 @@ add_sample_with_tags(
     NAME "Instancing"
     DESCRIPTION "Instanced mesh rendering, uses a separate vertex buffer for instanced data"
     SHADER_FILES_GLSL
-        "instancing/instancing.vert"
-        "instancing/instancing.frag"
-        "instancing/planet.vert"
-        "instancing/planet.frag"
-        "instancing/starfield.vert"
-        "instancing/starfield.frag")
+        "instancing/glsl/instancing.vert"
+        "instancing/glsl/instancing.frag"
+        "instancing/glsl/planet.vert"
+        "instancing/glsl/planet.frag"
+        "instancing/glsl/starfield.vert"
+        "instancing/glsl/starfield.frag"
+    SHADER_FILES_HLSL
+        "instancing/hlsl/instancing.vert.hlsl"
+        "instancing/hlsl/instancing.frag.hlsl"
+        "instancing/hlsl/planet.vert.hlsl"
+        "instancing/hlsl/planet.frag.hlsl"
+        "instancing/hlsl/starfield.vert.hlsl"
+        "instancing/hlsl/starfield.frag.hlsl")

@@ -153,6 +153,11 @@ class VulkanSample : public vkb::Application
 	RenderContextType const &get_render_context() const;
 	bool                     has_render_context() const;
 
+	/**
+	 * @brief Set the shading language to be used for this sample (glsl, hlsl)
+	 */
+	static void set_shading_language(const std::string &language);
+
 	/// <summary>
 	/// PROTECTED VIRTUAL INTERFACE
 	/// </summary>
@@ -333,6 +338,9 @@ class VulkanSample : public vkb::Application
 	 * @brief Set viewport and scissor state in command buffer for a given extent
 	 */
 	static void set_viewport_and_scissor(CommandBufferType const &command_buffer, Extent2DType const &extent);
+
+	/** @brief Used to select between different shader languages, static so it can be changed from a plugin */
+	inline static std::string shading_language{"glsl"};
 
 	/// <summary>
 	/// PRIVATE INTERFACE
@@ -1234,6 +1242,12 @@ inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::
 {
 	command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
 	command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::set_shading_language(const std::string &language)
+{
+	shading_language = language;
 }
 
 template <vkb::BindingType bindingType>
