@@ -323,8 +323,8 @@ void ShaderDebugPrintf::prepare_pipelines()
 	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
 
-	shader_stages[0] = load_shader("shader_debugprintf/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("shader_debugprintf/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("shader_debugprintf", "scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("shader_debugprintf", "scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// skysphere pipeline (background cube)
 	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
