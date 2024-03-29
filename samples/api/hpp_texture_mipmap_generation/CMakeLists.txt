@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "HPP Texture mipmap generation"
     DESCRIPTION "Generate mipmaps for a texture"
     SHADER_FILES_GLSL
-        "texture_mipmap_generation/texture.vert"
-        "texture_mipmap_generation/texture.frag")
+        "texture_mipmap_generation/glsl/texture.vert"
+        "texture_mipmap_generation/glsl/texture.frag"
+    SHADER_FILES_HLSL
+        "texture_mipmap_generation/hlsl/texture.vert.hlsl"
+        "texture_mipmap_generation/hlsl/texture.frag.hlsl")

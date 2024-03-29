@@ -199,8 +199,8 @@ vk::Pipeline HPPTextureMipMapGeneration::create_pipeline()
 {
 	// Load shaders
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("texture_mipmap_generation/texture.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("texture_mipmap_generation/texture.frag", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("texture_mipmap_generation", "texture.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("texture_mipmap_generation", "texture.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
