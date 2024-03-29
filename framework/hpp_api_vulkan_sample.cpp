@@ -413,6 +413,24 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
+vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage)
+{
+	// @todo: Adjust depending on global shader language selection
+	// @todo: Check if sample actually has e.g. glsl shaders?
+	std::string               full_file_name = sample_folder_name + "/" + shading_language + "/" + shader_filename;
+	vkb::ShaderSourceLanguage src_language   = vkb::ShaderSourceLanguage::GLSL;
+	if (shading_language == "hlsl")
+	{
+		// @todo: Find a better solution (than using ::SPV)
+		src_language = vkb::ShaderSourceLanguage::SPV;
+		full_file_name += ".spv";
+	}
+
+	shader_modules.push_back(vkb::common::load_shader(full_file_name, get_device().get_handle(), stage, src_language));
+	assert(shader_modules.back());
+	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
+}
+
 void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (has_gui())

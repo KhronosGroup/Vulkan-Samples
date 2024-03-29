@@ -46,11 +46,13 @@ void ShadingLanguageSelection::init(const vkb::CommandParser &parser)
 		{
 			LOGI("Shading language selection: glsl");
 			vkb::VulkanSample<vkb::BindingType::C>::set_shading_language("glsl");
+			vkb::VulkanSample<vkb::BindingType::Cpp>::set_shading_language("glsl");
 		}
 		else if (shading_language == "hlsl")
 		{
 			LOGI("Shading langauge selection: hlsl")
 			vkb::VulkanSample<vkb::BindingType::C>::set_shading_language("hlsl");
+			vkb::VulkanSample<vkb::BindingType::Cpp>::set_shading_language("hlsl");
 		}
 		else
 		{
