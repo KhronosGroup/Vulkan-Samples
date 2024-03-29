@@ -155,8 +155,9 @@ class VulkanSample : public vkb::Application
 
 	/**
 	 * @brief Set the shading language to be used for this sample (glsl, hlsl)
+	 * @param language The shading language that the sample will use
 	 */
-	static void set_shading_language(const std::string &language);
+	static void set_shading_language(const vkb::ShadingLanguage language);
 
 	/// <summary>
 	/// PROTECTED VIRTUAL INTERFACE
@@ -340,7 +341,7 @@ class VulkanSample : public vkb::Application
 	static void set_viewport_and_scissor(CommandBufferType const &command_buffer, Extent2DType const &extent);
 
 	/** @brief Used to select between different shader languages, static so it can be changed from a plugin */
-	inline static std::string shading_language{"glsl"};
+	inline static vkb::ShadingLanguage shading_language{vkb::ShadingLanguage::GLSL};
 
 	/// <summary>
 	/// PRIVATE INTERFACE
@@ -1245,7 +1246,7 @@ inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::set_shading_language(const std::string &language)
+inline void VulkanSample<bindingType>::set_shading_language(const vkb::ShadingLanguage language)
 {
 	shading_language = language;
 }
