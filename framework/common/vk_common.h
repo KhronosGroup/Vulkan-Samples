@@ -130,8 +130,8 @@ enum class ShaderSourceLanguage
 
 enum class ShadingLanguage
 {
-    GLSL,
-    HLSL,
+	GLSL,
+	HLSL,
 };
 
 /**
