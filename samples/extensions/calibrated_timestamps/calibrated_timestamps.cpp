@@ -480,7 +480,7 @@ void CalibratedTimestamps::setup_descriptor_pool()
 void CalibratedTimestamps::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
 	};
@@ -616,8 +616,8 @@ void CalibratedTimestamps::prepare_pipelines()
 	VkPipelineVertexInputStateCreateInfo empty_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
 
-	shader_stages[0]                  = load_shader("hdr/composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = load_shader("hdr/composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                  = load_shader("hdr", "composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                  = load_shader("hdr", "composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline_create_info.layout       = pipeline_layouts.composition;
 	pipeline_create_info.renderPass   = render_pass;
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
@@ -625,8 +625,8 @@ void CalibratedTimestamps::prepare_pipelines()
 	color_blend_state.pAttachments    = &blend_attachment_state;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
-	shader_stages[0]                           = load_shader("hdr/bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                           = load_shader("hdr/bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                           = load_shader("hdr", "bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                           = load_shader("hdr", "bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	color_blend_state.pAttachments             = &blend_attachment_state;
 	blend_attachment_state.colorWriteMask      = 0xF;
 	blend_attachment_state.blendEnable         = VK_TRUE;
@@ -677,8 +677,8 @@ void CalibratedTimestamps::prepare_pipelines()
 	color_blend_state.attachmentCount  = static_cast<uint32_t>(blend_attachment_states.size());
 	color_blend_state.pAttachments     = blend_attachment_states.data();
 
-	shader_stages[0] = load_shader("hdr/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("hdr/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("hdr", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("hdr", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
 	uint32_t shadertype                  = 0;
@@ -711,6 +711,7 @@ void CalibratedTimestamps::update_uniform_buffers()
 	ubo_vs.projection        = camera.matrices.perspective;
 	ubo_vs.model_view        = camera.matrices.view * models.transforms[models.object_index];
 	ubo_vs.skybox_model_view = camera.matrices.view;
+	ubo_vs.inverse_modelview = glm::inverse(camera.matrices.view);
 	uniform_buffers.matrices->convert_and_update(ubo_vs);
 	timestamps_end("update ubo");
 }

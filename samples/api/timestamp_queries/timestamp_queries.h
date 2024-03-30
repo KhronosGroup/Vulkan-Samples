@@ -53,6 +53,7 @@ class TimestampQueries : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skybox_modelview;
+		glm::mat4 inverse_modelview;
 		float     modelscale = 0.05f;
 	} ubo_vs;
 
