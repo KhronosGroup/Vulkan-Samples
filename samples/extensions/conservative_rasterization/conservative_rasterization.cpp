@@ -504,8 +504,8 @@ void ConservativeRasterization::prepare_pipelines()
 	pipeline_create_info.pStages             = shader_stages.data();
 
 	// Full screen pass
-	shader_stages[0] = load_shader("conservative_rasterization/fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("conservative_rasterization/fullscreen.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("conservative_rasterization", "fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("conservative_rasterization", "fullscreen.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Empty vertex input state (full screen triangle generated in vertex shader)
 	VkPipelineVertexInputStateCreateInfo empty_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
@@ -519,16 +519,16 @@ void ConservativeRasterization::prepare_pipelines()
 	// TODO(tomatkinson): Check support for lines
 	rasterization_state.lineWidth   = 2.0f;
 	rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
-	shader_stages[0]                = load_shader("conservative_rasterization/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                = load_shader("conservative_rasterization/triangleoverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                = load_shader("conservative_rasterization", "triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                = load_shader("conservative_rasterization", "triangleoverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.triangle_overlay));
 
 	pipeline_create_info.renderPass = offscreen_pass.render_pass;
 
 	// Triangle rendering
 	rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
-	shader_stages[0]                = load_shader("conservative_rasterization/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                = load_shader("conservative_rasterization/triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                = load_shader("conservative_rasterization", "triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                = load_shader("conservative_rasterization", "triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Basic pipeline
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.triangle));
