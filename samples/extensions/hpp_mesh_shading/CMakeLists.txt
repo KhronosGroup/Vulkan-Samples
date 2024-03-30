@@ -26,6 +26,8 @@ add_sample_with_tags(
     NAME "HPP Mesh shader sample"
     DESCRIPTION "Example showing how to utilize the EXT_MESH_SHADER pipeline, using Vulkan-Hpp."
     SHADER_FILES_GLSL
-        "mesh_shading/ms.mesh"
-        "mesh_shading/ps.frag"
-)
+        "mesh_shading/glsl/ms.mesh"
+        "mesh_shading/glsl/ps.frag"
+    SHADER_FILES_HLSL
+        "mesh_shading/hlsl/ms.mesh.hlsl"
+        "mesh_shading/hlsl/ps.frag.hlsl")

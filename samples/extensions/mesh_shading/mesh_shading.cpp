@@ -208,8 +208,8 @@ void MeshShading::prepare_pipelines()
 	// Load our SPIR-V shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("mesh_shading/ms.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
-	shader_stages[1] = load_shader("mesh_shading/ps.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("mesh_shading", "ms.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
+	shader_stages[1] = load_shader("mesh_shading", "ps.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
