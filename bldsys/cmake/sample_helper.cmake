@@ -239,7 +239,7 @@ function(compile_hlsl_shaders)
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.tese.hlsl")
             set(DXC_PROFILE "ds_6_1")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.mesh.hlsl")
-            set(DXC_PROFILE "ms_6_1")
+            set(DXC_PROFILE "ms_6_6")
             set(DXC_TARGET "-fspv-target-env=vulkan1.2")
         endif()
 
