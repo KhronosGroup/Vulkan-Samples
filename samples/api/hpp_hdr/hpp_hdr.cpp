@@ -249,8 +249,8 @@ vk::DescriptorPool HPPHDR::create_descriptor_pool()
 
 vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "bloom.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "bloom.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -293,8 +293,8 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 
 vk::Pipeline HPPHDR::create_composition_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "composition.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "composition.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state;
 	blend_attachment_state.colorWriteMask =
@@ -358,8 +358,8 @@ vk::Image HPPHDR::create_image(vk::Format format, vk::ImageUsageFlagBits usage)
 
 vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -681,9 +681,10 @@ void HPPHDR::update_params()
 
 void HPPHDR::update_uniform_buffers()
 {
-	ubo_matrices.projection       = camera.matrices.perspective;
-	ubo_matrices.modelview        = camera.matrices.view * models.transforms[models.object_index];
-	ubo_matrices.skybox_modelview = camera.matrices.view;
+	ubo_matrices.projection        = camera.matrices.perspective;
+	ubo_matrices.modelview         = camera.matrices.view * models.transforms[models.object_index];
+	ubo_matrices.skybox_modelview  = camera.matrices.view;
+	ubo_matrices.inverse_modelview = glm::inverse(camera.matrices.view);
 	uniform_buffers.matrices->convert_and_update(ubo_matrices);
 }
 

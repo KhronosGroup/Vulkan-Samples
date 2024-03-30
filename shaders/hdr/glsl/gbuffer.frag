@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,6 @@ layout (location = 1) in vec3 inPos;
 layout (location = 2) in vec3 inNormal;
 layout (location = 3) in vec3 inViewVec;
 layout (location = 4) in vec3 inLightVec;
-layout (location = 5) in mat4 inInvModelView;
 
 layout (location = 0) out vec4 outColor0;
 layout (location = 1) out vec4 outColor1;
@@ -32,6 +31,14 @@ layout (constant_id = 0) const int type = 0;
 
 #define PI 3.1415926
 #define TwoPI (2.0 * PI)
+
+layout (binding = 0) uniform UBOCamera {
+	mat4 projection;
+	mat4 modelview;
+	mat4 skybox_modelview;
+	mat4 inverse_modelview;
+	float modelscale;
+} uboCamera;
 
 layout (binding = 2) uniform UBO {
 	float exposure;
@@ -52,9 +59,9 @@ void main()
 		
 		case 1: // Reflect
 			{
-				vec3 wViewVec = mat3(inInvModelView) * normalize(inViewVec);
+				vec3 wViewVec = mat3(uboCamera.inverse_modelview) * normalize(inViewVec);
 				vec3 normal = normalize(inNormal);
-				vec3 wNormal = mat3(inInvModelView) * normal;
+				vec3 wNormal = mat3(uboCamera.inverse_modelview) * normal;
 
 				float NdotL = max(dot(normal, inLightVec), 0.0);
 
@@ -89,8 +96,8 @@ void main()
 
 		case 2: // Refract			
 			{
-				vec3 wViewVec = mat3(inInvModelView) * normalize(inViewVec);
-				vec3 wNormal = mat3(inInvModelView) * inNormal;
+				vec3 wViewVec = mat3(uboCamera.inverse_modelview) * normalize(inViewVec);
+				vec3 wNormal = mat3(uboCamera.inverse_modelview) * inNormal;
 				color = texture(samplerEnvMap, refract(-wViewVec, wNormal, 1.0/1.6));		
 			}
 			break;
