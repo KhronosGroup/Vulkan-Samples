@@ -240,7 +240,7 @@ function(compile_hlsl_shaders)
             set(DXC_PROFILE "ds_6_1")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.mesh.hlsl")
             set(DXC_PROFILE "ms_6_6")
-            set(DXC_TARGET "-fspv-target-env=vulkan1.2")
+            set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
         endif()
 
         execute_process(COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${HLSL_SPV_FILE})
