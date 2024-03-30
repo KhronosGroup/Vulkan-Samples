@@ -129,8 +129,8 @@ void HPPMeshShading::render(float delta_time)
 vk::Pipeline HPPMeshShading::create_pipeline()
 {
 	// Load our SPIR-V shaders.
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("mesh_shading/ms.mesh", vk::ShaderStageFlagBits::eMeshEXT),
-	                                                                load_shader("mesh_shading/ps.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("mesh_shading", "ms.mesh", vk::ShaderStageFlagBits::eMeshEXT),
+	                                                                load_shader("mesh_shading", "ps.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// We will have one viewport and scissor box.
 	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
