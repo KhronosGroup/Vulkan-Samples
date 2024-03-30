@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Sascha Willems
+# Copyright (c) 2019-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "Push descriptors"
     DESCRIPTION "Using VK_KHR_push_descriptor for push constant like use of descriptors"
     SHADER_FILES_GLSL
-        "push_descriptors/cube.vert"
-        "push_descriptors/cube.frag")
+        "push_descriptors/glsl/cube.vert"
+        "push_descriptors/glsl/cube.frag"
+    SHADER_FILES_HLSL
+        "push_descriptors/hlsl/cube.vert.hlsl"
+        "push_descriptors/hlsl/cube.frag.hlsl")
