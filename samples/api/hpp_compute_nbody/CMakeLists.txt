@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
