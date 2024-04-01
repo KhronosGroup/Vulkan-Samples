@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,22 +16,41 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec2 inUv;
-
-layout (binding = 0) uniform Ubo
+layout (binding = 1) uniform Col
 {
-        mat4 projection;
-        mat4 view;
-        mat4 model;
-} ubo;
+        vec4 data[8];
+} color;
 
-layout (location = 0) out vec2 outUV;
-layout (location = 1) out uint colorOffset;
+
+layout (location = 0) in vec2 inUV;
+layout (location = 1) flat in uint colorOffset;
+
+layout (location = 0) out vec4 outColor;
+
+vec4 sampleTexture(vec2 uv)
+{
+    vec4 c00 = color.data[0 + colorOffset];
+    vec4 c01 = color.data[1 + colorOffset];
+    vec4 c02 = color.data[2 + colorOffset];
+    vec4 c03 = color.data[3 + colorOffset];
+
+    vec4 b0 = mix(c00, c01, uv.x);
+    vec4 b1 = mix(c02, c03, uv.x);
+
+    vec4 p0 = mix(b0, b1, uv.y);
+
+    return p0;
+}
 
 void main()
 {
-    outUV = inUv;
-    colorOffset = inPos.z == 1.0f ? 4 : 0;
-    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPos.xyz, 1.0f);
+    outColor = sampleTexture(inUV);
 }
+
+
+
+
+
+
+
+
