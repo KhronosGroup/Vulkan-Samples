@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021-2022, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *

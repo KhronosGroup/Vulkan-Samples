@@ -1,6 +1,6 @@
 #version 450
 
-/* Copyright (c) 2023 Holochip Corporation
+/* Copyright (c) 2023-2024 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
