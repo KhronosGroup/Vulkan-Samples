@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021, Holochip
+/* Copyright (c) 2021-2024, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,6 +25,7 @@ layout (binding = 0) uniform UBO {
 	mat4 projection;
 	mat4 modelview;
 	mat4 skybox_modelview;
+	mat4 inverse_modelview;
 	float modelscale;
 } ubo;
 
@@ -33,7 +34,6 @@ layout (location = 1) out vec3 outPos;
 layout (location = 2) out vec3 outNormal;
 layout (location = 3) out vec3 outViewVec;
 layout (location = 4) out vec3 outLightVec;
-layout (location = 5) out mat4 outInvModelView;
 
 out gl_PerVertex 
 {
@@ -56,8 +56,6 @@ void main()
 	}
 	outNormal = mat3(ubo.modelview) * inNormal;	
 	
-	outInvModelView = inverse(ubo.skybox_modelview);
-
 	vec3 lightPos = vec3(0.0f, -5.0f, 5.0f);
 	outLightVec = lightPos.xyz - outPos.xyz;
 	outViewVec = -outPos.xyz;		
