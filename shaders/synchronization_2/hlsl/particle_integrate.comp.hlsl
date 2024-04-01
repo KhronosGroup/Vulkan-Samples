@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,31 +17,28 @@
 
 struct Particle
 {
-	vec4 pos;
-	vec4 vel;
+    float4 pos;
+    float4 vel;
 };
+[[vk::binding(0, 0)]]
+RWStructuredBuffer<Particle> particles : register(u0);
 
-// Binding 0 : Position storage buffer
-layout(std140, binding = 0) buffer Pos 
+struct UBO
 {
-   Particle particles[ ];
+    float deltaT;
+    int particleCount;
 };
-
-layout (local_size_x_id = 0) in;
-
-layout (binding = 1) uniform UBO 
-{
-	float deltaT;
-	int particleCount;
-} ubo;
+[[vk::binding(1, 0)]]
+ConstantBuffer<UBO> ubo : register(b1);
 
 #define TIME_FACTOR 0.05
 
-void main() 
+[numthreads(256, 1, 1)]
+void main(uint3 GlobalInvocationID : SV_DispatchThreadID)
 {
-	int index = int(gl_GlobalInvocationID);
-	vec4 position = particles[index].pos;
-	vec4 velocity = particles[index].vel;
-	position += ubo.deltaT * TIME_FACTOR * velocity;
-	particles[index].pos = position;
+    int index = int(GlobalInvocationID.x);
+    float4 position = particles[index].pos;
+    float4 velocity = particles[index].vel;
+    position += ubo.deltaT * TIME_FACTOR * velocity;
+    particles[index].pos = position;
 }

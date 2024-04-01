@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,6 +27,12 @@ layout (binding = 2) uniform UBO
 	mat4 modelview;
 	vec2 screendim;
 } ubo;
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+	float gl_PointSize;
+};
 
 void main () 
 {

@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,15 +16,33 @@
  * limitations under the License.
  */
 
-layout (binding = 0) uniform sampler2D samplerColorMap;
-layout (binding = 1) uniform sampler2D samplerGradientRamp;
-
-layout (location = 0) in float inGradientPos;
-
-layout (location = 0) out vec4 outFragColor;
-
-void main () 
+struct Particle
 {
-	vec3 color = texture(samplerGradientRamp, vec2(inGradientPos, 0.0)).rgb;
-	outFragColor.rgb = texture(samplerColorMap, gl_PointCoord).rgb * color;
+	vec4 pos;
+	vec4 vel;
+};
+
+// Binding 0 : Position storage buffer
+layout(std140, binding = 0) buffer Pos 
+{
+   Particle particles[ ];
+};
+
+layout (local_size_x_id = 0) in;
+
+layout (binding = 1) uniform UBO 
+{
+	float deltaT;
+	int particleCount;
+} ubo;
+
+#define TIME_FACTOR 0.05
+
+void main() 
+{
+	int index = int(gl_GlobalInvocationID);
+	vec4 position = particles[index].pos;
+	vec4 velocity = particles[index].vel;
+	position += ubo.deltaT * TIME_FACTOR * velocity;
+	particles[index].pos = position;
 }
