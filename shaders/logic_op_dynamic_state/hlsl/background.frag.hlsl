@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,20 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
+TextureCube textureEnvMap : register(t1);
+SamplerState samplerEnvMap : register(s1);
 
-layout(binding = 1) uniform samplerCube samplerEnvMap;
-
-layout(location = 0) in vec3 inUVW;
-
-layout(location = 0) out vec4 outColor0;
-
-void main()
+struct VSOutput
 {
-	vec4 color;
+    float4 Pos : SV_POSITION;
+    [[vk::location(0)]] float3 UVW : TEXCOORD0;
+};
 
-	vec3 normal = normalize(inUVW);
-	color       = texture(samplerEnvMap, normal);
-
-	outColor0 = vec4(color.rgb, 1.0);
+float4 main(VSOutput input) : SV_TARGET0
+{
+	float3 normal = normalize(input.UVW);
+    float4 color = textureEnvMap.Sample(samplerEnvMap, normal);
+    return float4(color.rgb, 1.0);
 }
