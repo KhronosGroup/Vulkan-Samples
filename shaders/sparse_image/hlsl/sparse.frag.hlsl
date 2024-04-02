@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,22 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+Texture2D textureColor : register(t1);
+SamplerState samplerColor : register(s1);
  
-#version 450
-#extension GL_ARB_sparse_texture2 : enable
+struct VSOutput
+{
+    float4 Pos : SV_POSITION;
+    [[vk::location(0)]] float2 UV : TEXCOORD0;
+};
 
-layout(binding = 1) uniform sampler2D texSampler;
+struct SettingsData
+{
+    bool color_highlight;
+    int minLOD;
+    int maxLOD;
+};
+[[vk::binding(2, 0)]]
+ConstantBuffer<SettingsData> settings : register(b2);
 
-layout(binding = 2) uniform settingsData {
-	bool color_highlight;
-	int  minLOD;
-	int  maxLOD;
-} settings;
-
-layout(location = 0) in vec2 fragTexCoord;
-layout(location = 0) out vec4 fragOutColor;
-
-vec3 color_blend_table[5] = 
+static float3 color_blend_table[5] = 
 {
 	{1.00, 1.00, 1.00},
 	{0.80, 0.60, 0.40},
@@ -38,23 +42,24 @@ vec3 color_blend_table[5] =
 	{0.20, 0.20, 0.20},
 };
 
-void main() {
-
-	vec4 color = vec4(0.0);
+float4 main(VSOutput input) : SV_TARGET0
+{
+	float4 color = float4(0.0, 0.0, 0.0, 1.0);
 
 	int lod = settings.minLOD;
-	int residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
-
-	for(++lod; (lod <= settings.maxLOD) && !sparseTexelsResidentARB(residencyCode); ++lod)
-	{
-		residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
-	}	
-
+    uint residencyCode;
+	
+    do
+    {
+        color = textureColor.SampleLevel(samplerColor, input.UV, lod, 0, residencyCode);
+        lod += 1.0f;
+    } while (!CheckAccessFullyMapped(residencyCode));
+	
 	if (settings.color_highlight)
 	{
 		lod -= 1;
 		color.xyz = (color.xyz * color_blend_table[lod]);
 	}
 
-	fragOutColor = color;
+	return color;
 }
