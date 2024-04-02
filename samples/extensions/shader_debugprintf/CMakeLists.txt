@@ -23,7 +23,6 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
-    FUUU "fuuu"
     NAME "Shader debugPrintf"
     DESCRIPTION "Demonstrates the use of the debugprintf command to display debugging information from shaders to the host"
     SHADER_FILES_GLSL
