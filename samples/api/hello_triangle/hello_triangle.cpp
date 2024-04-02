@@ -162,10 +162,10 @@ void HelloTriangle::init_instance(Context                         &context,
 {
 	LOGI("Initializing vulkan instance.");
 
-	if (volkInitialize())
-	{
-		throw std::runtime_error("Failed to initialize volk.");
-	}
+    if (volkInitialize())
+    {
+        throw std::runtime_error("Failed to initialize volk.");
+    }
 
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,8 +53,8 @@ class HPPPhysicalDevice
 	HPPPhysicalDevice &operator=(HPPPhysicalDevice &&) = delete;
 
 	/**
-     * @return The version of the driver
-     */
+	 * @return The version of the driver
+	 */
 	DriverVersion get_driver_version() const;
 
 	/**
@@ -62,6 +62,8 @@ class HPPPhysicalDevice
 	 * @returns A void pointer to the start of the extension linked list
 	 */
 	void *get_extension_feature_chain() const;
+
+	bool is_extension_supported(const std::string &requested_extension) const;
 
 	const vk::PhysicalDeviceFeatures &get_features() const;
 
@@ -72,12 +74,12 @@ class HPPPhysicalDevice
 	const vk::PhysicalDeviceMemoryProperties &get_memory_properties() const;
 
 	/**
-     * @brief Checks that a given memory type is supported by the GPU
-     * @param bits The memory requirement type bits
-     * @param properties The memory property to search for
-     * @param memory_type_found True if found, false if not found
-     * @returns The memory type index of the found memory type
-     */
+	 * @brief Checks that a given memory type is supported by the GPU
+	 * @param bits The memory requirement type bits
+	 * @param properties The memory property to search for
+	 * @param memory_type_found True if found, false if not found
+	 * @returns The memory type index of the found memory type
+	 */
 	uint32_t get_memory_type(uint32_t bits, vk::MemoryPropertyFlags properties, vk::Bool32 *memory_type_found = nullptr) const;
 
 	const vk::PhysicalDeviceProperties &get_properties() const;
@@ -166,6 +168,9 @@ class HPPPhysicalDevice
 
 	// The features that this GPU supports
 	vk::PhysicalDeviceFeatures features;
+
+	// The extensions that this GPU supports
+	std::vector<vk::ExtensionProperties> device_extensions;
 
 	// The GPU properties
 	vk::PhysicalDeviceProperties properties;

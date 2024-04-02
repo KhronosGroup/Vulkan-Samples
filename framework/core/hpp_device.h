@@ -133,8 +133,6 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 
 	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
 
-	std::vector<vk::ExtensionProperties> device_extensions;
-
 	std::vector<const char *> enabled_extensions{};
 
 	std::vector<std::vector<vkb::core::HPPQueue>> queues;

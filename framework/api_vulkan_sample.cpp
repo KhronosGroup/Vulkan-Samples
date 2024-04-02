@@ -1041,12 +1041,17 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture.image->get_format(), &filter, &mipmap_mode);
+
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
 	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter           = filter;
+	sampler_create_info.minFilter           = filter;
+	sampler_create_info.mipmapMode          = mipmap_mode;
 	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -1138,12 +1143,17 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture.image->get_format(), &filter, &mipmap_mode);
+
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
 	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter           = filter;
+	sampler_create_info.minFilter           = filter;
+	sampler_create_info.mipmapMode          = mipmap_mode;
 	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -1232,12 +1242,17 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
+	// Calculate valid filter and mipmap modes
+	VkFilter            filter      = VK_FILTER_LINEAR;
+	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture.image->get_format(), &filter, &mipmap_mode);
+
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
 	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.magFilter           = filter;
+	sampler_create_info.minFilter           = filter;
+	sampler_create_info.mipmapMode          = mipmap_mode;
 	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

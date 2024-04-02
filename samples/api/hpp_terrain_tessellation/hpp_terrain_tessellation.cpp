@@ -162,7 +162,7 @@ void HPPTerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			update_uniform_buffers();
 		}
-		if (drawer.input_float("Factor", &terrain.tessellation.tessellation_factor, 0.05f, 2))
+		if (drawer.input_float("Factor", &terrain.tessellation.tessellation_factor, 0.05f, "%.2f"))
 		{
 			update_uniform_buffers();
 		}

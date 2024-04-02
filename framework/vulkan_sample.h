@@ -26,6 +26,10 @@
 #include "scene_graph/components/camera.h"
 #include "scene_graph/scripts/animation.h"
 
+#if defined(PLATFORM__MACOS)
+#include <TargetConditionals.h>
+#endif
+
 namespace vkb
 {
 /**
@@ -253,21 +257,24 @@ class VulkanSample : public vkb::Application
 	 */
 	void create_render_context(const std::vector<SurfaceFormatType> &surface_priority_list);
 
-	DeviceType               &get_device();
-	DeviceType const         &get_device() const;
-	GuiType                  &get_gui();
-	GuiType const            &get_gui() const;
-	InstanceType             &get_instance();
-	InstanceType const       &get_instance() const;
-	RenderPipelineType       &get_render_pipeline();
-	RenderPipelineType const &get_render_pipeline() const;
-	sg::Scene                &get_scene();
-	StatsType                &get_stats();
-	SurfaceType               get_surface() const;
-	bool                      has_device() const;
-	bool                      has_gui() const;
-	bool                      has_render_pipeline() const;
-	bool                      has_scene();
+	DeviceType                           &get_device();
+	DeviceType const                     &get_device() const;
+	GuiType                              &get_gui();
+	GuiType const                        &get_gui() const;
+	InstanceType                         &get_instance();
+	InstanceType const                   &get_instance() const;
+	RenderPipelineType                   &get_render_pipeline();
+	RenderPipelineType const             &get_render_pipeline() const;
+	sg::Scene                            &get_scene();
+	StatsType                            &get_stats();
+	SurfaceType                           get_surface() const;
+	std::vector<SurfaceFormatType>       &get_surface_priority_list();
+	std::vector<SurfaceFormatType> const &get_surface_priority_list() const;
+	bool                                  has_device() const;
+	bool                                  has_instance() const;
+	bool                                  has_gui() const;
+	bool                                  has_render_pipeline() const;
+	bool                                  has_scene();
 
 	/**
 	 * @brief Loads the scene
@@ -392,6 +399,13 @@ class VulkanSample : public vkb::Application
 	vk::SurfaceKHR surface;
 
 	/**
+	 * @brief A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
+	 */
+	std::vector<vk::SurfaceFormatKHR> surface_priority_list = {
+	    {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	    {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
+
+	/**
 	 * @brief The configuration of the sample
 	 */
 	Configuration configuration{};
@@ -470,8 +484,6 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanS
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::create_render_context()
 {
-	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 	create_render_context_impl(surface_priority_list);
 }
 
@@ -532,11 +544,13 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &co
 		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		render_target.set_layout(0, memory_barrier.new_layout);
 
 		// Skip 1 as it is handled later as a depth-stencil attachment
 		for (size_t i = 2; i < views.size(); ++i)
 		{
 			command_buffer.image_memory_barrier(views[i], memory_barrier);
+			render_target.set_layout(static_cast<uint32_t>(i), memory_barrier.new_layout);
 		}
 	}
 
@@ -550,6 +564,7 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &co
 		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
 
 		command_buffer.image_memory_barrier(views[1], memory_barrier);
+		render_target.set_layout(1, memory_barrier.new_layout);
 	}
 
 	if constexpr (bindingType == BindingType::Cpp)
@@ -570,6 +585,7 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &co
 		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eBottomOfPipe;
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		render_target.set_layout(0, memory_barrier.new_layout);
 	}
 }
 
@@ -687,6 +703,32 @@ inline typename VulkanSample<bindingType>::GuiType const &VulkanSample<bindingTy
 	else
 	{
 		return reinterpret_cast<vkb::Gui const &>(*gui);
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline std::vector<typename VulkanSample<bindingType>::SurfaceFormatType> &VulkanSample<bindingType>::get_surface_priority_list()
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return surface_priority_list;
+	}
+	else
+	{
+		return reinterpret_cast<std::vector<VkSurfaceFormatKHR> &>(surface_priority_list);
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline std::vector<typename VulkanSample<bindingType>::SurfaceFormatType> const &VulkanSample<bindingType>::get_surface_priority_list() const
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return surface_priority_list;
+	}
+	else
+	{
+		return reinterpret_cast<std::vector<VkSurfaceFormatKHR> const &>(surface_priority_list);
 	}
 }
 
@@ -824,6 +866,12 @@ inline bool VulkanSample<bindingType>::has_device() const
 }
 
 template <vkb::BindingType bindingType>
+inline bool VulkanSample<bindingType>::has_instance() const
+{
+	return instance != nullptr;
+}
+
+template <vkb::BindingType bindingType>
 inline bool VulkanSample<bindingType>::has_gui() const
 {
 	return gui != nullptr;
@@ -908,7 +956,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	LOGI("Initializing Vulkan sample");
 
 	// initialize C++-Bindings default dispatcher, first step
+#if TARGET_OS_IPHONE
+    static vk::DynamicLoader dl("vulkan.framework/vulkan");
+#else
 	static vk::DynamicLoader dl;
+#endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 
 	bool headless = window->get_window_mode() == Window::Mode::Headless;

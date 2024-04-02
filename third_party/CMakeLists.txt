@@ -207,6 +207,7 @@ set(IMGUI_FILES
     "${IMGUI_DIR}/imgui.cpp"
     "${IMGUI_DIR}/imgui_demo.cpp"
     "${IMGUI_DIR}/imgui_draw.cpp"
+    "${IMGUI_DIR}/imgui_tables.cpp"
     "${IMGUI_DIR}/imgui_widgets.cpp"
     "${IMGUI_DIR}/imconfig.h"
     "${IMGUI_DIR}/imgui.h"
@@ -228,6 +229,9 @@ set(ENABLE_HLSL ON)
 option(ENABLE_OPT OFF)
 option(BUILD_TESTING OFF)
 option(BUILD_EXTERNAL OFF)
+if(IOS)
+    option(ENABLE_PCH OFF)
+endif ()
 
 add_subdirectory(glslang)
 
@@ -332,9 +336,17 @@ add_subdirectory(astc)
 # ASTC apparently tries to build for x86_64 even on Mac arm64 architectures,
 # but we can force it to build for the correct arch
 # Upstream bug: https://github.com/ARM-software/astc-encoder/issues/458
+if(IOS AND (CMAKE_SYSTEM_PROCESSOR STREQUAL "") )
+    set(CMAKE_SYSTEM_PROCESSOR "arm64")
+endif ()
 if (APPLE AND (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
     set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
 endif()
+
+# if targeting iOS, that's always arm64 even when the host OS is x86-64
+if(IOS)
+    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
+endif ()
 
 # astc doesn't have separate directories for it's source code and public interface.  Additionally, it includes it's
 # own copy of STB. In order to avoid conflicts, we copy the only header we need to the build directory and alter the
@@ -353,7 +365,7 @@ set_target_properties(
 set_property(TARGET ${ASTC_RAW_TARGET} PROPERTY FOLDER "ThirdParty")
 
 
-if(NOT ANDROID)
+if(NOT ANDROID AND NOT IOS)
     if (NOT DIRECT_TO_DISPLAY)
         # GLFW
         option(GLFW_BUILD_DOCS OFF)

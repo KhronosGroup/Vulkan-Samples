@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -151,6 +151,7 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	glm::tvec3<uint32_t> n_workgroups{1, 1, 1};
 
 	std::shared_ptr<core::Sampler> default_sampler{};
+	std::shared_ptr<core::Sampler> default_sampler_nearest{};
 	SampledImageMap                sampled_images{};
 	SampledImageMap                storage_images{};
 
