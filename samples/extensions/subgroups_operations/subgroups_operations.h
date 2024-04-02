@@ -31,6 +31,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	void render(float delta_time) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void create_command_pool() override;
 
 	void draw();
 	void load_assets();
@@ -302,4 +303,4 @@ class SubgroupsOperations : public ApiVulkanSample
 	void                  create_image_attachement(VkFormat format, uint32_t width, uint32_t height, ImageAttachment &result);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>>create_subgroups_operations();

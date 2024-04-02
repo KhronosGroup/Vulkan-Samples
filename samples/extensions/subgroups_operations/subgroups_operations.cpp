@@ -61,7 +61,7 @@ SubgroupsOperations::SubgroupsOperations()
 
 SubgroupsOperations::~SubgroupsOperations()
 {
-	if (device)
+	if (has_device())
 	{
 		fft_buffers.fft_tilde_h_kt_dx->destroy(get_device().get_handle());
 		fft_buffers.fft_tilde_h_kt_dy->destroy(get_device().get_handle());
@@ -114,7 +114,8 @@ bool SubgroupsOperations::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	ocean.graphics_queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
+	//ocean.graphics_queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
+	ocean.graphics_queue_family_index = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
 
 	load_assets();
 	setup_descriptor_pool();
@@ -161,7 +162,9 @@ void SubgroupsOperations::prepare_compute()
 void SubgroupsOperations::create_compute_queue()
 {
 	// create compute queue and get family index
-	compute.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	//compute.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+
+	compute.queue_family_index = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
 
 	vkGetDeviceQueue(get_device().get_handle(), compute.queue_family_index, 0u, &compute.queue);
 }
@@ -428,13 +431,14 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
 	}
 
-	subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
-	subgroups_properties.pNext = VK_NULL_HANDLE;
+    subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+    subgroups_properties.pNext = VK_NULL_HANDLE;
 
-	VkPhysicalDeviceProperties2 device_properties2 = {};
-	device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	device_properties2.pNext                       = &subgroups_properties;
-	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
+    VkPhysicalDeviceProperties2 device_properties2 = {};
+    device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    device_properties2.pNext                       = &subgroups_properties;
+    vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
+
 }
 
 void SubgroupsOperations::create_initial_tides()
@@ -992,7 +996,7 @@ void SubgroupsOperations::build_command_buffers()
 			img_barrier.dstAccessMask                   = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 			img_barrier.srcAccessMask                   = 0u;
 
-			vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+			vkCmdPipelineBarrier(cmd_buff, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 		}
 
 		vkCmdBeginRenderPass(cmd_buff, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -1042,7 +1046,7 @@ void SubgroupsOperations::build_command_buffers()
 			img_barrier.dstAccessMask                   = 0u;
 			img_barrier.srcAccessMask                   = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 
-			vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+			vkCmdPipelineBarrier(cmd_buff, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 		}
 
 		VK_CHECK(vkEndCommandBuffer(cmd_buff));
@@ -1489,7 +1493,16 @@ void SubgroupsOperations::Wind::recalc()
 	vec.y     = force * glm::sin(rad);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_subgroups_operations()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_subgroups_operations()
 {
 	return std::make_unique<SubgroupsOperations>();
+}
+
+void SubgroupsOperations::create_command_pool()
+{
+	VkCommandPoolCreateInfo command_pool_info = {};
+	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	command_pool_info.queueFamilyIndex        = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
+	command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_info, nullptr, &cmd_pool));
 }
