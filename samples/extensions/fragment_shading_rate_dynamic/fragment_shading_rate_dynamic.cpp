@@ -64,11 +64,14 @@ void FragmentShadingRateDynamic::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable the shading rate attachment feature required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &requested_extension_features = gpu.request_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
+	assert(gpu.get_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR)
+	           .attachmentFragmentShadingRate);
+	assert(gpu.get_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR)
+	           .pipelineFragmentShadingRate);
+	auto &requested_extension_features =
+	    gpu.add_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
 	requested_extension_features.attachmentFragmentShadingRate = VK_TRUE;
 	requested_extension_features.pipelineFragmentShadingRate   = VK_TRUE;
-	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -1127,7 +1130,7 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 	// Note: Using Revered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
-	auto command_pool_create = vkb::initializers::command_pool_create_info();
+	auto command_pool_create  = vkb::initializers::command_pool_create_info();
 	command_pool_create.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	vkCreateCommandPool(get_device().get_handle(), &command_pool_create, VK_NULL_HANDLE, &command_pool);
 

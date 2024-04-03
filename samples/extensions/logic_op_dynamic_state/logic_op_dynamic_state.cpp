@@ -202,14 +202,21 @@ void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
+	assert(
+	    gpu.get_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT)
+	        .extendedDynamicState2);
+	assert(
+	    gpu.get_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT)
+	        .extendedDynamicState2LogicOp);
 	auto &requested_extended_dynamic_state2_features =
-	    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
+	    gpu.add_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
 	requested_extended_dynamic_state2_features.extendedDynamicState2        = VK_TRUE;
 	requested_extended_dynamic_state2_features.extendedDynamicState2LogicOp = VK_TRUE;
 
-	auto &requested_extended_dynamic_state_feature =
-	    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
-	requested_extended_dynamic_state_feature.extendedDynamicState = VK_TRUE;
+	assert(gpu.get_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT)
+	           .extendedDynamicState);
+	gpu.add_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT)
+	    .extendedDynamicState = VK_TRUE;
 
 	if (gpu.get_features().samplerAnisotropy)
 	{

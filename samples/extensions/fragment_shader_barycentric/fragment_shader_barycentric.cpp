@@ -388,9 +388,12 @@ void FragmentShaderBarycentric::on_update_ui_overlay(vkb::Drawer &drawer)
  */
 void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto &requested_fragment_shader_barycentric_features =
-	    gpu.request_extension_features<VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR);
-	requested_fragment_shader_barycentric_features.fragmentShaderBarycentric = VK_TRUE;
+	assert(gpu
+	           .get_extension_features<VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR>(
+	               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR)
+	           .fragmentShaderBarycentric);
+	gpu.add_extension_features<VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR)
+	    .fragmentShaderBarycentric = VK_TRUE;
 
 	if (gpu.get_features().samplerAnisotropy)
 	{

@@ -71,12 +71,16 @@ void DescriptorBufferBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	// Enable features required for this example
 
 	// We need device addresses for buffers in certain places
-	auto &requested_buffer_device_address_features               = gpu.request_extension_features<VkPhysicalDeviceBufferDeviceAddressFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
-	requested_buffer_device_address_features.bufferDeviceAddress = VK_TRUE;
+	assert(gpu.get_extension_features<VkPhysicalDeviceBufferDeviceAddressFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES)
+	           .bufferDeviceAddress);
+	gpu.add_extension_features<VkPhysicalDeviceBufferDeviceAddressFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES)
+	    .bufferDeviceAddress = VK_TRUE;
 
 	// We need to enable the descriptor buffer feature of the VK_EXT_descriptor_buffer extension
-	auto &requested_buffer_descriptor_buffer_features            = gpu.request_extension_features<VkPhysicalDeviceDescriptorBufferFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT);
-	requested_buffer_descriptor_buffer_features.descriptorBuffer = VK_TRUE;
+	assert(gpu.get_extension_features<VkPhysicalDeviceDescriptorBufferFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT)
+	           .descriptorBuffer);
+	gpu.add_extension_features<VkPhysicalDeviceDescriptorBufferFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT).descriptorBuffer =
+	    VK_TRUE;
 }
 
 void DescriptorBufferBasic::build_command_buffers()
