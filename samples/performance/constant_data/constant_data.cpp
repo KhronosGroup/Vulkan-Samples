@@ -126,7 +126,8 @@ void ConstantData::request_gpu_features(vkb::PhysicalDevice &gpu)
 		gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
 	}
 
-	gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
+	gpu.add_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT) =
+	    gpu.get_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
 }
 
 void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)

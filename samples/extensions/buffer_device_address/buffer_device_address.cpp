@@ -428,9 +428,10 @@ void BufferDeviceAddress::render(float delta_time)
 void BufferDeviceAddress::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Need to enable the bufferDeviceAddress feature.
-	auto &features = gpu.request_extension_features<VkPhysicalDeviceBufferDeviceAddressFeaturesKHR>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR);
-	features.bufferDeviceAddress = VK_TRUE;
+	assert(gpu.get_extension_features<VkPhysicalDeviceBufferDeviceAddressFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR)
+	           .bufferDeviceAddress);
+	gpu.add_extension_features<VkPhysicalDeviceBufferDeviceAddressFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR)
+	    .bufferDeviceAddress = VK_TRUE;
 }
 
 std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address()

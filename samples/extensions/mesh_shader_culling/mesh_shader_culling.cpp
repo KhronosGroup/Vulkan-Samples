@@ -74,11 +74,12 @@ void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &meshFeatures = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
-
-	meshFeatures.taskShader = VK_TRUE;
-	meshFeatures.meshShader = VK_TRUE;
+	assert(gpu.get_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).taskShader);
+	assert(gpu.get_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).meshShader);
+	auto &requested_mesh_features =
+	    gpu.add_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
+	requested_mesh_features.taskShader = VK_TRUE;
+	requested_mesh_features.meshShader = VK_TRUE;
 
 	// Pipeline statistics
 	auto &requested_features = gpu.get_mutable_requested_features();

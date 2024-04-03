@@ -239,10 +239,10 @@ void ColorWriteEnable::create_attachments()
 
 void ColorWriteEnable::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	{
-		auto &features            = gpu.request_extension_features<VkPhysicalDeviceColorWriteEnableFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT);
-		features.colorWriteEnable = VK_TRUE;
-	}
+	assert(gpu.get_extension_features<VkPhysicalDeviceColorWriteEnableFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT)
+	           .colorWriteEnable);
+	gpu.add_extension_features<VkPhysicalDeviceColorWriteEnableFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT)
+	    .colorWriteEnable = VK_TRUE;
 	{
 		auto &features            = gpu.get_mutable_requested_features();
 		features.independentBlend = VK_TRUE;
@@ -544,7 +544,7 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 		                                                ImGuiColorEditFlags_NoSidePreview |
 		                                                    ImGuiColorEditFlags_NoSmallPreview |
 		                                                    ImGuiColorEditFlags_Float |
-                                                        ImGuiColorEditFlags_HDR))
+		                                                    ImGuiColorEditFlags_HDR))
 		{
 			rebuild_command_buffers();
 		}

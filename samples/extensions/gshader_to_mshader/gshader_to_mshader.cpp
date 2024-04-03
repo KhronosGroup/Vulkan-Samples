@@ -427,8 +427,8 @@ void GshaderToMshader::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void GshaderToMshader::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto &requested_vertex_input_features      = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
-	requested_vertex_input_features.meshShader = VK_TRUE;
+	assert(gpu.get_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).meshShader);
+	gpu.add_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).meshShader = VK_TRUE;
 
 	// we explicitly don't want those features!!
 	requested_vertex_input_features.multiviewMeshShader                    = VK_FALSE;

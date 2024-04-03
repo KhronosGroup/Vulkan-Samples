@@ -542,27 +542,36 @@ void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	gpu.get_mutable_requested_features().shaderSampledImageArrayDynamicIndexing = VK_TRUE;
 
-	auto &features = gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
+	auto &features =
+	    gpu.add_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
 
+	assert(gpu.get_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT)
+	           .shaderSampledImageArrayNonUniformIndexing);
 	features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
 
 	// These are required to support the 4 descriptor binding flags we use in this sample.
+	assert(gpu.get_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT)
+	           .descriptorBindingSampledImageUpdateAfterBind);
+	assert(gpu.get_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT)
+	           .descriptorBindingPartiallyBound);
+	assert(gpu.get_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT)
+	           .descriptorBindingUpdateUnusedWhilePending);
+	assert(gpu.get_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT)
+	           .descriptorBindingVariableDescriptorCount);
 	features.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
 	features.descriptorBindingPartiallyBound              = VK_TRUE;
 	features.descriptorBindingUpdateUnusedWhilePending    = VK_TRUE;
 	features.descriptorBindingVariableDescriptorCount     = VK_TRUE;
 
 	// Enables use of runtimeDescriptorArrays in SPIR-V shaders.
+	assert(gpu.get_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT)
+	           .runtimeDescriptorArray);
 	features.runtimeDescriptorArray = VK_TRUE;
 
 	// There are lot of properties associated with descriptor_indexing, grab them here.
-	auto vkGetPhysicalDeviceProperties2KHR =
-	    reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(get_instance().get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
-	assert(vkGetPhysicalDeviceProperties2KHR);
-	VkPhysicalDeviceProperties2KHR device_properties{};
-
 	descriptor_indexing_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+	VkPhysicalDeviceProperties2KHR device_properties{};
 	device_properties.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext              = &descriptor_indexing_properties;
 	vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);

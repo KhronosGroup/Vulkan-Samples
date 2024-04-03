@@ -38,8 +38,8 @@ struct RequestFeature
 	template <typename T>
 	RequestFeature &request(VkStructureType s_type, VkBool32 T::*member)
 	{
-		auto &member_feature   = gpu.request_extension_features<T>(s_type);
-		member_feature.*member = VK_TRUE;
+		assert(gpu.get_extension_features<T>(s_type).*member);
+		gpu.add_extension_features<T>(s_type).*member = VK_TRUE;
 		return *this;
 	}
 };

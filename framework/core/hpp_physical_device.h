@@ -91,52 +91,62 @@ class HPPPhysicalDevice
 	vk::PhysicalDeviceFeatures &get_mutable_requested_features();
 
 	/**
-	 * @brief Requests a third party extension to be used by the framework
+	 * @brief Get an extension features struct
 	 *
-	 *        To have the features enabled, this function must be called before the logical device
-	 *        is created. To do this request sample specific features inside
-	 *        VulkanSample::request_gpu_features(vkb::HPPPhysicalDevice &gpu).
-	 *
-	 *        If the feature extension requires you to ask for certain features to be enabled, you can
-	 *        modify the struct returned by this function, it will propagate the changes to the logical
-	 *        device.
+	 *        Gets the actual extension features struct with the supported flags set.
+	 *        The flags you're interested in can be set in a corresponding struct in the structure chain
+	 *        by calling PhysicalDevice::add_extension_features()
 	 * @returns The extension feature struct
 	 */
 	template <typename HPPStructureType>
-	HPPStructureType &request_extension_features()
+	HPPStructureType get_extension_features()
 	{
 		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) + " isn't enabled!");
-		}
-
-		// If the type already exists in the map, return a casted pointer to get the extension feature struct
-		vk::StructureType structureType         = HPPStructureType::structureType;        // need to instantiate this value to be usable in find()!
-		auto              extension_features_it = extension_features.find(structureType);
-		if (extension_features_it != extension_features.end())
-		{
-			return *static_cast<HPPStructureType *>(extension_features_it->second.get());
+			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+			                         " isn't enabled!");
 		}
 
 		// Get the extension feature
-		vk::StructureChain<vk::PhysicalDeviceFeatures2KHR, HPPStructureType> featureChain = handle.getFeatures2KHR<vk::PhysicalDeviceFeatures2KHR, HPPStructureType>();
+		return handle.getFeatures2KHR<vk::PhysicalDeviceFeatures2KHR, HPPStructureType>().template get<HPPStructureType>();
+	}
 
-		// Insert the extension feature into the extension feature map so its ownership is held
-		extension_features.insert({structureType, std::make_shared<HPPStructureType>(featureChain.template get<HPPStructureType>())});
-
-		// Pull out the dereferenced void pointer, we can assume its type based on the template
-		auto *extension_ptr = static_cast<HPPStructureType *>(extension_features.find(structureType)->second.get());
-
-		// If an extension feature has already been requested, we shift the linked list down by one
-		// Making this current extension the new base pointer
-		if (last_requested_extension_feature)
+	/**
+	 * @brief Add an extension features struct to the structure chain used for device creation
+	 *
+	 *        To have the features enabled, this function must be called before the logical device
+	 *        is created. To do this request sample specific features inside
+	 *        VulkanSample::request_gpu_features(vkb::PhysicalDevice &gpu).
+	 *
+	 *        If the feature extension requires you to ask for certain features to be enabled, you can
+	 *        modify the struct returned by this function, it will propagate the changes to the logical
+	 *        device.
+	 * @returns A reference to extension feature struct in the structure chain
+	 */
+	template <typename HPPStructureType>
+	HPPStructureType &add_extension_features()
+	{
+		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
+		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			extension_ptr->pNext = last_requested_extension_feature;
+			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+			                         " isn't enabled!");
 		}
-		last_requested_extension_feature = extension_ptr;
 
-		return *extension_ptr;
+		// Add an (empty) extension features into the map of extension features
+		auto [it, added] = extension_features.insert({HPPStructureType::structureType, std::make_shared<HPPStructureType>()});
+		if (added)
+		{
+			// if it was actually added, also add it to the structure chain
+			if (last_requested_extension_feature)
+			{
+				static_cast<HPPStructureType *>(it->second.get())->pNext = last_requested_extension_feature;
+			}
+			last_requested_extension_feature = it->second.get();
+		}
+
+		return *static_cast<HPPStructureType *>(it->second.get());
 	}
 
 	/**

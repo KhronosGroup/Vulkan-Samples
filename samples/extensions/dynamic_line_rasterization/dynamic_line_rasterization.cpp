@@ -430,8 +430,20 @@ void DynamicLineRasterization::build_command_buffers()
 void DynamicLineRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	{
-		auto &features = gpu.request_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(
-		    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT);
+		assert(gpu.get_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+		           .smoothLines);
+		assert(gpu.get_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+		           .stippledSmoothLines);
+		assert(gpu.get_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+		           .bresenhamLines);
+		assert(gpu.get_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+		           .stippledBresenhamLines);
+		assert(gpu.get_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+		           .rectangularLines);
+		assert(gpu.get_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+		           .stippledRectangularLines);
+		auto &features =
+		    gpu.add_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT);
 		features.smoothLines              = VK_TRUE;
 		features.stippledSmoothLines      = VK_TRUE;
 		features.bresenhamLines           = VK_TRUE;
@@ -440,13 +452,23 @@ void DynamicLineRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 		features.stippledRectangularLines = VK_TRUE;
 	}
 	{
-		auto &features =
-		    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
-		features.extendedDynamicState = VK_TRUE;
+		assert(gpu.get_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT)
+		           .extendedDynamicState);
+		gpu.add_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT)
+		    .extendedDynamicState = VK_TRUE;
 	}
 	{
+		assert(
+		    gpu.get_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT)
+		        .extendedDynamicState3PolygonMode);
+		assert(
+		    gpu.get_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT)
+		        .extendedDynamicState3LineRasterizationMode);
+		assert(
+		    gpu.get_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT)
+		        .extendedDynamicState3LineStippleEnable);
 		auto &features =
-		    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
+		    gpu.add_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
 		features.extendedDynamicState3PolygonMode           = VK_TRUE;
 		features.extendedDynamicState3LineRasterizationMode = VK_TRUE;
 		features.extendedDynamicState3LineStippleEnable     = VK_TRUE;
