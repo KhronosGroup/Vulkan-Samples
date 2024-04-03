@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,28 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
 
-layout(binding = 0) uniform UBO
+struct DSOutput
 {
-	mat4 projection;
-	mat4 view;
-}
-ubo;
+	float4 Pos : SV_POSITION;
+[[vk::location(0)]] float3 Color : COLOR0;
+};
 
-layout(location = 0) in vec3 inColor[gl_MaxPatchVertices];
-layout(location = 0) out vec4 color;
-
-layout(triangles, equal_spacing, cw) in;
-
-vec4 interpolate3D(vec4 v0, vec4 v1, vec4 v2)
+float4 main(DSOutput input) : SV_TARGET0
 {
-	return vec4(gl_TessCoord.x) * v0 + vec4(gl_TessCoord.y) * v1 + vec4(gl_TessCoord.z) * v2;
-}
-
-void main()
-{
-	vec4 pos    = interpolate3D(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position);
-	gl_Position = ubo.projection * ubo.view * pos;
-	color       = vec4(inColor[0], 1.0f);
+	return float4(input.Color, 1.0);
 }

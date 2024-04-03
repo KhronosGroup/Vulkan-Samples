@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,10 +15,27 @@
  * limitations under the License.
  */
 #version 450
-layout(location = 0) in vec4 inColor;
-layout(location = 0) out vec4 outFragColor;
+
+layout(binding = 0) uniform UBO
+{
+	mat4 projection;
+	mat4 view;
+}
+ubo;
+
+layout(location = 0) in vec3 inColor[gl_MaxPatchVertices];
+layout(location = 0) out vec4 color;
+
+layout(triangles, equal_spacing, cw) in;
+
+vec4 interpolate3D(vec4 v0, vec4 v1, vec4 v2)
+{
+	return vec4(gl_TessCoord.x) * v0 + vec4(gl_TessCoord.y) * v1 + vec4(gl_TessCoord.z) * v2;
+}
 
 void main()
 {
-	outFragColor = inColor;
+	vec4 pos    = interpolate3D(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position);
+	gl_Position = ubo.projection * ubo.view * pos;
+	color       = vec4(inColor[0], 1.0f);
 }
