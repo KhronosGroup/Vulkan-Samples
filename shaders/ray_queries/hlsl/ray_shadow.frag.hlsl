@@ -1,7 +1,4 @@
-#version 460
-#extension GL_EXT_ray_query : enable
-
-/* Copyright (c) 2021-2022 Holochip Corporation
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,28 +15,31 @@
  * limitations under the License.
  */
 
-layout(location = 0) in vec4 in_pos;
-layout(location = 1) in vec3 in_normal;
-layout(location = 2) in vec4 in_scene_pos;
+[[vk::binding(0, 0)]]
+RaytracingAccelerationStructure topLevelAS : register(t0);
 
-layout(location = 0) out vec4 o_color;
-
-layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
-
-layout(set = 0, binding = 1) uniform GlobalUniform
+struct GlobalUniform
 {
-	mat4 model;
-	mat4 view_proj;
-	vec3 camera_position;
-	vec3 light_position;
-}
-global_uniform;
+	float4x4 view;
+	float4x4 proj;
+	float4 camera_position;
+	float4 light_position;
+};
+[[vk::binding(1, 0)]]
+ConstantBuffer<GlobalUniform> global_uniform : register(b1);
 
+struct VSOutput
+{
+    float4 Pos : SV_POSITION;
+    [[vk::location(0)]] float4 O_Pos : TEXCOORD0;
+    [[vk::location(1)]] float3 O_Normal : NORMAL0;
+	[[vk::location(2)]] float4 Scene_pos : TEXCOORD1;	// scene with respect to BVH coordinates
+};
 
 /**
 Calculate ambient occlusion
 */
-float calculate_ambient_occlusion(vec3 object_point, vec3 object_normal)
+float calculate_ambient_occlusion(float3 object_point, float3 object_normal)
 {
 	const float ao_mult = 1;
 	uint max_ao_each = 3;
@@ -47,8 +47,8 @@ float calculate_ambient_occlusion(vec3 object_point, vec3 object_normal)
 	const float max_dist = 2;
 	const float tmin = 0.01, tmax = max_dist;
 	float accumulated_ao = 0.f;
-	vec3 u = abs(dot(object_normal, vec3(0, 0, 1))) > 0.9 ? cross(object_normal, vec3(1, 0, 0)) : cross(object_normal, vec3(0, 0, 1));
-	vec3 v = cross(object_normal, u);
+	float3 u = abs(dot(object_normal, float3(0, 0, 1))) > 0.9 ? cross(object_normal, float3(1, 0, 0)) : cross(object_normal, float3(0, 0, 1));
+	float3 v = cross(object_normal, u);
 	float accumulated_factor = 0;
 	for (uint j = 0; j < max_ao_each; ++j)
 	{
@@ -58,15 +58,21 @@ float calculate_ambient_occlusion(vec3 object_point, vec3 object_normal)
 			float x = cos(phi) * sin(theta);
 			float y = sin(phi) * sin(theta);
 			float z = cos(theta);
-			vec3 direction = x * u + y * v + z * object_normal;
+			float3 direction = x * u + y * v + z * object_normal;
 
-			rayQueryEXT query;
-			rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, object_point, tmin, direction.xyz, tmax);
-			rayQueryProceedEXT(query);
+			RayDesc ray;
+			ray.TMin = tmin;
+			ray.TMax = tmax;
+			ray.Origin = object_point;
+			ray.Direction = direction.xyz;
+
+			RayQuery<RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> query;
+			query.TraceRayInline(topLevelAS, 0, 0xFF, ray);
+			query.Proceed();
 			float dist = max_dist;
-			if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+			if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
 			{
-				dist = rayQueryGetIntersectionTEXT(query, true);
+				dist = query.CommittedRayT();
 			}
 			float ao = min(dist, max_dist);
 			float factor = 0.2 + 0.8 * z * z;
@@ -83,36 +89,44 @@ float calculate_ambient_occlusion(vec3 object_point, vec3 object_normal)
 /**
 Apply ray tracing to determine whether the point intersects light
 */
-bool intersects_light(vec3 light_origin, vec3 pos)
+bool intersects_light(float3 light_origin, float3 pos)
 {
-	const float tmin = 0.01, tmax = 1000;
-	const vec3  direction = light_origin - pos;
+	const float tmin = 0.01, tmax = 1.0;
+	const float3 direction = light_origin - pos;
 
-	rayQueryEXT query;
+	RayQuery<RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> query;
+
+	RayDesc ray;
+	ray.TMin = tmin;
+	ray.TMax = tmax;
+	ray.Origin = pos;
+	ray.Direction = direction.xyz;
 
 	// The following runs the actual ray query
 	// For performance, use gl_RayFlagsTerminateOnFirstHitEXT, since we only need to know
 	// whether an intersection exists, and not necessarily any particular intersection
-	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, 1.0);
+	query.TraceRayInline(topLevelAS, 0, 0xFF, ray);
+
 	// The following is the canonical way of using ray Queries from the fragment shader when
 	// there's more than one bounce or hit to traverse:
 	// while (rayQueryProceedEXT(query)) { }
 	// This sample has set flags to gl_RayFlagsTerminateOnFirstHitEXT which means that there
 	// will never be a bounce and no need for an expensive while loop.  (i.e. we only need to call it once).
-	rayQueryProceedEXT(query);
-	if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+	query.Proceed();
+	if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
 	{
 		// e.g. to get distance:
 		// const float dist = rayQueryGetIntersectionTEXT(query, false);
-		return true;
+		return true;		
 	}
+
 	return false;
 }
 
-void main(void)
+float4 main(VSOutput input) : SV_TARGET0
 {
 	// this is where we apply the shadow
-	const float ao = calculate_ambient_occlusion(in_scene_pos.xyz, in_normal);
-	const vec4 lighting = intersects_light(global_uniform.light_position, in_scene_pos.xyz) ? vec4(0.2, 0.2, 0.2, 1) : vec4(1, 1, 1, 1);
-	o_color = lighting * vec4(ao * vec3(1, 1, 1), 1);
+	const float ao = calculate_ambient_occlusion(input.Scene_pos.xyz, input.O_Normal);
+	const float4 lighting = intersects_light(global_uniform.light_position.xyz, input.Scene_pos.xyz) ? float4(0.2, 0.2, 0.2, 1.0) : float4(1.0, 1.0, 1.0, 1.0);
+	return lighting * float4(ao * float3(1, 1, 1), 1);
 }
