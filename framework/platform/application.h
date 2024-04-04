@@ -166,7 +166,7 @@ inline void Application::set_shading_language(const vkb::ShadingLanguage languag
 	shading_language = language;
 }
 
-inline vkb::ShadingLanguage  Application::get_shading_language()
+inline vkb::ShadingLanguage Application::get_shading_language()
 {
 	return shading_language;
 }

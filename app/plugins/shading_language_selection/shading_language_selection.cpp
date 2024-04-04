@@ -19,7 +19,7 @@
 
 #include <algorithm>
 
-#include "platform\application.h"
+#include "platform/application.h"
 
 namespace plugins
 {
