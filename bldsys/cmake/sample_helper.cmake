@@ -152,10 +152,10 @@ function(add_project)
     source_group("\\" FILES ${TARGET_FILES})
 
     # Add shaders to project group
-    if (SHADERS_GLSL)
+    if (TARGET_SHADERS_GLSL)
         source_group("\\Shaders\\glsl" FILES ${SHADERS_GLSL})
     endif()
-    if (SHADERS_HLSL)
+    if (TARGET_SHADERS_HLSL)
         source_group("\\Shaders\\hlsl" FILES ${SHADERS_HLSL})
         # Disable automatic compilation of HLSL shaders for MSVC
         set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
