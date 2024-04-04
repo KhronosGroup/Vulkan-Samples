@@ -68,20 +68,14 @@ function(add_sample_with_tags)
     endif()
 
     # Add GLSL shader files for this sample
-    if (TARGET_SHADER_FILES_GLSL)
-        list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
-        foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
-            list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
-        endforeach()        
-    endif()
+    foreach(SHADER_FILE_GLSL ${TARGET_SHADER_FILES_GLSL})
+        list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
+    endforeach()
 
     # Add HLSL shader files for this sample
-    if (TARGET_SHADER_FILES_HLSL)
-        list(APPEND SHADER_FILES_HLSL ${TARGET_SHADER_FILES_HLSL})
-        foreach(SHADER_FILE_HLSL ${SHADER_FILES_HLSL})
-            list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
-        endforeach()        
-    endif()
+    foreach(SHADER_FILE_HLSL ${TARGET_SHADER_FILES_HLSL})
+        list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
+    endforeach()
 
     add_project(
         TYPE "Sample"
@@ -153,10 +147,10 @@ function(add_project)
 
     # Add shaders to project group
     if (TARGET_SHADERS_GLSL)
-        source_group("\\Shaders\\glsl" FILES ${SHADERS_GLSL})
+        source_group("\\Shaders\\glsl" FILES ${TARGET_SHADERS_GLSL})
     endif()
     if (TARGET_SHADERS_HLSL)
-        source_group("\\Shaders\\hlsl" FILES ${SHADERS_HLSL})
+        source_group("\\Shaders\\hlsl" FILES ${TARGET_SHADERS_HLSL})
         # Disable automatic compilation of HLSL shaders for MSVC
         set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
