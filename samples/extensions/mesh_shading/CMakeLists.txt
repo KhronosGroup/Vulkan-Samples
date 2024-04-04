@@ -30,4 +30,5 @@ add_sample_with_tags(
         "mesh_shading/glsl/ps.frag"
     SHADER_FILES_HLSL
         "mesh_shading/hlsl/ms.mesh.hlsl"
-        "mesh_shading/hlsl/ps.frag.hlsl")
+        "mesh_shading/hlsl/ps.frag.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_mesh_shader")
