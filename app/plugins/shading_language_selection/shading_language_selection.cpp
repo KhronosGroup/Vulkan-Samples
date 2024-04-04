@@ -19,7 +19,7 @@
 
 #include <algorithm>
 
-#include "vulkan_sample.h"
+#include "platform\application.h"
 
 namespace plugins
 {
@@ -45,14 +45,12 @@ void ShadingLanguageSelection::init(const vkb::CommandParser &parser)
 		if (shading_language == "glsl")
 		{
 			LOGI("Shading language selection: GLSL");
-			vkb::VulkanSample<vkb::BindingType::C>::set_shading_language(vkb::ShadingLanguage::GLSL);
-			vkb::VulkanSample<vkb::BindingType::Cpp>::set_shading_language(vkb::ShadingLanguage::GLSL);
+			vkb::Application::set_shading_language(vkb::ShadingLanguage::GLSL);
 		}
 		else if (shading_language == "hlsl")
 		{
 			LOGI("Shading langauge selection: HLSL")
-			vkb::VulkanSample<vkb::BindingType::C>::set_shading_language(vkb::ShadingLanguage::HLSL);
-			vkb::VulkanSample<vkb::BindingType::Cpp>::set_shading_language(vkb::ShadingLanguage::HLSL);
+			vkb::Application::set_shading_language(vkb::ShadingLanguage::HLSL);
 		}
 		else
 		{

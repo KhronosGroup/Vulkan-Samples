@@ -446,7 +446,7 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 	std::string               shader_extension{""};
 	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
 
-	if (shading_language == vkb::ShadingLanguage::HLSL)
+	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
 	{
 		shader_folder = "hlsl";
 		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
