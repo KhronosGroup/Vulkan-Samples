@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2020, Sascha Willems
+/* Copyright (c) 2020-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,14 +16,15 @@
  * limitations under the License.
  */
 
-layout (binding = 0) uniform sampler2D samplerColor0;
-layout (binding = 1) uniform sampler2D samplerColor1;
+layout (location = 0) out vec2 outUV;
 
-layout (location = 0) in vec2 inUV;
-
-layout (location = 0) out vec4 outColor;
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
 
 void main() 
 {
-	outColor = texture(samplerColor0, inUV);
+	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
 }

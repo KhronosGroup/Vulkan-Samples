@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2020, Sascha Willems
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,15 +15,18 @@
  * limitations under the License.
  */
 
-layout (location = 0) out vec2 outUV;
+Texture2D textureColor0 : register(t0);
+SamplerState samplerColor0 : register(s0);
+Texture2D textureColor1 : register(t1);
+SamplerState samplerColor1 : register(s1);
 
-out gl_PerVertex
+struct VSOutput
 {
-	vec4 gl_Position;
+    float4 Pos : SV_POSITION;
+    [[vk::location(0)]] float2 UV : TEXCOORD0;
 };
 
-void main() 
+float4 main(VSOutput input) : SV_TARGET
 {
-	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
+	return textureColor0.Sample(samplerColor0, input.UV);
 }
