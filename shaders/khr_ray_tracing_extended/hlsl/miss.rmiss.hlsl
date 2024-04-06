@@ -18,8 +18,8 @@
 struct Payload
 {
 [[vk::location(0)]] float4 color;
-[[vk::location(0)]] float4 intersection; // {x, y, z, intersectionType}
-[[vk::location(0)]] float4 normal; // {nx, ny, nz, distance}    
+[[vk::location(1)]] float4 intersection; // {x, y, z, intersectionType}
+[[vk::location(2)]] float4 normal; // {nx, ny, nz, distance}    
 };
 
 [shader("miss")]

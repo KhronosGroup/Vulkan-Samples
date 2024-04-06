@@ -27,8 +27,8 @@
 struct Payload
 {
 [[vk::location(0)]] float4 color;
-[[vk::location(0)]] float4 intersection; // {x, y, z, intersectionType}
-[[vk::location(0)]] float4 normal; // {nx, ny, nz, distance}    
+[[vk::location(1)]] float4 intersection; // {x, y, z, intersectionType}
+[[vk::location(2)]] float4 normal; // {nx, ny, nz, distance}    
 };
 
 struct Attributes
@@ -44,7 +44,7 @@ SamplerState samplers[26]: register(s7);
 StructuredBuffer<float4> dynamic_vertex_buffer : register(t8);
 StructuredBuffer<uint> dynamic_index_buffer : register(t9);
 
-[[vk::constant_id(0)]] const int render_mode = 0;
+[[vk::constant_id(0)]] const int render_mode = RENDER_DEFAULT;
 
 float3 heatmap(float value, float minValue, float maxValue)
 {
@@ -85,7 +85,7 @@ uint3 getIndices(uint triangle_offset, uint primitive_id, bool is_static)
 
 void handleDraw(inout Payload hitValue, float2 attribs)
 {
-    uint index = InstanceIndex();
+    uint index = InstanceID();
 
     uint vertexOffset = data_map[4 * index];
     uint triangleOffset = data_map[4*index + 1];
@@ -140,7 +140,7 @@ void main(inout Payload hitValue, in Attributes Attribs)
   if (render_mode == RENDER_BARYCENTRIC ){
     hitValue.color = float4(barycentricCoords, 1);
   } else if (render_mode == RENDER_INSTANCE_ID){
-    hitValue.color = float4(heatmap(InstanceIndex(), 0, 25), 1);
+    hitValue.color = float4(heatmap(InstanceID(), 0, 25), 1);
   } else if (render_mode == RENDER_DISTANCE){
     hitValue.color = float4(heatmap(log(1 + RayTCurrent()), 0, log(1 + 25)), 1);
   } else {

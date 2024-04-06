@@ -34,15 +34,15 @@ struct CameraProperties
 [[vk::binding(2, 0)]]
 ConstantBuffer<CameraProperties> cam : register(b2);
 
-[[vk::constant_id(0)]] const int render_mode = 0;
-[[vk::constant_id(1)]] const int maxRays = 12;
-
 struct Payload
 {
 [[vk::location(0)]] float4 color;
 [[vk::location(1)]] float4 intersection; // {x, y, z, intersectionType}
 [[vk::location(2)]] float4 normal; // {nx, ny, nz, distance}
 };
+
+[[vk::constant_id(0)]] const int render_mode = 0;
+[[vk::constant_id(1)]] const int maxRays = 12;
 
 [shader("raygeneration")]
 void main()
@@ -74,18 +74,16 @@ void main()
 	float expectedDistance = -1;
 
     RayDesc rayDesc;
-    rayDesc.Origin = origin.xyz;
-    rayDesc.Direction = direction.xyz;
     rayDesc.TMin = tmin;
     rayDesc.TMax = tmax;
 
     Payload hitValue;
-    // TraceRay(rs, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, rayDesc, payload);
 
 	for (uint i = 0; i < max_rays && current_mode < 100 && color.a < 0.95 && (color.r < 0.99 || color.b < 0.99 || color.g < 0.99); ++i)
 	{
+        rayDesc.Origin = origin.xyz;
+        rayDesc.Direction = direction.xyz;
     	TraceRay(rs, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, rayDesc, hitValue);
-		//traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 		object_type = uint(hitValue.intersection.w);
 		const float3 object_intersection_pt = hitValue.intersection.xyz;
 		const float3 object_normal = hitValue.normal.xyz;
@@ -109,7 +107,6 @@ void main()
 				rayDesc.Origin = object_intersection_pt;
 				rayDesc.Direction = currentDirection;
     			TraceRay(rs, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, rayDesc, hitValue);
-				//traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, object_intersection_pt, tmin, currentDirection, tmax, 0);
 				float r = expectedDistance;
 				float actDistance = hitValue.normal.w;
 				float scale = actDistance < expectedDistance ? shadow_scale : 1;
@@ -145,7 +142,6 @@ void main()
 						rayDesc.Origin = object_intersection_pt;
 						rayDesc.Direction = direction;
     					TraceRay(rs, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, rayDesc, hitValue);
-						// traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, object_intersection_pt, tmin, direction, tmax, 0);
 						float ao = min(hitValue.normal.w, max_dist);
 						float factor = 0.2 + 0.8 * z * z;
 						accumulated_factor += factor;
