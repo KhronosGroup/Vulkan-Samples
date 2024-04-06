@@ -233,7 +233,7 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 		}
 
 		std::vector<uint8_t> buffer = vkb::fs::read_shader_binary(shader_file_name);
-		
+
 		// Pass the source GLSL shader code via an object tag
 		VkDebugUtilsObjectTagInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT};
 		info.objectType                   = VK_OBJECT_TYPE_SHADER_MODULE;
