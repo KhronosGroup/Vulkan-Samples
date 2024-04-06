@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,17 +15,29 @@
  * limitations under the License.
  */
 
-layout (input_attachment_index = 0, binding = 0) uniform subpassInput in_color_r;
-layout (input_attachment_index = 1, binding = 1) uniform subpassInput in_color_g;
-layout (input_attachment_index = 2, binding = 2) uniform subpassInput in_color_b;
-
-layout (location = 0) out vec4 outColor;
-
-void main()
+struct VSOutput
 {
-    vec4 color_r = subpassLoad(in_color_r);
-    vec4 color_g = subpassLoad(in_color_g);
-    vec4 color_b = subpassLoad(in_color_b);
+    float4 Pos : SV_POSITION;
+[[vk::location(0)]] float3 Color : COLOR0;
+};
 
-    outColor = color_r + color_g + color_b;
-}
+static float2 triangle_positions[3] = {
+    float2(0.0, -0.5),
+    float2(0.5, 0.5),
+    float2(-0.5, 0.5)
+};
+
+static float3 triangle_colors[3] = {
+    float3(1.0, 0.0, 0.0),
+    float3(0.0, 1.0, 0.0),
+    float3(0.0, 0.0, 1.0)
+};
+
+VSOutput main(uint VertexIndex : SV_VertexID)
+{
+    VSOutput output = (VSOutput) 0;
+    output.Pos = float4(triangle_positions[VertexIndex], 0.0, 1.0);
+    output.Color = triangle_colors[VertexIndex];   
+    return output;
+    }
+

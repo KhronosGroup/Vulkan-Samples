@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,18 +15,15 @@
  * limitations under the License.
  */
 
-layout(location = 0) in vec3 in_color;
+[[vk::input_attachment_index(0)]][[vk::binding(0)]] SubpassInput in_color_r;
+[[vk::input_attachment_index(1)]][[vk::binding(1)]] SubpassInput in_color_g;
+[[vk::input_attachment_index(2)]][[vk::binding(2)]] SubpassInput in_color_b;
 
-layout(location = 0) out vec4 out_color_r;
-layout(location = 1) out vec4 out_color_g;
-layout(location = 2) out vec4 out_color_b;
-
-// The full color is copied to individual attachments.
-// Each attachment has a single component bit (R, G, B) enabled
-// via the blend_attachment in ColorWriteEnable::prepare_pipelines.
-void main()
+float4 main() : SV_TARGET0
 {
-       out_color_r = vec4(in_color, 1.0f);
-       out_color_g = vec4(in_color, 1.0f);
-       out_color_b = vec4(in_color, 1.0f);
+    float4 color_r = in_color_r.SubpassLoad();
+    float4 color_g = in_color_g.SubpassLoad();
+    float4 color_b = in_color_b.SubpassLoad();
+
+    return color_r + color_g + color_b;
 }
