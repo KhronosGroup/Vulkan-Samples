@@ -132,6 +132,6 @@ HSOutput main(InputPatch<VSOutput, 3> patch, uint InvocationID : SV_OutputContro
 {
 	HSOutput output = (HSOutput)0;
 	output.Pos = patch[InvocationID].Pos;
-	output.Color = getColor(getTessLevel(patch[2].Pos, patch[0].Pos)), 1.0;
+	output.Color = getColor(getTessLevel(patch[2].Pos, patch[0].Pos));
 	return output;
 }
