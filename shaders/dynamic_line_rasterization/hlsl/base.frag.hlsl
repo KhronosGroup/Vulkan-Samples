@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,20 +15,18 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec3 inPos;
-
-layout (binding = 0) uniform Ubo
+struct VSOutput
 {
-    mat4 projection;
-    mat4 view;
-    mat4 model;
-} ubo;
-
-
-out gl_PerVertex {
-    vec4 gl_Position;
+    float4 Pos : SV_POSITION;
 };
 
-void main() {
-    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPos.xyz - vec3(0.0f, 1.0f, 0.0f), 1.0f);
+struct PushConstants
+{
+    float4 color;
+};
+[[vk::push_constant]] PushConstants pushConstant;
+
+float4 main(VSOutput input) : SV_TARGET0
+{
+    return pushConstant.color;
 }

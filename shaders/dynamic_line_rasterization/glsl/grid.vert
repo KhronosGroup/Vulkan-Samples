@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,7 @@ layout(binding = 0) uniform Ubo {
     mat4 projection;
     mat4 view;
     mat4 model;
+    mat4 viewProjectionInverse;
 } ubo;
 
 layout(location = 0) out vec3 nearPoint;
@@ -41,10 +42,9 @@ vec3 gridPlane[6] = vec3[](
 
 void main() {
     vec3 pos = gridPlane[gl_VertexIndex].xyz;
-    mat4 viewProjectionInverse = inverse(ubo.projection * ubo.view);
 
-    nearPoint = unprojectPoint(pos.x, pos.y, 0.0, viewProjectionInverse);
-    farPoint = unprojectPoint(pos.x, pos.y, 1.0, viewProjectionInverse);
+    nearPoint = unprojectPoint(pos.x, pos.y, 0.0, ubo.viewProjectionInverse);
+    farPoint = unprojectPoint(pos.x, pos.y, 1.0, ubo.viewProjectionInverse);
 
     view = ubo.view;
     projection = ubo.projection;

@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,12 +15,28 @@
  * limitations under the License.
  */
 
-layout (location = 0) out vec4 outFragColor;
-layout( push_constant ) uniform Push_Constants{
-    vec4 color;
-} pushConstant;
+struct VSInput
+{
+[[vk::location(0)]] float3 Pos : POSITION0;
+};
 
+struct UBO
+{
+    float4x4 projection;
+    float4x4 view;
+    float4x4 model;
+};
+[[vk::binding(0, 0)]]
+ConstantBuffer<UBO> ubo : register(b0);
 
-void main() {
-    outFragColor = pushConstant.color;
+struct VSOutput
+{
+    float4 Pos : SV_POSITION;
+};
+
+VSOutput main(VSInput input)
+{
+    VSOutput output = (VSOutput) 0;
+    output.Pos = mul(ubo.projection, mul(ubo.view, mul(ubo.model, float4(input.Pos - float3(0.0f, 1.0f, 0.0f), 1.0))));
+    return output;
 }
