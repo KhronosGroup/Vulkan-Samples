@@ -18,10 +18,8 @@
 
 #include "device.h"
 
-VKBP_DISABLE_WARNINGS()
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
