@@ -105,4 +105,7 @@ SpacesInSquareBrackets: false
 Standard:        Cpp11
 TabWidth:        4
 UseTab:          ForIndentation
+---
+Language: ObjC
+DisableFormat: true
 ...
