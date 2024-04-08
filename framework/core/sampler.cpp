@@ -23,10 +23,10 @@ namespace vkb
 {
 namespace core
 {
-Sampler::Sampler(Device const &d, const VkSamplerCreateInfo &info) :
+Sampler::Sampler(vkb::Device &d, const VkSamplerCreateInfo &info) :
     VulkanResource{VK_NULL_HANDLE, &d}
 {
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &info, nullptr, &handle));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &info, nullptr, &get_handle()));
 }
 
 Sampler::Sampler(Sampler &&other) :
@@ -36,9 +36,9 @@ Sampler::Sampler(Sampler &&other) :
 
 Sampler::~Sampler()
 {
-	if (handle != VK_NULL_HANDLE)
+	if (has_device())
 	{
-		vkDestroySampler(get_device().get_handle(), handle, nullptr);
+		vkDestroySampler(get_device().get_handle(), get_handle(), nullptr);
 	}
 }
 

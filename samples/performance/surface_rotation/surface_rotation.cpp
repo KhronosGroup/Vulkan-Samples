@@ -19,10 +19,8 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 #include <glm/gtc/matrix_transform.hpp>
-VKBP_ENABLE_WARNINGS()
 
 #include "core/device.h"
 #include "core/pipeline_layout.h"

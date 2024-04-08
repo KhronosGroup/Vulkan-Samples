@@ -1,4 +1,5 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+#version 450
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,27 +16,23 @@
  * limitations under the License.
  */
 
-#include "core/vulkan_resource.h"
 
-#include "core/device.h"
+layout (location = 0) in vec3 inNormal;
 
-namespace vkb
+layout (binding = 0) uniform Ubo
 {
-namespace core
-{
-namespace detail
-{
-void set_debug_name(const Device *device, VkObjectType object_type, uint64_t handle, const char *debug_name)
-{
-	if (!debug_name || *debug_name == '\0' || !device)
-	{
-		// Can't set name, or no point in setting an empty name
-		return;
-	}
+    mat4 projection;
+    mat4 view;
+    mat4 model;
+    vec4 colorTransformation;
+    ivec2 sceneTransformation;
+} ubo;
 
-	device->get_debug_utils().set_debug_name(device->get_handle(), object_type, handle, debug_name);
+layout (location = 0) out vec4 outColor;
+
+void main()
+{
+    outColor = vec4( 0.5 * inNormal + vec3(0.5), 1);
+
+    outColor.xyz = ubo.colorTransformation.x * outColor.xyz + vec3(ubo.colorTransformation.y);
 }
-
-}        // namespace detail
-}        // namespace core
-}        // namespace vkb

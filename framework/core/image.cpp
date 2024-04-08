@@ -68,17 +68,17 @@ inline VkImageType find_image_type(VkExtent3D extent)
 namespace core
 {
 
-Image ImageBuilder::build(const Device &device) const
+Image ImageBuilder::build(Device &device) const
 {
 	return Image(device, *this);
 }
 
-ImagePtr ImageBuilder::build_unique(const Device &device) const
+ImagePtr ImageBuilder::build_unique(Device &device) const
 {
 	return std::make_unique<Image>(device, *this);
 }
 
-Image::Image(Device const         &device,
+Image::Image(vkb::Device          &device,
              const VkExtent3D     &extent,
              VkFormat              format,
              VkImageUsageFlags     image_usage,
@@ -107,10 +107,10 @@ Image::Image(Device const         &device,
 {
 }
 
-Image::Image(Device const &device, ImageBuilder const &builder) :
+Image::Image(vkb::Device &device, ImageBuilder const &builder) :
     Allocated{builder.alloc_create_info, VK_NULL_HANDLE, &device}, create_info(builder.create_info)
 {
-	handle                 = create_image(create_info);
+	set_handle(create_image(create_info));
 	subresource.arrayLayer = create_info.arrayLayers;
 	subresource.mipLevel   = create_info.mipLevels;
 	if (!builder.debug_name.empty())
@@ -119,7 +119,7 @@ Image::Image(Device const &device, ImageBuilder const &builder) :
 	}
 }
 
-Image::Image(Device const &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) :
+Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) :
     Allocated{handle, &device}
 {
 	create_info.extent     = extent;
@@ -198,14 +198,14 @@ VkDeviceSize Image::get_image_required_size() const
 {
 	VkMemoryRequirements memory_requirements;
 
-	vkGetImageMemoryRequirements(device->get_handle(), handle, &memory_requirements);
+	vkGetImageMemoryRequirements(get_device().get_handle(), get_handle(), &memory_requirements);
 
 	return memory_requirements.size;
 }
 
 VkImageCompressionPropertiesEXT Image::get_applied_compression() const
 {
-	return query_applied_compression(device->get_handle(), handle);
+	return query_applied_compression(get_device().get_handle(), get_handle());
 }
 }        // namespace core
 }        // namespace vkb
