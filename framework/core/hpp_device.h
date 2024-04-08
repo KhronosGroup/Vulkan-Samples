@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "core/vulkan_resource.h"
 #include <core/hpp_command_buffer.h>
 #include <core/hpp_command_pool.h>
 #include <core/hpp_debug.h>
 #include <core/hpp_physical_device.h>
 #include <core/hpp_queue.h>
-#include <core/hpp_vulkan_resource.h>
 #include <hpp_fence_pool.h>
 #include <hpp_resource_cache.h>
 #include <vulkan/vulkan.hpp>
@@ -33,7 +33,7 @@ namespace core
 {
 class HPPBuffer;
 
-class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
+class HPPDevice : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::Device>
 {
   public:
 	/**

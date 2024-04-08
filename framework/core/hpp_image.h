@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "core/hpp_vulkan_resource.h"
+#include "core/vulkan_resource.h"
 #include "hpp_allocated.h"
 #include <unordered_set>
 

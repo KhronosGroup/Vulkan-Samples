@@ -397,7 +397,7 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
     {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
-GLTFLoader::GLTFLoader(Device const &device) :
+GLTFLoader::GLTFLoader(Device &device) :
     device{device}
 {
 }

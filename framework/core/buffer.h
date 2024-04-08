@@ -66,23 +66,23 @@ struct BufferBuilder : public allocated::Builder<BufferBuilder, VkBufferCreateIn
 		return *this;
 	}
 
-	Buffer    build(Device const &device) const;
-	BufferPtr build_unique(Device const &device) const;
+	Buffer    build(Device &device) const;
+	BufferPtr build_unique(Device &device) const;
 };
 
 class Buffer : public allocated::Allocated<VkBuffer>
 {
   public:
-	static Buffer create_staging_buffer(Device const &device, VkDeviceSize size, const void *data);
+	static Buffer create_staging_buffer(vkb::Device &device, VkDeviceSize size, const void *data);
 
 	template <typename T>
-	static Buffer create_staging_buffer(Device const &device, const std::vector<T> &data)
+	static Buffer create_staging_buffer(vkb::Device &device, const std::vector<T> &data)
 	{
 		return create_staging_buffer(device, data.size() * sizeof(T), data.data());
 	}
 
 	template <typename T>
-	static Buffer create_staging_buffer(Device const &device, const T &data)
+	static Buffer create_staging_buffer(Device &device, const T &data)
 	{
 		return create_staging_buffer(device, sizeof(T), &data);
 	}
@@ -97,14 +97,14 @@ class Buffer : public allocated::Allocated<VkBuffer>
 	 * @param queue_family_indices optional queue family indices
 	 */
 	// [[deprecated]]
-	Buffer(Device const                &device,
+	Buffer(vkb::Device                 &device,
 	       VkDeviceSize                 size,
 	       VkBufferUsageFlags           buffer_usage,
 	       VmaMemoryUsage               memory_usage,
 	       VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
 	       const std::vector<uint32_t> &queue_family_indices = {});
 
-	Buffer(Device const &device, const BufferBuilder &builder);
+	Buffer(Device &device, const BufferBuilder &builder);
 
 	Buffer(const Buffer &) = delete;
 
