@@ -19,7 +19,7 @@
 #pragma once
 
 #include "allocated.h"
-#include "hpp_vulkan_resource.h"
+#include "vulkan_resource.h"
 
 namespace vkb
 {
@@ -65,10 +65,9 @@ template <typename HandleType>
 class HPPAllocated : public Allocated<
                          HandleType,
                          vk::DeviceMemory,
-                         vkb::core::HPPDevice,
-                         vkb::core::HPPVulkanResource<HandleType>>
+                         vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>
 {
-	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::HPPDevice, vkb::core::HPPVulkanResource<HandleType>>;
+	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>;
 
   public:
 	using Parent::get_handle;

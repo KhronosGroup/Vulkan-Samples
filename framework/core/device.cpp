@@ -27,7 +27,7 @@ Device::Device(PhysicalDevice                        &gpu,
                VkSurfaceKHR                           surface,
                std::unique_ptr<DebugUtils>          &&debug_utils,
                std::unordered_map<const char *, bool> requested_extensions) :
-    VulkanResource{VK_NULL_HANDLE, this},        // Recursive, but valid
+    vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>{VK_NULL_HANDLE, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
     resource_cache{*this}
@@ -159,7 +159,7 @@ Device::Device(PhysicalDevice                        &gpu,
 	const auto requested_gpu_features = gpu.get_requested_features();
 	create_info.pEnabledFeatures      = &requested_gpu_features;
 
-	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);
+	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &get_handle());
 
 	if (result != VK_SUCCESS)
 	{
@@ -187,11 +187,11 @@ Device::Device(PhysicalDevice                        &gpu,
 }
 
 Device::Device(PhysicalDevice &gpu, VkDevice &vulkan_device, VkSurfaceKHR surface) :
+    VulkanResource{vulkan_device},
     gpu{gpu},
     resource_cache{*this}
 {
-	this->handle = vulkan_device;
-	debug_utils  = std::make_unique<DummyDebugUtils>();
+	debug_utils = std::make_unique<DummyDebugUtils>();
 }
 
 Device::~Device()
@@ -203,10 +203,7 @@ Device::~Device()
 
 	vkb::allocated::shutdown();
 
-	if (handle != VK_NULL_HANDLE)
-	{
-		vkDestroyDevice(handle, nullptr);
-	}
+	vkDestroyDevice(get_handle(), nullptr);
 }
 
 bool Device::is_extension_supported(const std::string &requested_extension) const
@@ -439,7 +436,7 @@ VkCommandPool Device::create_command_pool(uint32_t queue_index, VkCommandPoolCre
 	command_pool_info.queueFamilyIndex        = queue_index;
 	command_pool_info.flags                   = flags;
 	VkCommandPool command_pool;
-	VK_CHECK(vkCreateCommandPool(handle, &command_pool_info, nullptr, &command_pool));
+	VK_CHECK(vkCreateCommandPool(get_handle(), &command_pool_info, nullptr, &command_pool));
 	return command_pool;
 }
 
@@ -454,7 +451,7 @@ VkCommandBuffer Device::create_command_buffer(VkCommandBufferLevel level, bool b
 	cmd_buf_allocate_info.commandBufferCount = 1;
 
 	VkCommandBuffer command_buffer;
-	VK_CHECK(vkAllocateCommandBuffers(handle, &cmd_buf_allocate_info, &command_buffer));
+	VK_CHECK(vkAllocateCommandBuffers(get_handle(), &cmd_buf_allocate_info, &command_buffer));
 
 	// If requested, also start recording for the new command buffer
 	if (begin)
@@ -492,18 +489,18 @@ void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue,
 	fence_info.flags = VK_FLAGS_NONE;
 
 	VkFence fence;
-	VK_CHECK(vkCreateFence(handle, &fence_info, nullptr, &fence));
+	VK_CHECK(vkCreateFence(get_handle(), &fence_info, nullptr, &fence));
 
 	// Submit to the queue
 	VkResult result = vkQueueSubmit(queue, 1, &submit_info, fence);
 	// Wait for the fence to signal that command buffer has finished executing
-	VK_CHECK(vkWaitForFences(handle, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+	VK_CHECK(vkWaitForFences(get_handle(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 
-	vkDestroyFence(handle, fence, nullptr);
+	vkDestroyFence(get_handle(), fence, nullptr);
 
 	if (command_pool && free)
 	{
-		vkFreeCommandBuffers(handle, command_pool->get_handle(), 1, &command_buffer);
+		vkFreeCommandBuffers(get_handle(), command_pool->get_handle(), 1, &command_buffer);
 	}
 }
 
@@ -544,7 +541,7 @@ VkFence Device::request_fence() const
 
 VkResult Device::wait_idle() const
 {
-	return vkDeviceWaitIdle(handle);
+	return vkDeviceWaitIdle(get_handle());
 }
 
 ResourceCache &Device::get_resource_cache()
