@@ -30,11 +30,11 @@ endif::[]
 
 == Overview
 
-This sample shows how to allow a Vulkan application to control the compression of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImage.html[`VkImage`] elements, in particular a framebuffer attachment and the swapchain.
-This requires enabling and using the extensions https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control[`VK_EXT_image_compression_control`] and https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control_swapchain[`VK_EXT_image_compression_control_swapchain`] respectively.
+This sample shows how a Vulkan application can control the compression of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImage.html[`VkImage`] elements, in particular a framebuffer attachment and the swapchain.
+This requires enabling and using the extensions https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control[`VK_EXT_image_compression_control`] and https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control_swapchain[`VK_EXT_image_compression_control_swapchain`], respectively.
 Applications that use compression generally perform better thanks to the reduced memory footprint and bandwidth.
 
-In this sample the use-case is a simple post-processing effect (https://en.wikipedia.org/wiki/Chromatic_aberration[chromatic aberration]) applied to the output color of the forward-rendering pass.
+In this sample, the use-case is a simple post-processing effect (https://en.wikipedia.org/wiki/Chromatic_aberration[chromatic aberration]) applied to the output color of the forward-rendering pass.
 Since the color output needs to be saved to main memory and read again by the post-processing pass, this an opportunity to improve performance by using image compression.
 
 The sample allows toggling between:
@@ -67,7 +67,7 @@ On average, high compression ratios are often obtained, as shown in the xref:/sa
 
 On the other hand, a compression scheme may use a constant bitrate for all blocks, and in this case the compression is defined as fixed-rate.
 This means that in some cases a block will lose some information, and thus the compression is lossy.
-Therefore the device may not enable it automatically, and the developer must opt-in using the Vulkan image compression control extensions.
+Therefore the device cannot enable it automatically, and the developer must opt-in using the Vulkan image compression control extensions.
 
 Recent devices with Arm GPUs support Arm Fixed Rate Compression (AFRC), which achieve high quality results even with the highest compression ratios.
 For instance, see below for images saved from a Pixel 8 device:
