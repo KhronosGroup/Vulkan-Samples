@@ -23,9 +23,7 @@
 #include "rendering/render_frame.h"
 #include "rendering/subpass.h"
 
-VKBP_DISABLE_WARNINGS()
 #include <glm/gtc/type_ptr.hpp>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
