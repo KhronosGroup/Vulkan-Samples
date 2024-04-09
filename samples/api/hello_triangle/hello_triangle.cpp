@@ -509,6 +509,9 @@ void HelloTriangle::init_swapchain(Context &context)
 	info.clipped            = true;
 	info.oldSwapchain       = old_swapchain;
 
+	uint32_t image_count;
+	VK_CHECK(vkGetSwapchainImagesKHR(context.device, old_swapchain, &image_count, nullptr));
+	
 	VK_CHECK(vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain));
 
 	if (old_swapchain != VK_NULL_HANDLE)
@@ -517,9 +520,6 @@ void HelloTriangle::init_swapchain(Context &context)
 		{
 			vkDestroyImageView(context.device, image_view, nullptr);
 		}
-
-		uint32_t image_count;
-		VK_CHECK(vkGetSwapchainImagesKHR(context.device, old_swapchain, &image_count, nullptr));
 
 		for (size_t i = 0; i < image_count; i++)
 		{
@@ -533,7 +533,6 @@ void HelloTriangle::init_swapchain(Context &context)
 
 	context.swapchain_dimensions = {swapchain_size.width, swapchain_size.height, format.format};
 
-	uint32_t image_count;
 	VK_CHECK(vkGetSwapchainImagesKHR(context.device, context.swapchain, &image_count, nullptr));
 
 	/// The swapchain images.
