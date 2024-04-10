@@ -93,10 +93,10 @@ void DynamicRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	if (enable_dynamic)
 	{
-		assert(gpu.get_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR)
-		           .dynamicRendering);
-		gpu.add_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR)
-		    .dynamicRendering = VK_TRUE;
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+		                         dynamicRendering);
 	}
 
 	if (gpu.get_features().samplerAnisotropy)

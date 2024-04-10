@@ -64,14 +64,14 @@ void FragmentShadingRateDynamic::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable the shading rate attachment feature required by this sample
 	// These are passed to device creation via a pNext structure chain
-	assert(gpu.get_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR)
-	           .attachmentFragmentShadingRate);
-	assert(gpu.get_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR)
-	           .pipelineFragmentShadingRate);
-	auto &requested_extension_features =
-	    gpu.add_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
-	requested_extension_features.attachmentFragmentShadingRate = VK_TRUE;
-	requested_extension_features.pipelineFragmentShadingRate   = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceFragmentShadingRateFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
+	                         attachmentFragmentShadingRate);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceFragmentShadingRateFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
+	                         pipelineFragmentShadingRate);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

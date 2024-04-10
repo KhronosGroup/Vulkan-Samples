@@ -28,21 +28,6 @@
 namespace
 {
 constexpr uint32_t MIN_THREAD_COUNT = 1;
-struct RequestFeature
-{
-	vkb::PhysicalDevice &gpu;
-	explicit RequestFeature(vkb::PhysicalDevice &gpu) :
-	    gpu(gpu)
-	{}
-
-	template <typename T>
-	RequestFeature &request(VkStructureType s_type, VkBool32 T::*member)
-	{
-		assert(gpu.get_extension_features<T>(s_type).*member);
-		gpu.add_extension_features<T>(s_type).*member = VK_TRUE;
-		return *this;
-	}
-};
 
 template <typename T>
 struct CopyBuffer

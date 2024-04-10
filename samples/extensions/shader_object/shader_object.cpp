@@ -330,10 +330,10 @@ void ShaderObject::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Enable Dynamic Rendering
-	assert(gpu.get_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR)
-	           .dynamicRendering);
-	gpu.add_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR).dynamicRendering =
-	    VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+	                         dynamicRendering);
 
 	// Enable Geometry Shaders
 	auto &requested_geometry_shader          = gpu.get_mutable_requested_features();

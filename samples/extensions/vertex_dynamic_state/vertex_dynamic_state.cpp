@@ -449,11 +449,10 @@ void VertexDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	assert(
-	    gpu.get_extension_features<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT)
-	        .vertexInputDynamicState);
-	gpu.add_extension_features<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT)
-	    .vertexInputDynamicState = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT,
+	                         vertexInputDynamicState);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{

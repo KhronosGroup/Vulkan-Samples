@@ -55,31 +55,8 @@ MeshShaderCulling::~MeshShaderCulling()
 void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Check whether the device supports task and mesh shaders
-	VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features;
-	mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
-	mesh_shader_features.pNext = VK_NULL_HANDLE;
-	VkPhysicalDeviceFeatures2 features2;
-	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	features2.pNext = &mesh_shader_features;
-	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
-
-	if (!mesh_shader_features.taskShader || !mesh_shader_features.meshShader)
-	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support task and mesh shaders!");
-	}
-	if (!mesh_shader_features.meshShaderQueries)
-	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support mesh shader queries!");
-	}
-
-	// Enable extension features required by this sample
-	// These are passed to device creation via a pNext structure chain
-	assert(gpu.get_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).taskShader);
-	assert(gpu.get_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).meshShader);
-	auto &requested_mesh_features =
-	    gpu.add_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
-	requested_mesh_features.taskShader = VK_TRUE;
-	requested_mesh_features.meshShader = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, taskShader);
 
 	// Pipeline statistics
 	auto &requested_features = gpu.get_mutable_requested_features();

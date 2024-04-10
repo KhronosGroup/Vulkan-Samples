@@ -50,8 +50,7 @@ void MeshShading::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	assert(gpu.get_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).meshShader);
-	gpu.add_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT).meshShader = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
 }
 
 /*

@@ -95,8 +95,7 @@ bool HPPTimestampQueries::resize(const uint32_t width, const uint32_t height)
 void HPPTimestampQueries::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
 	// We need to enable the command pool reset feature in the extension struct
-	assert(gpu.get_extension_features<vk::PhysicalDeviceHostQueryResetFeaturesEXT>().hostQueryReset);
-	gpu.add_extension_features<vk::PhysicalDeviceHostQueryResetFeaturesEXT>().hostQueryReset = true;
+	HPP_REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceHostQueryResetFeaturesEXT, hostQueryReset);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
