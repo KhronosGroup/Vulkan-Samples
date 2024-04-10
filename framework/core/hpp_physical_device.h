@@ -117,12 +117,12 @@ class HPPPhysicalDevice
 	 *
 	 *        To have the features enabled, this function must be called before the logical device
 	 *        is created. To do this request sample specific features inside
-	 *        VulkanSample::request_gpu_features(vkb::PhysicalDevice &gpu).
+	 *        VulkanSample::request_gpu_features(vkb::HPPPhysicalDevice &gpu).
 	 *
 	 *        If the feature extension requires you to ask for certain features to be enabled, you can
 	 *        modify the struct returned by this function, it will propagate the changes to the logical
 	 *        device.
-	 * @returns A reference to extension feature struct in the structure chain
+	 * @returns A reference to the extension feature struct in the structure chain
 	 */
 	template <typename HPPStructureType>
 	HPPStructureType &add_extension_features()
@@ -147,6 +147,48 @@ class HPPPhysicalDevice
 		}
 
 		return *static_cast<HPPStructureType *>(it->second.get());
+	}
+
+	/**
+	 * @brief Request an optional features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a log message is generated.
+	 *
+	 * @returns true if the requested feature is supported, otherwise false
+	 */
+	template <typename Feature>
+	vk::Bool32 request_optional_feature(vk::Bool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		vk::Bool32 supported = get_extension_features<Feature>().*flag;
+		if (supported)
+		{
+			add_extension_features<Feature>().*flag = true;
+		}
+		else
+		{
+			LOGI("Requested optional feature <{}::{}> is not supported", featureName, flagName);
+		}
+		return supported;
+	}
+
+	/**
+	 * @brief Request a required features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a runtime_error is thrown.
+	 */
+	template <typename Feature>
+	void request_required_feature(vk::Bool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		if (get_extension_features<Feature>().*flag)
+		{
+			add_extension_features<Feature>().*flag = true;
+		}
+		else
+		{
+			throw std::runtime_error(std::string("Requested required feature <") + featureName + "::" + flagName + "> is not supported");
+		}
 	}
 
 	/**
@@ -202,5 +244,9 @@ class HPPPhysicalDevice
 
 	bool high_priority_graphics_queue{false};
 };
+
+#define HPP_REQUEST_OPTIONAL_FEATURE(gpu, Feature, flag) gpu.request_optional_feature<Feature>(&Feature::flag, #Feature, #flag)
+#define HPP_REQUEST_REQUIRED_FEATURE(gpu, Feature, flag) gpu.request_required_feature<Feature>(&Feature::flag, #Feature, #flag)
+
 }        // namespace core
 }        // namespace vkb

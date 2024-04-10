@@ -145,6 +145,48 @@ class PhysicalDevice
 	}
 
 	/**
+	 * @brief Request an optional features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a log message is generated.
+	 *
+	 * @returns true if the requested feature is supported, otherwise false
+	 */
+	template <typename Feature>
+	VkBool32 request_optional_feature(VkStructureType type, VkBool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		VkBool32 supported = get_extension_features<Feature>(type).*flag;
+		if (supported)
+		{
+			add_extension_features<Feature>(type).*flag = true;
+		}
+		else
+		{
+			LOGI("Requested optional feature <{}::{}> is not supported", featureName, flagName);
+		}
+		return supported;
+	}
+
+	/**
+	 * @brief Request a required features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a runtime_error is thrown.
+	 */
+	template <typename Feature>
+	void request_required_feature(VkStructureType type, VkBool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		if (get_extension_features<Feature>(type).*flag)
+		{
+			add_extension_features<Feature>(type).*flag = true;
+		}
+		else
+		{
+			throw std::runtime_error(std::string("Requested required feature <") + featureName + "::" + flagName + "> is not supported");
+		}
+	}
+
+	/**
 	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
 	 * Very specific feature which is used by async compute samples.
 	 * @param enable If true, present queue will have prio 1.0 and other queues have prio 0.5.
@@ -197,4 +239,8 @@ class PhysicalDevice
 
 	bool high_priority_graphics_queue{};
 };
+
+#define REQUEST_OPTIONAL_FEATURE(gpu, Feature, type, flag) gpu.request_optional_feature<Feature>(type, &Feature::flag, #Feature, #flag)
+#define REQUEST_REQUIRED_FEATURE(gpu, Feature, type, flag) gpu.request_required_feature<Feature>(type, &Feature::flag, #Feature, #flag)
+
 }        // namespace vkb

@@ -73,10 +73,7 @@ TimestampQueries::~TimestampQueries()
 void TimestampQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// We need to enable the command pool reset feature in the extension struct
-	assert(
-	    gpu.get_extension_features<VkPhysicalDeviceHostQueryResetFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT).hostQueryReset);
-	gpu.add_extension_features<VkPhysicalDeviceHostQueryResetFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT).hostQueryReset =
-	    VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceHostQueryResetFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT, hostQueryReset);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
