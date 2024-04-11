@@ -28,14 +28,6 @@ It's based on its original https://github.com/google-research/jax3d/tree/main/ja
 This is a different version from traditional NeRF rendering, which normally requires tracing rays (usually done via ray-marching) and querying a MLP multiple times for each ray. These many queries result in non-interactive frame rates on most of the GPUs.
 The mobile version uses the rasterization pipeline to render the final image; this is done via a triangle mesh and a feature texture, where each of its visible pixels are run through a small MLP (executed in the fragment shader) that converts the feature data and view direction to the corresponding output pixel color. This technique enables interactive FPS even on mobile GPUs (thus the name).
 
-just rendering the standard NeRF in realtime is not feasible on commodity hardware. Rendering
-views from a trained NeRF requires querying a multi-layer
-perception (MLP) hundreds of times per ray. It requires
-about 100 teraflops to render a single 800∗800 frame, which
-results in a best-case rendering time of 10 seconds per frame
-on a NVIDIA RTX 2080 GPU with full GPU utilization.
-
-
 == Description: [https://mobile-nerf.github.io/[Mobile Nerf]]
 Neural Radiance Fields (NeRFs) have demonstrated amazing ability to synthesize images of 3D scenes from novel views. 
 However, they rely upon specialized volumetric rendering algorithms based on ray marching that are mismatched to the capabilities of widely deployed graphics hardware. 

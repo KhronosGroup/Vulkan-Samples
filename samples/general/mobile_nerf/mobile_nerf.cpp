@@ -671,6 +671,18 @@ void MobileNerf::update_descriptor_sets_baseline()
 		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 	}
 }
+void MobileNerf::create_render_context()
+{
+    // Override surface formats to use UNORM, if possible
+    // The MLP was trained with gamma corrected values, because of that we must select
+    // a swapchain format that will not perform the the correction a second time
+    auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+                                                                 {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+                                                                 {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+                                                                 {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+
+    VulkanSample::create_render_context(surface_priority_list);
+}
 
 void MobileNerf::build_command_buffers()
 {
