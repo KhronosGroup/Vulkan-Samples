@@ -38,14 +38,35 @@ layout(location = 2) out vec4 rayDirectionOut;
 layout(binding = 0) uniform sampler2D textureInput_0;
 layout(binding = 1) uniform sampler2D textureInput_1;
 
+//////////////////////////////////////////////////////////////
+// MLP was trained with gamma-corrected values              //
+// convert to linear so sRGB conversion isn't applied twice //
+//////////////////////////////////////////////////////////////
+
+float Convert_sRGB_ToLinear(float value)
+{
+	return value <= 0.04045
+        ? value / 12.92
+        : pow((value + 0.055) / 1.055, 2.4);
+}
+
+vec3 Convert_sRGB_ToLinear(vec3 value) 
+{
+    return vec3(Convert_sRGB_ToLinear(value.x), Convert_sRGB_ToLinear(value.y), Convert_sRGB_ToLinear(value.z));
+}
+
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+
 void main(void)
 {
     vec2 flipped = vec2( texCoord_frag.x, 1.0 - texCoord_frag.y );
 	vec4 pixel_0 = texture(textureInput_0, flipped);
 	// if (pixel_0.r == 0.0) discard;
 	vec4 pixel_1 = texture(textureInput_1, flipped);
-	o_color_0 = pixel_0;
-	o_color_1 = pixel_1;
+	o_color_0 = vec4(Convert_sRGB_ToLinear(pixel_0.xyz), pixel_0.w);
+	o_color_1 = vec4(Convert_sRGB_ToLinear(pixel_1.xyz), pixel_1.w);
 	
 	rayDirectionOut.rgb = normalize(rayDirectionIn);
 	rayDirectionOut.a = 1.0f;

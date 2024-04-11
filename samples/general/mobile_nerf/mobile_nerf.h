@@ -153,7 +153,6 @@ class MobileNerf : public ApiVulkanSample
 	// Common
 	void read_json_map();
 	void load_shaders();
-	void create_render_context() override;
 	void build_command_buffers() override;
 	void create_uniforms();
 	void create_static_object_buffers(int model_index, int sub_model_index, int models_entry);
