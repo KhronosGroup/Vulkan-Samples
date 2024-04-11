@@ -45,7 +45,7 @@ layout(binding = 1) uniform sampler2D textureInput_1;
 
 float Convert_sRGB_ToLinear(float value)
 {
-	return value <= 0.04045
+    return value <= 0.04045
         ? value / 12.92
         : pow((value + 0.055) / 1.055, 2.4);
 }

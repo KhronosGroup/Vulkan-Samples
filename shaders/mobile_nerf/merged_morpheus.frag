@@ -159,7 +159,7 @@ vec3 evaluateNetwork(  vec4 f0,  vec4 f1,  vec4 viewdir)
 
 float Convert_sRGB_ToLinear(float value)
 {
-	return value <= 0.04045
+    return value <= 0.04045
         ? value / 12.92
         : pow((value + 0.055) / 1.055, 2.4);
 }
