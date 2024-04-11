@@ -162,10 +162,10 @@ void HelloTriangle::init_instance(Context                         &context,
 {
 	LOGI("Initializing vulkan instance.");
 
-    if (volkInitialize())
-    {
-        throw std::runtime_error("Failed to initialize volk.");
-    }
+	if (volkInitialize())
+	{
+		throw std::runtime_error("Failed to initialize volk.");
+	}
 
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
@@ -510,8 +510,10 @@ void HelloTriangle::init_swapchain(Context &context)
 	info.oldSwapchain       = old_swapchain;
 
 	uint32_t image_count;
-	VK_CHECK(vkGetSwapchainImagesKHR(context.device, old_swapchain, &image_count, nullptr));
-	
+	if (old_swapchain != VK_NULL_HANDLE)
+	{
+		VK_CHECK(vkGetSwapchainImagesKHR(context.device, old_swapchain, &image_count, nullptr));
+	}
 	VK_CHECK(vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain));
 
 	if (old_swapchain != VK_NULL_HANDLE)
