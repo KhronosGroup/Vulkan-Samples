@@ -631,9 +631,9 @@ void OpenCLInterop::prepare_shared_image()
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
 	mem_properties.push_back((cl_mem_properties) fd);
 #endif
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_KHR);
 	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_END_KHR);
 	mem_properties.push_back(0);
 
 	cl_image_format cl_img_fmt{};
@@ -693,9 +693,9 @@ void OpenCLInterop::prepare_sync_objects()
 	std::vector<cl_semaphore_properties_khr> semaphore_properties{
 	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
 	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_KHR,
 	    (cl_semaphore_properties_khr) opencl_objects.device_id,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_END_KHR,
 	};
 
 	// CL to VK semaphore
