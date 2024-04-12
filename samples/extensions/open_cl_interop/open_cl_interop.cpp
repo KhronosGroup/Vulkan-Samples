@@ -108,12 +108,15 @@ OpenCLInterop::OpenCLInterop()
 #ifdef _WIN32
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME);
 #else
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_SD_EXTENSION_NAME);
 #endif
 	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME);
 }
 
 OpenCLInterop::~OpenCLInterop()
