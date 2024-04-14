@@ -179,7 +179,7 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 		buffer = std::make_unique<vkb::core::Buffer>(
 		    device,
 		    build_sizes_info.accelerationStructureSize,
-		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 		    VMA_MEMORY_USAGE_GPU_ONLY);
 
 		VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};

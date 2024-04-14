@@ -473,7 +473,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 			bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
 			    get_device(),
 			    model_buffer.buildSize.accelerationStructureSize,
-			    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+			    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 			    VMA_MEMORY_USAGE_GPU_ONLY);
 		}
 		if (!is_update && bottom_level_acceleration_structure.handle == nullptr)
@@ -698,7 +698,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 		top_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
 		    get_device(),
 		    acceleration_structure_build_sizes_info.accelerationStructureSize,
-		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 		    VMA_MEMORY_USAGE_GPU_ONLY);
 	}
 
