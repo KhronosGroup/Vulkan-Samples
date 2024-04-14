@@ -228,8 +228,10 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.subresourceRange.layerCount     = 1u;
 		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
+		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
 	// initial tildes textures
 	{
@@ -244,10 +246,10 @@ void SubgroupsOperations::build_compute_command_buffer()
 		memory_barrier.buffer                = fft_buffers.fft_input_random->get_handle();
 		memory_barrier.offset                = 0u;
 		memory_barrier.size                  = fft_buffers.fft_input_random->get_size();
-		memory_barrier.srcAccessMask         = 0u;
-		memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT;
+		memory_barrier.srcAccessMask         = VK_ACCESS_SHADER_READ_BIT;
+		memory_barrier.dstAccessMask         = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
 	}
 
 	// tildes textures
@@ -268,8 +270,10 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.subresourceRange.layerCount     = 1u;
 		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
+		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
 
 	// fft horizontal; for Y axis
@@ -354,8 +358,11 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.subresourceRange.layerCount     = 1u;
 		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
+		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
 
 	// fft inverse
@@ -374,8 +381,10 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.subresourceRange.layerCount     = 1u;
 		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
+		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
 	// fft normal map
 	{
@@ -397,9 +406,9 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.srcQueueFamilyIndex             = compute.queue_family_index;
 		img_barrier.dstQueueFamilyIndex             = ocean.graphics_queue_family_index;
 		img_barrier.srcAccessMask                   = VK_ACCESS_SHADER_WRITE_BIT;
-		img_barrier.dstAccessMask                   = 0u;
+		img_barrier.dstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
 
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
