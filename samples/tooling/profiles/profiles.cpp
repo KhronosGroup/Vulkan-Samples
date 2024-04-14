@@ -112,8 +112,6 @@ std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 	device->create_internal_fence_pool();
 
 	return device;
-
-	return device;
 }
 
 // This sample overrides the instance creation part of the framework
