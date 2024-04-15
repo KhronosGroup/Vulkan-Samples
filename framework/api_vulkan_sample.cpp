@@ -976,7 +976,7 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 	return descriptor;
 }
 
-Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true)
+Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler)
 {
 	Texture texture{};
 
@@ -1075,7 +1075,7 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true)
+Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler)
 {
 	Texture texture{};
 
@@ -1177,7 +1177,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true)
+Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler)
 {
 	Texture texture{};
 
