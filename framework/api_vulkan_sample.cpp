@@ -976,7 +976,7 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 	return descriptor;
 }
 
-Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
+Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true)
 {
 	Texture texture{};
 
@@ -1046,33 +1046,36 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture.image->get_format(), &filter, &mipmap_mode);
 
-	// Create a defaultsampler
-	VkSamplerCreateInfo sampler_create_info = {};
-	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_create_info.magFilter           = filter;
-	sampler_create_info.minFilter           = filter;
-	sampler_create_info.mipmapMode          = mipmap_mode;
-	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler_create_info.mipLodBias          = 0.0f;
-	sampler_create_info.compareOp           = VK_COMPARE_OP_NEVER;
-	sampler_create_info.minLod              = 0.0f;
-	// Max level-of-detail should match mip level count
-	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
-	// Only enable anisotropic filtering if enabled on the device
-	// Note that for simplicity, we will always be using max. available anisotropy level for the current device
-	// This may have an impact on performance, esp. on lower-specced devices
-	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_requested_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
-	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	if (create_sampler)
+	{
+		// Create a default sampler
+		VkSamplerCreateInfo sampler_create_info = {};
+		sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		sampler_create_info.magFilter           = filter;
+		sampler_create_info.minFilter           = filter;
+		sampler_create_info.mipmapMode          = mipmap_mode;
+		sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler_create_info.mipLodBias          = 0.0f;
+		sampler_create_info.compareOp           = VK_COMPARE_OP_NEVER;
+		sampler_create_info.minLod              = 0.0f;
+		// Max level-of-detail should match mip level count
+		sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
+		// Only enable anisotropic filtering if enabled on the device
+		// Note that for simplicity, we will always be using max. available anisotropy level for the current device
+		// This may have an impact on performance, esp. on lower-specced devices
+		// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
+		sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_requested_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+		sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
+		sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	}
 
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
+Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true)
 {
 	Texture texture{};
 
@@ -1148,30 +1151,33 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture.image->get_format(), &filter, &mipmap_mode);
 
-	// Create a defaultsampler
-	VkSamplerCreateInfo sampler_create_info = {};
-	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_create_info.magFilter           = filter;
-	sampler_create_info.minFilter           = filter;
-	sampler_create_info.mipmapMode          = mipmap_mode;
-	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.mipLodBias          = 0.0f;
-	sampler_create_info.compareOp           = VK_COMPARE_OP_NEVER;
-	sampler_create_info.minLod              = 0.0f;
-	// Max level-of-detail should match mip level count
-	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
-	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
-	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	if (create_sampler)
+	{
+		// Create a default sampler
+		VkSamplerCreateInfo sampler_create_info = {};
+		sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		sampler_create_info.magFilter           = filter;
+		sampler_create_info.minFilter           = filter;
+		sampler_create_info.mipmapMode          = mipmap_mode;
+		sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		sampler_create_info.mipLodBias          = 0.0f;
+		sampler_create_info.compareOp           = VK_COMPARE_OP_NEVER;
+		sampler_create_info.minLod              = 0.0f;
+		// Max level-of-detail should match mip level count
+		sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
+		// Only enable anisotropic filtering if enabled on the devicec
+		sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+		sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+		sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	}
 
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
+Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true)
 {
 	Texture texture{};
 
@@ -1247,25 +1253,28 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture.image->get_format(), &filter, &mipmap_mode);
 
-	// Create a defaultsampler
-	VkSamplerCreateInfo sampler_create_info = {};
-	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_create_info.magFilter           = filter;
-	sampler_create_info.minFilter           = filter;
-	sampler_create_info.mipmapMode          = mipmap_mode;
-	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.mipLodBias          = 0.0f;
-	sampler_create_info.compareOp           = VK_COMPARE_OP_NEVER;
-	sampler_create_info.minLod              = 0.0f;
-	// Max level-of-detail should match mip level count
-	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
-	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
-	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	if (create_sampler)
+	{
+		// Create a default sampler
+		VkSamplerCreateInfo sampler_create_info = {};
+		sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		sampler_create_info.magFilter           = filter;
+		sampler_create_info.minFilter           = filter;
+		sampler_create_info.mipmapMode          = mipmap_mode;
+		sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		sampler_create_info.mipLodBias          = 0.0f;
+		sampler_create_info.compareOp           = VK_COMPARE_OP_NEVER;
+		sampler_create_info.minLod              = 0.0f;
+		// Max level-of-detail should match mip level count
+		sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
+		// Only enable anisotropic filtering if enabled on the devicec
+		sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+		sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+		sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
+	}
 
 	return texture;
 }

@@ -58,7 +58,7 @@ struct SwapchainBuffer
 struct Texture
 {
 	std::unique_ptr<vkb::sg::Image> image;
-	VkSampler                       sampler;
+	VkSampler                       sampler{VK_NULL_HANDLE};
 };
 
 /**
@@ -213,22 +213,25 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	 * @brief Loads in a ktx 2D texture
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
+	 * @param create_sampler If true, a default sampler for this image is created
 	 */
-	Texture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
+	Texture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true);
 
 	/**
 	 * @brief Loads in a ktx 2D texture array
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
+	 * @param create_sampler If true, a default sampler for this image is created
 	 */
-	Texture load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type);
+	Texture load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true);
 
 	/**
 	 * @brief Loads in a ktx 2D texture cubemap
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
+	 * @param create_sampler If true, a default sampler for this image is created
 	 */
-	Texture load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type);
+	Texture load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type, bool create_sampler = true);
 
 	/**
 	 * @brief Loads in a single model from a GLTF file
