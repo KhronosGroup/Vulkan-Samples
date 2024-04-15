@@ -148,7 +148,6 @@ void TerrainTessellation::load_assets()
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.heightmap.image->get_format(), &filter, &mipmap_mode);
 
 	// Setup a mirroring sampler for the height map
-	vkDestroySampler(get_device().get_handle(), textures.heightmap.sampler, nullptr);
 	sampler_create_info.magFilter    = filter;
 	sampler_create_info.minFilter    = filter;
 	sampler_create_info.mipmapMode   = mipmap_mode;
@@ -166,7 +165,6 @@ void TerrainTessellation::load_assets()
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.terrain_array.image->get_format(), &filter, &mipmap_mode);
 
 	// Setup a repeating sampler for the terrain texture layers
-	vkDestroySampler(get_device().get_handle(), textures.terrain_array.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
 	sampler_create_info.magFilter    = filter;
 	sampler_create_info.minFilter    = filter;

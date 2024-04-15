@@ -402,10 +402,10 @@ void ShaderObject::load_assets()
 	checkerboard_texture = load_texture("textures/checkerboard_rgba.ktx", vkb::sg::Image::Color);
 
 	// Terrain textures are stored in a texture array with layers corresponding to terrain height
-	terrain_array_textures = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::sg::Image::Color);
+	terrain_array_textures = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::sg::Image::Color, false);
 
 	// Height data is stored in a one-channel texture
-	heightmap_texture = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other);
+	heightmap_texture = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other, false);
 
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
@@ -415,7 +415,6 @@ void ShaderObject::load_assets()
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
 	// Setup a mirroring sampler for the height map
-	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
 	sampler_create_info.magFilter    = filter;
 	sampler_create_info.minFilter    = filter;
 	sampler_create_info.mipmapMode   = mipmap_mode;
@@ -433,7 +432,6 @@ void ShaderObject::load_assets()
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), terrain_array_textures.image->get_format(), &filter, &mipmap_mode);
 
 	// Setup a repeating sampler for the terrain texture layers
-	vkDestroySampler(get_device().get_handle(), terrain_array_textures.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
 	sampler_create_info.magFilter    = filter;
 	sampler_create_info.minFilter    = filter;
