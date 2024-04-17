@@ -380,7 +380,9 @@ void MSAASample::update_for_scene_and_postprocessing(bool msaa_enabled)
 	scene_pipeline->set_load_store(scene_load_store);
 }
 
-void MSAASample::use_multisampled_color(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t resolve_attachment)
+void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass,
+                                        std::vector<vkb::LoadStoreInfo>                               &load_store,
+                                        uint32_t                                                       resolve_attachment)
 {
 	// Render to multisampled color attachment
 	subpass->set_output_attachments({i_color_ms});
@@ -413,7 +415,9 @@ void MSAASample::use_multisampled_color(std::unique_ptr<vkb::Subpass> &subpass, 
 	}
 }
 
-void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t output_attachment)
+void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass,
+                                         std::vector<vkb::LoadStoreInfo>                               &load_store,
+                                         uint32_t                                                       output_attachment)
 {
 	// Render to a single-sampled attachment
 	subpass->set_output_attachments({output_attachment});
@@ -426,7 +430,8 @@ void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::Subpass> &subpass,
 	subpass->set_color_resolve_attachments({});
 }
 
-void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store)
+void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass,
+                                          std::vector<vkb::LoadStoreInfo>                               &load_store)
 {
 	if (depth_writeback_resolve_supported && resolve_depth_on_writeback)
 	{
@@ -455,7 +460,8 @@ void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::Subpass> &subpass
 	}
 }
 
-void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store)
+void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass,
+                                                 std::vector<vkb::LoadStoreInfo>                               &load_store)
 {
 	// Auxiliary single-sampled depth attachment is not used
 	load_store[i_depth_resolve].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "hpp_buffer_pool.h"
 #include <core/hpp_device.h>
 #include <hpp_semaphore_pool.h>
 #include <vulkan/vulkan_hash.hpp>

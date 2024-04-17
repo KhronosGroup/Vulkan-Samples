@@ -191,7 +191,7 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::RenderContext &context,
                                                                      vkb::ShaderSource &&vertex_source,
                                                                      vkb::ShaderSource &&fragment_source) :
-    vkb::Subpass(context, std::move(vertex_source), std::move(fragment_source))
+    vkb::rendering::Subpass<vkb::BindingType::C>(context, std::move(vertex_source), std::move(fragment_source))
 {
 	set_output_attachments({0});
 }

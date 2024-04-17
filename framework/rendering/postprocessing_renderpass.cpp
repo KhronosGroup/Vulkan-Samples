@@ -114,7 +114,7 @@ PostProcessingSubpass &PostProcessingSubpass::set_draw_func(DrawFunc &&new_func)
 void PostProcessingSubpass::prepare()
 {
 	// Build all shaders upfront
-	auto &resource_cache = render_context.get_device().get_resource_cache();
+	auto &resource_cache = get_render_context().get_device().get_resource_cache();
 	resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
 	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), fs_variant);
 }

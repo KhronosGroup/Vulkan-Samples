@@ -16,6 +16,7 @@
  */
 
 #include "core/hpp_command_buffer.h"
+#include "rendering/subpass.h"
 #include <core/hpp_command_pool.h>
 #include <core/hpp_device.h>
 #include <core/hpp_pipeline.h>
@@ -108,11 +109,11 @@ void HPPCommandBuffer::begin_query(const vkb::core::HPPQueryPool &query_pool, ui
 	get_handle().beginQuery(query_pool.get_handle(), query, flags);
 }
 
-void HPPCommandBuffer::begin_render_pass(const vkb::rendering::HPPRenderTarget                          &render_target,
-                                         const std::vector<vkb::common::HPPLoadStoreInfo>               &load_store_infos,
-                                         const std::vector<vk::ClearValue>                              &clear_values,
-                                         const std::vector<std::unique_ptr<vkb::rendering::HPPSubpass>> &subpasses,
-                                         vk::SubpassContents                                             contents)
+void HPPCommandBuffer::begin_render_pass(const vkb::rendering::HPPRenderTarget                                              &render_target,
+                                         const std::vector<vkb::common::HPPLoadStoreInfo>                                   &load_store_infos,
+                                         const std::vector<vk::ClearValue>                                                  &clear_values,
+                                         const std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::Cpp>>> &subpasses,
+                                         vk::SubpassContents                                                                 contents)
 {
 	// Reset state
 	pipeline_state.reset();
@@ -188,7 +189,7 @@ void HPPCommandBuffer::bind_input(const vkb::core::HPPImageView &image_view, uin
 	resource_binding_state.bind_input(image_view, set, binding, array_element);
 }
 
-void HPPCommandBuffer::bind_lighting(vkb::rendering::HPPLightingState &lighting_state, uint32_t set, uint32_t binding)
+void HPPCommandBuffer::bind_lighting(vkb::rendering::LightingState<vkb::BindingType::Cpp> &lighting_state, uint32_t set, uint32_t binding)
 {
 	bind_buffer(lighting_state.light_buffer.get_buffer(), lighting_state.light_buffer.get_offset(), lighting_state.light_buffer.get_size(), set, binding, 0);
 
@@ -323,9 +324,9 @@ void HPPCommandBuffer::execute_commands(std::vector<HPPCommandBuffer *> &seconda
 	get_handle().executeCommands(sec_cmd_buf_handles);
 }
 
-vkb::core::HPPRenderPass &HPPCommandBuffer::get_render_pass(const vkb::rendering::HPPRenderTarget                          &render_target,
-                                                            const std::vector<vkb::common::HPPLoadStoreInfo>               &load_store_infos,
-                                                            const std::vector<std::unique_ptr<vkb::rendering::HPPSubpass>> &subpasses)
+vkb::core::HPPRenderPass &HPPCommandBuffer::get_render_pass(const vkb::rendering::HPPRenderTarget                                              &render_target,
+                                                            const std::vector<vkb::common::HPPLoadStoreInfo>                                   &load_store_infos,
+                                                            const std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::Cpp>>> &subpasses)
 {
 	// Create render pass
 	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");

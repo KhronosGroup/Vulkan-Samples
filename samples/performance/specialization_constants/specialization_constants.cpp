@@ -64,7 +64,7 @@ bool SpecializationConstants::prepare(const vkb::ApplicationOptions &options)
 
 void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 {
-	auto &device = render_context.get_device();
+	auto &device = get_render_context().get_device();
 	for (auto &mesh : meshes)
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
@@ -73,7 +73,7 @@ void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 
 			// Same as Geometry except adds lighting definitions to sub mesh variants.
 			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(LIGHT_COUNT)});
-			variant.add_definitions(vkb::light_type_definitions);
+			variant.add_definitions(vkb::rendering::light_type_definitions);
 
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
 			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
@@ -111,7 +111,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specializat
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	// Create specialization constants pipeline
-	std::vector<std::unique_ptr<vkb::Subpass>> scene_subpasses{};
+	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
 	auto specialization_constants_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
@@ -128,7 +128,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_re
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	// Create base pipeline
-	std::vector<std::unique_ptr<vkb::Subpass>> scene_subpasses{};
+	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
 	auto standard_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
