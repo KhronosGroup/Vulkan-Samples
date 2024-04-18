@@ -82,7 +82,10 @@ ImageView::ImageView(ImageView &&other) :
 
 ImageView::~ImageView()
 {
-	vkDestroyImageView(get_device().get_handle(), get_handle(), nullptr);
+	if (has_device())
+	{
+		vkDestroyImageView(get_device().get_handle(), get_handle(), nullptr);
+	}
 }
 
 const Image &ImageView::get_image() const
