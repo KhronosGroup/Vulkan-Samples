@@ -138,7 +138,7 @@ void DescriptorBufferBasic::build_command_buffers()
 		// Global Matrices (set 0)
 		vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &buffer_index_ubo, &buffer_offset);
 
-		// Set and offset into descriptor for each model
+		// Set an offset into descriptor for each model
 		for (size_t j = 0; j < cubes.size(); j++)
 		{
 			// Uniform buffer (set 1)
@@ -304,6 +304,14 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 		VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
 		image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
+
+		// Note: we can just write combined image sampler descriptors back-to-back in the buffer here
+		// regardless of whether descriptor_buffer_properties.combinedImageSamplerDescriptorSingleArray is true or
+		// false because these aren't an array of descriptors, just individual descriptors in the same buffer.
+		// If these were actually an array (descriptor count > 1) then we would have to check the
+		// combinedImageSamplerDescriptorSingleArray property and separate the image descriptor part from the
+		// sampler descriptor part. We would place all the image descriptors first, followed by all the samplers.
+
 		vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_binding_descriptor.size + image_binding_descriptor.offset);
 	}
 
@@ -416,12 +424,6 @@ bool DescriptorBufferBasic::prepare(const vkb::ApplicationOptions &options)
 	device_properties.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext            = &descriptor_buffer_properties;
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
-
-	// This sample makes use of combined image samplers in a single array, which is an optional feature
-	if (!descriptor_buffer_properties.combinedImageSamplerDescriptorSingleArray)
-	{
-		throw std::runtime_error("This sample requires the combinedImageSamplerDescriptorSingleArray feature, which is not supported on the selected device");
-	}
 
 	/*
 	    End of extension specific functions
