@@ -47,6 +47,10 @@ SubgroupsOperations::SubgroupsOperations()
 	// Required by VK_KHR_spirv_1_4
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 
+	// add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+
+	// add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
+
 	// Targeting SPIR-V version
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 
@@ -185,6 +189,7 @@ void SubgroupsOperations::create_compute_command_buffer()
 	    vkb::initializers::command_buffer_allocate_info(compute.command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1u);
 
 	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &compute.command_buffer));
+	
 
 	// Semaphore for compute & graphics sync
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
@@ -193,6 +198,8 @@ void SubgroupsOperations::create_compute_command_buffer()
 
 void SubgroupsOperations::build_compute_command_buffer()
 {
+	VkImageMemoryBarrier img_barrier[5] {}; 
+
 	// record compute command
 	VkCommandBufferBeginInfo begin_info = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
@@ -203,13 +210,13 @@ void SubgroupsOperations::build_compute_command_buffer()
 		memory_barrier.buffer                = bit_reverse_buffer->get_handle();
 		memory_barrier.offset                = 0u;
 		memory_barrier.size                  = bit_reverse_buffer->get_size();
-		memory_barrier.srcAccessMask         = 0u;
+		memory_barrier.srcAccessMask         = VK_ACCESS_MEMORY_READ_BIT;
 		memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
 		memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
 		memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
-	}
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
+	}	
 
 	// butterfly texture
 	{
@@ -218,20 +225,21 @@ void SubgroupsOperations::build_compute_command_buffer()
 
 		vkCmdDispatch(compute.command_buffer, 1u, grid_size, 1u);
 	}
-	{
-		VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
-		img_barrier.image                           = butterfly_precomp.image;
-		img_barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		img_barrier.subresourceRange.baseMipLevel   = 0u;
-		img_barrier.subresourceRange.levelCount     = 1u;
-		img_barrier.subresourceRange.baseArrayLayer = 0u;
-		img_barrier.subresourceRange.layerCount     = 1u;
-		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
-		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+	{
+		img_barrier[0]            = vkb::initializers::image_memory_barrier();
+		img_barrier[0].image                           = butterfly_precomp.image;
+		img_barrier[0].subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		img_barrier[0].subresourceRange.baseMipLevel   = 0u;
+		img_barrier[0].subresourceRange.levelCount     = 1u;
+		img_barrier[0].subresourceRange.baseArrayLayer = 0u;
+		img_barrier[0].subresourceRange.layerCount     = 1u;
+		img_barrier[0].oldLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier[0].newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier[0].srcAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+		img_barrier[0].dstAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;;
+
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier[0]);
 	}
 	// initial tildes textures
 	{
@@ -247,39 +255,47 @@ void SubgroupsOperations::build_compute_command_buffer()
 		memory_barrier.offset                = 0u;
 		memory_barrier.size                  = fft_buffers.fft_input_random->get_size();
 		memory_barrier.srcAccessMask         = VK_ACCESS_SHADER_READ_BIT;
-		memory_barrier.dstAccessMask         = VK_ACCESS_TRANSFER_WRITE_BIT;
+		memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
+		// vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
+	}
+
+	{
+		VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
+		memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 1u, &memory_barrier, 0u, nullptr, 0u, nullptr);
 	}
 
 	// tildes textures
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, tildes.pipeline.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, tildes.pipeline.pipeline_layout, 0u, 1u, &tildes.descriptor_set, 0u, nullptr);
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, tildes.pipeline.pipeline_layout, 0u, 1u, &tildes.descriptor_set, 0u, nullptr); // tutaj
 
 		vkCmdDispatch(compute.command_buffer, grid_size / 8u, grid_size, 1u);
 	}
 
 	{
-		VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
-		img_barrier.image                           = fft_buffers.fft_input_htilde0->image;
-		img_barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		img_barrier.subresourceRange.baseMipLevel   = 0u;
-		img_barrier.subresourceRange.levelCount     = 1u;
-		img_barrier.subresourceRange.baseArrayLayer = 0u;
-		img_barrier.subresourceRange.layerCount     = 1u;
-		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
-		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
+		img_barrier[1]            = vkb::initializers::image_memory_barrier();
+		img_barrier[1].image                           = fft_buffers.fft_input_htilde0->image;
+		img_barrier[1].subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		img_barrier[1].subresourceRange.baseMipLevel   = 0u;
+		img_barrier[1].subresourceRange.levelCount     = 1u;
+		img_barrier[1].subresourceRange.baseArrayLayer = 0u;
+		img_barrier[1].subresourceRange.layerCount     = 1u;
+		img_barrier[1].oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+		img_barrier[1].newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier[1].srcAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+		img_barrier[1].dstAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		// vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
 
 	// fft horizontal; for Y axis
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_y, 0u, nullptr);
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_y, 0u, nullptr); // tutaj
 
 		for (uint32_t i = 0; i < log_2_N; ++i)
 		{
@@ -349,43 +365,60 @@ void SubgroupsOperations::build_compute_command_buffer()
 	}
 
 	{
-		VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
-		img_barrier.image                           = fft_buffers.fft_tilde_h_kt_dy->image;
-		img_barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		img_barrier.subresourceRange.baseMipLevel   = 0u;
-		img_barrier.subresourceRange.levelCount     = 1u;
-		img_barrier.subresourceRange.baseArrayLayer = 0u;
-		img_barrier.subresourceRange.layerCount     = 1u;
-		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
-		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
+		img_barrier[2]            = vkb::initializers::image_memory_barrier();
+		img_barrier[2].image                           = fft_buffers.fft_tilde_h_kt_dy->image;
+		img_barrier[2].subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		img_barrier[2].subresourceRange.baseMipLevel   = 0u;
+		img_barrier[2].subresourceRange.levelCount     = 1u;
+		img_barrier[2].subresourceRange.baseArrayLayer = 0u;
+		img_barrier[2].subresourceRange.layerCount     = 1u;
+		img_barrier[2].oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+		img_barrier[2].newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier[2].srcAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+		img_barrier[2].dstAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;;
 
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		// vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+	}
+
+	{
+		VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
+		memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 1u, &memory_barrier, 0u, nullptr, 0u, nullptr);
 	}
 
 	// fft inverse
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, grid_size / 32u, grid_size, 1u);
+		vkCmdDispatch(compute.command_buffer, grid_size / 32u, grid_size, 1u); // tutaj 2
 	}
 	{
-		VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
-		img_barrier.image                           = fft_buffers.fft_displacement->image;
-		img_barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		img_barrier.subresourceRange.baseMipLevel   = 0u;
-		img_barrier.subresourceRange.levelCount     = 1u;
-		img_barrier.subresourceRange.baseArrayLayer = 0u;
-		img_barrier.subresourceRange.layerCount     = 1u;
-		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-		img_barrier.srcAccessMask					= VK_ACCESS_SHADER_WRITE_BIT;
-		img_barrier.dstAccessMask					= VK_ACCESS_TRANSFER_WRITE_BIT;
+		img_barrier[3]            = vkb::initializers::image_memory_barrier();
+		img_barrier[3].image                           = fft_buffers.fft_displacement->image;
+		img_barrier[3].subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		img_barrier[3].subresourceRange.baseMipLevel   = 0u;
+		img_barrier[3].subresourceRange.levelCount     = 1u;
+		img_barrier[3].subresourceRange.baseArrayLayer = 0u;
+		img_barrier[3].subresourceRange.layerCount     = 1u;
+		img_barrier[3].oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+		img_barrier[3].newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier[3].srcAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+		img_barrier[3].dstAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		// vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
+
+	{
+		VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
+		memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 1u, &memory_barrier, 0u, nullptr, 0u, nullptr);
+	}
+
 	// fft normal map
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_normal_map.pipeline.pipeline);
@@ -394,22 +427,24 @@ void SubgroupsOperations::build_compute_command_buffer()
 	}
 	if (ocean.graphics_queue_family_index != compute.queue_family_index)
 	{
-		VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
-		img_barrier.image                           = fft_buffers.fft_displacement->image;
-		img_barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		img_barrier.subresourceRange.baseMipLevel   = 0u;
-		img_barrier.subresourceRange.levelCount     = 1u;
-		img_barrier.subresourceRange.baseArrayLayer = 0u;
-		img_barrier.subresourceRange.layerCount     = 1u;
-		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-		img_barrier.srcQueueFamilyIndex             = compute.queue_family_index;
-		img_barrier.dstQueueFamilyIndex             = ocean.graphics_queue_family_index;
-		img_barrier.srcAccessMask                   = VK_ACCESS_SHADER_WRITE_BIT;
-		img_barrier.dstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+		img_barrier[4]            = vkb::initializers::image_memory_barrier();
+		img_barrier[4].image                           = fft_buffers.fft_normal_map->image;
+		img_barrier[4].subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		img_barrier[4].subresourceRange.baseMipLevel   = 0u;
+		img_barrier[4].subresourceRange.levelCount     = 1u;
+		img_barrier[4].subresourceRange.baseArrayLayer = 0u;
+		img_barrier[4].subresourceRange.layerCount     = 1u;
+		img_barrier[4].oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+		img_barrier[4].newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+		img_barrier[4].srcQueueFamilyIndex             = compute.queue_family_index;
+		img_barrier[4].dstQueueFamilyIndex             = ocean.graphics_queue_family_index;
+		img_barrier[4].srcAccessMask                   = VK_ACCESS_SHADER_WRITE_BIT;
+		img_barrier[4].dstAccessMask                   = VK_ACCESS_SHADER_READ_BIT;;
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		 vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier[4]);
 	}
+
+	// vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, img_barrier);
 
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
 }
@@ -672,6 +707,8 @@ void SubgroupsOperations::create_semaphore()
 	// Semaphore for graphics queue
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
 	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &ocean.semaphore));
+
+
 }
 
 void SubgroupsOperations::setup_descriptor_pool()
@@ -987,10 +1024,17 @@ void SubgroupsOperations::build_command_buffers()
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		auto &cmd_buff                     = draw_cmd_buffers[i];
 
+		
+
 		VK_CHECK(vkBeginCommandBuffer(cmd_buff, &command_buffer_begin_info));
 
-		if (ocean.graphics_queue_family_index != compute.queue_family_index)
+
+		// if (ocean.graphics_queue_family_index != compute.queue_family_index)
 		{
+			VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
+			memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+			memory_barrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+
 			VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
 			img_barrier.image                           = fft_buffers.fft_normal_map->image;
 			img_barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -998,14 +1042,14 @@ void SubgroupsOperations::build_command_buffers()
 			img_barrier.subresourceRange.levelCount     = 1u;
 			img_barrier.subresourceRange.baseArrayLayer = 0u;
 			img_barrier.subresourceRange.layerCount     = 1u;
-			img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+			img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_GENERAL;
 			img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
 			img_barrier.srcQueueFamilyIndex             = compute.queue_family_index;
 			img_barrier.dstQueueFamilyIndex             = ocean.graphics_queue_family_index;
-			img_barrier.dstAccessMask                   = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			img_barrier.srcAccessMask                   = 0u;
+			img_barrier.srcAccessMask                   = VK_ACCESS_SHADER_WRITE_BIT;
+			img_barrier.dstAccessMask                   = VK_ACCESS_SHADER_READ_BIT;
 
-			vkCmdPipelineBarrier(cmd_buff, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+			vkCmdPipelineBarrier(cmd_buff, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0u, 1u, &memory_barrier, 0u, nullptr, 1u, &img_barrier);
 		}
 
 		vkCmdBeginRenderPass(cmd_buff, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -1048,7 +1092,7 @@ void SubgroupsOperations::build_command_buffers()
 			img_barrier.subresourceRange.levelCount     = 1u;
 			img_barrier.subresourceRange.baseArrayLayer = 0u;
 			img_barrier.subresourceRange.layerCount     = 1u;
-			img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+			img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_GENERAL;
 			img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
 			img_barrier.srcQueueFamilyIndex             = ocean.graphics_queue_family_index;
 			img_barrier.dstQueueFamilyIndex             = compute.queue_family_index;
@@ -1067,7 +1111,7 @@ void SubgroupsOperations::draw()
 	VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	// Submit compute commands
 	VkSubmitInfo compute_submit_info         = vkb::initializers::submit_info();
-	compute_submit_info.commandBufferCount   = 1u;
+	compute_submit_info.commandBufferCount   = 1;
 	compute_submit_info.pCommandBuffers      = &compute.command_buffer;
 	compute_submit_info.waitSemaphoreCount   = 1u;
 	compute_submit_info.pWaitSemaphores      = &ocean.semaphore;
@@ -1077,7 +1121,7 @@ void SubgroupsOperations::draw()
 
 	VK_CHECK(vkQueueSubmit(compute.queue, 1u, &compute_submit_info, VK_NULL_HANDLE));
 
-	VkPipelineStageFlags graphics_wait_stage_masks[]  = {VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	VkPipelineStageFlags graphics_wait_stage_masks[]  = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT};
 	VkSemaphore          graphics_wait_semaphores[]   = {compute.semaphore, semaphores.acquired_image_ready};
 	VkSemaphore          graphics_signal_semaphores[] = {ocean.semaphore, semaphores.render_complete};
 
@@ -1091,6 +1135,7 @@ void SubgroupsOperations::draw()
 	submit_info.pSignalSemaphores    = graphics_signal_semaphores;
 
 	VK_CHECK(vkQueueSubmit(queue, 1u, &submit_info, VK_NULL_HANDLE));
+	
 	ApiVulkanSample::submit_frame();
 }
 
@@ -1117,7 +1162,7 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 			                                            ImGuiColorEditFlags_NoSidePreview |
 			                                                ImGuiColorEditFlags_NoSmallPreview |
 			                                                ImGuiColorEditFlags_Float |
-			                                                ImGuiColorEditFlags_RGB);
+			                                                ImGuiColorEditFlags_HDR);
 			ui.light_color.r = colors[0];
 			ui.light_color.g = colors[1];
 			ui.light_color.b = colors[2];
@@ -1126,8 +1171,8 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 
 	if (drawer.header("Ocean settings"))
 	{
-		drawer.input_float("Amplitude", &ui.amplitude, 1.f, 3u);
-		drawer.input_float("Length", &ui.length, 10.f, 1u);
+		drawer.input_float("Amplitude", &ui.amplitude, 1.f, "%.3f");
+		drawer.input_float("Length", &ui.length, 10.f, "%.1f");
 		drawer.slider_float("Choppines", &ui.choppines, 0.0f, 1.0f);
 		drawer.slider_float("Displacement scale", &ui.displacement_scale, 0.0f, 1.0f);
 
@@ -1144,7 +1189,7 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 		                                            ImGuiColorEditFlags_NoSidePreview |
 		                                                ImGuiColorEditFlags_NoSmallPreview |
 		                                                ImGuiColorEditFlags_Float |
-		                                                ImGuiColorEditFlags_RGB);
+		                                                ImGuiColorEditFlags_HDR);
 		ui.ocean_color.r = colors[0];
 		ui.ocean_color.g = colors[1];
 		ui.ocean_color.b = colors[2];
@@ -1222,7 +1267,7 @@ void SubgroupsOperations::create_image_attachement(VkFormat format, uint32_t wid
 	sampler_info.anisotropyEnable    = VK_TRUE;
 	sampler_info.maxAnisotropy       = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 	sampler_info.compareEnable       = VK_FALSE;
-	sampler_info.compareOp           = VK_COMPARE_OP_ALWAYS;
+	sampler_info.compareOp           = VK_COMPARE_OP_NEVER;
 	sampler_info.borderColor         = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	sampler_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
