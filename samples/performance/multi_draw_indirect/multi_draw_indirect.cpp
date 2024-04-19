@@ -310,13 +310,11 @@ bool MultiDrawIndirect::prepare(const vkb::ApplicationOptions &options)
 
 void MultiDrawIndirect::load_scene()
 {
-	assert(has_device());
-	vkb::GLTFLoader   loader{get_device()};
 	const std::string scene_path = "scenes/vokselia/";
-	auto              scene      = loader.read_scene_from_file(scene_path + "vokselia.gltf");
+	ApiVulkanSample::load_scene(scene_path + "vokselia.gltf");
 
 	assert(has_scene());
-	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+	for (auto &&mesh : get_scene().get_components<vkb::sg::Mesh>())
 	{
 		const size_t texture_index = textures.size();
 		const auto  &short_name    = mesh->get_name();

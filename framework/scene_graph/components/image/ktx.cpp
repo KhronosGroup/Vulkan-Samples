@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
- * Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,10 +20,8 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include <ktx.h>
 #include <ktxvulkan.h>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
@@ -31,7 +29,7 @@ namespace sg
 {
 struct CallbackData final
 {
-	ktxTexture *         texture;
+	ktxTexture          *texture;
 	std::vector<Mipmap> *mipmaps;
 };
 
@@ -44,8 +42,8 @@ static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_le
                                                              int          height,
                                                              int          depth,
                                                              ktx_uint64_t face_lod_size,
-                                                             void *       pixels,
-                                                             void *       user_data)
+                                                             void        *pixels,
+                                                             void        *user_data)
 {
 	auto *callback_data = reinterpret_cast<CallbackData *>(user_data);
 	assert(static_cast<size_t>(mip_level) < callback_data->mipmaps->size() && "Not enough space in the mipmap vector");
@@ -75,9 +73,9 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType 
 
 	ktxTexture *texture;
 	auto        load_ktx_result = ktxTexture_CreateFromMemory(data_buffer,
-                                                       data_size,
-                                                       KTX_TEXTURE_CREATE_NO_FLAGS,
-                                                       &texture);
+	                                                          data_size,
+	                                                          KTX_TEXTURE_CREATE_NO_FLAGS,
+	                                                          &texture);
 	if (load_ktx_result != KTX_SUCCESS)
 	{
 		throw std::runtime_error{"Error loading KTX texture: " + name};
