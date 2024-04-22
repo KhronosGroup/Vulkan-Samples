@@ -24,10 +24,8 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 #include <glm/gtc/type_ptr.hpp>
-VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
 #include "common/utils.h"
@@ -399,7 +397,7 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
     {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
-GLTFLoader::GLTFLoader(Device const &device) :
+GLTFLoader::GLTFLoader(Device &device) :
     device{device}
 {
 }
@@ -620,9 +618,11 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count);
 
 	// Load textures
-	auto images          = scene.get_components<sg::Image>();
-	auto samplers        = scene.get_components<sg::Sampler>();
-	auto default_sampler = create_default_sampler();
+	auto images                  = scene.get_components<sg::Image>();
+	auto samplers                = scene.get_components<sg::Sampler>();
+	auto default_sampler_linear  = create_default_sampler(TINYGLTF_TEXTURE_FILTER_LINEAR);
+	auto default_sampler_nearest = create_default_sampler(TINYGLTF_TEXTURE_FILTER_NEAREST);
+	bool used_nearest_sampler    = false;
 
 	for (auto &gltf_texture : model.textures)
 	{
@@ -642,13 +642,26 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				gltf_texture.name = images[gltf_texture.source]->get_name();
 			}
 
-			texture->set_sampler(*default_sampler);
+			// Get the properties for the image format. We'll need to check whether a linear sampler is valid.
+			const VkFormatProperties fmtProps = device.get_gpu().get_format_properties(images[gltf_texture.source]->get_format());
+
+			if (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
+			{
+				texture->set_sampler(*default_sampler_linear);
+			}
+			else
+			{
+				texture->set_sampler(*default_sampler_nearest);
+				used_nearest_sampler = true;
+			}
 		}
 
 		scene.add_component(std::move(texture));
 	}
 
-	scene.add_component(std::move(default_sampler));
+	scene.add_component(std::move(default_sampler_linear));
+	if (used_nearest_sampler)
+		scene.add_component(std::move(default_sampler_nearest));
 
 	// Load materials
 	bool                            has_textures = scene.has_component<sg::Texture>();
@@ -1473,12 +1486,12 @@ std::unique_ptr<sg::PBRMaterial> GLTFLoader::create_default_material()
 	return parse_material(gltf_material);
 }
 
-std::unique_ptr<sg::Sampler> GLTFLoader::create_default_sampler()
+std::unique_ptr<sg::Sampler> GLTFLoader::create_default_sampler(int filter)
 {
 	tinygltf::Sampler gltf_sampler;
 
-	gltf_sampler.minFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
-	gltf_sampler.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
+	gltf_sampler.minFilter = filter;
+	gltf_sampler.magFilter = filter;
 
 	gltf_sampler.wrapS = TINYGLTF_TEXTURE_WRAP_REPEAT;
 	gltf_sampler.wrapT = TINYGLTF_TEXTURE_WRAP_REPEAT;

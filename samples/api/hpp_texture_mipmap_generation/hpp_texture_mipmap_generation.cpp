@@ -336,15 +336,19 @@ void HPPTextureMipMapGeneration::load_assets()
 	// Create samplers for different mip map demonstration cases
 
 	// Without mip mapping
-	samplers[0] = vkb::common::create_sampler(get_device().get_handle(), vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, 0.0f);
+	samplers[0] = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(), format,
+	                                          vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, 0.0f);
 
 	// With mip mapping
 	samplers[1] =
-	    vkb::common::create_sampler(get_device().get_handle(), vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, static_cast<float>(texture.mip_levels));
+	    vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(), format,
+	                                vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, static_cast<float>(texture.mip_levels));
 
 	// With mip mapping and anisotropic filtering (when supported)
 	samplers[2] = vkb::common::create_sampler(
+	    get_device().get_gpu().get_handle(),
 	    get_device().get_handle(),
+	    format,
 	    vk::Filter::eLinear,
 	    vk::SamplerAddressMode::eRepeat,
 	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,

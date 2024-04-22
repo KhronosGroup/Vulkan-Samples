@@ -580,11 +580,11 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		VK_CHECK(vkEndCommandBuffer(render_target._command_buffer));
 	};
 
-	// small_command_buffers are not controlled by ApiVulkanSample, that is we need to explicitly reset them here!
-	vkResetCommandPool(get_device().get_handle(), command_pool, 0);
-
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
+		// small_command_buffers are not controlled by ApiVulkanSample, that is we need to explicitly reset them here!
+		VK_CHECK(vkResetCommandBuffer(small_command_buffers[i], 0));
+
 		assert(subpass_extent.width > 0 && subpass_extent.width <= width && subpass_extent.height > 0 &&
 		       subpass_extent.height <= height);
 		RenderTarget small_target{
@@ -1128,6 +1128,7 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	auto command_pool_create = vkb::initializers::command_pool_create_info();
+	command_pool_create.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	vkCreateCommandPool(get_device().get_handle(), &command_pool_create, VK_NULL_HANDLE, &command_pool);
 
 	load_assets();

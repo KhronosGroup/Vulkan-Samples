@@ -50,7 +50,7 @@ struct DriverVersion
 	uint16_t patch;
 };
 
-class Device : public core::VulkanResource<VkDevice>
+class Device : public vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>
 {
   public:
 	/**
@@ -218,8 +218,6 @@ class Device : public core::VulkanResource<VkDevice>
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
 
 	std::unique_ptr<DebugUtils> debug_utils;
-
-	std::vector<VkExtensionProperties> device_extensions;
 
 	std::vector<const char *> enabled_extensions{};
 

@@ -131,13 +131,17 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	image_view = std::make_unique<vkb::core::ImageView>(*image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R16G16B16A16_SFLOAT,
 	                                                    0, 0, 1, 1);
 
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image->get_format(), &filter);
+
 	VkSamplerCreateInfo sampler_create_info = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter           = VK_FILTER_LINEAR;
+	sampler_create_info.magFilter           = filter;
+	sampler_create_info.minFilter           = filter;
 	sampler_create_info.maxLod              = VK_LOD_CLAMP_NONE;
 	sampler                                 = std::make_unique<vkb::core::Sampler>(device, sampler_create_info);
 

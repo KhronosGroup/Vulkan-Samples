@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, Holochip Inc
+- Copyright (c) 2023-2024, Holochip Inc
 - Copyright (c) 2023-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
@@ -56,6 +56,7 @@
 ** xref:samples/extensions/descriptor_buffer_basic/README.adoc[Descriptor buffer basic]
 ** xref:samples/extensions/descriptor_indexing/README.adoc[Descriptor indexing]
 ** xref:samples/extensions/dynamic_line_rasterization/README.adoc[Dynamic line rasterization]
+** xref:samples/extensions/dynamic_primitive_clipping/README.adoc[Dynamic primitive clipping]
 ** xref:samples/extensions/dynamic_rendering/README.adoc[Dynamic rendering]
 ** xref:samples/extensions/extended_dynamic_state2/README.adoc[Extended dynamic state2]
 ** xref:samples/extensions/fragment_shader_barycentric/README.adoc[Fragment shader barycentric]
@@ -78,6 +79,7 @@
 ** xref:samples/extensions/ray_queries/README.adoc[Ray queries]
 ** xref:samples/extensions/ray_tracing_reflection/README.adoc[Ray tracing reflection]
 ** xref:samples/extensions/shader_object/README.adoc[Shader Object]
+** xref:samples/extensions/shader_debugprintf/README.adoc[Shader Debug Printf]
 ** xref:samples/extensions/sparse_image/README.adoc[Sparse Image]
 ** xref:samples/extensions/synchronization_2/README.adoc[Synchronization 2]
 ** xref:samples/extensions/timeline_semaphore/README.adoc[Timeline semaphore]
@@ -90,6 +92,7 @@
 ** xref:samples/performance/command_buffer_usage/README.adoc[Command buffer usage]
 ** xref:samples/performance/constant_data/README.adoc[Constant data]
 ** xref:samples/performance/descriptor_management/README.adoc[Descriptor management]
+** xref:samples/performance/image_compression_control/README.adoc[Image compression control]
 ** xref:samples/performance/layout_transitions/README.adoc[Layout transitions]
 ** xref:samples/performance/msaa/README.adoc[MSAA]
 ** xref:samples/performance/multithreading_render_passes/README.adoc[Multithreading render passes]

@@ -94,3 +94,15 @@ foreach(ID ${PROJECT_ID_LIST})
         endif()
     endif()
 endforeach()
+
+if (IOS)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            "-framework UIKit"
+            "-framework Foundation"
+            "-framework CoreGraphics"
+            "-framework Metal"
+            "-framework QuartzCore"
+            "-framework IOKit"
+            "-framework IOSurface"
+            )
+endif ()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Thomas Atkinson
+/* Copyright (c) 2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,7 @@
 
 #include <core/util/error.hpp>
 
-VKBP_DISABLE_WARNINGS()
 #include <catch2/catch_test_macros.hpp>
-VKBP_ENABLE_WARNINGS()
 
 #include <core/util/strings.hpp>
 

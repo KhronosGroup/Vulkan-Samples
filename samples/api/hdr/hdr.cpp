@@ -403,11 +403,16 @@ void HDR::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &offscreen.framebuffer));
 
+		// Calculate valid filter and mipmap modes
+		VkFilter            filter      = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		vkb::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
+
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler.magFilter           = filter;
+		sampler.minFilter           = filter;
+		sampler.mipmapMode          = mipmap_mode;
 		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		sampler.addressModeV        = sampler.addressModeU;
 		sampler.addressModeW        = sampler.addressModeU;
@@ -499,11 +504,16 @@ void HDR::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
 
+		// Calculate valid filter and mipmap modes
+		VkFilter            filter      = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		vkb::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
+
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler.magFilter           = filter;
+		sampler.minFilter           = filter;
+		sampler.mipmapMode          = mipmap_mode;
 		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		sampler.addressModeV        = sampler.addressModeU;
 		sampler.addressModeW        = sampler.addressModeU;
@@ -922,7 +932,7 @@ void HDR::on_update_ui_overlay(vkb::Drawer &drawer)
 			update_uniform_buffers();
 			rebuild_command_buffers();
 		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, "%.3f"))
 		{
 			update_params();
 		}

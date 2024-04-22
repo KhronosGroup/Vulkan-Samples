@@ -75,7 +75,8 @@ MultiDrawIndirect::~MultiDrawIndirect()
 		vkDestroyPipeline(get_device().get_handle(), pipeline, VK_NULL_HANDLE);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, VK_NULL_HANDLE);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
-		vkDestroySampler(get_device().get_handle(), sampler, VK_NULL_HANDLE);
+		vkDestroySampler(get_device().get_handle(), sampler_linear, VK_NULL_HANDLE);
+		vkDestroySampler(get_device().get_handle(), sampler_nearest, VK_NULL_HANDLE);
 
 		vkDestroyPipeline(get_device().get_handle(), gpu_cull_pipeline, VK_NULL_HANDLE);
 		vkDestroyPipelineLayout(get_device().get_handle(), gpu_cull_pipeline_layout, VK_NULL_HANDLE);
@@ -241,7 +242,7 @@ void MultiDrawIndirect::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void MultiDrawIndirect::create_sampler()
+void MultiDrawIndirect::create_samplers()
 {
 	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
 	sampler_info.magFilter           = VK_FILTER_LINEAR;
@@ -255,7 +256,13 @@ void MultiDrawIndirect::create_sampler()
 	sampler_info.minLod              = 0.0f;
 	sampler_info.maxLod              = 1.0f;
 	sampler_info.borderColor         = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_info, nullptr, &sampler));
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_info, nullptr, &sampler_linear));
+
+	// Some formats don't support linear filtering, so create a nearest filtered sampler as a fallback
+	sampler_info.magFilter  = VK_FILTER_NEAREST;
+	sampler_info.minFilter  = VK_FILTER_NEAREST;
+	sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_info, nullptr, &sampler_nearest));
 }
 
 bool MultiDrawIndirect::prepare(const vkb::ApplicationOptions &options)
@@ -285,7 +292,7 @@ bool MultiDrawIndirect::prepare(const vkb::ApplicationOptions &options)
 		}
 	}
 
-	create_sampler();
+	create_samplers();
 	load_scene();
 	initialize_resources();
 	update_scene_uniform();
@@ -362,10 +369,15 @@ void MultiDrawIndirect::load_scene()
 
 		texture.image_view = std::make_unique<vkb::core::ImageView>(*texture.image, VK_IMAGE_VIEW_TYPE_2D);
 
+		// Get the properties for the image format. We'll need to check whether a linear sampler is valid.
+		const VkFormatProperties fmtProps = get_device().get_gpu().get_format_properties(image->get_format());
+
 		VkDescriptorImageInfo image_descriptor;
 		image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		image_descriptor.imageView   = texture.image_view->get_handle();
-		image_descriptor.sampler     = sampler;
+		image_descriptor.sampler     = (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) ?
+		                                   sampler_linear :
+		                                   sampler_nearest;
 		image_descriptors.push_back(image_descriptor);
 		textures.emplace_back(std::move(texture));
 

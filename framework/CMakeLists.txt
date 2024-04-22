@@ -67,7 +67,7 @@ set(FRAMEWORK_FILES
     resource_replay.cpp
     api_vulkan_sample.cpp
     timer.cpp
-    camera.cpp
+    camera_core.cpp
     hpp_api_vulkan_sample.cpp
     hpp_gui.cpp
     hpp_resource_cache.cpp)
@@ -271,14 +271,13 @@ set(CORE_FILES
     core/hpp_sampler.h
     core/hpp_shader_module.h
     core/hpp_swapchain.h
-    core/hpp_vulkan_resource.h
     core/vulkan_resource.h
     # Source Files
     core/instance.cpp
     core/physical_device.cpp
     core/device.cpp
     core/debug.cpp
-    core/image.cpp
+    core/image_core.cpp
     core/shader_module.cpp
     core/pipeline_layout.cpp
     core/pipeline.cpp
@@ -291,22 +290,21 @@ set(CORE_FILES
     core/command_buffer.cpp
     core/allocated.cpp
     core/buffer.cpp
-    core/image.cpp
+    core/image_core.cpp
     core/image_view.cpp
     core/sampled_image.cpp
     core/instance.cpp
-    core/sampler.cpp
+    core/sampler_core.cpp
     core/framebuffer.cpp
     core/render_pass.cpp
     core/query_pool.cpp
     core/acceleration_structure.cpp
-    core/vulkan_resource.cpp
     core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp
     core/hpp_debug.cpp
     core/hpp_device.cpp
-    core/hpp_image.cpp
+    core/hpp_image_core.cpp
     core/hpp_image_view.cpp
     core/hpp_instance.cpp
     core/hpp_physical_device.cpp
@@ -364,6 +362,14 @@ set(ANDROID_FILES
     platform/android/android_window.cpp
     stats/hwcpipe_stats_provider.cpp)
 
+set(IOS_FILES
+    # Header Files
+    platform/ios/ios_platform.h
+    platform/ios/ios_window.h
+    # Source Files
+	platform/ios/ios_platform.mm
+    platform/ios/ios_window.mm)
+
 set(WINDOWS_FILES
     # Header Files
     platform/windows/windows_platform.h
@@ -391,6 +397,7 @@ source_group("platform\\" FILES ${GLFW_FILES})
 source_group("platform\\parsers" FILES ${PARSER_FILES})
 source_group("platform\\windows" FILES ${WINDOWS_FILES})
 source_group("platform\\android" FILES ${ANDROID_FILES})
+source_group("platform\\ios" FILES ${IOS_FILES})
 source_group("platform\\unix" FILES ${UNIX_FILES})
 source_group("platform\\unix" FILES ${LINUX_D2D_FILES})
 source_group("core\\" FILES ${CORE_FILES})
@@ -430,14 +437,20 @@ else()
         list(APPEND PROJECT_FILES ${LINUX_D2D_FILES})
         message(STATUS "Unix d2d platform detected")
     else()
-        list(APPEND PROJECT_FILES ${GLFW_FILES})
-        if(WIN32)
-            list(APPEND PROJECT_FILES ${WINDOWS_FILES})
-            message(STATUS "Windows platform detected")
+        if(IOS)
+            enable_language(OBJCXX)
+            list(APPEND PROJECT_FILES ${IOS_FILES})
+            message(STATUS "iOS platform detected")
         else()
-            list(APPEND PROJECT_FILES ${UNIX_FILES})
-            message(STATUS "Unix platform detected")
-        endif()
+            list(APPEND PROJECT_FILES ${GLFW_FILES})
+            if(WIN32)
+                list(APPEND PROJECT_FILES ${WINDOWS_FILES})
+                message(STATUS "Windows platform detected")
+            else()
+                list(APPEND PROJECT_FILES ${UNIX_FILES})
+                message(STATUS "Unix platform detected")
+            endif()
+        endif ()
     endif()
 endif()
 
@@ -537,7 +550,9 @@ else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)
     else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
+        if (NOT IOS)
+            target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
+        endif ()
     endif()
 endif()
 

@@ -193,7 +193,7 @@ void HPPHDR::on_update_ui_overlay(vkb::Drawer &drawer)
 			update_uniform_buffers();
 			rebuild_command_buffers();
 		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, "%.3f"))
 		{
 			update_params();
 		}
@@ -593,7 +593,8 @@ void HPPHDR::prepare_offscreen_buffer()
 		    get_device().get_handle(), offscreen.render_pass, {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view}, offscreen.extent);
 
 		// Create sampler to sample from the color attachments
-		offscreen.sampler = vkb::common::create_sampler(get_device().get_handle(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
+		offscreen.sampler = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(), color_format,
+		                                                vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 
 	// Bloom separable filter pass
@@ -605,9 +606,9 @@ void HPPHDR::prepare_offscreen_buffer()
 		// Floating point color attachment
 		filter_pass.color       = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		filter_pass.render_pass = create_filter_render_pass();
-		filter_pass.framebuffer =
-		    vkb::common::create_framebuffer(get_device().get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
-		filter_pass.sampler = vkb::common::create_sampler(get_device().get_handle(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
+		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device().get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
+		filter_pass.sampler     = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(),
+		                                                      color_format, vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 }
 

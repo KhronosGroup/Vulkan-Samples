@@ -119,17 +119,25 @@ struct ImageBuilder : public allocated::Builder<ImageBuilder, VkImageCreateInfo>
 		return *this;
 	}
 
-	Image    build(const Device &device) const;
-	ImagePtr build_unique(const Device &device) const;
+	template <typename ExtensionType>
+	ImageBuilder &with_extension(ExtensionType &extension)
+	{
+		extension.pNext = create_info.pNext;
+
+		create_info.pNext = &extension;
+
+		return *this;
+	}
+
+	Image    build(Device &device) const;
+	ImagePtr build_unique(Device &device) const;
 };
 
 class ImageView;
 class Image : public allocated::Allocated<VkImage>
 {
-	VkImageCreateInfo create_info;
-
   public:
-	Image(Device const         &device,
+	Image(vkb::Device          &device,
 	      VkImage               handle,
 	      const VkExtent3D     &extent,
 	      VkFormat              format,
@@ -138,7 +146,7 @@ class Image : public allocated::Allocated<VkImage>
 
 	// [[deprecated("Use the ImageBuilder ctor instead")]]
 	Image(
-	    Device const         &device,
+	    vkb::Device          &device,
 	    const VkExtent3D     &extent,
 	    VkFormat              format,
 	    VkImageUsageFlags     image_usage,
@@ -151,7 +159,7 @@ class Image : public allocated::Allocated<VkImage>
 	    uint32_t              num_queue_families = 0,
 	    const uint32_t       *queue_families     = nullptr);
 
-	Image(Device const &device, ImageBuilder const &builder);
+	Image(Device &device, ImageBuilder const &builder);
 
 	Image(const Image &) = delete;
 
@@ -181,10 +189,15 @@ class Image : public allocated::Allocated<VkImage>
 
 	std::unordered_set<ImageView *> &get_views();
 
+	VkDeviceSize get_image_required_size() const;
+
+	VkImageCompressionPropertiesEXT get_applied_compression() const;
+
   private:
 	/// Image views referring to this image
-	std::unordered_set<ImageView *> views;
+	VkImageCreateInfo               create_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 	VkImageSubresource              subresource{};
+	std::unordered_set<ImageView *> views;
 };
 }        // namespace core
 }        // namespace vkb
