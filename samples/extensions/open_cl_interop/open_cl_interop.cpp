@@ -101,9 +101,10 @@ OpenCLInterop::OpenCLInterop()
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
 
-	// To use external memory and semaphores, we need to enable several extensions, both on the device as well as the instance
+	// To use external memory, semaphores and fences, we need to enable several extensions, both on the device as well as the instance
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_EXTENSION_NAME);
 	// Some of the extensions are platform dependent
 #ifdef _WIN32
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
