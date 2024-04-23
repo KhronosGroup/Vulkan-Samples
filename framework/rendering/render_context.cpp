@@ -31,6 +31,8 @@ RenderContext::RenderContext(Device                                &device,
                              const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list) :
     device{device}, window{window}, queue{device.get_suitable_graphics_queue()}, surface_extent{window.get_extent().width, window.get_extent().height}
 {
+	Swapchain::set_present_mode_priority_list(present_mode_priority_list);
+	Swapchain::set_surface_format_priority_list(surface_format_priority_list);
 	if (surface != VK_NULL_HANDLE)
 	{
 		VkSurfaceCapabilitiesKHR surface_properties;
@@ -40,11 +42,11 @@ RenderContext::RenderContext(Device                                &device,
 
 		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 		{
-			swapchain = std::make_unique<Swapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
+			swapchain = std::make_unique<Swapchain>(device, surface, present_mode, surface_extent);
 		}
 		else
 		{
-			swapchain = std::make_unique<Swapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list);
+			swapchain = std::make_unique<Swapchain>(device, surface, present_mode);
 		}
 	}
 }
@@ -175,7 +177,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 	recreate();
 }
 
-void RenderContext::update_swapchain(const VkImageCompressionFlagsEXT compression, const VkImageCompressionFixedRateFlagsEXT compression_fixed_rate)
+void RenderContext::update_swapchain(const VkImageCompressionFlagBitsEXT compression, const VkImageCompressionFixedRateFlagsEXT compression_fixed_rate)
 {
 	if (!swapchain)
 	{

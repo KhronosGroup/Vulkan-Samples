@@ -93,7 +93,7 @@ class ImageCompressionControlSample : public vkb::VulkanSample<vkb::BindingType:
 	 * Some also support fixed-rate compression, which is generally visually lossless.
 	 * This flag can also be used to disable all compression, which is not recommended.
 	 */
-	VkImageCompressionFlagsEXT compression_flag{VK_IMAGE_COMPRESSION_DEFAULT_EXT};
+	VkImageCompressionFlagBitsEXT compression_flag{VK_IMAGE_COMPRESSION_DEFAULT_EXT};
 
 	/**
 	 * @brief Possible compression schemes

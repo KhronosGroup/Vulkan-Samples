@@ -125,7 +125,7 @@ class RenderContext
 	 * @param compression The compression to use for swapchain images (default, fixed-rate, none)
 	 * @param compression_fixed_rate The rate to use, if compression is fixed-rate
 	 */
-	void update_swapchain(const VkImageCompressionFlagsEXT compression, const VkImageCompressionFixedRateFlagsEXT compression_fixed_rate);
+	void update_swapchain(const VkImageCompressionFlagBitsEXT compression, const VkImageCompressionFixedRateFlagsEXT compression_fixed_rate);
 
 	/**
 	 * @returns True if a valid swapchain exists in the RenderContext
@@ -244,8 +244,6 @@ class RenderContext
 	const Queue &queue;
 
 	std::unique_ptr<Swapchain> swapchain;
-
-	SwapchainProperties swapchain_properties;
 
 	std::vector<std::unique_ptr<RenderFrame>> frames;
 
