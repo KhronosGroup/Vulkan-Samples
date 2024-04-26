@@ -205,7 +205,7 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 === Dependencies
 
 * CMake v3.12+
-* C{pp}14 Compiler
+* C{pp}17 Compiler
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
 
