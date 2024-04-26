@@ -62,10 +62,9 @@ bool WaitIdle::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void WaitIdle::prepare_render_context()
+void WaitIdle::create_render_context()
 {
 	set_render_context(std::make_unique<CustomRenderContext>(get_device(), get_surface(), *window, wait_idle_enabled));
-	VulkanSample::prepare_render_context();
 }
 
 WaitIdle::CustomRenderContext::CustomRenderContext(vkb::Device &device, VkSurfaceKHR surface, const vkb::Window &window, int &wait_idle_enabled) :
