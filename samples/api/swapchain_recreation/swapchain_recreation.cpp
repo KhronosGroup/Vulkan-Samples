@@ -928,6 +928,10 @@ VkPhysicalDevice SwapchainRecreation::get_gpu_handle()
 
 VkDevice SwapchainRecreation::get_device_handle()
 {
+	if (!has_device())
+	{
+		return VK_NULL_HANDLE;
+	}
 	return get_device().get_handle();
 }
 
@@ -937,6 +941,12 @@ SwapchainRecreation::SwapchainRecreation()
 
 SwapchainRecreation::~SwapchainRecreation()
 {
+	if (get_device_handle() == VK_NULL_HANDLE)
+	{
+		// No device, VK_EXT_swapchain_maintenance1 may not be available. Resources will not be created.
+		return;
+	}
+
 	// Wait for device to be idle and clean up everything.
 	vkDeviceWaitIdle(get_device_handle());
 

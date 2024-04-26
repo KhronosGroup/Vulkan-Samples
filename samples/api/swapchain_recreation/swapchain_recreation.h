@@ -96,7 +96,7 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
   public:
 	SwapchainRecreation();
 
-	~SwapchainRecreation() override;
+	virtual ~SwapchainRecreation() override;
 
 	void create_render_context() override;
 
