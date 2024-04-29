@@ -62,6 +62,10 @@ A transcoded version of the API sample <<hlsl_shaders,HLSL Shaders>> that illust
 
 A transcoded version of the API sample <<instancing,Instancing>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
+=== xref:./{api_samplespath}hpp_oit_depth_peeling/README.adoc[HPP OIT Depth Peeling]
+
+A transcoded version of the API sample <<oit_depth_peeling,OIT Depth Peeling>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+
 === xref:./{api_samplespath}hpp_oit_linked_lists/README.adoc[HPP OIT Linked Lists]
 
 A transcoded version of the API sample <<oit_linked_lists,OIT Linked Lists>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
@@ -89,6 +93,14 @@ A transcoded version of the API sample <<timestamp_queries,Timestamp queries>> t
 === xref:./{api_samplespath}instancing/README.adoc[Instancing]
 
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
+
+=== xref:./{api_samplespath}oit_depth_peeling/README.adoc[OIT Depth Peeling]
+
+Implements an order-independent transparency (OIT) algorithm using depth peeling, resulting in pixel-perfect results, even with intersecting geometries.
+
+=== xref:./{api_samplespath}oit_linked_lists/README.adoc[OIT Linked Lists]
+
+Implements an order-independent transparency (OIT) algorithm using per-pixel ordered linked lists, resulting in pixel-perfect results, even with intersecting geometries.
 
 === xref:./{api_samplespath}separate_image_sampler/README.adoc[Separate image sampler]
 
