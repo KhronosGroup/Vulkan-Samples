@@ -27,7 +27,7 @@ NOTE: This is a transcoded version of the API sample https://github.com/KhronosG
 
 :pp: {plus}{plus}
 
-image::../oit_depth_peeling/images/sample.png[Sample]
+image::samples/api/oit_depth_peeling/images/sample.png[Sample]
 
 == Overview
 
