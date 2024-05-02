@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,27 +15,32 @@
  * limitations under the License.
  */
 
-#include "core/vulkan_resource.h"
+#include "sampler.h"
 
-#include "core/device.h"
+#include "device.h"
 
 namespace vkb
 {
 namespace core
 {
-namespace detail
+Sampler::Sampler(vkb::Device &d, const VkSamplerCreateInfo &info) :
+    VulkanResource{VK_NULL_HANDLE, &d}
 {
-void set_debug_name(const Device *device, VkObjectType object_type, uint64_t handle, const char *debug_name)
-{
-	if (!debug_name || *debug_name == '\0' || !device)
-	{
-		// Can't set name, or no point in setting an empty name
-		return;
-	}
-
-	device->get_debug_utils().set_debug_name(device->get_handle(), object_type, handle, debug_name);
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &info, nullptr, &get_handle()));
 }
 
-}        // namespace detail
+Sampler::Sampler(Sampler &&other) :
+    VulkanResource{std::move(other)}
+{
+}
+
+Sampler::~Sampler()
+{
+	if (has_device())
+	{
+		vkDestroySampler(get_device().get_handle(), get_handle(), nullptr);
+	}
+}
+
 }        // namespace core
 }        // namespace vkb

@@ -71,7 +71,7 @@ bool Drawer::radio_button(const char *caption, int32_t *selectedOption, const in
 	return res;
 }
 
-bool Drawer::input_float(const char *caption, float *value, float step, uint32_t precision)
+bool Drawer::input_float(const char *caption, float *value, float step, const char* precision)
 {
 	bool res = ImGui::InputFloat(caption, value, step, step * 10.0f, precision);
 	if (res)

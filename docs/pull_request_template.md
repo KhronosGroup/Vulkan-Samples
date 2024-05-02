@@ -24,6 +24,9 @@ Please ensure the following points are checked:
  - [ ] I have updated the header Copyright to reflect the current year (CI build will fail if Copyright is out of date)
  - [ ] My changes build on Windows, Linux, macOS and Android. Otherwise I have [documented any exceptions](https://github.com/KhronosGroup/Vulkan-Samples/tree/main/CONTRIBUTING.adoc#General-Requirements)
 
+ If this PR contains framework changes:
+ - [ ] I did a full batch run using the `batch` command line argument to make sure all samples still work properly
+
 ## Sample Checklist
 
 If your PR contains a new or modified sample, these further checks must be carried out *in addition* to the General Checklist:

@@ -261,3 +261,15 @@ Demonstrate how to use the blending related functions available in the VK_EXT_ex
 *Extensions:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_line_rasterization.html[`VK_EXT_line_rasterization`], https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
 
 Demonstrate methods for dynamically customizing the appearance of the rendered lines.
+
+=== xref:./{extension_samplespath}shader_debugprintf/README.adoc[Shader Debug Printf]
+
+*Extension*: https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_shader_non_semantic_info.html[`VK_KHR_shader_non_semantic_info`]
+
+Demonstrates how to use https://en.wikipedia.org/wiki/Printf[Printf] statements in a shader to output per-invocation values. This can help find issues with shaders in combination with graphics debugging tools.
+
+=== xref:./{extension_samplespath}dynamic_primitive_clipping/README.adoc[Dynamic depth clipping and primitive clipping]
+
+*Extension:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
+
+Rendering using primitive clipping and depth clipping configured by dynamic pipeline state.

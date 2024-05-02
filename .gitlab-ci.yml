@@ -55,7 +55,7 @@ ClangTidy:
     - docker
   script:
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Bbuild/clang
-    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-10 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
+    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-10 -isystem third_party -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
 
 Linux:
   stage: Build

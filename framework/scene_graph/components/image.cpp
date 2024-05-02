@@ -21,10 +21,8 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
-VKBP_ENABLE_WARNINGS()
 
 #include "common/utils.h"
 #include "filesystem/legacy.h"
@@ -198,7 +196,7 @@ const std::vector<std::vector<VkDeviceSize>> &Image::get_offsets() const
 	return offsets;
 }
 
-void Image::create_vk_image(Device const &device, VkImageViewType image_view_type, VkImageCreateFlags flags)
+void Image::create_vk_image(Device &device, VkImageViewType image_view_type, VkImageCreateFlags flags)
 {
 	assert(!vk_image && !vk_image_view && "Vulkan image already constructed");
 

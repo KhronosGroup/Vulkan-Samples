@@ -77,6 +77,7 @@ set(ORDER_LIST
     "ray_tracing_reflection"
     "timeline_semaphore"
     "shader_object"
+    "shader_debugprintf"
     "synchronization_2"
     "buffer_device_address"
     "descriptor_indexing"
@@ -89,6 +90,7 @@ set(ORDER_LIST
     "gshader_to_mshader"
     "color_write_enable"
     "sparse_image"
+    "dynamic_primitive_clipping"
 
     #Performance Samples
     "swapchain_images"

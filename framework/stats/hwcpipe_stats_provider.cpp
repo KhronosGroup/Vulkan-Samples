@@ -138,12 +138,17 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 		requested_stats.erase(iter.first);
 	}
 
+	requested_stats_count = requested_stats.size();
+
 	sampler = std::make_unique<hwcpipe::sampler<>>(config);
 
-	ec = sampler->start_sampling();
-	if (ec)
+	if (requested_stats_count > 0)
 	{
-		LOGE("HWCPipe: {}", ec.message());
+		ec = sampler->start_sampling();
+		if (ec)
+		{
+			LOGE("HWCPipe: {}", ec.message());
+		}
 	}
 }
 
@@ -151,10 +156,13 @@ HWCPipeStatsProvider::~HWCPipeStatsProvider()
 {
 	std::error_code ec;
 
-	ec = sampler->stop_sampling();
-	if (ec)
+	if (requested_stats_count > 0)
 	{
-		LOGE("HWCPipe: {}", ec.message());
+		ec = sampler->stop_sampling();
+		if (ec)
+		{
+			LOGE("HWCPipe: {}", ec.message());
+		}
 	}
 }
 
@@ -195,6 +203,11 @@ static double get_gpu_counter_value(const hwcpipe::counter_sample &sample)
 StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 {
 	Counters res;
+
+	if (requested_stats_count < 1)
+	{
+		return res;
+	}
 
 	std::error_code ec;
 
