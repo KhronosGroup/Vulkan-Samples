@@ -406,4 +406,8 @@ class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 	} touch_pos;
 	bool   touch_down  = false;
 	double touch_timer = 0.0;
+
+	uint32_t frame_count      = 0;
+	float    accumulated_time = 0.0f;
+	uint32_t fps              = 1;        // to prevent division by zero on first frame
 };
