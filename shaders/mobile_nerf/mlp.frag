@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -196,8 +196,26 @@ vec3 evaluateNetwork(  vec4 f0,  vec4 f1,  vec4 viewdir) {
       }
 
 
+//////////////////////////////////////////////////////////////
+// MLP was trained with gamma-corrected values              //
+// convert to linear so sRGB conversion isn't applied twice //
+//////////////////////////////////////////////////////////////
 
+float Convert_sRGB_ToLinear(float value)
+{
+    return value <= 0.04045
+        ? value / 12.92
+        : pow((value + 0.055) / 1.055, 2.4);
+}
 
+vec3 Convert_sRGB_ToLinear(vec3 value) 
+{
+    return vec3(Convert_sRGB_ToLinear(value.x), Convert_sRGB_ToLinear(value.y), Convert_sRGB_ToLinear(value.z));
+}
+
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
 
 void main(void)
 {
@@ -214,7 +232,7 @@ void main(void)
 	
     // Original
 
-    o_color.rgb = evaluateNetwork(feature_0,feature_1,rayDirection);
+    o_color.rgb = Convert_sRGB_ToLinear(evaluateNetwork(feature_0,feature_1,rayDirection));
     //o_color.rgb = feature_0.rgb;
     o_color.a = 1.0;
 	
