@@ -62,11 +62,11 @@ void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &
 
 	if (extended_dynamic_state_3_features.extendedDynamicState3RasterizationSamples)
 	{
-		VkPhysicalDeviceExtendedDynamicState3FeaturesEXT requested_feature = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT};
-		requested_feature.extendedDynamicState3RasterizationSamples        = VK_TRUE;
+		VkPhysicalDeviceExtendedDynamicState3FeaturesEXT requested_feature                                                                                        = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT};
+		requested_feature.extendedDynamicState3RasterizationSamples                                                                                               = VK_TRUE;
 		gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT) = requested_feature;
 	}
-	
+
 	// Dynamic Rendering
 	auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
 	requested_dynamic_rendering.dynamicRendering = VK_TRUE;
@@ -244,21 +244,10 @@ void DynamicMultisampleRasterization::build_command_buffers()
 		{
 			attachments[0].imageView = swapchain_buffers[i].view;
 		}
-
-		VkMultisampledRenderToSingleSampledInfoEXT multisampled_render;
-		if (sample_count != VK_SAMPLE_COUNT_1_BIT)
-		{
-			multisampled_render.multisampledRenderToSingleSampledEnable = VK_TRUE;
-			multisampled_render.sType                                   = VK_STRUCTURE_TYPE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_INFO_EXT;
-			multisampled_render.rasterizationSamples                    = sample_count;
-			multisampled_render.pNext                                   = nullptr;
-		}
-
 		auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
 		auto render_info             = vkb::initializers::rendering_info(render_area, 1, &attachments[0]);
 		render_info.layerCount       = 1;
 		render_info.pDepthAttachment = &attachments[1];
-		render_info.pNext            = (sample_count != VK_SAMPLE_COUNT_1_BIT) ? &multisampled_render : VK_NULL_HANDLE;
 
 		vkb::image_layout_transition(draw_cmd_buffers[i],
 		                             swapchain_buffers[i].image,
