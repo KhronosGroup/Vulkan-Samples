@@ -257,7 +257,7 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModelGp
 
 	// Create a buffer to hold the acceleration structure
 	AccelerationStructure blas;
-	blas.buffer = std::make_unique<vkb::core::Buffer>(get_device(), acceleration_structure_build_sizes_info.accelerationStructureSize, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR, VMA_MEMORY_USAGE_GPU_ONLY);
+	blas.buffer = std::make_unique<vkb::core::Buffer>(get_device(), acceleration_structure_build_sizes_info.accelerationStructureSize, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Create the acceleration structure
 	VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR};
@@ -348,7 +348,7 @@ void RaytracingReflection::create_top_level_acceleration_structure(std::vector<V
 	top_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
 	    get_device(),
 	    acceleration_structure_build_sizes_info.accelerationStructureSize,
-	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Create the acceleration structure

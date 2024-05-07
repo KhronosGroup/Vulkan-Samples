@@ -101,19 +101,23 @@ OpenCLInterop::OpenCLInterop()
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
 
-	// To use external memory and semaphores, we need to enable several extensions, both on the device as well as the instance
+	// To use external memory, semaphores and fences, we need to enable several extensions, both on the device as well as the instance
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_EXTENSION_NAME);
 	// Some of the extensions are platform dependent
 #ifdef _WIN32
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME);
 #else
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_FD_EXTENSION_NAME);
 #endif
 	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME);
 }
 
 OpenCLInterop::~OpenCLInterop()
@@ -628,9 +632,9 @@ void OpenCLInterop::prepare_shared_image()
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
 	mem_properties.push_back((cl_mem_properties) fd);
 #endif
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_KHR);
 	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_END_KHR);
 	mem_properties.push_back(0);
 
 	cl_image_format cl_img_fmt{};
@@ -690,9 +694,9 @@ void OpenCLInterop::prepare_sync_objects()
 	std::vector<cl_semaphore_properties_khr> semaphore_properties{
 	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
 	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_KHR,
 	    (cl_semaphore_properties_khr) opencl_objects.device_id,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_END_KHR,
 	};
 
 	// CL to VK semaphore

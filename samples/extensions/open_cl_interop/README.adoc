@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, Sascha Willems
+- Copyright (c) 2023-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -198,9 +198,9 @@ For this property list we need to get a shareable handle for the Vulkan memory b
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
 	mem_properties.push_back((cl_mem_properties) fd);
 #endif
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_KHR);
 	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_END_KHR);
 	mem_properties.push_back(0);
 ----
 
@@ -281,9 +281,9 @@ With the Vulkan part done, we again *switch over* to OpenCL, where we'll import 
 std::vector<cl_semaphore_properties_khr> semaphore_properties{
     (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
     (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
-    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_KHR,
     (cl_semaphore_properties_khr) opencl_objects.device_id,
-    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_END_KHR,
 };
 
 // CL to VK semaphore
