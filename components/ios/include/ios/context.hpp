@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,32 +15,25 @@
  * limitations under the License.
  */
 
-#include "sampler.h"
+#pragma once
 
-#include "device.h"
+#include <string>
+
+#include <core/platform/context.hpp>
 
 namespace vkb
 {
-namespace core
+/**
+ * @brief IOS platform context
+ *
+ * @warning Use in extreme circumstances with code guarded by the PLATFORM__UNIX define
+ */
+class IosPlatformContext final : public PlatformContext
 {
-Sampler::Sampler(Device const &d, const VkSamplerCreateInfo &info) :
-    VulkanResource{VK_NULL_HANDLE, &d}
-{
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &info, nullptr, &handle));
-}
-
-Sampler::Sampler(Sampler &&other) :
-    VulkanResource{std::move(other)}
-{
-}
-
-Sampler::~Sampler()
-{
-	if (handle != VK_NULL_HANDLE)
-	{
-		vkDestroySampler(get_device().get_handle(), handle, nullptr);
-	}
-}
-
-}        // namespace core
+  public:
+	IosPlatformContext(int argc, char **argv);
+	~IosPlatformContext() override = default;
+    void * view;
+    void* userPlatform;
+};
 }        // namespace vkb

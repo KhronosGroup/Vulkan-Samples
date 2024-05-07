@@ -23,11 +23,11 @@ class ShaderObject : public ApiVulkanSample
   public:
 	class Shader
 	{
-		VkShaderStageFlagBits stage;
-		VkShaderStageFlags    next_stage;
+		VkShaderStageFlagBits stage{};
+		VkShaderStageFlags    next_stage{};
 		VkShaderEXT           shader      = VK_NULL_HANDLE;
 		std::string           shader_name = "shader";
-		VkShaderCreateInfoEXT vk_shader_create_info;
+		VkShaderCreateInfoEXT vk_shader_create_info{};
 		std::vector<uint32_t> spirv;
 
 	  public:

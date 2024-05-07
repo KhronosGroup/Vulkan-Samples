@@ -441,7 +441,16 @@ void ApiVulkanSample::update_overlay(float delta_time, const std::function<void(
 {
 	if (has_gui())
 	{
-		get_gui().show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() {
+		frame_count++;
+		accumulated_time += delta_time;
+		if (0.5f < accumulated_time)
+		{
+			fps              = static_cast<uint32_t>(frame_count / accumulated_time);
+			frame_count      = 0;
+			accumulated_time = 0.0f;
+		}
+
+		get_gui().show_simple_window(get_name(), fps, [this, additional_ui]() {
 			on_update_ui_overlay(get_gui().get_drawer());
 			additional_ui();
 		});
