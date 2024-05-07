@@ -486,7 +486,10 @@ RenderPass::RenderPass(RenderPass &&other) :
 RenderPass::~RenderPass()
 {
 	// Destroy render pass
-	vkDestroyRenderPass(get_device().get_handle(), get_handle(), nullptr);
+	if (has_device())
+	{
+		vkDestroyRenderPass(get_device().get_handle(), get_handle(), nullptr);
+	}
 }
 
 const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
