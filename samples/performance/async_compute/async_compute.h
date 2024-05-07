@@ -100,7 +100,7 @@ class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 		vkb::sg::Camera            &shadow_camera;
 	};
 
-	struct CompositeSubpass : vkb::rendering::Subpass<vkb::BindingType::C>
+	struct CompositeSubpass : vkb::rendering::SubpassC
 	{
 		CompositeSubpass(vkb::RenderContext &render_context,
 		                 vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);

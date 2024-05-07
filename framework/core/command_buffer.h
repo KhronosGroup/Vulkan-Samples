@@ -47,8 +47,10 @@ namespace rendering
 {
 template <vkb::BindingType bindingType>
 struct LightingState;
+using LightingStateC = LightingState<vkb::BindingType::C>;
 template <vkb::BindingType bindingType>
 class Subpass;
+using SubpassC = Subpass<vkb::BindingType::C>;
 }        // namespace rendering
 
 /**
@@ -119,11 +121,11 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 
 	void clear(VkClearAttachment info, VkClearRect rect);
 
-	void begin_render_pass(const RenderTarget                                                               &render_target,
-	                       const std::vector<LoadStoreInfo>                                                 &load_store_infos,
-	                       const std::vector<VkClearValue>                                                  &clear_values,
-	                       const std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> &subpasses,
-	                       VkSubpassContents                                                                 contents = VK_SUBPASS_CONTENTS_INLINE);
+	void begin_render_pass(const RenderTarget                                           &render_target,
+	                       const std::vector<LoadStoreInfo>                             &load_store_infos,
+	                       const std::vector<VkClearValue>                              &clear_values,
+	                       const std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &subpasses,
+	                       VkSubpassContents                                             contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	void begin_render_pass(const RenderTarget &render_target, const RenderPass &render_pass, const Framebuffer &framebuffer, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
@@ -176,7 +178,7 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 
 	void bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type);
 
-	void bind_lighting(vkb::rendering::LightingState<vkb::BindingType::C> &lighting_state, uint32_t set, uint32_t binding);
+	void bind_lighting(vkb::rendering::LightingStateC &lighting_state, uint32_t set, uint32_t binding);
 
 	void set_viewport_state(const ViewportState &state_info);
 
@@ -248,9 +250,9 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 	 */
 	VkResult reset(ResetMode reset_mode);
 
-	RenderPass &get_render_pass(const vkb::RenderTarget                                                          &render_target,
-	                            const std::vector<LoadStoreInfo>                                                 &load_store_infos,
-	                            const std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> &subpasses);
+	RenderPass &get_render_pass(const vkb::RenderTarget                                      &render_target,
+	                            const std::vector<LoadStoreInfo>                             &load_store_infos,
+	                            const std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &subpasses);
 
 	const VkCommandBufferLevel level;
 

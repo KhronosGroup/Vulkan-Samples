@@ -787,7 +787,7 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::CommandBuffer &comma
 }
 
 AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader) :
-    vkb::rendering::Subpass<vkb::BindingType::C>(render_context, std::move(vertex_shader), std::move(fragment_shader))
+    vkb::rendering::SubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader))
 {
 }
 

@@ -30,8 +30,10 @@ namespace rendering
 {
 template <vkb::BindingType bindingType>
 struct LightingState;
+using LightingStateCpp = LightingState<vkb::BindingType::Cpp>;
 template <vkb::BindingType bindingType>
 class Subpass;
+using SubpassCpp = Subpass<vkb::BindingType::Cpp>;
 }        // namespace rendering
 
 namespace core
@@ -91,11 +93,11 @@ class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp,
 	vk::Result begin(vk::CommandBufferUsageFlags flags, const vkb::core::HPPRenderPass *render_pass, const vkb::core::HPPFramebuffer *framebuffer, uint32_t subpass_index);
 
 	void                      begin_query(const vkb::core::HPPQueryPool &query_pool, uint32_t query, vk::QueryControlFlags flags);
-	void                      begin_render_pass(const vkb::rendering::HPPRenderTarget                                              &render_target,
-	                                            const std::vector<vkb::common::HPPLoadStoreInfo>                                   &load_store_infos,
-	                                            const std::vector<vk::ClearValue>                                                  &clear_values,
-	                                            const std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::Cpp>>> &subpasses,
-	                                            vk::SubpassContents                                                                 contents = vk::SubpassContents::eInline);
+	void                      begin_render_pass(const vkb::rendering::HPPRenderTarget                          &render_target,
+	                                            const std::vector<vkb::common::HPPLoadStoreInfo>               &load_store_infos,
+	                                            const std::vector<vk::ClearValue>                              &clear_values,
+	                                            const std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> &subpasses,
+	                                            vk::SubpassContents                                             contents = vk::SubpassContents::eInline);
 	void                      begin_render_pass(const vkb::rendering::HPPRenderTarget &render_target,
 	                                            const vkb::core::HPPRenderPass        &render_pass,
 	                                            const vkb::core::HPPFramebuffer       &framebuffer,
@@ -106,7 +108,7 @@ class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp,
 	void                      bind_image(const vkb::core::HPPImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 	void                      bind_index_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::IndexType index_type);
 	void                      bind_input(const vkb::core::HPPImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
-	void                      bind_lighting(vkb::rendering::LightingState<vkb::BindingType::Cpp> &lighting_state, uint32_t set, uint32_t binding);
+	void                      bind_lighting(vkb::rendering::LightingStateCpp &lighting_state, uint32_t set, uint32_t binding);
 	void                      bind_pipeline_layout(vkb::core::HPPPipelineLayout &pipeline_layout);
 	void                      bind_vertex_buffers(uint32_t                                                               first_binding,
 	                                              const std::vector<std::reference_wrapper<const vkb::core::HPPBuffer>> &buffers,
@@ -134,9 +136,9 @@ class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp,
 	void                      end_render_pass();
 	void                      execute_commands(HPPCommandBuffer &secondary_command_buffer);
 	void                      execute_commands(std::vector<HPPCommandBuffer *> &secondary_command_buffers);
-	vkb::core::HPPRenderPass &get_render_pass(const vkb::rendering::HPPRenderTarget                                              &render_target,
-	                                          const std::vector<vkb::common::HPPLoadStoreInfo>                                   &load_store_infos,
-	                                          const std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::Cpp>>> &subpasses);
+	vkb::core::HPPRenderPass &get_render_pass(const vkb::rendering::HPPRenderTarget                          &render_target,
+	                                          const std::vector<vkb::common::HPPLoadStoreInfo>               &load_store_infos,
+	                                          const std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> &subpasses);
 	void                      image_memory_barrier(const vkb::core::HPPImageView &image_view, const vkb::common::HPPImageMemoryBarrier &memory_barrier) const;
 	void                      next_subpass();
 

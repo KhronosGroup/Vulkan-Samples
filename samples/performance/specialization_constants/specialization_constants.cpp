@@ -111,7 +111,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specializat
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	// Create specialization constants pipeline
-	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> scene_subpasses{};
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
 	auto specialization_constants_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
@@ -128,7 +128,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_re
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	// Create base pipeline
-	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> scene_subpasses{};
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
 	auto standard_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));

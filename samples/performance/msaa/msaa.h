@@ -166,18 +166,18 @@ class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 	 *        renderpass since it only renders a texture on single full-screen
 	 *        triangle and MSAA only works on primitive edges
 	 */
-	void use_multisampled_color(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass,
-	                            std::vector<vkb::LoadStoreInfo>                               &load_store,
-	                            uint32_t                                                       resolve_attachment);
+	void use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
+	                            std::vector<vkb::LoadStoreInfo>           &load_store,
+	                            uint32_t                                   resolve_attachment);
 
 	/**
 	 * @brief Sets the single-sampled output_attachment as the output attachment,
 	 *        disables color resolve and updates the load/store operations of
 	 *        color attachments
 	 */
-	void use_singlesampled_color(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass,
-	                             std::vector<vkb::LoadStoreInfo>                               &load_store,
-	                             uint32_t                                                       output_attachment);
+	void use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
+	                             std::vector<vkb::LoadStoreInfo>           &load_store,
+	                             uint32_t                                   output_attachment);
 
 	/**
 	 * @brief Submits a transfer operation to resolve the multisampled color attachment
@@ -207,13 +207,13 @@ class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 	 *        attachment if depth resolve on writeback is supported
 	 *        Update the load/store operations of the depth attachments
 	 */
-	void store_multisampled_depth(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass, std::vector<vkb::LoadStoreInfo> &load_store);
+	void store_multisampled_depth(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store);
 
 	/**
 	 * @brief Disables depth writeback resolve and updates the load/store operations of
 	 *        the depth resolve attachment
 	 */
-	void disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &subpass, std::vector<vkb::LoadStoreInfo> &load_store);
+	void disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store);
 
 	/**
 	 * @brief Selects the depth resolve mode (e.g. min or max sample values)

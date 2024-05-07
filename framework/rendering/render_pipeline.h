@@ -39,7 +39,7 @@ namespace vkb
 class RenderPipeline
 {
   public:
-	RenderPipeline(std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> &&subpasses = {});
+	RenderPipeline(std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &&subpasses = {});
 
 	RenderPipeline(const RenderPipeline &) = delete;
 
@@ -80,9 +80,9 @@ class RenderPipeline
 	 * @brief Appends a subpass to the pipeline
 	 * @param subpass Subpass to append
 	 */
-	void add_subpass(std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &&subpass);
+	void add_subpass(std::unique_ptr<vkb::rendering::SubpassC> &&subpass);
 
-	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> &get_subpasses();
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &get_subpasses();
 
 	/**
 	 * @brief Record draw commands for each Subpass
@@ -93,10 +93,10 @@ class RenderPipeline
 	 * @return Subpass currently being recorded, or the first one
 	 *         if drawing has not started
 	 */
-	std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>> &get_active_subpass();
+	std::unique_ptr<vkb::rendering::SubpassC> &get_active_subpass();
 
   private:
-	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> subpasses;
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> subpasses;
 
 	/// Default to two load store
 	std::vector<LoadStoreInfo> load_store = std::vector<LoadStoreInfo>(2);

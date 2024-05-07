@@ -300,7 +300,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	lighting_subpass->set_input_attachments({1, 2, 3});
 
 	// Create subpasses pipeline
-	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> subpasses{};
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> subpasses{};
 	subpasses.push_back(std::move(scene_subpass));
 	subpasses.push_back(std::move(lighting_subpass));
 
@@ -324,7 +324,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	scene_subpass->set_output_attachments({1, 2, 3});
 
 	// Create geometry pipeline
-	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> scene_subpasses{};
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
 	auto geometry_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
@@ -346,7 +346,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	// Inputs are depth, albedo, and normal from the geometry subpass
 	lighting_subpass->set_input_attachments({1, 2, 3});
 	// Create lighting pipeline
-	std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> lighting_subpasses{};
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> lighting_subpasses{};
 	lighting_subpasses.push_back(std::move(lighting_subpass));
 
 	auto lighting_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(lighting_subpasses));

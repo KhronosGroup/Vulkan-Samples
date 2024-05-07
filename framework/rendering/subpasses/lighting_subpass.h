@@ -55,7 +55,7 @@ struct alignas(16) DeferredLights
 /**
  * @brief Lighting pass of Deferred Rendering
  */
-class LightingSubpass : public vkb::rendering::Subpass<vkb::BindingType::C>
+class LightingSubpass : public vkb::rendering::SubpassC
 {
   public:
 	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);

@@ -232,7 +232,7 @@ class ConstantData : public vkb::VulkanSample<vkb::BindingType::C>
 			subpass->struct_size = 256;
 		}
 
-		std::vector<std::unique_ptr<vkb::rendering::Subpass<vkb::BindingType::C>>> subpasses{};
+		std::vector<std::unique_ptr<vkb::rendering::SubpassC>> subpasses{};
 		subpasses.push_back(std::move(subpass));
 		return std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
 	}

@@ -61,6 +61,9 @@ struct LightingState
 	BufferAllocationType light_buffer;
 };
 
+using LightingStateC   = LightingState<vkb::BindingType::C>;
+using LightingStateCpp = LightingState<vkb::BindingType::Cpp>;
+
 /**
  * @brief Calculates the vulkan style projection matrix
  * @param proj The projection matrix
@@ -176,7 +179,7 @@ class Subpass
 	uint32_t depth_stencil_resolve_attachment{VK_ATTACHMENT_UNUSED};
 
 	/// The structure containing all the requested render-ready lights for the scene
-	LightingState<vkb::BindingType::Cpp> lighting_state{};
+	LightingStateCpp lighting_state{};
 
 	ShaderSource fragment_shader;
 
@@ -194,6 +197,9 @@ class Subpass
 	vk::SampleCountFlagBits sample_count{vk::SampleCountFlagBits::e1};
 	ShaderSource            vertex_shader;
 };
+
+using SubpassC   = Subpass<vkb::BindingType::C>;
+using SubpassCpp = Subpass<vkb::BindingType::Cpp>;
 }        // namespace rendering
 }        // namespace vkb
 
