@@ -1,0 +1,92 @@
+name: "build Antora documentation"
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can
+      # access it
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+
+      - name: "Checkout Vulkan-Site"
+        uses: actions/checkout@v3
+        with:
+#          repository: KhronosGroup/Vulkan-Site
+          repository: gpx1000/Vulkan-Site
+          path: ./Vulkan-Site
+#          ref: main
+          ref: parent-ci
+          submodules: recursive
+
+      - name: "setup npm"
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'latest'
+          cache: 'npm'
+          cache-dependency-path: ./Vulkan-Site/docs-site/package-lock.json
+
+      - name: "force clear the npm cache"
+        run: npm cache clean --force
+
+      - name: "run npm install for ui bundle"
+        working-directory: ./Vulkan-Site/antora-ui-khronos
+        run: npm install
+
+      - name: "run npm install for docs-site"
+        working-directory: ./Vulkan-Site/docs-site
+        run: npm install
+
+      - name: "run npm install for Vulkan-Docs"
+        working-directory: ./Vulkan-Site/Vulkan-Docs
+        run: npm install
+
+
+      - name: "ensure we have all dependencies for building/searching/highlighting"
+        run: |
+          sudo gem install rouge
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
+          sudo apt-get install -y asciidoctor
+          pip install lxml
+
+      - name: "build the ui bundle"
+        working-directory: ./Vulkan-Site/antora-ui-khronos
+        run: |
+          npx update-browserslist-db@latest
+          ./node_modules/gulp/bin/gulp.js --version
+          ./node_modules/gulp/bin/gulp.js bundle
+
+      - name: "copy ui-bundle.zip to vulkan-site"
+        run: cp ./Vulkan-Site/antora-ui-khronos/build/ui-bundle.zip docs-site/
+
+      - name: "prepare repos with make"
+        working-directory: ./Vulkan-Site/docs-site
+        run: make prepare_components
+
+      - name: "prepare samples"
+        run: cmake -H"." -B"build/unix" -DVKB_GENERATE_ANTORA_SITE=ON
+
+      - name: "build (npx) with stacktrace"
+        working-directory: ./Vulkan-Site/docs-site
+        run: |
+          npx antora antora-samples-playbook.yml --stacktrace
+          touch build/site/.nojekyll
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./Vulkan-Site/docs-site/build/site
