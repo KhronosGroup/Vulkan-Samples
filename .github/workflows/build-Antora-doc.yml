@@ -1,6 +1,7 @@
 name: "build Antora documentation"
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [ opened, synchronize, reopened ]
   push:
@@ -30,6 +31,13 @@ jobs:
 #          ref: main
           ref: parent-ci
           submodules: recursive
+
+      - name: "Checkout antora ui"
+        uses: actions/checkout@v3
+        with:
+          repository: KhronosGroup/antora-ui-khronos
+          path: ./Vulkan-Site/antora-ui-khronos
+          ref: main
 
       - name: "setup npm"
         uses: actions/setup-node@v3
