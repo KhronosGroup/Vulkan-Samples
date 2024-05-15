@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <hpp_vulkan_sample.h>
-
 #include <camera.h>
 #include <common/hpp_error.h>
 #include <hpp_gui.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
+
+#include "vulkan_sample.h"
 
 /**
  * @brief A swapchain buffer
@@ -60,7 +60,7 @@ struct HPPVertex
  *
  * See vkb::ApiVulkanSample for documentation
  */
-class HPPApiVulkanSample : public vkb::HPPVulkanSample
+class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 {
   public:
 	HPPApiVulkanSample() = default;
@@ -139,6 +139,15 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	std::vector<vk::Fence> wait_fences;
 
 	/**
+	 * @brief Creates a vulkan sampler
+	 * @param address_mode The samplers address mode
+	 * @param mipmaps_count The samplers mipmaps count
+	 * @param format The image format that will be sampled
+	 * @returns A valid vk::Sampler
+	 */
+	vk::Sampler create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count, vk::Format format);
+
+	/**
 	 * @brief Populates the swapchain_buffers vector with the image and imageviews
 	 */
 	void create_swapchain_buffers();
@@ -165,22 +174,27 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Loads in a ktx 2D texture
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
+	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eRepeat.
 	 */
-	HPPTexture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
+	HPPTexture
+	    load_texture(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type, vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat);
 
 	/**
 	 * @brief Loads in a ktx 2D texture array
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
+	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eClampToEdge.
 	 */
-	HPPTexture load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type);
+	HPPTexture load_texture_array(const std::string                                  &file,
+	                              vkb::scene_graph::components::HPPImage::ContentType content_type,
+	                              vk::SamplerAddressMode                              address_mode = vk::SamplerAddressMode::eClampToEdge);
 
 	/**
 	 * @brief Loads in a ktx 2D texture cubemap
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
 	 */
-	HPPTexture load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type);
+	HPPTexture load_texture_cubemap(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type);
 
 	/**
 	 * @brief Loads in a single model from a GLTF file
@@ -193,8 +207,9 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Records the necessary drawing commands to a command buffer
 	 * @param model The model to draw
 	 * @param command_buffer The command buffer to record to
+	 * @param instance_count The number of instances (default: 1)
 	 */
-	void draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer);
+	void draw_model(std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> &model, vk::CommandBuffer command_buffer, uint32_t instance_count = 1);
 
 	/**
 	 * @brief Synchronously execute a block code within a command buffer, then submit the command buffer and wait for completion.
@@ -222,6 +237,11 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 *        Called when the framebuffers need to be rebuilt
 	 */
 	virtual void build_command_buffers() = 0;
+
+	/**
+	 * @brief Rebuild the command buffers by first resetting the corresponding command pool and then building the command buffers.
+	 */
+	void rebuild_command_buffers();
 
 	/**
 	 * @brief Creates the fences for rendering
@@ -280,14 +300,16 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Load a SPIR-V shader
 	 * @param file The file location of the shader relative to the shaders folder
 	 * @param stage The shader stage
+	 * @param src_language The shader language
 	 */
-	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage);
+	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
 
 	/**
 	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
 	 */
-	void update_overlay(float delta_time);
+	void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
 
 	/**
 	 * @brief If the gui is enabled, then record the drawing commands to a command buffer
@@ -310,7 +332,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Called when the UI overlay is updating, can be used to add custom elements to the overlay
 	 * @param drawer The drawer from the gui to draw certain elements
 	 */
-	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer);
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
 
 	/**
 	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
@@ -334,15 +356,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
   public:
 	bool         prepared = false;
 	vk::Extent2D extent{1280, 720};
-
-	/** @brief Example settings that can be changed e.g. by command line arguments */
-	struct
-	{
-		/** @brief Set to true if fullscreen mode has been requested via command line */
-		bool fullscreen = false;
-		/** @brief Set to true if v-sync will be forced for the swapchain */
-		bool vsync = false;
-	} settings;
 
 	vk::ClearColorValue default_clear_color = std::array<float, 4>({{0.002f, 0.002f, 0.002f, 1.0f}});
 
@@ -379,12 +392,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	struct
 	{
-		glm::vec2 axis_left  = glm::vec2(0.0f);
-		glm::vec2 axis_right = glm::vec2(0.0f);
-	} game_pad_state;
-
-	struct
-	{
 		bool left   = false;
 		bool right  = false;
 		bool middle = false;
@@ -397,7 +404,10 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 		int32_t x;
 		int32_t y;
 	} touch_pos;
-	bool    touch_down    = false;
-	double  touch_timer   = 0.0;
-	int64_t last_tap_time = 0;
+	bool   touch_down  = false;
+	double touch_timer = 0.0;
+
+	uint32_t frame_count      = 0;
+	float    accumulated_time = 0.0f;
+	uint32_t fps              = 1;        // to prevent division by zero on first frame
 };

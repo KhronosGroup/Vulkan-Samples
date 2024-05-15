@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,7 +35,7 @@ struct alignas(16) ShadowUniform
  * This sample shows performance improvement when using multithreading with
  * multiple render passes and primary level command buffers.
  */
-class MultithreadingRenderPasses : public vkb::VulkanSample
+class MultithreadingRenderPasses : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	enum class MultithreadingMode
@@ -178,4 +178,4 @@ class MultithreadingRenderPasses : public vkb::VulkanSample
 	void draw_main_pass(vkb::CommandBuffer &command_buffer);
 };
 
-std::unique_ptr<vkb::VulkanSample> create_multithreading_render_passes();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multithreading_render_passes();

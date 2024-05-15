@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,9 +22,7 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include <glslang/Public/ShaderLang.h>
-VKBP_ENABLE_WARNINGS()
 
 #include "common/vk_common.h"
 #include "core/shader_module.h"
@@ -64,9 +62,9 @@ class GLSLCompiler
 	 */
 	bool compile_to_spirv(VkShaderStageFlagBits       stage,
 	                      const std::vector<uint8_t> &glsl_source,
-	                      const std::string &         entry_point,
-	                      const ShaderVariant &       shader_variant,
+	                      const std::string          &entry_point,
+	                      const ShaderVariant        &shader_variant,
 	                      std::vector<std::uint32_t> &spirv,
-	                      std::string &               info_log);
+	                      std::string                &info_log);
 };
 }        // namespace vkb

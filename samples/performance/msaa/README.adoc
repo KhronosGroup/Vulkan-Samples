@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2021-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,6 +17,11 @@
 -
 ////
 = MSAA (Multisample anti-aliasing)
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/msaa[Khronos Vulkan samples github repository].
+endif::[]
+
 
 Aliasing is the result of under-sampling a signal.
 In graphics this means computing the color of a pixel at a resolution that results in artifacts, commonly jaggies at model edges.
@@ -48,7 +53,7 @@ Irregular patterns achieve https://pdfs.semanticscholar.org/ebd9/ddb08c4244fc7df
 Note that MSAA has no effect for pixels within the primitive, where all samples store the same color value.
 
 MSAA is different from (and more efficient than) super-sampling anti-aliasing (SSAA) where the fragment shader is evaluated for each sample.
-This would help reduce aliasing within primitives, but usually xref:../../api/texture_mipmap_generation/README.adoc[mip-maps] mitigate this already.
+This would help reduce aliasing within primitives, but usually xref:samples/api/texture_mipmap_generation/README.adoc[mip-maps] mitigate this already.
 
 To enable MSAA, first query http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap32.html#VkPhysicalDeviceLimits[`vkPhysicalDeviceLimits`] to select a supported level of MSAA e.g.
 http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap32.html#VkSampleCountFlagBits[`VK_SAMPLE_COUNT_4_BIT`], and use this when creating the multisampled attachment, as well as when setting the http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap24.html#VkPipelineMultisampleStateCreateInfo[`rasterizationSamples`] member of http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap9.html#VkGraphicsPipelineCreateInfo[`pMultisampleState`] in the graphics pipeline.

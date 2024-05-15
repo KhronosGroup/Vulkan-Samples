@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,13 +21,11 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
-VKBP_ENABLE_WARNINGS()
 
 #include "common/utils.h"
-#include "platform/filesystem.h"
+#include "filesystem/legacy.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"
@@ -198,7 +196,7 @@ const std::vector<std::vector<VkDeviceSize>> &Image::get_offsets() const
 	return offsets;
 }
 
-void Image::create_vk_image(Device const &device, VkImageViewType image_view_type, VkImageCreateFlags flags)
+void Image::create_vk_image(Device &device, VkImageViewType image_view_type, VkImageCreateFlags flags)
 {
 	assert(!vk_image && !vk_image_view && "Vulkan image already constructed");
 
@@ -236,6 +234,24 @@ Mipmap &Image::get_mipmap(const size_t index)
 	return mipmaps[index];
 }
 
+// Note that this function returns the required size for ALL mip levels, *including* the base level.
+uint32_t get_required_mipmaps_size(const VkExtent3D &extent)
+{
+	constexpr uint32_t channels = 4;
+	auto               width    = std::max<uint32_t>(1, extent.width);
+	auto               height   = std::max<uint32_t>(1, extent.height);
+	auto               size     = width * height * channels;
+	auto               result   = size;
+	while (size != channels)
+	{
+		width  = std::max<uint32_t>(1u, width >> 1);
+		height = std::max<uint32_t>(1u, height >> 1);
+		size   = width * height * channels;
+		result += size;
+	}
+	return result;
+}
+
 void Image::generate_mipmaps()
 {
 	assert(mipmaps.size() == 1 && "Mipmaps already generated");
@@ -250,6 +266,10 @@ void Image::generate_mipmaps()
 	auto next_height = std::max<uint32_t>(1u, extent.height / 2);
 	auto channels    = 4;
 	auto next_size   = next_width * next_height * channels;
+
+	// Allocate for all the mips at once.  The function returns the total size needed for the
+	// existing base mip as well as all the mips that will be generated.
+	data.reserve(get_required_mipmaps_size(extent));
 
 	while (true)
 	{

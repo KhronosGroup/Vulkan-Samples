@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,9 @@
 
 #include "gltf_loader_test.h"
 
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
@@ -27,10 +27,8 @@
 #	include "platform/android/android_platform.h"
 #endif
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 #include <glm/gtx/quaternion.hpp>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkbtest
 {
@@ -48,17 +46,17 @@ bool GLTFLoaderTest::prepare(const vkb::ApplicationOptions &options)
 
 	load_scene(scene_path);
 
-	scene->clear_components<vkb::sg::Light>();
+	get_scene().clear_components<vkb::sg::Light>();
 
 	vkb::add_directional_light(get_scene(), glm::quat({glm::radians(-90.0f), 0.0f, glm::radians(30.0f)}));
 
-	auto camera_node = scene->find_node("main_camera");
+	auto camera_node = get_scene().find_node("main_camera");
 
 	if (!camera_node)
 	{
 		LOGW("Camera node not found. Looking for `default_camera` node.");
 
-		camera_node = scene->find_node("default_camera");
+		camera_node = get_scene().find_node("default_camera");
 	}
 
 	auto &camera = camera_node->get_component<vkb::sg::Camera>();
@@ -66,12 +64,12 @@ bool GLTFLoaderTest::prepare(const vkb::ApplicationOptions &options)
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
 
-	auto scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, camera);
+	auto scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
-	VulkanSample::set_render_pipeline(std::move(render_pipeline));
+	VulkanSample<vkb::BindingType::C>::set_render_pipeline(std::move(render_pipeline));
 
 	return true;
 }

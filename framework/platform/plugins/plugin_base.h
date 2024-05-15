@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
+ * Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +17,7 @@
  */
 #pragma once
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 
 #include "common/tags.h"
 #include "platform/parser.h"
@@ -27,7 +28,7 @@ namespace vkb
 {
 /**
  * @brief PluginBase is the base class that plugins inherit from. The class enforces the use of tags when creating new plugins.
- * 		  For method information see Plugin  
+ * 		  For method information see Plugin
  */
 template <typename... TAGS>
 class PluginBase : public Plugin, public Tag<TAGS...>
@@ -38,7 +39,7 @@ class PluginBase : public Plugin, public Tag<TAGS...>
 	virtual ~PluginBase() = default;
 
 	virtual const std::vector<Command *> &get_cli_commands() const override;
-	virtual const std::vector<Hook> &     get_hooks() const override;
+	virtual const std::vector<Hook>      &get_hooks() const override;
 	virtual bool                          has_tag(TagID id) const override;
 
 	// hooks that can be implemented by plugins
@@ -48,6 +49,7 @@ class PluginBase : public Plugin, public Tag<TAGS...>
 	virtual void on_platform_close() override{};
 	virtual void on_post_draw(RenderContext &context) override{};
 	virtual void on_app_error(const std::string &app_id) override{};
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override{};
 
   private:
 	Tag<TAGS...> *tags = reinterpret_cast<Tag<TAGS...> *>(this);

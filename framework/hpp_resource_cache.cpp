@@ -32,7 +32,7 @@ T &request_resource(
 {
 	std::lock_guard<std::mutex> guard(resource_mutex);
 
-	auto &res = request_resource(device, &recorder, resources, args...);
+	auto &res = vkb::common::request_resource(device, &recorder, resources, args...);
 
 	return res;
 }

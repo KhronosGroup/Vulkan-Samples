@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,11 +15,16 @@
  * limitations under the License.
  */
 
-#include "common/logging.h"
+#include "core/util/logging.hpp"
 #include "platform/platform.h"
 #include "plugins/plugins.h"
 
 #include <core/platform/entrypoint.hpp>
+#include <filesystem/filesystem.hpp>
+
+#if defined(PLATFORM__MACOS)
+#	include <TargetConditionals.h>
+#endif
 
 #if defined(PLATFORM__ANDROID)
 #	include "platform/android/android_platform.h"
@@ -27,14 +32,18 @@
 #	include "platform/windows/windows_platform.h"
 #elif defined(PLATFORM__LINUX_D2D)
 #	include "platform/unix/unix_d2d_platform.h"
-#elif defined(PLATFORM__LINUX) || defined(PLATFORM__MACOS)
+#elif defined(PLATFORM__LINUX) || defined(PLATFORM__MACOS) && !(TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 #	include "platform/unix/unix_platform.h"
+#elif defined(PLATFORM__MACOS) && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
+#	include "platform/ios/ios_platform.h"
 #else
 #	error "Platform not supported"
 #endif
 
 CUSTOM_MAIN(context)
 {
+	vkb::filesystem::init_with_context(context);
+
 #if defined(PLATFORM__ANDROID)
 	vkb::AndroidPlatform platform{context};
 #elif defined(PLATFORM__WINDOWS)
@@ -43,8 +52,10 @@ CUSTOM_MAIN(context)
 	vkb::UnixD2DPlatform platform{context};
 #elif defined(PLATFORM__LINUX)
 	vkb::UnixPlatform platform{context, vkb::UnixType::Linux};
-#elif defined(PLATFORM__MACOS)
+#elif defined(PLATFORM__MACOS) && !(TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 	vkb::UnixPlatform platform{context, vkb::UnixType::Mac};
+#elif (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
+	vkb::IosPlatform platform{context};
 #else
 #	error "Platform not supported"
 #endif

@@ -18,6 +18,11 @@
 ////
 = Choosing the right number of swapchain images
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/swapchain_images[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Vulkan gives the application some significant control over the number of swapchain images to be created.

@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2022-2023, The Khronos Group
+- Copyright (c) 2022-2024, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -19,15 +19,15 @@
 :doctype: book
 :pp: {plus}{plus}
 
-=== HPP Texture mipmap generation
+= Run-time mip-map generation with Vulkan-Hpp
 
-A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/texture_mipmap_generation[Texture mipmap generation] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_texture_mipmap_generation[Khronos Vulkan samples github repository].
+endif::[]
 
-= Run-time mip-map generation
+NOTE: A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/texture_mipmap_generation[Texture mipmap generation] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 == Overview
-
-This is the readme as written in https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/texture_mipmap_generation[Texture mipmap generation], with code transcoded to functions and classes from vulkan.hpp.
 
 Generates a complete texture mip-chain at runtime from a base image using image blits and proper image barriers.
 
@@ -47,15 +47,15 @@ To detect this, check for queue families with only the  `vk::QueueFlagBits::eTra
 
 Without mip mapping:
 
-image::../texture_mipmap_generation/images/mip_mapping_off.jpg[Off,512px]
+image::samples/api/texture_mipmap_generation/images/mip_mapping_off.jpg[Off,512px]
 
 Using mip mapping with a bilinear filter:
 
-image:../texture_mipmap_generation/images/mip_mapping_bilinear.jpg[Bilinear,512px]
+image::samples/api/texture_mipmap_generation/images/mip_mapping_bilinear.jpg[Bilinear,512px]
 
 Using mip mapping with an anisotropic filter:
 
-image:../texture_mipmap_generation/images/mip_mapping_anisotropic.jpg[Anisotropic,512px]
+image::samples/api/texture_mipmap_generation/images/mip_mapping_anisotropic.jpg[Anisotropic,512px]
 
 == Requirements
 
@@ -230,3 +230,4 @@ vk::ImageViewCreateInfo image_view_create_info({},
                                                {vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels, 0, 1});
 texture.view = get_device()->get_handle().createImageView(image_view_create_info);
 ----
+

@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, The Khronos Group
+- Copyright (c) 2021-2024, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,9 +16,140 @@
 - limitations under the License.
 -
 ////
-= Performance samples
+ifndef::performance_samplespath[:performance_samplespath:]
+
+== Performance samples
 
 The goal of these samples is to demonstrate how to use certain features and functions to achieve optimal performance.
 To visualize this, they also include real-time profiling information.
 
-A list of all performance samples can be found link:../README.adoc#performance-samples[here].
+=== xref:./{performance_samplespath}afbc/README.adoc[AFBC]
+
+AFBC (Arm Frame Buffer Compression) is a real-time lossless compression algorithm found in Arm Mali GPUs, designed to tackle the ever-growing demand for higher resolution graphics.
+This format is applied to the framebuffers that are to be written to the GPU.
+This technology can offer bandwidth reductions of https://developer.arm.com/technologies/graphics-technologies/arm-frame-buffer-compression[up to 50%].
+
+=== xref:./{performance_samplespath}command_buffer_usage/README.adoc[Command buffer usage]
+
+This sample demonstrates how to use and manage secondary command buffers, and how to record them concurrently.
+Implementing multi-threaded recording of draw calls can help reduce CPU frame time.
+
+=== xref:./{performance_samplespath}constant_data/README.adoc[Constant data]
+
+The Vulkan API exposes a few different ways in which we can send uniform data into our shaders.
+There are enough methods that it raises the question "Which one is fastest?", and more often than not the answer is "It depends".
+The main issue for developers is that the fastest methods may differ between the various vendors, so often there is no "one size fits all" solution.
+This sample aims to highlight this issue, and help move the Vulkan ecosystem to a point where we are better equipped to solve this for developers.
+This is done by having an interactive way to toggle different constant data methods that the Vulkan API expose to us.
+This can then be run on a platform of the developers choice to see the performance implications that each of them bring.
+
+=== xref:./{performance_samplespath}descriptor_management/README.adoc[Descriptor management]
+An application using Vulkan will have to implement a system to manage descriptor pools and sets.
+The most straightforward and flexible approach is to re-create them for each frame, but doing so might be very inefficient, especially on mobile platforms.
+The problem of descriptor management is intertwined with that of buffer management, that is choosing how to pack data in `VkBuffer` objects.
+This sample will explore a few options to improve both descriptor and buffer management.
+
+=== xref:./{performance_samplespath}hpp_swapchain_images/README.adoc[HPP Swapchain images]
+
+A transcoded version of the Performance sample <<swapchain_images,Swapchain images>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+
+=== xref:./{performance_samplespath}image_compression_control/README.adoc[Image compression control]
+
+This sample shows how to use the extensions https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control[`VK_EXT_image_compression_control`] and https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control_swapchain[`VK_EXT_image_compression_control_swapchain`] to select between different levels of image compression.
+The UI shows the impact compression has on image size and bandwidth, illustrating the benefits of fixed-rate (visually lossless) compression.
+
+=== xref:./{performance_samplespath}layout_transitions/README.adoc[Layout transitions]
+
+Vulkan requires the application to manage image layouts, so that all render pass attachments are in the correct layout when the render pass begins.
+This is usually done using pipeline barriers or the `initialLayout` and `finalLayout` parameters of the render pass.
+If the rendering pipeline is complex, transitioning each image to its correct layout is not trivial, as it requires some sort of state tracking.
+If previous image contents are not needed, there is an easy way out, that is setting `oldLayout`/`initialLayout` to `VK_IMAGE_LAYOUT_UNDEFINED`.
+While this is functionally correct, it can have performance implications as it may prevent the GPU from performing some optimizations.
+This sample will cover an example of such optimizations and how to avoid the performance overhead from using sub-optimal layouts.
+
+=== xref:./{performance_samplespath}msaa/README.adoc[MSAA]
+
+Aliasing is the result of under-sampling a signal.
+In graphics this means computing the color of a pixel at a resolution that results in artifacts, commonly jaggies at model edges.
+Multisample anti-aliasing (MSAA) is an efficient technique that reduces pixel sampling error.
+
+=== xref:./{performance_samplespath}multithreading_render_passes/README.adoc[Multi-threaded recording with multiple render passes]
+
+Ideally you render all stages of your frame in a single render pass.
+However, in some cases different stages can't be performed in the same render pass.
+This sample shows how multi-threading can help to boost performance when using multiple render passes to render a single frame.
+
+=== xref:./{performance_samplespath}pipeline_barriers/README.adoc[Pipeline barriers]
+
+Vulkan gives the application significant control over memory access for resources.
+Pipeline barriers are particularly convenient for synchronizing memory accesses between render passes.
+Having barriers is required whenever there is a memory dependency - the application should not assume that render passes are executed in order.
+However, having too many or too strict barriers can affect the application's performance.
+This sample will cover how to set up pipeline barriers efficiently, with a focus on pipeline stages.
+
+=== xref:./{performance_samplespath}pipeline_cache/README.adoc[Pipeline cache]
+
+Vulkan gives applications the ability to save internal representation of a pipeline (graphics or compute) to enable recreating the same pipeline later.
+This sample will look in detail at the implementation and performance implications of the pipeline creation, caching and management.
+
+=== xref:./{performance_samplespath}render_passes/README.adoc[Render passes]
+
+Vulkan render-passes use attachments to describe input and output render targets.
+This sample shows how loading and storing attachments might affect performance on mobile.
+During the creation of a render-pass, you can specify various color attachments and a depth-stencil attachment.
+Each of those is described by a https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentDescription.html[`VkAttachmentDescription`] struct, which contains attributes to specify the https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentLoadOp.html[load operation] (`loadOp`) and the https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentStoreOp.html[store operation] (`storeOp`).
+This sample lets you choose between different combinations of these operations at runtime.
+
+=== xref:./{performance_samplespath}specialization_constants/README.adoc[Specialization constants]
+
+Vulkan exposes a number of methods for setting values within shader code during run-time, this includes UBOs and Specialization Constants.
+This sample compares these two methods and the performance impact of them.
+
+=== xref:./{performance_samplespath}subpasses/README.adoc[Sub passes]
+
+Vulkan introduces the concept of _subpasses_ to subdivide a single xref:./{performance_samplespath}render_passes/README.adoc[render pass] into separate logical phases.
+The benefit of using subpasses over multiple render passes is that a GPU is able to perform various optimizations.
+Tile-based renderers, for example, can take advantage of tile memory, which being on chip is decisively faster than external memory, potentially saving a considerable amount of bandwidth.
+
+=== xref:./{performance_samplespath}surface_rotation/README.adoc[Surface rotation]
+
+Mobile devices can be rotated, therefore the logical orientation of the application window and the physical orientation of the display may not match.
+Applications then need to be able to operate in two modes: portrait and landscape.
+The difference between these two modes can be simplified to just a change in resolution.
+However, some display subsystems always work on the "native" (or "physical") orientation of the display panel.
+Since the device has been rotated, to achieve the desired effect the application output must also rotate.
+In this sample we focus on the rotation step, and analyze the performance implications of implementing it correctly with Vulkan.
+
+=== xref:./{performance_samplespath}swapchain_images/README.adoc[Swapchain images]
+
+Vulkan gives the application some significant control over the number of swapchain images to be created.
+This sample analyzes the available options and their performance implications.
+
+=== xref:./{performance_samplespath}wait_idle/README.adoc[Wait idle]
+
+This sample compares two methods for synchronizing between the CPU and GPU, `WaitIdle` and `Fences` demonstrating which one is the best option in order to avoid stalling.
+
+=== xref:./{performance_samplespath}16bit_storage_input_output/README.adoc[16-bit storage InputOutput]
+
+This sample compares bandwidth consumption when using FP32 varyings compared to using FP16 varyings with `VK_KHR_16bit_storage`.
+
+=== xref:./{performance_samplespath}16bit_arithmetic/README.adoc[16-bit arithmetic]
+
+This sample compares arithmetic throughput for 32-bit arithmetic operations and 16-bit arithmetic.
+The sample also shows how to enable 16-bit storage for SSBOs and push constants.
+
+=== xref:./{performance_samplespath}async_compute/README.adoc[Async compute]
+
+This sample demonstrates using multiple Vulkan queues to get better hardware utilization with compute post-processing workloads.
+
+=== xref:./{performance_samplespath}texture_compression_basisu/README.adoc[Basis Universal supercompressed GPU textures]
+
+This sample demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
+
+=== xref:./{performance_samplespath}multi_draw_indirect/README.adoc[GPU Rendering and Multi-Draw Indirect]
+
+This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
+
+=== xref:./{performance_samplespath}texture_compression_comparison/README.adoc[Texture compression comparison]
+
+This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows  the timing benefits of each.

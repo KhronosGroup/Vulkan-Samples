@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Google
+/* Copyright (c) 2023-2024, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,10 +17,10 @@
 
 #include "swapchain_recreation.h"
 
-#include "common/logging.h"
 #include "common/vk_common.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 
 static constexpr uint32_t INVALID_IMAGE_INDEX = std::numeric_limits<uint32_t>::max();
 
@@ -36,8 +36,53 @@ void SwapchainRecreation::get_queue()
 
 	if (!supports_present)
 	{
-		throw std::runtime_error("Default graphics queue does not support preesnt.");
+		throw std::runtime_error("Default graphics queue does not support present.");
 	}
+}
+
+void SwapchainRecreation::check_for_maintenance1()
+{
+	const char *use_maintenance1 = std::getenv("USE_MAINTENANCE1");
+	has_maintenance1             = use_maintenance1 == nullptr || strcmp(use_maintenance1, "no") != 0;
+
+	if (!has_maintenance1)
+	{
+		LOGI("Disabling usage of VK_EXT_surface_maintenance1 due to USE_MAINTENANCE1=no");
+		return;
+	}
+
+	VkResult result = volkInitialize();
+	if (result)
+	{
+		throw vkb::VulkanException(result, "Failed to initialize volk.");
+	}
+
+	// Check to see if VK_EXT_surface_maintenance1 is supported in the first place.
+	// Assume that VK_EXT_swapchain_maintenance1 is also supported in that case.
+	uint32_t instance_extension_count;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+
+	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+
+	const bool has_ext = std::find_if(available_instance_extensions.begin(),
+	                                  available_instance_extensions.end(),
+	                                  [](auto const &ep) {
+		                                  return strcmp(ep.extensionName, VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME) == 0;
+	                                  }) != available_instance_extensions.end();
+
+	if (has_ext)
+	{
+		// It is indeed supported.
+		add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+		add_instance_extension(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME);
+		add_device_extension(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME);
+		return;
+	}
+
+	// Extension is not supported by the driver or loader.
+	LOGI("Skipping unsupported VK_EXT_surface_maintenance1");
+	has_maintenance1 = false;
 }
 
 void SwapchainRecreation::query_surface_format()
@@ -54,6 +99,41 @@ void SwapchainRecreation::query_present_modes()
 	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(get_gpu_handle(), get_surface(), &present_mode_count, present_modes.data()));
 
 	adjust_desired_present_mode();
+}
+
+/**
+ * @brief Get the list of present modes compatible with the current mode.  If present mode is
+ * changed and the two modes are compatible, swapchain is not recreated.
+ */
+void SwapchainRecreation::query_compatible_present_modes(VkPresentModeKHR present_mode)
+{
+	// If manually overriden, or if VK_EXT_surface_maintenance1 is not supported, assume no
+	// compatible present modes.
+	if (!has_maintenance1 || recreate_swapchain_on_present_mode_change)
+	{
+		compatible_modes.resize(1);
+		compatible_modes[0] = present_mode;
+		return;
+	}
+
+	VkPhysicalDeviceSurfaceInfo2KHR surface_info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR};
+	surface_info.surface = get_surface();
+
+	VkSurfacePresentModeEXT surface_present_mode{VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT};
+	surface_present_mode.presentMode = present_mode;
+	surface_info.pNext               = &surface_present_mode;
+
+	VkSurfaceCapabilities2KHR surface_caps{VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR};
+
+	VkSurfacePresentModeCompatibilityEXT modes{VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_COMPATIBILITY_EXT};
+	modes.presentModeCount = 0;
+	surface_caps.pNext     = &modes;
+
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilities2KHR(get_gpu_handle(), &surface_info, &surface_caps));
+
+	compatible_modes.resize(modes.presentModeCount);
+	modes.pPresentModes = compatible_modes.data();
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilities2KHR(get_gpu_handle(), &surface_info, &surface_caps));
 }
 
 void SwapchainRecreation::adjust_desired_present_mode()
@@ -120,6 +200,18 @@ void SwapchainRecreation::create_render_pass()
 	VK_CHECK(vkCreateRenderPass(get_device_handle(), &rp_info, nullptr, &render_pass));
 }
 
+bool SwapchainRecreation::are_present_modes_compatible()
+{
+	// Look in the list of compatible present modes (which was created for
+	// current_present_mode).  If desired_present_mode is in that list, then there's no need to
+	// recreate the swapchain.  Note that current_present_mode is in this list as well.
+	//
+	// While this functionality was introduced by VK_EXT_surface_maintenance1, compatible_modes
+	// is always set up such that every present mode is assumed to be compatible only with
+	// itself; there is no need for an extension check here.
+	return std::find(compatible_modes.begin(), compatible_modes.end(), desired_present_mode) != compatible_modes.end();
+}
+
 /**
  * @brief Initializes the Vulkan swapchain.
  */
@@ -137,7 +229,7 @@ void SwapchainRecreation::init_swapchain()
 		swapchain_extents = surface_properties.currentExtent;
 	}
 
-	// Do tripple-buffering when possible.  This is clamped to the min and max image count limits.
+	// Do triple-buffering when possible.  This is clamped to the min and max image count limits.
 	uint32_t desired_swapchain_images = std::max(surface_properties.minImageCount, 3u);
 	if (surface_properties.maxImageCount > 0)
 	{
@@ -186,7 +278,29 @@ void SwapchainRecreation::init_swapchain()
 	// be used instead.  However, the application is required to handle preTransform elsewhere
 	// accordingly.
 
+	query_compatible_present_modes(desired_present_mode);
+
+	VkSwapchainPresentModesCreateInfoEXT compatible_modes_info{VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODES_CREATE_INFO_EXT};
+	if (has_maintenance1)
+	{
+		// When VK_EXT_swapchain_maintenance1 is available, you can optionally amortize the
+		// cost of swapchain image allocations over multiple frames.
+		info.flags |= VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT;
+
+		// If there are multiple present modes that are compatible, give that list to create
+		// info.  When switching present modes between compatible ones, swapchain doesn't
+		// need to be recreated.
+		if (compatible_modes.size() > 1)
+		{
+			compatible_modes_info.presentModeCount = static_cast<uint32_t>(compatible_modes.size());
+			compatible_modes_info.pPresentModes    = compatible_modes.data();
+			info.pNext                             = &compatible_modes_info;
+		}
+	}
+
+	LOGI("Creating new swapchain");
 	VK_CHECK(vkCreateSwapchainKHR(get_device_handle(), &info, nullptr, &swapchain));
+	++swapchain_creation_count;
 
 	current_present_mode = desired_present_mode;
 
@@ -208,9 +322,14 @@ void SwapchainRecreation::init_swapchain()
 	swapchain_objects.framebuffers.resize(image_count, VK_NULL_HANDLE);
 	VK_CHECK(vkGetSwapchainImagesKHR(get_device_handle(), swapchain, &image_count, swapchain_objects.images.data()));
 
-	for (uint32_t index = 0; index < image_count; ++index)
+	if (!has_maintenance1)
 	{
-		init_swapchain_image(index);
+		// When VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT is used, image views
+		// cannot be created until the first time the image is acquired.
+		for (uint32_t index = 0; index < image_count; ++index)
+		{
+			init_swapchain_image(index);
+		}
 	}
 }
 
@@ -275,7 +394,7 @@ bool SwapchainRecreation::recreate_swapchain()
 	// Only rebuild the swapchain if the dimensions have changed
 	if (surface_properties.currentExtent.width == swapchain_extents.width &&
 	    surface_properties.currentExtent.height == swapchain_extents.height &&
-	    desired_present_mode == current_present_mode)
+	    are_present_modes_compatible())
 	{
 		return false;
 	}
@@ -301,7 +420,7 @@ void SwapchainRecreation::setup_frame()
 		// Reset/recycle resources, they are no longer in use.
 		recycle_fence(frame.submit_fence);
 		recycle_semaphore(frame.acquire_semaphore);
-		vkResetCommandBuffer(frame.command_buffer, 0);
+		vkResetCommandPool(get_device_handle(), frame.command_pool, 0);
 
 		// Destroy any garbage that's associated with this submission.
 		for (SwapchainObjects &garbage : frame.swapchain_garbage)
@@ -328,7 +447,7 @@ void SwapchainRecreation::setup_frame()
 	if (frame.command_pool == VK_NULL_HANDLE)
 	{
 		VkCommandPoolCreateInfo cmd_pool_info{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-		cmd_pool_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		cmd_pool_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 		cmd_pool_info.queueFamilyIndex = queue->get_family_index();
 		VK_CHECK(vkCreateCommandPool(get_device_handle(), &cmd_pool_info, nullptr, &frame.command_pool));
 
@@ -450,23 +569,41 @@ static VkResult ignore_suboptimal_due_to_rotation(VkResult result)
  */
 VkResult SwapchainRecreation::acquire_next_image(uint32_t *index)
 {
-	PerFrame &frame         = submit_history[submit_history_index];
-	VkFence   acquire_fence = get_fence();
+	PerFrame &frame = submit_history[submit_history_index];
+
+	// Use a fence to know when acquire is done.  Without VK_EXT_swapchain_maintenance1, this
+	// fence is used to infer when the _previous_ present to this image index has finished.
+	// There is no need for this with VK_EXT_swapchain_maintenance1.
+	VkFence acquire_fence = has_maintenance1 ? VK_NULL_HANDLE : get_fence();
 
 	VkResult result = vkAcquireNextImageKHR(get_device_handle(), swapchain, UINT64_MAX, frame.acquire_semaphore, acquire_fence, index);
 
-	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	if (has_maintenance1 && (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR))
 	{
-		// If failed, fence is untouched, recycle it.
-		//
-		// The semaphore is also untouched, but it may be used in the retry of
-		// vkAcquireNextImageKHR.  It is nevertheless cleaned up after cpu throttling
-		// automatically.
-		recycle_fence(acquire_fence);
-		return result;
+		// When VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT is specified, image
+		// views must be created after the first time the image is acquired.
+		assert(*index < swapchain_objects.views.size());
+		if (swapchain_objects.views[*index] == VK_NULL_HANDLE)
+		{
+			init_swapchain_image(*index);
+		}
 	}
 
-	associate_fence_with_present_history(*index, acquire_fence);
+	if (!has_maintenance1)
+	{
+		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		{
+			// If failed, fence is untouched, recycle it.
+			//
+			// The semaphore is also untouched, but it may be used in the retry of
+			// vkAcquireNextImageKHR.  It is nevertheless cleaned up after cpu
+			// throttling automatically.
+			recycle_fence(acquire_fence);
+			return result;
+		}
+
+		associate_fence_with_present_history(*index, acquire_fence);
+	}
 
 	return ignore_suboptimal_due_to_rotation(result);
 }
@@ -487,15 +624,45 @@ VkResult SwapchainRecreation::present_image(uint32_t index)
 	present.waitSemaphoreCount = 1;
 	present.pWaitSemaphores    = &frame.present_semaphore;
 
+	// When VK_EXT_swapchain_maintenance1 is enabled, add a fence to the present operation,
+	// which is signaled when the resources associated with present operation can be freed.
+	VkFence                        present_fence = VK_NULL_HANDLE;
+	VkSwapchainPresentFenceInfoEXT fence_info{VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT};
+	VkSwapchainPresentModeInfoEXT  present_mode{VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODE_INFO_EXT};
+	if (has_maintenance1)
+	{
+		present_fence = get_fence();
+
+		fence_info.swapchainCount = 1;
+		fence_info.pFences        = &present_fence;
+
+		present.pNext = &fence_info;
+
+		// If present mode has changed but the two modes are compatible, change the present
+		// mode at present time.
+		if (current_present_mode != desired_present_mode)
+		{
+			// Can't reach here if the modes are not compatible.
+			assert(are_present_modes_compatible());
+
+			current_present_mode = desired_present_mode;
+
+			present_mode.swapchainCount = 1;
+			present_mode.pPresentModes  = &current_present_mode;
+
+			fence_info.pNext = &present_mode;
+		}
+	}
+
 	VkResult result = vkQueuePresentKHR(queue->get_handle(), &present);
 
-	add_present_to_history(index);
+	add_present_to_history(index, present_fence);
 	cleanup_present_history();
 
 	return ignore_suboptimal_due_to_rotation(result);
 }
 
-void SwapchainRecreation::add_present_to_history(uint32_t index)
+void SwapchainRecreation::add_present_to_history(uint32_t index, VkFence present_fence)
 {
 	PerFrame &frame = submit_history[submit_history_index];
 
@@ -505,10 +672,18 @@ void SwapchainRecreation::add_present_to_history(uint32_t index)
 
 	frame.present_semaphore = VK_NULL_HANDLE;
 
-	// The fence needed to know when the semaphore can be recycled will be one that is passed to
-	// vkAcquireNextImageKHR that returns the same image index.  That is why the image index
-	// needs to be tracked in this case.
-	present_history.back().image_index = index;
+	if (has_maintenance1)
+	{
+		present_history.back().image_index   = INVALID_IMAGE_INDEX;
+		present_history.back().cleanup_fence = present_fence;
+	}
+	else
+	{
+		// The fence needed to know when the semaphore can be recycled will be one that is
+		// passed to vkAcquireNextImageKHR that returns the same image index.  That is why
+		// the image index needs to be tracked in this case.
+		present_history.back().image_index = index;
+	}
 }
 
 void SwapchainRecreation::cleanup_present_history()
@@ -787,6 +962,7 @@ SwapchainRecreation::~SwapchainRecreation()
 		cleanup_present_info(present_info);
 	}
 
+	LOGI("During the lifetime of this sample, {} swapchains were created", swapchain_creation_count);
 	LOGI("Old swapchain count at destruction: {}", old_swapchains.size());
 
 	for (SwapchainCleanupData &old_swapchain : old_swapchains)
@@ -821,14 +997,26 @@ SwapchainRecreation::~SwapchainRecreation()
 
 bool SwapchainRecreation::prepare(const vkb::ApplicationOptions &options)
 {
+	// Add the relevant instance extensions before creating the instance in
+	// VulkanSample::prepare.
+	check_for_maintenance1();
+
 	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
 
+	LOGI("------------------------------------");
 	LOGI("USAGE:");
-	LOGI(" - Press v to enable v-sync");
+	LOGI(" - Press v to enable v-sync (default)");
 	LOGI(" - Press n to disable v-sync");
+	LOGI(" - Press p to enable switching between compatible present modes (default)");
+	LOGI(" - Press r to disable switching between compatible present modes");
+	if (has_maintenance1)
+	{
+		LOGI("Set environment variable USE_MAINTENANCE1=no to avoid VK_EXT_surface_maintenance1");
+	}
+	LOGI("------------------------------------");
 
 	return true;
 }
@@ -860,7 +1048,7 @@ void SwapchainRecreation::update(float delta_time)
 
 	setup_frame();
 
-	if (desired_present_mode != current_present_mode)
+	if (!are_present_modes_compatible())
 	{
 		recreate_swapchain();
 	}
@@ -932,6 +1120,22 @@ void SwapchainRecreation::input_event(const vkb::InputEvent &input_event)
 			{
 				LOGI("Disabling V-Sync");
 				desired_present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
+			}
+			break;
+		case vkb::KeyCode::P:
+			if (recreate_swapchain_on_present_mode_change)
+			{
+				LOGI("Switch between compatible present modes: Enabled");
+				recreate_swapchain_on_present_mode_change = false;
+				compatible_modes.clear();
+			}
+			break;
+		case vkb::KeyCode::R:
+			if (!recreate_swapchain_on_present_mode_change)
+			{
+				LOGI("Switch between compatible present modes: Disabled");
+				recreate_swapchain_on_present_mode_change = true;
+				compatible_modes.clear();
 			}
 			break;
 		default:

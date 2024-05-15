@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ ExtendedDynamicState2::ExtendedDynamicState2()
 
 ExtendedDynamicState2::~ExtendedDynamicState2()
 {
-	if (device)
+	if (has_device())
 	{
 		uniform_buffers.common.reset();
 		uniform_buffers.baseline.reset();
@@ -95,7 +95,7 @@ void ExtendedDynamicState2::load_assets()
 	load_scene("scenes/primitives/primitives.gltf");
 
 	std::vector<SceneNode>       scene_elements;
-	std::vector<vkb::sg::Node *> node_scene_list = {&(scene->get_root_node())};
+	std::vector<vkb::sg::Node *> node_scene_list = {&(get_scene().get_root_node())};
 	vkb::sg::Node               *node            = nullptr;
 
 	for (size_t list_it = 0; node_scene_list.size() > list_it; ++list_it)
@@ -1009,32 +1009,9 @@ void ExtendedDynamicState2::model_data_creation()
 	                                          UINT32_MAX,
 	                                          2, 3, 6, 7};
 
-	struct
-	{
-		VkBuffer       buffer;
-		VkDeviceMemory memory;
-	} vertex_pos_staging, vertex_norm_staging, index_staging;
-
-	vertex_pos_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    vertex_buffer_size,
-	    &vertex_pos_staging.memory,
-	    vertices_pos.data());
-
-	vertex_norm_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    vertex_buffer_size,
-	    &vertex_norm_staging.memory,
-	    vertices_norm.data());
-
-	index_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    index_buffer_size,
-	    &index_staging.memory,
-	    indices.data());
+	vkb::core::Buffer vertex_pos_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), vertices_pos);
+	vkb::core::Buffer vertex_norm_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices_norm);
+	vkb::core::Buffer index_staging       = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
 
 	cube.vertices_pos = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                        vertex_buffer_size,
@@ -1054,21 +1031,21 @@ void ExtendedDynamicState2::model_data_creation()
 	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
 
 	copy_region.size = vertex_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    vertex_pos_staging.buffer,
+	    vertex_pos_staging.get_handle(),
 	    cube.vertices_pos->get_handle(),
 	    1,
 	    &copy_region);
 
 	vkCmdCopyBuffer(
 	    copy_command,
-	    vertex_norm_staging.buffer,
+	    vertex_norm_staging.get_handle(),
 	    cube.vertices_norm->get_handle(),
 	    1,
 	    &copy_region);
@@ -1076,19 +1053,12 @@ void ExtendedDynamicState2::model_data_creation()
 	copy_region.size = index_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    index_staging.buffer,
+	    index_staging.get_handle(),
 	    cube.indices->get_handle(),
 	    1,
 	    &copy_region);
 
-	device->flush_command_buffer(copy_command, queue, true);
-
-	vkDestroyBuffer(get_device().get_handle(), vertex_pos_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), vertex_pos_staging.memory, nullptr);
-	vkDestroyBuffer(get_device().get_handle(), vertex_norm_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), vertex_norm_staging.memory, nullptr);
-	vkDestroyBuffer(get_device().get_handle(), index_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), index_staging.memory, nullptr);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 /**
@@ -1141,11 +1111,11 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 		/* Write new position to object */
 		transform.set_translation(translation);
 		gui_settings.time_tick = true;
-		build_command_buffers();
+		rebuild_command_buffers();
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_extended_dynamic_state2()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_extended_dynamic_state2()
 {
 	return std::make_unique<ExtendedDynamicState2>();
 }

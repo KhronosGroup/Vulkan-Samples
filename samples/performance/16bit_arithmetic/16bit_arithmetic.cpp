@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #include "16bit_arithmetic.h"
 
+#include "gui.h"
 #include "stats/stats.h"
 #include <random>
 #include <scene_graph/components/camera.h>
@@ -54,8 +55,8 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 
 	// Normally, we should see the immediate effect on frame times,
 	// but if we're somehow hitting 60 FPS, GPU cycles / s should go down while hitting vsync.
-	stats->request_stats({vkb::StatIndex::gpu_cycles, vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	get_stats().request_stats({vkb::StatIndex::gpu_cycles, vkb::StatIndex::frame_times});
+	create_gui(*window, &get_stats());
 
 	// Set up some structs for the (color, depth) attachments in the default render pass.
 	load_store_infos.resize(2);
@@ -103,13 +104,11 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	blob_buffer         = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16),
                                                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                                       VMA_MEMORY_USAGE_GPU_ONLY);
-	auto staging_buffer = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_buffer->update(initial_data_fp16, sizeof(initial_data_fp16));
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(device, initial_data_fp16);
 
 	auto &cmd = device.request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	cmd.copy_buffer(*staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
+	cmd.copy_buffer(staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
 
 	vkb::BufferMemoryBarrier barrier;
 	barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -132,13 +131,17 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	image_view = std::make_unique<vkb::core::ImageView>(*image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R16G16B16A16_SFLOAT,
 	                                                    0, 0, 1, 1);
 
+	// Calculate valid filter
+	VkFilter filter = VK_FILTER_LINEAR;
+	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image->get_format(), &filter);
+
 	VkSamplerCreateInfo sampler_create_info = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter           = VK_FILTER_LINEAR;
+	sampler_create_info.magFilter           = filter;
+	sampler_create_info.minFilter           = filter;
 	sampler_create_info.maxLod              = VK_LOD_CLAMP_NONE;
 	sampler                                 = std::make_unique<vkb::core::Sampler>(device, sampler_create_info);
 
@@ -315,7 +318,7 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 	command_buffer.set_scissor(0, {{{0, 0}, render_target.get_extent()}});
 	subpasses.front()->draw(command_buffer);
 
-	gui->draw(command_buffer);
+	get_gui().draw(command_buffer);
 	command_buffer.end_render_pass();
 }
 
@@ -331,7 +334,7 @@ void KHR16BitArithmeticSample::draw_gui()
 		label = "16-bit arithmetic (unsupported features)";
 	}
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this, label]() {
 		    if (!supported_extensions)
 		    {
@@ -345,7 +348,7 @@ void KHR16BitArithmeticSample::draw_gui()
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_16bit_arithmetic()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic()
 {
 	return std::make_unique<KHR16BitArithmeticSample>();
 }

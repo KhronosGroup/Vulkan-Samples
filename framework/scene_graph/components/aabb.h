@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,9 +24,7 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
-VKBP_ENABLE_WARNINGS()
 
 #include "scene_graph/component.h"
 #include "scene_graph/components/sub_mesh.h"

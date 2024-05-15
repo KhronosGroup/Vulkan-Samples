@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,7 +69,7 @@ struct TypeCast
 class GLTFLoader
 {
   public:
-	GLTFLoader(Device const &device);
+	GLTFLoader(Device &device);
 
 	virtual ~GLTFLoader() = default;
 
@@ -98,7 +98,7 @@ class GLTFLoader
 
 	virtual std::unique_ptr<sg::PBRMaterial> create_default_material();
 
-	virtual std::unique_ptr<sg::Sampler> create_default_sampler();
+	virtual std::unique_ptr<sg::Sampler> create_default_sampler(int filter);
 
 	virtual std::unique_ptr<sg::Camera> create_default_camera();
 
@@ -122,7 +122,7 @@ class GLTFLoader
 	 */
 	tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
 
-	Device const &device;
+	Device &device;
 
 	tinygltf::Model model;
 

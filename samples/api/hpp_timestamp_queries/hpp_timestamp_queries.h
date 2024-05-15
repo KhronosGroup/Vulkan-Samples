@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,33 +21,56 @@
 
 #pragma once
 
-#include "hpp_api_vulkan_sample.h"
+#include <hpp_api_vulkan_sample.h>
 
 class HPPTimestampQueries : public HPPApiVulkanSample
 {
+  public:
+	HPPTimestampQueries();
+	~HPPTimestampQueries();
+
   private:
-	struct DescriptorSetLayouts
+	struct Bloom
 	{
-		vk::DescriptorSetLayout bloom_filter;
-		vk::DescriptorSetLayout composition;
-		vk::DescriptorSetLayout models;
+		bool                    enabled               = true;
+		vk::DescriptorSetLayout descriptor_set_layout = {};
+		vk::DescriptorSet       descriptor_set;
+		vk::PipelineLayout      pipeline_layout;
+		vk::Pipeline            pipelines[2];
+
+		void destroy(vk::Device device)
+		{
+			device.destroyPipeline(pipelines[0]);
+			device.destroyPipeline(pipelines[1]);
+			device.destroyPipelineLayout(pipeline_layout);
+			device.destroyDescriptorSetLayout(descriptor_set_layout);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
+		}
 	};
 
-	struct DescriptorSets
+	struct Composition
 	{
-		vk::DescriptorSet bloom_filter;
-		vk::DescriptorSet composition;
-		vk::DescriptorSet object;
-		vk::DescriptorSet skybox;
+		vk::DescriptorSetLayout descriptor_set_layout = {};
+		vk::DescriptorSet       descriptor_set        = {};
+		vk::PipelineLayout      pipeline_layout       = {};
+		vk::Pipeline            pipeline              = {};
+
+		void destroy(vk::Device device)
+		{
+			device.destroyPipeline(pipeline);
+			device.destroyPipelineLayout(pipeline_layout);
+			device.destroyDescriptorSetLayout(descriptor_set_layout);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
+		}
 	};
 
 	// Framebuffer for offscreen rendering
 	struct FramebufferAttachment
 	{
-		vk::Format       format;
-		vk::Image        image;
-		vk::DeviceMemory mem;
-		vk::ImageView    view;
+		vk::Format       format = {};
+		vk::Image        image  = {};
+		vk::DeviceMemory mem    = {};
+		vk::ImageView    view   = {};
 
 		void destroy(vk::Device device)
 		{
@@ -57,65 +80,96 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 		}
 	};
 
-	struct FilterPassData
+	struct FilterPass
 	{
-		FramebufferAttachment color;
-		vk::Extent2D          extent;
-		vk::Framebuffer       framebuffer;
-		vk::RenderPass        render_pass;
-		vk::Sampler           sampler;
+		vk::Extent2D          extent      = {};
+		vk::Framebuffer       framebuffer = {};
+		FramebufferAttachment color       = {};
+		vk::RenderPass        render_pass = {};
+		vk::Sampler           sampler     = {};
+
+		void destroy(vk::Device device)
+		{
+			device.destroySampler(sampler);
+			device.destroyFramebuffer(framebuffer);
+			device.destroyRenderPass(render_pass);
+			color.destroy(device);
+		}
+	};
+
+	struct Geometry
+	{
+		vk::DescriptorSet                                                      descriptor_set = {};
+		vk::Pipeline                                                           pipeline       = {};
+		std::vector<std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>> meshes         = {};
+
+		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		{
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
+			device.destroyPipeline(pipeline);
+		}
 	};
 
 	struct Models
 	{
-		int32_t                                                                object_index = 0;
-		std::vector<std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>> objects;
-		std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>              skybox;
-		std::vector<glm::mat4>                                                 transforms;
+		vk::DescriptorSetLayout descriptor_set_layout = {};
+		vk::PipelineLayout      pipeline_layout       = {};
+		Geometry                objects               = {};
+		Geometry                skybox                = {};
+		std::vector<glm::mat4>  transforms            = {};
+		int32_t                 object_index          = 0;
+
+		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		{
+			objects.destroy(device, descriptor_pool);
+			skybox.destroy(device, descriptor_pool);
+			device.destroyPipelineLayout(pipeline_layout);
+			device.destroyDescriptorSetLayout(descriptor_set_layout);
+		}
 	};
 
-	struct OffscreenData
+	struct Offscreen
 	{
-		FramebufferAttachment color[2];
-		FramebufferAttachment depth;
-		vk::Extent2D          extent;
-		vk::Framebuffer       framebuffer;
-		vk::RenderPass        render_pass;
-		vk::Sampler           sampler;
-	};
+		vk::Extent2D          extent      = {};
+		vk::Framebuffer       framebuffer = {};
+		FramebufferAttachment color[2]    = {};
+		FramebufferAttachment depth       = {};
+		vk::RenderPass        render_pass = {};
+		vk::Sampler           sampler     = {};
 
-	struct PipelineLayouts
-	{
-		vk::PipelineLayout bloom_filter;
-		vk::PipelineLayout composition;
-		vk::PipelineLayout models;
-	};
-
-	struct Pipelines
-	{
-		vk::Pipeline bloom[2];
-		vk::Pipeline composition;
-		vk::Pipeline reflect;
-		vk::Pipeline skybox;
+		void destroy(vk::Device device)
+		{
+			device.destroySampler(sampler);
+			device.destroyFramebuffer(framebuffer);
+			device.destroyRenderPass(render_pass);
+			color[0].destroy(device);
+			color[1].destroy(device);
+			depth.destroy(device);
+		}
 	};
 
 	struct Textures
 	{
 		HPPTexture envmap;
+
+		void destroy(vk::Device device)
+		{
+			device.destroySampler(envmap.sampler);
+		}
 	};
 
-	struct UBOParams
+	struct TimeStamps
 	{
-		float exposure = 1.0f;
+		std::array<uint64_t, 6> values;            // GPU time stamps will be stored in an array
+		vk::QueryPool           query_pool;        // A query pool is required to use GPU time stamps
+
+		void destroy(vk::Device device)
+		{
+			device.destroyQueryPool(query_pool);
+		}
 	};
 
-	struct UBOs
-	{
-		std::unique_ptr<vkb::core::HPPBuffer> matrices;
-		std::unique_ptr<vkb::core::HPPBuffer> params;
-	};
-
-	struct UBOVS
+	struct UBOMatrices
 	{
 		glm::mat4 projection;
 		glm::mat4 modelview;
@@ -123,54 +177,69 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 		float     modelscale = 0.05f;
 	};
 
-  public:
-	HPPTimestampQueries();
-	~HPPTimestampQueries();
+	struct UBOParams
+	{
+		float exposure = 1.0f;
+	};
+
+	struct UniformBuffers
+	{
+		std::unique_ptr<vkb::core::HPPBuffer> matrices;
+		std::unique_ptr<vkb::core::HPPBuffer> params;
+	};
 
   private:
 	// from vkb::Application
-	bool prepare(const vkb::ApplicationOptions &options) override;
-	bool resize(const uint32_t width, const uint32_t height) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-	// from HPPVulkanSample
-	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
+	// from vkb::VulkanSample
+	virtual void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
-	void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
-	void render(float delta_time) override;
+	virtual void build_command_buffers() override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	virtual void render(float delta_time) override;
 
-	void create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachment *attachment);
-	void draw();
-	void get_time_stamp_results();
-	void load_assets();
-	void prepare_descriptor_pool();
-	void prepare_descriptor_set_layout();
-	void prepare_descriptor_sets();
-	void prepare_offscreen_buffer();
-	void prepare_pipelines();
-	void prepare_uniform_buffers();
-	void prepare_time_stamp_queries();
-	void update_params();
-	void update_uniform_buffers();
+	vk::DeviceMemory      allocate_memory(vk::Image image);
+	FramebufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
+	vk::DescriptorPool    create_descriptor_pool();
+	vk::Pipeline          create_bloom_pipeline(uint32_t direction);
+	vk::Pipeline          create_composition_pipeline();
+	vk::RenderPass        create_filter_render_pass();
+	vk::Image             create_image(vk::Format format, vk::ImageUsageFlagBits usage);
+	vk::Pipeline          create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite);
+	vk::RenderPass        create_offscreen_render_pass();
+	vk::RenderPass        create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description);
+	void                  draw();
+	void                  get_time_stamp_results();
+	void                  load_assets();
+	void                  prepare_bloom();
+	void                  prepare_camera();
+	void                  prepare_composition();
+	void                  prepare_models();
+	void                  prepare_offscreen_buffer();
+	void                  prepare_time_stamps();
+	void                  prepare_uniform_buffers();
+	void                  update_composition_descriptor_set();
+	void                  update_bloom_descriptor_set();
+	void                  update_model_descriptor_set(vk::DescriptorSet descriptor_set);
+	void                  update_params();
+	void                  update_uniform_buffers();
 
   private:
-	bool                     bloom = true;
-	DescriptorSetLayouts     descriptor_set_layouts;
-	DescriptorSets           descriptor_sets;
+	Bloom                    bloom;
+	Composition              composition;
 	bool                     display_skybox = true;
-	FilterPassData           filter_pass;
+	FilterPass               filter_pass;
 	Models                   models;
 	std::vector<std::string> object_names;
-	OffscreenData            offscreen;
-	PipelineLayouts          pipeline_layouts;
-	Pipelines                pipelines;
+	Offscreen                offscreen;
 	Textures                 textures;
-	std::array<uint64_t, 6>  time_stamps;                   // GPU time stamps will be stored in an array
-	vk::QueryPool            time_stamps_query_pool;        // A query pool is required to use GPU time stamps
+	TimeStamps               time_stamps;
+	UBOMatrices              ubo_matrices;
 	UBOParams                ubo_params;
-	UBOVS                    ubo_vs;
-	UBOs                     uniform_buffers;
+	UniformBuffers           uniform_buffers;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_timestamp_queries();

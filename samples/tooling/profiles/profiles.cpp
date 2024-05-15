@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Sascha Willems
+/* Copyright (c) 2022-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,9 +28,7 @@
 #include "fence_pool.h"
 
 // The Vulkan Profiles library is part of the SDK and has been copied to the sample's folder for convenience
-VKBP_DISABLE_WARNINGS()
 #include "vulkan_profiles.hpp"
-VKBP_ENABLE_WARNINGS()
 
 // This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux
 #define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
@@ -43,7 +41,7 @@ Profiles::Profiles()
 
 Profiles::~Profiles()
 {
-	if (device)
+	if (has_device())
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
@@ -58,10 +56,8 @@ Profiles::~Profiles()
 
 // This sample overrides the device creation part of the framework
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
-void Profiles::create_device()
+std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 {
-	auto &gpu = instance->get_suitable_gpu(surface);
-
 	// Simplified queue setup (only graphics)
 	uint32_t                selected_queue_family   = 0;
 	const auto             &queue_family_properties = gpu.get_queue_family_properties();
@@ -89,7 +85,7 @@ void Profiles::create_device()
 
 	// Check if the profile is supported at device level
 	VkBool32 profile_supported;
-	vpGetPhysicalDeviceProfileSupport(instance->get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
+	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
 	if (!profile_supported)
 	{
 		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
@@ -109,16 +105,18 @@ void Profiles::create_device()
 	}
 
 	// Post device setup required for the framework
-	device = std::make_unique<vkb::Device>(gpu, vulkan_device, surface);
+	auto device = std::make_unique<vkb::Device>(gpu, vulkan_device, get_surface());
 	device->add_queue(0, queue_create_info.queueFamilyIndex, queue_family_properties[selected_queue_family], true);
 	device->prepare_memory_allocator();
 	device->create_internal_command_pool();
 	device->create_internal_fence_pool();
+
+	return device;
 }
 
 // This sample overrides the instance creation part of the framework
 // Instead of manually setting up all properties we use the Vulkan Profiles library to simplify instance setup
-void Profiles::create_instance()
+std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 {
 	// Initialize Volk Vulkan Loader
 	VkResult result = volkInitialize();
@@ -137,7 +135,7 @@ void Profiles::create_instance()
 		throw std::runtime_error{"The selected profile is not supported (error at creating the instance)!"};
 	}
 
-	// Even when using profiles we still need to provide the platform specific surface extension
+	// Even when using profiles we still need to provide the platform specific get_surface() extension
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -170,7 +168,7 @@ void Profiles::create_instance()
 
 	volkLoadInstance(vulkan_instance);
 
-	instance = std::make_unique<vkb::Instance>(vulkan_instance);
+	return std::make_unique<vkb::Instance>(vulkan_instance);
 }
 
 void Profiles::generate_textures()
@@ -201,10 +199,7 @@ void Profiles::generate_textures()
 	image_view.subresourceRange.baseArrayLayer = 0;
 	image_view.subresourceRange.layerCount     = 1;
 
-	auto staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                          image_info.extent.width * image_info.extent.height * sizeof(uint32_t),
-	                                                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
 
 	textures.resize(32);
 	for (size_t i = 0; i < textures.size(); i++)
@@ -225,7 +220,7 @@ void Profiles::generate_textures()
 		std::default_random_engine           rnd_engine(rnd_device());
 		std::uniform_int_distribution<short> rnd_dist(0, 255);
 		const size_t                         buffer_size = dim * dim * 4;
-		uint8_t                             *buffer      = staging_buffer->map();
+		uint8_t                             *buffer      = staging_buffer.map();
 		for (size_t i = 0; i < dim * dim; i++)
 		{
 			buffer[i * 4]     = static_cast<uint8_t>(rnd_dist(rnd_engine));
@@ -233,6 +228,9 @@ void Profiles::generate_textures()
 			buffer[i * 4 + 2] = static_cast<uint8_t>(rnd_dist(rnd_engine));
 			buffer[i * 4 + 3] = 255;
 		}
+
+		staging_buffer.unmap();
+		staging_buffer.flush();
 
 		auto &cmd = get_device().request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -242,7 +240,7 @@ void Profiles::generate_textures()
 		VkBufferImageCopy copy_info{};
 		copy_info.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 		copy_info.imageExtent      = image_info.extent;
-		vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer->get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
+		vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer.get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
 
 		vkb::image_layout_transition(cmd.get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 

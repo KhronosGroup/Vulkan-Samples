@@ -1,4 +1,5 @@
-/* Copyright (c) 2021-2023, Holochip Corporation
+/* Copyright (c) 2021-2024, Holochip Corporation
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,8 +17,8 @@
  */
 
 #include "ray_queries.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
-#include "platform/filesystem.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
@@ -98,9 +99,9 @@ RayQueries::RayQueries()
 
 RayQueries::~RayQueries()
 {
-	if (device)
+	if (has_device())
 	{
-		auto device_ptr = device->get_handle();
+		auto device_ptr = get_device().get_handle();
 		vertex_buffer.reset();
 		index_buffer.reset();
 		uniform_buffer.reset();
@@ -115,8 +116,7 @@ void RayQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
 	RequestFeature(gpu)
 	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, &VkPhysicalDeviceBufferDeviceAddressFeatures::bufferDeviceAddress)
 	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, &VkPhysicalDeviceAccelerationStructureFeaturesKHR::accelerationStructure)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR, &VkPhysicalDeviceRayQueryFeaturesKHR::rayQuery)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, &VkPhysicalDeviceRayTracingPipelineFeaturesKHR::rayTracingPipeline);
+	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR, &VkPhysicalDeviceRayQueryFeaturesKHR::rayQuery);
 }
 
 void RayQueries::render(float delta_time)
@@ -214,7 +214,7 @@ uint64_t RayQueries::get_buffer_device_address(VkBuffer buffer)
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer = buffer;
-	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
+	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 }
 
 void RayQueries::create_top_level_acceleration_structure()
@@ -291,7 +291,7 @@ void RayQueries::load_scene()
 {
 	model = {};
 
-	vkb::GLTFLoader loader{*device};
+	vkb::GLTFLoader loader{get_device()};
 	auto            scene = loader.read_scene_from_file("scenes/sponza/Sponza01.gltf");
 
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
@@ -518,7 +518,7 @@ void RayQueries::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_ray_queries()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_queries()
 {
 	return std::make_unique<RayQueries>();
 }

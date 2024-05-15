@@ -18,6 +18,11 @@
 ////
 = Timestamp queries
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/timestamp_queries[Khronos Vulkan samples github repository].
+endif::[]
+
+
 This tutorial, along with the accompanying example code, shows how to use timestamp queries to measure timings on the GPU.
 
 The sample, based on the HDR one, does multiple render passes and will use timestamp queries to get GPU timings for the different render passes.
@@ -276,3 +281,4 @@ This is pretty much the same as the `vkCmdWriteTimestamp` function used in this 
 == Verdict
 
 Even though timestamp queries are limited due to how a GPU works, they can still be useful for profiling and finding performance GPU bottlenecks.
+ul for profiling and finding performance GPU bottlenecks.

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,13 +60,15 @@ void Animation::update(float delta_time)
 				{
 					switch (channel.target)
 					{
-						case Translation: {
+						case Translation:
+						{
 							transform.set_translation(glm::vec3(glm::mix(channel.sampler.outputs[i],
 							                                             channel.sampler.outputs[i + 1],
 							                                             time)));
 							break;
 						}
-						case Rotation: {
+						case Rotation:
+						{
 							glm::quat q1;
 							q1.x = channel.sampler.outputs[i].x;
 							q1.y = channel.sampler.outputs[i].y;
@@ -83,7 +85,8 @@ void Animation::update(float delta_time)
 							break;
 						}
 
-						case Scale: {
+						case Scale:
+						{
 							transform.set_scale(glm::vec3(glm::mix(channel.sampler.outputs[i],
 							                                       channel.sampler.outputs[i + 1],
 							                                       time)));
@@ -94,11 +97,13 @@ void Animation::update(float delta_time)
 				{
 					switch (channel.target)
 					{
-						case Translation: {
+						case Translation:
+						{
 							transform.set_translation(glm::vec3(channel.sampler.outputs[i]));
 							break;
 						}
-						case Rotation: {
+						case Rotation:
+						{
 							glm::quat q1;
 							q1.x = channel.sampler.outputs[i].x;
 							q1.y = channel.sampler.outputs[i].y;
@@ -109,7 +114,8 @@ void Animation::update(float delta_time)
 							break;
 						}
 
-						case Scale: {
+						case Scale:
+						{
 							transform.set_scale(glm::vec3(channel.sampler.outputs[i]));
 						}
 					}
@@ -124,18 +130,20 @@ void Animation::update(float delta_time)
 					glm::vec4 m0 = delta * channel.sampler.outputs[i * 3 + 2];              // Delta time * out tangent
 					glm::vec4 m1 = delta * channel.sampler.outputs[(i + 1) * 3 + 0];        // Delta time * in tangent of next point
 
-					// This equation is taken from the GLTF 2.0 specification Appendix C (https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#appendix-c-spline-interpolation)
+					// This equation is taken from the GLTF 2.0 specification Appendix C (https://github.com/KhronosGroup/glTF/tree/main/specification/2.0#appendix-c-spline-interpolation)
 					glm::vec4 result = (2.0f * glm::pow(time, 3.0f) - 3.0f * glm::pow(time, 2.0f) + 1.0f) * p0 + (glm::pow(time, 3.0f) - 2.0f * glm::pow(time, 2.0f) + time) * m0 + (-2.0f * glm::pow(time, 3.0f) + 3.0f * glm::pow(time, 2.0f)) * p1 + (glm::pow(time, 3.0f) - glm::pow(time, 2.0f)) * m1;
 
 					auto &transform = channel.node.get_transform();
 
 					switch (channel.target)
 					{
-						case Translation: {
+						case Translation:
+						{
 							transform.set_translation(glm::vec3(result));
 							break;
 						}
-						case Rotation: {
+						case Rotation:
+						{
 							glm::quat q1;
 							q1.x = result.x;
 							q1.y = result.y;
@@ -146,7 +154,8 @@ void Animation::update(float delta_time)
 							break;
 						}
 
-						case Scale: {
+						case Scale:
+						{
 							transform.set_scale(glm::vec3(result));
 						}
 					}

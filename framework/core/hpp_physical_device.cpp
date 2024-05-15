@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
 
 #include <core/hpp_physical_device.h>
 
-#include <common/logging.h>
+#include <core/util/logging.hpp>
 
 namespace vkb
 {
@@ -34,6 +34,18 @@ HPPPhysicalDevice::HPPPhysicalDevice(HPPInstance &instance, vk::PhysicalDevice p
 	LOGI("Found GPU: {}", properties.deviceName.data());
 
 	queue_family_properties = physical_device.getQueueFamilyProperties();
+
+	device_extensions = physical_device.enumerateDeviceExtensionProperties();
+
+	// Display supported extensions
+	if (device_extensions.size() > 0)
+	{
+		LOGD("HPPDevice supports the following extensions:");
+		for (auto &extension : device_extensions)
+		{
+			LOGD("  \t{}", extension.extensionName.data());
+		}
+	}
 }
 
 DriverVersion HPPPhysicalDevice::get_driver_version() const
@@ -67,6 +79,13 @@ DriverVersion HPPPhysicalDevice::get_driver_version() const
 void *HPPPhysicalDevice::get_extension_feature_chain() const
 {
 	return last_requested_extension_feature;
+}
+
+bool HPPPhysicalDevice::is_extension_supported(const std::string &requested_extension) const
+{
+	return std::find_if(device_extensions.begin(),
+	                    device_extensions.end(),
+	                    [requested_extension](auto &device_extension) { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
 }
 
 const vk::PhysicalDeviceFeatures &HPPPhysicalDevice::get_features() const

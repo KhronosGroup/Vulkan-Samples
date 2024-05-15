@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Arm Limited and Contributors
+/* Copyright (c) 2023-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,7 +60,7 @@
  * This sample shows how to use the extension to also resolve the depth
  * attachment on writeback and use it in a simple postprocessing pass.
  */
-class MSAASample : public vkb::VulkanSample
+class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	MSAASample();
@@ -268,4 +268,4 @@ class MSAASample : public vkb::VulkanSample
 	VkResolveModeFlagBits last_gui_depth_resolve_mode{VK_RESOLVE_MODE_NONE};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_msaa();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_msaa();

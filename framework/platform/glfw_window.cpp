@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,14 +21,13 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
+#include <fmt/format.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-VKBP_ENABLE_WARNINGS()
 
+#include "core/util/logging.hpp"
 #include "platform/platform.h"
 
 namespace vkb

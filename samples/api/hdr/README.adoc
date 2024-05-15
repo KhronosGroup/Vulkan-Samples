@@ -17,6 +17,11 @@
 -
 ////
 
-=== High dynamic range
+= High dynamic range
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hdr[Khronos Vulkan samples github repository].
+endif::[]
+
 
 Implements a high dynamic range rendering pipeline using 16/32 bit floating point precision for all calculations.

@@ -18,6 +18,10 @@
 ////
 :pp: {plus}{plus}
 
-=== HPP Dynamic Uniform Buffers
+= HPP Dynamic Uniform Buffers
 
-A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/dynamic_uniform_buffers[Dynamic Uniform buffers] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_dynamic_uniform_buffers[Khronos Vulkan samples github repository].
+endif::[]
+
+NOTE: A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/dynamic_uniform_buffers[Dynamic Uniform buffers] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.

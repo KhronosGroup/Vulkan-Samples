@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ HDR::HDR()
 
 HDR::~HDR()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
@@ -288,26 +288,12 @@ void HDR::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBu
 void HDR::prepare_offscreen_buffer()
 {
 	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
-	VkFormat color_format{VK_FORMAT_UNDEFINED};
-
 	const std::vector<VkFormat> float_format_priority_list = {
 	    VK_FORMAT_R32G32B32A32_SFLOAT,
-	    VK_FORMAT_R16G16B16A16_SFLOAT};
+	    VK_FORMAT_R16G16B16A16_SFLOAT        // Guaranteed blend support for this
+	};
 
-	for (auto &format : float_format_priority_list)
-	{
-		const VkFormatProperties properties = get_device().get_gpu().get_format_properties(format);
-		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
-		{
-			color_format = format;
-			break;
-		}
-	}
-
-	if (color_format == VK_FORMAT_UNDEFINED)
-	{
-		throw std::runtime_error("No suitable float format could be determined");
-	}
+	VkFormat color_format = vkb::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 	{
 		offscreen.width  = width;
@@ -417,11 +403,16 @@ void HDR::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &offscreen.framebuffer));
 
+		// Calculate valid filter and mipmap modes
+		VkFilter            filter      = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		vkb::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
+
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler.magFilter           = filter;
+		sampler.minFilter           = filter;
+		sampler.mipmapMode          = mipmap_mode;
 		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		sampler.addressModeV        = sampler.addressModeU;
 		sampler.addressModeW        = sampler.addressModeU;
@@ -513,11 +504,16 @@ void HDR::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
 
+		// Calculate valid filter and mipmap modes
+		VkFilter            filter      = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		vkb::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
+
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		sampler.magFilter           = filter;
+		sampler.minFilter           = filter;
+		sampler.mipmapMode          = mipmap_mode;
 		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		sampler.addressModeV        = sampler.addressModeU;
 		sampler.addressModeW        = sampler.addressModeU;
@@ -934,19 +930,19 @@ void HDR::on_update_ui_overlay(vkb::Drawer &drawer)
 		if (drawer.combo_box("Object type", &models.object_index, object_names))
 		{
 			update_uniform_buffers();
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, "%.3f"))
 		{
 			update_params();
 		}
 		if (drawer.checkbox("Bloom", &bloom))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Skybox", &display_skybox))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }

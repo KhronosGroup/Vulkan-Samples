@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,6 +17,11 @@
 -
 ////
 = Layout transitions
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/layout_transitions[Khronos Vulkan samples github repository].
+endif::[]
+
 
 Vulkan requires the application to manage image layouts, so that all render pass attachments are in the correct layout when the render pass begins.
 This is usually done using pipeline barriers or the `initialLayout` and `finalLayout` parameters of the render pass.
@@ -65,7 +70,7 @@ The `vkCmdBlitImage()` framebuffer transfer stage operation will also always inv
 The sample sets up deferred rendering using two render passes, to show the effect of transitioning G-buffer images from `UNDEFINED` rather than their last known layout.
 
 Note that a deferred rendering implementation using subpasses might be more efficient overall;
-see xref:../subpasses/README.adoc[the subpasses tutorial] for more detail.
+see xref:samples/performance/subpasses/README.adoc[the subpasses tutorial] for more detail.
 
 The base case is with all color images being transitioned from `UNDEFINED`, as shown in the image below.
 

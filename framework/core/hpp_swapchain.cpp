@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,8 @@
 
 #include "core/hpp_swapchain.h"
 
-#include "common/logging.h"
 #include "core/hpp_device.h"
+#include "core/util/logging.hpp"
 
 namespace vkb
 {
@@ -309,15 +309,14 @@ HPPSwapchain::HPPSwapchain(HPPDevice                               &device,
 	// Chose best properties based on surface capabilities
 	vk::SurfaceCapabilitiesKHR const surface_capabilities = device.get_gpu().get_handle().getSurfaceCapabilitiesKHR(surface);
 
-	vk::FormatProperties const format_properties = device.get_gpu().get_handle().getFormatProperties(properties.surface_format.format);
-	this->image_usage_flags                      = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
-
 	properties.image_count     = clamp(image_count,
 	                                   surface_capabilities.minImageCount,
                                    surface_capabilities.maxImageCount ? surface_capabilities.maxImageCount : std::numeric_limits<uint32_t>::max());
-	properties.extent          = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
-	properties.array_layers    = 1;
-	properties.surface_format  = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
+	properties.extent                            = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
+	properties.array_layers                      = 1;
+	properties.surface_format                    = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
+	vk::FormatProperties const format_properties = device.get_gpu().get_handle().getFormatProperties(properties.surface_format.format);
+	this->image_usage_flags                      = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
 	properties.image_usage     = composite_image_flags(this->image_usage_flags);
 	properties.pre_transform   = choose_transform(transform, surface_capabilities.supportedTransforms, surface_capabilities.currentTransform);
 	properties.composite_alpha = choose_composite_alpha(vk::CompositeAlphaFlagBitsKHR::eInherit, surface_capabilities.supportedCompositeAlpha);

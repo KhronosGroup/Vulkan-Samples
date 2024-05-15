@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #include "16bit_storage_input_output.h"
 
+#include "gui.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
@@ -48,7 +49,7 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 	vkb::sg::Mesh *teapot_mesh = nullptr;
 
 	// Override the default material so it's not rendering all black.
-	auto materials = scene->get_components<vkb::sg::PBRMaterial>();
+	auto materials = get_scene().get_components<vkb::sg::PBRMaterial>();
 	for (auto *material : materials)
 	{
 		material->base_color_factor = glm::vec4(0.8f, 0.6f, 0.5f, 1.0f);
@@ -82,7 +83,7 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 		return 1.0f + 0.2f * float_distribution(rng);
 	};
 
-	auto &root_node = scene->get_root_node();
+	auto &root_node = get_scene().get_root_node();
 	for (auto *child : root_node.get_children())
 	{
 		if (child->get_name() == "Teapot")
@@ -134,7 +135,7 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 			teapot_transforms.push_back(teapot);
 
 			root_node.add_child(*node);
-			scene->add_node(std::move(node));
+			get_scene().add_node(std::move(node));
 		}
 	}
 }
@@ -158,10 +159,10 @@ void KHR16BitStorageInputOutputSample::update_pipeline()
 
 	vkb::ShaderSource vert_shader(base_path + vertex_path);
 	vkb::ShaderSource frag_shader(base_path + fragment_path);
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 }
@@ -175,7 +176,7 @@ bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &op
 
 	setup_scene();
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	auto &camera_transform = camera->get_node()->get_component<vkb::sg::Transform>();
@@ -184,9 +185,9 @@ bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &op
 
 	update_pipeline();
 
-	stats->request_stats({vkb::StatIndex::gpu_ext_read_bytes, vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::gpu_ext_read_bytes, vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -229,7 +230,7 @@ void KHR16BitStorageInputOutputSample::draw_gui()
 		label = "Enable 16-bit InputOutput (noop - unsupported by device)";
 	}
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this, label]() {
 		    ImGui::Checkbox(label, &khr_16bit_storage_input_output_enabled);
 	    },
@@ -245,7 +246,7 @@ void KHR16BitStorageInputOutputSample::recreate_swapchain()
 	get_render_context().update_swapchain(image_usage_flags);
 }
 
-std::unique_ptr<vkb::VulkanSample> create_16bit_storage_input_output()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_storage_input_output()
 {
 	return std::make_unique<KHR16BitStorageInputOutputSample>();
 }

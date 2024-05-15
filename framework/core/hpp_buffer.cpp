@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,79 +23,65 @@ namespace vkb
 {
 namespace core
 {
+
+HPPBuffer HPPBufferBuilder::build(HPPDevice &device) const
+{
+	return HPPBuffer{device, *this};
+}
+
+HPPBufferPtr HPPBufferBuilder::build_unique(HPPDevice &device) const
+{
+	return std::make_unique<HPPBuffer>(device, *this);
+}
+
+HPPBuffer HPPBuffer::create_staging_buffer(HPPDevice &device, vk::DeviceSize size, const void *data)
+{
+	HPPBuffer staging_buffer = HPPBufferBuilder{size}
+	                               .with_usage(vk::BufferUsageFlagBits::eTransferSrc)
+	                               .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT)
+	                               .build(device);
+	if (data != nullptr)
+	{
+		staging_buffer.update(static_cast<const uint8_t *>(data), size);
+	}
+	return staging_buffer;
+}
+
 HPPBuffer::HPPBuffer(vkb::core::HPPDevice        &device,
                      vk::DeviceSize               size_,
                      vk::BufferUsageFlags         buffer_usage,
                      VmaMemoryUsage               memory_usage,
                      VmaAllocationCreateFlags     flags,
                      const std::vector<uint32_t> &queue_family_indices) :
-    HPPVulkanResource(nullptr, &device), size(size_)
+    HPPBuffer(device,
+              HPPBufferBuilder{size_}
+                  .with_usage(buffer_usage)
+                  .with_vma_flags(flags)
+                  .with_vma_usage(memory_usage)
+                  .with_queue_families(queue_family_indices)
+                  .with_implicit_sharing_mode())
+{}
+
+HPPBuffer::HPPBuffer(
+    vkb::core::HPPDevice   &device,
+    HPPBufferBuilder const &builder) :
+    Parent{builder.alloc_create_info, nullptr, &device}, size(builder.create_info.size)
 {
-#ifdef VK_USE_PLATFORM_METAL_EXT
-	// Workaround for Mac (MoltenVK requires unmapping https://github.com/KhronosGroup/MoltenVK/issues/175)
-	// Force cleares the flag VMA_ALLOCATION_CREATE_MAPPED_BIT
-	flags &= ~VMA_ALLOCATION_CREATE_MAPPED_BIT;
-#endif
-
-	persistent = (flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0;
-
-	vk::BufferCreateInfo buffer_create_info({}, size, buffer_usage);
-	if (queue_family_indices.size() >= 2)
+	get_handle() = create_buffer(builder.create_info.operator const VkBufferCreateInfo &());
+	if (!builder.debug_name.empty())
 	{
-		buffer_create_info.sharingMode           = vk::SharingMode::eConcurrent;
-		buffer_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
-		buffer_create_info.pQueueFamilyIndices   = queue_family_indices.data();
-	}
-
-	VmaAllocationCreateInfo memory_info{};
-	memory_info.flags = flags;
-	memory_info.usage = memory_usage;
-
-	VmaAllocationInfo allocation_info{};
-	auto              result = vmaCreateBuffer(device.get_memory_allocator(),
-	                                           reinterpret_cast<VkBufferCreateInfo *>(&buffer_create_info), &memory_info,
-	                                           reinterpret_cast<VkBuffer *>(&get_handle()), &allocation,
-	                                           &allocation_info);
-
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException{result, "Cannot create HPPBuffer"};
-	}
-
-	memory = static_cast<vk::DeviceMemory>(allocation_info.deviceMemory);
-
-	if (persistent)
-	{
-		mapped_data = static_cast<uint8_t *>(allocation_info.pMappedData);
+		set_debug_name(builder.debug_name);
 	}
 }
 
-HPPBuffer::HPPBuffer(HPPBuffer &&other) :
-    HPPVulkanResource{other.get_handle(), &other.get_device()},
-    allocation(std::exchange(other.allocation, {})),
-    memory(std::exchange(other.memory, {})),
-    size(std::exchange(other.size, {})),
-    mapped_data(std::exchange(other.mapped_data, {})),
-    mapped(std::exchange(other.mapped, {}))
+HPPBuffer::HPPBuffer(HPPBuffer &&other) noexcept :
+    HPPAllocated{static_cast<HPPAllocated &&>(other)},
+    size(std::exchange(other.size, {}))
 {}
 
 HPPBuffer::~HPPBuffer()
 {
-	if (get_handle() && (allocation != VK_NULL_HANDLE))
-	{
-		unmap();
-		vmaDestroyBuffer(get_device().get_memory_allocator(), static_cast<VkBuffer>(get_handle()), allocation);
-	}
-}
-
-VmaAllocation HPPBuffer::get_allocation() const
-{
-	return allocation;
-}
-
-vk::DeviceMemory HPPBuffer::get_memory() const
-{
-	return memory;
+	destroy_buffer(get_handle());
 }
 
 vk::DeviceSize HPPBuffer::get_size() const
@@ -103,65 +89,9 @@ vk::DeviceSize HPPBuffer::get_size() const
 	return size;
 }
 
-const uint8_t *HPPBuffer::get_data() const
-{
-	return mapped_data;
-}
-
-uint8_t *HPPBuffer::map()
-{
-	if (!mapped && !mapped_data)
-	{
-		VK_CHECK(vmaMapMemory(get_device().get_memory_allocator(), allocation, reinterpret_cast<void **>(&mapped_data)));
-		mapped = true;
-	}
-	return mapped_data;
-}
-
-void HPPBuffer::unmap()
-{
-	if (mapped)
-	{
-		vmaUnmapMemory(get_device().get_memory_allocator(), allocation);
-		mapped_data = nullptr;
-		mapped      = false;
-	}
-}
-
-void HPPBuffer::flush()
-{
-	vmaFlushAllocation(get_device().get_memory_allocator(), allocation, 0, size);
-}
-
-void HPPBuffer::update(const std::vector<uint8_t> &data, size_t offset)
-{
-	update(data.data(), data.size(), offset);
-}
-
 uint64_t HPPBuffer::get_device_address() const
 {
 	return get_device().get_handle().getBufferAddressKHR({get_handle()});
-}
-
-void HPPBuffer::update(void *data, size_t size, size_t offset)
-{
-	update(reinterpret_cast<const uint8_t *>(data), size, offset);
-}
-
-void HPPBuffer::update(const uint8_t *data, const size_t size, const size_t offset)
-{
-	if (persistent)
-	{
-		std::copy(data, data + size, mapped_data + offset);
-		flush();
-	}
-	else
-	{
-		map();
-		std::copy(data, data + size, mapped_data + offset);
-		flush();
-		unmap();
-	}
 }
 
 }        // namespace core

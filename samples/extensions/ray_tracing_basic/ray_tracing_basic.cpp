@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,7 +46,7 @@ RaytracingBasic::RaytracingBasic()
 
 RaytracingBasic::~RaytracingBasic()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -137,7 +137,7 @@ uint64_t RaytracingBasic::get_buffer_device_address(VkBuffer buffer)
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer = buffer;
-	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
+	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 }
 
 /*
@@ -151,10 +151,10 @@ ScratchBuffer RaytracingBasic::create_scratch_buffer(VkDeviceSize size)
 	buffer_create_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	buffer_create_info.size               = size;
 	buffer_create_info.usage              = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-	VK_CHECK(vkCreateBuffer(device->get_handle(), &buffer_create_info, nullptr, &scratch_buffer.handle));
+	VK_CHECK(vkCreateBuffer(get_device().get_handle(), &buffer_create_info, nullptr, &scratch_buffer.handle));
 
 	VkMemoryRequirements memory_requirements = {};
-	vkGetBufferMemoryRequirements(device->get_handle(), scratch_buffer.handle, &memory_requirements);
+	vkGetBufferMemoryRequirements(get_device().get_handle(), scratch_buffer.handle, &memory_requirements);
 
 	VkMemoryAllocateFlagsInfo memory_allocate_flags_info = {};
 	memory_allocate_flags_info.sType                     = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
@@ -164,14 +164,14 @@ ScratchBuffer RaytracingBasic::create_scratch_buffer(VkDeviceSize size)
 	memory_allocate_info.sType                = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocate_info.pNext                = &memory_allocate_flags_info;
 	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = device->get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocate_info, nullptr, &scratch_buffer.memory));
-	VK_CHECK(vkBindBufferMemory(device->get_handle(), scratch_buffer.handle, scratch_buffer.memory, 0));
+	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &scratch_buffer.memory));
+	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), scratch_buffer.handle, scratch_buffer.memory, 0));
 
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer = scratch_buffer.handle;
-	scratch_buffer.device_address     = vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
+	scratch_buffer.device_address     = vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
 
 	return scratch_buffer;
 }
@@ -180,11 +180,11 @@ void RaytracingBasic::delete_scratch_buffer(ScratchBuffer &scratch_buffer)
 {
 	if (scratch_buffer.memory != VK_NULL_HANDLE)
 	{
-		vkFreeMemory(device->get_handle(), scratch_buffer.memory, nullptr);
+		vkFreeMemory(get_device().get_handle(), scratch_buffer.memory, nullptr);
 	}
 	if (scratch_buffer.handle != VK_NULL_HANDLE)
 	{
-		vkDestroyBuffer(device->get_handle(), scratch_buffer.handle, nullptr);
+		vkDestroyBuffer(get_device().get_handle(), scratch_buffer.handle, nullptr);
 	}
 }
 
@@ -262,7 +262,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
 	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 	vkGetAccelerationStructureBuildSizesKHR(
-	    device->get_handle(),
+	    get_device().get_handle(),
 	    VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 	    &acceleration_structure_build_geometry_info,
 	    &primitive_count,
@@ -272,7 +272,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
 	    get_device(),
 	    acceleration_structure_build_sizes_info.accelerationStructureSize,
-	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Create the acceleration structure
@@ -281,7 +281,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	acceleration_structure_create_info.buffer = bottom_level_acceleration_structure.buffer->get_handle();
 	acceleration_structure_create_info.size   = acceleration_structure_build_sizes_info.accelerationStructureSize;
 	acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-	vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &bottom_level_acceleration_structure.handle);
+	vkCreateAccelerationStructureKHR(get_device().get_handle(), &acceleration_structure_create_info, nullptr, &bottom_level_acceleration_structure.handle);
 
 	// The actual build process starts here
 
@@ -321,7 +321,8 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
 	acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
-	bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+	bottom_level_acceleration_structure.device_address =
+	    vkGetAccelerationStructureDeviceAddressKHR(get_device().get_handle(), &acceleration_device_address_info);
 }
 
 /*
@@ -373,7 +374,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
 	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 	vkGetAccelerationStructureBuildSizesKHR(
-	    device->get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+	    get_device().get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 	    &acceleration_structure_build_geometry_info,
 	    &primitive_count,
 	    &acceleration_structure_build_sizes_info);
@@ -382,7 +383,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	top_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
 	    get_device(),
 	    acceleration_structure_build_sizes_info.accelerationStructureSize,
-	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Create the acceleration structure
@@ -391,7 +392,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	acceleration_structure_create_info.buffer = top_level_acceleration_structure.buffer->get_handle();
 	acceleration_structure_create_info.size   = acceleration_structure_build_sizes_info.accelerationStructureSize;
 	acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &top_level_acceleration_structure.handle);
+	vkCreateAccelerationStructureKHR(get_device().get_handle(), &acceleration_structure_create_info, nullptr, &top_level_acceleration_structure.handle);
 
 	// The actual build process starts here
 
@@ -431,7 +432,8 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
 	acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	acceleration_device_address_info.accelerationStructure = top_level_acceleration_structure.handle;
-	top_level_acceleration_structure.device_address        = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+	top_level_acceleration_structure.device_address =
+	    vkGetAccelerationStructureDeviceAddressKHR(get_device().get_handle(), &acceleration_device_address_info);
 }
 
 inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
@@ -655,7 +657,7 @@ void RaytracingBasic::delete_acceleration_structure(AccelerationStructure &accel
 	}
 	if (acceleration_structure.handle)
 	{
-		vkDestroyAccelerationStructureKHR(device->get_handle(), acceleration_structure.handle, nullptr);
+		vkDestroyAccelerationStructureKHR(get_device().get_handle(), acceleration_structure.handle, nullptr);
 	}
 }
 
@@ -691,7 +693,6 @@ void RaytracingBasic::build_command_buffers()
 		image_descriptor.imageLayout            = VK_IMAGE_LAYOUT_GENERAL;
 		VkWriteDescriptorSet result_image_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 		vkUpdateDescriptorSets(get_device().get_handle(), 1, &result_image_write, 0, VK_NULL_HANDLE);
-		build_command_buffers();
 	}
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
@@ -884,7 +885,7 @@ void RaytracingBasic::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_basic()
 {
 	return std::make_unique<RaytracingBasic>();
 }

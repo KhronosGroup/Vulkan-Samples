@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,10 +17,10 @@
 
 #include "hello_triangle.h"
 
-#include "common/logging.h"
 #include "common/vk_common.h"
+#include "core/util/logging.hpp"
+#include "filesystem/legacy.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -162,10 +162,10 @@ void HelloTriangle::init_instance(Context                         &context,
 {
 	LOGI("Initializing vulkan instance.");
 
-	if (volkInitialize())
-	{
-		throw std::runtime_error("Failed to initialize volk.");
-	}
+    if (volkInitialize())
+    {
+        throw std::runtime_error("Failed to initialize volk.");
+    }
 
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));

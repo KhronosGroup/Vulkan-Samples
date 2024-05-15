@@ -47,12 +47,12 @@ jobs:
         name: Configure and build
         shell: pwsh
         run: |
-          cmake -H"." -B"build/${{ matrix.platform }}" -G"NMake Makefiles" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake -B"build/${{ matrix.platform }}" -G"Ninja" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
         run: |
-          cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_d2d:
@@ -73,7 +73,7 @@ jobs:
         with:
           key: ${{ github.job }}-${{ matrix.os }}
       - name: Configure
-        run: cmake -H"." -B"build/ubuntu-latest-d2d" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DVKB_WSI_SELECTION=D2D
+        run: cmake -B"build/ubuntu-latest-d2d" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DVKB_WSI_SELECTION=D2D
       - name: "Build Ubuntu in Release with VKB_WSI_SELECTION=D2D"
         run: cmake --build "build/ubuntu-latest-d2d" --target vulkan_samples --config Release ${{ env.PARALLEL }}
 
@@ -106,3 +106,41 @@ jobs:
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
         run: NDK_CCACHE=1 NDK_CCACHE_BIN=ccache ./gradlew app:assemble${{ matrix.build_type }} --info
+
+  build_ios:
+    name: "Build ios in ${{ matrix.build_type }}"
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Debug]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+
+      - name: Load VulkanSDK from cache
+        id: VulkanSDK
+        uses: actions/cache@v1
+        with:
+          path: VulkanSDK
+          key: vulkan
+
+      - name: retrieve VulkanSDK
+        if: steps.VulkanSDK.outputs.cache-hit != 'true'
+        run: |
+          wget https://sdk.lunarg.com/sdk/download/1.3.280.0/mac/vulkansdk-macos-1.3.280.0.dmg
+          sudo hdiutil attach vulkansdk-macos-1.3.280.0.dmg
+          sudo /Volumes/vulkansdk-macos-1.3.280.0/InstallVulkan.app/Contents/MacOS/InstallVulkan --root ~/VulkanSDK --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.ios
+          sudo hdiutil detach /Volumes/vulkansdk-macos-1.3.280.0
+
+      - name: build_ios
+        run: |
+          source ~/VulkanSDK/setup-env.sh
+          cmake -H"." -B"build/ios" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
+          cmake --build "build/ios" --target vulkan_samples --config ${{ matrix.build_type }} -- -sdk iphoneos -allowProvisioningUpdates

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,6 +57,10 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	// Create pipeline layout and bind it
 	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_modules);
 	command_buffer.bind_pipeline_layout(pipeline_layout);
+
+	// we know, that the lighting subpass does not have any vertex stage input -> reset the vertex input state
+	assert(pipeline_layout.get_resources(ShaderResourceType::Input, VK_SHADER_STAGE_VERTEX_BIT).empty());
+	command_buffer.set_vertex_input_state({});
 
 	// Get image views of the attachments
 	auto &render_target = get_render_context().get_active_frame().get_render_target();

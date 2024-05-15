@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Sascha Willems
+/* Copyright (c) 2022-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -66,22 +66,22 @@ class Profiles : public ApiVulkanSample
 
 	Profiles();
 	~Profiles() override;
-	void         generate_textures();
-	void         generate_cubes();
-	void         build_command_buffers() override;
-	void         draw();
-	void         setup_descriptor_pool();
-	void         setup_descriptor_set_layout();
-	void         setup_descriptor_set();
-	void         prepare_pipelines();
-	void         prepare_uniform_buffers();
-	void         update_uniform_buffers();
-	bool         prepare(const vkb::ApplicationOptions &options) override;
-	void         render(float delta_time) override;
-	void         view_changed() override;
-	void         create_device() override;
-	void         create_instance() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void                           generate_textures();
+	void                           generate_cubes();
+	void                           build_command_buffers() override;
+	void                           draw();
+	void                           setup_descriptor_pool();
+	void                           setup_descriptor_set_layout();
+	void                           setup_descriptor_set();
+	void                           prepare_pipelines();
+	void                           prepare_uniform_buffers();
+	void                           update_uniform_buffers();
+	bool                           prepare(const vkb::ApplicationOptions &options) override;
+	void                           render(float delta_time) override;
+	void                           view_changed() override;
+	std::unique_ptr<vkb::Device>   create_device(vkb::PhysicalDevice &gpu) override;
+	std::unique_ptr<vkb::Instance> create_instance(bool headless) override;
+	virtual void                   on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::Application> create_profiles();

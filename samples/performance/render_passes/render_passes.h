@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@
 /**
  * @brief Appropriate use of render pass attachment operations
  */
-class RenderPassesSample : public vkb::VulkanSample
+class RenderPassesSample : public vkb::VulkanSample<vkb::BindingType::C>
 {
   public:
 	RenderPassesSample();
@@ -80,4 +80,4 @@ class RenderPassesSample : public vkb::VulkanSample
 	float frame_rate;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_render_passes();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_render_passes();
