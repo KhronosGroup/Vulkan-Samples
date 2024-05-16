@@ -18,6 +18,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can
       # access it
       - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.0'
@@ -25,10 +27,10 @@ jobs:
       - name: "Checkout Vulkan-Site"
         uses: actions/checkout@v3
         with:
-#          repository: KhronosGroup/Vulkan-Site
+          #          repository: KhronosGroup/Vulkan-Site
           repository: gpx1000/Vulkan-Site
           path: ./Vulkan-Site
-#          ref: main
+          #          ref: main
           ref: parent-ci
           submodules: recursive
 
@@ -57,11 +59,6 @@ jobs:
         working-directory: ./Vulkan-Site/docs-site
         run: npm install
 
-      - name: "run npm install for Vulkan-Docs"
-        working-directory: ./Vulkan-Site/Vulkan-Docs
-        run: npm install
-
-
       - name: "ensure we have all dependencies for building/searching/highlighting"
         run: |
           sudo gem install rouge
@@ -78,11 +75,7 @@ jobs:
           ./node_modules/gulp/bin/gulp.js bundle
 
       - name: "copy ui-bundle.zip to vulkan-site"
-        run: cp ./Vulkan-Site/antora-ui-khronos/build/ui-bundle.zip docs-site/
-
-      - name: "prepare repos with make"
-        working-directory: ./Vulkan-Site/docs-site
-        run: make prepare_components
+        run: cp ./Vulkan-Site/antora-ui-khronos/build/ui-bundle.zip ./Vulkan-Site/docs-site/
 
       - name: "prepare samples"
         run: cmake -H"." -B"build/unix" -DVKB_GENERATE_ANTORA_SITE=ON
@@ -90,7 +83,7 @@ jobs:
       - name: "build (npx) with stacktrace"
         working-directory: ./Vulkan-Site/docs-site
         run: |
-          npx antora antora-samples-playbook.yml --stacktrace
+          npx antora antora-parent-ci-playbook.yml --stacktrace
           touch build/site/.nojekyll
 
       - name: Publish to GitHub Pages
