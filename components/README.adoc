@@ -1,5 +1,6 @@
 ////
-- Copyright (c) 2023, Thomas Atkinson
+- Copyright (c) 2023-2024, Thomas Atkinson
+- Copyright (c) 2024, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -31,7 +32,7 @@ These interfaces are defined in `components/core`.
 *Core* is the only component which does not follow the component pattern in its entirety.
 The only major difference between core and other components is the header prefix used is `core/<sub_dir>` instead of `components/core/<sub_dir>`.
 
-See xref:core/README.adoc[core documentation] for more information.
+See xref:./core/README.adoc[core documentation] for more information.
 
 == Create a new component
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Thomas Atkinson
+/* Copyright (c) 2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,11 +33,11 @@
 		_Pragma("clang diagnostic pop")
 #elif defined(__GNUC__) || defined(__GNUG__)
 // GCC ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS()                             \
-		_Pragma("GCC diagnostic push")                          \
-		    _Pragma("GCC diagnostic ignored \"-Wall\"")         \
-		        _Pragma("clang diagnostic ignored \"-Wextra\"") \
-		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"")
+#	define VKBP_DISABLE_WARNINGS()                           \
+		_Pragma("GCC diagnostic push")                        \
+		    _Pragma("GCC diagnostic ignored \"-Wall\"")       \
+		        _Pragma("GCC diagnostic ignored \"-Wextra\"") \
+		            _Pragma("GCC diagnostic ignored \"-Wtautological-compare\"")
 
 #	define VKBP_ENABLE_WARNINGS() \
 		_Pragma("GCC diagnostic pop")
@@ -50,10 +50,8 @@
 		__pragma(warning(pop))
 #endif
 
-VKBP_DISABLE_WARNINGS()
 // TODO: replace with a direct fmt submodule
-#include <spdlog/fmt/fmt.h>
-VKBP_ENABLE_WARNINGS()
+#include <fmt/format.h>
 
 #include <stdexcept>
 

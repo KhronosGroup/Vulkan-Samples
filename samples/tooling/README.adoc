@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, The Khronos Group
+- Copyright (c) 2023-2024, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,9 +16,13 @@
 - limitations under the License.
 -
 ////
-= Tooling samples
+ifndef::tooling_samplespath[:tooling_samplespath:]
 
-The goal of these samples is to demonstrate how to use tooling features that are not directly part of Vulkan, but e.g.
-provided by the LunarG Vulkan SDK.
+== Tooling Samples
 
-A list of all tooling samples can be found link:../README.adoc#tooling-samples[here].
+The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
+
+=== xref:./{tooling_samplespath}profiles/README.adoc[Profiles Library]
+
+Use the https://github.com/KhronosGroup/Vulkan-Profiles[Vulkan Profiles library] to simplify instance and device setup.
+The library defines a common baseline of features, extensions, etc.

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
- * Copyright (c) 2020-2023, Broadcom Inc.
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
+ * Copyright (c) 2020-2024, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,26 @@
 
 #include "hwcpipe_stats_provider.h"
 
+namespace
+{
+const char *get_product_family_name(hwcpipe::device::product_id::gpu_family f)
+{
+	using gpu_family = hwcpipe::device::product_id::gpu_family;
+
+	switch (f)
+	{
+		case gpu_family::bifrost:
+			return "Bifrost";
+		case gpu_family::midgard:
+			return "Midgard";
+		case gpu_family::valhall:
+			return "Valhall";
+		default:
+			return "Unknown";
+	}
+}
+}        // namespace
+
 namespace vkb
 {
 HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
@@ -25,114 +45,88 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 	// Mapping of stats to their hwcpipe availability
 	// clang-format off
 	StatDataMap hwcpipe_stats = {
-	    {StatIndex::cpu_cycles,            {hwcpipe::CpuCounter::Cycles}},
-	    {StatIndex::cpu_instructions,      {hwcpipe::CpuCounter::Instructions}},
-	    {StatIndex::cpu_cache_miss_ratio,  {hwcpipe::CpuCounter::CacheMisses,  StatScaling::ByCounter, hwcpipe::CpuCounter::CacheReferences}},
-	    {StatIndex::cpu_branch_miss_ratio, {hwcpipe::CpuCounter::BranchMisses, StatScaling::ByCounter, hwcpipe::CpuCounter::BranchInstructions}},
-	    {StatIndex::cpu_l1_accesses,       {hwcpipe::CpuCounter::L1Accesses}},
-	    {StatIndex::cpu_instr_retired,     {hwcpipe::CpuCounter::InstrRetired}},
-	    {StatIndex::cpu_l2_accesses,       {hwcpipe::CpuCounter::L2Accesses}},
-	    {StatIndex::cpu_l3_accesses,       {hwcpipe::CpuCounter::L3Accesses}},
-	    {StatIndex::cpu_bus_reads,         {hwcpipe::CpuCounter::BusReads}},
-	    {StatIndex::cpu_bus_writes,        {hwcpipe::CpuCounter::BusWrites}},
-	    {StatIndex::cpu_mem_reads,         {hwcpipe::CpuCounter::MemReads}},
-	    {StatIndex::cpu_mem_writes,        {hwcpipe::CpuCounter::MemWrites}},
-	    {StatIndex::cpu_ase_spec,          {hwcpipe::CpuCounter::ASESpec}},
-	    {StatIndex::cpu_vfp_spec,          {hwcpipe::CpuCounter::VFPSpec}},
-	    {StatIndex::cpu_crypto_spec,       {hwcpipe::CpuCounter::CryptoSpec}},
-	    {StatIndex::gpu_cycles,            {hwcpipe::GpuCounter::GpuCycles}},
-	    {StatIndex::gpu_vertex_cycles,     {hwcpipe::GpuCounter::VertexComputeCycles}},
-	    {StatIndex::gpu_load_store_cycles, {hwcpipe::GpuCounter::ShaderLoadStoreCycles}},
-	    {StatIndex::gpu_tiles,             {hwcpipe::GpuCounter::Tiles}},
-	    {StatIndex::gpu_killed_tiles,      {hwcpipe::GpuCounter::TransactionEliminations}}, 
-	    {StatIndex::gpu_fragment_cycles,   {hwcpipe::GpuCounter::FragmentCycles}},
-	    {StatIndex::gpu_fragment_jobs,     {hwcpipe::GpuCounter::FragmentJobs}},
-	    {StatIndex::gpu_ext_reads,         {hwcpipe::GpuCounter::ExternalMemoryReadAccesses}},
-	    {StatIndex::gpu_ext_writes,        {hwcpipe::GpuCounter::ExternalMemoryWriteAccesses}},
-	    {StatIndex::gpu_ext_read_stalls,   {hwcpipe::GpuCounter::ExternalMemoryReadStalls}},
-	    {StatIndex::gpu_ext_write_stalls,  {hwcpipe::GpuCounter::ExternalMemoryWriteStalls}},
-	    {StatIndex::gpu_ext_read_bytes,    {hwcpipe::GpuCounter::ExternalMemoryReadBytes}},
-	    {StatIndex::gpu_ext_write_bytes,   {hwcpipe::GpuCounter::ExternalMemoryWriteBytes}},
-	    {StatIndex::gpu_tex_cycles,        {hwcpipe::GpuCounter::ShaderTextureCycles}}};
+	    {StatIndex::gpu_cycles,            {hwcpipe_counter::MaliGPUActiveCy}},
+	    {StatIndex::gpu_vertex_cycles,     {hwcpipe_counter::MaliNonFragQueueActiveCy, {MaliNonFragActiveCy, MaliBinningIterActiveCy} }},
+	    {StatIndex::gpu_load_store_cycles, {hwcpipe_counter::MaliLSIssueCy}},
+	    {StatIndex::gpu_tiles,             {hwcpipe_counter::MaliFragTile}},
+	    {StatIndex::gpu_killed_tiles,      {hwcpipe_counter::MaliFragTileKill}},
+	    {StatIndex::gpu_fragment_cycles,   {hwcpipe_counter::MaliFragQueueActiveCy, {MaliFragActiveCy, MaliMainIterActiveCy}}},
+	    {StatIndex::gpu_fragment_jobs,     {hwcpipe_counter::MaliFragQueueJob, {MaliFragIterJob, MaliMainIterJob}}},
+	    {StatIndex::gpu_ext_reads,         {hwcpipe_counter::MaliExtBusRdBt}},
+	    {StatIndex::gpu_ext_writes,        {hwcpipe_counter::MaliExtBusWrBt}},
+	    {StatIndex::gpu_ext_read_stalls,   {hwcpipe_counter::MaliExtBusRdStallCy}},
+	    {StatIndex::gpu_ext_write_stalls,  {hwcpipe_counter::MaliExtBusWrStallCy}},
+	    {StatIndex::gpu_ext_read_bytes,    {hwcpipe_counter::MaliExtBusRdBy}},
+	    {StatIndex::gpu_ext_write_bytes,   {hwcpipe_counter::MaliExtBusWrBy}},
+	    {StatIndex::gpu_tex_cycles,        {hwcpipe_counter::MaliTexIssueCy}}};
 	// clang-format on
 
-	hwcpipe::CpuCounterSet enabled_cpu_counters{};
-	hwcpipe::GpuCounterSet enabled_gpu_counters{};
-
-	for (const auto &stat : requested_stats)
+	// Detect all GPUs & print some info
+	for (const auto &gpu : hwcpipe::find_gpus())
 	{
-		auto res = hwcpipe_stats.find(stat);
-		if (res != hwcpipe_stats.end())
-		{
-			stat_data[stat] = hwcpipe_stats[stat];
-
-			switch (res->second.type)
-			{
-				case StatType::Cpu:
-					enabled_cpu_counters.insert(res->second.cpu_counter);
-					if (res->second.divisor_cpu_counter != hwcpipe::CpuCounter::MaxValue)
-					{
-						enabled_cpu_counters.insert(res->second.divisor_cpu_counter);
-					}
-					break;
-				case StatType::Gpu:
-					enabled_gpu_counters.insert(res->second.gpu_counter);
-					if (res->second.divisor_gpu_counter != hwcpipe::GpuCounter::MaxValue)
-					{
-						enabled_gpu_counters.insert(res->second.divisor_gpu_counter);
-					}
-					break;
-			}
-		}
+		LOGI("HWCPipe: ------------------------------------------------------------");
+		LOGI("HWCPipe:  GPU Device {}:", gpu.get_device_number());
+		LOGI("HWCPipe: ------------------------------------------------------------");
+		LOGI("HWCPipe:     Product Family:  {}", get_product_family_name(gpu.get_product_id().get_gpu_family()));
+		LOGI("HWCPipe:     Number of Cores: {}", gpu.num_shader_cores());
+		LOGI("HWCPipe:     Bus Width:       {}", gpu.bus_width());
 	}
 
-	hwcpipe = std::make_unique<hwcpipe::HWCPipe>(enabled_cpu_counters, enabled_gpu_counters);
-
-	// Now that we've made a hwcpipe with the counters we'd like, remove any that
-	// aren't actually supported
-	for (auto iter = stat_data.begin(); iter != stat_data.end();)
+	// Probe device 0 (i.e. /dev/mali0)
+	auto gpu = hwcpipe::gpu(0);
+	if (!gpu)
 	{
-		switch (iter->second.type)
+		LOGE("HWCPipe: Mali GPU device 0 is missing");
+	}
+
+	auto config     = hwcpipe::sampler_config(gpu);
+	auto counter_db = hwcpipe::counter_database{};
+
+	std::error_code ec;
+	for (const auto &stat : requested_stats)
+	{
+		auto it = hwcpipe_stats.find(stat);
+		if (it != hwcpipe_stats.end())
 		{
-			case StatType::Cpu:
+			hwcpipe::counter_metadata meta;
+
+			auto ec = counter_db.describe_counter(it->second.counter, meta);
+			if (ec)
 			{
-				if (hwcpipe->cpu_profiler())
-				{
-					const auto &cpu_supp = hwcpipe->cpu_profiler()->supported_counters();
-					if (cpu_supp.find(iter->second.cpu_counter) == cpu_supp.end())
-					{
-						iter = stat_data.erase(iter);
-					}
-					else
-					{
-						++iter;
-					}
-				}
-				else
-				{
-					iter = stat_data.erase(iter);
-				}
-				break;
+				LOGE("HWCPipe: unknown counter");
 			}
-			case StatType::Gpu:
+
+			ec = config.add_counter(it->second.counter);
+			if (ec)
 			{
-				if (hwcpipe->gpu_profiler())
+				// Some counters have changed in recent devices
+				auto &fallback_list = it->second.fallback_list;
+				if (!fallback_list.empty())
 				{
-					const auto &gpu_supp = hwcpipe->gpu_profiler()->supported_counters();
-					if (gpu_supp.find(iter->second.gpu_counter) == gpu_supp.end())
+					for (const auto &fallback : fallback_list)
 					{
-						iter = stat_data.erase(iter);
-					}
-					else
-					{
-						++iter;
+						ec = counter_db.describe_counter(fallback, meta);
+						ec = config.add_counter(fallback);
+
+						if (!ec)
+						{
+							// Replace counter with available alternative
+							it->second.counter = fallback;
+							break;
+						}
 					}
 				}
-				else
-				{
-					iter = stat_data.erase(iter);
-				}
-				break;
+			}
+
+			if (ec)
+			{
+				LOGE("HWCPipe: '{}' counter not supported by this GPU.", meta.name);
+			}
+			else
+			{
+				stat_data[stat] = hwcpipe_stats[stat];
+
+				LOGI("HWCPipe: enabled '{}' counter", meta.name);
 			}
 		}
 	}
@@ -144,7 +138,32 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 		requested_stats.erase(iter.first);
 	}
 
-	hwcpipe->run();
+	requested_stats_count = requested_stats.size();
+
+	sampler = std::make_unique<hwcpipe::sampler<>>(config);
+
+	if (requested_stats_count > 0)
+	{
+		ec = sampler->start_sampling();
+		if (ec)
+		{
+			LOGE("HWCPipe: {}", ec.message());
+		}
+	}
+}
+
+HWCPipeStatsProvider::~HWCPipeStatsProvider()
+{
+	std::error_code ec;
+
+	if (requested_stats_count > 0)
+	{
+		ec = sampler->stop_sampling();
+		if (ec)
+		{
+			LOGE("HWCPipe: {}", ec.message());
+		}
+	}
 }
 
 bool HWCPipeStatsProvider::is_available(StatIndex index) const
@@ -168,41 +187,53 @@ const StatGraphData &HWCPipeStatsProvider::get_graph_data(StatIndex index) const
 	return default_graph_map[index];
 }
 
-static double get_cpu_counter_value(const hwcpipe::CpuMeasurements *cpu, hwcpipe::CpuCounter counter)
+static double get_gpu_counter_value(const hwcpipe::counter_sample &sample)
 {
-	auto hwcpipe_ctr = cpu->find(counter);
-	if (hwcpipe_ctr != cpu->end())
+	switch (sample.type)
 	{
-		return hwcpipe_ctr->second.get<double>();
+		case hwcpipe::counter_sample::type::uint64:
+			return sample.value.uint64;
+		case hwcpipe::counter_sample::type::float64:
+			return sample.value.float64;
+		default:
+			return 0.0;
 	}
-	return 0.0;
-}
-
-static double get_gpu_counter_value(const hwcpipe::GpuMeasurements *gpu, hwcpipe::GpuCounter counter)
-{
-	auto hwcpipe_ctr = gpu->find(counter);
-	if (hwcpipe_ctr != gpu->end())
-	{
-		return hwcpipe_ctr->second.get<double>();
-	}
-	return 0.0;
 }
 
 StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 {
-	Counters              res;
-	hwcpipe::Measurements m = hwcpipe->sample();
+	Counters res;
 
-	// Map from hwcpipe measurement to our sample result for each counter
-	for (auto iter : stat_data)
+	if (requested_stats_count < 1)
 	{
-		StatIndex       index = iter.first;
-		const StatData &data  = iter.second;
+		return res;
+	}
 
-		double d = 0.0;
-		if (data.type == StatType::Cpu)
+	std::error_code ec;
+
+	ec = sampler->sample_now();
+	if (ec)
+	{
+		LOGE("HWCPipe: {}", ec.message());
+	}
+	else
+	{
+		// Map from hwcpipe measurement to our sample result for each counter
+		for (auto iter : stat_data)
 		{
-			d = get_cpu_counter_value(m.cpu, data.cpu_counter);
+			StatIndex       index = iter.first;
+			const StatData &data  = iter.second;
+
+			hwcpipe::counter_sample sample;
+
+			ec = sampler->get_counter_value(data.counter, sample);
+			if (ec)
+			{
+				LOGE("HWCPipe: {}", ec.message());
+				continue;
+			}
+
+			auto d = get_gpu_counter_value(sample);
 
 			if (data.scaling == StatScaling::ByDeltaTime && delta_time != 0.0f)
 			{
@@ -210,7 +241,14 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 			}
 			else if (data.scaling == StatScaling::ByCounter)
 			{
-				double divisor = get_cpu_counter_value(m.cpu, data.divisor_cpu_counter);
+				ec = sampler->get_counter_value(data.divisor, sample);
+				if (ec)
+				{
+					LOGE("HWCPipe: {}", ec.message());
+					continue;
+				}
+
+				double divisor = get_gpu_counter_value(sample);
 				if (divisor != 0.0)
 				{
 					d /= divisor;
@@ -220,29 +258,9 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 					d = 0.0;
 				}
 			}
-		}
-		else if (data.type == StatType::Gpu)
-		{
-			d = get_gpu_counter_value(m.gpu, data.gpu_counter);
 
-			if (data.scaling == StatScaling::ByDeltaTime && delta_time != 0.0f)
-			{
-				d /= delta_time;
-			}
-			else if (data.scaling == StatScaling::ByCounter)
-			{
-				double divisor = get_gpu_counter_value(m.gpu, data.divisor_gpu_counter);
-				if (divisor != 0.0)
-				{
-					d /= divisor;
-				}
-				else
-				{
-					d = 0.0;
-				}
-			}
+			res[index].result = d;
 		}
-		res[index].result = d;
 	}
 
 	return res;

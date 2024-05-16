@@ -34,6 +34,8 @@ class HPPDevice;
 class HPPDescriptorPool : private vkb::DescriptorPool
 {
   public:
+	using vkb::DescriptorPool::reset;
+
 	HPPDescriptorPool(vkb::core::HPPDevice &device, const vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, uint32_t pool_size = MAX_SETS_PER_POOL) :
 	    vkb::DescriptorPool(reinterpret_cast<vkb::Device &>(device), reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout), pool_size)
 	{}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,15 +17,8 @@
 
 #include "unix_platform.h"
 
-#include "common/error.h"
-
 #include "platform/glfw_window.h"
 #include "platform/headless_window.h"
-
-VKBP_DISABLE_WARNINGS()
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-VKBP_ENABLE_WARNINGS()
 
 #ifndef VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
@@ -49,17 +42,6 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
 
 UnixPlatform::UnixPlatform(const PlatformContext &context, const UnixType &type) :
     Platform{context}, type{type}

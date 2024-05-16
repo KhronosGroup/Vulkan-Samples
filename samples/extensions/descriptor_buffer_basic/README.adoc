@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, Sascha Willems
+- Copyright (c) 2023-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,6 +17,11 @@
 -
 ////
 = Descriptor buffers
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/descriptor_buffer_basic[Khronos Vulkan samples github repository].
+endif::[]
+
 
 == Overview
 
@@ -77,51 +82,7 @@ Descriptors are now stored in and accessed from memory, so instead of having to 
 The extension introduces two different types of descriptors: Resource descriptors for buffers (uniform buffers, shader storage buffers) and sampler/combined image sampler descriptors.
 In this sample we'll be using both types, so we create two different buffers.
 
-As is usual in Vulkan, implementations have different size and alignment requirements.
-So to calculate the actual buffer sizes required to store the descriptors, we need to get the sizes that match our descriptor set layouts first:
-
-[,cpp]
-----
-std::array<VkDeviceSize, 2> descriptorLayoutSizes{};
-
-// Buffers
-vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_buffer, &descriptorLayoutSizes[0]);
-
-// Combined image samplers
-vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_image, &descriptorLayoutSizes[1]);
-----
-
-Creating the resource descriptors for the uniform buffers using the `VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT` usage flag:
-
-[,cpp]
-----
-resource_descriptor_buffer =
-    std::make_unique<vkb::core::Buffer>(get_device(),
-                                        (static_cast<uint32_t>(cubes.size()) + 1) * descriptorLayoutSizes[0],
-                                        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
-----
-
-Creating the combined image sampler descriptors by additionally adding the `VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT` usage flag:
-
-[,cpp]
-----
-image_descriptor_buffer =
-    std::make_unique<vkb::core::Buffer>(get_device(),
-                                        static_cast<uint32_t>(cubes.size()) * descriptorLayoutSizes[1],
-                                        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
-----
-
-=== Putting the descriptors into the buffers
-
-After creating the appropriate buffers we now put the actual descriptors into those buffers, making them accessible to the GPU.
-This is done with the `vkGetDescriptorEXT` function.
-
-The sample uses one global uniform buffer that stores the scene matrices, one uniform buffer per object displayed and one combined image sampler per object.
-
-As usual we need to adhere to the size and alignment requirements of the implementation defined in `VkPhysicalDeviceDescriptorBufferPropertiesEXT`.
-At the start of the example we fetch that information into `descriptor_buffer_properties` so we can access it in the following code:
+As is usual in Vulkan, implementations have different size and alignment requirements. Alignment requirements for setting offsets in the descriptor buffer with `vkCmdSetDescriptorBufferOffsetsEXT` are defined by `VkPhysicalDeviceDescriptorBufferPropertiesEXT::descriptorBufferOffsetAlignment`. At the start of the example we fetch that information into `descriptor_buffer_properties`.
 
 [,cpp]
 ----
@@ -130,11 +91,51 @@ descriptor_buffer_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTO
 device_properties.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 device_properties.pNext            = &descriptor_buffer_properties;
 vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
-...
-// Get required alignments based implementation dependant values
-uniform_descriptor_offset = aligned_size(descriptor_buffer_properties.uniformBufferDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
-image_descriptor_offset   = aligned_size(descriptor_buffer_properties.combinedImageSamplerDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
 ----
+
+So to calculate the actual buffer sizes required to store the descriptors, we need to get the sizes of set layouts and also align them to `VkPhysicalDeviceDescriptorBufferPropertiesEXT::descriptorBufferOffsetAlignment`. We also need to fetch offsets of the descriptor bindings of a set layout as by the Vulkan specs size of the set layout is at least a sum of sizes of descriptor bindings of this layout but it can be higher than that and there are no guarantees about the layout of descriptor bindings in a descriptor set layout, meaning that first descriptor binding of a set can start exactly a the beginning of a set layout memory or it can start with non 0 offset if driver implementation puts some metadata there.
+
+[,cpp]
+----
+// Get set layout descriptor sizes.
+vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), uniform_binding_descriptor.layout, &uniform_binding_descriptor.size);
+vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), image_binding_descriptor.layout, &image_binding_descriptor.size);
+
+// Adjust set layout sizes to satisfy alignment requirements.
+uniform_binding_descriptor.size = aligned_size(uniform_binding_descriptor.size, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
+image_binding_descriptor.size = aligned_size(image_binding_descriptor.size, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
+
+// Get descriptor bindings offsets as descriptors are placed inside set layout by those offsets.
+vkGetDescriptorSetLayoutBindingOffsetEXT(get_device().get_handle(), uniform_binding_descriptor.layout, 0u, &uniform_binding_descriptor.offset);
+vkGetDescriptorSetLayoutBindingOffsetEXT(get_device().get_handle(), image_binding_descriptor.layout, 0u, &image_binding_descriptor.offset);
+----
+
+Creating the resource descriptors for the uniform buffers using the `VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT` usage flag:
+
+[,cpp]
+----
+uniform_binding_descriptor.buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                    (static_cast<uint32_t>(cubes.size()) + 1) * uniform_binding_descriptor.size,
+	                                                                    VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+----
+
+Creating the combined image sampler descriptors by additionally adding the `VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT` usage flag:
+
+[,cpp]
+----
+image_binding_descriptor.buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                  static_cast<uint32_t>(cubes.size()) * image_binding_descriptor.size,
+	                                                                  VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
+----
+
+=== Putting the descriptors into the buffers
+
+After creating the appropriate buffers we now put the actual descriptors into those buffers, making them accessible to the GPU.
+This is done with the `vkGetDescriptorEXT` function.
+
+The sample uses one global uniform buffer that stores the scene matrices, one uniform buffer per object displayed and one combined image sampler per object.
 
 For resource descriptor buffers, we can simply put buffer device addresses into it.
 No need for descriptors, as the GPU only needs to know the address of the buffers to access them:
@@ -158,13 +159,13 @@ vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descripto
 // We use pointers to offset and align the data we put into the descriptor buffers
 for (size_t i = 0; i < cubes.size(); i++)
 {
-    VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
-    cube_addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
-    cube_addr_info.range                      = cubes[i].uniform_buffer->get_size();
-    cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
+	VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
+	cube_addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
+	cube_addr_info.range                      = cubes[i].uniform_buffer->get_size();
+	cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
 
-    buffer_descriptor_info.data.pUniformBuffer = &cube_addr_info;
-    vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr + (i + 1) * uniform_descriptor_offset);
+	buffer_descriptor_info.data.pUniformBuffer = &cube_addr_info;
+	vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr + (i + 1) * uniform_binding_descriptor.size + uniform_binding_descriptor.offset);
 }
 ----
 
@@ -174,15 +175,15 @@ For combined image samplers (or samplers alone) we can't use buffer device addre
 ----
 // For combined images we need to put descriptors into the descriptor buffers
 // We use pointers to offset and align the data we put into the descriptor buffers
-char *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
+char *image_descriptor_buf_ptr = (char *) image_binding_descriptor.buffer->get_data();
 for (size_t i = 0; i < cubes.size(); i++)
 {
-    VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
+	VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
 
-    VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
-    image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
-    vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_descriptor_offset);
+	VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
+	image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
+	vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_binding_descriptor.size + image_binding_descriptor.offset);
 }
 ----
 
@@ -213,13 +214,14 @@ vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_G
 // Set and offset into descriptor for each model
 for (size_t j = 0; j < cubes.size(); j++)
 {
-    // Uniform buffer (set 1)
-    // Model ubos start at offset * 1 (slot 0 is global matrices)
-    buffer_offset = (j + 1) * uniform_descriptor_offset;
-    vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
-    // Image (set 2)
-    vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 2, 1, &buffer_index_image, &buffer_offset);
-    draw_model(models.cube, draw_cmd_buffers[i]);
+	// Uniform buffer (set 1)
+	// Model ubos start at offset * (j + 1) (+1 as slot 0 is global matrices)
+	buffer_offset = (j + 1) * uniform_binding_descriptor.size;
+	vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
+	// Image (set 2)
+	buffer_offset = j * image_binding_descriptor.size;
+	vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 2, 1, &buffer_index_image, &buffer_offset);
+	draw_model(models.cube, draw_cmd_buffers[i]);
 }
 ----
 

@@ -49,6 +49,17 @@ Ideally it also contains an image of how the sample is supposed to look.
 For an example you can take a look at the readme's of existing samples, e.g. https://raw.githubusercontent.com/KhronosGroup/Vulkan-Samples/main/samples/extensions/descriptor_indexing/README.adoc
 ////
 
+= Sample name
+
+////
+The following block adds linkage to this repo in the Vulkan docs site project. It's only visible if the file is viewed via the Antora framework.
+////
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/PUT_SAMPLE_PATH_HERE[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 ////
@@ -70,4 +81,9 @@ The chapter itself can be structured by using sub paragraphs, e.g.:
 
 ////
 The tutorial should end with a conclusion chapter that recaps the tutorial and (if applicable) talks about pros and cons of the features demonstrated in this sample
+////
+
+////
+NOTE: Please also add a link to the new samples' README.adoc to the file located in ./antora/modules/ROOT/nav.adoc
+THis is necessary to have the sample show up on the build for the docs site under https://docs.vulkan.org
 ////

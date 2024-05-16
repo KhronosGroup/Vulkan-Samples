@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,13 +76,27 @@ class BufferBlock
 	BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage);
 
 	/**
+	 * @brief check if this BufferBlock can allocate a given amount of memory
+	 * @param size the number of bytes to check
+	 * @return \c true if \a size bytes can be allocated from this \c BufferBlock, otherwise \c false.
+	 */
+	bool can_allocate(VkDeviceSize size) const;
+
+	/**
 	 * @return An usable view on a portion of the underlying buffer
 	 */
-	BufferAllocation allocate(uint32_t size);
+	BufferAllocation allocate(VkDeviceSize size);
 
 	VkDeviceSize get_size() const;
 
 	void reset();
+
+  private:
+	/**
+	 * @ brief Determine the current aligned offset.
+	 * @return The current aligned offset.
+	 */
+	VkDeviceSize aligned_offset() const;
 
   private:
 	core::Buffer buffer;
@@ -131,8 +145,5 @@ class BufferPool
 	VkBufferUsageFlags usage{};
 
 	VmaMemoryUsage memory_usage{};
-
-	/// Numbers of active blocks from the start of buffer_blocks
-	uint32_t active_buffer_block_count{0};
 };
 }        // namespace vkb

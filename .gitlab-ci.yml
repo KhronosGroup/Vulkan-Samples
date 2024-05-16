@@ -54,8 +54,8 @@ ClangTidy:
     - linux
     - docker
   script:
-    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
-    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-10 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
+    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Bbuild/clang
+    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-10 -isystem third_party -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
 
 Linux:
   stage: Build
@@ -70,7 +70,7 @@ Linux:
     - linux
     - docker
   script:
-    - cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+    - cmake -G "Unix Makefiles" -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build/linux --target vulkan_samples --config Release -- -j$(($(nproc)/2+1))
 
 Windows:
@@ -85,7 +85,7 @@ Windows:
     - gpu
     - windows
   script:
-    - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
+    - cmake -G"Visual Studio 15 2017 Win64" -Bbuild/windows -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
     - cmake --build build/windows --target vulkan_samples --config Release
 
 Android:
@@ -101,7 +101,7 @@ Android:
     - linux
     - docker
   script:
-    - cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+    - cmake -G "Unix Makefiles" -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build/android --config Release --target vulkan_samples_package -- -j$(($(nproc)/2+1))
 
 GenerateSample:
@@ -145,7 +145,7 @@ LinuxExternalProject:
     - linux
     - docker
   script:
-    - cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+    - cmake tests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
 
 WindowsExternalProject:
   stage: Package
@@ -155,7 +155,7 @@ WindowsExternalProject:
     - gpu
     - windows
   script:
-    - cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+    - cmake tests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
 
 AndroidExternalProject:
   stage: Package
@@ -166,4 +166,4 @@ AndroidExternalProject:
     - linux
     - docker
   script:
-    - cmake -DCMAKE_TOOLCHAIN_FILE=../../bldsys/toolchain/android_gradle.cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+    - cmake -DCMAKE_TOOLCHAIN_FILE=../../bldsys/toolchain/android_gradle.cmake tests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF

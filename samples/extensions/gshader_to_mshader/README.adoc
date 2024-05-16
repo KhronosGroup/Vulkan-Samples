@@ -18,6 +18,11 @@
 ////
 = Geometry shader to mesh shader
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/gshader_to_mshader[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/visualization_of_normals.png[Sample]
 
 == Overview

@@ -17,6 +17,11 @@
 -
 ////
 
-=== Hello Triangle
+= Hello Triangle
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hello_triangle[Khronos Vulkan samples github repository].
+endif::[]
+
 
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.

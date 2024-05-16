@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,6 +44,8 @@ class PhysicalDevice
 	Instance &get_instance() const;
 
 	VkBool32 is_present_supported(VkSurfaceKHR surface, uint32_t queue_family_index) const;
+
+	bool is_extension_supported(const std::string &extension) const;
 
 	const VkFormatProperties get_format_properties(VkFormat format) const;
 
@@ -157,6 +159,9 @@ class PhysicalDevice
 
 	// The features that this GPU supports
 	VkPhysicalDeviceFeatures features{};
+
+	// The extensions that this GPU supports
+	std::vector<VkExtensionProperties> device_extensions;
 
 	// The GPU properties
 	VkPhysicalDeviceProperties properties;

@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -19,48 +19,42 @@
 = Vulkan Samples
 // omit in toc
 :pp: {plus}{plus}
+ifndef::site-gen-antora[]
+:toc:
+endif::[]
 
 image::banner.jpg[Vulkan Samples banner]
 
-== Contents
-// omit in toc
-
-* <<renaming-default-branch,Renaming Default Branch>>
-* <<introduction,Introduction>>
- ** <<goals,Goals>>
-* <<samples,Samples>>
-* <<general-information,General information>>
-* <<setup,Setup>>
-* <<build,Build>>
- ** <<supported-platforms,Supported Platforms>>
-* <<usage,Usage>>
-* <<tests,Tests>>
-* <<license,License>>
- ** <<trademarks,Trademarks>>
-* <<contributions,Contributions>>
-* <<related-resources,Related resources>>
-
+ifndef::site-gen-antora[]
 == Renaming Default Branch
 
 We have recently transitioned the repository to use the `main` branch by default.
 All remote git usage is handled automatically.
 To update your local repository to use main please use the following commands
 
-____
-git branch -m master main git fetch origin git branch -u origin/main main git remote set-head origin -a
-____
+----
+git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a
+----
+endif::[]
 
 == Introduction
 
 The Vulkan Samples is collection of resources to help you develop optimized Vulkan applications.
 
-If you are new to Vulkan the link:samples/api[API samples] are the right place to start.
+If you are new to Vulkan the xref:samples/api/README.adoc[API samples] are the right place to start.
 Additionally you may find the following links useful:
 
+ifdef::site-gen-antora[]
+* xref:guide:ROOT:index.adoc[Vulkan Guide]
+* xref:tutorial:ROOT:00_Introduction.adoc[Get Started in Vulkan]
+endif::[]
+
+ifndef::site-gen-antora[]
 * https://github.com/KhronosGroup/Vulkan-Guide[Vulkan Guide]
 * https://vulkan-tutorial.com/[Get Started in Vulkan]
+endif::[]
 
-link:samples/performance[Performance samples] show the recommended best practice together with real-time profiling information.
+xref:samples/performance/README.adoc[Performance samples] show the recommended best practice together with real-time profiling information.
 They are more advanced but also contain a detailed tutorial with more in-detail explanations.
 
 === Goals
@@ -76,14 +70,14 @@ They are more advanced but also contain a detailed tutorial with more in-detail 
 == General information
 
 * *Project Basics*
- ** link:./docs/misc.adoc#controls[Controls]
- ** link:./docs/misc.adoc#debug-window[Debug window]
+ ** xref:./docs/misc.adoc#controls[Controls]
+ ** xref:./docs/misc.adoc#debug-window[Debug window]
  ** xref:./scripts/README.adoc[Create a Sample]
 * *Vulkan Essentials*
  ** xref:./samples/vulkan_basics.adoc[How does Vulkan compare to OpenGL ES?
 What should you expect when targeting Vulkan?]
 * *Misc*
- ** link:./docs/misc.adoc#driver-version[Driver version]
+ ** xref:./docs/misc.adoc#driver-version[Driver version]
  ** xref:./docs/memory_limits.adoc[Memory limits]
 
 == Setup
@@ -103,14 +97,18 @@ Follow build instructions for your platform below.
 
 === Supported Platforms
 
-* Windows - link:./docs/build.adoc#windows[Build Guide]
-* Linux - link:./docs/build.adoc#linux[Build Guide]
-* macOS - link:./docs/build.adoc#macos[Build Guide]
-* Android - link:./docs/build.adoc#android[Build Guide]
+* Windows - xref:./docs/build.adoc#windows[Build Guide]
+* Linux - xref:./docs/build.adoc#linux[Build Guide]
+* macOS - xref:./docs/build.adoc#macos[Build Guide]
+* Android - xref:./docs/build.adoc#android[Build Guide]
 
 == Usage
 
 The following shows some example command line usage on how to configure and run the Vulkan Samples.
+
+> Make sure that you are running the samples from the root directory of the repository.
+> Otherwise the samples will not be able to find the assets.
+> ./build/app/bin/<BuildType>/<Arch>/vulkan_samples
 
 ----
 # For the entire usage use
@@ -137,8 +135,8 @@ adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_sam
 
 == Tests
 
-* System Test - link:docs/testing.adoc#system-test[Usage Guide]
-* Generate Sample - link:docs/testing.adoc#generate-sample-test[Usage Guide]
+* System Test - xref:docs/testing.adoc#system-test[Usage Guide]
+* Generate Sample - xref:docs/testing.adoc#generate-sample-test[Usage Guide]
 
 == License
 

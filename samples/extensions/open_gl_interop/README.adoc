@@ -17,7 +17,12 @@
 -
 ////
 
-=== OpenGL interoperability
+= OpenGL interoperability
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/open_gl_interop[Khronos Vulkan samples github repository].
+endif::[]
+
 
 *Extensions*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html[`VK_KHR_external_memory`], https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html[`VK_KHR_external_semaphore`]
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,10 +21,8 @@
 
 #include "hlsl_shaders.h"
 
-VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
 #include <glslang/Public/ResourceLimits.h>
-VKBP_ENABLE_WARNINGS()
 
 VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string &file, VkShaderStageFlagBits stage)
 {
@@ -131,7 +129,7 @@ HlslShaders::HlslShaders()
 
 HlslShaders::~HlslShaders()
 {
-	if (device)
+	if (has_device())
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class

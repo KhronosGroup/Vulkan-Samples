@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,11 +22,19 @@
 #include <algorithm>
 #include <functional>
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#	define USE_VALIDATION_LAYERS
+#endif
+
+#if defined(USE_VALIDATION_LAYERS) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
+#	define USE_VALIDATION_LAYER_FEATURES
+#endif
+
 namespace vkb
 {
 namespace
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
@@ -140,6 +148,8 @@ std::unordered_map<const char *, bool> get_optimal_validation_layers(const std::
 	return {};
 }
 
+Optional<uint32_t> Instance::selected_gpu_index;
+
 namespace
 {
 bool enable_extension(const char                               *required_ext_name,
@@ -195,7 +205,7 @@ Instance::Instance(const std::string                            &application_nam
 	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
 	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 	                                               available_instance_extensions, enabled_extensions);
@@ -218,7 +228,7 @@ Instance::Instance(const std::string                            &application_nam
 	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
-#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS))
+#ifdef USE_VALIDATION_LAYER_FEATURES
 	bool validation_features = false;
 	{
 		uint32_t layer_instance_extension_count;
@@ -292,7 +302,7 @@ Instance::Instance(const std::string                            &application_nam
 
 	std::unordered_map<const char *, bool> requested_validation_layers(required_validation_layers);
 
-#ifdef VKB_VALIDATION_LAYERS
+#ifdef USE_VALIDATION_LAYERS
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::unordered_map<const char *, bool> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
 	requested_validation_layers.insert(optimal_validation_layers.begin(), optimal_validation_layers.end());
@@ -336,7 +346,7 @@ Instance::Instance(const std::string                            &application_nam
 	instance_info.enabledLayerCount   = to_u32(final_validation_layers.size());
 	instance_info.ppEnabledLayerNames = final_validation_layers.data();
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info  = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
 	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
 	if (has_debug_utils)
@@ -355,12 +365,13 @@ Instance::Instance(const std::string                            &application_nam
 		instance_info.pNext = &debug_report_create_info;
 	}
 #endif
+
 #if (defined(VKB_ENABLE_PORTABILITY))
 	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
 	// Some of the specialized layers need to be enabled explicitly
-#if (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
+#ifdef USE_VALIDATION_LAYER_FEATURES
 	VkValidationFeaturesEXT                   validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
 	std::vector<VkValidationFeatureEnableEXT> enable_features{};
 	if (validation_features)
@@ -392,7 +403,7 @@ Instance::Instance(const std::string                            &application_nam
 
 	volkLoadInstance(handle);
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	if (has_debug_utils)
 	{
 		result = vkCreateDebugUtilsMessengerEXT(handle, &debug_utils_create_info, nullptr, &debug_utils_messenger);
@@ -414,9 +425,17 @@ Instance::Instance(const std::string                            &application_nam
 	query_gpus();
 }
 
-Instance::Instance(VkInstance instance) :
+Instance::Instance(VkInstance                       instance,
+                   const std::vector<const char *> &externally_enabled_extensions) :
     handle{instance}
 {
+	// Some parts of the framework will check for certain extensions to be enabled
+	// To make those work we need to copy over externally enabled extensions into this class
+	for (auto extension : externally_enabled_extensions)
+	{
+		enabled_extensions.push_back(extension);
+	}
+
 	if (handle != VK_NULL_HANDLE)
 	{
 		query_gpus();
@@ -429,7 +448,7 @@ Instance::Instance(VkInstance instance) :
 
 Instance::~Instance()
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef USE_VALIDATION_LAYERS
 	if (debug_utils_messenger != VK_NULL_HANDLE)
 	{
 		vkDestroyDebugUtilsMessengerEXT(handle, debug_utils_messenger, nullptr);
@@ -489,6 +508,17 @@ PhysicalDevice &Instance::get_first_gpu()
 PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
+
+	// A GPU can be explicitly selected via the command line (see plugins/gpu_selection.cpp), this overrides the below GPU selection algorithm
+	if (selected_gpu_index.has_value())
+	{
+		LOGI("Explicitly selecting GPU {}", selected_gpu_index.value());
+		if (selected_gpu_index.value() > gpus.size() - 1)
+		{
+			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
+		}
+		return *gpus[selected_gpu_index.value()];
+	}
 
 	// Find a discrete GPU
 	for (auto &gpu : gpus)

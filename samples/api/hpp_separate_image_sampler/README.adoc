@@ -19,13 +19,13 @@
 :doctype: book
 :pp: {plus}{plus}
 
-=== HPP Separate image sampler
+= Separating samplers and images with Vulkan-Hpp
 
-A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/separate_image_sampler[Separate image sampler] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_separate_image_sampler[Khronos Vulkan samples github repository].
+endif::[]
 
-= Separating samplers and images
-
-This is the tutorial as written in https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/separate_image_sampler[Separate image sampler], with code transcoded to functions and classes from vulkan.hpp.
+NOTE: A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/separate_image_sampler[Separate image sampler] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 This tutorial, along with the accompanying example code, shows how to separate samplers and images in a Vulkan application.
 Opposite to combined image and samplers, this allows the application to freely mix an arbitrary set of samplers and images in the shader.

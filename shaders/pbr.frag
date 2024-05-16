@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023 Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@
  * [1] https://learnopengl.com/PBR/Theory (Theory, Lighting and IBL sections)
  *
  * Extra:
- * glTF sample viewer PBR: https://github.com/KhronosGroup/glTF-Sample-Viewer/blob/master/src/shaders/metallic-roughness.frag
+ * glTF sample viewer PBR: https://github.com/KhronosGroup/glTF-Sample-Viewer/blob/main/source/Renderer/shaders/pbr.frag
  * Google Filament Engine: https://google.github.io/filament/Filament.html
  */
 

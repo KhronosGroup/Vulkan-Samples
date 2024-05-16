@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, Arm Limited and Contributors
+- Copyright (c) 2019-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,6 +17,11 @@
 -
 ////
 = Descriptor and buffer management
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/descriptor_management[Khronos Vulkan samples github repository].
+endif::[]
+
 
 == Overview
 
@@ -83,7 +88,7 @@ Mobile implementations may use a simpler allocator if that flag is not set, rely
 
 It is possible to avoid using that flag by updating descriptor sets instead of deleting them.
 The application can keep track of recycled descriptor sets and re-use one of them when a new one is requested.
-The xref:../subpasses/README.adoc[subpasses sample] uses this approach when it re-creates the G-buffer images.
+The xref:samples/performance/subpasses/README.adoc[subpasses sample] uses this approach when it re-creates the G-buffer images.
 
 == Buffer management
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,9 @@
 #include "descriptor_management.h"
 
 #include "common/vk_common.h"
+#include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
@@ -47,19 +47,19 @@ bool DescriptorManagement::prepare(const vkb::ApplicationOptions &options)
 	load_scene("scenes/bonza/Bonza4X.gltf");
 
 	// Attach a move script to the camera component in the scene
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass   = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
-	auto              render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	auto              scene_subpass   = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto              render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 	set_render_pipeline(std::move(render_pipeline));
 
 	// Add a GUI with the stats you want to monitor
-	stats->request_stats({vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	get_stats().request_stats({vkb::StatIndex::frame_times});
+	create_gui(*window, &get_stats());
 
 	return true;
 }
@@ -90,11 +90,11 @@ void DescriptorManagement::update(float delta_time)
 	render_context.get_active_frame().set_descriptor_management_strategy(descriptor_management_strategy);
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->begin_sampling(command_buffer);
+	get_stats().begin_sampling(command_buffer);
 
 	draw(command_buffer, render_context.get_active_frame().get_render_target());
 
-	stats->end_sampling(command_buffer);
+	get_stats().end_sampling(command_buffer);
 	command_buffer.end();
 
 	render_context.submit(command_buffer);
@@ -109,7 +109,7 @@ void DescriptorManagement::draw_gui()
 		lines = lines * 2;
 	}
 
-	gui->show_options_window(
+	get_gui().show_options_window(
 	    /* body = */ [this, lines]() {
 		    // For every option set
 		    for (size_t i = 0; i < radio_buttons.size(); ++i)
@@ -144,7 +144,7 @@ void DescriptorManagement::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_management()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_management()
 {
 	return std::make_unique<DescriptorManagement>();
 }

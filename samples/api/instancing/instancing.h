@@ -55,10 +55,9 @@ class Instancing : public ApiVulkanSample
 	// Contains the instanced data
 	struct InstanceBuffer
 	{
-		VkBuffer               buffer = VK_NULL_HANDLE;
-		VkDeviceMemory         memory = VK_NULL_HANDLE;
-		size_t                 size   = 0;
-		VkDescriptorBufferInfo descriptor;
+		std::unique_ptr<vkb::core::Buffer> buffer;
+		size_t                             size = 0;
+		VkDescriptorBufferInfo             descriptor;
 	} instance_buffer;
 
 	struct UBOVS

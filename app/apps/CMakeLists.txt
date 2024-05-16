@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023, Arm Limited and Contributors
+# Copyright (c) 2020-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -89,8 +89,20 @@ foreach(ID ${PROJECT_ID_LIST})
     if(TARGET ${ID})
         get_target_property(TARGET_TYPE ${ID} TYPE)
 
-        if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY")
+        if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY" OR TARGET_TYPE STREQUAL "STATIC_LIBRARY")
             target_link_libraries(${PROJECT_NAME} PUBLIC ${ID})
         endif()
     endif()
 endforeach()
+
+if (IOS)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            "-framework UIKit"
+            "-framework Foundation"
+            "-framework CoreGraphics"
+            "-framework Metal"
+            "-framework QuartzCore"
+            "-framework IOKit"
+            "-framework IOSurface"
+            )
+endif ()

@@ -17,7 +17,12 @@
 -
 ////
 
-=== Fragment shading rate
+= Fragment shading rate
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/fragment_shading_rate[Khronos Vulkan samples github repository].
+endif::[]
+
 
 *Extension*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html[`VK_KHR_fragment_shading_rate`]
 

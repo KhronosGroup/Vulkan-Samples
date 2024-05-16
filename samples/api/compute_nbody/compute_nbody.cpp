@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,7 +37,7 @@ ComputeNBody::ComputeNBody()
 
 ComputeNBody::~ComputeNBody()
 {
-	if (device)
+	if (has_device())
 	{
 		// Graphics
 		graphics.uniform_buffer.reset();
@@ -78,13 +78,6 @@ void ComputeNBody::load_assets()
 
 void ComputeNBody::build_command_buffers()
 {
-	// Destroy command buffers if already present
-	if (!check_command_buffers())
-	{
-		destroy_command_buffers();
-		create_command_buffers();
-	}
-
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
@@ -329,8 +322,7 @@ void ComputeNBody::prepare_storage_buffers()
 
 	// Staging
 	// SSBO won't be changed on the host after upload so copy to device local memory
-	vkb::core::Buffer staging_buffer{get_device(), storage_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
-	staging_buffer.update(particle_buffer.data(), storage_buffer_size);
+	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), particle_buffer);
 
 	compute.storage_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                             storage_buffer_size,
@@ -338,7 +330,7 @@ void ComputeNBody::prepare_storage_buffers()
 	                                                             VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffer to storage buffer
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	VkBufferCopy    copy_region  = {};
 	copy_region.size             = storage_buffer_size;
 	vkCmdCopyBuffer(copy_command, staging_buffer.get_handle(), compute.storage_buffer->get_handle(), 1, &copy_region);
@@ -367,7 +359,7 @@ void ComputeNBody::prepare_storage_buffers()
 		    0, nullptr);
 	}
 
-	device->flush_command_buffer(copy_command, queue, true);
+	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
 void ComputeNBody::setup_descriptor_pool()
@@ -657,7 +649,6 @@ void ComputeNBody::prepare_compute()
 	VkCommandPoolCreateInfo command_pool_create_info = {};
 	command_pool_create_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	command_pool_create_info.queueFamilyIndex        = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
-	command_pool_create_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_create_info, nullptr, &compute.command_pool));
 
 	// Create a command buffer for compute operations
@@ -758,14 +749,14 @@ void ComputeNBody::prepare_compute()
 		fence_info.flags = VK_FLAGS_NONE;
 
 		VkFence fence;
-		VK_CHECK(vkCreateFence(device->get_handle(), &fence_info, nullptr, &fence));
+		VK_CHECK(vkCreateFence(get_device().get_handle(), &fence_info, nullptr, &fence));
 		// Submit to the *compute* queue
 		VkResult result = vkQueueSubmit(compute.queue, 1, &submit_info, fence);
 		// Wait for the fence to signal that command buffer has finished executing
-		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
-		vkDestroyFence(device->get_handle(), fence, nullptr);
+		VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+		vkDestroyFence(get_device().get_handle(), fence, nullptr);
 
-		vkFreeCommandBuffers(device->get_handle(), compute.command_pool, 1, &transfer_command);
+		vkFreeCommandBuffers(get_device().get_handle(), compute.command_pool, 1, &transfer_command);
 	}
 }
 

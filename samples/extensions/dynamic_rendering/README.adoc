@@ -17,6 +17,11 @@ limitations under the License.
 ////
 = Dynamic Rendering
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/dynamic_rendering[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 This sample demonstrates how to use the `VK_KHR_dynamic_rendering` extension, which eliminates the need to create render passes and improves flexibility while developing render pipelines.

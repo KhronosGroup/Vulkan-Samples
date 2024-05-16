@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,9 +28,9 @@ HPPHDR::HPPHDR()
 
 HPPHDR::~HPPHDR()
 {
-	if (get_device() && get_device()->get_handle())
+	if (has_device() && get_device().get_handle())
 	{
-		vk::Device device = get_device()->get_handle();
+		vk::Device device = get_device().get_handle();
 
 		bloom.destroy(device);
 		composition.destroy(device);
@@ -43,23 +43,23 @@ HPPHDR::~HPPHDR()
 
 bool HPPHDR::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		prepare_camera();
+		load_assets();
+		prepare_uniform_buffers();
+		prepare_offscreen_buffer();
+		descriptor_pool = create_descriptor_pool();
+		prepare_bloom();
+		prepare_composition();
+		prepare_models();
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	prepare_camera();
-	load_assets();
-	prepare_uniform_buffers();
-	prepare_offscreen_buffer();
-
-	descriptor_pool = create_descriptor_pool();
-	setup_bloom();
-	setup_composition();
-	setup_models();
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 bool HPPHDR::resize(const uint32_t width, const uint32_t height)
@@ -184,59 +184,59 @@ void HPPHDR::build_command_buffers()
 	}
 }
 
-void HPPHDR::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPHDR::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
 		if (drawer.combo_box("Object type", &models.object_index, object_names))
 		{
 			update_uniform_buffers();
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, "%.3f"))
 		{
 			update_params();
 		}
 		if (drawer.checkbox("Bloom", &bloom.enabled))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Skybox", &display_skybox))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }
 
 void HPPHDR::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
-	}
-	draw();
-	if (camera.updated)
-	{
-		update_uniform_buffers();
+		draw();
+		if (camera.updated)
+		{
+			update_uniform_buffers();
+		}
 	}
 }
 
 vk::DeviceMemory HPPHDR::allocate_memory(vk::Image image)
 {
-	vk::MemoryRequirements memory_requirements = get_device()->get_handle().getImageMemoryRequirements(image);
+	vk::MemoryRequirements memory_requirements = get_device().get_handle().getImageMemoryRequirements(image);
 
-	vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size,
-	                                            get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
+	vk::MemoryAllocateInfo memory_allocate_info(
+	    memory_requirements.size, get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
 
-	return get_device()->get_handle().allocateMemory(memory_allocate_info);
+	return get_device().get_handle().allocateMemory(memory_allocate_info);
 }
 
-HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage)
+HPPHDR::FramebufferAttachment HPPHDR::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage)
 {
 	vk::Image        image  = create_image(format, usage);
 	vk::DeviceMemory memory = allocate_memory(image);
-	get_device()->get_handle().bindImageMemory(image, memory, 0);
-	vk::ImageView view = create_image_view(format, usage, image);
+	get_device().get_handle().bindImageMemory(image, memory, 0);
+	vk::ImageView view =
+	    vkb::common::create_image_view(get_device().get_handle(), image, vk::ImageViewType::e2D, format, vkb::common::get_image_aspect_flags(usage, format));
 
 	return {format, image, memory, view};
 }
@@ -244,14 +244,13 @@ HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::I
 vk::DescriptorPool HPPHDR::create_descriptor_pool()
 {
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}}};
-	return get_device()->get_handle().createDescriptorPool({{}, 4, pool_sizes});
+	return get_device().get_handle().createDescriptorPool({{}, 4, pool_sizes});
 }
 
 vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
-	    load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -277,23 +276,25 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 	depth_stencil_state.front          = depth_stencil_state.back;
 
 	// Empty vertex input state, full screen triangles are generated by the vertex shader
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             {},
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eFront,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},
 	                                             depth_stencil_state,
 	                                             bloom.pipeline_layout,
-	                                             render_pass);
+	                                             direction == 1 ? render_pass : filter_pass.render_pass);
 }
 
 vk::Pipeline HPPHDR::create_composition_pipeline()
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                               load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state;
 	blend_attachment_state.colorWriteMask =
@@ -306,11 +307,13 @@ vk::Pipeline HPPHDR::create_composition_pipeline()
 	depth_stencil_state.front          = depth_stencil_state.back;
 
 	// Empty vertex input state, full screen triangles are generated by the vertex shader
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             {},
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eFront,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},
@@ -350,23 +353,13 @@ vk::Image HPPHDR::create_image(vk::Format format, vk::ImageUsageFlagBits usage)
 	image_create_info.tiling      = vk::ImageTiling::eOptimal;
 	image_create_info.usage       = usage | vk::ImageUsageFlagBits::eSampled;
 
-	return get_device()->get_handle().createImage(image_create_info);
-}
-
-vk::ImageView HPPHDR::create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image)
-{
-	vk::ImageAspectFlags aspect_mask = vkb::common::get_image_aspect_flags(usage, format);
-
-	vk::ImageViewCreateInfo image_view_create_info({}, image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1});
-
-	return get_device()->get_handle().createImageView(image_view_create_info);
+	return get_device().get_handle().createImage(image_create_info);
 }
 
 vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
-	    load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -399,11 +392,13 @@ vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFla
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                             pipeline_cache,
 	                                             shader_stages,
 	                                             vertex_input_state,
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             cullMode,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             blend_attachment_states,
@@ -473,25 +468,7 @@ vk::RenderPass HPPHDR::create_render_pass(std::vector<vk::AttachmentDescription>
 
 	vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass_description, subpass_dependencies);
 
-	return get_device()->get_handle().createRenderPass(render_pass_create_info);
-}
-
-vk::Sampler HPPHDR::create_sampler()
-{
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter     = vk::Filter::eNearest;
-	sampler_create_info.minFilter     = vk::Filter::eNearest;
-	sampler_create_info.mipmapMode    = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU  = vk::SamplerAddressMode::eClampToEdge;
-	sampler_create_info.addressModeV  = sampler_create_info.addressModeU;
-	sampler_create_info.addressModeW  = sampler_create_info.addressModeU;
-	sampler_create_info.mipLodBias    = 0.0f;
-	sampler_create_info.maxAnisotropy = 1.0f;
-	sampler_create_info.minLod        = 0.0f;
-	sampler_create_info.maxLod        = 1.0f;
-	sampler_create_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
-
-	return get_device()->get_handle().createSampler(sampler_create_info);
+	return get_device().get_handle().createRenderPass(render_pass_create_info);
 }
 
 void HPPHDR::draw()
@@ -528,7 +505,21 @@ void HPPHDR::load_assets()
 	models.transforms.push_back(torus_matrix);
 
 	// Load HDR cube map
-	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::scene_graph::components::HPPImage::Color);
+}
+
+void HPPHDR::prepare_bloom()
+{
+	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+
+	vk::Device device           = get_device().get_handle();
+	bloom.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	bloom.pipeline_layout       = device.createPipelineLayout({{}, bloom.descriptor_set_layout});
+	bloom.pipelines[0]          = create_bloom_pipeline(1);
+	bloom.pipelines[1]          = create_bloom_pipeline(0);
+	bloom.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, bloom.descriptor_set_layout);
+	update_bloom_descriptor_set();
 }
 
 void HPPHDR::prepare_camera()
@@ -541,24 +532,48 @@ void HPPHDR::prepare_camera()
 	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 
+void HPPHDR::prepare_composition()
+{
+	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+
+	vk::Device device                 = get_device().get_handle();
+	composition.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	composition.pipeline_layout       = device.createPipelineLayout({{}, composition.descriptor_set_layout});
+	composition.pipeline              = create_composition_pipeline();
+	composition.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, composition.descriptor_set_layout);
+	update_composition_descriptor_set();
+}
+
+void HPPHDR::prepare_models()
+{
+	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}}};
+
+	vk::Device device            = get_device().get_handle();
+	models.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	models.pipeline_layout       = device.createPipelineLayout({{}, models.descriptor_set_layout});
+
+	models.objects.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, models.descriptor_set_layout);
+	update_model_descriptor_set(models.objects.descriptor_set);
+	models.objects.pipeline = create_models_pipeline(1, vk::CullModeFlagBits::eFront, true);
+
+	models.skybox.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, models.descriptor_set_layout);
+	update_model_descriptor_set(models.skybox.descriptor_set);
+	models.skybox.pipeline = create_models_pipeline(0, vk::CullModeFlagBits::eBack, false);
+}
+
 // Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 void HPPHDR::prepare_offscreen_buffer()
 {
 	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
-	const std::vector<vk::Format> float_format_priority_list = {vk::Format::eR32G32B32A32Sfloat, vk::Format::eR16G16B16A16Sfloat};
+	const std::vector<vk::Format> float_format_priority_list = {
+	    vk::Format::eR32G32B32A32Sfloat,
+	    vk::Format::eR16G16B16A16Sfloat        // Guaranteed blend support for this
+	};
 
-	auto formatIt = std::find_if(float_format_priority_list.begin(),
-	                             float_format_priority_list.end(),
-	                             [this](vk::Format format) {
-		                             const vk::FormatProperties properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
-		                             return properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend;
-	                             });
-	if (formatIt == float_format_priority_list.end())
-	{
-		throw std::runtime_error("No suitable float format could be determined");
-	}
-
-	vk::Format color_format = *formatIt;
+	vk::Format color_format = vkb::common::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 	{
 		offscreen.extent = extent;
@@ -575,10 +590,11 @@ void HPPHDR::prepare_offscreen_buffer()
 		offscreen.render_pass = create_offscreen_render_pass();
 
 		offscreen.framebuffer = vkb::common::create_framebuffer(
-		    get_device()->get_handle(), offscreen.render_pass, {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view}, offscreen.extent);
+		    get_device().get_handle(), offscreen.render_pass, {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view}, offscreen.extent);
 
 		// Create sampler to sample from the color attachments
-		offscreen.sampler = create_sampler();
+		offscreen.sampler = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(), color_format,
+		                                                vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 
 	// Bloom separable filter pass
@@ -590,8 +606,9 @@ void HPPHDR::prepare_offscreen_buffer()
 		// Floating point color attachment
 		filter_pass.color       = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		filter_pass.render_pass = create_filter_render_pass();
-		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device()->get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
-		filter_pass.sampler     = create_sampler();
+		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device().get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
+		filter_pass.sampler     = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(),
+		                                                      color_format, vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 }
 
@@ -599,65 +616,19 @@ void HPPHDR::prepare_offscreen_buffer()
 void HPPHDR::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	uniform_buffers.matrices = std::make_unique<vkb::core::HPPBuffer>(get_device(),
 	                                                                  sizeof(ubo_matrices),
 	                                                                  vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	uniform_buffers.params = std::make_unique<vkb::core::HPPBuffer>(get_device(),
 	                                                                sizeof(ubo_params),
 	                                                                vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 	update_params();
-}
-
-void HPPHDR::setup_bloom()
-{
-	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-
-	vk::Device device           = get_device()->get_handle();
-	bloom.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
-	bloom.pipeline_layout       = device.createPipelineLayout({{}, bloom.descriptor_set_layout});
-	bloom.pipelines[0]          = create_bloom_pipeline(1);
-	bloom.pipelines[1]          = create_bloom_pipeline(0);
-	bloom.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, bloom.descriptor_set_layout);
-	update_bloom_descriptor_set();
-}
-
-void HPPHDR::setup_composition()
-{
-	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-
-	vk::Device device                 = get_device()->get_handle();
-	composition.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
-	composition.pipeline_layout       = device.createPipelineLayout({{}, composition.descriptor_set_layout});
-	composition.pipeline              = create_composition_pipeline();
-	composition.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, composition.descriptor_set_layout);
-	update_composition_descriptor_set();
-}
-
-void HPPHDR::setup_models()
-{
-	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}}};
-
-	vk::Device device            = get_device()->get_handle();
-	models.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
-	models.pipeline_layout       = device.createPipelineLayout({{}, models.descriptor_set_layout});
-
-	models.objects.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, models.descriptor_set_layout);
-	update_model_descriptor_set(models.objects.descriptor_set);
-	models.objects.pipeline = create_models_pipeline(1, vk::CullModeFlagBits::eFront, true);
-
-	models.skybox.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, models.descriptor_set_layout);
-	update_model_descriptor_set(models.skybox.descriptor_set);
-	models.skybox.pipeline = create_models_pipeline(0, vk::CullModeFlagBits::eBack, false);
 }
 
 void HPPHDR::update_composition_descriptor_set()
@@ -669,7 +640,7 @@ void HPPHDR::update_composition_descriptor_set()
 	    {{composition.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
 	     {composition.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
 
-	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
 }
 
 void HPPHDR::update_bloom_descriptor_set()
@@ -681,7 +652,7 @@ void HPPHDR::update_bloom_descriptor_set()
 	    {{bloom.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
 	     {bloom.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
 
-	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
 }
 
 void HPPHDR::update_model_descriptor_set(vk::DescriptorSet descriptor_set)
@@ -700,7 +671,7 @@ void HPPHDR::update_model_descriptor_set(vk::DescriptorSet descriptor_set)
 	     {descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, environment_image_descriptor},
 	     {descriptor_set, 2, 0, vk::DescriptorType::eUniformBuffer, {}, params_buffer_descriptor}}};
 
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPHDR::update_params()

@@ -18,6 +18,11 @@
 ////
 = Full Screen Exclusive
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/full_screen_exclusive[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 This code sample demonstrates how to incorporate the Vulkan extension `VK_EXT_full_screen_exclusive`.

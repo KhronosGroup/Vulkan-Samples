@@ -1,5 +1,5 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
- * Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
+ * Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,10 +20,9 @@
 
 #include "apps.h"
 
-VKBP_DISABLE_WARNINGS()
+#include <fmt/format.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
-VKBP_ENABLE_WARNINGS()
 
 namespace plugins
 {

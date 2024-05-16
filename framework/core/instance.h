@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "common/optional.h"
 #include "common/vk_common.h"
 
 namespace vkb
@@ -40,6 +41,11 @@ class Instance
 {
   public:
 	/**
+	 * @brief Can be set from the GPU selection plugin to explicitly select a GPU instead
+	 */
+	static Optional<uint32_t> selected_gpu_index;
+
+	/**
 	 * @brief Initializes the connection to Vulkan
 	 * @param application_name The name of the application
 	 * @param required_extensions The extensions requested to be enabled
@@ -57,8 +63,10 @@ class Instance
 	/**
 	 * @brief Queries the GPUs of a VkInstance that is already created
 	 * @param instance A valid VkInstance
+	 * @param externally_enabled_extensions List of extensions that have been enabled, used for following checks e.g. during device creation
 	 */
-	Instance(VkInstance instance);
+	Instance(VkInstance                       instance,
+	         const std::vector<const char *> &externally_enabled_extensions = {});
 
 	Instance(const Instance &) = delete;
 

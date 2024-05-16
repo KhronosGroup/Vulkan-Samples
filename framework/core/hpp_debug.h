@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include <core/debug.h>
-
+#include <common/glm_common.h>
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
@@ -28,242 +27,122 @@ namespace core
 class HPPCommandBuffer;
 
 /**
- * @brief facade class around vkb::DebugUtils, providing a vulkan.hpp-based interface
- *
- * See vkb::DebugUtils for documentation
+ * @brief An interface over platform-specific debug extensions.
  */
-class HPPDebugUtils : private vkb::DebugUtils
+class HPPDebugUtils
 {
   public:
-	void set_debug_name(VkDevice     device,
-	                    VkObjectType object_type,
-	                    uint64_t     object_handle,
-	                    const char  *name) const override
-	{
-		set_debug_name(
-		    static_cast<vk::Device>(device), static_cast<vk::ObjectType>(object_type), object_handle, name);
-	}
+	virtual ~HPPDebugUtils() = default;
 
-	void set_debug_tag(VkDevice     device,
-	                   VkObjectType object_type,
-	                   uint64_t     object_handle,
-	                   uint64_t     tag_name,
-	                   const void  *tag_data,
-	                   size_t       tag_data_size) const override
-	{
-		set_debug_tag(static_cast<vk::Device>(device),
-		              static_cast<vk::ObjectType>(object_type),
-		              object_handle,
-		              tag_name,
-		              tag_data,
-		              tag_data_size);
-	}
+	/**
+	 * @brief Sets the debug name for a Vulkan object.
+	 */
+	virtual void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const = 0;
 
-	void cmd_begin_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		cmd_begin_label(static_cast<vk::CommandBuffer>(command_buffer), name, color);
-	}
+	/**
+	 * @brief Tags the given Vulkan object with some data.
+	 */
+	virtual void set_debug_tag(
+	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const = 0;
 
-	void cmd_end_label(VkCommandBuffer command_buffer) const override
-	{
-		cmd_end_label(static_cast<vk::CommandBuffer>(command_buffer));
-	}
+	/**
+	 * @brief Inserts a command to begin a new debug label/marker scope.
+	 */
+	virtual void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
 
-	void cmd_insert_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		cmd_insert_label(static_cast<vk::CommandBuffer>(command_buffer), name, color);
-	}
+	/**
+	 * @brief Inserts a command to end the current debug label/marker scope.
+	 */
+	virtual void cmd_end_label(vk::CommandBuffer command_buffer) const = 0;
 
-	virtual void set_debug_name(vk::Device     device,
-	                            vk::ObjectType object_type,
-	                            uint64_t       object_handle,
-	                            const char    *name) const                                                           = 0;
-	virtual void set_debug_tag(vk::Device     device,
-	                           vk::ObjectType object_type,
-	                           uint64_t       object_handle,
-	                           uint64_t       tag_name,
-	                           const void    *tag_data,
-	                           size_t         tag_data_size) const                                                        = 0;
-	virtual void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color = {}) const  = 0;
-	virtual void cmd_end_label(vk::CommandBuffer command_buffer) const                                            = 0;
-	virtual void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color = {}) const = 0;
+	/**
+	 * @brief Inserts a (non-scoped) debug label/marker in the command buffer.
+	 */
+	virtual void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
 };
 
 /**
- * @brief facade class around vkb::DebugUtilsExtDebugUtils, providing a vulkan.hpp-based interface
- *
- * See vkb::DebugUtilsExtDebugUtils for documentation
+ * @brief HPPDebugUtils implemented on top of VK_EXT_debug_utils.
  */
 class HPPDebugUtilsExtDebugUtils final : public vkb::core::HPPDebugUtils
 {
   public:
-	virtual void set_debug_name(vk::Device     device,
-	                            vk::ObjectType object_type,
-	                            uint64_t       object_handle,
-	                            const char    *name) const override
-	{
-		reinterpret_cast<vkb::DebugUtilsExtDebugUtils const *>(this)->set_debug_name(
-		    static_cast<VkDevice>(device), static_cast<VkObjectType>(object_type), object_handle, name);
-	}
+	~HPPDebugUtilsExtDebugUtils() override = default;
 
-	virtual void set_debug_tag(vk::Device     device,
-	                           vk::ObjectType object_type,
-	                           uint64_t       object_handle,
-	                           uint64_t       tag_name,
-	                           const void    *tag_data,
-	                           size_t         tag_data_size) const override
-	{
-		reinterpret_cast<vkb::DebugUtilsExtDebugUtils const *>(this)->set_debug_tag(
-		    static_cast<VkDevice>(device),
-		    static_cast<VkObjectType>(object_type),
-		    object_handle,
-		    tag_name,
-		    tag_data,
-		    tag_data_size);
-	}
+	void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const override;
 
-	virtual void
-	    cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		reinterpret_cast<vkb::DebugUtilsExtDebugUtils const *>(this)->cmd_begin_label(
-		    static_cast<VkCommandBuffer>(command_buffer), name, color);
-	}
+	void set_debug_tag(
+	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
 
-	virtual void cmd_end_label(vk::CommandBuffer command_buffer) const override
-	{
-		reinterpret_cast<vkb::DebugUtilsExtDebugUtils const *>(this)->cmd_end_label(
-		    static_cast<VkCommandBuffer>(command_buffer));
-	}
+	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
-	virtual void
-	    cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		reinterpret_cast<vkb::DebugUtilsExtDebugUtils const *>(this)->cmd_insert_label(
-		    static_cast<VkCommandBuffer>(command_buffer), name, color);
-	}
+	void cmd_end_label(vk::CommandBuffer command_buffer) const override;
+
+	void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 };
 
 /**
- * @brief facade class around vkb::DebugMarkerExtDebugUtils, providing a vulkan.hpp-based interface
- *
- * See vkb::DebugMarkerExtDebugUtils for documentation
+ * @brief HPPDebugUtils implemented on top of VK_EXT_debug_marker.
  */
 class HPPDebugMarkerExtDebugUtils final : public vkb::core::HPPDebugUtils
 {
   public:
-	virtual void set_debug_name(vk::Device     device,
-	                            vk::ObjectType object_type,
-	                            uint64_t       object_handle,
-	                            const char    *name) const override
-	{
-		reinterpret_cast<vkb::DebugMarkerExtDebugUtils const *>(this)->set_debug_name(
-		    static_cast<VkDevice>(device), static_cast<VkObjectType>(object_type), object_handle, name);
-	}
+	~HPPDebugMarkerExtDebugUtils() override = default;
 
-	virtual void set_debug_tag(vk::Device     device,
-	                           vk::ObjectType object_type,
-	                           uint64_t       object_handle,
-	                           uint64_t       tag_name,
-	                           const void    *tag_data,
-	                           size_t         tag_data_size) const override
-	{
-		reinterpret_cast<vkb::DebugMarkerExtDebugUtils const *>(this)->set_debug_tag(
-		    static_cast<VkDevice>(device),
-		    static_cast<VkObjectType>(object_type),
-		    object_handle,
-		    tag_name,
-		    tag_data,
-		    tag_data_size);
-	}
+	void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const override;
 
-	virtual void
-	    cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		reinterpret_cast<vkb::DebugMarkerExtDebugUtils const *>(this)->cmd_begin_label(
-		    static_cast<VkCommandBuffer>(command_buffer), name, color);
-	}
+	void set_debug_tag(
+	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
 
-	virtual void cmd_end_label(vk::CommandBuffer command_buffer) const override
-	{
-		reinterpret_cast<vkb::DebugMarkerExtDebugUtils const *>(this)->cmd_end_label(
-		    static_cast<VkCommandBuffer>(command_buffer));
-	}
+	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
-	virtual void
-	    cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		reinterpret_cast<vkb::DebugMarkerExtDebugUtils const *>(this)->cmd_insert_label(
-		    static_cast<VkCommandBuffer>(command_buffer), name, color);
-	}
+	void cmd_end_label(vk::CommandBuffer command_buffer) const override;
+
+	void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 };
 
 /**
- * @brief facade class around vkb::DummyDebugUtils, providing a vulkan.hpp-based interface
- *
- * See vkb::DummyDebugUtils for documentation
+ * @brief No-op HPPDebugUtils.
  */
 class HPPDummyDebugUtils final : public vkb::core::HPPDebugUtils
 {
   public:
-	virtual void set_debug_name(vk::Device     device,
-	                            vk::ObjectType object_type,
-	                            uint64_t       object_handle,
-	                            const char    *name) const override
-	{
-		reinterpret_cast<vkb::DummyDebugUtils const *>(this)->set_debug_name(
-		    static_cast<VkDevice>(device), static_cast<VkObjectType>(object_type), object_handle, name);
-	}
+	~HPPDummyDebugUtils() override = default;
 
-	virtual void set_debug_tag(vk::Device     device,
-	                           vk::ObjectType object_type,
-	                           uint64_t       object_handle,
-	                           uint64_t       tag_name,
-	                           const void    *tag_data,
-	                           size_t         tag_data_size) const override
-	{
-		reinterpret_cast<vkb::DummyDebugUtils const *>(this)->set_debug_tag(static_cast<VkDevice>(device),
-		                                                                    static_cast<VkObjectType>(object_type),
-		                                                                    object_handle,
-		                                                                    tag_name,
-		                                                                    tag_data,
-		                                                                    tag_data_size);
-	}
+	inline void set_debug_name(vk::Device, vk::ObjectType, uint64_t, const char *) const override
+	{}
 
-	virtual void
-	    cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		reinterpret_cast<vkb::DummyDebugUtils const *>(this)->cmd_begin_label(
-		    static_cast<VkCommandBuffer>(command_buffer), name, color);
-	}
+	inline void set_debug_tag(vk::Device, vk::ObjectType, uint64_t, uint64_t, const void *, size_t) const override
+	{}
 
-	virtual void cmd_end_label(vk::CommandBuffer command_buffer) const override
-	{
-		reinterpret_cast<vkb::DummyDebugUtils const *>(this)->cmd_end_label(
-		    static_cast<VkCommandBuffer>(command_buffer));
-	}
+	inline void cmd_begin_label(vk::CommandBuffer, const char *, glm::vec4 const) const override
+	{}
 
-	virtual void
-	    cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 color) const override
-	{
-		reinterpret_cast<vkb::DummyDebugUtils const *>(this)->cmd_insert_label(
-		    static_cast<VkCommandBuffer>(command_buffer), name, color);
-	}
+	inline void cmd_end_label(vk::CommandBuffer) const override
+	{}
+
+	inline void cmd_insert_label(vk::CommandBuffer, const char *, glm::vec4 const) const override
+	{}
 };
 
 /**
- * @brief facade class around vkb::DummyDebugUtils, providing a vulkan.hpp-based interface
- *
- * See vkb::DummyDebugUtils for documentation
+ * @brief A RAII debug label.
+ *        If any of EXT_debug_utils or EXT_debug_marker is available, this:
+ *        - Begins a debug label / marker on construction
+ *        - Ends it on destruction
  */
 class HPPScopedDebugLabel final
 {
   public:
-	HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, const char *name, glm::vec4 color = {}) :
-	    scopedDebugLabel(reinterpret_cast<vkb::CommandBuffer const &>(command_buffer), name, color)
-	{}
+	HPPScopedDebugLabel(const vkb::core::HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const color = {});
+
+	HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const color = {});
+
+	~HPPScopedDebugLabel();
 
   private:
-	ScopedDebugLabel scopedDebugLabel;
+	const vkb::core::HPPDebugUtils *debug_utils;
+	vk::CommandBuffer               command_buffer;
 };
 
 }        // namespace core

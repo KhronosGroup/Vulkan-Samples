@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler
  */
-class Sampler : public VulkanResource<VkSampler, VK_OBJECT_TYPE_SAMPLER, const Device>
+class Sampler : public VulkanResource<vkb::BindingType::C, VkSampler>
 {
   public:
 	/**
@@ -38,7 +38,7 @@ class Sampler : public VulkanResource<VkSampler, VK_OBJECT_TYPE_SAMPLER, const D
 	 * @param d The device to use
 	 * @param info Creation details
 	 */
-	Sampler(Device const &d, const VkSamplerCreateInfo &info);
+	Sampler(vkb::Device &d, const VkSamplerCreateInfo &info);
 
 	Sampler(const Sampler &) = delete;
 

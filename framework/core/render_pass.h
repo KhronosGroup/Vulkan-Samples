@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,13 +43,13 @@ struct SubpassInfo
 	std::string debug_name;
 };
 
-class RenderPass : public core::VulkanResource<VkRenderPass, VK_OBJECT_TYPE_RENDER_PASS>
+class RenderPass : public vkb::core::VulkanResource<vkb::BindingType::C, VkRenderPass>
 {
   public:
-	RenderPass(Device &                          device,
-	           const std::vector<Attachment> &   attachments,
+	RenderPass(Device                           &device,
+	           const std::vector<Attachment>    &attachments,
 	           const std::vector<LoadStoreInfo> &load_store_infos,
-	           const std::vector<SubpassInfo> &  subpasses);
+	           const std::vector<SubpassInfo>   &subpasses);
 
 	RenderPass(const RenderPass &) = delete;
 

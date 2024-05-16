@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2021-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,6 +17,11 @@
 -
 ////
 = Multi-threaded recording with multiple render passes
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/multithreading_render_passes[Khronos Vulkan samples github repository].
+endif::[]
+
 
 == Overview
 
@@ -57,11 +62,13 @@ Another approach is to use secondary level command buffers.
 First, both of the passes are recorded into two separate secondary command buffers using two threads.
 Then, we can just reference them in the primary command buffer via `vkCmdExecuteCommands`.
 
-When using both of these methods for multi-threading, general recommendations should still be taken into account (see https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/command_buffer_usage/README.adoc#Multi-threaded-recording[Multi-threaded-recording]).
+When using both of these methods for multi-threading, general recommendations should still be taken into account (see https://github.com/KhronosGroup/Vulkan-Samples/blob/main/samples/performance/command_buffer_usage/README.adoc#Multi-threaded-recording[Multi-threaded-recording]).
 
 This sample shows the difference between recording both render passes into a single command buffer in one thread and using the methods described above.
 
 Below are screenshots of the sample running on a phone with a Mali G72 GPU:
+
+NOTE: Since the time of writing this tutorial, the CPU counter provider, HWCPipe, has been updated and it no longer provides CPU cycles. These may still be measured using external tools, as shown later.
 
 image::./images/no_multi_threading.png[Single Thread]
 
@@ -91,7 +98,7 @@ And indeed, in debug build, which was used for profiling, frame time is decrease
 
 == Further reading
 
-xref:../command_buffer_usage/README.adoc[Command buffer usage and multi-threaded recording]
+xref:samples/performance/command_buffer_usage/README.adoc[Command buffer usage and multi-threaded recording]
 
 == Best practice summary
 

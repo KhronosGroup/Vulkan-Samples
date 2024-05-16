@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/optional.h"
 #include <common/hpp_error.h>
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
@@ -42,6 +43,11 @@ std::unordered_map<const char *, bool> get_optimal_validation_layers(const std::
 class HPPInstance
 {
   public:
+	/**
+	 * @brief Can be set from the GPU selection plugin to explicitly select a GPU instead
+	 */
+	static Optional<uint32_t> selected_gpu_index;
+
 	/**
 	 * @brief Initializes the connection to Vulkan
 	 * @param application_name The name of the application

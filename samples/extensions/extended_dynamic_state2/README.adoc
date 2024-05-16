@@ -18,6 +18,11 @@
 ////
 = Extended dynamic state 2
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/extended_dynamic_state2[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/extended_dynamic_state2_screenshot.png[Sample]
 
 == Overview
@@ -268,3 +273,4 @@ add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
 
 If the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceExtendedDynamicState2FeaturesEXT.html[`VkPhysicalDeviceExtendedDynamicState2FeaturesEXT`] structure is included in the pNext chain of the `VkPhysicalDeviceFeatures2` structure passed to vkGetPhysicalDeviceFeatures2, it is filled in to indicate whether each corresponding feature is supported.
 `VkPhysicalDeviceExtendedDynamicState2FeaturesEXT` can also be used in the pNext chain of `VkDeviceCreateInfo` to selectively enable these features.
+o selectively enable these features.

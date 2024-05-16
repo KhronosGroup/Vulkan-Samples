@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@ namespace vkb
 {
 namespace core
 {
-AccelerationStructure::AccelerationStructure(Device &                       device,
+AccelerationStructure::AccelerationStructure(Device                        &device,
                                              VkAccelerationStructureTypeKHR type) :
     device{device},
     type{type}
@@ -179,7 +179,7 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 		buffer = std::make_unique<vkb::core::Buffer>(
 		    device,
 		    build_sizes_info.accelerationStructureSize,
-		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 		    VMA_MEMORY_USAGE_GPU_ONLY);
 
 		VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
@@ -202,7 +202,11 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	device_address                                         = vkGetAccelerationStructureDeviceAddressKHR(device.get_handle(), &acceleration_device_address_info);
 
 	// Create a scratch buffer as a temporary storage for the acceleration structure build
-	scratch_buffer = std::make_unique<vkb::core::ScratchBuffer>(device, build_sizes_info.buildScratchSize);
+	scratch_buffer = std::make_unique<vkb::core::Buffer>(
+	    device,
+	    build_sizes_info.buildScratchSize,
+	    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	build_geometry_info.scratchData.deviceAddress = scratch_buffer->get_device_address();
 	build_geometry_info.dstAccelerationStructure  = handle;

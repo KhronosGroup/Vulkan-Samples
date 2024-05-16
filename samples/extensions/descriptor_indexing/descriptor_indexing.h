@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,6 +76,7 @@ class DescriptorIndexing : public ApiVulkanSample
 	std::uniform_real_distribution<float>           distribution{0.0f, 0.1f};
 	uint32_t                                        descriptor_offset{};
 	float                                           accumulated_time{};
+	const VkFormat                                  format = VK_FORMAT_R8G8B8A8_UNORM;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_descriptor_indexing();
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_indexing();

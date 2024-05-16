@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 #include <string>
 
 #include "common/strings.h"
-#include "logging.h"
+#include "core/util/logging.hpp"
 #include "vk_common.h"
 
 #if defined(__clang__)
@@ -37,11 +37,11 @@
 		_Pragma("clang diagnostic pop")
 #elif defined(__GNUC__) || defined(__GNUG__)
 // GCC ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS()                             \
-		_Pragma("GCC diagnostic push")                          \
-		    _Pragma("GCC diagnostic ignored \"-Wall\"")         \
-		        _Pragma("clang diagnostic ignored \"-Wextra\"") \
-		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"")
+#	define VKBP_DISABLE_WARNINGS()                           \
+		_Pragma("GCC diagnostic push")                        \
+		    _Pragma("GCC diagnostic ignored \"-Wall\"")       \
+		        _Pragma("GCC diagnostic ignored \"-Wextra\"") \
+		            _Pragma("GCC diagnostic ignored \"-Wtautological-compare\"")
 
 #	define VKBP_ENABLE_WARNINGS() \
 		_Pragma("GCC diagnostic pop")

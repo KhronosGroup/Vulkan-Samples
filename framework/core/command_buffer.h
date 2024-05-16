@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ struct LightingState;
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER>
+class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCommandBuffer>
 {
   public:
 	enum class ResetMode

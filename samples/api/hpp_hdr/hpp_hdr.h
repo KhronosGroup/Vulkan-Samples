@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,7 +65,7 @@ class HPPHDR : public HPPApiVulkanSample
 	};
 
 	// Framebuffer for offscreen rendering
-	struct FrameBufferAttachment
+	struct FramebufferAttachment
 	{
 		vk::Format       format = {};
 		vk::Image        image  = {};
@@ -84,7 +84,7 @@ class HPPHDR : public HPPApiVulkanSample
 	{
 		vk::Extent2D          extent      = {};
 		vk::Framebuffer       framebuffer = {};
-		FrameBufferAttachment color       = {};
+		FramebufferAttachment color       = {};
 		vk::RenderPass        render_pass = {};
 		vk::Sampler           sampler     = {};
 
@@ -132,8 +132,8 @@ class HPPHDR : public HPPApiVulkanSample
 	{
 		vk::Extent2D          extent      = {};
 		vk::Framebuffer       framebuffer = {};
-		FrameBufferAttachment color[2]    = {};
-		FrameBufferAttachment depth       = {};
+		FramebufferAttachment color[2]    = {};
+		FramebufferAttachment depth       = {};
 		vk::RenderPass        render_pass = {};
 		vk::Sampler           sampler     = {};
 
@@ -182,34 +182,32 @@ class HPPHDR : public HPPApiVulkanSample
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-	// from HPPVulkanSample
+	// from vkb::VulkanSample
 	virtual void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
 
 	// from HPPApiVulkanSample
 	virtual void build_command_buffers() override;
-	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual void render(float delta_time) override;
 
 	vk::DeviceMemory      allocate_memory(vk::Image image);
-	FrameBufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
+	FramebufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
 	vk::DescriptorPool    create_descriptor_pool();
 	vk::Pipeline          create_bloom_pipeline(uint32_t direction);
 	vk::Pipeline          create_composition_pipeline();
 	vk::RenderPass        create_filter_render_pass();
 	vk::Image             create_image(vk::Format format, vk::ImageUsageFlagBits usage);
-	vk::ImageView         create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image);
 	vk::Pipeline          create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite);
 	vk::RenderPass        create_offscreen_render_pass();
 	vk::RenderPass        create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description);
-	vk::Sampler           create_sampler();
 	void                  draw();
 	void                  load_assets();
+	void                  prepare_bloom();
 	void                  prepare_camera();
+	void                  prepare_composition();
+	void                  prepare_models();
 	void                  prepare_offscreen_buffer();
 	void                  prepare_uniform_buffers();
-	void                  setup_bloom();
-	void                  setup_composition();
-	void                  setup_models();
 	void                  update_composition_descriptor_set();
 	void                  update_bloom_descriptor_set();
 	void                  update_model_descriptor_set(vk::DescriptorSet descriptor_set);

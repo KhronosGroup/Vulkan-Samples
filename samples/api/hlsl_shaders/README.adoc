@@ -18,6 +18,11 @@
 ////
 = Using HLSL shaders in Vulkan
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hlsl_shaders[Khronos Vulkan samples github repository].
+endif::[]
+
+
 This tutorial, along with the accompanying example code, shows how to use shaders written in the High Level Shading Language (HLSL) in Vulkan at runtime.
 
 Vulkan does not directly consume shaders in a human-readable text format, but instead uses SPIR-V as an intermediate representation.
@@ -25,11 +30,11 @@ This opens the option to use shader languages other than e.g.
 GLSL, as long as they can target the Vulkan SPIR-V environment.
 One such language is Microsoft's HLSL, which is the shading language for DirectX.
 
-Details on how HLSL fits into the Vulkan ecosystem can be found in  this https://github.com/KhronosGroup/Vulkan-Guide/blob/master/chapters/hlsl.adoc[Vulkan guide chapter].
+Details on how HLSL fits into the Vulkan ecosystem can be found in  this https://github.com/KhronosGroup/Vulkan-Guide/blob/main/chapters/hlsl.adoc[Vulkan guide chapter].
 
 == HLSL Syntax
 
-HLSL is a bit more object-oriented than GLSL, but the general structure of a shader is similar Vulkan-specific functions are marked with the https://github.com/microsoft/DirectXShaderCompiler/blob/master/docs/SPIR-V.rst#the-implicit-vk-namespace[implicit `vk` namespace]:
+HLSL is a bit more object-oriented than GLSL, but the general structure of a shader is similar Vulkan-specific functions are marked with the https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst#the-implicit-vk-namespace[implicit `vk` namespace]:
 
 [,hlsl]
 ----

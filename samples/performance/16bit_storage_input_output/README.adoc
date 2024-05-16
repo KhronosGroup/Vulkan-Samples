@@ -18,6 +18,11 @@
 ////
 = Using 16-bit storage InputOutput feature to reduce bandwidth on tile-based architectures
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/16bit_storage_input_output[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 On some tile-based deferred renderers (TBDR), such as Arm Mali GPUs, vertex shading and fragment shading is split into two distinct stages.
