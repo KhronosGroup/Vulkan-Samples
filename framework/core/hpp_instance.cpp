@@ -149,11 +149,11 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::La
 
 	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
 	        {
-			"VK_LAYER_GOOGLE_threading",
-			"VK_LAYER_LUNARG_parameter_validation",
-			"VK_LAYER_LUNARG_object_tracker",
-			"VK_LAYER_LUNARG_core_validation",
-			"VK_LAYER_GOOGLE_unique_objects",
+	            "VK_LAYER_GOOGLE_threading",
+	            "VK_LAYER_LUNARG_parameter_validation",
+	            "VK_LAYER_LUNARG_object_tracker",
+	            "VK_LAYER_LUNARG_core_validation",
+	            "VK_LAYER_GOOGLE_unique_objects",
 	        },
 
 	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
@@ -220,7 +220,7 @@ bool enable_all_extensions(const std::vector<const char *>             required_
 
 HPPInstance::HPPInstance(const std::string                            &application_name,
                          const std::unordered_map<const char *, bool> &required_extensions,
-                         const std::vector<const char *> &required_validation_layers,
+                         const std::vector<const char *>              &required_validation_layers,
                          const std::unordered_map<const char *, bool> &requested_layers,
                          bool                                          headless,
                          uint32_t                                      api_version)
@@ -335,8 +335,8 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 		throw std::runtime_error("Required validation layers are missing.");
 	}
 
-	std::unordered_map<const char*, bool> layers = (std::unordered_map<const char*, bool>)(requested_layers);
-	if(validate_layers(layers, supported_validation_layers))
+	std::unordered_map<const char *, bool> layers = (std::unordered_map<const char *, bool>) (requested_layers);
+	if (validate_layers(layers, supported_validation_layers))
 	{
 		LOGI("Enabled Validation Layers:")
 		for (const auto &layer : layers)

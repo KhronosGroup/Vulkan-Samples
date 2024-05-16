@@ -50,6 +50,7 @@ class Instance
 	 * @param application_name The name of the application
 	 * @param required_extensions The extensions requested to be enabled
 	 * @param required_validation_layers The validation layers to be enabled
+	 * @param requested_layers The layers that are requested to be enabled (second parameter in unordered map is if required).
 	 * @param headless Whether the application is requesting a headless setup or not
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
