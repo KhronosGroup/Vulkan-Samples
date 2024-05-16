@@ -75,15 +75,7 @@ jobs:
     - name: Count Diff Lines
       continue-on-error: true
       id: count-diff
-      run: |
-        echo "line-count=$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
-        echo "${{ steps.clang-diff.outputs.changes }}" >> patch.txt
-    - if: ${{ steps.count-diff.outputs.line-count > 0 }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: diff-output
-        path: patch.txt
-
+      run: echo "line-count=$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
     - name: Assert
       run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo "${{ steps.clang-diff.outputs.changes }}"; exit 1; fi
 
