@@ -41,6 +41,9 @@ ShaderObject::ShaderObject()
 
 	// Enable extensions for sample
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
+
+	// Enable the shader object layer if it's available.  Its optional.
+	add_layer("VK_LAYER_KHRONOS_shader_object", false);
 }
 
 ShaderObject::~ShaderObject()
@@ -103,13 +106,6 @@ ShaderObject::~ShaderObject()
 
 		vkDestroyDescriptorPool(vkdevice, descriptor_pool, nullptr);
 	}
-}
-
-// Currently the sample calls through this function in order to get the list of any instance layers, not just validation layers.
-// This is not suitable for a real application implementation using the layer, the layer will need to be shipped with the application.
-const std::unordered_map<const char *, bool> ShaderObject::get_validation_layers()
-{
-	return {{"VK_LAYER_KHRONOS_shader_object", false}};
 }
 
 bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)
@@ -232,7 +228,7 @@ void ShaderObject::setup_render_pass()
 	// delete existing render pass
 	if (render_pass != VK_NULL_HANDLE)
 	{
-		vkDestroyRenderPass(device->get_handle(), render_pass, VK_NULL_HANDLE);
+		vkDestroyRenderPass(get_device().get_handle(), render_pass, VK_NULL_HANDLE);
 	}
 	VkAttachmentDescription color_attachment{};
 

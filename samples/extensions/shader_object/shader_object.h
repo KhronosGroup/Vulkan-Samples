@@ -128,8 +128,6 @@ class ShaderObject : public ApiVulkanSample
 	ShaderObject();
 	~ShaderObject() override;
 
-	const std::unordered_map<const char *, bool> get_validation_layers() override;
-
 	bool resize(const uint32_t width, const uint32_t height) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void setup_framebuffer() override;

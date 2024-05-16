@@ -217,12 +217,12 @@ void HelloTriangle::init_instance(Context                         &context,
 
 #ifdef VKB_VALIDATION_LAYERS
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
-	std::unordered_map<const char *, bool> optimal_validation_layers_map = vkb::get_optimal_validation_layers(supported_validation_layers);
+	std::vector<const char *> optimal_validation_layers_map = vkb::get_optimal_validation_layers(supported_validation_layers);
 	std::vector<const char *>              optimal_validation_layers;
 	optimal_validation_layers.reserve(optimal_validation_layers_map.size());
 	for (auto &layer : optimal_validation_layers_map)
 	{
-		optimal_validation_layers.push_back(layer.first);
+		optimal_validation_layers.push_back(layer);
 	}
 	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif

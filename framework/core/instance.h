@@ -29,7 +29,7 @@ class PhysicalDevice;
  *        Attempting to enable them in order of preference, starting with later Vulkan SDK versions
  * @param supported_instance_layers A list of validation layers to check against
  */
-std::unordered_map<const char *, bool> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers);
+std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers);
 
 /**
  * @brief A wrapper class for VkInstance
@@ -56,7 +56,8 @@ class Instance
 	 */
 	Instance(const std::string                            &application_name,
 	         const std::unordered_map<const char *, bool> &required_extensions        = {},
-	         const std::unordered_map<const char *, bool> &required_validation_layers = {},
+	         const std::vector<const char *> &required_validation_layers = {},
+	         const std::unordered_map<const char *, bool> &requested_layers        = {},
 	         bool                                          headless                   = false,
 	         uint32_t                                      api_version                = VK_API_VERSION_1_0);
 
