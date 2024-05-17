@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
@@ -24,7 +25,6 @@
 #include <sys/stat.h>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
 
 namespace vkb
 {
