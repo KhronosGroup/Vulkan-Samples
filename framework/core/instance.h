@@ -57,8 +57,8 @@ class Instance
 	 */
 	Instance(const std::string                            &application_name,
 	         const std::unordered_map<const char *, bool> &required_extensions        = {},
-	         const std::vector<const char *> &required_validation_layers = {},
-	         const std::unordered_map<const char *, bool> &requested_layers        = {},
+	         const std::vector<const char *>              &required_validation_layers = {},
+	         const std::unordered_map<const char *, bool> &requested_layers           = {},
 	         bool                                          headless                   = false,
 	         uint32_t                                      api_version                = VK_API_VERSION_1_0);
 

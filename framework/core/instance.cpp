@@ -112,7 +112,7 @@ bool validate_layers(std::unordered_map<const char *, bool> &required,
 }
 
 bool validate_layers(const std::vector<const char *>      &required,
-                     const std::vector<VkLayerProperties>   &available)
+                     const std::vector<VkLayerProperties> &available)
 {
 	for (auto layer : required)
 	{
@@ -220,7 +220,7 @@ bool enable_all_extensions(const std::vector<const char *>           required_ex
 
 Instance::Instance(const std::string                            &application_name,
                    const std::unordered_map<const char *, bool> &required_extensions,
-                   const std::vector<const char *> &required_validation_layers,
+                   const std::vector<const char *>              &required_validation_layers,
                    const std::unordered_map<const char *, bool> &requested_layers,
                    bool                                          headless,
                    uint32_t                                      api_version)
@@ -347,8 +347,8 @@ Instance::Instance(const std::string                            &application_nam
 		throw std::runtime_error("Required validation layers are missing.");
 	}
 
-	std::unordered_map<const char*, bool> layers = (std::unordered_map<const char*, bool>)(requested_layers);
-	if(validate_layers(layers, supported_validation_layers))
+	std::unordered_map<const char *, bool> layers = (std::unordered_map<const char *, bool>) (requested_layers);
+	if (validate_layers(layers, supported_validation_layers))
 	{
 		LOGI("Enabled Validation Layers:")
 		for (const auto &layer : layers)

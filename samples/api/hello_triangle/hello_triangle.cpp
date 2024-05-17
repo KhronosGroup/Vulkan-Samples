@@ -162,10 +162,10 @@ void HelloTriangle::init_instance(Context                         &context,
 {
 	LOGI("Initializing vulkan instance.");
 
-    if (volkInitialize())
-    {
-        throw std::runtime_error("Failed to initialize volk.");
-    }
+	if (volkInitialize())
+	{
+		throw std::runtime_error("Failed to initialize volk.");
+	}
 
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
@@ -218,7 +218,7 @@ void HelloTriangle::init_instance(Context                         &context,
 #ifdef VKB_VALIDATION_LAYERS
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::vector<const char *> optimal_validation_layers_map = vkb::get_optimal_validation_layers(supported_validation_layers);
-	std::vector<const char *>              optimal_validation_layers;
+	std::vector<const char *> optimal_validation_layers;
 	optimal_validation_layers.reserve(optimal_validation_layers_map.size());
 	for (auto &layer : optimal_validation_layers_map)
 	{

@@ -27,7 +27,7 @@
 #include "scene_graph/scripts/animation.h"
 
 #if defined(PLATFORM__MACOS)
-#include <TargetConditionals.h>
+#	include <TargetConditionals.h>
 #endif
 
 namespace vkb
@@ -420,7 +420,6 @@ class VulkanSample : public vkb::Application
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
 	std::unordered_map<const char *, bool> instance_layers;
-
 
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
 	uint32_t api_version = VK_API_VERSION_1_0;
@@ -975,9 +974,9 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	// initialize C++-Bindings default dispatcher, first step
 #if TARGET_OS_IPHONE
-    static vk::DynamicLoader dl("vulkan.framework/vulkan");
+	static vk::DynamicLoader dl("vulkan.framework/vulkan");
 #else
-	static vk::DynamicLoader dl;
+	static vk::DynamicLoader        dl;
 #endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 
