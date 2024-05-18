@@ -145,7 +145,7 @@ A common code style like, for instance, the one described by the https://google.
 A sample must consistently apply a single code style.
 
 A `.clang-format` file is included with this repository, please use `clang-format -style=file` to verify the code style.
-Ensure that you are using clang-format 8.
+It is recommended to use `clang-format-15`, which is compatible with the styles in our `.clang-format` file.
 
 == Procedure for Contributing
 
