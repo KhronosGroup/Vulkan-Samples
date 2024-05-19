@@ -180,6 +180,7 @@ ExitCode Platform::main_loop_frame()
             }
             else
             {
+				set_last_error(e.what());
                 return ExitCode::FatalError;
             }
         }
@@ -237,6 +238,7 @@ ExitCode Platform::main_loop()
 			}
 			else
 			{
+                set_last_error(e.what());
 				return ExitCode::FatalError;
 			}
 		}
@@ -376,6 +378,11 @@ const std::string &Platform::get_temp_directory()
 	return temp_directory;
 }
 
+std::string &Platform::get_last_error()
+{
+	return last_error;
+}
+
 Application &Platform::get_app()
 {
 	assert(active_app && "Application is not valid");
@@ -396,6 +403,11 @@ Window &Platform::get_window()
 void Platform::set_external_storage_directory(const std::string &dir)
 {
 	external_storage_directory = dir;
+}
+
+void Platform::set_last_error(const std::string &error)
+{
+	last_error = error;
 }
 
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
