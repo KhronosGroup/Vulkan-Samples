@@ -313,18 +313,18 @@ void HPPTextureMipMapGeneration::load_assets()
 		// Prepare current mip level as image blit destination
 		vk::ImageSubresourceRange image_subresource_range(vk::ImageAspectFlagBits::eColor, i, 1, 0, 1);
 		vkb::common::image_layout_transition(
-		    copy_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, image_subresource_range);
+		    blit_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, image_subresource_range);
 
 		// Blit from previous level
 		blit_command.blitImage(texture.image, vk::ImageLayout::eTransferSrcOptimal, texture.image, vk::ImageLayout::eTransferDstOptimal, image_blit, vk::Filter::eLinear);
 
 		// Prepare current mip level as image blit source for next level
 		vkb::common::image_layout_transition(
-		    copy_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, image_subresource_range);
+		    blit_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, image_subresource_range);
 	}
 
 	// After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
-	vkb::common::image_layout_transition(copy_command,
+	vkb::common::image_layout_transition(blit_command,
 	                                     texture.image,
 	                                     vk::ImageLayout::eTransferSrcOptimal,
 	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
