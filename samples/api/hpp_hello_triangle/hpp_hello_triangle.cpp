@@ -508,7 +508,7 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 	// initialize function pointers for instance
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
 
-#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR) || defined(VK_USE_PLATFORM_ANDROID_KHR)
 	// we need some additional initializing for this platform!
 	if (volkInitialize())
 	{

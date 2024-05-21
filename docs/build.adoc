@@ -149,7 +149,6 @@ ____
 
 It is recommended to use `clang-format-15`, which is compatible with the styles in our `.clang-format` file.
 It is also used by CI and is a basic version installed with Visual Studio 2022.
-The minimum version that supports our current `.clang-format` file is `clang-format-9`.
 
 Go to the http://releases.llvm.org/download.html[LLVM downloads page] to get clang.
 
