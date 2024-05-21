@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Mobica Limited
+# Copyright (c) 2023-2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,8 +23,8 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Khronos"
-    NAME "dynamic_line_rasterization"
-    DESCRIPTION "Sample description"
+    NAME "Dynamic line rasterization"
+    DESCRIPTION "Dynamic line rasterization options available in the VK_EXT_line_rasterization and VK_EXT_extended_dynamic_state3 extensions"
     SHADER_FILES_GLSL
         "dynamic_line_rasterization/base.vert"
         "dynamic_line_rasterization/base.frag"
