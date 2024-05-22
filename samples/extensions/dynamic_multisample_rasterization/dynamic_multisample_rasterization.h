@@ -50,18 +50,18 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
 
-	VkPipeline            pipeline;
-	VkPipeline            pipeline_inversed_rasterizer;
-	VkPipelineLayout      pipeline_layout;
-	VkDescriptorSet       descriptor_set;
-	VkDescriptorSetLayout descriptor_set_layout;
+	VkPipeline            pipeline{VK_NULL_HANDLE};
+	VkPipeline            pipeline_inversed_rasterizer{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
 	// GUI
-	VkPipeline            pipeline_gui;
-	VkPipelineLayout      pipeline_layout_gui;
-	VkDescriptorSet       descriptor_set_gui;
-	VkDescriptorSetLayout descriptor_set_layout_gui;
-	VkDescriptorPool      descriptor_pool_gui;
+	VkPipeline            pipeline_gui{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout_gui{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set_gui{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout_gui{VK_NULL_HANDLE};
+	VkDescriptorPool      descriptor_pool_gui{VK_NULL_HANDLE};
 
 	ImageData color_attachment;
 

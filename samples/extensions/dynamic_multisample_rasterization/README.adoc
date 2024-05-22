@@ -24,12 +24,13 @@
 
 This sample demonstrates one of the functionalities of VK_EXT_extended_dynamic_state3 related to rasterization samples.
 The extension can be used to dynamically change sampling without need to swap pipelines.
-image:image/image.png[]
+image:./image/image.png[]
 
 == Enabling the extension
 
 To be able to use this extension in Vulkan API:
 `VK_EXT_extended_dynamic_state3` depends on `VK_KHR_get_physical_device_properties2`, which is promoted to Vulkan 1.1. That is, to use this extension, `VK_EXT_extended_dynamic_state3` and either `VK_KHR_get_physical_device_properties2` or Vulkan 1.1 are required.
+Additionally this sample uses `VK_KHR_dynamic_rendering" which required Vulkan 1.2.
 
 == Using the extension
 
