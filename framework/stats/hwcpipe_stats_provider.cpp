@@ -138,7 +138,7 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 		requested_stats.erase(iter.first);
 	}
 
-	requested_stats_count = requested_stats.size();
+	requested_stats_count = stat_data.size();
 
 	sampler = std::make_unique<hwcpipe::sampler<>>(config);
 
