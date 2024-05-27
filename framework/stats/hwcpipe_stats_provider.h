@@ -91,7 +91,7 @@ class HWCPipeStatsProvider : public StatsProvider
   private:
 	std::unique_ptr<hwcpipe::sampler<>> sampler;
 
-	size_t requested_stats_count{0};
+	size_t stat_data_count{0};
 
 	// Only stats which are available and were requested end up in stat_data
 	StatDataMap stat_data;
