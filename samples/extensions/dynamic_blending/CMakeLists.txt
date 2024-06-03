@@ -23,8 +23,8 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Khronos"
-    NAME "dynamic_blending"
-    DESCRIPTION "Dynamic blending options available in the VK_EXT_extended_dynamic_state3 extension."
+    NAME "Dynamic blending"
+    DESCRIPTION "Dynamic blending options available in the VK_EXT_extended_dynamic_state3 extension"
     SHADER_FILES_GLSL
         "dynamic_blending/glsl/blending.vert"
         "dynamic_blending/glsl/blending.frag"

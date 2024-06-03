@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Google
+# Copyright (c) 2023-2024, Google
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,7 +23,7 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
 	AUTHOR "Google"
-    NAME "oit_linked_lists"
+    NAME "Order-independent transparency (ordered linked lists)"
 	DESCRIPTION "Order-independent transparency using per-pixel ordered linked lists"
     SHADER_FILES_GLSL
         "oit_linked_lists/background.frag"
