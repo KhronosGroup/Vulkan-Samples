@@ -40,51 +40,6 @@ void SwapchainRecreation::get_queue()
 	}
 }
 
-void SwapchainRecreation::check_for_maintenance1()
-{
-	const char *use_maintenance1 = std::getenv("USE_MAINTENANCE1");
-	has_maintenance1             = use_maintenance1 == nullptr || strcmp(use_maintenance1, "no") != 0;
-
-	if (!has_maintenance1)
-	{
-		LOGI("Disabling usage of VK_EXT_surface_maintenance1 due to USE_MAINTENANCE1=no");
-		return;
-	}
-
-	VkResult result = volkInitialize();
-	if (result)
-	{
-		throw vkb::VulkanException(result, "Failed to initialize volk.");
-	}
-
-	// Check to see if VK_EXT_surface_maintenance1 is supported in the first place.
-	// Assume that VK_EXT_swapchain_maintenance1 is also supported in that case.
-	uint32_t instance_extension_count;
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
-
-	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
-
-	const bool has_ext = std::find_if(available_instance_extensions.begin(),
-	                                  available_instance_extensions.end(),
-	                                  [](auto const &ep) {
-		                                  return strcmp(ep.extensionName, VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME) == 0;
-	                                  }) != available_instance_extensions.end();
-
-	if (has_ext)
-	{
-		// It is indeed supported.
-		add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
-		add_instance_extension(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME);
-		add_device_extension(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME);
-		return;
-	}
-
-	// Extension is not supported by the driver or loader.
-	LOGI("Skipping unsupported VK_EXT_surface_maintenance1");
-	has_maintenance1 = false;
-}
-
 void SwapchainRecreation::query_surface_format()
 {
 	surface_format = vkb::select_surface_format(get_gpu_handle(), get_surface());
@@ -937,6 +892,19 @@ VkDevice SwapchainRecreation::get_device_handle()
 
 SwapchainRecreation::SwapchainRecreation()
 {
+	const char *use_maintenance1 = std::getenv("USE_MAINTENANCE1");
+
+	if ((use_maintenance1 == nullptr) || (strcmp(use_maintenance1, "no") != 0))
+	{
+		// Request sample-specific extensions as optional
+		add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME, true);
+		add_instance_extension(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME, true);
+		add_device_extension(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME, true);
+	}
+	else
+	{
+		LOGI("Disabling usage of VK_EXT_surface_maintenance1 due to USE_MAINTENANCE1=no");
+	}
 }
 
 SwapchainRecreation::~SwapchainRecreation()
@@ -1005,16 +973,13 @@ SwapchainRecreation::~SwapchainRecreation()
 	}
 }
 
-bool SwapchainRecreation::prepare(const vkb::ApplicationOptions &options)
+std::unique_ptr<vkb::Device> SwapchainRecreation::create_device(vkb::PhysicalDevice &gpu)
 {
-	// Add the relevant instance extensions before creating the instance in
-	// VulkanSample::prepare.
-	check_for_maintenance1();
+	std::unique_ptr<vkb::Device> device = vkb::VulkanSample<vkb::BindingType::C>::create_device(gpu);
 
-	if (!VulkanSample::prepare(options))
-	{
-		return false;
-	}
+	has_maintenance1 = get_instance().is_enabled(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME) &&
+	                   get_instance().is_enabled(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME) &&
+	                   device->is_enabled(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME);
 
 	LOGI("------------------------------------");
 	LOGI("USAGE:");
@@ -1028,7 +993,7 @@ bool SwapchainRecreation::prepare(const vkb::ApplicationOptions &options)
 	}
 	LOGI("------------------------------------");
 
-	return true;
+	return device;
 }
 
 void SwapchainRecreation::create_render_context()
