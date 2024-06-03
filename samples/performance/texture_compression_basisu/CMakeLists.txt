@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Sascha Willems
+# Copyright (c) 2021-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "Basis Universal texture compression"
     DESCRIPTION "Loading and displaying a Basis Universal compressed texture from KTX2"
     SHADER_FILES_GLSL
-        "texture_compression_basisu/texture.vert"
-        "texture_compression_basisu/texture.frag")
+        "texture_compression_basisu/glsl/texture.vert"
+        "texture_compression_basisu/glsl/texture.frag"
+    SHADER_FILES_HLSL
+        "texture_compression_basisu/hlsl/texture.vert.hlsl"
+        "texture_compression_basisu/hlsl/texture.frag.hlsl")

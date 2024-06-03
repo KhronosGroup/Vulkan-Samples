@@ -632,8 +632,8 @@ void FragmentShadingRate::prepare_pipelines()
 	pipeline_create_info.renderPass = render_pass;
 
 	// Skysphere
-	shader_stages[0] = load_shader("fragment_shading_rate/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("fragment_shading_rate/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("fragment_shading_rate", "scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("fragment_shading_rate", "scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Objects

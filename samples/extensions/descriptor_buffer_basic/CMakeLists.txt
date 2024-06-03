@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Sascha Willems
+# Copyright (c) 2023-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "Descriptor buffers"
     DESCRIPTION "Using VK_KHR_descriptor_buffer"
     SHADER_FILES_GLSL
-        "descriptor_buffer_basic/cube.vert"
-        "descriptor_buffer_basic/cube.frag")
+        "descriptor_buffer_basic/glsl/cube.vert"
+        "descriptor_buffer_basic/glsl/cube.frag"
+    SHADER_FILES_HLSL
+        "descriptor_buffer_basic/hlsl/cube.vert.hlsl"
+        "descriptor_buffer_basic/hlsl/cube.frag.hlsl")

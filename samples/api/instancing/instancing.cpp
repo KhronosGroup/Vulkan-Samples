@@ -332,16 +332,16 @@ void Instancing::prepare_pipelines()
 	pipeline_create_info.pVertexInputState = &input_state;
 
 	// Instancing pipeline
-	shader_stages[0] = load_shader("instancing/instancing.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("instancing/instancing.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("instancing", "instancing.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("instancing", "instancing.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Use all input bindings and attribute descriptions
 	input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(binding_descriptions.size());
 	input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size());
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.instanced_rocks));
 
 	// Planet rendering pipeline
-	shader_stages[0] = load_shader("instancing/planet.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("instancing/planet.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("instancing", "planet.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("instancing", "planet.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Only use the non-instanced input bindings and attribute descriptions
 	input_state.vertexBindingDescriptionCount   = 1;
 	input_state.vertexAttributeDescriptionCount = 3;
@@ -351,8 +351,8 @@ void Instancing::prepare_pipelines()
 	rasterization_state.cullMode         = VK_CULL_MODE_NONE;
 	depth_stencil_state.depthWriteEnable = VK_FALSE;
 	depth_stencil_state.depthTestEnable  = VK_FALSE;
-	shader_stages[0]                     = load_shader("instancing/starfield.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                     = load_shader("instancing/starfield.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                     = load_shader("instancing", "starfield.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                     = load_shader("instancing", "starfield.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Vertices are generated in the vertex shader
 	input_state.vertexBindingDescriptionCount   = 0;
 	input_state.vertexAttributeDescriptionCount = 0;

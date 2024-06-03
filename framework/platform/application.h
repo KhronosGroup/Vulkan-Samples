@@ -113,6 +113,17 @@ class Application
 	 */
 	const std::map<ShaderSourceLanguage, std::vector<std::pair<VkShaderStageFlagBits, std::string>>> &get_available_shaders() const;
 
+	/**
+	 * @brief Set the shading language to be used for this sample (glsl, hlsl)
+	 * @param language The shading language that the sample will use
+	 */
+	static void set_shading_language(const vkb::ShadingLanguage language);
+
+	/**
+	 * @brief Returns the selected shading language to be used for this sample (glsl, hlsl)
+	 */
+	static vkb::ShadingLanguage get_shading_language();
+
   protected:
 	/**
 	 * @brief Stores a list of shaders for the active sample, used by plugins to dynamically change the shader
@@ -145,5 +156,19 @@ class Application
 	DebugInfo debug_info{};
 
 	bool requested_close{false};
+
+	/** @brief Used to select between different shader languages, static so it can be changed from a plugin */
+	inline static vkb::ShadingLanguage shading_language{vkb::ShadingLanguage::GLSL};
 };
+
+inline void Application::set_shading_language(const vkb::ShadingLanguage language)
+{
+	shading_language = language;
+}
+
+inline vkb::ShadingLanguage Application::get_shading_language()
+{
+	return shading_language;
+}
+
 }        // namespace vkb
