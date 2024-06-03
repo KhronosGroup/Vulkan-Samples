@@ -1,6 +1,7 @@
 #[[
  Copyright (c) 2019-2024, Arm Limited and Contributors
  Copyright (c) 2024, Mobica Limited
+ Copyright (c) 2024, Sascha Willems
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -22,10 +23,10 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_sample)
     set(options)  
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})    
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     add_sample_with_tags(
         TYPE "Sample"
@@ -43,12 +44,13 @@ function(add_sample)
         SHADER_FILES_GLSL
             ${TARGET_SHADER_FILES_GLSL}
         SHADER_FILES_HLSL
-            ${TARGET_SHADER_FILES_HLSL})
+            ${TARGET_SHADER_FILES_HLSL}
+        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -91,7 +93,8 @@ function(add_sample_with_tags)
         SHADERS_GLSL
             ${SHADERS_GLSL}
         SHADERS_HLSL
-            ${SHADERS_HLSL})
+            ${SHADERS_HLSL}
+        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
 
 endfunction()
 
@@ -121,7 +124,7 @@ endfunction()
 
 function(add_project)
     set(options)  
-    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
+    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -131,7 +134,7 @@ function(add_project)
     endif()
 
     if(NOT ${VKB_${TARGET_ID}})
-        message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
+        # message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
         return()
     endif()
 
@@ -142,14 +145,14 @@ function(add_project)
 
     source_group("\\" FILES ${TARGET_FILES})
 
-    # Add GLSL shaders to project group
+    # Add shaders to project group
     if (TARGET_SHADERS_GLSL)
-        source_group("\\Shaders" FILES ${SHADERS_GLSL})
+        source_group("\\Shaders\\glsl" FILES ${TARGET_SHADERS_GLSL})
     endif()
-
-    #Add HLSL shaders to project group
     if (TARGET_SHADERS_HLSL)
-        source_group("\\Shaders" FILES ${SHADERS_HLSL})
+        source_group("\\Shaders\\hlsl" FILES ${TARGET_SHADERS_HLSL})
+        # Disable automatic compilation of HLSL shaders for MSVC
+        set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
@@ -197,25 +200,28 @@ endif()
     if(DEFINED Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
         compile_hlsl_shaders(
             SHADERS_HLSL ${TARGET_SHADERS_HLSL}
+            DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}
         )
     endif()
 endfunction()
 
 function(compile_hlsl_shaders)
     set(options)
-    set(oneValueArgs)
+    set(oneValueArgs DXC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs SHADERS_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
         set(HLSL_SPV_FILE ${SHADER_FILE_HLSL}.spv)
+        # Omit the .hlsl. part for the output file to make loading those easier
+        string(REPLACE ".hlsl." "." HLSL_SPV_FILE "${HLSL_SPV_FILE}")
 
         if(${SHADER_FILE_HLSL} MATCHES "[^-]+.vert.hlsl")
             set(DXC_PROFILE "vs_6_1")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.frag.hlsl")
             set(DXC_PROFILE "ps_6_4")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen..hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
+        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
             set(DXC_PROFILE "lib_6_3")
             set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.comp.hlsl")
@@ -227,10 +233,10 @@ function(compile_hlsl_shaders)
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.tese.hlsl")
             set(DXC_PROFILE "ds_6_1")
         elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.mesh.hlsl")
-            set(DXC_PROFILE "ms_6_1")
-            set(DXC_TARGET "-fspv-target-env=vulkan1.2")
+            set(DXC_PROFILE "ms_6_6")
+            set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
         endif()
 
-        execute_process(COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${HLSL_SPV_FILE})
+        execute_process(COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${HLSL_SPV_FILE})
     endforeach()
 endfunction()

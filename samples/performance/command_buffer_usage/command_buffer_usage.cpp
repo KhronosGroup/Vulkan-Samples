@@ -149,7 +149,7 @@ void CommandBufferUsage::draw_gui()
 	    /* body = */ [&]() {
 		    // Secondary command buffer count
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
-		    ImGui::SliderInt("", &gui_secondary_cmd_buf_count, 0, max_secondary_command_buffer_count, "Secondary CmdBuffs: %d");
+		    ImGui::SliderInt("##secCmdBufs", &gui_secondary_cmd_buf_count, 0, max_secondary_command_buffer_count, "Secondary CmdBuffs: %d");
 		    ImGui::SameLine();
 		    ImGui::Text("Draws/buf: %.1f", subpass->get_avg_draws_per_buffer());
 

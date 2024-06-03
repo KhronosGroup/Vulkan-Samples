@@ -102,6 +102,7 @@ void BatchMode::init(const vkb::CommandParser &parser)
 	properties.resizable = false;
 	platform->set_window_properties(properties);
 	platform->disable_input_processing();
+	platform->force_render(true);
 	request_app();
 }
 

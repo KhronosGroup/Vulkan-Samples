@@ -597,8 +597,8 @@ void Profiles::prepare_pipelines()
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("profiles/profiles.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("profiles/profiles.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("profiles", "profiles.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("profiles", "profiles.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {

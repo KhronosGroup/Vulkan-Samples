@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,6 +39,7 @@ void BenchmarkMode::init(const vkb::CommandParser &parser)
 	// Whilst in benchmark mode fix the fps so that separate runs are consistently simulated
 	// This will effect the graph outputs of framerate
 	platform->force_simulation_fps(60.0f);
+	platform->force_render(true);
 }
 
 void BenchmarkMode::on_update(float delta_time)

@@ -212,8 +212,8 @@ vk::DescriptorSetLayout HPPInstancing::create_descriptor_set_layout()
 vk::Pipeline HPPInstancing::create_planet_pipeline()
 {
 	// Planet rendering pipeline
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/planet.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "planet.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing", "planet.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
@@ -258,8 +258,8 @@ vk::Pipeline HPPInstancing::create_planet_pipeline()
 
 vk::Pipeline HPPInstancing::create_rocks_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing/instancing.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("instancing/instancing.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing", "instancing.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("instancing", "instancing.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	// The instancing pipeline uses a vertex input state with two bindings
@@ -319,8 +319,8 @@ vk::Pipeline HPPInstancing::create_rocks_pipeline()
 vk::Pipeline HPPInstancing::create_starfield_pipeline()
 {
 	// Starfield rendering pipeline
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/starfield.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("instancing/starfield.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "starfield.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing", "starfield.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);

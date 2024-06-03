@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Arm Limited and Contributors
+# Copyright (c) 2021-2024, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,13 @@ add_sample_with_tags(
         NAME "Descriptor indexing"
         DESCRIPTION "Demonstrates update-after-bind as well as non-uniform indexing of descriptors (VK_EXT_descriptor_indexing)"
         SHADER_FILES_GLSL
-                "descriptor_indexing/nonuniform-quads.vert"
-                "descriptor_indexing/nonuniform-quads.frag"
-                "descriptor_indexing/update-after-bind-quads.vert"
-                "descriptor_indexing/update-after-bind-quads.frag")
+                "descriptor_indexing/glsl/nonuniform-quads.vert"
+                "descriptor_indexing/glsl/nonuniform-quads.frag"
+                "descriptor_indexing/glsl/update-after-bind-quads.vert"
+                "descriptor_indexing/glsl/update-after-bind-quads.frag"
+        SHADER_FILES_HLSL
+                "descriptor_indexing/hlsl/nonuniform-quads.vert.hlsl"
+                "descriptor_indexing/hlsl/nonuniform-quads.frag.hlsl"
+                "descriptor_indexing/hlsl/update-after-bind-quads.vert.hlsl"
+                "descriptor_indexing/hlsl/update-after-bind-quads.frag.hlsl"
+        DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing")

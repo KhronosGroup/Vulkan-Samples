@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Holochip Corporation
+# Copyright (c) 2021-2024 Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,6 +26,12 @@ add_sample_with_tags(
     NAME "Ray tracing extended"
     DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Level Acceleration Structure rebuild and AO."
     SHADER_FILES_GLSL
-        "khr_ray_tracing_extended/raygen.rgen"
-        "khr_ray_tracing_extended/miss.rmiss"
-        "khr_ray_tracing_extended/closesthit.rchit")
+        "ray_tracing_extended/glsl/raygen.rgen"
+        "ray_tracing_extended/glsl/miss.rmiss"
+        "ray_tracing_extended/glsl/closesthit.rchit"
+    SHADER_FILES_HLSL
+        "ray_tracing_extended/hlsl/raygen.rgen.hlsl"
+        "ray_tracing_extended/hlsl/miss.rmiss.hlsl"
+        "ray_tracing_extended/hlsl/closesthit.rchit.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing")
+

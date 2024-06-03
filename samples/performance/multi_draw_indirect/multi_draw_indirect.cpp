@@ -891,7 +891,7 @@ struct VisibilityTester
 		// normalize plane; see Appendix A.2
 		for (auto &&plane : out)
 		{
-			plane /= float(length(vec3(plane.xyz)));
+			plane /= static_cast<float>(length(vec3(plane.xyz)));
 		}
 		return out;
 	}

@@ -26,5 +26,9 @@ add_sample(
     NAME "Shader debugPrintf"
     DESCRIPTION "Demonstrates the use of the debugprintf command to display debugging information from shaders to the host"
     SHADER_FILES_GLSL
-        "shader_debugprintf/scene.vert"
-        "shader_debugprintf/scene.frag")
+        "shader_debugprintf/glsl/scene.vert"
+        "shader_debugprintf/glsl/scene.frag"
+    SHADER_FILES_HLSL
+        "shader_debugprintf/hlsl/scene.vert.hlsl"
+        "shader_debugprintf/hlsl/scene.frag.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_non_semantic_info")

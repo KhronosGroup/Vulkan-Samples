@@ -216,8 +216,8 @@ vk::DescriptorSetLayout HPPTerrainTessellation::create_sky_sphere_descriptor_set
 vk::Pipeline HPPTerrainTessellation::create_sky_sphere_pipeline()
 {
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("terrain_tessellation/skysphere.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("terrain_tessellation/skysphere.frag", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("terrain_tessellation", "skysphere.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("terrain_tessellation", "skysphere.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings an attributes
 	// Binding description
@@ -477,10 +477,10 @@ void HPPTerrainTessellation::prepare_statistics()
 
 void HPPTerrainTessellation::prepare_terrain()
 {
-	terrain.shader_stages = {load_shader("terrain_tessellation/terrain.vert", vk::ShaderStageFlagBits::eVertex),
-	                         load_shader("terrain_tessellation/terrain.frag", vk::ShaderStageFlagBits::eFragment),
-	                         load_shader("terrain_tessellation/terrain.tesc", vk::ShaderStageFlagBits::eTessellationControl),
-	                         load_shader("terrain_tessellation/terrain.tese", vk::ShaderStageFlagBits::eTessellationEvaluation)};
+	terrain.shader_stages = {load_shader("terrain_tessellation", "terrain.vert", vk::ShaderStageFlagBits::eVertex),
+	                         load_shader("terrain_tessellation", "terrain.frag", vk::ShaderStageFlagBits::eFragment),
+	                         load_shader("terrain_tessellation", "terrain.tesc", vk::ShaderStageFlagBits::eTessellationControl),
+	                         load_shader("terrain_tessellation", "terrain.tese", vk::ShaderStageFlagBits::eTessellationEvaluation)};
 
 	terrain.descriptor_set_layout = create_terrain_descriptor_set_layout();
 	terrain.pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, terrain.descriptor_set_layout});
