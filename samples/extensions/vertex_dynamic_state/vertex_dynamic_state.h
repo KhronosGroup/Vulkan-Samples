@@ -32,6 +32,7 @@ class VertexDynamicState : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skybox_modelview;
+		glm::mat4 inverse_modelview;
 		float     modelscale = 0.15f;
 	} ubo_vs;
 

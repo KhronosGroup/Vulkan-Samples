@@ -128,6 +128,12 @@ enum class ShaderSourceLanguage
 	SPV,
 };
 
+enum class ShadingLanguage
+{
+	GLSL,
+	HLSL,
+};
+
 /**
  * @brief Helper function to create a VkShaderModule
  * @param filename The shader location

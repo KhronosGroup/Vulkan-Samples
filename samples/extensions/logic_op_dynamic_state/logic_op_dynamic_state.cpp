@@ -321,8 +321,8 @@ void LogicOpDynamicState::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("logic_op_dynamic_state/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("logic_op_dynamic_state/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("logic_op_dynamic_state", "baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("logic_op_dynamic_state", "baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Use the pNext to point to the rendering create structure */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -375,8 +375,8 @@ void LogicOpDynamicState::create_pipeline()
 
 	rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-	shader_stages[0] = load_shader("logic_op_dynamic_state/background.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("logic_op_dynamic_state/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("logic_op_dynamic_state", "background.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("logic_op_dynamic_state", "background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.background));
 }

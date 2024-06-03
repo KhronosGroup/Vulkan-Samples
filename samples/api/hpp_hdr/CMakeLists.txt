@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,16 @@ add_sample_with_tags(
     NAME "HPP HDR"
     DESCRIPTION "High-dynamic-range rendering, using vulkan.hpp"
     SHADER_FILES_GLSL
-        "hdr/composition.vert"
-        "hdr/composition.frag"
-        "hdr/bloom.vert"
-        "hdr/bloom.frag"
-        "hdr/gbuffer.vert"
-        "hdr/gbuffer.frag")
+        "hdr/glsl/composition.vert"
+        "hdr/glsl/composition.frag"
+        "hdr/glsl/bloom.vert"
+        "hdr/glsl/bloom.frag"
+        "hdr/glsl/gbuffer.vert"
+        "hdr/glsl/gbuffer.frag"
+    SHADER_FILES_HLSL
+        "hdr/hlsl/composition.vert.hlsl"
+        "hdr/hlsl/composition.frag.hlsl"
+        "hdr/hlsl/bloom.vert.hlsl"
+        "hdr/hlsl/bloom.frag.hlsl"
+        "hdr/hlsl/gbuffer.vert.hlsl"
+        "hdr/hlsl/gbuffer.frag.hlsl")

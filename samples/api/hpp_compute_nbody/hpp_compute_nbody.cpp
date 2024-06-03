@@ -299,8 +299,8 @@ vk::DescriptorSetLayout HPPComputeNBody::create_graphics_descriptor_set_layout()
 vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 {
 	// Load shaders
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("compute_nbody/particle.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("compute_nbody/particle.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("compute_nbody", "particle.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("compute_nbody", "particle.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_bindings(0, sizeof(Particle), vk::VertexInputRate::eVertex);
@@ -415,7 +415,7 @@ void HPPComputeNBody::prepare_compute()
 	// create the compute pipelines
 	// 1st pass - Particle movement calculations
 	{
-		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody/particle_calculate.comp", vk::ShaderStageFlagBits::eCompute);
+		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody", "particle_calculate.comp", vk::ShaderStageFlagBits::eCompute);
 
 		// Set some shader parameters via specialization constants
 		struct MovementSpecializationData
@@ -448,7 +448,7 @@ void HPPComputeNBody::prepare_compute()
 
 	// 2nd pass - Particle integration
 	{
-		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody/particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
+		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody", "particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
 
 		vk::SpecializationMapEntry integration_specialization_entry(0, 0, sizeof(compute.work_group_size));
 		vk::SpecializationInfo     specialization_info(1, &integration_specialization_entry, sizeof(compute.work_group_size), &compute.work_group_size);

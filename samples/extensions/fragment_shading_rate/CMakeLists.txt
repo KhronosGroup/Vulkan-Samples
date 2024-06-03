@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Sascha Willems
+# Copyright (c) 2020-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,9 @@ add_sample_with_tags(
     NAME "Fragment shading rate"
     DESCRIPTION "Using variable fragment shading rate patterns via VK_KHR_fragment_shading_rate"
     SHADER_FILES_GLSL
-        "fragment_shading_rate/scene.vert"
-        "fragment_shading_rate/scene.frag")
+        "fragment_shading_rate/glsl/scene.vert"
+        "fragment_shading_rate/glsl/scene.frag"
+    SHADER_FILES_HLSL
+        "fragment_shading_rate/hlsl/scene.vert.hlsl"
+        "fragment_shading_rate/hlsl/scene.frag.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_fragment_shading_rate")
