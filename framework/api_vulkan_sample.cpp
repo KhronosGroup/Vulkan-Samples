@@ -437,6 +437,35 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 	return shader_stage;
 }
 
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, VkShaderStageFlagBits stage)
+{
+	// Note: this can be reworked once offline compilation for GLSL shaders is added
+
+	// Default to GLSL
+	std::string               shader_folder{"glsl"};
+	std::string               shader_extension{""};
+	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
+
+	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
+	{
+		shader_folder = "hlsl";
+		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
+		src_language     = vkb::ShaderSourceLanguage::SPV;
+		shader_extension = ".spv";
+	}
+
+	std::string full_file_name = sample_folder_name + "/" + shader_folder + "/" + shader_filename + shader_extension;
+
+	VkPipelineShaderStageCreateInfo shader_stage = {};
+	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shader_stage.stage                           = stage;
+	shader_stage.module                          = vkb::load_shader(full_file_name, get_device().get_handle(), stage, src_language);
+	shader_stage.pName                           = "main";
+	assert(shader_stage.module != VK_NULL_HANDLE);
+	shader_modules.push_back(shader_stage.module);
+	return shader_stage;
+}
+
 void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (has_gui())

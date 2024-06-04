@@ -138,11 +138,11 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 		requested_stats.erase(iter.first);
 	}
 
-	requested_stats_count = requested_stats.size();
+	stat_data_count = stat_data.size();
 
 	sampler = std::make_unique<hwcpipe::sampler<>>(config);
 
-	if (requested_stats_count > 0)
+	if (stat_data_count > 0)
 	{
 		ec = sampler->start_sampling();
 		if (ec)
@@ -156,7 +156,7 @@ HWCPipeStatsProvider::~HWCPipeStatsProvider()
 {
 	std::error_code ec;
 
-	if (requested_stats_count > 0)
+	if (stat_data_count > 0)
 	{
 		ec = sampler->stop_sampling();
 		if (ec)
@@ -204,7 +204,7 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 {
 	Counters res;
 
-	if (requested_stats_count < 1)
+	if (stat_data_count < 1)
 	{
 		return res;
 	}

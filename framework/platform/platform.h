@@ -70,7 +70,7 @@ class Platform
 	 * @return An exit code representing the outcome of the loop
 	 */
 	ExitCode main_loop();
-    ExitCode main_loop_frame();
+	ExitCode main_loop_frame();
 
 	/**
 	 * @brief Runs the application for one frame
@@ -132,6 +132,9 @@ class Platform
 
 	void force_simulation_fps(float fps);
 
+	// Force the application to always render even if it is not in focus
+	void force_render(bool should_always_render);
+
 	void disable_input_processing();
 
 	void set_window_properties(const Window::OptionalProperties &properties);
@@ -170,6 +173,7 @@ class Platform
 
 	Window::Properties window_properties;              /* Source of truth for window state */
 	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
+	bool               always_render{false};           /* App should always render even if not in focus */
 	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
 	bool               process_input_events{true};     /* App should continue processing input events */
 	bool               focused{true};                  /* App is currently in focus at an operating system level */

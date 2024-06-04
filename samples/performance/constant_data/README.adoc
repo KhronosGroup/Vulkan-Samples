@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2021-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -99,7 +99,7 @@ They have slightly different rules for what they do depending on the shader stag
 However, generally their use is to feed values from one stage to the next (e.g.
 from vertex shader to fragment shader).
 
-_You can read more about shader stage inputs and outputs https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Shader_stage_inputs_and_outputs[here]._
+_You can read more about shader stage inputs and outputs https://www.khronos.org/opengl/wiki/Type_Qualifier_%28GLSL%29#Shader_stage_inputs_and_outputs[here]._
 
 ==== _Uniform Types_
 
@@ -139,7 +139,7 @@ However, the difference is that they have to be given a user-defined type.
 They work exactly the same way as a `struct` in GLSL/C{pp}.
 For example, to access the model matrix in this interface block, you'd use `per_mesh_data.model_matrix`.
 
-_You can read more about interface blocks https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)[here]._
+_You can read more about interface blocks https://www.khronos.org/opengl/wiki/Interface_Block_%28GLSL%29[here]._
 
 === *Vulkan API*
 
@@ -452,8 +452,5 @@ A few different stats are affected in the Mali GPU by using this, but the main t
 *Impact*
 
 * Failing to use the correct method of constant data will negatively impact performance, causing either reduced FPS and/or increased BW and load/store activity.
-* On Mali, register mapped uniforms are effectively free.
-Any spilling to buffers in memory will increase load/store cache accesses to the per thread uniform fetches.
- reduced FPS and/or increased BW and load/store activity.
 * On Mali, register mapped uniforms are effectively free.
 Any spilling to buffers in memory will increase load/store cache accesses to the per thread uniform fetches.

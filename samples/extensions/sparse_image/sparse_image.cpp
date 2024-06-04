@@ -148,8 +148,8 @@ void SparseImage::prepare_pipelines()
 
 	std::array<VkPipelineShaderStageCreateInfo, 2U> shader_stages{};
 
-	shader_stages[0] = load_shader("sparse_image/sparse.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("sparse_image/sparse.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("sparse_image", "sparse.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("sparse_image", "sparse.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(sample_pipeline_layout, render_pass);
 	pipeline_create_info.stageCount                   = vkb::to_u32(shader_stages.size());

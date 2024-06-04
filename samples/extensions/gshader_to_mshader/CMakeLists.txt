@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Mobica Limited
+# Copyright (c) 2023-2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,7 +23,7 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
-    NAME "gshader_to_mshader"
+    NAME "Geometry shader to mesh shader"
     DESCRIPTION "Sample shows migration from geometry shader pipeline to mesh shader one"
     SHADER_FILES_GLSL
         "gshader_to_mshader/gshader_to_mshader.vert"
