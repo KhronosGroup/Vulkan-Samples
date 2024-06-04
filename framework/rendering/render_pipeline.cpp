@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,6 +33,14 @@ RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses
     subpasses{std::move(subpasses_)}
 {
 	prepare();
+
+	// Default load/store for swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Default load/store for depth attachment
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
 	// Default clear value
 	clear_value[0].color        = {0.0f, 0.0f, 0.0f, 1.0f};

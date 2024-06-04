@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -121,10 +121,6 @@ class HPPSwapchain
 	vk::SwapchainKHR handle;
 
 	std::vector<vk::Image> images;
-
-	std::vector<vk::SurfaceFormatKHR> surface_formats;
-
-	std::vector<vk::PresentModeKHR> present_modes;
 
 	HPPSwapchainProperties properties;
 

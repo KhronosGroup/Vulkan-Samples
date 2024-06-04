@@ -23,8 +23,11 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
-    NAME "dynamic_primitive_clipping"
+    NAME "Dynamic primitive clipping"
     DESCRIPTION "Rendering using primitive clipping through VK_EXT_extended_dynamic_state3 extension"
     SHADER_FILES_GLSL
-    "dynamic_primitive_clipping/primitive_clipping.vert"
-    "dynamic_primitive_clipping/primitive_clipping.frag")
+        "dynamic_primitive_clipping/glsl/primitive_clipping.vert"
+        "dynamic_primitive_clipping/glsl/primitive_clipping.frag"
+    SHADER_FILES_HLSL
+        "dynamic_primitive_clipping/hlsl/primitive_clipping.vert.hlsl"
+        "dynamic_primitive_clipping/hlsl/primitive_clipping.frag.hlsl")

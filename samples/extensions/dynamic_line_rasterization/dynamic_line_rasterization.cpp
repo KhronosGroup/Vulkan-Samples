@@ -234,8 +234,8 @@ void DynamicLineRasterization::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_line_rasterization/base.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_line_rasterization/base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_line_rasterization", "base.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_line_rasterization", "base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	graphics_create.pNext               = VK_NULL_HANDLE;
@@ -260,8 +260,8 @@ void DynamicLineRasterization::create_pipelines()
 	                                   VK_NULL_HANDLE,
 	                                   &pipelines.object));
 
-	shader_stages[0]                  = load_shader("dynamic_line_rasterization/grid.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = load_shader("dynamic_line_rasterization/grid.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                  = load_shader("dynamic_line_rasterization", "grid.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                  = load_shader("dynamic_line_rasterization", "grid.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	graphics_create.pStages           = shader_stages.data();
 	vertex_input_state                = vkb::initializers::pipeline_vertex_input_state_create_info();
 	graphics_create.pVertexInputState = &vertex_input_state;
@@ -277,10 +277,11 @@ void DynamicLineRasterization::prepare_uniform_buffers()
 void DynamicLineRasterization::update_uniform_buffers()
 {
 	CameraUbo cam;
-	cam.model      = glm::mat4(1.0f);
-	cam.model      = glm::translate(cam.model, glm::vec3(0.0f));
-	cam.view       = camera.matrices.view;
-	cam.projection = camera.matrices.perspective;
+	cam.model                 = glm::mat4(1.0f);
+	cam.model                 = glm::translate(cam.model, glm::vec3(0.0f));
+	cam.view                  = camera.matrices.view;
+	cam.projection            = camera.matrices.perspective;
+	cam.viewProjectionInverse = glm::inverse(cam.projection * cam.view);
 
 	camera_ubo->convert_and_update(cam);
 
@@ -336,12 +337,16 @@ void DynamicLineRasterization::draw()
 void DynamicLineRasterization::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 
 	draw();
 
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void DynamicLineRasterization::build_command_buffers()
@@ -457,7 +462,9 @@ void DynamicLineRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	auto build_command_buffers_when = [this](bool drawer_action) {
 		if (drawer_action)
+		{
 			rebuild_command_buffers();
+		}
 	};
 
 	auto uint16_to_hex_string = [](const char *caption, uint16_t value) {
@@ -488,7 +495,9 @@ void DynamicLineRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 			}
 			ImGui::PopID();
 			if (i % 8 != 7)
+			{
 				ImGui::SameLine();
+			}
 		}
 	}
 }
@@ -497,8 +506,12 @@ uint16_t DynamicLineRasterization::array_to_uint16(const std::array<bool, 16> &a
 {
 	uint16_t result = 0;
 	for (int i = 0; i < 16; ++i)
+	{
 		if (array[i])
+		{
 			result |= (1 << i);
+		}
+	}
 	return result;
 }
 

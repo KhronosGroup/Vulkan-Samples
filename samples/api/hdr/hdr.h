@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,6 +53,7 @@ class HDR : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skybox_modelview;
+		glm::mat4 inverse_modelview;
 		float     modelscale = 0.05f;
 	} ubo_vs;
 

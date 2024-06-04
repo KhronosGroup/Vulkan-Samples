@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Sascha Willems
+# Copyright (c) 2022-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,9 @@ add_sample_with_tags(
     NAME "Using Vulkan profiles"
     DESCRIPTION "Shows how to use a Vulkan profile to simplify device creation"
     SHADER_FILES_GLSL
-        "profiles/profiles.vert"
-        "profiles/profiles.frag")
+        "profiles/glsl/profiles.vert"
+        "profiles/glsl/profiles.frag"
+    SHADER_FILES_HLSL
+        "profiles/hlsl/profiles.vert.hlsl"
+        "profiles/hlsl/profiles.frag.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing")

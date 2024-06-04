@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Sascha Willems
+# Copyright (c) 2023-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,9 +34,11 @@ if (NOT APPLE)
             ../open_cl_common/open_cl_utils.h
             ../open_cl_common/open_cl_utils.cpp
         SHADER_FILES_GLSL
-            open_cl_interop/texture_display.vert
-            open_cl_interop/texture_display.frag
+            open_cl_interop/glsl/texture_display.vert
+            open_cl_interop/glsl/texture_display.frag
             # Also add the OpenCL kernel so it cean be opened from the IDE
-            open_cl_interop/procedural_texture.cl)
-
+            open_cl_interop/procedural_texture.cl
+        SHADER_FILES_HLSL
+            open_cl_interop/hlsl/texture_display.vert.hlsl
+            open_cl_interop/hlsl/texture_display.frag.hlsl)
 endif()

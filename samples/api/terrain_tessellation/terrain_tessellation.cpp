@@ -573,10 +573,10 @@ void TerrainTessellation::prepare_pipelines()
 	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages;
 
 	// Terrain tessellation pipeline
-	shader_stages[0] = load_shader("terrain_tessellation/terrain.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("terrain_tessellation/terrain.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[2] = load_shader("terrain_tessellation/terrain.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-	shader_stages[3] = load_shader("terrain_tessellation/terrain.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+	shader_stages[0] = load_shader("terrain_tessellation", "terrain.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("terrain_tessellation", "terrain.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[2] = load_shader("terrain_tessellation", "terrain.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	shader_stages[3] = load_shader("terrain_tessellation", "terrain.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(pipeline_layouts.terrain, render_pass, 0);
@@ -617,8 +617,8 @@ void TerrainTessellation::prepare_pipelines()
 	depth_stencil_state.depthWriteEnable = VK_FALSE;
 	pipeline_create_info.stageCount      = 2;
 	pipeline_create_info.layout          = pipeline_layouts.skysphere;
-	shader_stages[0]                     = load_shader("terrain_tessellation/skysphere.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                     = load_shader("terrain_tessellation/skysphere.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                     = load_shader("terrain_tessellation", "skysphere.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                     = load_shader("terrain_tessellation", "skysphere.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 }
 

@@ -122,16 +122,17 @@ void DynamicRendering::prepare_uniform_buffers()
 
 void DynamicRendering::update_uniform_buffers()
 {
-	ubo_vs.projection       = camera.matrices.perspective;
-	ubo_vs.modelview        = camera.matrices.view * glm::mat4(1.f);
-	ubo_vs.skybox_modelview = camera.matrices.view;
+	ubo_vs.projection        = camera.matrices.perspective;
+	ubo_vs.modelview         = camera.matrices.view * glm::mat4(1.f);
+	ubo_vs.inverse_modelview = glm::inverse(camera.matrices.view);
+	ubo_vs.skybox_modelview  = camera.matrices.view;
 	ubo->convert_and_update(ubo_vs);
 }
 
 void DynamicRendering::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
 
@@ -250,8 +251,8 @@ void DynamicRendering::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_rendering/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Create graphics pipeline for dynamic rendering
 	VkFormat color_rendering_format = get_render_context().get_format();

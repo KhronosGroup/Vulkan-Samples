@@ -287,7 +287,7 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 	if (khr_16bit_arith_enabled && supports_push_constant16)
 	{
 		push16.num_blobs = push32.num_blobs;
-		push16.fp16_seed = uint16_t(glm::packHalf2x16(glm::vec2(push32.fp32_seed)));
+		push16.fp16_seed = static_cast<uint16_t>(glm::packHalf2x16(glm::vec2(push32.fp32_seed)));
 		push16.range_x   = push32.range_x;
 		push16.range_y   = push32.range_y;
 		command_buffer.push_constants(push16);

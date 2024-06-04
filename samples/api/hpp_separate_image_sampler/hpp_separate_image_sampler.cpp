@@ -198,8 +198,8 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 {
 	// Load shaders
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("separate_image_sampler/separate_image_sampler.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("separate_image_sampler/separate_image_sampler.frag", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("separate_image_sampler", "separate_image_sampler.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("separate_image_sampler", "separate_image_sampler.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);

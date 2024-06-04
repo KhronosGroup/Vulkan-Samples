@@ -957,7 +957,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	// initialize C++-Bindings default dispatcher, first step
 #if TARGET_OS_IPHONE
-    static vk::DynamicLoader dl("vulkan.framework/vulkan");
+	static vk::DynamicLoader dl("vulkan.framework/vulkan");
 #else
 	static vk::DynamicLoader dl;
 #endif
