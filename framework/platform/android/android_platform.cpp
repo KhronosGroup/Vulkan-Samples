@@ -447,8 +447,11 @@ void AndroidPlatform::terminate(ExitCode code)
 			log_output.clear();
 			break;
 		case ExitCode::FatalError:
-			send_notification(log_output);
+		{
+			const std::string error_message = "Error! Could not launch selected sample:" + get_last_error();
+			send_notification(error_message);
 			break;
+		}
 		default:
 			break;
 	}

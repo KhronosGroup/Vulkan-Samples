@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,11 +17,17 @@
 
 package com.khronos.vulkan_samples;
 
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
@@ -32,10 +38,13 @@ import com.google.androidgamesdk.GameActivity;
 import com.khronos.vulkan_samples.common.Notifications;
 
 import java.io.File;
+import java.util.concurrent.Semaphore;
 
 public class NativeSampleActivity extends GameActivity {
 
     private Context context;
+
+    private final Semaphore semaphore = new Semaphore(0, true);
 
     @Override
     protected void onCreate(Bundle instance) {
@@ -62,34 +71,32 @@ public class NativeSampleActivity extends GameActivity {
     }
 
     /***
-     *  Handle the application when an error is thrown
-     *
-     * @param log_file The location of the log output
+     *  Handle the application when an error is thrown and display a message
      */
-    public void fatalError(final String log_file) {
-        File file = new File(log_file);
+    public void fatalError(String message) {
+        final NativeSampleActivity activity = this;
 
-        Uri path = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", file);
+        ApplicationInfo applicationInfo = activity.getApplicationInfo();
 
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-        Intent.createChooser(intent, context.getResources().getString(R.string.open_file_with));
-        intent.setDataAndType(path, context.getContentResolver().getType(path));
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        PendingIntent pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Notifications.CHANNEL_ID)
-                .setSmallIcon(R.drawable.icon)
-                .setContentTitle("Vulkan Samples Error")
-                .setContentText("Fatal Error: click to view")
-                .setStyle(new NotificationCompat.BigTextStyle().bigText("Log: " + log_file))
-                .setAutoCancel(true)
-                .setContentIntent(pi)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
-
-        NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-        nm.notify(Notifications.getNotificationId(this), builder.build());
+        this.runOnUiThread(new Runnable() {
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                builder.setTitle("Vulkan Samples");
+                builder.setMessage(message);
+                builder.setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        semaphore.release();
+                    }
+                });
+                builder.setCancelable(false);
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
+        try {
+            semaphore.acquire();
+        }
+        catch (InterruptedException e) { }
+        activity.finish();
     }
 }
