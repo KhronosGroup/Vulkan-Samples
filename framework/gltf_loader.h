@@ -28,6 +28,8 @@
 
 #include "timer.h"
 
+#include "vulkan/vulkan.h"
+
 #define KHR_LIGHTS_PUNCTUAL_EXTENSION "KHR_lights_punctual"
 
 namespace vkb
@@ -79,7 +81,7 @@ class GLTFLoader
 	 * @brief Loads the first model from a GLTF file for use in simpler samples
 	 *        makes use of the Vertex struct in vulkan_example_base.h
 	 */
-	std::unique_ptr<sg::SubMesh> read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false);
+	std::unique_ptr<sg::SubMesh> read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
   protected:
 	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node, size_t index) const;
@@ -134,6 +136,6 @@ class GLTFLoader
   private:
 	sg::Scene load_scene(int scene_index = -1);
 
-	std::unique_ptr<sg::SubMesh> load_model(uint32_t index, bool storage_buffer = false);
+	std::unique_ptr<sg::SubMesh> load_model(uint32_t index, bool storage_buffer = false, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 };
 }        // namespace vkb

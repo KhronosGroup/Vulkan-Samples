@@ -235,8 +235,9 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	 * @param file The filename of the model to load
 	 * @param index The index of the model to load from the GLTF file (default: 0)
 	 * @param storage_buffer Set true to store model in SSBO
+	 * @param additional_buffer_usage_flags Additional buffer usage flags to be applied to vertex and index buffers
 	 */
-	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false);
+	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer
