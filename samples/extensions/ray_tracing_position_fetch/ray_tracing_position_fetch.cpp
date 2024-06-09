@@ -16,6 +16,7 @@
  */
 
 #include "ray_tracing_position_fetch.h"
+#include "scene_graph/components/mesh.h"
 
 RayTracingPositionFetch::RayTracingPositionFetch()
 {
@@ -141,38 +142,48 @@ uint64_t RayTracingPositionFetch::get_buffer_device_address(VkBuffer buffer)
 }
 
 /*
-    Create the bottom level acceleration structure that contains the scene's geometry (triangles)
+    Create the bottom level acceleration structure that contains the scene's geometry
 */
 void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 {
-	// Load vertices and indices from a glTF scene
-	std::unique_ptr<vkb::sg::SubMesh> scene = load_model("scenes/cube.gltf", 0, false, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-	//std::unique_ptr<vkb::sg::SubMesh> scene = load_model("scenes/pica_pica_robot/scene.gltf", 0, false, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-
-	auto num_vertices  = scene->vertices_count;
-	auto num_triangles = scene->vertex_indices / 3;
-
-	//num_triangles = 40;
-
 	// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
+	// Note: We flip the Y-Axis to match the glTF coordinate system
 	VkTransformMatrixKHR transform_matrix = {
 	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, 1.0f, 0.0f, 0.0f,
+	    0.0f, -1.0f, 0.0f, 0.0f,
 	    0.0f, 0.0f, 1.0f, 0.0f};
 	std::unique_ptr<vkb::core::Buffer> transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
-	//std::unique_ptr<vkb::core::Buffer> vertex_buffer(&scene->vertex_buffers.at("vertex_buffer"));
-
 	bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-	bottom_level_acceleration_structure->add_triangle_geometry(
-	    scene->vertex_buffers.at("vertex_buffer"),
-	    scene->index_buffer,
-	    transform_matrix_buffer,
-	    num_triangles,
-	    num_vertices,
-	    sizeof(Vertex),
-	    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR);
+
+	// For ray tracing, the vertex and index buffers of the glTF scene need to be used for acceleration structure builds and getting device addresses, so we provide additional flags in this sample
+	const VkBufferUsageFlags additiona_buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+
+	// Add all parts of the glTF scene to the bottom level architecture
+	vkb::GLTFLoader loader{get_device()};
+
+	auto scene = loader.read_scene_from_file("scenes/pica_pica_robot/scene.gltf", -1, additiona_buffer_usage_flags);
+	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+	{
+		for (auto &&sub_mesh : mesh->get_submeshes())
+		{
+			const auto num_vertices  = sub_mesh->vertices_count - 1;
+			const auto num_triangles = sub_mesh->vertex_indices / 3;
+
+			vkb::sg::VertexAttribute attrib;
+			sub_mesh->get_attribute("position", attrib);
+
+			bottom_level_acceleration_structure->add_triangle_geometry(
+			    sub_mesh->vertex_buffers.at("position"),
+			    sub_mesh->index_buffer,
+			    transform_matrix_buffer,
+			    num_triangles,
+			    num_vertices,
+			    attrib.stride,
+			    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR);
+		}
+	}
 
 	// To access vertex positions from a shader, we need to set the VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR for the bottom level acceleration structure
 	VkBuildAccelerationStructureFlagsKHR acceleration_build_flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
