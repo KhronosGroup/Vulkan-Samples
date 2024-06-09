@@ -406,7 +406,7 @@ GLTFLoader::GLTFLoader(Device &device) :
 {
 }
 
-std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index)
+std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	std::string err;
 	std::string warn;
@@ -445,7 +445,7 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 		model_path.clear();
 	}
 
-	return std::make_unique<sg::Scene>(load_scene(scene_index));
+	return std::make_unique<sg::Scene>(load_scene(scene_index, additional_buffer_usage_flags));
 }
 
 std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
@@ -490,7 +490,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 	return std::move(load_model(index, storage_buffer, additional_buffer_usage_flags));
 }
 
-sg::Scene GLTFLoader::load_scene(int scene_index)
+sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	auto scene = sg::Scene();
 
@@ -749,9 +749,15 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 					submesh->vertices_count = to_u32(model.accessors[attribute.second].count);
 				}
 
+				VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+				if (additional_buffer_usage_flags)
+				{
+					buffer_usage_flags |= additional_buffer_usage_flags;
+				}
+
 				core::Buffer buffer{device,
 				                    vertex_data.size(),
-				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				                    buffer_usage_flags,
 				                    VMA_MEMORY_USAGE_CPU_TO_GPU};
 				buffer.update(vertex_data);
 				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
@@ -792,9 +798,15 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 						break;
 				}
 
+				VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+				if (additional_buffer_usage_flags)
+				{
+					buffer_usage_flags |= additional_buffer_usage_flags;
+				}
+
 				submesh->index_buffer = std::make_unique<core::Buffer>(device,
 				                                                       index_data.size(),
-				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				                                                       additional_buffer_usage_flags,
 				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
 				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
 				                                                  gltf_mesh.name, i_primitive));
