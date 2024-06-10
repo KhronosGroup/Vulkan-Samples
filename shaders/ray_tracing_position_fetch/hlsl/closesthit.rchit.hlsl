@@ -59,9 +59,5 @@ void main(inout Payload p, in Attributes attribs)
     float3 normal = normalize(cross(vertexPos1 - vertexPos0, vertexPos2 - vertexPos0));
     normal = normalize(mul(float4(normal, 1.0), WorldToObject4x3()));
 
-	// Basic lighting
-    float3 lightDir = normalize(ubo.lightPos.xyz - currentPos);
-    float diffuse = max(dot(normal, lightDir), 0.0);
-
-    p.hitValue.rgb = 0.1 + diffuse;
+    p.hitValue.rgb = normal;
 }
