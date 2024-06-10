@@ -147,10 +147,10 @@ uint64_t RayTracingPositionFetch::get_buffer_device_address(VkBuffer buffer)
 void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 {
 	// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
-	// Note: We flip the Y-Axis to match the glTF coordinate system
+	// Note: We flip the Y-Axis to match the glTF coordinate system and also offset the model to center it
 	VkTransformMatrixKHR transform_matrix = {
 	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, -1.0f, 0.0f, 0.0f,
+	    0.0f, -1.0f, 0.0f, 2.0f,
 	    0.0f, 0.0f, 1.0f, 0.0f};
 	std::unique_ptr<vkb::core::Buffer> transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
@@ -621,8 +621,8 @@ bool RayTracingPositionFetch::prepare(const vkb::ApplicationOptions &options)
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
-	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
-	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.5f));
+	camera.set_rotation(glm::vec3(0.0f, 15.0f, 0.0f));
+	camera.set_translation(glm::vec3(0.0f, 0.0f, -6.5f));
 
 	create_storage_image();
 	create_scene();
