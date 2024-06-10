@@ -334,41 +334,15 @@ void RayTracingPositionFetch::create_descriptor_sets()
 */
 void RayTracingPositionFetch::create_ray_tracing_pipeline()
 {
-	// Slot for binding top level acceleration structures to the ray generation shader
-	VkDescriptorSetLayoutBinding acceleration_structure_layout_binding{};
-	acceleration_structure_layout_binding.binding         = 0;
-	acceleration_structure_layout_binding.descriptorType  = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
-	acceleration_structure_layout_binding.descriptorCount = 1;
-	acceleration_structure_layout_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
-
-	VkDescriptorSetLayoutBinding result_image_layout_binding{};
-	result_image_layout_binding.binding         = 1;
-	result_image_layout_binding.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	result_image_layout_binding.descriptorCount = 1;
-	result_image_layout_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
-
-	VkDescriptorSetLayoutBinding uniform_buffer_binding{};
-	uniform_buffer_binding.binding         = 2;
-	uniform_buffer_binding.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uniform_buffer_binding.descriptorCount = 1;
-	uniform_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
-
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {
-	    acceleration_structure_layout_binding,
-	    result_image_layout_binding,
-	    uniform_buffer_binding};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 0, 1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 1, 1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, 2, 1)};
 
-	VkDescriptorSetLayoutCreateInfo layout_info{};
-	layout_info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
-	layout_info.pBindings    = bindings.data();
+	VkDescriptorSetLayoutCreateInfo layout_info = vkb::initializers::descriptor_set_layout_create_info(bindings.data(), static_cast<uint32_t>(bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &layout_info, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
-	pipeline_layout_create_info.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipeline_layout_create_info.setLayoutCount = 1;
-	pipeline_layout_create_info.pSetLayouts    = &descriptor_set_layout;
-
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
 	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the glslang compiler
@@ -381,43 +355,37 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
 	// Ray generation group
-	{
-		shader_stages.push_back(load_shader("ray_tracing_position_fetch", "raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
-		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
-		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
-		raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-		raygen_group_ci.generalShader      = static_cast<uint32_t>(shader_stages.size()) - 1;
-		raygen_group_ci.closestHitShader   = VK_SHADER_UNUSED_KHR;
-		raygen_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
-		raygen_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
-		shader_groups.push_back(raygen_group_ci);
-	}
+	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+	VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
+	raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+	raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+	raygen_group_ci.generalShader      = static_cast<uint32_t>(shader_stages.size()) - 1;
+	raygen_group_ci.closestHitShader   = VK_SHADER_UNUSED_KHR;
+	raygen_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
+	raygen_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
+	shader_groups.push_back(raygen_group_ci);
 
 	// Ray miss group
-	{
-		shader_stages.push_back(load_shader("ray_tracing_position_fetch", "miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
-		VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
-		miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
-		miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-		miss_group_ci.generalShader      = static_cast<uint32_t>(shader_stages.size()) - 1;
-		miss_group_ci.closestHitShader   = VK_SHADER_UNUSED_KHR;
-		miss_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
-		miss_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
-		shader_groups.push_back(miss_group_ci);
-	}
+	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+	VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
+	miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+	miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+	miss_group_ci.generalShader      = static_cast<uint32_t>(shader_stages.size()) - 1;
+	miss_group_ci.closestHitShader   = VK_SHADER_UNUSED_KHR;
+	miss_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
+	miss_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
+	shader_groups.push_back(miss_group_ci);
 
 	// Ray closest hit group
-	{
-		shader_stages.push_back(load_shader("ray_tracing_position_fetch", "closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
-		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
-		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
-		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
-		closes_hit_group_ci.generalShader      = VK_SHADER_UNUSED_KHR;
-		closes_hit_group_ci.closestHitShader   = static_cast<uint32_t>(shader_stages.size()) - 1;
-		closes_hit_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
-		closes_hit_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
-		shader_groups.push_back(closes_hit_group_ci);
-	}
+	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+	VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
+	closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+	closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+	closes_hit_group_ci.generalShader      = VK_SHADER_UNUSED_KHR;
+	closes_hit_group_ci.closestHitShader   = static_cast<uint32_t>(shader_stages.size()) - 1;
+	closes_hit_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
+	closes_hit_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
+	shader_groups.push_back(closes_hit_group_ci);
 
 	/*
 	    Create the ray tracing pipeline
@@ -481,20 +449,20 @@ void RayTracingPositionFetch::build_command_buffers()
 
 		const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
 
-		VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{};
-		raygen_shader_sbt_entry.deviceAddress = get_buffer_device_address(raygen_shader_binding_table->get_handle());
-		raygen_shader_sbt_entry.stride        = handle_size_aligned;
-		raygen_shader_sbt_entry.size          = handle_size_aligned;
+		VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{
+		    get_buffer_device_address(raygen_shader_binding_table->get_handle()),
+		    handle_size_aligned,
+		    handle_size_aligned};
 
-		VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{};
-		miss_shader_sbt_entry.deviceAddress = get_buffer_device_address(miss_shader_binding_table->get_handle());
-		miss_shader_sbt_entry.stride        = handle_size_aligned;
-		miss_shader_sbt_entry.size          = handle_size_aligned;
+		VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{
+		    get_buffer_device_address(miss_shader_binding_table->get_handle()),
+		    handle_size_aligned,
+		    handle_size_aligned};
 
-		VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{};
-		hit_shader_sbt_entry.deviceAddress = get_buffer_device_address(hit_shader_binding_table->get_handle());
-		hit_shader_sbt_entry.stride        = handle_size_aligned;
-		hit_shader_sbt_entry.size          = handle_size_aligned;
+		VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{
+		    get_buffer_device_address(hit_shader_binding_table->get_handle()),
+		    handle_size_aligned,
+		    handle_size_aligned};
 
 		VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
