@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -64,7 +64,6 @@ class RayTracingPositionFetch : public ApiVulkanSample
 	virtual ~RayTracingPositionFetch();
 
 	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	uint64_t     get_buffer_device_address(VkBuffer buffer);
 	void         create_storage_image();
 	void         create_bottom_level_acceleration_structure();
 	void         create_top_level_acceleration_structure();

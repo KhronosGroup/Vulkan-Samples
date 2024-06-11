@@ -131,17 +131,6 @@ void RayTracingPositionFetch::create_storage_image()
 }
 
 /*
-    Gets the device address from a buffer that's needed in many places during the ray tracing setup
-*/
-uint64_t RayTracingPositionFetch::get_buffer_device_address(VkBuffer buffer)
-{
-	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
-	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-	buffer_device_address_info.buffer = buffer;
-	return vkGetBufferDeviceAddressKHR(get_device().get_handle(), &buffer_device_address_info);
-}
-
-/*
     Create the bottom level acceleration structure that contains the scene's geometry
 */
 void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
@@ -214,16 +203,9 @@ void RayTracingPositionFetch::create_top_level_acceleration_structure()
 	                                                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
 
-	const uint32_t instance_count = 1;
-
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
-	top_level_acceleration_structure->add_instance_geometry(instances_buffer, instance_count);
+	top_level_acceleration_structure->add_instance_geometry(instances_buffer, 1);
 	top_level_acceleration_structure->build(queue);
-}
-
-inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
-{
-	return (value + alignment - 1) & ~(alignment - 1);
 }
 
 /*
@@ -233,6 +215,11 @@ void RayTracingPositionFetch::create_scene()
 {
 	create_bottom_level_acceleration_structure();
 	create_top_level_acceleration_structure();
+}
+
+inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
+{
+	return (value + alignment - 1) & ~(alignment - 1);
 }
 
 /*
@@ -253,7 +240,6 @@ void RayTracingPositionFetch::create_shader_binding_tables()
 {
 	const uint32_t           handle_size            = ray_tracing_pipeline_properties.shaderGroupHandleSize;
 	const uint32_t           handle_size_aligned    = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
-	const uint32_t           handle_alignment       = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
 	const uint32_t           group_count            = static_cast<uint32_t>(shader_groups.size());
 	const uint32_t           sbt_size               = group_count * handle_size_aligned;
 	const VkBufferUsageFlags sbt_buffer_usage_flags = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
@@ -406,12 +392,8 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 */
 void RayTracingPositionFetch::create_uniform_buffer()
 {
-	ubo = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                          sizeof(uniform_data),
-	                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(uniform_data), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	ubo->convert_and_update(uniform_data);
-
 	update_uniform_buffers();
 }
 
@@ -450,17 +432,17 @@ void RayTracingPositionFetch::build_command_buffers()
 		const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
 
 		VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{
-		    get_buffer_device_address(raygen_shader_binding_table->get_handle()),
+		    raygen_shader_binding_table->get_device_address(),
 		    handle_size_aligned,
 		    handle_size_aligned};
 
 		VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{
-		    get_buffer_device_address(miss_shader_binding_table->get_handle()),
+		    miss_shader_binding_table->get_device_address(),
 		    handle_size_aligned,
 		    handle_size_aligned};
 
 		VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{
-		    get_buffer_device_address(hit_shader_binding_table->get_handle()),
+		    hit_shader_binding_table->get_device_address(),
 		    handle_size_aligned,
 		    handle_size_aligned};
 
