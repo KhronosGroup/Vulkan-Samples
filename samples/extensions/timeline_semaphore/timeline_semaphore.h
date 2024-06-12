@@ -109,16 +109,17 @@ class TimelineSemaphore : public ApiVulkanSample
 	void     create_timeline_semaphore();
 	void     start_timeline_workers();
 	void     finish_timeline_workers();
-	void     signal_next_frame();
-	void     wait_for_next_frame();
 	void     signal_timeline(Timeline::Stages stage);
 	void     wait_on_timeline(Timeline::Stages stage);
+	void     signal_next_frame();
+	void     wait_for_next_frame();
 	uint64_t get_timeline_stage_value(Timeline::Stages stage);
 
 	// Compute Work
 	void do_compute_work();
 	void setup_compute_pipeline();
 	void setup_compute_resources();
+	void setup_game_of_life();
 	void build_compute_command_buffers(const ComputeResources::CommandType type, const float elapsed = 0.0f);
 
 	// Graphics Work

@@ -285,34 +285,28 @@ uint64_t TimelineSemaphore::get_timeline_stage_value(Timeline::Stages stage)
 
 void TimelineSemaphore::do_compute_work()
 {
-	setup_compute_resources();
-	setup_compute_pipeline();
-
 	compute.timer.start();
 	while (compute_worker.alive)
 	{
 		wait_on_timeline(Timeline::prepare);
 
-		if (timeline.frame == 0)
-		{
-			// Initialise the game of life on the first frame
-			build_compute_command_buffers(ComputeResources::init);
-		}
-		else
-		{
-			auto elapsed      = static_cast<float>(compute.timer.elapsed());
-			auto command_type = (elapsed > 1.0f) ? ComputeResources::update : ComputeResources::mutate;
+		auto elapsed      = static_cast<float>(compute.timer.elapsed());
+		auto command_type = (elapsed > 1.0f) ? ComputeResources::update : ComputeResources::mutate;
 
-			build_compute_command_buffers(command_type, elapsed);
-		}
+		build_compute_command_buffers(command_type, elapsed);
 
+		uint64_t                      wait_value    = 0;
+		VkPipelineStageFlags          wait_flags    = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		uint64_t                      signal_value  = get_timeline_stage_value(Timeline::draw);
-		VkTimelineSemaphoreSubmitInfo timeline_info = create_timeline_submit_info(0, nullptr, 1, &signal_value);
+		VkTimelineSemaphoreSubmitInfo timeline_info = create_timeline_submit_info(1, &wait_value, 1, &signal_value);
 
 		VkSubmitInfo submit_info         = vkb::initializers::submit_info();
 		submit_info.pNext                = &timeline_info;
 		submit_info.commandBufferCount   = 1;
 		submit_info.pCommandBuffers      = &compute.command_buffer;
+		submit_info.waitSemaphoreCount   = 1;
+		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
+		submit_info.pWaitDstStageMask    = &wait_flags;
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores    = &timeline.semaphore;
 
@@ -365,6 +359,50 @@ void TimelineSemaphore::setup_compute_resources()
 	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &alloc_info, &compute.command_buffer));
 }
 
+void TimelineSemaphore::setup_game_of_life()
+{
+	auto begin_info  = vkb::initializers::command_buffer_begin_info();
+	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	VK_CHECK(vkResetCommandBuffer(compute.command_buffer, 0));
+	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
+
+	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_images[1], 0, nullptr);
+
+	//  On the first iteration, we initialize the game of life.
+	vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.init_pipeline);
+
+	VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
+	image_barrier.srcAccessMask        = 0;
+	image_barrier.dstAccessMask        = VK_ACCESS_SHADER_WRITE_BIT;
+	image_barrier.image                = shared.images[1]->get_handle();
+	image_barrier.subresourceRange     = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+	image_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_barrier.newLayout            = VK_IMAGE_LAYOUT_GENERAL;
+
+	// The semaphore takes care of srcStageMask.
+	vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+
+	vkCmdDispatch(compute.command_buffer, grid_width / 8, grid_height / 8, 1);
+
+	image_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+	image_barrier.dstAccessMask = 0;
+	image_barrier.oldLayout     = VK_IMAGE_LAYOUT_GENERAL;
+	image_barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	// The semaphore takes care of dstStageMask.
+	vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+
+	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
+
+	VkSubmitInfo submit_info       = vkb::initializers::submit_info();
+	submit_info.commandBufferCount = 1;
+	submit_info.pCommandBuffers    = &compute.command_buffer;
+
+	VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
+
+	VK_CHECK(get_device().wait_idle());
+}
+
 void TimelineSemaphore::build_compute_command_buffers(const ComputeResources::CommandType type, float elapsed)
 {
 	auto begin_info  = vkb::initializers::command_buffer_begin_info();
@@ -379,13 +417,6 @@ void TimelineSemaphore::build_compute_command_buffers(const ComputeResources::Co
 
 	switch (type)
 	{
-		case ComputeResources::init:
-		{
-			//  On the first iteration, we initialize the game of life.
-			vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.init_pipeline);
-		}
-		break;
-
 		case ComputeResources::update:
 		{
 			vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.update_pipeline);
@@ -434,27 +465,24 @@ void TimelineSemaphore::build_compute_command_buffers(const ComputeResources::Co
 
 void TimelineSemaphore::do_graphics_work()
 {
-	setup_graphics_resources();
-	setup_graphics_pipeline();
-
 	while (graphics_worker.alive)
 	{
 		wait_on_timeline(Timeline::prepare);
 
 		build_graphics_command_buffer();
 
-		uint64_t                      wait_values[]       = {0, get_timeline_stage_value(Timeline::draw)};
-		VkPipelineStageFlags          wait_stage_masks[]  = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
-		VkSemaphore                   wait_semaphores[]   = {semaphores.acquired_image_ready, timeline.semaphore};
+		uint64_t                      wait_value          = get_timeline_stage_value(Timeline::draw);
+		VkPipelineStageFlags          wait_stage_mask     = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		VkSemaphore                   wait_semaphores     = timeline.semaphore;
 		uint64_t                      signal_values[]     = {get_timeline_stage_value(Timeline::present), 0};
 		VkSemaphore                   signal_semaphores[] = {timeline.semaphore, semaphores.render_complete};
-		VkTimelineSemaphoreSubmitInfo timeline_info       = create_timeline_submit_info(2, wait_values, 2, signal_values);
+		VkTimelineSemaphoreSubmitInfo timeline_info       = create_timeline_submit_info(1, &wait_value, 2, signal_values);
 
 		VkSubmitInfo submit_info         = vkb::initializers::submit_info();
 		submit_info.pNext                = &timeline_info;
-		submit_info.waitSemaphoreCount   = 2;
-		submit_info.pWaitSemaphores      = wait_semaphores;
-		submit_info.pWaitDstStageMask    = wait_stage_masks;
+		submit_info.waitSemaphoreCount   = 1;
+		submit_info.pWaitSemaphores      = &timeline.semaphore;
+		submit_info.pWaitDstStageMask    = &wait_stage_mask;
 		submit_info.signalSemaphoreCount = 2;
 		submit_info.pSignalSemaphores    = signal_semaphores;
 		submit_info.commandBufferCount   = 1;
@@ -558,9 +586,10 @@ void TimelineSemaphore::build_graphics_command_buffer()
 		viewport.height = viewport.width;
 	}
 
+	VK_CHECK(vkResetCommandBuffer(graphics.command_buffer, 0));
+
 	auto begin_info  = vkb::initializers::command_buffer_begin_info();
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	VK_CHECK(vkResetCommandBuffer(graphics.command_buffer, 0));
 	VK_CHECK(vkBeginCommandBuffer(graphics.command_buffer, &begin_info));
 
 	VkRenderPassBeginInfo render_pass_begin    = vkb::initializers::render_pass_begin_info();
@@ -607,6 +636,15 @@ bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	setup_shared_resources();
+
+	setup_compute_resources();
+	setup_compute_pipeline();
+
+	setup_graphics_resources();
+	setup_graphics_pipeline();
+
+	setup_game_of_life();
+
 	create_timeline_semaphore();
 
 	start_timeline_workers();
