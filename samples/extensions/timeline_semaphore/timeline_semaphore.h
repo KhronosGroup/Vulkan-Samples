@@ -51,13 +51,6 @@ class TimelineSemaphore : public ApiVulkanSample
 
 		vkb::Timer timer;
 		uint32_t   queue_family_index;
-
-		enum CommandType
-		{
-			init,
-			update,
-			mutate
-		};
 	} compute;
 
 	// Resources used by both workers for storing/sampling images
@@ -80,10 +73,9 @@ class TimelineSemaphore : public ApiVulkanSample
 		// the stages to be reused without needing to recreate the semaphore.
 		enum Stages
 		{
-			prepare = 1,        // Worker threads can begin preparing command buffers for submission
-			submit,             // Worker threads can submit their command buffers,
-			draw,               // The graphics worker can draw the current frame
-			present,            // The main thread can present the frame to the display
+			submit = 1,        // Worker threads can create and submit their command buffers,
+			draw,              // The graphics worker can draw the current frame
+			present,           // The main thread can present the frame to the display
 			MAX_STAGES
 		};
 
@@ -109,17 +101,18 @@ class TimelineSemaphore : public ApiVulkanSample
 	void     create_timeline_semaphore();
 	void     start_timeline_workers();
 	void     finish_timeline_workers();
+	void     signal_timeline(const Timeline::Stages stage);
+	void     wait_on_timeline(const Timeline::Stages stage);
 	void     signal_next_frame();
 	void     wait_for_next_frame();
-	void     signal_timeline(Timeline::Stages stage);
-	void     wait_on_timeline(Timeline::Stages stage);
-	uint64_t get_timeline_stage_value(Timeline::Stages stage);
+	uint64_t get_timeline_stage_value(const Timeline::Stages stage);
 
 	// Compute Work
 	void do_compute_work();
 	void setup_compute_pipeline();
 	void setup_compute_resources();
-	void build_compute_command_buffers(const ComputeResources::CommandType type, const float elapsed = 0.0f);
+	void setup_game_of_life();
+	void build_compute_command_buffers(const float elapsed = 0.0f);
 
 	// Graphics Work
 	void do_graphics_work();
