@@ -100,6 +100,8 @@ class Platform
 	 */
 	static const std::string &get_temp_directory();
 
+	std::string &get_last_error();
+
 	virtual void resize(uint32_t width, uint32_t height);
 
 	virtual void input_event(const InputEvent &input_event);
@@ -111,6 +113,8 @@ class Platform
 	Application &get_app();
 
 	static void set_external_storage_directory(const std::string &dir);
+
+	void set_last_error(const std::string &error);
 
 	template <class T>
 	T *get_plugin() const;
@@ -183,6 +187,8 @@ class Platform
 	std::vector<Plugin *> plugins;
 
 	std::vector<std::string> arguments;
+
+	std::string last_error;
 
 	// static so can be references from vkb::fs
 	static std::string external_storage_directory;
