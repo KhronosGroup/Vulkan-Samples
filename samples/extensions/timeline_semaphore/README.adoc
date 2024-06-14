@@ -203,49 +203,44 @@ After updating image N, the main thread will sample from image N.
 
 The sequential flow of the rendering is something like:
 
-* Compute thread waits for "prepare"
-* Graphics thread waits for prepare
-* Main thread signals "prepare"
-* Main thread acquires the next swapchain image
-* Compute thread prepares command buffer
-* Compute thread waits on "submit"
-* Graphics thread prepares command buffer
-* Graphics thread waits on "submit"
-* Main thread signals "submit"
-* Main thread waits for "present"
-* Compute thread writes image
-* Compute thread signals "draw"
-* Compute thread waits for next frame
-* Graphics thread reads image
-* Graphics thread signals "present"
-* Graphics thread waits for next frame
-* Main thread presents swapchain
-* Main thread signals "end of frame"
-* Compute thread waits for "prepare"
-* Graphics thread waits for prepare
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
+* Main: acquires the swapchain image
+* Main: signal "submit"
+* Main: wait for "present"
+* Compute: wait for "image_acquired" (binary semaphore)
+* Graphics: wait for "draw"
+* Compute: write image
+* Compute: signal "draw"
+* Compute: wait for "end of frame"
+* Graphics: read image
+* Graphics: signal "present"
+* Graphics: wait for "end of frame"
+* Main: present swapchain
+* Main: signals "end of frame"
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
 
 And so on ...
 With out of order signal, we can end up observing this order of submissions instead.
 
-* Main thread signals "prepare"
-* Main thread acquires the next swapchain image
-* Main signals "submit"
-* Compute thread waits for "prepare"
-* Compute thread prepares command buffer
-* Compute thread writes image
-* Compute thread signals "draw"
-* Compute thread waits for next frame
-* Graphics thread waits for "prepare"
-* Graphics thread prepares command buffer
-* Graphics thread waits on "submit"
-* Graphics thread reads image
-* Graphics thread signals present
-* Graphics thread waits for next frame
-* Main thread presents swapchain
-* Main thread signals end of frame
-* Main thread signals "prepare"
-* Compute thread waits for "prepare"
-* Graphics thread waits for prepare
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
+* Main: acquires the swapchain image
+* Main: signal "submit"
+* Graphics: wait for "draw"
+* Compute: wait for "image_acquired" (binary semaphore)
+* Compute: write image
+* Compute: signal "draw"
+* Graphics: read image
+* Graphics: signal "present"
+* Main: wait for "present"
+* Main: present swapchain
+* Compute: wait for "end of frame"
+* Main: signals "end of frame"
+* Graphics: wait for "end of frame"
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
 
 When submitting out of order, it is important that you don't just submit work way ahead of where the GPU actually is, since the latency becomes extremely large.
 The natural place to keep submission explosion under control here is the place where we wait for the timeline on host, since we need to re-record command buffers anyways.
