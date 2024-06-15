@@ -161,7 +161,7 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 			const auto num_triangles = sub_mesh->vertex_indices / 3;
 
 			vkb::sg::VertexAttribute attrib;
-			sub_mesh->get_attribute("position", attrib);
+			sub_mesh->get_attribute("position", attrib);			
 
 			bottom_level_acceleration_structure->add_triangle_geometry(
 			    sub_mesh->vertex_buffers.at("position"),
@@ -170,7 +170,10 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 			    num_triangles,
 			    num_vertices,
 			    attrib.stride,
-			    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR);
+			    0,
+				attrib.format,
+				sub_mesh->index_type,
+				VK_GEOMETRY_OPAQUE_BIT_KHR);
 		}
 	}
 
