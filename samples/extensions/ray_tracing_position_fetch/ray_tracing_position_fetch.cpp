@@ -147,12 +147,12 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 	bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
 
 	// For ray tracing, the vertex and index buffers of the glTF scene need to be used for acceleration structure builds and getting device addresses, so we provide additional flags in this sample
-	const VkBufferUsageFlags additiona_buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	const VkBufferUsageFlags additional_buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
 	// Add all parts of the glTF scene to the bottom level architecture
 	vkb::GLTFLoader loader{get_device()};
 
-	auto scene = loader.read_scene_from_file("scenes/pica_pica_robot/scene.gltf", -1, additiona_buffer_usage_flags);
+	auto scene = loader.read_scene_from_file("scenes/pica_pica_robot/scene.gltf", -1, additional_buffer_usage_flags);
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		for (auto &&sub_mesh : mesh->get_submeshes())
