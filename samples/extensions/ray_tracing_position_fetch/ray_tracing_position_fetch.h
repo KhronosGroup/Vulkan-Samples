@@ -52,13 +52,14 @@ class RayTracingPositionFetch : public ApiVulkanSample
 	{
 		glm::mat4 view_inverse{1.0f};
 		glm::mat4 proj_inverse{1.0f};
+		int32_t  display_mode{0};
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
-	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};	
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
 	RayTracingPositionFetch();
 	virtual ~RayTracingPositionFetch();
@@ -75,6 +76,7 @@ class RayTracingPositionFetch : public ApiVulkanSample
 	void         build_command_buffers() override;
 	void         update_uniform_buffers();
 	void         draw();
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 };

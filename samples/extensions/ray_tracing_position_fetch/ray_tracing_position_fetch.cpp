@@ -585,6 +585,12 @@ bool RayTracingPositionFetch::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+void RayTracingPositionFetch::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	const std::vector<std::string> display_mode_names{"Geometric normal", "Vertex position"};
+	drawer.combo_box("Display mode", &uniform_data.display_mode, display_mode_names);
+}
+
 void RayTracingPositionFetch::draw()
 {
 	ApiVulkanSample::prepare_frame();
@@ -600,11 +606,8 @@ void RayTracingPositionFetch::render(float delta_time)
 	{
 		return;
 	}
+	update_uniform_buffers();
 	draw();
-	if (camera.updated)
-	{
-		update_uniform_buffers();
-	}
 }
 
 std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_position_fetch()

@@ -29,7 +29,7 @@ struct UBO
 {
     float4x4 viewInverse;
     float4x4 projInverse;
-    float4 lightPos;
+    int displayMode;
 };
 ConstantBuffer<UBO> ubo : register(b2);
 
@@ -50,14 +50,26 @@ void main(inout Payload p, in Attributes attribs)
 
 	// With VK_KHR_ray_tracing_position_fetch we can access the vertices for the hit triangle in the shader
 
-    float3 vertexPos0 = gl_HitTriangleVertexPositions[0];
-    float3 vertexPos1 = gl_HitTriangleVertexPositions[1];
-    float3 vertexPos2 = gl_HitTriangleVertexPositions[2];
-    float3 currentPos = vertexPos0 * barycentricCoords.x + vertexPos1 * barycentricCoords.y + vertexPos2 * barycentricCoords.z;
-
-	// Calcualte the normal from above values
-    float3 normal = normalize(cross(vertexPos1 - vertexPos0, vertexPos2 - vertexPos0));
-    normal = normalize(mul(float4(normal, 1.0), WorldToObject4x3()));
-
-    p.hitValue.rgb = normal;
+    float3 pos0 = gl_HitTriangleVertexPositions[0];
+    float3 pos1 = gl_HitTriangleVertexPositions[1];
+    float3 pos2 = gl_HitTriangleVertexPositions[2];
+    float3 currentPos = pos0 * barycentricCoords.x + pos1 * barycentricCoords.y + pos2 * barycentricCoords.z;
+   
+    p.hitValue = float3(0.0, 0.0, 0.0);
+    
+    switch (ubo.displayMode)
+    {
+        case (0):{
+			// Visualize the geometric normal
+            float3 normal = normalize(cross(pos1 - pos0, pos2 - pos0));
+            normal = normalize(mul(float4(normal, 1.0), WorldToObject4x3()));
+            p.hitValue = normal;
+            break;
+        }
+        case (1):{
+			// Visualize the vertex position
+            p.hitValue = currentPos;
+            break;
+        }
+    }
 }
