@@ -96,13 +96,11 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
   public:
 	SwapchainRecreation();
 
-	~SwapchainRecreation() override;
+	virtual ~SwapchainRecreation() override;
 
 	void create_render_context() override;
 
 	void prepare_render_context() override;
-
-	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void update(float delta_time) override;
 
@@ -170,8 +168,9 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
 	// User toggles.
 	bool recreate_swapchain_on_present_mode_change = false;
 
+	std::unique_ptr<vkb::Device> create_device(vkb::PhysicalDevice &gpu) override;
+
 	void get_queue();
-	void check_for_maintenance1();
 	void query_surface_format();
 	void query_present_modes();
 	void query_compatible_present_modes(VkPresentModeKHR present_mode);

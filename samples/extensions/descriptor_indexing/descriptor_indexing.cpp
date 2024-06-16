@@ -309,12 +309,12 @@ void DescriptorIndexing::create_pipelines()
 	info.pStages    = stages;
 	info.stageCount = 2;
 
-	stages[0] = load_shader("descriptor_indexing/nonuniform-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	stages[1] = load_shader("descriptor_indexing/nonuniform-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	stages[0] = load_shader("descriptor_indexing", "nonuniform-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	stages[1] = load_shader("descriptor_indexing", "nonuniform-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.non_uniform_indexing));
 
-	stages[0] = load_shader("descriptor_indexing/update-after-bind-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	stages[1] = load_shader("descriptor_indexing/update-after-bind-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	stages[0] = load_shader("descriptor_indexing", "update-after-bind-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	stages[1] = load_shader("descriptor_indexing", "update-after-bind-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.update_after_bind));
 }
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Mobica Limited
+# Copyright (c) 2023-2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,8 +23,11 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
-    NAME "sparse_image"
+    NAME "Sparse image binding and residency"
     DESCRIPTION "This sample is showcasing the potential usage of the sparse-image-binding and sparse-image-residency features. It works with the concept of Virtual Textures, allowing textures to be rendered without being entirely allocated in the memory."
     SHADER_FILES_GLSL
-        "sparse_image/sparse.vert"
-        "sparse_image/sparse.frag")
+        "sparse_image/glsl/sparse.vert"
+        "sparse_image/glsl/sparse.frag"
+    SHADER_FILES_HLSL
+        "sparse_image/hlsl/sparse.vert.hlsl"
+        "sparse_image/hlsl/sparse.frag.hlsl")

@@ -347,7 +347,9 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 		meshlet.indices[meshlet.index_count] = *(reinterpret_cast<uint32_t *>(index_data.data()) + i);
 
 		if (vertices.insert(meshlet.indices[meshlet.index_count]).second)
+		{
 			++meshlet.vertex_count;
+		}
 
 		meshlet.index_count++;
 		triangle_check = triangle_check < 3 ? ++triangle_check : 1;
@@ -356,7 +358,9 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 		if (meshlet.vertex_count == 64 || meshlet.index_count == 96 || i == submesh->vertex_indices - 1)
 		{
 			if (i == submesh->vertex_indices - 1)
+			{
 				assert(triangle_check == 3);
+			}
 
 			uint32_t counter = 0;
 			for (auto v : vertices)
@@ -660,7 +664,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 	scene.add_component(std::move(default_sampler_linear));
 	if (used_nearest_sampler)
+	{
 		scene.add_component(std::move(default_sampler_nearest));
+	}
 
 	// Load materials
 	bool                            has_textures = scene.has_component<sg::Texture>();
@@ -1266,7 +1272,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			prepare_meshlets(meshlets, submesh, index_data);
 
 			// vertex_indices and index_buffer are used for meshlets now
-			submesh->vertex_indices = (uint32_t) meshlets.size();
+			submesh->vertex_indices = static_cast<uint32_t>(meshlets.size());
 
 			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, meshlets);
 

@@ -38,6 +38,7 @@ class DynamicLineRasterization : public ApiVulkanSample
 		alignas(16) glm::mat4 projection;
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 model;
+		alignas(16) glm::mat4 viewProjectionInverse;
 	};
 
 	struct

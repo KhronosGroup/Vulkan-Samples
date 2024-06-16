@@ -70,7 +70,7 @@ class Platform
 	 * @return An exit code representing the outcome of the loop
 	 */
 	ExitCode main_loop();
-    ExitCode main_loop_frame();
+	ExitCode main_loop_frame();
 
 	/**
 	 * @brief Runs the application for one frame
@@ -100,6 +100,8 @@ class Platform
 	 */
 	static const std::string &get_temp_directory();
 
+	std::string &get_last_error();
+
 	virtual void resize(uint32_t width, uint32_t height);
 
 	virtual void input_event(const InputEvent &input_event);
@@ -111,6 +113,8 @@ class Platform
 	Application &get_app();
 
 	static void set_external_storage_directory(const std::string &dir);
+
+	void set_last_error(const std::string &error);
 
 	template <class T>
 	T *get_plugin() const;
@@ -127,6 +131,9 @@ class Platform
 	bool start_app();
 
 	void force_simulation_fps(float fps);
+
+	// Force the application to always render even if it is not in focus
+	void force_render(bool should_always_render);
 
 	void disable_input_processing();
 
@@ -166,6 +173,7 @@ class Platform
 
 	Window::Properties window_properties;              /* Source of truth for window state */
 	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
+	bool               always_render{false};           /* App should always render even if not in focus */
 	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
 	bool               process_input_events{true};     /* App should continue processing input events */
 	bool               focused{true};                  /* App is currently in focus at an operating system level */
@@ -179,6 +187,8 @@ class Platform
 	std::vector<Plugin *> plugins;
 
 	std::vector<std::string> arguments;
+
+	std::string last_error;
 
 	// static so can be references from vkb::fs
 	static std::string external_storage_directory;

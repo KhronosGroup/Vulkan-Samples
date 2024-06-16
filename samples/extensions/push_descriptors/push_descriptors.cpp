@@ -238,8 +238,8 @@ void PushDescriptors::prepare_pipelines()
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("push_descriptors/cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("push_descriptors/cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("push_descriptors", "cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("push_descriptors", "cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();

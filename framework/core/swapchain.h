@@ -168,10 +168,6 @@ class Swapchain
 
 	std::vector<VkImage> images;
 
-	std::vector<VkSurfaceFormatKHR> surface_formats{};
-
-	std::vector<VkPresentModeKHR> present_modes{};
-
 	SwapchainProperties properties;
 
 	// A list of present modes in order of priority (vector[0] has high priority, vector[size-1] has low priority)

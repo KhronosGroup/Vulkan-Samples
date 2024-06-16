@@ -35,11 +35,6 @@
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
 
-namespace plugins
-{
-class BenchmarkMode;
-}
-
 namespace vkb
 {
 const uint32_t Platform::MIN_WINDOW_WIDTH  = 420;
@@ -133,46 +128,46 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 
 ExitCode Platform::main_loop_frame()
 {
-    if (!app_requested())
-    {
-        return ExitCode::NoSample;
-    }
+	if (!app_requested())
+	{
+		return ExitCode::NoSample;
+	}
 
-    if (!window->should_close() && !close_requested)
-    {
-        try
-        {
-            // Load the requested app
-            if (app_requested())
-            {
-                if (!start_app())
-                {
-                    LOGE("Failed to load requested application");
-                    return ExitCode::FatalError;
-                }
+	if (!window->should_close() && !close_requested)
+	{
+		try
+		{
+			// Load the requested app
+			if (app_requested())
+			{
+				if (!start_app())
+				{
+					LOGE("Failed to load requested application");
+					return ExitCode::FatalError;
+				}
 
-                // Compensate for load times of the app by rendering the first frame pre-emptively
-                timer.tick<Timer::Seconds>();
-                active_app->update(0.01667f);
-            }
+				// Compensate for load times of the app by rendering the first frame pre-emptively
+				timer.tick<Timer::Seconds>();
+				active_app->update(0.01667f);
+			}
 
-            update();
+			update();
 
-            if (active_app && active_app->should_close())
-            {
-                std::string id = active_app->get_name();
-                on_app_close(id);
-                active_app->finish();
-            }
+			if (active_app && active_app->should_close())
+			{
+				std::string id = active_app->get_name();
+				on_app_close(id);
+				active_app->finish();
+			}
 
-            window->process_events();
-        }
-        catch (std::exception &e)
-        {
-            LOGE("Error Message: {}", e.what());
-            LOGE("Failed when running application {}", active_app->get_name());
+			window->process_events();
+		}
+		catch (std::exception &e)
+		{
+			LOGE("Error Message: {}", e.what());
+			LOGE("Failed when running application {}", active_app->get_name());
 
-            on_app_error(active_app->get_name());
+			on_app_error(active_app->get_name());
 
             if (app_requested())
             {
@@ -180,12 +175,13 @@ ExitCode Platform::main_loop_frame()
             }
             else
             {
+				set_last_error(e.what());
                 return ExitCode::FatalError;
             }
         }
     }
 
-    return ExitCode::Success;
+	return ExitCode::Success;
 }
 
 ExitCode Platform::main_loop()
@@ -237,6 +233,7 @@ ExitCode Platform::main_loop()
 			}
 			else
 			{
+                set_last_error(e.what());
 				return ExitCode::FatalError;
 			}
 		}
@@ -249,7 +246,7 @@ void Platform::update()
 {
 	auto delta_time = static_cast<float>(timer.tick<Timer::Seconds>());
 
-	if (focused)
+	if (focused || always_render)
 	{
 		on_update(delta_time);
 
@@ -346,6 +343,11 @@ void Platform::force_simulation_fps(float fps)
 	simulation_frame_time = 1 / fps;
 }
 
+void Platform::force_render(bool should_always_render)
+{
+	always_render = should_always_render;
+}
+
 void Platform::disable_input_processing()
 {
 	process_input_events = false;
@@ -376,6 +378,11 @@ const std::string &Platform::get_temp_directory()
 	return temp_directory;
 }
 
+std::string &Platform::get_last_error()
+{
+	return last_error;
+}
+
 Application &Platform::get_app()
 {
 	assert(active_app && "Application is not valid");
@@ -396,6 +403,11 @@ Window &Platform::get_window()
 void Platform::set_external_storage_directory(const std::string &dir)
 {
 	external_storage_directory = dir;
+}
+
+void Platform::set_last_error(const std::string &error)
+{
+	last_error = error;
 }
 
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()

@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,7 +23,7 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
 	AUTHOR "Google"
-    NAME "hpp_oit_linked_lists"
+    NAME "HPP Order-independent transparency (ordered linked lists)"
 	DESCRIPTION "Order-independent transparency using per-pixel ordered linked lists, using vulkan.hpp"
     SHADER_FILES_GLSL
         "oit_linked_lists/background.frag"

@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Mobica Limited
+# Copyright (c) 2022-2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample(
     NAME "Vertex Dynamic State"
     DESCRIPTION "Demonstrates the Vertex Input Dynamic State extension which can reduce number of pipelines by dynamically change vertex input bindings and attribute descriptions"
     SHADER_FILES_GLSL
-    "vertex_dynamic_state/gbuffer.vert"
-    "vertex_dynamic_state/gbuffer.frag")
+        "vertex_dynamic_state/glsl/gbuffer.vert"
+        "vertex_dynamic_state/glsl/gbuffer.frag"
+    SHADER_FILES_HLSL
+        "vertex_dynamic_state/hlsl/gbuffer.vert.hlsl"
+        "vertex_dynamic_state/hlsl/gbuffer.frag.hlsl")
