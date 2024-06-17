@@ -430,22 +430,22 @@ void RayTracingPositionFetch::build_command_buffers()
 
 	const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
 
-	VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{
+	const VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{
 	    raygen_shader_binding_table->get_device_address(),
 	    handle_size_aligned,
 	    handle_size_aligned};
 
-	VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{
+	const VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{
 	    miss_shader_binding_table->get_device_address(),
 	    handle_size_aligned,
 	    handle_size_aligned};
 
-	VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{
+	const VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{
 	    hit_shader_binding_table->get_device_address(),
 	    handle_size_aligned,
 	    handle_size_aligned};
 
-	VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
+	const VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
