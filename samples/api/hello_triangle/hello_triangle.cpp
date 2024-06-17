@@ -265,9 +265,9 @@ void HelloTriangle::init_instance(Context                         &context,
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
 	if (has_debug_report)
-    	{
-		debug_report_create_info.flags                          = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-		debug_report_create_info.pfnCallback                    = debug_callback;
+	{
+		debug_report_create_info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+		debug_report_create_info.pfnCallback = debug_callback;
 
 		instance_info.pNext = &debug_report_create_info;
 	}
