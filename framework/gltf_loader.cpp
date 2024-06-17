@@ -749,15 +749,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 					submesh->vertices_count = to_u32(model.accessors[attribute.second].count);
 				}
 
-				VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-				if (additional_buffer_usage_flags)
-				{
-					buffer_usage_flags |= additional_buffer_usage_flags;
-				}
-
 				core::Buffer buffer{device,
 				                    vertex_data.size(),
-				                    buffer_usage_flags,
+				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | additional_buffer_usage_flags,
 				                    VMA_MEMORY_USAGE_CPU_TO_GPU};
 				buffer.update(vertex_data);
 				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
@@ -798,15 +792,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 						break;
 				}
 
-				VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-				if (additional_buffer_usage_flags)
-				{
-					buffer_usage_flags |= additional_buffer_usage_flags;
-				}
-
 				submesh->index_buffer = std::make_unique<core::Buffer>(device,
 				                                                       index_data.size(),
-				                                                       additional_buffer_usage_flags,
+				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | additional_buffer_usage_flags,
 				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
 				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
 				                                                  gltf_mesh.name, i_primitive));
