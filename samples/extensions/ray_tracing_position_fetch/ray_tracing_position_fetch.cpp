@@ -424,32 +424,32 @@ void RayTracingPositionFetch::build_command_buffers()
 
 	VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
+	/*
+	    Setup the strided device address regions pointing at the shader identifiers in the shader binding table
+	*/
+
+	const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
+
+	VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{
+	    raygen_shader_binding_table->get_device_address(),
+	    handle_size_aligned,
+	    handle_size_aligned};
+
+	VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{
+	    miss_shader_binding_table->get_device_address(),
+	    handle_size_aligned,
+	    handle_size_aligned};
+
+	VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{
+	    hit_shader_binding_table->get_device_address(),
+	    handle_size_aligned,
+	    handle_size_aligned};
+
+	VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
+
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
-
-		/*
-		    Setup the strided device address regions pointing at the shader identifiers in the shader binding table
-		*/
-
-		const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
-
-		VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{
-		    raygen_shader_binding_table->get_device_address(),
-		    handle_size_aligned,
-		    handle_size_aligned};
-
-		VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{
-		    miss_shader_binding_table->get_device_address(),
-		    handle_size_aligned,
-		    handle_size_aligned};
-
-		VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{
-		    hit_shader_binding_table->get_device_address(),
-		    handle_size_aligned,
-		    handle_size_aligned};
-
-		VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
 		/*
 		    Dispatch the ray tracing commands
