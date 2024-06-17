@@ -94,14 +94,6 @@ A transcoded version of the API sample <<timestamp_queries,Timestamp queries>> t
 
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
 
-=== xref:./{api_samplespath}oit_depth_peeling/README.adoc[OIT Depth Peeling]
-
-Implements an order-independent transparency (OIT) algorithm using depth peeling, resulting in pixel-perfect results, even with intersecting geometries.
-
-=== xref:./{api_samplespath}oit_linked_lists/README.adoc[OIT Linked Lists]
-
-Implements an order-independent transparency (OIT) algorithm using per-pixel ordered linked lists, resulting in pixel-perfect results, even with intersecting geometries.
-
 === xref:./{api_samplespath}separate_image_sampler/README.adoc[Separate image sampler]
 
 Separate image and samplers, both in the application and the shaders.
