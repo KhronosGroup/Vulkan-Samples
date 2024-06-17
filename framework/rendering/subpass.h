@@ -138,13 +138,13 @@ class Subpass
 	std::unordered_map<std::string, ShaderResourceMode> const &get_resource_mode_map() const;
 	SampleCountflagBitsType                                    get_sample_count() const;
 	const ShaderSource                                        &get_vertex_shader() const;
-	void                                                       set_color_resolve_attachments(std::vector<uint32_t> color_resolve);
+	void                                                       set_color_resolve_attachments(std::vector<uint32_t> const &color_resolve);
 	void                                                       set_debug_name(const std::string &name);
 	void                                                       set_disable_depth_stencil_attachment(bool disable_depth_stencil);
 	void                                                       set_depth_stencil_resolve_attachment(uint32_t depth_stencil_resolve);
 	void                                                       set_depth_stencil_resolve_mode(ResolveModeFlagBitsType mode);
-	void                                                       set_input_attachments(std::vector<uint32_t> input);
-	void                                                       set_output_attachments(std::vector<uint32_t> output);
+	void                                                       set_input_attachments(std::vector<uint32_t> const &input);
+	void                                                       set_output_attachments(std::vector<uint32_t> const &output);
 	void                                                       set_sample_count(SampleCountflagBitsType sample_count);
 
 	/**
@@ -420,7 +420,7 @@ inline const ShaderSource &Subpass<bindingType>::get_fragment_shader() const
 }
 
 template <vkb::BindingType bindingType>
-inline void Subpass<bindingType>::set_color_resolve_attachments(std::vector<uint32_t> color_resolve)
+inline void Subpass<bindingType>::set_color_resolve_attachments(std::vector<uint32_t> const &color_resolve)
 {
 	color_resolve_attachments = color_resolve;
 }
@@ -457,13 +457,13 @@ inline void Subpass<bindingType>::set_depth_stencil_resolve_mode(ResolveModeFlag
 }
 
 template <vkb::BindingType bindingType>
-inline void Subpass<bindingType>::set_input_attachments(std::vector<uint32_t> input)
+inline void Subpass<bindingType>::set_input_attachments(std::vector<uint32_t> const &input)
 {
 	input_attachments = input;
 }
 
 template <vkb::BindingType bindingType>
-inline void Subpass<bindingType>::set_output_attachments(std::vector<uint32_t> output)
+inline void Subpass<bindingType>::set_output_attachments(std::vector<uint32_t> const &output)
 {
 	output_attachments = output;
 }
