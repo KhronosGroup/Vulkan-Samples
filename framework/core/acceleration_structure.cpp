@@ -66,9 +66,9 @@ uint64_t AccelerationStructure::add_triangle_geometry(std::unique_ptr<vkb::core:
 	return index;
 }
 
-uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::Buffer                  &vertex_buffer,
-                                                      std::unique_ptr<vkb::core::Buffer> &index_buffer,
-                                                      std::unique_ptr<vkb::core::Buffer> &transform_buffer,
+uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::Buffer const &vertex_buffer,
+                                                      vkb::core::Buffer const &index_buffer,
+                                                      vkb::core::Buffer const &transform_buffer,
                                                       uint32_t triangle_count, uint32_t max_vertex,
                                                       VkDeviceSize vertex_stride, uint32_t transform_offset,
                                                       VkFormat vertex_format, VkIndexType index_type,
@@ -84,8 +84,8 @@ uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::Buffer         
 	geometry.geometry.triangles.vertexStride                = vertex_stride;
 	geometry.geometry.triangles.indexType                   = index_type;
 	geometry.geometry.triangles.vertexData.deviceAddress    = vertex_buffer.get_device_address();
-	geometry.geometry.triangles.indexData.deviceAddress     = index_buffer->get_device_address();
-	geometry.geometry.triangles.transformData.deviceAddress = transform_buffer->get_device_address();
+	geometry.geometry.triangles.indexData.deviceAddress     = index_buffer.get_device_address();
+	geometry.geometry.triangles.transformData.deviceAddress = transform_buffer.get_device_address();
 
 	uint64_t index = geometries.size();
 	geometries.insert({index, {geometry, triangle_count, transform_offset}});

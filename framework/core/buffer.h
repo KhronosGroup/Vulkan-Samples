@@ -153,7 +153,7 @@ class Buffer : public allocated::Allocated<VkBuffer>
 	/**
 	 * @return Return the buffer's device address (note: requires that the buffer has been created with the VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage fla)
 	 */
-	uint64_t get_device_address();
+	uint64_t get_device_address() const;
 
   private:
 	VkDeviceSize size{0};

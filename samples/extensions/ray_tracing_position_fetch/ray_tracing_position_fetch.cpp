@@ -165,8 +165,8 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 
 			bottom_level_acceleration_structure->add_triangle_geometry(
 			    sub_mesh->vertex_buffers.at("position"),
-			    sub_mesh->index_buffer,
-			    transform_matrix_buffer,
+			    *sub_mesh->index_buffer,
+			    *transform_matrix_buffer,
 			    num_triangles,
 			    num_vertices,
 			    attrib.stride,
