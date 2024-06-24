@@ -43,6 +43,22 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 	title = "Shader debugprintf";
 
 	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+
+#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VK_EXT_layer_settings)
+	// If layer settings available, use it to configure validation layer for debugPrintfEXT
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
+
+	VkLayerSettingEXT layerSetting;
+	layerSetting.pLayerName = "VK_LAYER_KHRONOS_validation";
+	layerSetting.pSettingName = "enables";
+	layerSetting.type = VK_LAYER_SETTING_TYPE_STRING_EXT;
+	layerSetting.valueCount = 1;
+
+	static const char * layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
+	layerSetting.pValues = &layerEnables;
+
+	add_layer_setting(layerSetting);
+#endif
 }
 
 ShaderDebugPrintf::~ShaderDebugPrintf()
@@ -375,6 +391,13 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	// Register debug utils callback here vs in ShaderDebugPrintf::create_instance() so it works with both override and layer settings
+	VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+	debug_utils_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+	debug_utils_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+	debug_utils_messenger_create_info.pfnUserCallback = debug_utils_message_callback;
+	VK_CHECK(vkCreateDebugUtilsMessengerEXT(get_instance().get_handle(), &debug_utils_messenger_create_info, nullptr, &debug_utils_messenger));
+
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -6.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
@@ -393,7 +416,9 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+#if !(defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) || !defined(VK_EXT_layer_settings)
 // This sample overrides the instance creation part of the framework to chain in additional structures
+// Not required when layer settings available, since debugPrintfEXT feature is enabled using standard framework
 std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 {
 	std::vector<const char *> enabled_extensions;
@@ -406,11 +431,14 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 
 	enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+#if (defined(VKB_ENABLE_PORTABILITY))
+	enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
 
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
-	app_info.apiVersion       = VK_API_VERSION_1_1;
+	app_info.apiVersion       = VK_API_VERSION_1_0;
 
 	// Shader printf is a feature of the validation layers that needs to be enabled
 	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
@@ -427,6 +455,9 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	instance_create_info.pApplicationInfo        = &app_info;
 	instance_create_info.ppEnabledLayerNames     = validation_layers.data();
 	instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_create_info.flags					|= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
 	instance_create_info.pNext                   = &validation_features;
 
 	VkInstance vulkan_instance;
@@ -439,15 +470,9 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 
 	volkLoadInstance(vulkan_instance);
 
-	VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-	debug_utils_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-	debug_utils_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-	debug_utils_messenger_create_info.pfnUserCallback = debug_utils_message_callback;
-
-	VK_CHECK(vkCreateDebugUtilsMessengerEXT(vulkan_instance, &debug_utils_messenger_create_info, nullptr, &debug_utils_messenger));
-
 	return std::make_unique<vkb::Instance>(vulkan_instance, enabled_extensions);
 }
+#endif
 
 void ShaderDebugPrintf::render(float delta_time)
 {
