@@ -250,6 +250,10 @@ class VulkanSample : public vkb::Application
 	 */
 	void add_instance_extension(const char *extension, bool optional = false);
 
+#if defined(VK_EXT_layer_settings)
+	void add_layer_setting(VkLayerSettingEXT layerSetting);
+#endif
+
 	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
@@ -358,6 +362,10 @@ class VulkanSample : public vkb::Application
 	 */
 	std::unordered_map<const char *, bool> const &get_instance_extensions() const;
 
+#if defined(VK_EXT_layer_settings)
+	std::vector<VkLayerSettingEXT> const &get_layer_settings() const;
+#endif
+
 	/// <summary>
 	/// PRIVATE MEMBERS
 	/// </summary>
@@ -416,6 +424,11 @@ class VulkanSample : public vkb::Application
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
 
+#if defined(VK_EXT_layer_settings)
+	/** @brief Vector of layer settings to be enabled for this example (must be set in the derived constructor) */
+	std::vector<VkLayerSettingEXT> layer_settings;
+#endif
+
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
 	uint32_t api_version = VK_API_VERSION_1_0;
 
@@ -459,6 +472,14 @@ inline void VulkanSample<bindingType>::add_instance_extension(const char *extens
 	instance_extensions[extension] = optional;
 }
 
+#if defined(VK_EXT_layer_settings)
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_layer_setting(VkLayerSettingEXT layerSetting)
+{
+	layer_settings.push_back(layerSetting);
+}
+#endif
+
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSample<bindingType>::create_device(PhysicalDeviceType &gpu)
 {
@@ -478,7 +499,11 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance(bool headless)
 {
+#if defined(VK_EXT_layer_settings)
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), headless, api_version);
+#else
 	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+#endif
 }
 
 template <vkb::BindingType bindingType>
@@ -763,6 +788,14 @@ inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::
 {
 	return instance_extensions;
 }
+
+#if defined(VK_EXT_layer_settings)
+template <vkb::BindingType bindingType>
+inline std::vector<VkLayerSettingEXT> const &VulkanSample<bindingType>::get_layer_settings() const
+{
+	return layer_settings;
+}
+#endif
 
 template <vkb::BindingType bindingType>
 inline typename VulkanSample<bindingType>::RenderContextType const &VulkanSample<bindingType>::get_render_context() const

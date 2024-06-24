@@ -186,6 +186,9 @@ bool enable_all_extensions(const std::vector<const char *>           required_ex
 Instance::Instance(const std::string                            &application_name,
                    const std::unordered_map<const char *, bool> &required_extensions,
                    const std::vector<const char *>              &required_validation_layers,
+#if defined(VK_EXT_layer_settings)
+				   const std::vector<VkLayerSettingEXT>			&required_layer_settings,
+#endif
                    bool                                          headless,
                    uint32_t                                      api_version)
 {
@@ -373,6 +376,19 @@ Instance::Instance(const std::string                            &application_nam
 		validation_features_info.pEnabledValidationFeatures    = enable_features.data();
 		validation_features_info.pNext                         = instance_info.pNext;
 		instance_info.pNext                                    = &validation_features_info;
+	}
+#endif
+
+#if defined(VK_EXT_layer_settings)
+	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT};
+
+	// If layer settings extension enabled by sample, then activate layer settings during instance creation
+	if (std::find(enabled_extensions.begin(), enabled_extensions.end(), VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) != enabled_extensions.end())
+	{
+		layerSettingsCreateInfo.settingCount = uint32_t(required_layer_settings.size());
+		layerSettingsCreateInfo.pSettings = required_layer_settings.data();
+		layerSettingsCreateInfo.pNext = instance_info.pNext;
+		instance_info.pNext = &layerSettingsCreateInfo;
 	}
 #endif
 
