@@ -45,7 +45,7 @@ if(ANDROID)
 elseif(WIN32)
     target_compile_definitions(vkb__core PUBLIC VK_USE_PLATFORM_WIN32_KHR PLATFORM__WINDOWS)
 elseif(APPLE)
-    target_compile_definitions(vkb__core PUBLIC VK_USE_PLATFORM_METAL_EXT PLATFORM__MACOS)
+    target_compile_definitions(vkb__core PUBLIC VK_USE_PLATFORM_METAL_EXT VK_ENABLE_BETA_EXTENSIONS PLATFORM__MACOS)
 elseif(UNIX)
     target_compile_definitions(vkb__core PUBLIC PLATFORM__LINUX)
 
