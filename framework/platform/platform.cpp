@@ -34,6 +34,7 @@
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
+#include "glsl_compiler.h"
 
 namespace vkb
 {
@@ -442,6 +443,9 @@ bool Platform::start_app()
 
 		active_app->finish();
 	}
+
+	// Reset target environment to default prior to each sample to properly support batch mode
+	vkb::GLSLCompiler::reset_target_environment();
 
 	active_app = requested_app_info->create();
 

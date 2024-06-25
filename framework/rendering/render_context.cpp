@@ -335,7 +335,8 @@ void RenderContext::begin_frame()
 			}
 		}
 
-		if (result != VK_SUCCESS)
+		// VK_SUBOPTIMAL_KHR can legitimately occur in batch mode when exiting certain samples (e.g. afbc, msaa, surface_rotation, swapchain_images)
+		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 		{
 			prev_frame.reset();
 			return;
