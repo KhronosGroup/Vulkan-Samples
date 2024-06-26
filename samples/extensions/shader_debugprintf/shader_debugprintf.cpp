@@ -44,7 +44,7 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 
 	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 
-#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VK_EXT_layer_settings)
+#if defined(VK_EXT_layer_settings)
 	// If layer settings available, use it to configure validation layer for debugPrintfEXT
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
 
@@ -416,7 +416,15 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-#if !(defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) || !defined(VK_EXT_layer_settings)
+#if defined(VK_EXT_layer_settings)
+// Currently the sample calls through this function in order to get the list of any instance layers, not just validation layers.
+// This is not suitable for a real application implementation using the layer, the layer will need to be shipped with the application.
+const std::vector<const char*> ShaderDebugPrintf::get_validation_layers()
+{
+	// Always enable validation layer for access to debugPrintfEXT feature, even for release builds
+	return {"VK_LAYER_KHRONOS_validation"};
+}
+#else
 // This sample overrides the instance creation part of the framework to chain in additional structures
 // Not required when layer settings available, since debugPrintfEXT feature is enabled using standard framework
 std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)

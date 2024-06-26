@@ -32,6 +32,3 @@ add_sample(
         "shader_debugprintf/hlsl/scene.vert.hlsl"
         "shader_debugprintf/hlsl/scene.frag.hlsl"
     DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_non_semantic_info")
-
-# Always enable validation layer for this sample to access debugPrintfEXT layer feature
-target_compile_definitions(${FOLDER_NAME} PUBLIC VKB_VALIDATION_LAYERS)

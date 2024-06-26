@@ -251,6 +251,10 @@ class VulkanSample : public vkb::Application
 	void add_instance_extension(const char *extension, bool optional = false);
 
 #if defined(VK_EXT_layer_settings)
+	/**
+	 * @brief Add a sample-specific layer setting
+	 * @param layerSetting The layer setting
+	 */
 	void add_layer_setting(VkLayerSettingEXT layerSetting);
 #endif
 
@@ -363,6 +367,11 @@ class VulkanSample : public vkb::Application
 	std::unordered_map<const char *, bool> const &get_instance_extensions() const;
 
 #if defined(VK_EXT_layer_settings)
+	/**
+	 * @brief Get sample-specific layer settings.
+	 *
+	 * @return Vector of layer settings. Default is empty vector.
+	 */
 	std::vector<VkLayerSettingEXT> const &get_layer_settings() const;
 #endif
 

@@ -92,7 +92,9 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	void                           update_uniform_buffers();
 	void                           draw();
 	bool                           prepare(const vkb::ApplicationOptions &options) override;
-#if !(defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) || !defined(VK_EXT_layer_settings)
+#if defined(VK_EXT_layer_settings)
+	const std::vector<const char*> get_validation_layers() override;
+#else
 	std::unique_ptr<vkb::Instance> create_instance(bool headless) override;
 #endif
 	virtual void                   render(float delta_time) override;
