@@ -376,7 +376,7 @@ VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandB
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	VK_CHECK(queue.submit({submit_info}, fence));
 
 	return signal_semaphore;
 }
@@ -395,7 +395,7 @@ void RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	VK_CHECK(queue.submit({submit_info}, fence));
 }
 
 void RenderContext::wait_frame()

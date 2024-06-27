@@ -143,8 +143,7 @@ ExitCode Platform::main_loop_frame()
 			{
 				if (!start_app())
 				{
-					LOGE("Failed to load requested application");
-					return ExitCode::FatalError;
+					throw std::runtime_error("Failed to load requested application");
 				}
 
 				// Compensate for load times of the app by rendering the first frame pre-emptively
@@ -201,8 +200,7 @@ ExitCode Platform::main_loop()
 			{
 				if (!start_app())
 				{
-					LOGE("Failed to load requested application");
-					return ExitCode::FatalError;
+					throw std::runtime_error("Failed to load requested application");
 				}
 
 				// Compensate for load times of the app by rendering the first frame pre-emptively
