@@ -726,18 +726,21 @@ void AsyncComputeSample::update(float delta_time)
 
 void AsyncComputeSample::finish()
 {
-	for (auto &sem : hdr_wait_semaphores)
+	if (has_device())
 	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
-	}
-
-	if (compute_post_semaphore)
-	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		for (auto &sem : hdr_wait_semaphores)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
+		}
+		
+		if (compute_post_semaphore)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		}
 	}
 }
 
