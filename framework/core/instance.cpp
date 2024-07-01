@@ -340,7 +340,7 @@ Instance::Instance(const std::string                            &application_nam
 
 		instance_info.pNext = &debug_utils_create_info;
 	}
-	else
+	else if (has_debug_report)
 	{
 		debug_report_create_info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 		debug_report_create_info.pfnCallback = debug_callback;
@@ -395,7 +395,7 @@ Instance::Instance(const std::string                            &application_nam
 			throw VulkanException(result, "Could not create debug utils messenger");
 		}
 	}
-	else
+	else if (has_debug_report)
 	{
 		result = vkCreateDebugReportCallbackEXT(handle, &debug_report_create_info, nullptr, &debug_report_callback);
 		if (result != VK_SUCCESS)
