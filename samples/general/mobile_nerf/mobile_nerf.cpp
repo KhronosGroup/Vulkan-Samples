@@ -623,7 +623,7 @@ void MobileNerf::setup_nerf_framebuffer_baseline()
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebuffer_create_info.pNext                   = NULL;
 	framebuffer_create_info.renderPass              = render_pass_nerf;
-	framebuffer_create_info.attachmentCount         = views.size();
+	framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(views.size());
 	framebuffer_create_info.pAttachments            = views.data();
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
@@ -729,7 +729,7 @@ void MobileNerf::build_command_buffers_baseline()
 	render_pass_begin_info.renderArea.offset.y      = 0;
 	render_pass_begin_info.renderArea.extent.width  = width;
 	render_pass_begin_info.renderArea.extent.height = height;
-	render_pass_begin_info.clearValueCount          = clear_values.size();
+	render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
 	render_pass_begin_info.pClearValues             = clear_values.data();
 
 	VkClearValue clear_values_UI[2];
@@ -769,7 +769,7 @@ void MobileNerf::build_command_buffers_baseline()
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, model.pipeline_first_pass);
 			// If deferred, only use the first descriptor bounded with the model
 			// If forward, each model has the swapchan number of descriptor
-			int descriptorIndex = use_deferred ? 0 : i;
+			int descriptorIndex = use_deferred ? 0 : static_cast<uint32_t>(i);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_first_pass_layout,
 			                        0, 1, &model.descriptor_set_first_pass[descriptorIndex], 0, nullptr);
 			VkDeviceSize offsets[1] = {0};
@@ -889,7 +889,7 @@ void MobileNerf::create_descriptor_pool()
 		    {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 3 * static_cast<uint32_t>(framebuffers.size())},
 		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(framebuffers.size())}};
 
-		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, models.size() + framebuffers.size());
+		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, static_cast<uint32_t>(models.size() + framebuffers.size()));
 		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 	}
 	else
@@ -900,7 +900,7 @@ void MobileNerf::create_descriptor_pool()
 		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(models.size()) * static_cast<uint32_t>(framebuffers.size())},
 		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(models.size()) * static_cast<uint32_t>(framebuffers.size())}};
 
-		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, models.size() * framebuffers.size());
+		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, static_cast<uint32_t>(models.size() * framebuffers.size()));
 		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 	}
 }
@@ -958,7 +958,7 @@ void MobileNerf::create_pipeline_layout_baseline()
 
 void MobileNerf::create_descriptor_sets_first_pass(Model &model)
 {
-	int numDescriptorPerModel = use_deferred ? 1 : nerf_framebuffers.size();
+	int numDescriptorPerModel = use_deferred ? 1 : static_cast<int>(nerf_framebuffers.size());
 	model.descriptor_set_first_pass.resize(numDescriptorPerModel);
 
 	for (int i = 0; i < numDescriptorPerModel; i++)
@@ -1063,7 +1063,7 @@ void MobileNerf::prepare_pipelines()
 		blend_attachment_states.push_back(vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE));
 	}
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(blend_attachment_states.size(), blend_attachment_states.data());
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(static_cast<uint32_t>(blend_attachment_states.size()), blend_attachment_states.data());
 
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
 	depth_stencil_state.depthBoundsTestEnable                 = VK_FALSE;
@@ -1236,11 +1236,11 @@ void MobileNerf::initialize_mlp_uniform_buffers(int model_index)
 	json data = json::parse(f);
 
 	// Record a index of the first sub-model
-	int first_sub_model = models.size();
+	int first_sub_model = static_cast<int>(models.size());
 	int obj_num         = data["obj_num"].get<int>();
 
 	// Here we know the actual number of sub models
-	int next_sub_model_index = models.size();
+	int next_sub_model_index = static_cast<int>(models.size());
 	models.resize(models.size() + obj_num);
 
 	for (int i = next_sub_model_index; i < models.size(); i++)

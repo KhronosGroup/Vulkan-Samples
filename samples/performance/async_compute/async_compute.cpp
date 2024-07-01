@@ -606,7 +606,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	}
 
 	command_buffer.bind_pipeline_layout(*blur_up_pipeline);
-	for (uint32_t index = blur_chain_views.size() - 2; index >= 1; index--)
+	for (uint32_t index = static_cast<uint32_t>(blur_chain_views.size() - 2); index >= 1; index--)
 	{
 		dispatch_pass(*blur_chain_views[index], *blur_chain_views[index + 1], index == 1);
 	}

@@ -93,7 +93,7 @@ device_properties.pNext            = &descriptor_buffer_properties;
 vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 ----
 
-So to calculate the actual buffer sizes required to store the descriptors, we need to get the sizes of set layouts and also align them to `VkPhysicalDeviceDescriptorBufferPropertiesEXT::descriptorBufferOffsetAlignment`. We also need to fetch offsets of the descriptor bindings of a set layout as by the Vulkan specs size of the set layout is at least a sum of sizes of descriptor bindings of this layout but it can be higher than that and there are no guarantees about the layout of descriptor bindings in a descriptor set layout, meaning that first descriptor binding of a set can start exactly a the beginning of a set layout memory or it can start with non 0 offset if driver implementation puts some metadata there.
+So to calculate the actual buffer sizes required to store the descriptors, we need to get the sizes of set layouts and also align them to `VkPhysicalDeviceDescriptorBufferPropertiesEXT::descriptorBufferOffsetAlignment`. We also need to fetch offsets of the descriptor bindings of a set layout as by the Vulkan specs size of the set layout is at least a sum of sizes of descriptor bindings of this layout but it can be higher than that and there are no guarantees about the layout of descriptor bindings in a descriptor set layout, meaning that first descriptor binding of a set can start exactly at the beginning of a set layout memory or it can start with non 0 offset if driver implementation puts some metadata there.
 
 [,cpp]
 ----
