@@ -445,13 +445,13 @@ bool Platform::start_app()
 
 	active_app = requested_app_info->create();
 
-	active_app->set_name(requested_app_info->id);
-
 	if (!active_app)
 	{
 		LOGE("Failed to create a valid vulkan app.");
 		return false;
 	}
+	auto sample_info = static_cast<const apps::SampleInfo *>(requested_app_info);
+	active_app->set_name(sample_info->name);
 
 	if (!active_app->prepare({false, window.get()}))
 	{
