@@ -36,6 +36,13 @@ Enables overestimation to generate fragments for every pixel touched instead of 
 Demonstrates how to use Dynamic Rendering.
 Read the blog post here for discussion: (https://www.khronos.org/blog/streamlining-render-passes)
 
+=== xref:./extensions/dynamic_rendering_local_read/README.adoc[Dynamic Rendering local read]
+
+*Extension*: https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#VK_KHR_dynamic_rendering_local_read[`VK_KHR_dynamic_rendering_local_read`]
+
+Demonstrates how to use Dynamic Rendering with local reads to fully replace render passses with multiple subpasses.
+See this https://www.khronos.org/blog/streamlining-subpasses[this blogpost].
+
 === xref:./{extension_samplespath}push_descriptors/README.adoc[Push Descriptors]
 
 *Extension*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor[`VK_KHR_push_descriptor`]
