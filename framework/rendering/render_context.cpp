@@ -335,7 +335,8 @@ void RenderContext::begin_frame()
 			}
 		}
 
-		if (result != VK_SUCCESS)
+		// VK_SUBOPTIMAL_KHR can legitimately occur in batch mode when exiting certain samples (e.g. afbc, msaa, surface_rotation, swapchain_images)
+		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 		{
 			prev_frame.reset();
 			return;
@@ -375,7 +376,7 @@ VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandB
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	VK_CHECK(queue.submit({submit_info}, fence));
 
 	return signal_semaphore;
 }
@@ -394,7 +395,7 @@ void RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	VK_CHECK(queue.submit({submit_info}, fence));
 }
 
 void RenderContext::wait_frame()

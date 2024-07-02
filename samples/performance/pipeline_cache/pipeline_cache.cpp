@@ -43,11 +43,11 @@ PipelineCache::~PipelineCache()
 	{
 		/* Get size of pipeline cache */
 		size_t size{};
-		VK_CHECK(vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, nullptr));
+		vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, nullptr);
 
 		/* Get data of pipeline cache */
 		std::vector<uint8_t> data(size);
-		VK_CHECK(vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, data.data()));
+		vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, data.data());
 
 		/* Write pipeline cache data to a file in binary format */
 		vkb::fs::write_temp(data, "pipeline_cache.data");

@@ -34,6 +34,7 @@
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
+#include "glsl_compiler.h"
 
 namespace vkb
 {
@@ -142,8 +143,7 @@ ExitCode Platform::main_loop_frame()
 			{
 				if (!start_app())
 				{
-					LOGE("Failed to load requested application");
-					return ExitCode::FatalError;
+					throw std::runtime_error("Failed to load requested application");
 				}
 
 				// Compensate for load times of the app by rendering the first frame pre-emptively
@@ -200,8 +200,7 @@ ExitCode Platform::main_loop()
 			{
 				if (!start_app())
 				{
-					LOGE("Failed to load requested application");
-					return ExitCode::FatalError;
+					throw std::runtime_error("Failed to load requested application");
 				}
 
 				// Compensate for load times of the app by rendering the first frame pre-emptively
@@ -442,6 +441,9 @@ bool Platform::start_app()
 
 		active_app->finish();
 	}
+
+	// Reset target environment to default prior to each sample to properly support batch mode
+	vkb::GLSLCompiler::reset_target_environment();
 
 	active_app = requested_app_info->create();
 

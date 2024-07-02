@@ -9,6 +9,7 @@ tests/system_test/tmp
 output/*
 .mypy_cache
 tags
+.DS_Store
 
 # vim backup and temp files
 *~

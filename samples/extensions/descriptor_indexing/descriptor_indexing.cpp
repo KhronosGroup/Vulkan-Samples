@@ -31,6 +31,23 @@ DescriptorIndexing::DescriptorIndexing()
 	// Works around a validation layer bug with descriptor pool allocation with VARIABLE_COUNT.
 	// See: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2350.
 	add_device_extension(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
+
+#if defined(PLATFORM__MACOS) && TARGET_OS_OSX && defined(VK_EXT_layer_settings)
+	// On macOS use layer setting to configure MoltenVK for using Metal argument buffers (needed for descriptor indexing)
+	// MoltenVK supports Metal argument buffers on macOS, iOS possible in future (see https://github.com/KhronosGroup/MoltenVK/issues/1651)
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
+
+	VkLayerSettingEXT layerSetting;
+	layerSetting.pLayerName = "MoltenVK";
+	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
+	layerSetting.type = VK_LAYER_SETTING_TYPE_INT32_EXT;
+	layerSetting.valueCount = 1;
+
+	static const int32_t useMetalArgumentBuffers = 1;
+	layerSetting.pValues = &useMetalArgumentBuffers;
+
+	add_layer_setting(layerSetting);
+#endif
 }
 
 DescriptorIndexing::~DescriptorIndexing()
@@ -194,7 +211,12 @@ void DescriptorIndexing::create_immutable_sampler_descriptor_set()
 void DescriptorIndexing::create_bindless_descriptors()
 {
 	VkDescriptorSetLayoutBinding binding = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+#if defined(PLATFORM__MACOS)
+																							// on macOS variable descriptor counts don't seem to work, use max expected count
+																							std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform));
+#else
 	                                                                                        descriptor_indexing_properties.maxDescriptorSetUpdateAfterBindSampledImages);
+#endif
 
 	VkDescriptorSetLayoutCreateInfo set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(&binding, 1);
 
@@ -235,7 +257,12 @@ void DescriptorIndexing::create_bindless_descriptors()
 
 	// We're going to allocate two separate descriptor sets from the same pool, and here VARIABLE_DESCRIPTOR_COUNT comes in handy!
 	// For the non-uniform indexing part, we allocate few descriptors, and for the streaming case, we allocate a fairly large ring buffer of descriptors we can play around with.
+#if defined(PLATFORM__MACOS)
+	// on macOS variable descriptor counts don't seem to work, use pool size of max expected count x 2 (for 2 allocations)
+	VkDescriptorPoolSize       pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform)*2);
+#else
 	VkDescriptorPoolSize       pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NumDescriptorsStreaming + NumDescriptorsNonUniform);
+#endif
 	VkDescriptorPoolCreateInfo pool      = vkb::initializers::descriptor_pool_create_info(1, &pool_size, 2);
 
 	// The pool is marked update-after-bind. Be aware that there is a global limit to the number of descriptors can be allocated at any one time.

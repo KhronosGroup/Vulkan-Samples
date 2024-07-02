@@ -310,7 +310,8 @@ void HPPRenderContext::begin_frame()
 			}
 		}
 
-		if (result != vk::Result::eSuccess)
+		// eSuboptimalKHR can legitimately occur in batch mode when exiting certain samples (e.g. afbc, msaa, surface_rotation, swapchain_images)
+		if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
 		{
 			prev_frame.reset();
 			return;
