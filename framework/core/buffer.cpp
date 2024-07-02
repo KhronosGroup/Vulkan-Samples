@@ -88,7 +88,7 @@ VkDeviceSize Buffer::get_size() const
 	return size;
 }
 
-uint64_t Buffer::get_device_address()
+uint64_t Buffer::get_device_address() const
 {
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;

@@ -66,6 +66,32 @@ uint64_t AccelerationStructure::add_triangle_geometry(std::unique_ptr<vkb::core:
 	return index;
 }
 
+uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::Buffer const &vertex_buffer,
+                                                      vkb::core::Buffer const &index_buffer,
+                                                      vkb::core::Buffer const &transform_buffer,
+                                                      uint32_t triangle_count, uint32_t max_vertex,
+                                                      VkDeviceSize vertex_stride, uint32_t transform_offset,
+                                                      VkFormat vertex_format, VkIndexType index_type,
+                                                      VkGeometryFlagsKHR flags)
+{
+	VkAccelerationStructureGeometryKHR geometry{};
+	geometry.sType                                          = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	geometry.geometryType                                   = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+	geometry.flags                                          = flags;
+	geometry.geometry.triangles.sType                       = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+	geometry.geometry.triangles.vertexFormat                = vertex_format;
+	geometry.geometry.triangles.maxVertex                   = max_vertex;
+	geometry.geometry.triangles.vertexStride                = vertex_stride;
+	geometry.geometry.triangles.indexType                   = index_type;
+	geometry.geometry.triangles.vertexData.deviceAddress    = vertex_buffer.get_device_address();
+	geometry.geometry.triangles.indexData.deviceAddress     = index_buffer.get_device_address();
+	geometry.geometry.triangles.transformData.deviceAddress = transform_buffer.get_device_address();
+
+	uint64_t index = geometries.size();
+	geometries.insert({index, {geometry, triangle_count, transform_offset}});
+	return index;
+}
+
 void AccelerationStructure::update_triangle_geometry(uint64_t                            triangleUUID,
                                                      std::unique_ptr<vkb::core::Buffer> &vertex_buffer,
                                                      std::unique_ptr<vkb::core::Buffer> &index_buffer,
