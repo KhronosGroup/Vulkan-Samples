@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,7 @@
  */
 
 #include "hpp_render_frame.h"
+#include "hpp_buffer_pool.h"
 #include <common/hpp_resource_caching.h>
 
 constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;

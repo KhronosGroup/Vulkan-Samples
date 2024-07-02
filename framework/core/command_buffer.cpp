@@ -131,7 +131,11 @@ void CommandBuffer::flush(VkPipelineBindPoint pipeline_bind_point)
 	flush_descriptor_state(pipeline_bind_point);
 }
 
-void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents)
+void CommandBuffer::begin_render_pass(const RenderTarget                                           &render_target,
+                                      const std::vector<LoadStoreInfo>                             &load_store_infos,
+                                      const std::vector<VkClearValue>                              &clear_values,
+                                      const std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &subpasses,
+                                      VkSubpassContents                                             contents)
 {
 	// Reset state
 	pipeline_state.reset();
@@ -277,7 +281,7 @@ void CommandBuffer::bind_index_buffer(const core::Buffer &buffer, VkDeviceSize o
 	vkCmdBindIndexBuffer(get_handle(), buffer.get_handle(), offset, index_type);
 }
 
-void CommandBuffer::bind_lighting(LightingState &lighting_state, uint32_t set, uint32_t binding)
+void CommandBuffer::bind_lighting(vkb::rendering::LightingStateC &lighting_state, uint32_t set, uint32_t binding)
 {
 	bind_buffer(lighting_state.light_buffer.get_buffer(), lighting_state.light_buffer.get_offset(), lighting_state.light_buffer.get_size(), set, binding, 0);
 
@@ -772,7 +776,9 @@ VkResult CommandBuffer::reset(ResetMode reset_mode)
 	return result;
 }
 
-RenderPass &CommandBuffer::get_render_pass(const vkb::RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<std::unique_ptr<Subpass>> &subpasses)
+RenderPass &CommandBuffer::get_render_pass(const vkb::RenderTarget                                      &render_target,
+                                           const std::vector<LoadStoreInfo>                             &load_store_infos,
+                                           const std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &subpasses)
 {
 	// Create render pass
 	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");

@@ -68,7 +68,7 @@ class PostProcessingRenderPass;
 /**
  * @brief A single step of a vkb::PostProcessingRenderPass.
  */
-class PostProcessingSubpass : public Subpass
+class PostProcessingSubpass : public vkb::rendering::SubpassC
 {
   public:
 	PostProcessingSubpass(PostProcessingRenderPass *parent, RenderContext &render_context, ShaderSource &&triangle_vs,

@@ -29,8 +29,8 @@
 
 struct alignas(16) CustomForwardLights
 {
-	uint32_t   count;
-	vkb::Light lights[LIGHT_COUNT];
+	uint32_t              count;
+	vkb::rendering::Light lights[LIGHT_COUNT];
 };
 
 /**
@@ -76,7 +76,7 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 			T light_info;
 			light_info.count = vkb::to_u32(light_count);
 
-			std::vector<vkb::Light> lights;
+			std::vector<vkb::rendering::Light> lights;
 			for (auto &scene_light : scene_lights)
 			{
 				if (lights.size() < light_count)
@@ -84,10 +84,10 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 					const auto &properties = scene_light->get_properties();
 					auto       &transform  = scene_light->get_node()->get_transform();
 
-					vkb::Light light{{transform.get_translation(), static_cast<float>(scene_light->get_light_type())},
-					                 {properties.color, properties.intensity},
-					                 {transform.get_rotation() * properties.direction, properties.range},
-					                 {properties.inner_cone_angle, properties.outer_cone_angle}};
+					vkb::rendering::Light light{{transform.get_translation(), static_cast<float>(scene_light->get_light_type())},
+					                            {properties.color, properties.intensity},
+					                            {transform.get_rotation() * properties.direction, properties.range},
+					                            {properties.inner_cone_angle, properties.outer_cone_angle}};
 
 					lights.push_back(light);
 				}
