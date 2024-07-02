@@ -41,6 +41,9 @@ ShaderObject::ShaderObject()
 
 	// Enable extensions for sample
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
+
+	// Enable the shader object layer if it's available.  Its optional.
+	add_layer("VK_LAYER_KHRONOS_shader_object", false);
 }
 
 ShaderObject::~ShaderObject()
@@ -103,13 +106,6 @@ ShaderObject::~ShaderObject()
 
 		vkDestroyDescriptorPool(vkdevice, descriptor_pool, nullptr);
 	}
-}
-
-// Currently the sample calls through this function in order to get the list of any instance layers, not just validation layers.
-// This is not suitable for a real application implementation using the layer, the layer will need to be shipped with the application.
-const std::vector<const char *> ShaderObject::get_validation_layers()
-{
-	return {"VK_LAYER_KHRONOS_shader_object"};
 }
 
 bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)
@@ -229,6 +225,11 @@ void ShaderObject::setup_framebuffer()
 // Create render pass for UI drawing
 void ShaderObject::setup_render_pass()
 {
+	// delete existing render pass
+	if (render_pass != VK_NULL_HANDLE)
+	{
+		vkDestroyRenderPass(get_device().get_handle(), render_pass, VK_NULL_HANDLE);
+	}
 	VkAttachmentDescription color_attachment{};
 
 	// Color attachment set to load color and ignore stencil
@@ -413,6 +414,10 @@ void ShaderObject::load_assets()
 	vkb::make_filters_valid(get_device().get_gpu().get_handle(), heightmap_texture.image->get_format(), &filter, &mipmap_mode);
 
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
+
+	// destroy created sampler before re-creating
+	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
+	vkDestroySampler(get_device().get_handle(), terrain_array_textures.sampler, nullptr);
 
 	// Setup a mirroring sampler for the height map
 	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
@@ -1954,7 +1959,7 @@ void ShaderObject::build_linked_shaders(VkDevice device, ShaderObject::Shader *v
 		shader_create.flags |= VK_SHADER_CREATE_LINK_STAGE_BIT_EXT;
 	}
 
-	VkShaderEXT shaderEXTs[2];
+	VkShaderEXT shaderEXTs[2] = {VK_NULL_HANDLE, VK_NULL_HANDLE};
 
 	// Create the shader objects
 	VkResult result = vkCreateShadersEXT(device,
