@@ -92,6 +92,19 @@ Treat all warnings as errors
 
 *Default:* `ON`
 
+=== VKB_PROFILING
+
+Enable profiling using the xref:https://github.com/wolfpld/tracy[Tracy profiler].
+
+We currently use Tracy v0.10.0 if you do not use the correct Tracy Profiler version as the Tracy Client version used in Sample you will get a protocol mismatch error.
+
+Windows users can download the profiler from the xref:https://github.com/wolfpld/tracy/releases/tag/v0.10[Tracy v0.10.0 release page]
+Other platforms require the user to build the profiler from source see the xref:https://github.com/wolfpld/tracy/releases/tag/v0.10[Tracy.pdf documentation] for more information on how to build for your platform.
+
+Tracy is not currently enabled for Android builds. In the future, we may add support for this.
+
+*Default:* `OFF`
+
 == Quality Assurance
 
 We use a small set of tools to provide a level of quality to the project.

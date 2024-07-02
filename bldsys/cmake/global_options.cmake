@@ -55,6 +55,7 @@ set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan bes
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 set(VKB_CLANG_TIDY OFF CACHE STRING "Use CMake Clang Tidy integration")
 set(VKB_CLANG_TIDY_EXTRAS "-header-filter=framework,samples,app;-checks=-*,google-*,-google-runtime-references;--fix;--fix-errors" CACHE STRING "Clang Tidy Parameters")
+set(VKB_PROFILING OFF CACHE BOOL "Enable Tracy profiling")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
@@ -74,3 +75,10 @@ if (VKB_CLANG_TIDY)
     find_program(CLANG_TIDY "clang-tidy" "clang-tidy-15" REQUIRED)
     set(VKB_DO_CLANG_TIDY ${CLANG_TIDY} ${VKB_CLANG_TIDY_EXTRAS})
 endif()
+
+if (ANDROID AND VKB_PROFILING)
+    message(WARNING "Tracy Profiling is not supported on android yet")
+    set(VKB_PROFILING OFF)
+endif()
+
+set(TRACY_ENABLE ${VKB_PROFILING})

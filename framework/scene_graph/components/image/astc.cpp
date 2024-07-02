@@ -20,6 +20,7 @@
 #include <mutex>
 
 #include "common/error.h"
+#include "core/util/profiling.hpp"
 
 #include "common/glm_common.h"
 #if defined(_WIN32) || defined(_WIN64)
@@ -102,6 +103,8 @@ void Astc::init()
 
 void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *compressed_data, uint32_t compressed_size)
 {
+	PROFILE_SCOPE("Decode ASTC Image");
+
 	// Actual decoding
 	astcenc_swizzle swizzle = {ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A};
 	// Configure the compressor run
