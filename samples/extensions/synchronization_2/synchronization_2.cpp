@@ -72,8 +72,10 @@ void Synchronization2::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Enable synchronization2 feature
-	auto &requested_synchronisation2_features            = gpu.request_extension_features<VkPhysicalDeviceSynchronization2FeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR);
-	requested_synchronisation2_features.synchronization2 = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceSynchronization2FeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR,
+	                         synchronization2);
 }
 
 void Synchronization2::load_assets()

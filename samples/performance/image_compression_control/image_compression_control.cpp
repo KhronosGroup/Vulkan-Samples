@@ -46,16 +46,18 @@ void ImageCompressionControlSample::request_gpu_features(vkb::PhysicalDevice &gp
 {
 	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 	{
-		auto &compression_control_features = gpu.request_extension_features<VkPhysicalDeviceImageCompressionControlFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT);
-
-		compression_control_features.imageCompressionControl = VK_TRUE;
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceImageCompressionControlFeaturesEXT,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT,
+		                         imageCompressionControl);
 	}
 
 	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
 	{
-		auto &compression_control_swapchain_features = gpu.request_extension_features<VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT);
-
-		compression_control_swapchain_features.imageCompressionControlSwapchain = VK_TRUE;
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT,
+		                         imageCompressionControlSwapchain);
 	}
 }
 
