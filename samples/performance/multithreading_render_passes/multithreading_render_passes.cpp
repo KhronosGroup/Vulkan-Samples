@@ -478,7 +478,7 @@ void MultithreadingRenderPasses::MainSubpass::prepare()
 void MultithreadingRenderPasses::MainSubpass::draw(vkb::CommandBuffer &command_buffer)
 {
 	ShadowUniform shadow_uniform;
-	shadow_uniform.shadowmap_projection_matrix = vkb::vulkan_style_projection(shadowmap_camera.get_projection()) * shadowmap_camera.get_view();
+	shadow_uniform.shadowmap_projection_matrix = vkb::rendering::vulkan_style_projection(shadowmap_camera.get_projection()) * shadowmap_camera.get_view();
 
 	auto &shadow_render_target = *shadow_render_targets[get_render_context().get_active_frame_index()];
 	// Bind the shadowmap texture to the proper set nd binding in shader
@@ -521,7 +521,7 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_state(vkb::Comm
 	command_buffer.set_depth_bias(-1.4f, 0.0f, -1.7f);
 
 	vkb::MultisampleState multisample_state{};
-	multisample_state.rasterization_samples = sample_count;
+	multisample_state.rasterization_samples = get_sample_count();
 	command_buffer.set_multisample_state(multisample_state);
 }
 
