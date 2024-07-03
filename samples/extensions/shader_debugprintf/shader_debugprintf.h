@@ -92,11 +92,8 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	void                           update_uniform_buffers();
 	void                           draw();
 	bool                           prepare(const vkb::ApplicationOptions &options) override;
-#if defined(VK_EXT_layer_settings)
 	const std::vector<const char*> get_validation_layers() override;
-#else
 	std::unique_ptr<vkb::Instance> create_instance(bool headless) override;
-#endif
 	virtual void                   render(float delta_time) override;
 	virtual void                   on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool                   resize(const uint32_t width, const uint32_t height) override;

@@ -46,7 +46,7 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 
 #if defined(VK_EXT_layer_settings)
 	// If layer settings available, use it to configure validation layer for debugPrintfEXT
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
 	VkLayerSettingEXT layerSetting;
 	layerSetting.pLayerName = "VK_LAYER_KHRONOS_validation";
@@ -416,19 +416,38 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-#if defined(VK_EXT_layer_settings)
-// Currently the sample calls through this function in order to get the list of any instance layers, not just validation layers.
-// This is not suitable for a real application implementation using the layer, the layer will need to be shipped with the application.
+// This sample overrides the per-sample layer framework to force activation of the validation layer
 const std::vector<const char*> ShaderDebugPrintf::get_validation_layers()
 {
-	// Always enable validation layer for access to debugPrintfEXT feature, even for release builds
-	return {"VK_LAYER_KHRONOS_validation"};
+	// Note validation layer is already enabled for debug builds, so set the default list to empty
+	std::vector<const char*> validation_layers = {};
+
+#if !defined(VKB_DEBUG) && !defined(VKB_VALIDATION_LAYERS)
+	// Force activation of validation layer on release builds for access to debugPrintfEXT feature
+	validation_layers = {"VK_LAYER_KHRONOS_validation"};
+#endif
+
+	return validation_layers;
 }
-#else
+
 // This sample overrides the instance creation part of the framework to chain in additional structures
-// Not required when layer settings available, since debugPrintfEXT feature is enabled using standard framework
 std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 {
+#if defined(VK_EXT_layer_settings)
+	uint32_t instance_extension_count;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+
+	// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
+	// Note this check is necessary in the short term for backwards compatibility with SDKs < 1.3.272 without VK_EXT_layer_settings
+	if (auto it = std::find_if(available_instance_extensions.begin(), available_instance_extensions.end(),
+		[](VkExtensionProperties extension) {return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;}); it != available_instance_extensions.end())
+	{
+		return VulkanSample::create_instance(headless);
+	}
+#endif
+
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -480,7 +499,6 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 
 	return std::make_unique<vkb::Instance>(vulkan_instance, enabled_extensions);
 }
-#endif
 
 void ShaderDebugPrintf::render(float delta_time)
 {
