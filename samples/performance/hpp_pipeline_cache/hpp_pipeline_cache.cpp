@@ -48,7 +48,7 @@ HPPPipelineCache::~HPPPipelineCache()
 
 bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample<vkb::BindingType::Cpp>::prepare(options))
+	if (!vkb::VulkanSampleCpp::prepare(options))
 	{
 		return false;
 	}
@@ -158,10 +158,10 @@ void HPPPipelineCache::update(float delta_time)
 		record_frame_time_next_frame    = false;
 	}
 
-	VulkanSample<vkb::BindingType::Cpp>::update(delta_time);
+	vkb::VulkanSampleCpp::update(delta_time);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_pipeline_cache()
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_pipeline_cache()
 {
 	return std::make_unique<HPPPipelineCache>();
 }

@@ -140,4 +140,4 @@ class LogicOpDynamicState : public ApiVulkanSample
 	void create_render_context() override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_logic_op_dynamic_state();
+std::unique_ptr<vkb::VulkanSampleC> create_logic_op_dynamic_state();

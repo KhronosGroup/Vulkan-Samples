@@ -441,7 +441,7 @@ void Subpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_subpasses()
+std::unique_ptr<vkb::VulkanSampleC> create_subpasses()
 {
 	return std::make_unique<Subpasses>();
 }

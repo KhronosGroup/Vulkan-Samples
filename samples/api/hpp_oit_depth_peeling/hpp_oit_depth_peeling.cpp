@@ -553,7 +553,7 @@ void HPPOITDepthPeeling::update_scene_constants()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_oit_depth_peeling()
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_oit_depth_peeling()
 {
 	return std::make_unique<HPPOITDepthPeeling>();
 }

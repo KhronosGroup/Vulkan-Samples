@@ -1691,7 +1691,7 @@ void MobileNerf::update_render_pass_nerf_baseline()
 	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mobile_nerf()
+std::unique_ptr<vkb::VulkanSampleC> create_mobile_nerf()
 {
 	return std::make_unique<MobileNerf>();
 }

@@ -684,7 +684,7 @@ bool DynamicBlending::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_blending()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_blending()
 {
 	return std::make_unique<DynamicBlending>();
 }

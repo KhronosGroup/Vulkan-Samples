@@ -689,7 +689,7 @@ void LogicOpDynamicState::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_logic_op_dynamic_state()
+std::unique_ptr<vkb::VulkanSampleC> create_logic_op_dynamic_state()
 {
 	return std::make_unique<LogicOpDynamicState>();
 }

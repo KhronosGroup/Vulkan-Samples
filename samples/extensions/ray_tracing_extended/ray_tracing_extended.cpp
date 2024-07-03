@@ -1478,7 +1478,7 @@ void RaytracingExtended::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_extended()
+std::unique_ptr<vkb::VulkanSampleC> create_ray_tracing_extended()
 {
 	return std::make_unique<RaytracingExtended>();
 }

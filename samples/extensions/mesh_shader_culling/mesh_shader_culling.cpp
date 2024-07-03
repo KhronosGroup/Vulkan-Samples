@@ -377,7 +377,7 @@ bool MeshShaderCulling::resize(uint32_t width, uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shader_culling()
+std::unique_ptr<vkb::VulkanSampleC> create_mesh_shader_culling()
 {
 	return std::make_unique<MeshShaderCulling>();
 }

@@ -149,4 +149,4 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	} push_const_block;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate_dynamic();
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shading_rate_dynamic();

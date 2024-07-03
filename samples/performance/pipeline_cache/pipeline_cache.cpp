@@ -183,7 +183,7 @@ void PipelineCache::update(float delta_time)
 	VulkanSample::update(delta_time);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_pipeline_cache()
+std::unique_ptr<vkb::VulkanSampleC> create_pipeline_cache()
 {
 	return std::make_unique<PipelineCache>();
 }

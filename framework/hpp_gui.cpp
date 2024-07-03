@@ -68,7 +68,7 @@ const ImGuiWindowFlags HPPGui::common_flags  = ImGuiWindowFlags_NoMove |
 const ImGuiWindowFlags HPPGui::options_flags = HPPGui::common_flags;
 const ImGuiWindowFlags HPPGui::info_flags    = HPPGui::common_flags | ImGuiWindowFlags_NoInputs;
 
-HPPGui::HPPGui(VulkanSample<BindingType::Cpp> &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
+HPPGui::HPPGui(VulkanSampleCpp &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
     sample{sample_}, content_scale_factor{window.get_content_scale_factor()}, dpi_factor{window.get_dpi_factor() * content_scale_factor}, explicit_update{explicit_update}, stats_view(stats)
 {
 	ImGui::CreateContext();

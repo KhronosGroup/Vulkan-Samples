@@ -288,4 +288,4 @@ class ShaderObject : public ApiVulkanSample
 	std::default_random_engine rng;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_shader_object();
+std::unique_ptr<vkb::VulkanSampleC> create_shader_object();

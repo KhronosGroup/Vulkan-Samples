@@ -28,7 +28,7 @@
  *        implements deferred rendering with and without sub-passes, giving the
  *        user the possibility to change some key settings.
  */
-class Subpasses : public vkb::VulkanSample<vkb::BindingType::C>
+class Subpasses : public vkb::VulkanSampleC
 {
   public:
 	Subpasses();
@@ -137,4 +137,4 @@ class Subpasses : public vkb::VulkanSample<vkb::BindingType::C>
 	     /* value       = */ 0}};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_subpasses();
+std::unique_ptr<vkb::VulkanSampleC> create_subpasses();

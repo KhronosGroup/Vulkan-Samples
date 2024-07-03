@@ -572,7 +572,7 @@ void OITDepthPeeling::update_scene_constants()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_depth_peeling()
+std::unique_ptr<vkb::VulkanSampleC> create_oit_depth_peeling()
 {
 	return std::make_unique<OITDepthPeeling>();
 }

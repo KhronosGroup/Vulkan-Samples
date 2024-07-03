@@ -226,4 +226,4 @@ class MobileNerf : public ApiVulkanSample
 	bool     use_native_screen_size = false;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mobile_nerf();
+std::unique_ptr<vkb::VulkanSampleC> create_mobile_nerf();

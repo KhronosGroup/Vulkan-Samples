@@ -105,7 +105,7 @@ void WaitIdle::draw_gui()
 	    /* lines = */ lines);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_wait_idle()
+std::unique_ptr<vkb::VulkanSampleC> create_wait_idle()
 {
 	return std::make_unique<WaitIdle>();
 }

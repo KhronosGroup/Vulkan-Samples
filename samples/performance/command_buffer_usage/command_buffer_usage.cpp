@@ -427,7 +427,7 @@ CommandBufferUsage::ForwardSubpassSecondaryState &CommandBufferUsage::ForwardSub
 	return state;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_command_buffer_usage()
+std::unique_ptr<vkb::VulkanSampleC> create_command_buffer_usage()
 {
 	return std::make_unique<CommandBufferUsage>();
 }

@@ -2024,7 +2024,7 @@ void ShaderObject::Shader::destroy(VkDevice device)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_shader_object()
+std::unique_ptr<vkb::VulkanSampleC> create_shader_object()
 {
 	return std::make_unique<ShaderObject>();
 }

@@ -93,7 +93,7 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(VulkanSample<vkb::BindingType::C> &sample_, const Window &window, const Stats *stats, const float font_size, bool explicit_update) :
+Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const float font_size, bool explicit_update) :
     sample{sample_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},
