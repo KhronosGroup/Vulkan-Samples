@@ -51,11 +51,9 @@ if(Vulkan_FOUND)
     if(Vulkan_dxc_EXECUTABLE)
         message(STATUS "Found DirectX Shader Compiler under ${Vulkan_dxc_EXECUTABLE}")
     else()
-        message(WARNING "Couldn't find DirectX Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_dxc_EXECUTABLE env variable. HLSL shaders won't be compiled")
+        message(STATUS "Couldn't find DirectX Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_dxc_EXECUTABLE cmake variable. HLSL shaders won't be compiled.")
         unset(Vulkan_dxc_EXECUTABLE CACHE)
     endif()
-else()
-    message(WARNING "VULKAN_SDK path not found, HLSL shaders won't be compiled")
 endif()
 
 # globally add VKB_DEBUG for the debug build
