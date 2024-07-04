@@ -74,6 +74,12 @@ class HPPAllocated : public Allocated<
 	using Parent::Parent;
 	using Parent::update;
 
+	HPPAllocated()                                = delete;
+	HPPAllocated(HPPAllocated const &)            = delete;
+	HPPAllocated(HPPAllocated &&rhs)              = default;
+	HPPAllocated &operator=(HPPAllocated const &) = delete;
+	HPPAllocated &operator=(HPPAllocated &&rhs)   = default;
+
 	/**
 	 * @brief Copies byte data into the buffer
 	 * @param data The data to copy from

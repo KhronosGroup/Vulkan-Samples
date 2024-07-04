@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -149,7 +149,7 @@ class RenderFrame
 	 * @param thread_index Index of the buffer pool to be used by the current thread
 	 * @return The requested allocation, it may be empty
 	 */
-	BufferAllocation allocate_buffer(VkBufferUsageFlags usage, VkDeviceSize size, size_t thread_index = 0);
+	BufferAllocationC allocate_buffer(VkBufferUsageFlags usage, VkDeviceSize size, size_t thread_index = 0);
 
 	/**
 	 * @brief Updates all the descriptor sets in the current frame at a specific thread index
@@ -188,7 +188,7 @@ class RenderFrame
 	BufferAllocationStrategy     buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
 	DescriptorManagementStrategy descriptor_management_strategy{DescriptorManagementStrategy::StoreInCache};
 
-	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPool, BufferBlock *>>> buffer_pools;
+	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPoolC, BufferBlockC *>>> buffer_pools;
 
 	static std::vector<uint32_t> collect_bindings_to_update(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos);
 };

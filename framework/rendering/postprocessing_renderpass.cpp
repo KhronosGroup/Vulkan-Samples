@@ -509,7 +509,7 @@ void PostProcessingRenderPass::draw(CommandBuffer &command_buffer, RenderTarget 
 	{
 		// Allocate a buffer (using the buffer pool from the active frame to store uniform values) and bind it
 		auto &render_frame   = parent->get_render_context().get_active_frame();
-		uniform_buffer_alloc = std::make_shared<BufferAllocation>(render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_data.size()));
+		uniform_buffer_alloc = std::make_shared<BufferAllocationC>(render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_data.size()));
 		uniform_buffer_alloc->update(uniform_data);
 	}
 
