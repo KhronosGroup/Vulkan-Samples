@@ -31,10 +31,10 @@
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "force_close/force_close.h"
+#include "glsl_compiler.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
-#include "glsl_compiler.h"
 
 namespace vkb
 {
@@ -169,17 +169,17 @@ ExitCode Platform::main_loop_frame()
 
 			on_app_error(active_app->get_name());
 
-            if (app_requested())
-            {
-                LOGI("Attempting to load next application");
-            }
-            else
-            {
+			if (app_requested())
+			{
+				LOGI("Attempting to load next application");
+			}
+			else
+			{
 				set_last_error(e.what());
-                return ExitCode::FatalError;
-            }
-        }
-    }
+				return ExitCode::FatalError;
+			}
+		}
+	}
 
 	return ExitCode::Success;
 }
@@ -232,7 +232,7 @@ ExitCode Platform::main_loop()
 			}
 			else
 			{
-                set_last_error(e.what());
+				set_last_error(e.what());
 				return ExitCode::FatalError;
 			}
 		}

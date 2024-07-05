@@ -42,7 +42,7 @@ void AsyncComputeSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 #ifdef VK_ENABLE_BETA_EXTENSIONS
 	// We need to enable the mutableComparisonSamplers feature of the VK_KHR_portability_subset extension
-	auto &requested_portability_subset_features            = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
+	auto &requested_portability_subset_features                     = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
 	requested_portability_subset_features.mutableComparisonSamplers = VK_TRUE;
 #endif
 }
@@ -263,15 +263,15 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	vkb::ShaderSource vert_shader("async_compute/forward.vert");
 	vkb::ShaderSource frag_shader("async_compute/forward.frag");
 	auto              scene_subpass = std::make_unique<ShadowMapForwardSubpass>(get_render_context(),
-                                                                   std::move(vert_shader), std::move(frag_shader),
-                                                                   get_scene(), *camera,
-                                                                   *shadow_camera);
+	                                                                            std::move(vert_shader), std::move(frag_shader),
+	                                                                            get_scene(), *camera,
+	                                                                            *shadow_camera);
 
 	vkb::ShaderSource shadow_vert_shader("async_compute/shadow.vert");
 	vkb::ShaderSource shadow_frag_shader("async_compute/shadow.frag");
 	auto              shadow_scene_subpass = std::make_unique<DepthMapSubpass>(get_render_context(),
-                                                                  std::move(shadow_vert_shader), std::move(shadow_frag_shader),
-                                                                  get_scene(), *shadow_camera);
+	                                                                           std::move(shadow_vert_shader), std::move(shadow_frag_shader),
+	                                                                           get_scene(), *shadow_camera);
 	shadow_render_pipeline.add_subpass(std::move(shadow_scene_subpass));
 
 	vkb::ShaderSource composite_vert_shader("async_compute/composite.vert");
@@ -734,7 +734,7 @@ void AsyncComputeSample::finish()
 			get_device().wait_idle();
 			vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
 		}
-		
+
 		if (compute_post_semaphore)
 		{
 			// We're outside a frame context, so free the semaphore manually.

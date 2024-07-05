@@ -63,9 +63,9 @@ class TextureMipMapGeneration : public ApiVulkanSample
 	} ubo;
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
 
-	VkPipeline            pipeline = VK_NULL_HANDLE;
-	VkPipelineLayout      pipeline_layout = VK_NULL_HANDLE;
-	VkDescriptorSet       descriptor_set = VK_NULL_HANDLE;
+	VkPipeline            pipeline              = VK_NULL_HANDLE;
+	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
+	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 
 	TextureMipMapGeneration();

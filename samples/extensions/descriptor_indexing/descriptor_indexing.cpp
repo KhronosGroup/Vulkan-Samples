@@ -38,13 +38,13 @@ DescriptorIndexing::DescriptorIndexing()
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
 
 	VkLayerSettingEXT layerSetting;
-	layerSetting.pLayerName = "MoltenVK";
+	layerSetting.pLayerName   = "MoltenVK";
 	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
-	layerSetting.type = VK_LAYER_SETTING_TYPE_INT32_EXT;
-	layerSetting.valueCount = 1;
+	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
+	layerSetting.valueCount   = 1;
 
 	static const int32_t useMetalArgumentBuffers = 1;
-	layerSetting.pValues = &useMetalArgumentBuffers;
+	layerSetting.pValues                         = &useMetalArgumentBuffers;
 
 	add_layer_setting(layerSetting);
 #endif
@@ -212,8 +212,8 @@ void DescriptorIndexing::create_bindless_descriptors()
 {
 	VkDescriptorSetLayoutBinding binding = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
 #if defined(PLATFORM__MACOS)
-																							// on macOS variable descriptor counts don't seem to work, use max expected count
-																							std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform));
+	                                                                                        // on macOS variable descriptor counts don't seem to work, use max expected count
+	                                                                                        std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform));
 #else
 	                                                                                        descriptor_indexing_properties.maxDescriptorSetUpdateAfterBindSampledImages);
 #endif
@@ -259,11 +259,11 @@ void DescriptorIndexing::create_bindless_descriptors()
 	// For the non-uniform indexing part, we allocate few descriptors, and for the streaming case, we allocate a fairly large ring buffer of descriptors we can play around with.
 #if defined(PLATFORM__MACOS)
 	// on macOS variable descriptor counts don't seem to work, use pool size of max expected count x 2 (for 2 allocations)
-	VkDescriptorPoolSize       pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform)*2);
+	VkDescriptorPoolSize pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform) * 2);
 #else
-	VkDescriptorPoolSize       pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NumDescriptorsStreaming + NumDescriptorsNonUniform);
+	VkDescriptorPoolSize pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NumDescriptorsStreaming + NumDescriptorsNonUniform);
 #endif
-	VkDescriptorPoolCreateInfo pool      = vkb::initializers::descriptor_pool_create_info(1, &pool_size, 2);
+	VkDescriptorPoolCreateInfo pool = vkb::initializers::descriptor_pool_create_info(1, &pool_size, 2);
 
 	// The pool is marked update-after-bind. Be aware that there is a global limit to the number of descriptors can be allocated at any one time.
 	// UPDATE_AFTER_BIND descriptors is somewhat of a precious resource, but min-spec in Vulkan is at least 500k descriptors, which should be more than enough.

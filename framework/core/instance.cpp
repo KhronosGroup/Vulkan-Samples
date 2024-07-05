@@ -187,10 +187,10 @@ Instance::Instance(const std::string                            &application_nam
                    const std::unordered_map<const char *, bool> &required_extensions,
                    const std::vector<const char *>              &required_validation_layers,
 #if defined(VK_EXT_layer_settings)
-				   const std::vector<VkLayerSettingEXT>			&required_layer_settings,
+                   const std::vector<VkLayerSettingEXT> &required_layer_settings,
 #endif
-                   bool                                          headless,
-                   uint32_t                                      api_version)
+                   bool     headless,
+                   uint32_t api_version)
 {
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
@@ -386,9 +386,9 @@ Instance::Instance(const std::string                            &application_nam
 	if (std::find(enabled_extensions.begin(), enabled_extensions.end(), VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) != enabled_extensions.end())
 	{
 		layerSettingsCreateInfo.settingCount = uint32_t(required_layer_settings.size());
-		layerSettingsCreateInfo.pSettings = required_layer_settings.data();
-		layerSettingsCreateInfo.pNext = instance_info.pNext;
-		instance_info.pNext = &layerSettingsCreateInfo;
+		layerSettingsCreateInfo.pSettings    = required_layer_settings.data();
+		layerSettingsCreateInfo.pNext        = instance_info.pNext;
+		instance_info.pNext                  = &layerSettingsCreateInfo;
 	}
 #endif
 

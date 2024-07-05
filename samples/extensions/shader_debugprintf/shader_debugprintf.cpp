@@ -49,13 +49,13 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
 	VkLayerSettingEXT layerSetting;
-	layerSetting.pLayerName = "VK_LAYER_KHRONOS_validation";
+	layerSetting.pLayerName   = "VK_LAYER_KHRONOS_validation";
 	layerSetting.pSettingName = "enables";
-	layerSetting.type = VK_LAYER_SETTING_TYPE_STRING_EXT;
-	layerSetting.valueCount = 1;
+	layerSetting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
+	layerSetting.valueCount   = 1;
 
-	static const char * layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
-	layerSetting.pValues = &layerEnables;
+	static const char *layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
+	layerSetting.pValues            = &layerEnables;
 
 	add_layer_setting(layerSetting);
 #endif
@@ -417,10 +417,10 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 }
 
 // This sample overrides the per-sample layer framework to force activation of the validation layer
-const std::vector<const char*> ShaderDebugPrintf::get_validation_layers()
+const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
 {
 	// Note validation layer is already enabled for debug builds, so set the default list to empty
-	std::vector<const char*> validation_layers = {};
+	std::vector<const char *> validation_layers = {};
 
 #if !defined(VKB_DEBUG) && !defined(VKB_VALIDATION_LAYERS)
 	// Force activation of validation layer on release builds for access to debugPrintfEXT feature
@@ -442,7 +442,8 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
 	// Note this check is necessary in the short term for backwards compatibility with SDKs < 1.3.272 without VK_EXT_layer_settings
 	if (auto it = std::find_if(available_instance_extensions.begin(), available_instance_extensions.end(),
-		[](VkExtensionProperties extension) {return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;}); it != available_instance_extensions.end())
+	                           [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; });
+	    it != available_instance_extensions.end())
 	{
 		return VulkanSample::create_instance(headless);
 	}
@@ -483,9 +484,9 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	instance_create_info.ppEnabledLayerNames     = validation_layers.data();
 	instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_create_info.flags					|= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	instance_create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
-	instance_create_info.pNext                   = &validation_features;
+	instance_create_info.pNext = &validation_features;
 
 	VkInstance vulkan_instance;
 	VkResult   result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);

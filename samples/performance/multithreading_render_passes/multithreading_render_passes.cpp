@@ -43,7 +43,7 @@ void MultithreadingRenderPasses::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 #ifdef VK_ENABLE_BETA_EXTENSIONS
 	// We need to enable the mutableComparisonSamplers feature of the VK_KHR_portability_subset extension
-	auto &requested_portability_subset_features            = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
+	auto &requested_portability_subset_features                     = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
 	requested_portability_subset_features.mutableComparisonSamplers = VK_TRUE;
 #endif
 }
