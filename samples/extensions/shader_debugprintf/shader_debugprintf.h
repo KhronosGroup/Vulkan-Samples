@@ -1,4 +1,5 @@
 /* Copyright (c) 2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -93,7 +94,7 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	void                            draw();
 	bool                            prepare(const vkb::ApplicationOptions &options) override;
 	const std::vector<const char *> get_validation_layers() override;
-	std::unique_ptr<vkb::Instance>  create_instance(bool headless) override;
+	std::unique_ptr<vkb::Instance>  create_instance() override;
 	virtual void                    render(float delta_time) override;
 	virtual void                    on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool                    resize(const uint32_t width, const uint32_t height) override;

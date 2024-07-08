@@ -187,7 +187,6 @@ Instance::Instance(const std::string                            &application_nam
                    const std::unordered_map<const char *, bool> &required_extensions,
                    const std::vector<const char *>              &required_validation_layers,
                    const std::vector<VkLayerSettingEXT>         &required_layer_settings,
-                   bool                                          headless,
                    uint32_t                                      api_version)
 {
 	uint32_t instance_extension_count;
@@ -240,20 +239,11 @@ Instance::Instance(const std::string                            &application_nam
 	}
 #endif
 
-	// Try to enable headless surface extension if it exists
-	if (headless)
-	{
-		const bool has_headless_surface = enable_extension(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME,
-		                                                   available_instance_extensions, enabled_extensions);
-		if (!has_headless_surface)
-		{
-			LOGW("{} is not available, disabling swapchain creation", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
-		}
-	}
-	else
-	{
-		enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-	}
+	// Specific surface extensions are obtained from  Window::get_required_surface_extensions
+	// They are already added to required_extensions by VulkanSample::prepare
+
+	// Even for a headless surface a swapchain is still required
+	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
 	// which will be used for stats gathering where available.

@@ -1,4 +1,5 @@
 /* Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,13 +50,10 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
 
-	if (window->get_window_mode() != vkb::Window::Mode::Headless)
-	{
-		submit_info.waitSemaphoreCount   = 1;
-		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
-		submit_info.signalSemaphoreCount = 1;
-		submit_info.pSignalSemaphores    = &semaphores.render_complete;
-	}
+	submit_info.waitSemaphoreCount   = 1;
+	submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
+	submit_info.signalSemaphoreCount = 1;
+	submit_info.pSignalSemaphores    = &semaphores.render_complete;
 
 	queue = get_device().get_suitable_graphics_queue().get_handle();
 

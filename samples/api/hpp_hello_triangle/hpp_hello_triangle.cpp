@@ -1,4 +1,5 @@
 /* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -195,6 +196,10 @@ HPPHelloTriangle::~HPPHelloTriangle()
 
 bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
+	// Headless is not supported to keep this sample as simple as possible
+	assert(options.window != nullptr);
+	assert(options.window->get_window_mode() != vkb::Window::Mode::Headless);
+
 	if (Application::prepare(options))
 	{
 		instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
