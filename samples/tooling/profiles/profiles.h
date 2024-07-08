@@ -1,4 +1,5 @@
 /* Copyright (c) 2022-2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -80,7 +81,7 @@ class Profiles : public ApiVulkanSample
 	void                           render(float delta_time) override;
 	void                           view_changed() override;
 	std::unique_ptr<vkb::Device>   create_device(vkb::PhysicalDevice &gpu) override;
-	std::unique_ptr<vkb::Instance> create_instance(bool headless) override;
+	std::unique_ptr<vkb::Instance> create_instance() override;
 	virtual void                   on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
