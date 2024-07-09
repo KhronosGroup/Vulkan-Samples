@@ -441,9 +441,9 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 
 	// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
 	// Note this check is necessary in the short term for backwards compatibility with SDKs < 1.3.272 without VK_EXT_layer_settings
-	if (auto it = std::find_if(available_instance_extensions.begin(), available_instance_extensions.end(),
-	                           [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; });
-	    it != available_instance_extensions.end())
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 	{
 		return VulkanSample::create_instance(headless);
 	}

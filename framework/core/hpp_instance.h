@@ -62,7 +62,7 @@ class HPPInstance
 	            const std::unordered_map<const char *, bool> &required_extensions        = {},
 	            const std::vector<const char *>              &required_validation_layers = {},
 #if defined(VK_EXT_layer_settings)
-	            const std::vector<VkLayerSettingEXT> &required_layer_settings = {},
+	            const std::vector<vk::LayerSettingEXT> &required_layer_settings = {},
 #endif
 	            bool     headless    = false,
 	            uint32_t api_version = VK_API_VERSION_1_0);

@@ -27,7 +27,7 @@
 #include "scene_graph/scripts/animation.h"
 
 #if defined(PLATFORM__MACOS)
-#include <TargetConditionals.h>
+#	include <TargetConditionals.h>
 #endif
 
 namespace vkb
@@ -145,8 +145,11 @@ class VulkanSample : public vkb::Application
 	using RenderTargetType   = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 	using Extent2DType       = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
-	using SurfaceFormatType  = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
-	using SurfaceType        = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+#if defined(VK_EXT_layer_settings)
+	using LayerSettingType = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
+#endif
+	using SurfaceFormatType = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
+	using SurfaceType       = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
 	Configuration           &get_configuration();
 	RenderContextType       &get_render_context();
@@ -255,7 +258,7 @@ class VulkanSample : public vkb::Application
 	 * @brief Add a sample-specific layer setting
 	 * @param layerSetting The layer setting
 	 */
-	void add_layer_setting(VkLayerSettingEXT layerSetting);
+	void add_layer_setting(LayerSettingType const &layerSetting);
 #endif
 
 	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
@@ -372,7 +375,7 @@ class VulkanSample : public vkb::Application
 	 *
 	 * @return Vector of layer settings. Default is empty vector.
 	 */
-	std::vector<VkLayerSettingEXT> const &get_layer_settings() const;
+	std::vector<LayerSettingType> const &get_layer_settings() const;
 #endif
 
 	/// <summary>
@@ -435,7 +438,7 @@ class VulkanSample : public vkb::Application
 
 #if defined(VK_EXT_layer_settings)
 	/** @brief Vector of layer settings to be enabled for this example (must be set in the derived constructor) */
-	std::vector<VkLayerSettingEXT> layer_settings;
+	std::vector<vk::LayerSettingEXT> layer_settings;
 #endif
 
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
@@ -483,9 +486,16 @@ inline void VulkanSample<bindingType>::add_instance_extension(const char *extens
 
 #if defined(VK_EXT_layer_settings)
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::add_layer_setting(VkLayerSettingEXT layerSetting)
+inline void VulkanSample<bindingType>::add_layer_setting(LayerSettingType const &layerSetting)
 {
-	layer_settings.push_back(layerSetting);
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		layer_settings.push_back(layerSetting);
+	}
+	else
+	{
+		layer_settings.push_back(reinterpret_cast<VkLayerSettingEXT const &>(layerSetting));
+	}
 }
 #endif
 
@@ -800,9 +810,16 @@ inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::
 
 #if defined(VK_EXT_layer_settings)
 template <vkb::BindingType bindingType>
-inline std::vector<VkLayerSettingEXT> const &VulkanSample<bindingType>::get_layer_settings() const
+inline std::vector<typename VulkanSample<bindingType>::LayerSettingType> const &VulkanSample<bindingType>::get_layer_settings() const
 {
-	return layer_settings;
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return layer_settings;
+	}
+	else
+	{
+		return reinterpret_cast<std::vector<VkLayerSettingEXT> const &>(layer_settings);
+	}
 }
 #endif
 

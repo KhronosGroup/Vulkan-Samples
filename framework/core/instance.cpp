@@ -385,7 +385,7 @@ Instance::Instance(const std::string                            &application_nam
 	// If layer settings extension enabled by sample, then activate layer settings during instance creation
 	if (std::find(enabled_extensions.begin(), enabled_extensions.end(), VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) != enabled_extensions.end())
 	{
-		layerSettingsCreateInfo.settingCount = uint32_t(required_layer_settings.size());
+		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(required_layer_settings.size());
 		layerSettingsCreateInfo.pSettings    = required_layer_settings.data();
 		layerSettingsCreateInfo.pNext        = instance_info.pNext;
 		instance_info.pNext                  = &layerSettingsCreateInfo;
