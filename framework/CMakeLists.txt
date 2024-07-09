@@ -119,7 +119,6 @@ set(RENDERING_FILES
     rendering/hpp_render_frame.h
     rendering/hpp_render_pipeline.h
     rendering/hpp_render_target.h
-    rendering/hpp_subpass.h
     # Source files
     rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
@@ -130,7 +129,6 @@ set(RENDERING_FILES
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
-    rendering/subpass.cpp
     rendering/hpp_render_context.cpp
     rendering/hpp_render_frame.cpp
     rendering/hpp_render_target.cpp)
