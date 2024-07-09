@@ -63,31 +63,6 @@ vec3 evaluateNetwork(  vec4 f0,  vec4 f1,  vec4 viewdir) {
            weights.data[bias_0_ind/4 + 3]
         );
 
-        #if 0
-        for (int j = 0; j < 11; ++j) {
-            float input_value = 0.0;
-            if (j < 4) {
-            input_value =
-                (j == 0) ? f0.r : (
-                (j == 1) ? f0.g : (
-                (j == 2) ? f0.b : f0.a));
-            } else if (j < 8) {
-            input_value =
-                (j == 4) ? f1.r : (
-                (j == 5) ? f1.g : (
-                (j == 6) ? f1.b : f1.a));
-            } else {
-            input_value =
-                (j == 8) ? viewdir.r : (
-                (j == 9) ? -viewdir.b : viewdir.g); //switch y-z axes
-            }
-            for (int i = 0; i < 16; ++i) {
-            intermediate_one[i] += input_value * weights0[ j*16 + i];
-                //texelFetch(weightsZero, ivec2(j, i), 0).x;
-            }
-        }
-        #endif
-
 #define  APPLY_WEIGHTS_0(multiplier, weightFirstInd) \
         intermediate_one[ 0] += (multiplier) * weights.data[ weightFirstInd/4]; \
         intermediate_one[ 1] += (multiplier) * weights.data[ weightFirstInd/4 + 1]; \
@@ -115,18 +90,6 @@ vec3 evaluateNetwork(  vec4 f0,  vec4 f1,  vec4 viewdir) {
            weights.data[bias_1_ind/4 + 2],
            weights.data[bias_1_ind/4 + 3]
         );
-
-         #if 0
-         for (int j = 0; j < 16; ++j) {
-            if (intermediate_one[j] <= 0.0) {
-                continue;
-            }
-            for (int i = 0; i < 16; ++i) {
-                intermediate_two[i] += intermediate_one[j] * weights1[j*16 + i];
-                    //texelFetch(weightsOne, ivec2(j, i), 0).x;
-            }
-         }
-         #endif
 
 #define  APPLY_WEIGHTS_1(intermediate, oneInd) \
          if(intermediate > 0.0f){ \
@@ -156,18 +119,6 @@ vec3 evaluateNetwork(  vec4 f0,  vec4 f1,  vec4 viewdir) {
         int bias_2_ind = WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT +
                          BIAS_0_COUNT + BIAS_1_COUNT;
         vec4 result = weights.data[bias_2_ind/4];
-
-         #if 0
-         for (int j = 0; j < 16; ++j) {
-            if (intermediate_two[j] <= 0.0) {
-                continue;
-            }
-            for (int i = 0; i < 3; ++i) {
-                result[i] += intermediate_two[j] * weights2[j*3 + i];
-                    //texelFetch(weightsTwo, ivec2(j, i), 0).x;
-            }
-         }
-         #endif
 
 #define  APPLY_WEIGHTS_2(intermediate, oneInd) \
          if(intermediate > 0.0f){ \
