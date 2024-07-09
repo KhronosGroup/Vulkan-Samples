@@ -168,7 +168,7 @@ void @SAMPLE_NAME@::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSampleC> create_@SAMPLE_NAME_FILE@()
+std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_@SAMPLE_NAME_FILE@()
 {
 	return std::make_unique<@SAMPLE_NAME@>();
 }
