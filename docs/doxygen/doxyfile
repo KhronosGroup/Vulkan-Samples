@@ -1960,8 +1960,6 @@ INCLUDE_FILE_PATTERNS  =
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 PREDEFINED             = DOXYGEN_SKIP
-# Stop Doxygen from complaining about #ifdef parameters in Instance() and HPPInstance()
-PREDEFINED             = VK_EXT_layer_settings
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

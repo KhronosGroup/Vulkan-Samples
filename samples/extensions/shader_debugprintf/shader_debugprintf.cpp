@@ -44,7 +44,6 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 
 	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 
-#if defined(VK_EXT_layer_settings)
 	// If layer settings available, use it to configure validation layer for debugPrintfEXT
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
@@ -58,7 +57,6 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 	layerSetting.pValues            = &layerEnables;
 
 	add_layer_setting(layerSetting);
-#endif
 }
 
 ShaderDebugPrintf::~ShaderDebugPrintf()
@@ -433,7 +431,6 @@ const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
 // This sample overrides the instance creation part of the framework to chain in additional structures
 std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 {
-#if defined(VK_EXT_layer_settings)
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
 	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
@@ -447,7 +444,6 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	{
 		return VulkanSample::create_instance(headless);
 	}
-#endif
 
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);

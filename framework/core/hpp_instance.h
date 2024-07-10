@@ -61,11 +61,9 @@ class HPPInstance
 	HPPInstance(const std::string                            &application_name,
 	            const std::unordered_map<const char *, bool> &required_extensions        = {},
 	            const std::vector<const char *>              &required_validation_layers = {},
-#if defined(VK_EXT_layer_settings)
-	            const std::vector<vk::LayerSettingEXT> &required_layer_settings = {},
-#endif
-	            bool     headless    = false,
-	            uint32_t api_version = VK_API_VERSION_1_0);
+	            const std::vector<vk::LayerSettingEXT>       &required_layer_settings    = {},
+	            bool                                          headless                   = false,
+	            uint32_t                                      api_version                = VK_API_VERSION_1_0);
 
 	/**
 	 * @brief Queries the GPUs of a vk::Instance that is already created

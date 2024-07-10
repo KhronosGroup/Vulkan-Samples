@@ -186,11 +186,9 @@ bool enable_all_extensions(const std::vector<const char *>             required_
 HPPInstance::HPPInstance(const std::string                            &application_name,
                          const std::unordered_map<const char *, bool> &required_extensions,
                          const std::vector<const char *>              &required_validation_layers,
-#if defined(VK_EXT_layer_settings)
-                         const std::vector<vk::LayerSettingEXT> &required_layer_settings,
-#endif
-                         bool     headless,
-                         uint32_t api_version)
+                         const std::vector<vk::LayerSettingEXT>       &required_layer_settings,
+                         bool                                          headless,
+                         uint32_t                                      api_version)
 {
 	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 
@@ -350,7 +348,6 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	}
 #endif
 
-#if defined(VK_EXT_layer_settings)
 	vk::LayerSettingsCreateInfoEXT layerSettingsCreateInfo;
 
 	// If layer settings extension enabled by sample, then activate layer settings during instance creation
@@ -361,7 +358,6 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 		layerSettingsCreateInfo.pNext        = instance_info.pNext;
 		instance_info.pNext                  = &layerSettingsCreateInfo;
 	}
-#endif
 
 	// Create the Vulkan instance
 	handle = vk::createInstance(instance_info);
