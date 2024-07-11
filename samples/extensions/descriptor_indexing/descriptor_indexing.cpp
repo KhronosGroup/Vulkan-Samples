@@ -34,8 +34,7 @@ DescriptorIndexing::DescriptorIndexing()
 
 #if defined(PLATFORM__MACOS) && TARGET_OS_OSX
 	// On macOS use layer setting to configure MoltenVK for using Metal argument buffers (needed for descriptor indexing)
-	// MoltenVK supports Metal argument buffers on macOS, iOS possible in future (see https://github.com/KhronosGroup/MoltenVK/issues/1651)
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
 	VkLayerSettingEXT layerSetting;
 	layerSetting.pLayerName   = "MoltenVK";
@@ -47,6 +46,10 @@ DescriptorIndexing::DescriptorIndexing()
 	layerSetting.pValues                         = &useMetalArgumentBuffers;
 
 	add_layer_setting(layerSetting);
+
+	// On macOS also set environment variable as fallback in case layer settings not available at runtime with older SDKs
+	// Will not work in batch mode, but is the best we can do short of using the deprecated MoltenVK private config API
+	setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "1", 1);
 #endif
 }
 

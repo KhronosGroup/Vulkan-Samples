@@ -27,7 +27,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
     void                                       *pUserData)
 {
-	if (strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0)
+	// Look for Validation Layer message id names: WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed UNASSIGNED with older Vulkan SDKs)
+	if (strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
 	{
 		// Validation messages are a bit verbose, but we only want the text from the shader, so we cut off everything before the first word from the shader message
 		// See scene.vert: debugPrintfEXT("Position = %v4f", outPos);
