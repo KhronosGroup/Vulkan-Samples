@@ -53,7 +53,7 @@ PipelineCache::~PipelineCache()
 			{
 				if (size < data.size())
 				{
-				  data.resize(size);
+					data.resize(size);
 				}
 
 				/* Write pipeline cache data to a file in binary format */
