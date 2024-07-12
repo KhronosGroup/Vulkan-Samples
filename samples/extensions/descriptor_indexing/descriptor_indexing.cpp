@@ -42,6 +42,7 @@ DescriptorIndexing::DescriptorIndexing()
 	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
 	layerSetting.valueCount   = 1;
 
+	// Make this static so layer setting reference remains valid after leaving constructor scope
 	static const int32_t useMetalArgumentBuffers = 1;
 	layerSetting.pValues                         = &useMetalArgumentBuffers;
 
