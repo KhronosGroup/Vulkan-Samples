@@ -36,7 +36,7 @@ jobs:
     container: ghcr.io/khronosgroupactions/doxygen:1.9.5
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: mkdir -p doxygen
       - run: doxygen docs/doxygen/doxyfile
       - run: if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
@@ -46,7 +46,7 @@ jobs:
     container: ghcr.io/khronosgroupactions/copyright-check:latest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
       - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
       - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: python3 /usr/local/bin/snake_case_check.py $TARGET_BRANCH > snake-report.txt
       - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
@@ -66,7 +66,7 @@ jobs:
     container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
       - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
       - name: Run Clang Format diff
@@ -95,7 +95,7 @@ jobs:
     continue-on-error: true # we currently don't track clang-tidy warnings as errors. in the future this will change
     if: ${{needs.changed-files.outputs.all}}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: "recursive"
       - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
@@ -107,7 +107,7 @@ jobs:
     name: Pre-Commit Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
         continue-on-error: true # we currently don't track pre-commit warnings as errors. in the future this will change. for this step to pass we will need to run `pre-commit run --all-files`
