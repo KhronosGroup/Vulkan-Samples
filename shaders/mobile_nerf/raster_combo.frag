@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
  * ------------------------------------------------------------------------
  *
  * THIS IS A MODIFIED VERSION OF THE ORIGINAL FILE
- * 
+ *
  * The original file, along with the original Apache-2.0 LICENSE can be found at:
  * https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf
  *
@@ -27,30 +27,32 @@
  */
 #version 460
 
-#extension GL_EXT_ray_query : enable
+layout(location = 0) in vec2 texCoord_frag;
+layout(location = 1) in vec3 rayDirectionIn;
 
-layout(binding = 0, set = 0, rgba8) uniform image2D image;
+layout(location = 0) out vec4 o_color_0;
+layout(location = 1) out vec4 o_color_1;
+layout(location = 2) out vec4 rayDirectionOut;
+layout(location = 3) out uint weights_idx_out;
 
-layout(binding = 1, set = 0) uniform sampler2D inputFeature_0;
+layout(binding = 0) uniform sampler2D textureInput_0;
+layout(binding = 1) uniform sampler2D textureInput_1;
 
-layout(binding = 2, set = 0) uniform sampler2D inputFeature_1;
+layout(push_constant) uniform PushConstants {
+	uint weights_idx;
+} pc;
 
-// TODO should add mlp weight in here
-//layout(set = 0, binding = 2) uniform mlp_weights....
-
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
-
-void main() 
+void main(void)
 {
-	const uvec3 globalSize = gl_NumWorkGroups * gl_WorkGroupSize;
-	const vec2 pixelCenter = vec2(gl_GlobalInvocationID.xy) + vec2(0.5);
-	const vec2 inUV = pixelCenter/vec2(globalSize);
+    vec2 flipped = vec2( texCoord_frag.x, 1.0 - texCoord_frag.y );
+	vec4 pixel_0 = texture(textureInput_0, flipped);
+	if (pixel_0.r == 0.0) discard;
+	vec4 pixel_1 = texture(textureInput_1, flipped);
+	o_color_0 = vec4(pixel_0.xyz, pixel_0.w);
+	o_color_1 = vec4(pixel_1.xyz, pixel_1.w);
 
-	vec4 feature_0 = texture(inputFeature_0, inUV);
-	vec4 feature_1 = texture(inputFeature_1, inUV);
+	rayDirectionOut.rgb = normalize(rayDirectionIn);
+	rayDirectionOut.a = 1.0f;
 
-	vec4 o_color = vec4(((feature_0 + feature_1) / 2.0f).rgb, 1.0f);
-
-	imageStore(image, ivec2(gl_GlobalInvocationID.xy), o_color);
+	weights_idx_out = pc.weights_idx;
 }
-
