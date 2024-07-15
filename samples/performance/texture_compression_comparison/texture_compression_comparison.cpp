@@ -190,21 +190,8 @@ bool TextureCompressionComparison::is_texture_format_supported(const TextureComp
 	return supported_by_default || supported_by_feature || supported_by_extension;
 }
 
-void TextureCompressionComparison::get_available_texture_formats()
-{
-	available_texture_formats.clear();
-
-	const auto all_formats = get_texture_formats();
-
-	// Determine which formats are supported by this device
-	std::copy_if(all_formats.cbegin(), all_formats.cend(), std::back_inserter(available_texture_formats), [this](const auto &texture_format) {
-		return is_texture_format_supported(texture_format);
-	});
-}
-
 void TextureCompressionComparison::load_assets()
 {
-	get_available_texture_formats();
 	load_scene("scenes/sponza/Sponza01.gltf");
 	if (!has_scene())
 	{
@@ -336,18 +323,6 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 	get_device().flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle(), true);
 
 	return image_out;
-}
-
-std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::string &filename)
-{
-	if (filename.empty())
-	{
-		return {};
-	}
-
-	std::ifstream                  is(filename, std::ios::binary);
-	std::istream_iterator<uint8_t> start(is), end;
-	return {start, end};
 }
 
 std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format, const std::string &name)

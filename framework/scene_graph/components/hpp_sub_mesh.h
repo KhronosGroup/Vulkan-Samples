@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 #pragma once
 
 #include <core/hpp_buffer.h>
+#include <scene_graph/components/hpp_material.h>
 #include <scene_graph/components/sub_mesh.h>
 
 namespace vkb
@@ -44,6 +45,11 @@ class HPPSubMesh : private vkb::sg::SubMesh
 	vk::IndexType get_index_type() const
 	{
 		return static_cast<vk::IndexType>(vkb::sg::SubMesh::index_type);
+	}
+
+	vkb::scene_graph::components::HPPMaterial const *get_material() const
+	{
+		return reinterpret_cast<vkb::scene_graph::components::HPPMaterial const *>(vkb::sg::SubMesh::get_material());
 	}
 
 	vkb::core::HPPBuffer const &get_vertex_buffer(std::string const &name) const
