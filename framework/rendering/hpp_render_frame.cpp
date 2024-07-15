@@ -16,7 +16,7 @@
  */
 
 #include "hpp_render_frame.h"
-#include "hpp_buffer_pool.h"
+#include "buffer_pool.h"
 #include <common/hpp_resource_caching.h>
 
 constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
@@ -34,7 +34,7 @@ HPPRenderFrame::HPPRenderFrame(vkb::core::HPPDevice &device, std::unique_ptr<vkb
 {
 	for (auto &usage_it : supported_usage_map)
 	{
-		auto [buffer_pools_it, inserted] = buffer_pools.emplace(usage_it.first, std::vector<std::pair<vkb::HPPBufferPool, vkb::HPPBufferBlock *>>{});
+		auto [buffer_pools_it, inserted] = buffer_pools.emplace(usage_it.first, std::vector<std::pair<vkb::BufferPoolCpp, vkb::BufferBlockCpp *>>{});
 		if (!inserted)
 		{
 			throw std::runtime_error("Failed to insert buffer pool");
@@ -42,7 +42,7 @@ HPPRenderFrame::HPPRenderFrame(vkb::core::HPPDevice &device, std::unique_ptr<vkb
 
 		for (size_t i = 0; i < thread_count; ++i)
 		{
-			buffer_pools_it->second.push_back(std::make_pair(vkb::HPPBufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024 * usage_it.second, usage_it.first}, nullptr));
+			buffer_pools_it->second.push_back(std::make_pair(vkb::BufferPoolCpp{device, BUFFER_POOL_BLOCK_SIZE * 1024 * usage_it.second, usage_it.first}, nullptr));
 		}
 	}
 
@@ -53,7 +53,7 @@ HPPRenderFrame::HPPRenderFrame(vkb::core::HPPDevice &device, std::unique_ptr<vkb
 	}
 }
 
-vkb::HPPBufferAllocation HPPRenderFrame::allocate_buffer(const vk::BufferUsageFlags usage, const vk::DeviceSize size, size_t thread_index)
+vkb::BufferAllocationCpp HPPRenderFrame::allocate_buffer(const vk::BufferUsageFlags usage, const vk::DeviceSize size, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
@@ -62,7 +62,7 @@ vkb::HPPBufferAllocation HPPRenderFrame::allocate_buffer(const vk::BufferUsageFl
 	if (buffer_pool_it == buffer_pools.end())
 	{
 		LOGE("No buffer pool for buffer usage " + vk::to_string(usage));
-		return vkb::HPPBufferAllocation{};
+		return vkb::BufferAllocationCpp{};
 	}
 
 	assert(thread_index < buffer_pool_it->second.size());

@@ -40,7 +40,6 @@ set(FRAMEWORK_FILES
     timer.h
     camera.h
     hpp_api_vulkan_sample.h
-    hpp_buffer_pool.h
     hpp_fence_pool.h
     hpp_glsl_compiler.h
     hpp_gltf_loader.h
@@ -57,7 +56,6 @@ set(FRAMEWORK_FILES
     spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
-    buffer_pool.cpp
     fence_pool.cpp
     heightmap.cpp
     semaphore_pool.cpp

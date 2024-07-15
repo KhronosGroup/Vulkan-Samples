@@ -74,11 +74,6 @@ HPPBuffer::HPPBuffer(
 	}
 }
 
-HPPBuffer::HPPBuffer(HPPBuffer &&other) noexcept :
-    HPPAllocated{static_cast<HPPAllocated &&>(other)},
-    size(std::exchange(other.size, {}))
-{}
-
 HPPBuffer::~HPPBuffer()
 {
 	destroy_buffer(get_handle());

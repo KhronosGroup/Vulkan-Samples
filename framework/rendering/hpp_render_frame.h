@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "hpp_buffer_pool.h"
+#include "buffer_pool.h"
 #include <core/hpp_device.h>
 #include <hpp_semaphore_pool.h>
 #include <vulkan/vulkan_hash.hpp>
@@ -89,7 +89,7 @@ class HPPRenderFrame
 	 * @param thread_index Index of the buffer pool to be used by the current thread
 	 * @return The requested allocation, it may be empty
 	 */
-	vkb::HPPBufferAllocation allocate_buffer(vk::BufferUsageFlags usage, vk::DeviceSize size, size_t thread_index = 0);
+	vkb::BufferAllocationCpp allocate_buffer(vk::BufferUsageFlags usage, vk::DeviceSize size, size_t thread_index = 0);
 
 	/**
 	 * @brief Requests a command buffer to the command pool of the active frame
@@ -175,7 +175,7 @@ class HPPRenderFrame
 
 	DescriptorManagementStrategy descriptor_management_strategy{DescriptorManagementStrategy::StoreInCache};
 
-	std::map<vk::BufferUsageFlags, std::vector<std::pair<vkb::HPPBufferPool, vkb::HPPBufferBlock *>>> buffer_pools;
+	std::map<vk::BufferUsageFlags, std::vector<std::pair<vkb::BufferPoolCpp, vkb::BufferBlockCpp *>>> buffer_pools;
 };
 }        // namespace rendering
 }        // namespace vkb

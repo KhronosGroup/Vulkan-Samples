@@ -19,7 +19,6 @@
 #pragma once
 
 #include "buffer_pool.h"
-#include "hpp_buffer_pool.h"
 #include "rendering/hpp_pipeline_state.h"
 #include "rendering/hpp_render_target.h"
 #include "rendering/pipeline_state.h"
@@ -53,12 +52,10 @@ struct alignas(16) Light
 template <vkb::BindingType bindingType>
 struct LightingState
 {
-	using BufferAllocationType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPBufferAllocation, vkb::BufferAllocation>::type;
-
-	std::vector<Light>   directional_lights;
-	std::vector<Light>   point_lights;
-	std::vector<Light>   spot_lights;
-	BufferAllocationType light_buffer;
+	std::vector<Light>            directional_lights;
+	std::vector<Light>            point_lights;
+	std::vector<Light>            spot_lights;
+	BufferAllocation<bindingType> light_buffer;
 };
 
 using LightingStateC   = LightingState<vkb::BindingType::C>;

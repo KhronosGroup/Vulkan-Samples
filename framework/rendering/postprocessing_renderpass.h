@@ -313,14 +313,14 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	BarrierInfo get_src_barrier_info() const override;
 	BarrierInfo get_dst_barrier_info() const override;
 
-	RenderPipeline                    pipeline{};
-	std::unique_ptr<core::Sampler>    default_sampler{};
-	std::unique_ptr<core::Sampler>    default_sampler_nearest{};
-	RenderTarget                     *draw_render_target{nullptr};
-	std::vector<LoadStoreInfo>        load_stores{};
-	bool                              load_stores_dirty{true};
-	std::vector<uint8_t>              uniform_data{};
-	std::shared_ptr<BufferAllocation> uniform_buffer_alloc{};
+	RenderPipeline                     pipeline{};
+	std::unique_ptr<core::Sampler>     default_sampler{};
+	std::unique_ptr<core::Sampler>     default_sampler_nearest{};
+	RenderTarget                      *draw_render_target{nullptr};
+	std::vector<LoadStoreInfo>         load_stores{};
+	bool                               load_stores_dirty{true};
+	std::vector<uint8_t>               uniform_data{};
+	std::shared_ptr<BufferAllocationC> uniform_buffer_alloc{};
 };
 
 }        // namespace vkb
