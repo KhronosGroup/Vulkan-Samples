@@ -318,7 +318,7 @@ find_library(Vulkan_LIBRARY
         HINTS
         ${_Vulkan_hint_library_search_paths}
 )
-message(STATUS vulkan_library ${Vulkan_LIBRARY} search paths ${_Vulkan_hint_library_search_paths})
+message(STATUS "vulkan_library ${Vulkan_LIBRARY} search paths ${_Vulkan_hint_library_search_paths}")
 mark_as_advanced(Vulkan_LIBRARY)
 
 find_library(Vulkan_Layer_API_DUMP
@@ -652,9 +652,18 @@ find_package_handle_standard_args(Vulkan
 
 if(Vulkan_FOUND AND NOT TARGET Vulkan::Vulkan)
     add_library(Vulkan::Vulkan UNKNOWN IMPORTED)
+    cmake_path(GET Vulkan_LIBRARIES EXTENSION _Vulkan_lib_extension)
+    if(_Vulkan_lib_extension STREQUAL ".framework" AND CMAKE_VERSION VERSION_LESS 3.28)
+        set_target_properties(Vulkan::Vulkan PROPERTIES
+                # Prior to 3.28 must reference library just inside the framework.
+                IMPORTED_LOCATION "${Vulkan_LIBRARIES}/vulkan")
+    else()
+        set_target_properties(Vulkan::Vulkan PROPERTIES
+                IMPORTED_LOCATION "${Vulkan_LIBRARIES}")
+    endif()
     set_target_properties(Vulkan::Vulkan PROPERTIES
-            IMPORTED_LOCATION "${Vulkan_LIBRARIES}"
             INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
+    unset(_Vulkan_lib_extension)
 endif()
 
 if(Vulkan_FOUND AND NOT TARGET Vulkan::Headers)
