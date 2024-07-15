@@ -278,7 +278,7 @@ void RayQueries::create_bottom_level_acceleration_structure()
 		    index_buffer,
 		    transform_matrix_buffer,
 		    static_cast<uint32_t>(model.indices.size()),
-		    static_cast<uint32_t>(model.vertices.size()),
+		    static_cast<uint32_t>(model.vertices.size()) - 1,
 		    sizeof(Vertex),
 		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
 		    get_buffer_device_address(vertex_buffer->get_handle()),
