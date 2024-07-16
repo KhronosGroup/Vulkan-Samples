@@ -21,7 +21,7 @@
 #include "scene_graph/components/camera.h"
 #include "vulkan_sample.h"
 
-class @SAMPLE_NAME@ : public vkb::VulkanSample<vkb::BindingType::C>
+class @SAMPLE_NAME@ : public vkb::VulkanSampleC
 {
   public:
 	@SAMPLE_NAME@();
@@ -31,4 +31,4 @@ class @SAMPLE_NAME@ : public vkb::VulkanSample<vkb::BindingType::C>
 	virtual ~@SAMPLE_NAME@() = default;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_@SAMPLE_NAME_FILE@();
+std::unique_ptr<vkb::VulkanSampleC> create_@SAMPLE_NAME_FILE@();

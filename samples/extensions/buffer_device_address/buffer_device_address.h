@@ -72,4 +72,4 @@ class BufferDeviceAddress : public ApiVulkanSample
 	uint32_t                              num_indices_per_mesh{};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_buffer_device_address();
+std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address();

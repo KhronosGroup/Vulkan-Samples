@@ -96,4 +96,4 @@ class RayQueries : public ApiVulkanSample
 	void draw();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_queries();
+std::unique_ptr<vkb::VulkanSampleC> create_ray_queries();

@@ -25,7 +25,7 @@
 /**
  * @brief Using pipeline barriers efficiently
  */
-class PipelineBarriers : public vkb::VulkanSample<vkb::BindingType::C>
+class PipelineBarriers : public vkb::VulkanSampleC
 {
   public:
 	PipelineBarriers();
@@ -59,4 +59,4 @@ class PipelineBarriers : public vkb::VulkanSample<vkb::BindingType::C>
 	DependencyType dependency_type{DependencyType::BOTTOM_TO_TOP};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_pipeline_barriers();
+std::unique_ptr<vkb::VulkanSampleC> create_pipeline_barriers();

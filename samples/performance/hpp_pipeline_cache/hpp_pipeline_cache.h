@@ -24,7 +24,7 @@
 /**
  * @brief Pipeline creation and caching
  */
-class HPPPipelineCache : public vkb::VulkanSample<vkb::BindingType::Cpp>
+class HPPPipelineCache : public vkb::VulkanSampleCpp
 {
   public:
 	HPPPipelineCache();
@@ -45,4 +45,4 @@ class HPPPipelineCache : public vkb::VulkanSample<vkb::BindingType::Cpp>
 	bool              record_frame_time_next_frame    = false;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_pipeline_cache();
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_pipeline_cache();

@@ -57,7 +57,7 @@ using SubpassC = Subpass<vkb::BindingType::C>;
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCommandBuffer>
+class CommandBuffer : public vkb::core::VulkanResourceC<VkCommandBuffer>
 {
   public:
 	enum class ResetMode

@@ -908,7 +908,7 @@ bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop()
+std::unique_ptr<vkb::VulkanSampleC> create_open_cl_interop()
 {
 	return std::make_unique<OpenCLInterop>();
 }

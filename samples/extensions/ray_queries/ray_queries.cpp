@@ -518,7 +518,7 @@ void RayQueries::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_queries()
+std::unique_ptr<vkb::VulkanSampleC> create_ray_queries()
 {
 	return std::make_unique<RayQueries>();
 }

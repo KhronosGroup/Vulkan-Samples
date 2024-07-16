@@ -940,7 +940,7 @@ void SparseImage::render(float delta_time)
 	draw();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_sparse_image()
+std::unique_ptr<vkb::VulkanSampleC> create_sparse_image()
 {
 	return std::make_unique<SparseImage>();
 }

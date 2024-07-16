@@ -260,14 +260,14 @@ void Platform::update()
 		});
 		active_app->update(delta_time);
 
-		if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::Cpp> *>(active_app.get()))
+		if (auto *app = dynamic_cast<VulkanSampleCpp *>(active_app.get()))
 		{
 			if (app->has_render_context())
 			{
 				on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
 			}
 		}
-		else if (auto *app = dynamic_cast<VulkanSample<vkb::BindingType::C> *>(active_app.get()))
+		else if (auto *app = dynamic_cast<VulkanSampleC *>(active_app.get()))
 		{
 			if (app->has_render_context())
 			{

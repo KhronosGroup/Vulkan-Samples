@@ -740,7 +740,7 @@ bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate()
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shading_rate()
 {
 	return std::make_unique<FragmentShadingRate>();
 }

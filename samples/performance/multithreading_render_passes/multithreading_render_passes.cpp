@@ -542,7 +542,7 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_push_constants(vkb::Comm
 	return;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multithreading_render_passes()
+std::unique_ptr<vkb::VulkanSampleC> create_multithreading_render_passes()
 {
 	return std::make_unique<MultithreadingRenderPasses>();
 }

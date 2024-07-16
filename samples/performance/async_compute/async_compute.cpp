@@ -732,7 +732,7 @@ void AsyncComputeSample::finish()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_async_compute()
+std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 {
 	return std::make_unique<AsyncComputeSample>();
 }

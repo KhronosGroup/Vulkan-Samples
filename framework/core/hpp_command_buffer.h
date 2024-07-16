@@ -45,7 +45,7 @@ class HPPDescriptorSetLayout;
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::CommandBuffer>
+class HPPCommandBuffer : public vkb::core::VulkanResourceCpp<vk::CommandBuffer>
 {
   public:
 	struct RenderPassBinding

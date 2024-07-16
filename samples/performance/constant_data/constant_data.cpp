@@ -276,7 +276,7 @@ void ConstantData::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_constant_data()
+std::unique_ptr<vkb::VulkanSampleC> create_constant_data()
 {
 	return std::make_unique<ConstantData>();
 }

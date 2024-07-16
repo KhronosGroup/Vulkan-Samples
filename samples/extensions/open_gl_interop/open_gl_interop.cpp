@@ -761,7 +761,7 @@ OpenGLInterop::~OpenGLInterop()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_gl_interop()
+std::unique_ptr<vkb::VulkanSampleC> create_open_gl_interop()
 {
 	return std::make_unique<OpenGLInterop>();
 }

@@ -26,7 +26,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler, using Vulkan-Hpp
  */
-class HPPSampler : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::Sampler>
+class HPPSampler : public vkb::core::VulkanResourceCpp<vk::Sampler>
 {
   public:
 	/**
