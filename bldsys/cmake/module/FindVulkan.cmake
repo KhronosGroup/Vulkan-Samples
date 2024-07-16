@@ -287,7 +287,7 @@ else()
             "$ENV{VULKAN_SDK}/lib"
     )
 endif()
-if(APPLE AND DEFINED ENV{VULKAN_SDK})
+if(APPLE AND DEFINED Vulkan_Target_SDK)
     list(APPEND _Vulkan_hint_include_search_paths
             "${Vulkan_Target_SDK}/macOS/include"
     )
@@ -301,7 +301,7 @@ if(APPLE AND DEFINED ENV{VULKAN_SDK})
         )
     else()
         list(APPEND _Vulkan_hint_library_search_paths
-                "${Vulkan_Target_SDK}}/lib"
+                "${Vulkan_Target_SDK}/lib"
         )
     endif()
 endif()
