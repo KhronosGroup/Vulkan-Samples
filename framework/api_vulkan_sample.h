@@ -99,7 +99,7 @@ struct Meshlet
  *
  * See vkb::VulkanSample for documentation
  */
-class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
+class ApiVulkanSample : public vkb::VulkanSampleC
 {
   public:
 	ApiVulkanSample() = default;

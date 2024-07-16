@@ -67,7 +67,7 @@ struct alignas(16) MVPUniform
  *
  * The shaders will be compiled with a definition to handle this difference.
  */
-class ConstantData : public vkb::VulkanSample<vkb::BindingType::C>
+class ConstantData : public vkb::VulkanSampleC
 {
   public:
 	/**
@@ -274,4 +274,4 @@ class ConstantData : public vkb::VulkanSample<vkb::BindingType::C>
 	int last_gui_method_value{static_cast<int>(Method::PushConstants)};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_constant_data();
+std::unique_ptr<vkb::VulkanSampleC> create_constant_data();

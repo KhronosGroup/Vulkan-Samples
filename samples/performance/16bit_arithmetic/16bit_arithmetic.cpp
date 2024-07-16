@@ -348,7 +348,7 @@ void KHR16BitArithmeticSample::draw_gui()
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic()
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_arithmetic()
 {
 	return std::make_unique<KHR16BitArithmeticSample>();
 }

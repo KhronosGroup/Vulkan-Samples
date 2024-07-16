@@ -33,7 +33,7 @@ namespace core
 {
 class HPPBuffer;
 
-class HPPDevice : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::Device>
+class HPPDevice : public vkb::core::VulkanResourceCpp<vk::Device>
 {
   public:
 	/**

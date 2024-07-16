@@ -65,9 +65,9 @@ template <typename HandleType>
 class HPPAllocated : public Allocated<
                          HandleType,
                          vk::DeviceMemory,
-                         vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>
+                         vkb::core::VulkanResourceCpp<HandleType>>
 {
-	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>;
+	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::VulkanResourceCpp<HandleType>>;
 
   public:
 	using Parent::get_handle;

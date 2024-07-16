@@ -850,7 +850,7 @@ void MSAASample::draw_gui()
 	    lines);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_msaa()
+std::unique_ptr<vkb::VulkanSampleC> create_msaa()
 {
 	return std::make_unique<MSAASample>();
 }

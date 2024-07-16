@@ -130,7 +130,7 @@ void AFBCSample::draw_gui()
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_afbc()
+std::unique_ptr<vkb::VulkanSampleC> create_afbc()
 {
 	return std::make_unique<AFBCSample>();
 }

@@ -603,7 +603,7 @@ void PatchControlPoints::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_patch_control_points()
+std::unique_ptr<vkb::VulkanSampleC> create_patch_control_points()
 {
 	return std::make_unique<PatchControlPoints>();
 }

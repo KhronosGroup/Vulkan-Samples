@@ -113,4 +113,4 @@ class OpenGLInterop : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_gl_interop();
+std::unique_ptr<vkb::VulkanSampleC> create_open_gl_interop();

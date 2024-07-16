@@ -460,7 +460,7 @@ void DynamicRendering::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_rendering()
 {
 	return std::make_unique<DynamicRendering>();
 }

@@ -87,4 +87,4 @@ class DescriptorBufferBasic : public ApiVulkanSample
 	void         on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_buffer_basic();
+std::unique_ptr<vkb::VulkanSampleC> create_descriptor_buffer_basic();

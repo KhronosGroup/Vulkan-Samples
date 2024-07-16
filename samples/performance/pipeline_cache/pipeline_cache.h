@@ -26,7 +26,7 @@
 /**
  * @brief Pipeline creation and caching
  */
-class PipelineCache : public vkb::VulkanSample<vkb::BindingType::C>
+class PipelineCache : public vkb::VulkanSampleC
 {
   public:
 	PipelineCache();
@@ -53,4 +53,4 @@ class PipelineCache : public vkb::VulkanSample<vkb::BindingType::C>
 	virtual void draw_gui() override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_pipeline_cache();
+std::unique_ptr<vkb::VulkanSampleC> create_pipeline_cache();

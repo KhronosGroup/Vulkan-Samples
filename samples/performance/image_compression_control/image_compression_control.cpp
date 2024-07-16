@@ -172,7 +172,7 @@ void ImageCompressionControlSample::create_render_context()
 			new_surface_priority_list.push_back(remaining_format);
 		}
 
-		VulkanSample<vkb::BindingType::C>::create_render_context(new_surface_priority_list);
+		vkb::VulkanSampleC::create_render_context(new_surface_priority_list);
 	}
 
 	/**
@@ -576,7 +576,7 @@ void ImageCompressionControlSample::draw_gui()
 	    lines);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_image_compression_control()
+std::unique_ptr<vkb::VulkanSampleC> create_image_compression_control()
 {
 	return std::make_unique<ImageCompressionControlSample>();
 }

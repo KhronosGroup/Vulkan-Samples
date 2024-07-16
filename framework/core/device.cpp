@@ -27,7 +27,7 @@ Device::Device(PhysicalDevice                        &gpu,
                VkSurfaceKHR                           surface,
                std::unique_ptr<DebugUtils>          &&debug_utils,
                std::unordered_map<const char *, bool> requested_extensions) :
-    vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>{VK_NULL_HANDLE, this},        // Recursive, but valid
+    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
     resource_cache{*this}

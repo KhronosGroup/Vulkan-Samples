@@ -387,7 +387,7 @@ void DynamicPrimitiveClipping::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_primitive_clipping()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_primitive_clipping()
 {
 	return std::make_unique<DynamicPrimitiveClipping>();
 }

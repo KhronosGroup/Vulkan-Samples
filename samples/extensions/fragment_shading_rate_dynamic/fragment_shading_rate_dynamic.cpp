@@ -1205,7 +1205,7 @@ bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate_dynamic()
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shading_rate_dynamic()
 {
 	return std::make_unique<FragmentShadingRateDynamic>();
 }

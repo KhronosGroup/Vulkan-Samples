@@ -36,7 +36,7 @@ struct alignas(16) CustomForwardLights
 /**
  * @brief Using specialization constants
  */
-class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
+class SpecializationConstants : public vkb::VulkanSampleC
 {
   public:
 	SpecializationConstants();
@@ -121,4 +121,4 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 	int specialization_constants_enabled{0};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_specialization_constants();
+std::unique_ptr<vkb::VulkanSampleC> create_specialization_constants();

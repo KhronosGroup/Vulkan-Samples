@@ -60,7 +60,7 @@
  * This sample shows how to use the extension to also resolve the depth
  * attachment on writeback and use it in a simple postprocessing pass.
  */
-class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
+class MSAASample : public vkb::VulkanSampleC
 {
   public:
 	MSAASample();
@@ -272,4 +272,4 @@ class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 	VkResolveModeFlagBits last_gui_depth_resolve_mode{VK_RESOLVE_MODE_NONE};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_msaa();
+std::unique_ptr<vkb::VulkanSampleC> create_msaa();

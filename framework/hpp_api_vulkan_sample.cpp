@@ -26,7 +26,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample<vkb::BindingType::Cpp>::prepare(options))
+	if (!vkb::VulkanSampleCpp::prepare(options))
 	{
 		return false;
 	}
@@ -160,17 +160,17 @@ void HPPApiVulkanSample::create_render_context()
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
-	VulkanSample<vkb::BindingType::Cpp>::create_render_context(surface_priority_list);
+	vkb::VulkanSampleCpp::create_render_context(surface_priority_list);
 }
 
 void HPPApiVulkanSample::prepare_render_context()
 {
-	VulkanSample<vkb::BindingType::Cpp>::prepare_render_context();
+	vkb::VulkanSampleCpp::prepare_render_context();
 }
 
 void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 {
-	VulkanSample<vkb::BindingType::Cpp>::input_event(input_event);
+	vkb::VulkanSampleCpp::input_event(input_event);
 
 	bool gui_captures_event = false;
 

@@ -184,4 +184,4 @@ class HPPOITDepthPeeling : public HPPApiVulkanSample
 	std::unique_ptr<vkb::core::HPPBuffer>                     scene_constants = {};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_oit_depth_peeling();
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_oit_depth_peeling();

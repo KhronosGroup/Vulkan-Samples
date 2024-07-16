@@ -948,7 +948,7 @@ void MultiDrawIndirect::cpu_cull()
 	get_device().get_fence_pool().wait();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multi_draw_indirect()
+std::unique_ptr<vkb::VulkanSampleC> create_multi_draw_indirect()
 {
 	return std::make_unique<MultiDrawIndirect>();
 }

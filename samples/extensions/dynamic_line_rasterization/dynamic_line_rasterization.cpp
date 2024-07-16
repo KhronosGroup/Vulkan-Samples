@@ -522,7 +522,7 @@ bool DynamicLineRasterization::resize(const uint32_t width, const uint32_t heigh
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_line_rasterization()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_line_rasterization()
 {
 	return std::make_unique<DynamicLineRasterization>();
 }

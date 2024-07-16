@@ -25,7 +25,7 @@
  * @brief A sample that implements best practices in handling present resources and swapchain
  * recreation, for example due to window resizing or present mode changes.
  */
-class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
+class SwapchainRecreation : public vkb::VulkanSampleC
 {
 	struct SwapchainObjects
 	{

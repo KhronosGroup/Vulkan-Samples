@@ -22,7 +22,7 @@
 #include "api_vulkan_sample.h"
 #include "scene_graph/components/camera.h"
 
-class TextureCompressionComparison : public vkb::VulkanSample<vkb::BindingType::C>
+class TextureCompressionComparison : public vkb::VulkanSampleC
 {
   public:
 	TextureCompressionComparison()           = default;
