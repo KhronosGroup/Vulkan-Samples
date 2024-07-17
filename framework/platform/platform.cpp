@@ -29,7 +29,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "core/util/logging.hpp"
-#include "filesystem/legacy.h"
 #include "force_close/force_close.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
@@ -40,16 +39,9 @@ namespace vkb
 const uint32_t Platform::MIN_WINDOW_WIDTH  = 420;
 const uint32_t Platform::MIN_WINDOW_HEIGHT = 320;
 
-std::string Platform::external_storage_directory = "";
-
-std::string Platform::temp_directory = "";
-
 Platform::Platform(const PlatformContext &context)
 {
 	arguments = context.arguments();
-
-	external_storage_directory = context.external_storage_directory();
-	temp_directory             = context.temp_directory();
 }
 
 ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
@@ -368,16 +360,6 @@ void Platform::set_window_properties(const Window::OptionalProperties &propertie
 	window_properties.extent.height = properties.extent.height.has_value() ? properties.extent.height.value() : window_properties.extent.height;
 }
 
-const std::string &Platform::get_external_storage_directory()
-{
-	return external_storage_directory;
-}
-
-const std::string &Platform::get_temp_directory()
-{
-	return temp_directory;
-}
-
 std::string &Platform::get_last_error()
 {
 	return last_error;
@@ -398,11 +380,6 @@ Application &Platform::get_app() const
 Window &Platform::get_window()
 {
 	return *window;
-}
-
-void Platform::set_external_storage_directory(const std::string &dir)
-{
-	external_storage_directory = dir;
 }
 
 void Platform::set_last_error(const std::string &error)

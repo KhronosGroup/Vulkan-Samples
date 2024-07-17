@@ -17,6 +17,8 @@
 
 #include "data_path.h"
 
+#include "filesystem/filesystem.hpp"
+
 namespace plugins
 {
 DataPath::DataPath() :
@@ -35,7 +37,8 @@ void DataPath::init(const vkb::CommandParser &parser)
 {
 	if (parser.contains(&data_path_flag))
 	{
-		vkb::Platform::set_external_storage_directory(parser.as<std::string>(&data_path_flag) + "/");
+		auto fs = vkb::filesystem::get();
+		fs->set_external_storage_directory(parser.as<std::string>(&data_path_flag) + "/");
 	}
 }
 

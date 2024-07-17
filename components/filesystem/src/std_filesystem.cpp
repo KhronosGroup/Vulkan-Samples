@@ -140,6 +140,11 @@ void StdFileSystem::remove(const Path &path)
 	}
 }
 
+void StdFileSystem::set_external_storage_directory(const std::string &dir)
+{
+	_external_storage_directory = dir;
+}
+
 const Path &StdFileSystem::external_storage_directory() const
 {
 	return _external_storage_directory;
