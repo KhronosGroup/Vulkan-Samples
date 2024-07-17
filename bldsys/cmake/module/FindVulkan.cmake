@@ -233,6 +233,17 @@ if("FATAL_ERROR" IN_LIST Vulkan_FIND_COMPONENTS)
     list(REMOVE_ITEM Vulkan_FIND_COMPONENTS "FATAL_ERROR")
 endif()
 
+# FindVulkan only works correctly with the default CMAKE_FIND_FRAMEWORK
+# value: FIRST. If LAST it will find the macOS dylibs instead of the iOS
+# frameworks when IOS is true. If ALWAYS it will fail to find the macOS
+# dylibs. If NEVER it will fail to find the iOS frameworks. If frameworks
+# are ever included in the SDK for macOS, the search mechanism will need
+# revisiting.
+if(DEFINED CMAKE_FIND_FRAMEWORK)
+    set( _Vulkan_saved_cmake_find_framework ${CMAKE_FIND_FRAMEWORK} )
+endif()
+set( CMAKE_FIND_FRAMEWORK FIRST )
+
 if(IOS)
     get_filename_component(Vulkan_Target_SDK "$ENV{VULKAN_SDK}/.." REALPATH)
     list(APPEND CMAKE_FRAMEWORK_PATH "${Vulkan_Target_SDK}/iOS/lib")
@@ -520,6 +531,13 @@ if (dxc IN_LIST Vulkan_FIND_COMPONENTS)
             HINTS
             ${_Vulkan_hint_executable_search_paths})
     mark_as_advanced(Vulkan_dxc_EXECUTABLE)
+endif()
+
+if(DEFINED _Vulkan_saved_cmake_find_framework)
+    set(CMAKE_FIND_FRAMEWORK ${saved_cmake_find_framework})
+    unset(_Vulkan_saved_cmake_find_framework)
+else()
+    unset(CMAKE_FIND_FRAMEWORK)
 endif()
 
 if(Vulkan_GLSLC_EXECUTABLE)
