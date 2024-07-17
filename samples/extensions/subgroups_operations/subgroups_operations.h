@@ -303,4 +303,4 @@ class SubgroupsOperations : public ApiVulkanSample
 	void                  create_image_attachement(VkFormat format, uint32_t width, uint32_t height, ImageAttachment &result);
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>>create_subgroups_operations();
+std::unique_ptr<vkb::VulkanSampleC> create_subgroups_operations();

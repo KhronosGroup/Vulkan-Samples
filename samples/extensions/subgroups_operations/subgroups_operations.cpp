@@ -1812,7 +1812,7 @@ void SubgroupsOperations::Wind::recalc()
 	vec.y     = force * glm::sin(rad);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_subgroups_operations()
+std::unique_ptr<vkb::VulkanSampleC> create_subgroups_operations()
 {
 	return std::make_unique<SubgroupsOperations>();
 }
