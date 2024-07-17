@@ -272,9 +272,9 @@ class Gui
 
 	VulkanSampleC &sample;
 
-	std::unique_ptr<core::Buffer> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
 
-	std::unique_ptr<core::Buffer> index_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
 
 	size_t last_vertex_buffer_size;
 

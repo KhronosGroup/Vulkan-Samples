@@ -59,9 +59,9 @@ class DynamicRendering : public ApiVulkanSample
 		float     modelscale = 0.05f;
 	} ubo_vs;
 
-	std::unique_ptr<vkb::sg::SubMesh>  skybox;
-	std::unique_ptr<vkb::sg::SubMesh>  object;
-	std::unique_ptr<vkb::core::Buffer> ubo;
+	std::unique_ptr<vkb::sg::SubMesh>   skybox;
+	std::unique_ptr<vkb::sg::SubMesh>   object;
+	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	VkPipeline            model_pipeline{VK_NULL_HANDLE};
 	VkPipeline            skybox_pipeline{VK_NULL_HANDLE};

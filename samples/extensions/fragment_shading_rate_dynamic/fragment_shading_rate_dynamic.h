@@ -97,7 +97,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		uint32_t   n_rates;
 		uint32_t   _pad;
 	};
-	std::unique_ptr<vkb::core::Buffer> frequency_information_params;
+	std::unique_ptr<vkb::core::BufferC> frequency_information_params;
 
 	struct
 	{
@@ -121,7 +121,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> scene;
+		std::unique_ptr<vkb::core::BufferC> scene;
 	} uniform_buffers;
 
 	struct UBOScene

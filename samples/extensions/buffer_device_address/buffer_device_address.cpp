@@ -174,18 +174,18 @@ static constexpr unsigned mesh_strips            = mesh_height - 1;
 static constexpr unsigned mesh_indices_per_strip = 2 * mesh_width;
 static constexpr unsigned mesh_num_indices       = mesh_strips * (mesh_indices_per_strip + 1);        // Add one index to handle primitive restart.
 
-std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
+std::unique_ptr<vkb::core::BufferC> BufferDeviceAddress::create_index_buffer()
 {
 	constexpr size_t size = mesh_num_indices * sizeof(uint16_t);
 
 	// Build a simple subdivided quad mesh. We can tweak the vertices later in compute to create a simple cloth-y/wave-like effect.
 
-	auto index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        size,
-	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
+	auto index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         size,
+	                                                         VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
-	auto  staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), size, nullptr);
+	auto  staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), size, nullptr);
 	auto *buffer         = reinterpret_cast<uint16_t *>(staging_buffer.map());
 	for (unsigned strip = 0; strip < mesh_strips; strip++)
 	{

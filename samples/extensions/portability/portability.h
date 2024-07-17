@@ -45,7 +45,7 @@ class Portability : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> matrices;
+		std::unique_ptr<vkb::core::BufferC> matrices;
 	} uniform_buffers;
 
 	struct UBOVS

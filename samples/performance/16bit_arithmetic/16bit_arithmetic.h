@@ -48,7 +48,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSampleC
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> subpasses;
 	std::vector<VkClearValue>                              clear_values;
 
-	std::unique_ptr<vkb::core::Buffer>    blob_buffer;
+	std::unique_ptr<vkb::core::BufferC>   blob_buffer;
 	std::unique_ptr<vkb::core::Image>     image;
 	std::unique_ptr<vkb::core::ImageView> image_view;
 	std::unique_ptr<vkb::core::Sampler>   sampler;

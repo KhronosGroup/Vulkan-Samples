@@ -246,7 +246,6 @@ set(CORE_FILES
     core/query_pool.h
     core/acceleration_structure.h
     core/hpp_allocated.h
-    core/hpp_buffer.h
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
     core/hpp_debug.h
@@ -285,7 +284,6 @@ set(CORE_FILES
     core/swapchain.cpp
     core/command_buffer.cpp
     core/allocated.cpp
-    core/buffer.cpp
     core/image_core.cpp
     core/image_view.cpp
     core/sampled_image.cpp
@@ -295,7 +293,6 @@ set(CORE_FILES
     core/render_pass.cpp
     core/query_pool.cpp
     core/acceleration_structure.cpp
-    core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp
     core/hpp_debug.cpp

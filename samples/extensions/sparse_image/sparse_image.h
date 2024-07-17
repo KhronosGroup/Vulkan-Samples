@@ -324,13 +324,13 @@ class SparseImage : public ApiVulkanSample
 
 	VkQueue sparse_queue;
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
 
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	size_t                             index_count;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	size_t                              index_count;
 
-	std::unique_ptr<vkb::core::Buffer> mvp_buffer;
-	std::unique_ptr<vkb::core::Buffer> frag_settings_data_buffer;
+	std::unique_ptr<vkb::core::BufferC> mvp_buffer;
+	std::unique_ptr<vkb::core::BufferC> frag_settings_data_buffer;
 
 	glm::mat4 current_mvp_transform;
 

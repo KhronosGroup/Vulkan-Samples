@@ -18,7 +18,6 @@
 #include <hpp_api_vulkan_sample.h>
 
 #include <common/hpp_vk_common.h>
-#include <core/hpp_buffer.h>
 #include <hpp_gltf_loader.h>
 
 // Instantiate the default dispatcher
@@ -875,7 +874,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> bufferCopyRegions;
@@ -933,7 +932,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
@@ -997,7 +996,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;

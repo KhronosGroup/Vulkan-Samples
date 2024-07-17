@@ -72,14 +72,14 @@ class HPPHlslShaders : public HPPApiVulkanSample
   private:
 	vk::DescriptorSet                     base_descriptor_set;
 	vk::DescriptorSetLayout               base_descriptor_set_layout;
-	std::unique_ptr<vkb::core::HPPBuffer> index_buffer;
+	std::unique_ptr<vkb::core::BufferCpp> index_buffer;
 	vk::Pipeline                          pipeline;
 	vk::PipelineLayout                    pipeline_layout;
 	vk::DescriptorSetLayout               sampler_descriptor_set_layout;
 	HPPTexture                            texture;
 	UBOVS                                 ubo_vs;
-	std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer_vs;
-	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferCpp> uniform_buffer_vs;
+	std::unique_ptr<vkb::core::BufferCpp> vertex_buffer;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_hlsl_shaders();

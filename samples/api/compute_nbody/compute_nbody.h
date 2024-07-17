@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,13 +46,13 @@ class ComputeNBody : public ApiVulkanSample
 	// Resources for the graphics part of the example
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> uniform_buffer;               // Contains scene matrices
-		VkDescriptorSetLayout              descriptor_set_layout;        // Particle system rendering shader binding layout
-		VkDescriptorSet                    descriptor_set;               // Particle system rendering shader bindings
-		VkPipelineLayout                   pipeline_layout;              // Layout of the graphics pipeline
-		VkPipeline                         pipeline;                     // Particle rendering pipeline
-		VkSemaphore                        semaphore;                    // Execution dependency between compute & graphic submission
-		uint32_t                           queue_family_index;
+		std::unique_ptr<vkb::core::BufferC> uniform_buffer;               // Contains scene matrices
+		VkDescriptorSetLayout               descriptor_set_layout;        // Particle system rendering shader binding layout
+		VkDescriptorSet                     descriptor_set;               // Particle system rendering shader bindings
+		VkPipelineLayout                    pipeline_layout;              // Layout of the graphics pipeline
+		VkPipeline                          pipeline;                     // Particle rendering pipeline
+		VkSemaphore                         semaphore;                    // Execution dependency between compute & graphic submission
+		uint32_t                            queue_family_index;
 		struct
 		{
 			glm::mat4 projection;
@@ -64,22 +64,22 @@ class ComputeNBody : public ApiVulkanSample
 	// Resources for the compute part of the example
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> storage_buffer;               // (Shader) storage buffer object containing the particles
-		std::unique_ptr<vkb::core::Buffer> uniform_buffer;               // Uniform buffer object containing particle system parameters
-		VkQueue                            queue;                        // Separate queue for compute commands (queue family may differ from the one used for graphics)
-		VkCommandPool                      command_pool;                 // Use a separate command pool (queue family may differ from the one used for graphics)
-		VkCommandBuffer                    command_buffer;               // Command buffer storing the dispatch commands and barriers
-		VkSemaphore                        semaphore;                    // Execution dependency between compute & graphic submission
-		VkDescriptorSetLayout              descriptor_set_layout;        // Compute shader binding layout
-		VkDescriptorSet                    descriptor_set;               // Compute shader bindings
-		VkPipelineLayout                   pipeline_layout;              // Layout of the compute pipeline
-		VkPipeline                         pipeline_calculate;           // Compute pipeline for N-Body velocity calculation (1st pass)
-		VkPipeline                         pipeline_integrate;           // Compute pipeline for euler integration (2nd pass)
-		VkPipeline                         blur;
-		VkPipelineLayout                   pipeline_layout_blur;
-		VkDescriptorSetLayout              descriptor_set_layout_blur;
-		VkDescriptorSet                    descriptor_set_blur;
-		uint32_t                           queue_family_index;
+		std::unique_ptr<vkb::core::BufferC> storage_buffer;               // (Shader) storage buffer object containing the particles
+		std::unique_ptr<vkb::core::BufferC> uniform_buffer;               // Uniform buffer object containing particle system parameters
+		VkQueue                             queue;                        // Separate queue for compute commands (queue family may differ from the one used for graphics)
+		VkCommandPool                       command_pool;                 // Use a separate command pool (queue family may differ from the one used for graphics)
+		VkCommandBuffer                     command_buffer;               // Command buffer storing the dispatch commands and barriers
+		VkSemaphore                         semaphore;                    // Execution dependency between compute & graphic submission
+		VkDescriptorSetLayout               descriptor_set_layout;        // Compute shader binding layout
+		VkDescriptorSet                     descriptor_set;               // Compute shader bindings
+		VkPipelineLayout                    pipeline_layout;              // Layout of the compute pipeline
+		VkPipeline                          pipeline_calculate;           // Compute pipeline for N-Body velocity calculation (1st pass)
+		VkPipeline                          pipeline_integrate;           // Compute pipeline for euler integration (2nd pass)
+		VkPipeline                          blur;
+		VkPipelineLayout                    pipeline_layout_blur;
+		VkDescriptorSetLayout               descriptor_set_layout_blur;
+		VkDescriptorSet                     descriptor_set_blur;
+		uint32_t                            queue_family_index;
 		struct ComputeUBO
 		{                              // Compute shader uniform block object
 			float   delta_time;        //		Frame delta time

@@ -546,10 +546,10 @@ void SparseImage::update_and_generate()
 	    virtual_texture.update_set.begin(), virtual_texture.update_set.end(), [this](auto page_index) { return get_mip_level(page_index) == 0; });
 	size_t level_zero_index = 0;
 
-	std::unique_ptr<vkb::core::Buffer> multi_page_buffer;
+	std::unique_ptr<vkb::core::BufferC> multi_page_buffer;
 	if (0 < level_zero_count)
 	{
-		multi_page_buffer = std::make_unique<vkb::core::Buffer>(get_device(), level_zero_count * virtual_texture.page_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+		multi_page_buffer = std::make_unique<vkb::core::BufferC>(get_device(), level_zero_count * virtual_texture.page_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 	}
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -729,7 +729,7 @@ void SparseImage::free_unused_memory()
 
 	if (memory_defragmentation && !pages_to_reallocate.empty())
 	{
-		std::unique_ptr<vkb::core::Buffer> reallocation_buffer = std::make_unique<vkb::core::Buffer>(get_device(), virtual_texture.page_size * pages_to_reallocate.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		std::unique_ptr<vkb::core::BufferC> reallocation_buffer = std::make_unique<vkb::core::BufferC>(get_device(), virtual_texture.page_size * pages_to_reallocate.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 		VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1181,8 +1181,8 @@ void SparseImage::create_vertex_buffer()
 	vertices[2].uv = {1.0f, 1.0f};
 	vertices[3].uv = {0.0f, 1.0f};
 
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
-	vertex_buffer       = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
+	vertex_buffer       = std::make_unique<vkb::core::BufferC>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1204,8 +1204,8 @@ void SparseImage::create_index_buffer()
 	VkDeviceSize             indices_size = sizeof(indices[0]) * indices.size();
 	index_count                           = indices.size();
 
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
-	index_buffer        = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
+	index_buffer        = std::make_unique<vkb::core::BufferC>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1330,10 +1330,10 @@ void SparseImage::update_frag_settings()
 void SparseImage::create_uniform_buffers()
 {
 	VkDeviceSize buffer_size = sizeof(MVP);
-	mvp_buffer               = std::make_unique<vkb::core::Buffer>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	mvp_buffer               = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
 	buffer_size               = sizeof(FragSettingsData);
-	frag_settings_data_buffer = std::make_unique<vkb::core::Buffer>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	frag_settings_data_buffer = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
 /**

@@ -258,11 +258,11 @@ void OITLinkedLists::create_fragment_resources(const uint32_t width, const uint3
 	{
 		fragment_max_count                  = width * height * kFragmentsPerPixelAverage;
 		const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
-		fragment_buffer                     = std::make_unique<vkb::core::Buffer>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		fragment_buffer                     = std::make_unique<vkb::core::BufferC>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 	}
 
 	{
-		fragment_counter = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		fragment_counter = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 	}
 }
 
@@ -315,8 +315,8 @@ void OITLinkedLists::load_assets()
 
 void OITLinkedLists::create_constant_buffers()
 {
-	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instance_data   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	scene_constants = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_data   = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void OITLinkedLists::create_descriptors()

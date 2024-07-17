@@ -47,7 +47,7 @@ struct RequestFeature
 template <typename T>
 struct CopyBuffer
 {
-	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *buffer_name)
+	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::BufferC> &buffers, const char *buffer_name)
 	{
 		auto iter = buffers.find(buffer_name);
 		if (iter == buffers.cend())
@@ -1279,13 +1279,13 @@ void MobileNerf::create_static_object_buffers(int model_index, int sub_model_ind
 	auto   index_buffer_size  = model.indices.size() * sizeof(model.indices[0]);
 
 	// Create destination buffers
-	model.vertex_buffer = std::make_unique<vkb::core::Buffer>(
+	model.vertex_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    vertex_buffer_size,
 	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	    VMA_MEMORY_USAGE_GPU_ONLY);
 	model.vertex_buffer->set_debug_name(fmt::format("Model #{} Sub-Model #{} vertices", model_index, sub_model_index));
-	model.index_buffer = std::make_unique<vkb::core::Buffer>(
+	model.index_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    index_buffer_size,
 	    VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -1293,14 +1293,14 @@ void MobileNerf::create_static_object_buffers(int model_index, int sub_model_ind
 	model.index_buffer->set_debug_name(fmt::format("Model #{} Sub-Model #{} indices", model_index, sub_model_index));
 
 	// Create staging buffers
-	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = std::make_unique<vkb::core::Buffer>(
+	std::unique_ptr<vkb::core::BufferC> staging_vertex_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    vertex_buffer_size,
 	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 	    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_vertex_buffer->update(model.vertices);
 
-	std::unique_ptr<vkb::core::Buffer> staging_index_buffer = std::make_unique<vkb::core::Buffer>(
+	std::unique_ptr<vkb::core::BufferC> staging_index_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    index_buffer_size,
 	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -1324,16 +1324,16 @@ void MobileNerf::create_uniforms()
 	for (int i = 0; i < model_path.size(); i++)
 	{
 		LOGI("Creating camera view uniform buffer for model {}", i);
-		uniform_buffers[i] = std::make_unique<vkb::core::Buffer>(get_device(),
-		                                                         sizeof(global_uniform),
-		                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                          sizeof(global_uniform),
+		                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 		LOGI("Creating mlp weights uniform buffer for model {}", i);
-		weights_buffers[i] = std::make_unique<vkb::core::Buffer>(get_device(),
-		                                                         sizeof(MLP_Weights),
-		                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+		weights_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                          sizeof(MLP_Weights),
+		                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffers();
@@ -1553,14 +1553,14 @@ void MobileNerf::prepare_instance_data()
 
 	auto instance_buffer_size = instance_data.size() * sizeof(InstanceData);
 
-	instance_buffer = std::make_unique<vkb::core::Buffer>(
+	instance_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    instance_buffer_size,
 	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy over the data for each of the models
-	auto staging_instance_buffer = std::make_unique<vkb::core::Buffer>(
+	auto staging_instance_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    instance_buffer_size,
 	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,

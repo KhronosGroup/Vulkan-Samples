@@ -69,9 +69,9 @@ class RayQueries : public ApiVulkanSample
 	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
 
 	// Buffers
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
-	std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> index_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer{nullptr};
 
 	// Ray tracing structures
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR  acceleration_structure_features{};

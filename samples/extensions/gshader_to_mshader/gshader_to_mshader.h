@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,10 +45,10 @@ class GshaderToMshader : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::SubMesh> object;
 	std::unique_ptr<vkb::sg::SubMesh> storage_buffer_object;
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_gs;
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_ms;
-	std::unique_ptr<vkb::core::Buffer> meshlet_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_gs;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_ms;
+	std::unique_ptr<vkb::core::BufferC> meshlet_buffer;
 
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
