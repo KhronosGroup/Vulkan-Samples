@@ -240,9 +240,9 @@ endif()
 # are ever included in the SDK for macOS, the search mechanism will need
 # revisiting.
 if(DEFINED CMAKE_FIND_FRAMEWORK)
-    set( _Vulkan_saved_cmake_find_framework ${CMAKE_FIND_FRAMEWORK} )
+    set(_Vulkan_saved_cmake_find_framework ${CMAKE_FIND_FRAMEWORK})
+    set(CMAKE_FIND_FRAMEWORK FIRST)
 endif()
-set( CMAKE_FIND_FRAMEWORK FIRST )
 
 if(IOS)
     get_filename_component(Vulkan_Target_SDK "$ENV{VULKAN_SDK}/.." REALPATH)
@@ -534,7 +534,7 @@ if (dxc IN_LIST Vulkan_FIND_COMPONENTS)
 endif()
 
 if(DEFINED _Vulkan_saved_cmake_find_framework)
-    set(CMAKE_FIND_FRAMEWORK ${saved_cmake_find_framework})
+    set(CMAKE_FIND_FRAMEWORK ${_Vulkan_saved_cmake_find_framework})
     unset(_Vulkan_saved_cmake_find_framework)
 else()
     unset(CMAKE_FIND_FRAMEWORK)
