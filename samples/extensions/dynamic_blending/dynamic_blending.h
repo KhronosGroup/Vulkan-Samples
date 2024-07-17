@@ -87,7 +87,7 @@ class DynamicBlending : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> common;
+		std::unique_ptr<vkb::core::BufferC> common;
 	} uniform_buffers;
 
 	struct
@@ -98,19 +98,19 @@ class DynamicBlending : public ApiVulkanSample
 
 	std::vector<std::string> blend_factor_names;
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count = 0;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	uint32_t                            index_count = 0;
 
 	std::vector<Vertex> vertices;
 	uint32_t            vertex_buffer_size;
 	uint8_t             current_face_index = 1;
 
-	std::unique_ptr<vkb::core::Buffer> camera_ubo;
-	std::array<bool, 8>                color_bit;
+	std::unique_ptr<vkb::core::BufferC> camera_ubo;
+	std::array<bool, 8>                 color_bit;
 
-	ColorUbo                           color;
-	std::unique_ptr<vkb::core::Buffer> color_ubo;
+	ColorUbo                            color;
+	std::unique_ptr<vkb::core::BufferC> color_ubo;
 
 	VkDescriptorPool      descriptor_pool;
 	VkDescriptorSetLayout descriptor_set_layout;

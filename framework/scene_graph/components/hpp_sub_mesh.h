@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <core/hpp_buffer.h>
 #include <scene_graph/components/hpp_material.h>
 #include <scene_graph/components/sub_mesh.h>
 
@@ -37,9 +36,9 @@ class HPPSubMesh : private vkb::sg::SubMesh
   public:
 	using vkb::sg::SubMesh::vertex_indices;
 
-	vkb::core::HPPBuffer const &get_index_buffer() const
+	vkb::core::BufferCpp const &get_index_buffer() const
 	{
-		return reinterpret_cast<vkb::core::HPPBuffer const &>(*vkb::sg::SubMesh::index_buffer);
+		return reinterpret_cast<vkb::core::BufferCpp const &>(*vkb::sg::SubMesh::index_buffer);
 	}
 
 	vk::IndexType get_index_type() const
@@ -47,14 +46,9 @@ class HPPSubMesh : private vkb::sg::SubMesh
 		return static_cast<vk::IndexType>(vkb::sg::SubMesh::index_type);
 	}
 
-	vkb::scene_graph::components::HPPMaterial const *get_material() const
+	vkb::core::BufferCpp const &get_vertex_buffer(std::string const &name) const
 	{
-		return reinterpret_cast<vkb::scene_graph::components::HPPMaterial const *>(vkb::sg::SubMesh::get_material());
-	}
-
-	vkb::core::HPPBuffer const &get_vertex_buffer(std::string const &name) const
-	{
-		return reinterpret_cast<vkb::core::HPPBuffer const &>(vkb::sg::SubMesh::vertex_buffers.at(name));
+		return reinterpret_cast<vkb::core::BufferCpp const &>(vkb::sg::SubMesh::vertex_buffers.at(name));
 	}
 };
 }        // namespace components

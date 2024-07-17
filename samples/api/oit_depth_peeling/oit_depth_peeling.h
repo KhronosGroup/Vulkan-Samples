@@ -73,7 +73,7 @@ class OITDepthPeeling : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::SubMesh> object;
 	Texture                           background_texture;
 
-	std::unique_ptr<vkb::core::Buffer> scene_constants;
+	std::unique_ptr<vkb::core::BufferC> scene_constants;
 
 	VkSampler point_sampler = VK_NULL_HANDLE;
 
