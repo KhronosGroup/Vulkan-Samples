@@ -327,7 +327,12 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](vk::ExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	}
 #endif
 
 #ifdef USE_VALIDATION_LAYER_FEATURES

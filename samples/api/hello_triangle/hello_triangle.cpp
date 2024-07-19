@@ -170,14 +170,14 @@ void HelloTriangle::init_instance(Context                         &context,
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
 
-	std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data()));
+	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
 	std::vector<const char *> active_instance_extensions(required_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	bool has_debug_report = false;
-	for (const auto &ext : instance_extensions)
+	for (const auto &ext : available_instance_extensions)
 	{
 		if (strcmp(ext.extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME) == 0)
 		{
@@ -197,7 +197,12 @@ void HelloTriangle::init_instance(Context                         &context,
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	}
 #endif
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -218,7 +223,7 @@ void HelloTriangle::init_instance(Context                         &context,
 #	pragma error Platform not supported
 #endif
 
-	if (!validate_extensions(active_instance_extensions, instance_extensions))
+	if (!validate_extensions(active_instance_extensions, available_instance_extensions))
 	{
 		throw std::runtime_error("Required instance extensions are missing.");
 	}
@@ -274,7 +279,12 @@ void HelloTriangle::init_instance(Context                         &context,
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	}
 #endif
 
 	// Create the Vulkan instance

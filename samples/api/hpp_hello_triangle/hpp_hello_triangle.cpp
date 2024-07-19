@@ -435,7 +435,12 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](vk::ExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	}
 #endif
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -499,7 +504,12 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](vk::ExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	}
 #endif
 
 	// Create the Vulkan instance

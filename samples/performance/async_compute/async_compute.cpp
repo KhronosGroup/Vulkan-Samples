@@ -40,8 +40,8 @@ AsyncComputeSample::AsyncComputeSample()
 
 void AsyncComputeSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-#ifdef VK_ENABLE_BETA_EXTENSIONS
-	// We need to enable the mutableComparisonSamplers feature of the VK_KHR_portability_subset extension
+#ifdef VKB_ENABLE_PORTABILITY
+	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
 	auto &requested_portability_subset_features                     = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
 	requested_portability_subset_features.mutableComparisonSamplers = VK_TRUE;
 #endif

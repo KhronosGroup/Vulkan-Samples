@@ -439,14 +439,16 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
 	// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
-	// Note this check is necessary in the short term for backwards compatibility with SDKs < 1.3.272 without VK_EXT_layer_settings
+	// For backwards compatibility with SDKs < 1.3.272 without VK_EXT_layer_settings, the remainder of this custom override is required
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
 	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 	{
+		// Run standard create_instance() from framework (with layer settings support) and return
 		return VulkanSample::create_instance(headless);
 	}
 
+	// Run remainder of this custom create_instance() (without layer settings support) and return
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -458,7 +460,12 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 #if (defined(VKB_ENABLE_PORTABILITY))
-	enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	}
 #endif
 
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
@@ -482,7 +489,12 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	instance_create_info.ppEnabledLayerNames     = validation_layers.data();
 	instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		instance_create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	}
 #endif
 	instance_create_info.pNext = &validation_features;
 
