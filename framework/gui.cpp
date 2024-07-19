@@ -653,6 +653,11 @@ void Gui::draw(CommandBuffer &command_buffer)
 
 void Gui::draw(VkCommandBuffer command_buffer)
 {
+	draw(command_buffer, pipeline, pipeline_layout->get_handle(), descriptor_set);
+}
+
+void Gui::draw(VkCommandBuffer command_buffer, const VkPipeline pipeline, const VkPipelineLayout pipeline_layout, const VkDescriptorSet descriptor_set)
+{
 	if (!visible)
 	{
 		return;
@@ -669,13 +674,13 @@ void Gui::draw(VkCommandBuffer command_buffer)
 	}
 
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->get_handle(), 0, 1, &descriptor_set, 0, NULL);
+	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
 	// Push constants
 	auto push_transform = glm::mat4(1.0f);
 	push_transform      = glm::translate(push_transform, glm::vec3(-1.0f, -1.0f, 0.0f));
 	push_transform      = glm::scale(push_transform, glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
-	vkCmdPushConstants(command_buffer, pipeline_layout->get_handle(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &push_transform);
+	vkCmdPushConstants(command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &push_transform);
 
 	VkDeviceSize offsets[1] = {0};
 
@@ -727,6 +732,16 @@ Gui::StatsView &Gui::get_stats_view()
 Drawer &Gui::get_drawer()
 {
 	return drawer;
+}
+
+VkSampler Gui::get_sampler() const
+{
+	return sampler->get_handle();
+}
+
+VkImageView Gui::get_font_image_view() const
+{
+	return font_image_view->get_handle();
 }
 
 Font &Gui::get_font(const std::string &font_name)

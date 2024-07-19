@@ -273,3 +273,9 @@ Demonstrates how to use https://en.wikipedia.org/wiki/Printf[Printf] statements 
 *Extension:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
 
 Rendering using primitive clipping and depth clipping configured by dynamic pipeline state.
+
+=== xref:./{extension_samplespath}dynamic_multisample_rasterization/README.adoc[Dynamic multisample rasterization]
+
+*Extensions:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_line_rasterization`], https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
+
+Demonstrate how to use dynamic multisample rasterization (MSAA)
