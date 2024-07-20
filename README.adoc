@@ -26,7 +26,7 @@ endif::[]
 image::banner.jpg[Vulkan Samples banner]
 
 ifndef::site-gen-antora[]
-== Vulkan documentation site
+== Vulkan Documentation Site
 
 Documentation for the samples is best viewed at the new link:https://docs.vulkan.org/samples/latest/README.html[Vulkan Documentation Site]. The documentation uses AsciiDoc which isn't fully supported by github.
 
