@@ -536,8 +536,6 @@ endif()
 if(DEFINED _Vulkan_saved_cmake_find_framework)
     set(CMAKE_FIND_FRAMEWORK ${_Vulkan_saved_cmake_find_framework})
     unset(_Vulkan_saved_cmake_find_framework)
-else()
-    unset(CMAKE_FIND_FRAMEWORK)
 endif()
 
 if(Vulkan_GLSLC_EXECUTABLE)
