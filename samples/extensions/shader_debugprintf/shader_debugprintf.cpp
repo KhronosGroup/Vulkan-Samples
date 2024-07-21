@@ -460,11 +460,13 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 #if (defined(VKB_ENABLE_PORTABILITY))
+	bool portability_enumeration_available = false;
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
 	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		portability_enumeration_available = true;
 	}
 #endif
 
@@ -489,9 +491,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	instance_create_info.ppEnabledLayerNames     = validation_layers.data();
 	instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
 #if (defined(VKB_ENABLE_PORTABILITY))
-	if (std::any_of(available_instance_extensions.begin(),
-	                available_instance_extensions.end(),
-	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	if (portability_enumeration_available)
 	{
 		instance_create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	}
