@@ -214,14 +214,17 @@ void DescriptorIndexing::create_immutable_sampler_descriptor_set()
 
 void DescriptorIndexing::create_bindless_descriptors()
 {
-	VkDescriptorSetLayoutBinding binding = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+	uint32_t descriptorCount = descriptor_indexing_properties.maxDescriptorSetUpdateAfterBindSampledImages;
+
 #if defined(PLATFORM__MACOS)
-	                                                                                        // on macOS variable descriptor counts don't seem to work, use max expected count
-	                                                                                        std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform));
-#else
-	                                                                                        descriptor_indexing_properties.maxDescriptorSetUpdateAfterBindSampledImages);
+	// On Apple Vulkan API <= 1.2.283 variable descriptor counts don't work, use max expected count instead. Fixed in later versions.
+	if (get_device().get_gpu().get_properties().apiVersion <= VK_MAKE_API_VERSION(0, 1, 2, 283))
+	{
+		descriptorCount = std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform);
+	}
 #endif
 
+	VkDescriptorSetLayoutBinding    binding                = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 0, descriptorCount);
 	VkDescriptorSetLayoutCreateInfo set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(&binding, 1);
 
 	// We're going to use update-after-bind, so we need to make sure the flag is set correctly in the set layout.
@@ -261,13 +264,18 @@ void DescriptorIndexing::create_bindless_descriptors()
 
 	// We're going to allocate two separate descriptor sets from the same pool, and here VARIABLE_DESCRIPTOR_COUNT comes in handy!
 	// For the non-uniform indexing part, we allocate few descriptors, and for the streaming case, we allocate a fairly large ring buffer of descriptors we can play around with.
+	uint32_t poolCount = NumDescriptorsStreaming + NumDescriptorsNonUniform;
+
 #if defined(PLATFORM__MACOS)
-	// on macOS variable descriptor counts don't seem to work, use pool size of max expected count x 2 (for 2 allocations)
-	VkDescriptorPoolSize pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform) * 2);
-#else
-	VkDescriptorPoolSize pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NumDescriptorsStreaming + NumDescriptorsNonUniform);
+	// On Apple Vulkan API <= 1.2.283 variable descriptor counts don't work, use pool size of max expected count x 2 (for 2 allocations). Fixed in later versions.
+	if (get_device().get_gpu().get_properties().apiVersion <= VK_MAKE_API_VERSION(0, 1, 2, 283))
+	{
+		poolCount = std::max(NumDescriptorsStreaming, NumDescriptorsNonUniform) * 2;
+	}
 #endif
-	VkDescriptorPoolCreateInfo pool = vkb::initializers::descriptor_pool_create_info(1, &pool_size, 2);
+
+	VkDescriptorPoolSize       pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, poolCount);
+	VkDescriptorPoolCreateInfo pool      = vkb::initializers::descriptor_pool_create_info(1, &pool_size, 2);
 
 	// The pool is marked update-after-bind. Be aware that there is a global limit to the number of descriptors can be allocated at any one time.
 	// UPDATE_AFTER_BIND descriptors is somewhat of a precious resource, but min-spec in Vulkan is at least 500k descriptors, which should be more than enough.
