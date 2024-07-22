@@ -260,7 +260,7 @@ cmake --build build/mac --config Release --target vulkan_samples -j4
 `Step 3.` Run the *Vulkan Samples* application to display the help message
 
 ----
-./build/mac/app/bin/Release/x86_64/vulkan_samples --help
+./build/mac/app/bin/Release/arm64/vulkan_samples --help
 ----
 
 == iOS
