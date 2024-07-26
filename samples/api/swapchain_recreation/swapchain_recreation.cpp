@@ -975,7 +975,7 @@ SwapchainRecreation::~SwapchainRecreation()
 
 std::unique_ptr<vkb::Device> SwapchainRecreation::create_device(vkb::PhysicalDevice &gpu)
 {
-	std::unique_ptr<vkb::Device> device = vkb::VulkanSample<vkb::BindingType::C>::create_device(gpu);
+	std::unique_ptr<vkb::Device> device = vkb::VulkanSampleC::create_device(gpu);
 
 	has_maintenance1 = get_instance().is_enabled(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME) &&
 	                   get_instance().is_enabled(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME) &&

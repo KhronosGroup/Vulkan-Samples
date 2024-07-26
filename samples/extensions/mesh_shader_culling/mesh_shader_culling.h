@@ -70,4 +70,4 @@ class MeshShaderCulling : public ApiVulkanSample
 	void get_query_results();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shader_culling();
+std::unique_ptr<vkb::VulkanSampleC> create_mesh_shader_culling();

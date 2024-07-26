@@ -77,4 +77,4 @@ class DynamicRendering : public ApiVulkanSample
 	bool enable_dynamic;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering();
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_rendering();

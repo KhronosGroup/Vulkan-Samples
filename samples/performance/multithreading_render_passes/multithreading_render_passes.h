@@ -35,7 +35,7 @@ struct alignas(16) ShadowUniform
  * This sample shows performance improvement when using multithreading with
  * multiple render passes and primary level command buffers.
  */
-class MultithreadingRenderPasses : public vkb::VulkanSample<vkb::BindingType::C>
+class MultithreadingRenderPasses : public vkb::VulkanSampleC
 {
   public:
 	enum class MultithreadingMode
@@ -178,4 +178,4 @@ class MultithreadingRenderPasses : public vkb::VulkanSample<vkb::BindingType::C>
 	void draw_main_pass(vkb::CommandBuffer &command_buffer);
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multithreading_render_passes();
+std::unique_ptr<vkb::VulkanSampleC> create_multithreading_render_passes();

@@ -316,7 +316,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 		instance_info.pNext = &debug_utils_create_info;
 	}
-	else
+	else if (has_debug_report)
 	{
 		debug_report_create_info = vk::DebugReportCallbackCreateInfoEXT(
 		    vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning, debug_callback);
@@ -361,7 +361,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	{
 		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(debug_utils_create_info);
 	}
-	else
+	else if (has_debug_report)
 	{
 		debug_report_callback = handle.createDebugReportCallbackEXT(debug_report_create_info);
 	}

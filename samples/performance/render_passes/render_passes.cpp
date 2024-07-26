@@ -173,7 +173,7 @@ void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb
 	command_buffer.end_render_pass();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_render_passes()
+std::unique_ptr<vkb::VulkanSampleC> create_render_passes()
 {
 	return std::make_unique<RenderPassesSample>();
 }

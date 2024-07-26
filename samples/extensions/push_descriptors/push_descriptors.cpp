@@ -391,7 +391,7 @@ void PushDescriptors::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_push_descriptors()
+std::unique_ptr<vkb::VulkanSampleC> create_push_descriptors()
 {
 	return std::make_unique<PushDescriptors>();
 }

@@ -398,7 +398,7 @@ void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shader_barycentric()
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shader_barycentric()
 {
 	return std::make_unique<FragmentShaderBarycentric>();
 }

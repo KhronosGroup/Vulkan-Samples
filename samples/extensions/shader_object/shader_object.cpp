@@ -1772,39 +1772,39 @@ void ShaderObject::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		imgui_slider(&iterate_basic, "Basic Linked Shader Set:",
 		             basic_vert_shaders[current_basic_linked_shaders[selected_basic_object]]->get_name(),
-		             &current_basic_linked_shaders[selected_basic_object], basic_vert_shaders.size() - 1,
+		             &current_basic_linked_shaders[selected_basic_object], static_cast<uint32_t>(basic_vert_shaders.size() - 1),
 		             slider_spacing, checkbox_spacing);
 
 		ImGui::SliderInt("Selected Material Object:", &selected_material_object, 0, num_material_objects - 1);
 
 		imgui_slider(&iterate_material_vert, "Material Vert Shader:",
 		             material_vert_shaders[current_material_shaders[selected_material_object].vert]->get_name(),
-		             &current_material_shaders[selected_material_object].vert, material_vert_shaders.size() - 1,
+		             &current_material_shaders[selected_material_object].vert, static_cast<uint32_t>(material_vert_shaders.size() - 1),
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_material_geo, "Material Geo Shader:",
 		             material_geo_shaders[current_material_shaders[selected_material_object].geo]->get_name(),
-		             &current_material_shaders[selected_material_object].geo, material_geo_shaders.size() - 1,
+		             &current_material_shaders[selected_material_object].geo, static_cast<uint32_t>(material_geo_shaders.size() - 1),
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_material_frag, "Material Frag Shader:",
 		             material_frag_shaders[current_material_shaders[selected_material_object].frag]->get_name(),
-		             &current_material_shaders[selected_material_object].frag, material_frag_shaders.size() - 1,
+		             &current_material_shaders[selected_material_object].frag, static_cast<uint32_t>(material_frag_shaders.size() - 1),
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_post_process, "Post Process Frag Shader:",
 		             post_process_frag_shaders[current_post_process_shader]->get_name(),
-		             &current_post_process_shader, post_process_frag_shaders.size() - 1,
+		             &current_post_process_shader, static_cast<uint32_t>(post_process_frag_shaders.size() - 1),
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_output, "Output Format:",
 		             supported_output_formats[current_output_format].name.c_str(),
-		             &current_output_format, supported_output_formats.size() - 1,
+		             &current_output_format, static_cast<uint32_t>(supported_output_formats.size() - 1),
 		             slider_spacing, checkbox_spacing);
 
 		imgui_slider(&iterate_depth, "Depth Format:",
 		             supported_depth_formats[current_depth_format].name,
-		             &current_depth_format, supported_depth_formats.size() - 1,
+		             &current_depth_format, static_cast<uint32_t>(supported_depth_formats.size() - 1),
 		             slider_spacing, checkbox_spacing);
 
 		if (drawer.button("Randomize All"))
@@ -1830,7 +1830,7 @@ void ShaderObject::on_update_ui_overlay(vkb::Drawer &drawer)
 		ImGui::Text("16.667 ms");
 		ImGui::SameLine(-font_size);
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
-		ImGui::PlotLines("##Frame Times", timestamp_values.data(), timestamp_values.size(), current_timestamp + 1, 0, 0.0f,
+		ImGui::PlotLines("##Frame Times", timestamp_values.data(), static_cast<uint32_t>(timestamp_values.size()), current_timestamp + 1, 0, 0.0f,
 		                 16.667f, ImVec2(1.08f * width * dpi_factor, graph_height));
 
 		ImGui::PopStyleColor();
@@ -2024,7 +2024,7 @@ void ShaderObject::Shader::destroy(VkDevice device)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_shader_object()
+std::unique_ptr<vkb::VulkanSampleC> create_shader_object()
 {
 	return std::make_unique<ShaderObject>();
 }

@@ -277,8 +277,8 @@ void RayQueries::create_bottom_level_acceleration_structure()
 		    vertex_buffer,
 		    index_buffer,
 		    transform_matrix_buffer,
-		    model.indices.size(),
-		    model.vertices.size(),
+		    static_cast<uint32_t>(model.indices.size()),
+		    static_cast<uint32_t>(model.vertices.size()) - 1,
 		    sizeof(Vertex),
 		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
 		    get_buffer_device_address(vertex_buffer->get_handle()),
@@ -518,7 +518,7 @@ void RayQueries::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_queries()
+std::unique_ptr<vkb::VulkanSampleC> create_ray_queries()
 {
 	return std::make_unique<RayQueries>();
 }

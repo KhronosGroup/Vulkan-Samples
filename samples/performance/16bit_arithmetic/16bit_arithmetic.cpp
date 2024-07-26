@@ -191,7 +191,7 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::RenderContext &context,
                                                                      vkb::ShaderSource &&vertex_source,
                                                                      vkb::ShaderSource &&fragment_source) :
-    vkb::Subpass(context, std::move(vertex_source), std::move(fragment_source))
+    vkb::rendering::SubpassC(context, std::move(vertex_source), std::move(fragment_source))
 {
 	set_output_attachments({0});
 }
@@ -348,7 +348,7 @@ void KHR16BitArithmeticSample::draw_gui()
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic()
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_arithmetic()
 {
 	return std::make_unique<KHR16BitArithmeticSample>();
 }

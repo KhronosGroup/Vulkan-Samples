@@ -529,7 +529,7 @@ void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
 	vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_indexing()
+std::unique_ptr<vkb::VulkanSampleC> create_descriptor_indexing()
 {
 	return std::make_unique<DescriptorIndexing>();
 }

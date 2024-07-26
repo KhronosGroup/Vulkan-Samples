@@ -885,7 +885,7 @@ void RaytracingBasic::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_basic()
+std::unique_ptr<vkb::VulkanSampleC> create_ray_tracing_basic()
 {
 	return std::make_unique<RaytracingBasic>();
 }

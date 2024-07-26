@@ -518,7 +518,7 @@ void OITLinkedLists::fill_instance_data()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_linked_lists()
+std::unique_ptr<vkb::VulkanSampleC> create_oit_linked_lists()
 {
 	return std::make_unique<OITLinkedLists>();
 }

@@ -72,6 +72,12 @@ class HPPBuffer : public allocated::HPPAllocated<vk::Buffer>
 		return create_staging_buffer(device, data.size() * sizeof(T), data.data());
 	}
 
+	HPPBuffer()                             = delete;
+	HPPBuffer(const HPPBuffer &)            = delete;
+	HPPBuffer(HPPBuffer &&other)            = default;
+	HPPBuffer &operator=(const HPPBuffer &) = delete;
+	HPPBuffer &operator=(HPPBuffer &&)      = default;
+
 	/**
 	 * @brief Creates a buffer using VMA
 	 * @param device A valid Vulkan device
@@ -89,16 +95,9 @@ class HPPBuffer : public allocated::HPPAllocated<vk::Buffer>
 	          VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
 	          const std::vector<uint32_t> &queue_family_indices = {});
 
-	HPPBuffer(vkb::core::HPPDevice   &device,
-	          HPPBufferBuilder const &builder);
-
-	HPPBuffer(const HPPBuffer &) = delete;
-	HPPBuffer(HPPBuffer &&other) noexcept;
+	HPPBuffer(vkb::core::HPPDevice &device, HPPBufferBuilder const &builder);
 
 	~HPPBuffer();
-
-	HPPBuffer &operator=(const HPPBuffer &) = delete;
-	HPPBuffer &operator=(HPPBuffer &&)      = delete;
 
 	/**
 	 * @return Return the buffer's device address (note: requires that the buffer has been created with the VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage fla)

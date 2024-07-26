@@ -114,9 +114,9 @@ void DynamicLineRasterization::prepare_scene()
 
 	cube_index_count                 = static_cast<uint32_t>(cube_indices.size());
 	edges_index_count                = static_cast<uint32_t>(edges_indices.size());
-	uint32_t vertex_buffer_size      = vertices.size() * sizeof(glm::vec3);
-	uint32_t cube_index_buffer_size  = cube_indices.size() * sizeof(uint32_t);
-	uint32_t edges_index_buffer_size = edges_indices.size() * sizeof(uint32_t);
+	uint32_t vertex_buffer_size      = static_cast<uint32_t>(vertices.size() * sizeof(glm::vec3));
+	uint32_t cube_index_buffer_size  = static_cast<uint32_t>(cube_indices.size() * sizeof(uint32_t));
+	uint32_t edges_index_buffer_size = static_cast<uint32_t>(edges_indices.size() * sizeof(uint32_t));
 
 	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
@@ -522,7 +522,7 @@ bool DynamicLineRasterization::resize(const uint32_t width, const uint32_t heigh
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_line_rasterization()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_line_rasterization()
 {
 	return std::make_unique<DynamicLineRasterization>();
 }

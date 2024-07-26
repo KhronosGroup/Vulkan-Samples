@@ -116,7 +116,7 @@ void BatchMode::on_update(float delta_time)
 		elapsed_time = 0.0f;
 
 		// Only check and advance the config if the application is a vulkan sample
-		if (auto *vulkan_app = dynamic_cast<vkb::VulkanSample<vkb::BindingType::C> *>(&platform->get_app()))
+		if (auto *vulkan_app = dynamic_cast<vkb::VulkanSampleC *>(&platform->get_app()))
 		{
 			auto &configuration = vulkan_app->get_configuration();
 

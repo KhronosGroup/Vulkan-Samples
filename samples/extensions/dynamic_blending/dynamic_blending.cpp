@@ -115,7 +115,7 @@ void DynamicBlending::prepare_scene()
 
 	index_count = static_cast<uint32_t>(indices.size());
 
-	vertex_buffer_size     = vertices.size() * sizeof(Vertex);
+	vertex_buffer_size     = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
 	auto index_buffer_size = indices.size() * sizeof(uint32_t);
 
 	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -684,7 +684,7 @@ bool DynamicBlending::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_blending()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_blending()
 {
 	return std::make_unique<DynamicBlending>();
 }

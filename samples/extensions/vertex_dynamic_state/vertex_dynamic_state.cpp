@@ -569,7 +569,7 @@ void VertexDynamicState::model_data_creation()
 	get_device().flush_command_buffer(copy_command, queue, true);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_vertex_dynamic_state()
+std::unique_ptr<vkb::VulkanSampleC> create_vertex_dynamic_state()
 {
 	return std::make_unique<VertexDynamicState>();
 }

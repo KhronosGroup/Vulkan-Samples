@@ -148,7 +148,7 @@ class Gui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	Gui(VulkanSample<vkb::BindingType::C> &sample, const Window &window, const Stats *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
+	Gui(VulkanSampleC &sample, const Window &window, const Stats *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
@@ -270,7 +270,7 @@ class Gui
 
 	static const ImGuiWindowFlags info_flags;
 
-	VulkanSample<vkb::BindingType::C> &sample;
+	VulkanSampleC &sample;
 
 	std::unique_ptr<core::Buffer> vertex_buffer;
 

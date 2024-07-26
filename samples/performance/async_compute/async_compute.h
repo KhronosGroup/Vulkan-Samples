@@ -26,7 +26,7 @@
 /**
  * @brief Using multiple queues to achieve more parallelism on the GPU
  */
-class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
+class AsyncComputeSample : public vkb::VulkanSampleC
 {
   public:
 	AsyncComputeSample();
@@ -100,7 +100,7 @@ class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 		vkb::sg::Camera            &shadow_camera;
 	};
 
-	struct CompositeSubpass : vkb::Subpass
+	struct CompositeSubpass : vkb::rendering::SubpassC
 	{
 		CompositeSubpass(vkb::RenderContext &render_context,
 		                 vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);
@@ -118,4 +118,4 @@ class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 	vkb::RenderTarget &get_current_forward_render_target();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_async_compute();
+std::unique_ptr<vkb::VulkanSampleC> create_async_compute();

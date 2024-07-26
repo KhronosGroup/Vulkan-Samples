@@ -176,7 +176,7 @@ void MultiDrawIndirect::build_command_buffers()
 
 		if (m_enable_mdi && m_supports_mdi)
 		{
-			vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, cpu_commands.size(), sizeof(cpu_commands[0]));
+			vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, static_cast<uint32_t>(cpu_commands.size()), sizeof(cpu_commands[0]));
 		}
 		else
 		{
@@ -488,8 +488,8 @@ void MultiDrawIndirect::initialize_resources()
 		GpuModelInformation model_information;
 		model_information.bounding_sphere_center = model.bounding_sphere.center;
 		model_information.bounding_sphere_radius = model.bounding_sphere.radius;
-		model_information.texture_index          = model.texture_index;
-		model_information.firstIndex             = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
+		model_information.texture_index          = static_cast<uint32_t>(model.texture_index);
+		model_information.firstIndex             = static_cast<uint32_t>(model.index_buffer_offset / (sizeof(model.triangles[0][0])));
 		model_information.indexCount             = static_cast<uint32_t>(model.triangles.size());
 		staging_model_buffer.update(&model_information, sizeof(GpuModelInformation), i * sizeof(GpuModelInformation));
 	}
@@ -550,7 +550,7 @@ void MultiDrawIndirect::create_pipeline()
 	VkDescriptorSetLayoutBinding image_array_binding{};
 	image_array_binding.binding         = 1;
 	image_array_binding.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	image_array_binding.descriptorCount = textures.size();
+	image_array_binding.descriptorCount = static_cast<uint32_t>(textures.size());
 	image_array_binding.stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 	VkDescriptorSetLayoutBinding scene_uniform_binding{};
@@ -698,7 +698,7 @@ void MultiDrawIndirect::initialize_descriptors()
 		VkDescriptorBufferInfo model_buffer_descriptor = create_descriptor(*model_information_buffer);
 		VkWriteDescriptorSet   model_write             = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, &model_buffer_descriptor, 1);
 
-		VkWriteDescriptorSet texture_array_write = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, image_descriptors.data(), image_descriptors.size());
+		VkWriteDescriptorSet texture_array_write = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, image_descriptors.data(), static_cast<uint32_t>(image_descriptors.size()));
 
 		VkDescriptorBufferInfo scene_descriptor = create_descriptor(*scene_uniform_buffer);
 		VkWriteDescriptorSet   scene_write      = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &scene_descriptor, 1);
@@ -919,10 +919,10 @@ void MultiDrawIndirect::cpu_cull()
 		// we control visibility by changing the instance count
 		auto                        &model = models[i];
 		VkDrawIndexedIndirectCommand cmd{};
-		cmd.firstIndex    = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
+		cmd.firstIndex    = static_cast<uint32_t>(model.index_buffer_offset / (sizeof(model.triangles[0][0])));
 		cmd.indexCount    = static_cast<uint32_t>(model.triangles.size()) * 3;
 		cmd.vertexOffset  = static_cast<int32_t>(model.vertex_buffer_offset / sizeof(Vertex));
-		cmd.firstInstance = i;
+		cmd.firstInstance = static_cast<uint32_t>(i);
 		cmd.instanceCount = tester.is_visible(model.bounding_sphere.center, model.bounding_sphere.radius);
 		cpu_commands[i]   = cmd;
 	}
@@ -948,7 +948,7 @@ void MultiDrawIndirect::cpu_cull()
 	get_device().get_fence_pool().wait();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multi_draw_indirect()
+std::unique_ptr<vkb::VulkanSampleC> create_multi_draw_indirect()
 {
 	return std::make_unique<MultiDrawIndirect>();
 }

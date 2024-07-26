@@ -129,4 +129,4 @@ class OpenCLInterop : public ApiVulkanSample
 	float total_time_passed{0};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop();
+std::unique_ptr<vkb::VulkanSampleC> create_open_cl_interop();

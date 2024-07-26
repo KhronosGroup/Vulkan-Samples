@@ -113,4 +113,4 @@ class OITLinkedLists : public ApiVulkanSample
 	float   background_grayscale  = 0.3f;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_linked_lists();
+std::unique_ptr<vkb::VulkanSampleC> create_oit_linked_lists();

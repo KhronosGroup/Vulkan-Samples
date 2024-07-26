@@ -32,6 +32,7 @@ ExtendedDynamicState2::ExtendedDynamicState2()
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
+	add_device_extension(VK_EXT_PRIMITIVE_TOPOLOGY_LIST_RESTART_EXTENSION_NAME);
 }
 
 ExtendedDynamicState2::~ExtendedDynamicState2()
@@ -747,6 +748,10 @@ void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
 	    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
 	requested_extended_dynamic_state_feature.extendedDynamicState = VK_TRUE;
 
+	auto &requested_primitive_topology_restart_features =
+	    gpu.request_extension_features<VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT);
+	requested_primitive_topology_restart_features.primitiveTopologyListRestart = VK_TRUE;
+
 	// Tessellation shader support is required for this example
 	auto &requested_features = gpu.get_mutable_requested_features();
 	if (gpu.get_features().tessellationShader)
@@ -1115,7 +1120,7 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_extended_dynamic_state2()
+std::unique_ptr<vkb::VulkanSampleC> create_extended_dynamic_state2()
 {
 	return std::make_unique<ExtendedDynamicState2>();
 }

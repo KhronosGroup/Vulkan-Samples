@@ -103,4 +103,4 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 	VkPipeline sample_pipeline{};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_primitive_clipping();
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_primitive_clipping();

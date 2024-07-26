@@ -60,7 +60,7 @@ struct HPPVertex
  *
  * See vkb::ApiVulkanSample for documentation
  */
-class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
+class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 {
   public:
 	HPPApiVulkanSample() = default;

@@ -1105,7 +1105,7 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 	else
 	{
 		gui = std::make_unique<vkb::HPPGui>(
-		    *reinterpret_cast<VulkanSample<vkb::BindingType::Cpp> *>(this), window, reinterpret_cast<vkb::stats::HPPStats const *>(stats), font_size, explicit_update);
+		    *reinterpret_cast<VulkanSampleCpp *>(this), window, reinterpret_cast<vkb::stats::HPPStats const *>(stats), font_size, explicit_update);
 	}
 }
 
@@ -1365,5 +1365,8 @@ inline void VulkanSample<bindingType>::update_stats(float delta_time)
 		}
 	}
 }
+
+using VulkanSampleC   = VulkanSample<vkb::BindingType::C>;
+using VulkanSampleCpp = VulkanSample<vkb::BindingType::Cpp>;
 
 }        // namespace vkb

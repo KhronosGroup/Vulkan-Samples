@@ -465,7 +465,7 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		const size_t old_size = small_command_buffers.size();
 		small_command_buffers.resize(draw_cmd_buffers.size(), VK_NULL_HANDLE);
 		auto allocate = vkb::initializers::command_buffer_allocate_info(command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		                                                                draw_cmd_buffers.size() - old_size);
+		                                                                static_cast<uint32_t>(draw_cmd_buffers.size() - old_size));
 		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &allocate, &small_command_buffers[old_size]));
 	}
 
@@ -801,7 +801,7 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 
 	// Transfer frequency information to buffer
 	const uint32_t buffer_size =
-	    sizeof(FrequencyInformation) + shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]);
+	    static_cast<uint32_t>(sizeof(FrequencyInformation) + shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]));
 	frequency_information_params = std::make_unique<vkb::core::Buffer>(get_device(), buffer_size,
 	                                                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -936,7 +936,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        blend_attachment_state.size(),
+	        static_cast<uint32_t>(blend_attachment_state.size()),
 	        blend_attachment_state.data());
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
@@ -1205,7 +1205,7 @@ bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate_dynamic()
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shading_rate_dynamic()
 {
 	return std::make_unique<FragmentShadingRateDynamic>();
 }

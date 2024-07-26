@@ -31,7 +31,7 @@ HPPSwapchainImages::HPPSwapchainImages()
 
 bool HPPSwapchainImages::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample<vkb::BindingType::Cpp>::prepare(options))
+	if (!vkb::VulkanSampleCpp::prepare(options))
 	{
 		return false;
 	}
@@ -70,7 +70,7 @@ void HPPSwapchainImages::update(float delta_time)
 		last_swapchain_image_count = swapchain_image_count;
 	}
 
-	VulkanSample<vkb::BindingType::Cpp>::update(delta_time);
+	vkb::VulkanSampleCpp::update(delta_time);
 }
 
 void HPPSwapchainImages::draw_gui()

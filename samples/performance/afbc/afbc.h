@@ -25,7 +25,7 @@
 /**
  * @brief Using framebuffer compression to reduce bandwidth
  */
-class AFBCSample : public vkb::VulkanSample<vkb::BindingType::C>
+class AFBCSample : public vkb::VulkanSampleC
 {
   public:
 	AFBCSample();
@@ -50,4 +50,4 @@ class AFBCSample : public vkb::VulkanSample<vkb::BindingType::C>
 	std::chrono::system_clock::time_point start_time;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_afbc();
+std::unique_ptr<vkb::VulkanSampleC> create_afbc();

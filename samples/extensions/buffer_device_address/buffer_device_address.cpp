@@ -433,7 +433,7 @@ void BufferDeviceAddress::request_gpu_features(vkb::PhysicalDevice &gpu)
 	features.bufferDeviceAddress = VK_TRUE;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_buffer_device_address()
+std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address()
 {
 	return std::make_unique<BufferDeviceAddress>();
 }
