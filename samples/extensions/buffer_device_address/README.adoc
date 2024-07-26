@@ -299,4 +299,3 @@ If the `bufferDeviceAddressCaptureReplay` is not present however, tools like Ren
 == Conclusion
 
 Buffer device address is an extremely powerful feature which enables various use cases which were either impossible or very impractical before.
-e cases which were either impossible or very impractical before.
