@@ -273,3 +273,9 @@ Demonstrates how to use https://en.wikipedia.org/wiki/Printf[Printf] statements 
 *Extension:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
 
 Rendering using primitive clipping and depth clipping configured by dynamic pipeline state.
+
+=== xref:./{extension_samplespath}host_image_copy/README.adoc[Host image copies]
+
+*Extension:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html[`VK_EXT_extended_dynamic_state3`]
+
+Demonstrate the use of the host image extension to directly copy from a host buffer to an image on the device without going through a staging buffer.
