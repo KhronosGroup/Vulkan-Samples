@@ -170,14 +170,14 @@ void HostImageCopy::load_texture()
 	// VK_EXT_host_image_copy als introduces a simplified way of doing the required image transition on the host
 	// This no longer requires a dedicated command buffer to submit the barrier
 	// We also no longer need multiple transitions, and only have to do one for the final layout
-	VkHostImageLayoutTransitionInfoEXT host_image_layou_transition_info{};
-	host_image_layou_transition_info.sType            = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO_EXT;
-	host_image_layou_transition_info.image            = texture.image;
-	host_image_layou_transition_info.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
-	host_image_layou_transition_info.newLayout        = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	host_image_layou_transition_info.subresourceRange = subresource_range;
+	VkHostImageLayoutTransitionInfoEXT host_image_layout_transition_info{};
+	host_image_layout_transition_info.sType            = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO_EXT;
+	host_image_layout_transition_info.image            = texture.image;
+	host_image_layout_transition_info.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
+	host_image_layout_transition_info.newLayout        = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	host_image_layout_transition_info.subresourceRange = subresource_range;
 
-	vkTransitionImageLayoutEXT(get_device().get_handle(), 1, &host_image_layou_transition_info);
+	vkTransitionImageLayoutEXT(get_device().get_handle(), 1, &host_image_layout_transition_info);
 
 	// With the image in the correct layout and copy information for all mip levels setup, we can now issue the copy to our taget image from the host
 	// The implementation will then convert this to an implementation specific optimal tiling layout
