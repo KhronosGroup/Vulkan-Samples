@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2024, The Khronos Group
+- Copyright (c) 2019-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -26,7 +26,7 @@ endif::[]
 
 == Overview
 
-A very common thing in Vulkan is copying image data to the GPU to sample from it in a shader (e.g. for texturing objects). Often that image data is coming from a file stored on disk (e.g. in KTX format) and needs to be moved from the host to the device.
+A common thing in Vulkan is copying image data to the GPU to sample from it in a shader (e.g. for texturing objects). Often that image data is coming from a file stored on disk (e.g. in KTX format) and needs to be moved from the host to the device.
 
 Depending on the memory setup of the implementation, this  requires uploading the image data to a host visible buffer and then copying it over to a device local buffer to make it usable as an image in a shader. This also requires multiple image transitions (barriers). This is commonly referred to as "staging".
 
@@ -105,7 +105,7 @@ Using staging you'd have to submit multiple barriers. One that transitions the i
 
 `VK_EXT_host_image_copy` simplifies this process in two ways: First you only need one transition for the final usage layout (e.g. shader read), second you can do that transition on the host without having to setup and issue a command buffer using the `vkTransitionImageLayoutEXT` function.
 
-So for copying host memory to a device image all you need is this single barrier call before doing the copy:
+So for copying host memory to a device image all you need is this single barrier call:
 
 [,cpp]
 ----
@@ -157,7 +157,7 @@ The sample is a variation of the texture loading api sample and replaces the sta
 
 == Conclusion
 
-The `VK_EXT_host_image_copy` extension can simplify image copies from host do device and help reduce memory requirements and improve performance.
+Aside from the use-case shown in this sample, the `VK_EXT_host_image_copy` extension also can do image copies to host memory and image to image copies on the host. All these can simplify image copies and help reduce memory requirements and improve performance.
 
 == Additional Resources
 
