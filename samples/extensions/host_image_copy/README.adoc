@@ -164,3 +164,4 @@ Aside from the use-case shown in this sample, the `VK_EXT_host_image_copy` exten
 * https://www.khronos.org/blog/copying-images-on-the-host-in-vulkan[Copying Images on the Host in Vulkan]
 * https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_host_image_copy.html[Extension proposal]
 * https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html[Specification]
+* https://vulkan.gpuinfo.org/displayextensiondetail?extension=VK_EXT_host_image_copy[Extension device support]
