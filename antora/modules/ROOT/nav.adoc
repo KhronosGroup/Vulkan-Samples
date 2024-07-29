@@ -80,6 +80,7 @@
 ** xref:samples/extensions/ray_tracing_extended/README.adoc[Raytracing extended]
 ** xref:samples/extensions/ray_queries/README.adoc[Ray queries]
 ** xref:samples/extensions/ray_tracing_reflection/README.adoc[Ray tracing reflection]
+** xref:samples/extensions/ray_tracing_position_fetch/README.adoc[Ray tracing position fetch]
 ** xref:samples/extensions/shader_object/README.adoc[Shader Object]
 ** xref:samples/extensions/shader_debugprintf/README.adoc[Shader Debug Printf]
 ** xref:samples/extensions/sparse_image/README.adoc[Sparse Image]
