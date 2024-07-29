@@ -163,7 +163,7 @@ void HPPCommandBuffer::begin_render_pass(const vkb::rendering::HPPRenderTarget &
 }
 
 void HPPCommandBuffer::bind_buffer(
-    const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
+    const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_binding_state.bind_buffer(buffer, offset, range, set, binding, array_element);
 }
@@ -179,7 +179,7 @@ void HPPCommandBuffer::bind_image(const vkb::core::HPPImageView &image_view, uin
 	resource_binding_state.bind_image(image_view, set, binding, array_element);
 }
 
-void HPPCommandBuffer::bind_index_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::IndexType index_type)
+void HPPCommandBuffer::bind_index_buffer(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, vk::IndexType index_type)
 {
 	get_handle().bindIndexBuffer(buffer.get_handle(), offset, index_type);
 }
@@ -204,11 +204,11 @@ void HPPCommandBuffer::bind_pipeline_layout(vkb::core::HPPPipelineLayout &pipeli
 }
 
 void HPPCommandBuffer::bind_vertex_buffers(uint32_t                                                               first_binding,
-                                           const std::vector<std::reference_wrapper<const vkb::core::HPPBuffer>> &buffers,
+                                           const std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> &buffers,
                                            const std::vector<vk::DeviceSize>                                     &offsets)
 {
 	std::vector<vk::Buffer> buffer_handles(buffers.size(), nullptr);
-	std::transform(buffers.begin(), buffers.end(), buffer_handles.begin(), [](const vkb::core::HPPBuffer &buffer) { return buffer.get_handle(); });
+	std::transform(buffers.begin(), buffers.end(), buffer_handles.begin(), [](const vkb::core::BufferCpp &buffer) { return buffer.get_handle(); });
 	get_handle().bindVertexBuffers(first_binding, buffer_handles, offsets);
 }
 
@@ -218,7 +218,7 @@ void HPPCommandBuffer::blit_image(const vkb::core::HPPImage &src_img, const vkb:
 	    src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal, regions, vk::Filter::eNearest);
 }
 
-void HPPCommandBuffer::buffer_memory_barrier(const vkb::core::HPPBuffer                &buffer,
+void HPPCommandBuffer::buffer_memory_barrier(const vkb::core::BufferCpp                &buffer,
                                              vk::DeviceSize                             offset,
                                              vk::DeviceSize                             size,
                                              const vkb::common::HPPBufferMemoryBarrier &memory_barrier)
@@ -236,13 +236,13 @@ void HPPCommandBuffer::clear(vk::ClearAttachment attachment, vk::ClearRect rect)
 	get_handle().clearAttachments(attachment, rect);
 }
 
-void HPPCommandBuffer::copy_buffer(const vkb::core::HPPBuffer &src_buffer, const vkb::core::HPPBuffer &dst_buffer, vk::DeviceSize size)
+void HPPCommandBuffer::copy_buffer(const vkb::core::BufferCpp &src_buffer, const vkb::core::BufferCpp &dst_buffer, vk::DeviceSize size)
 {
 	vk::BufferCopy copy_region({}, {}, size);
 	get_handle().copyBuffer(src_buffer.get_handle(), dst_buffer.get_handle(), copy_region);
 }
 
-void HPPCommandBuffer::copy_buffer_to_image(const vkb::core::HPPBuffer             &buffer,
+void HPPCommandBuffer::copy_buffer_to_image(const vkb::core::BufferCpp             &buffer,
                                             const vkb::core::HPPImage              &image,
                                             const std::vector<vk::BufferImageCopy> &regions)
 {
@@ -256,7 +256,7 @@ void HPPCommandBuffer::copy_image(const vkb::core::HPPImage &src_img, const vkb:
 
 void HPPCommandBuffer::copy_image_to_buffer(const vkb::core::HPPImage              &image,
                                             vk::ImageLayout                         image_layout,
-                                            const vkb::core::HPPBuffer             &buffer,
+                                            const vkb::core::BufferCpp             &buffer,
                                             const std::vector<vk::BufferImageCopy> &regions)
 {
 	get_handle().copyImageToBuffer(image.get_handle(), image_layout, buffer.get_handle(), regions);
@@ -268,7 +268,7 @@ void HPPCommandBuffer::dispatch(uint32_t group_count_x, uint32_t group_count_y, 
 	get_handle().dispatch(group_count_x, group_count_y, group_count_z);
 }
 
-void HPPCommandBuffer::dispatch_indirect(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset)
+void HPPCommandBuffer::dispatch_indirect(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset)
 {
 	flush(vk::PipelineBindPoint::eCompute);
 	get_handle().dispatchIndirect(buffer.get_handle(), offset);
@@ -286,7 +286,7 @@ void HPPCommandBuffer::draw_indexed(uint32_t index_count, uint32_t instance_coun
 	get_handle().drawIndexed(index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
-void HPPCommandBuffer::draw_indexed_indirect(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, uint32_t draw_count, uint32_t stride)
+void HPPCommandBuffer::draw_indexed_indirect(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, uint32_t draw_count, uint32_t stride)
 {
 	flush(vk::PipelineBindPoint::eGraphics);
 	get_handle().drawIndexedIndirect(buffer.get_handle(), offset, draw_count, stride);
@@ -510,7 +510,7 @@ void HPPCommandBuffer::set_viewport_state(const vkb::rendering::HPPViewportState
 	pipeline_state.set_viewport_state(state_info);
 }
 
-void HPPCommandBuffer::update_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, const std::vector<uint8_t> &data)
+void HPPCommandBuffer::update_buffer(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, const std::vector<uint8_t> &data)
 {
 	get_handle().updateBuffer<uint8_t>(buffer.get_handle(), offset, data);
 }

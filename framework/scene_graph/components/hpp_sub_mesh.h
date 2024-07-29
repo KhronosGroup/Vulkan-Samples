@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <core/hpp_buffer.h>
 #include <scene_graph/components/sub_mesh.h>
 
 namespace vkb
@@ -36,9 +35,9 @@ class HPPSubMesh : private vkb::sg::SubMesh
   public:
 	using vkb::sg::SubMesh::vertex_indices;
 
-	vkb::core::HPPBuffer const &get_index_buffer() const
+	vkb::core::BufferCpp const &get_index_buffer() const
 	{
-		return reinterpret_cast<vkb::core::HPPBuffer const &>(*vkb::sg::SubMesh::index_buffer);
+		return reinterpret_cast<vkb::core::BufferCpp const &>(*vkb::sg::SubMesh::index_buffer);
 	}
 
 	vk::IndexType get_index_type() const
@@ -46,9 +45,9 @@ class HPPSubMesh : private vkb::sg::SubMesh
 		return static_cast<vk::IndexType>(vkb::sg::SubMesh::index_type);
 	}
 
-	vkb::core::HPPBuffer const &get_vertex_buffer(std::string const &name) const
+	vkb::core::BufferCpp const &get_vertex_buffer(std::string const &name) const
 	{
-		return reinterpret_cast<vkb::core::HPPBuffer const &>(vkb::sg::SubMesh::vertex_buffers.at(name));
+		return reinterpret_cast<vkb::core::BufferCpp const &>(vkb::sg::SubMesh::vertex_buffers.at(name));
 	}
 };
 }        // namespace components

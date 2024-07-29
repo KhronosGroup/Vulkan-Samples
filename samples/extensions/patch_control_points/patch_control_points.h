@@ -73,9 +73,9 @@ class PatchControlPoints : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> common;
-		std::unique_ptr<vkb::core::Buffer> static_tessellation;
-		std::unique_ptr<vkb::core::Buffer> dynamic_tessellation;
+		std::unique_ptr<vkb::core::BufferC> common;
+		std::unique_ptr<vkb::core::BufferC> static_tessellation;
+		std::unique_ptr<vkb::core::BufferC> dynamic_tessellation;
 	} uniform_buffers;
 
 	struct

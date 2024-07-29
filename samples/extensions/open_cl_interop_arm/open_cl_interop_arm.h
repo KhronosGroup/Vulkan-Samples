@@ -83,10 +83,10 @@ class OpenCLInteropArm : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count{0};
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	uint32_t                            index_count{0};
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
 
 	VkFence rendering_finished_fence{VK_NULL_HANDLE};
 

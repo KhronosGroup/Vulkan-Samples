@@ -18,7 +18,6 @@
 #include <core/hpp_device.h>
 
 #include <common/hpp_error.h>
-#include <core/hpp_buffer.h>
 #include <core/hpp_command_pool.h>
 
 namespace vkb
@@ -332,7 +331,7 @@ std::pair<vk::Image, vk::DeviceMemory> HPPDevice::create_image(vk::Format format
 	return std::make_pair(image, memory);
 }
 
-void HPPDevice::copy_buffer(vkb::core::HPPBuffer &src, vkb::core::HPPBuffer &dst, vk::Queue queue, vk::BufferCopy *copy_region) const
+void HPPDevice::copy_buffer(vkb::core::BufferCpp &src, vkb::core::BufferCpp &dst, vk::Queue queue, vk::BufferCopy *copy_region) const
 {
 	assert(dst.get_size() <= src.get_size());
 	assert(src.get_handle());

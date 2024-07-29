@@ -223,8 +223,8 @@ void HPPOITLinkedLists::clear_sized_resources()
 void HPPOITLinkedLists::create_constant_buffers()
 {
 	scene_constants =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(SceneConstants), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instance_data = std::make_unique<vkb::core::HPPBuffer>(
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(SceneConstants), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_data = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), sizeof(Instance) * kInstanceCount, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
@@ -273,9 +273,9 @@ void HPPOITLinkedLists::create_fragment_resources(vk::Extent2D const &extent)
 	fragment_max_count                  = extent.width * extent.height * kFragmentsPerPixelAverage;
 	const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
 	fragment_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), fragment_buffer_size, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), fragment_buffer_size, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	fragment_counter = std::make_unique<vkb::core::HPPBuffer>(
+	fragment_counter = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), sizeof(glm::uint), vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 }
 

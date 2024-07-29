@@ -411,16 +411,16 @@ void HPPTerrainTessellation::generate_terrain()
 
 	// Create staging buffers
 
-	vkb::core::HPPBuffer vertex_staging(get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vkb::core::BufferCpp vertex_staging(get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_staging.update(vertices);
 
-	vkb::core::HPPBuffer index_staging(get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vkb::core::BufferCpp index_staging(get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_staging.update(indices);
 
-	terrain.vertices = std::make_unique<vkb::core::HPPBuffer>(
+	terrain.vertices = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	terrain.indices = std::make_unique<vkb::core::HPPBuffer>(
+	terrain.indices = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
@@ -494,11 +494,11 @@ void HPPTerrainTessellation::prepare_uniform_buffers()
 {
 	// Shared tessellation shader stages uniform buffer
 	terrain.tessellation_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Skysphere vertex shader uniform buffer
 	sky_sphere.transform_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

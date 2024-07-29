@@ -121,8 +121,8 @@ class MobileNerf : public ApiVulkanSample
 		Texture texture_input_0, texture_input_1;
 
 		// Vulkan Buffers for each model
-		std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
-		std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
+		std::unique_ptr<vkb::core::BufferC> vertex_buffer{nullptr};
+		std::unique_ptr<vkb::core::BufferC> index_buffer{nullptr};
 
 		// Each model will have its own pipeline and descriptor set
 		VkPipeline pipeline_first_pass{VK_NULL_HANDLE};
@@ -137,14 +137,14 @@ class MobileNerf : public ApiVulkanSample
 	std::vector<Model> models;
 
 	// MLPs for each model
-	std::vector<MLP_Weights>                        mlp_weight_vector;
-	std::vector<std::unique_ptr<vkb::core::Buffer>> weights_buffers;
+	std::vector<MLP_Weights>                         mlp_weight_vector;
+	std::vector<std::unique_ptr<vkb::core::BufferC>> weights_buffers;
 
 	// Uniform buffer for each model
-	std::vector<std::unique_ptr<vkb::core::Buffer>> uniform_buffers;
+	std::vector<std::unique_ptr<vkb::core::BufferC>> uniform_buffers;
 
 	// Buffer to store instance data
-	std::unique_ptr<vkb::core::Buffer> instance_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> instance_buffer{nullptr};
 
 	// Common
 	void read_json_map();

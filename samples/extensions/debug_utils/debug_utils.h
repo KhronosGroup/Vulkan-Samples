@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Sascha Willems
+/* Copyright (c) 2020-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,7 +44,7 @@ class DebugUtils : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> matrices;
+		std::unique_ptr<vkb::core::BufferC> matrices;
 	} uniform_buffers;
 
 	struct UBOVS

@@ -20,7 +20,6 @@
 
 #include "core/buffer.h"
 #include "core/device.h"
-#include "core/hpp_buffer.h"
 #include "core/hpp_device.h"
 
 namespace vkb
@@ -35,8 +34,6 @@ class BufferAllocation
   public:
 	using DeviceSizeType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
 
-	using BufferType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPBuffer, vkb::core::Buffer>::type;
-
   public:
 	BufferAllocation()                                    = default;
 	BufferAllocation(const BufferAllocation &)            = delete;
@@ -44,28 +41,28 @@ class BufferAllocation
 	BufferAllocation &operator=(const BufferAllocation &) = delete;
 	BufferAllocation &operator=(BufferAllocation &&)      = default;
 
-	BufferAllocation(BufferType &buffer, DeviceSizeType size, DeviceSizeType offset);
+	BufferAllocation(vkb::core::Buffer<bindingType> &buffer, DeviceSizeType size, DeviceSizeType offset);
 
-	bool           empty() const;
-	BufferType    &get_buffer();
-	DeviceSizeType get_offset() const;
-	DeviceSizeType get_size() const;
-	void           update(const std::vector<uint8_t> &data, uint32_t offset = 0);
+	bool                            empty() const;
+	vkb::core::Buffer<bindingType> &get_buffer();
+	DeviceSizeType                  get_offset() const;
+	DeviceSizeType                  get_size() const;
+	void                            update(const std::vector<uint8_t> &data, uint32_t offset = 0);
 	template <typename T>
 	void update(const T &value, uint32_t offset = 0);
 
   private:
-	BufferType    *buffer      = nullptr;
-	DeviceSizeType base_offset = 0;
-	DeviceSizeType size        = 0;
+	vkb::core::BufferCpp *buffer      = nullptr;
+	vk::DeviceSize        base_offset = 0;
+	vk::DeviceSize        size        = 0;
 };
 
 using BufferAllocationC   = BufferAllocation<vkb::BindingType::C>;
 using BufferAllocationCpp = BufferAllocation<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-BufferAllocation<bindingType>::BufferAllocation(BufferType &buffer, DeviceSizeType size, DeviceSizeType offset) :
-    buffer{&buffer},
+BufferAllocation<bindingType>::BufferAllocation(vkb::core::Buffer<bindingType> &buffer, DeviceSizeType size, DeviceSizeType offset) :
+    buffer{reinterpret_cast<vkb::core::BufferCpp *>(&buffer)},
     size{size},
     base_offset{offset}
 {
@@ -78,10 +75,17 @@ bool BufferAllocation<bindingType>::empty() const
 }
 
 template <vkb::BindingType bindingType>
-typename BufferAllocation<bindingType>::BufferType &BufferAllocation<bindingType>::get_buffer()
+typename vkb::core::Buffer<bindingType> &BufferAllocation<bindingType>::get_buffer()
 {
 	assert(buffer && "Invalid buffer pointer");
-	return *buffer;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return *buffer;
+	}
+	else
+	{
+		return reinterpret_cast<vkb::core::BufferC &>(*buffer);
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -163,7 +167,7 @@ class BufferBlock
 	vk::DeviceSize determine_alignment(vk::BufferUsageFlags usage, vk::PhysicalDeviceLimits const &limits) const;
 
   private:
-	vkb::core::HPPBuffer buffer;
+	vkb::core::BufferCpp buffer;
 	vk::DeviceSize       alignment = 0;        // Memory alignment, it may change according to the usage
 	vk::DeviceSize       offset    = 0;        // Current offset, it increases on every allocation
 };
@@ -200,7 +204,7 @@ BufferAllocation<bindingType> BufferBlock<bindingType>::allocate(DeviceSizeType 
 		}
 		else
 		{
-			return BufferAllocationC{reinterpret_cast<vkb::core::Buffer &>(buffer), static_cast<VkDeviceSize>(size), static_cast<VkDeviceSize>(offset)};
+			return BufferAllocationC{reinterpret_cast<vkb::core::BufferC &>(buffer), static_cast<VkDeviceSize>(size), static_cast<VkDeviceSize>(offset)};
 		}
 	}
 

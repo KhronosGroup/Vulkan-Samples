@@ -546,10 +546,10 @@ void TextureMipMapGeneration::prepare_pipelines()
 void TextureMipMapGeneration::prepare_uniform_buffers()
 {
 	// Shared parameter uniform buffer block
-	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                     sizeof(ubo),
-	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(ubo),
+	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

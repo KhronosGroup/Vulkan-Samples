@@ -52,9 +52,9 @@ class DynamicLineRasterization : public ApiVulkanSample
 	VkPipelineLayout      pipeline_layout;
 	VkDescriptorPool      descriptor_pool;
 
-	std::unique_ptr<vkb::core::Buffer> camera_ubo;
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> cube_index_buffer, edges_index_buffer;
+	std::unique_ptr<vkb::core::BufferC> camera_ubo;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> cube_index_buffer, edges_index_buffer;
 
 	glm::vec4 fill_color, edge_color;
 

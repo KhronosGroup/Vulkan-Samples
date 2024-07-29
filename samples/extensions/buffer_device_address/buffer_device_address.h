@@ -62,8 +62,8 @@ class BufferDeviceAddress : public ApiVulkanSample
 	TestBuffer              create_pointer_buffer();
 	TestBuffer              pointer_buffer;
 
-	std::unique_ptr<vkb::core::Buffer> create_index_buffer();
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
+	std::unique_ptr<vkb::core::BufferC> create_index_buffer();
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
 
 	std::default_random_engine            rnd{42};
 	std::uniform_real_distribution<float> distribution{0.0f, 0.1f};
