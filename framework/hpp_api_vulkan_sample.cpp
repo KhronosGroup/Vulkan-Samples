@@ -1050,11 +1050,12 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 	return texture;
 }
 
-std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> HPPApiVulkanSample::load_model(const std::string &file, uint32_t index)
+std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>
+    HPPApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer, vk::BufferUsageFlags additional_buffer_usage_flags)
 {
 	vkb::HPPGLTFLoader loader{get_device()};
 
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> model = loader.read_model_from_file(file, index);
+	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> model = loader.read_model_from_file(file, index, storage_buffer, additional_buffer_usage_flags);
 
 	if (!model)
 	{
