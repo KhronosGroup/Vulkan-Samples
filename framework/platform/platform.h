@@ -28,7 +28,6 @@
 #include "common/optional.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
-#include "filesystem/legacy.h"
 #include "platform/application.h"
 #include "platform/parser.h"
 #include "platform/plugins/plugin.h"
@@ -88,18 +87,6 @@ class Platform
 	 */
 	virtual void close();
 
-	/**
-	 * @brief Returns the working directory of the application set by the platform
-	 * @returns The path to the working directory
-	 */
-	static const std::string &get_external_storage_directory();
-
-	/**
-	 * @brief Returns the suitable directory for temporary files from the environment variables set in the system
-	 * @returns The path to the temp folder on the system
-	 */
-	static const std::string &get_temp_directory();
-
 	std::string &get_last_error();
 
 	virtual void resize(uint32_t width, uint32_t height);
@@ -111,8 +98,6 @@ class Platform
 	Application &get_app() const;
 
 	Application &get_app();
-
-	static void set_external_storage_directory(const std::string &dir);
 
 	void set_last_error(const std::string &error);
 
@@ -189,12 +174,6 @@ class Platform
 	std::vector<std::string> arguments;
 
 	std::string last_error;
-
-	// static so can be references from vkb::fs
-	static std::string external_storage_directory;
-
-	// static so can be references from vkb::fs
-	static std::string temp_directory;
 };
 
 template <class T>
