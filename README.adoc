@@ -26,15 +26,10 @@ endif::[]
 image::banner.jpg[Vulkan Samples banner]
 
 ifndef::site-gen-antora[]
-== Renaming Default Branch
+== Vulkan Documentation Site
 
-We have recently transitioned the repository to use the `main` branch by default.
-All remote git usage is handled automatically.
-To update your local repository to use main please use the following commands
+Documentation for the samples is best viewed at the new link:https://docs.vulkan.org/samples/latest/README.html[Vulkan Documentation Site]. The documentation uses AsciiDoc which isn't fully supported by github.
 
-----
-git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a
-----
 endif::[]
 
 == Introduction
