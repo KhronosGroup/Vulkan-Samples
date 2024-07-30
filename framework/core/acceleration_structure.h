@@ -72,6 +72,17 @@ class AccelerationStructure
 	                               uint64_t                            index_buffer_data_address     = 0,
 	                               uint64_t                            transform_buffer_data_address = 0);
 
+	uint64_t add_triangle_geometry(vkb::core::Buffer const &vertex_buffer,
+	                               vkb::core::Buffer const &index_buffer,
+	                               vkb::core::Buffer const &transform_buffer,
+	                               uint32_t                 triangle_count,
+	                               uint32_t                 max_vertex,
+	                               VkDeviceSize             vertex_stride,
+	                               uint32_t                 transform_offset = 0,
+	                               VkFormat                 vertex_format    = VK_FORMAT_R32G32B32_SFLOAT,
+	                               VkIndexType              index_type       = VK_INDEX_TYPE_UINT32,
+	                               VkGeometryFlagsKHR       flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
+
 	void update_triangle_geometry(uint64_t triangleUUID, std::unique_ptr<vkb::core::Buffer> &vertex_buffer,
 	                              std::unique_ptr<vkb::core::Buffer> &index_buffer,
 	                              std::unique_ptr<vkb::core::Buffer> &transform_buffer,

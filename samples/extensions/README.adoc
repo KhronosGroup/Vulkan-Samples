@@ -173,6 +173,12 @@ Then it uses that dynamic  sample rate map as a base for the next frame.
 Render a simple scene showing the basics of ray tracing, including reflection and shadow rays.
 The sample creates some geometries and create a bottom acceleration structure for each, then make instances of those, using different materials and placing them at different locations.
 
+=== xref:./{extension_samplespath}ray_tracing_position_fetch/README.adoc[Ray tracing position fetch]
+
+*Extensions*: https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VK_KHR_ray_tracing_position_fetch[`VK_KHR_ray_tracing_position_fetch`]
+
+Shows how to use the ray tracing position fetch extension to directly access vertex positions for a hit triangle from the acceleration structure, instead of having to explicitly pass and unpack that information
+
 === xref:./{extension_samplespath}portability/README.adoc[Portability]
 
 *Extensions*: https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VK_KHR_portability_subset[`VK_KHR_portability_subset`]
@@ -279,3 +285,4 @@ Rendering using primitive clipping and depth clipping configured by dynamic pipe
 *Extension:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html[`VK_EXT_extended_dynamic_state3`]
 
 Demonstrate the use of the host image extension to directly copy from a host buffer to an image on the device without going through a staging buffer.
+

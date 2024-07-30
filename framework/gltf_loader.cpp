@@ -406,7 +406,7 @@ GLTFLoader::GLTFLoader(Device &device) :
 {
 }
 
-std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index)
+std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	std::string err;
 	std::string warn;
@@ -445,10 +445,10 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 		model_path.clear();
 	}
 
-	return std::make_unique<sg::Scene>(load_scene(scene_index));
+	return std::make_unique<sg::Scene>(load_scene(scene_index, additional_buffer_usage_flags));
 }
 
-std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer)
+std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	std::string err;
 	std::string warn;
@@ -487,10 +487,10 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 		model_path.clear();
 	}
 
-	return std::move(load_model(index, storage_buffer));
+	return std::move(load_model(index, storage_buffer, additional_buffer_usage_flags));
 }
 
-sg::Scene GLTFLoader::load_scene(int scene_index)
+sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	auto scene = sg::Scene();
 
@@ -751,7 +751,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 				core::Buffer buffer{device,
 				                    vertex_data.size(),
-				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | additional_buffer_usage_flags,
 				                    VMA_MEMORY_USAGE_CPU_TO_GPU};
 				buffer.update(vertex_data);
 				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
@@ -794,7 +794,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 				submesh->index_buffer = std::make_unique<core::Buffer>(device,
 				                                                       index_data.size(),
-				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | additional_buffer_usage_flags,
 				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
 				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
 				                                                  gltf_mesh.name, i_primitive));
@@ -1085,7 +1085,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	return scene;
 }
 
-std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage_buffer)
+std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	auto submesh = std::make_unique<sg::SubMesh>();
 
@@ -1117,6 +1117,8 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 	size_t vertex_count = accessor.count;
 	auto  &buffer_view  = model.bufferViews[accessor.bufferView];
 	pos                 = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
+
+	submesh->vertices_count = static_cast<uint32_t>(vertex_count);
 
 	if (gltf_primitive.attributes.find("NORMAL") != gltf_primitive.attributes.end())
 	{
@@ -1190,9 +1192,15 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 		core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, vertex_data);
 
+		VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		if (additional_buffer_usage_flags)
+		{
+			buffer_usage_flags |= additional_buffer_usage_flags;
+		}
+
 		core::Buffer buffer{device,
 		                    vertex_data.size() * sizeof(Vertex),
-		                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		                    buffer_usage_flags,
 		                    VMA_MEMORY_USAGE_GPU_ONLY};
 
 		command_buffer.copy_buffer(stage_buffer, buffer, vertex_data.size() * sizeof(Vertex));
@@ -1260,9 +1268,15 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		{
 			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, index_data);
 
+			VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+			if (additional_buffer_usage_flags)
+			{
+				buffer_usage_flags |= additional_buffer_usage_flags;
+			}
+
 			submesh->index_buffer = std::make_unique<core::Buffer>(device,
 			                                                       index_data.size(),
-			                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			                                                       buffer_usage_flags,
 			                                                       VMA_MEMORY_USAGE_GPU_ONLY);
 
 			command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, index_data.size());
