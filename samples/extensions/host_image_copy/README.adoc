@@ -28,7 +28,7 @@ endif::[]
 
 A common thing in Vulkan is copying image data to the GPU to sample from it in a shader (e.g. for texturing objects). Often that image data is coming from a file stored on disk (e.g. in KTX format) and needs to be moved from the host to the device.
 
-Depending on the memory setup of the implementation, this  requires uploading the image data to a host visible buffer and then copying it over to a device local buffer to make it usable as an image in a shader. This also requires multiple image transitions (barriers). This is commonly referred to as "staging".
+Depending on the memory setup of the implementation, this requires uploading the image data to a host visible buffer and then copying it over to a device local buffer to make it usable as an image in a shader. This also requires multiple image transitions (barriers). This is commonly referred to as "staging".
 
 In some scenarios like streaming image data from disk, this way of uploading image data may come with drawbacks like added memory requirements and unnecessary copies. These may result in negative effects like memory swapping or stuttering.
 
@@ -149,7 +149,7 @@ copy_memory_info.pRegions       = &memory_to_image_copy;
 vkCopyMemoryToImageEXT(device, &copy_memory_info);
 ----
 
-`pHostPointer` points to the source date in host memory. So for e.g. copying multiple mip levels one would setup multiple  `VkMemoryToImageCopyEXT` elements and offset `pHostPointer` to point at the start of each mip level in host memory. That makes it very easy to copy from arbitrary locations in host memory, no matter if data is tightly packed or stored behind different addresses.
+`pHostPointer` points to the source data in host memory. So for e.g. copying multiple mip levels one would setup multiple  `VkMemoryToImageCopyEXT` elements and offset `pHostPointer` to point at the start of each mip level in host memory. That makes it very easy to copy from arbitrary locations in host memory, no matter if data is tightly packed or stored behind different addresses.
 
 == The sample
 
