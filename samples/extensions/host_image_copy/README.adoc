@@ -34,6 +34,8 @@ In some scenarios like streaming image data from disk, this way of uploading ima
 
 The `VK_EXT_host_image_copy` extension aims to improve this by providing a direct way of moving image data from host memory to/from the device without having to go through such a staging process. It also simplifies the image transition process.
 
+NOTE: A staged upload usually has to first perform a CPU copy of data to a GPU-visible buffer and then uses the GPU to convert that data into the optimal format. A host-image copy does the copy and conversion using the CPU alone. In many circumstances this can actually be faster than the staged approach even though the GPU is not involved in the transfer.
+
 == Enabling the Extension
 
 The `VK_EXT_host_image_copy` extension needs to be enabled at device level. Depending on the Vulkan version you target, additional extensions might need to be enabled. See the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html#_extension_and_version_dependencies[extension and version dependencies] of the extension spec for details.
