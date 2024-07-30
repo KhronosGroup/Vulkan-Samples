@@ -40,7 +40,7 @@ project(vulkan_samples)
 find_package(Vulkan)
 
 if(Vulkan_FOUND)
-    if(NOT Vulkan_dxc_EXECUTABLE)
+    if(NOT Vulkan_dxc_exe_FOUND)
         find_program(Vulkan_dxc_EXECUTABLE
                     NAMES dxc
                     HINTS
@@ -52,7 +52,6 @@ if(Vulkan_FOUND)
         message(STATUS "Found DirectX Shader Compiler under ${Vulkan_dxc_EXECUTABLE}")
     else()
         message(STATUS "Couldn't find DirectX Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_dxc_EXECUTABLE cmake variable. HLSL shaders won't be compiled.")
-        unset(Vulkan_dxc_EXECUTABLE CACHE)
     endif()
 endif()
 
