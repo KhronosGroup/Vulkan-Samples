@@ -31,7 +31,7 @@
 #include "vulkan_profiles.hpp"
 
 // This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux, and the VP_LUNARG_desktop_portability_2021_subset profile on portability platforms like macOS
-#if (defined(VKB_ENABLE_PORTABILITY))
+#if (defined(VKB_ENABLE_PORTABILITY) && defined(VP_LUNARG_desktop_portability_2021_subset))
 #	define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_NAME
 #	define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_SPEC_VERSION
 #else
