@@ -30,9 +30,14 @@
 // The Vulkan Profiles library is part of the SDK and has been copied to the sample's folder for convenience
 #include "vulkan_profiles.hpp"
 
-// This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux
-#define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
-#define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
+// This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux, and the VP_LUNARG_desktop_portability_2021_subset profile on portability platforms like macOS
+#if (defined(VKB_ENABLE_PORTABILITY))
+#	define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_NAME
+#	define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_SPEC_VERSION
+#else
+#	define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
+#	define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
+#endif
 
 Profiles::Profiles()
 {
