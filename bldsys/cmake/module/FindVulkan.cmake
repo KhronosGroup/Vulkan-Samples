@@ -668,7 +668,7 @@ find_package_handle_standard_args(Vulkan
 
 if(Vulkan_FOUND AND NOT TARGET Vulkan::Vulkan)
     add_library(Vulkan::Vulkan UNKNOWN IMPORTED)
-    cmake_path(GET Vulkan_LIBRARIES EXTENSION _Vulkan_lib_extension)
+    get_filename_component(_Vulkan_lib_extension ${Vulkan_LIBRARIES} LAST_EXT)
     if(_Vulkan_lib_extension STREQUAL ".framework" AND CMAKE_VERSION VERSION_LESS 3.28)
         set_target_properties(Vulkan::Vulkan PROPERTIES
                 # Prior to 3.28 must reference library just inside the framework.
