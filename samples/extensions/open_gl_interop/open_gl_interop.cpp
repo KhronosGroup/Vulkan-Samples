@@ -214,13 +214,26 @@ void OpenGLInterop::prepare_shared_resources()
 		imageCreateInfo.usage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		VK_CHECK(vkCreateImage(deviceHandle, &imageCreateInfo, nullptr, &sharedTexture.image));
 
+		VkMemoryDedicatedAllocateInfo dedicated_allocate_info;
+		dedicated_allocate_info.sType  = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
+		dedicated_allocate_info.pNext  = nullptr;
+		dedicated_allocate_info.buffer = VK_NULL_HANDLE;
+		dedicated_allocate_info.image  = sharedTexture.image;
+
 		VkMemoryRequirements memReqs{};
 		vkGetImageMemoryRequirements(get_device().get_handle(), sharedTexture.image, &memReqs);
 
-		VkExportMemoryAllocateInfo exportAllocInfo{
-		    VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO, nullptr,
-		    VK_EXTERNAL_MEMORY_HANDLE_TYPE};
-		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &exportAllocInfo};
+		// In order to export an external handle later, we need to tell it explicitly during memory allocation
+		VkExportMemoryAllocateInfo export_memory_allocate_Info;
+		export_memory_allocate_Info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
+		export_memory_allocate_Info.pNext = &dedicated_allocate_info;
+#if WIN32
+		export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+#else
+		export_memory_allocate_Info.handleTypes       = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+#endif
+
+		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &export_memory_allocate_Info};
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex                               = get_device().get_memory_type(memReqs.memoryTypeBits,
@@ -556,6 +569,9 @@ bool OpenGLInterop::prepare(const vkb::ApplicationOptions &options)
 	glGenSemaphoresEXT(1, &gl_data->gl_complete);
 	// memory
 	glCreateMemoryObjectsEXT(1, &gl_data->mem);
+
+	GLint dedicated = GL_TRUE;
+	glMemoryObjectParameterivEXT(gl_data->mem, GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated);
 
 	// Platform specific import.
 	glImportSemaphore(gl_data->gl_ready, GL_HANDLE_TYPE, shareHandles.gl_ready);
