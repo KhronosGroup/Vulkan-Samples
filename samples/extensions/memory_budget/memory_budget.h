@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Sascha Willems
- * Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2023-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
