@@ -33,7 +33,7 @@ class MemoryBudget : public ApiVulkanSample
   private:
 	// Memory budget extension related variables
 	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
-	VkPhysicalDeviceMemoryProperties2         device_memory_properties{};
+	VkPhysicalDeviceMemoryProperties2KHR      device_memory_properties{};
 
 	struct ConvertedMemory
 	{
