@@ -142,7 +142,7 @@ Previous generations that support AFBC only support a subset of formats:
 *Do*
 
 * Ensure that your swapchain is created correctly as per the requirements of AFBC.
-* AFBC is not a replacement for (and independent of) texture compression like ASTC, so always compress all of the things when possible.
+* AFBC is not a replacement for (it is independent of) texture compression like ASTC, so always compress all of the things when possible.
 * Avoid changing your image configuration at run-time (using `vkCmdCopyImage` with an invalid AFBC requirement) as it will trigger a decompression.
 * Make sure you are resolving your images using `pResolveAttachments` when it comes to multisampling.
 Any `VkImage` with `SAMPLE_COUNT > 1` will not have AFBC applied to it.
