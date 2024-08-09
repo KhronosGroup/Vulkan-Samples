@@ -555,3 +555,11 @@ endif()
 if(VKB_DO_CLANG_TIDY)
     set_target_properties(framework PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
 endif()
+
+if (VKB_PROFILING)
+    ## Enable profling
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_PROFILING=1)
+else()
+    ## Disable profiling
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_PROFILING=0)
+endif()
