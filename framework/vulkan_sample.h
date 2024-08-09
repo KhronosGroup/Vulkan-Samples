@@ -27,7 +27,7 @@
 #include "scene_graph/scripts/animation.h"
 
 #if defined(PLATFORM__MACOS)
-#include <TargetConditionals.h>
+#	include <TargetConditionals.h>
 #endif
 
 namespace vkb
@@ -250,6 +250,8 @@ class VulkanSample : public vkb::Application
 	 */
 	void add_instance_extension(const char *extension, bool optional = false);
 
+	void add_layer(const char *layer, bool optional = false);
+
 	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
@@ -358,6 +360,8 @@ class VulkanSample : public vkb::Application
 	 */
 	std::unordered_map<const char *, bool> const &get_instance_extensions() const;
 
+	std::unordered_map<const char *, bool> const &get_layers() const;
+
 	/// <summary>
 	/// PRIVATE MEMBERS
 	/// </summary>
@@ -415,6 +419,7 @@ class VulkanSample : public vkb::Application
 
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
+	std::unordered_map<const char *, bool> instance_layers;
 
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
 	uint32_t api_version = VK_API_VERSION_1_0;
@@ -460,6 +465,12 @@ inline void VulkanSample<bindingType>::add_instance_extension(const char *extens
 }
 
 template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_layer(const char *layer, bool optional)
+{
+	instance_layers[layer] = optional;
+}
+
+template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSample<bindingType>::create_device(PhysicalDeviceType &gpu)
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -478,7 +489,7 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance(bool headless)
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layers(), headless, api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -765,6 +776,12 @@ inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::
 }
 
 template <vkb::BindingType bindingType>
+inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::get_layers() const
+{
+	return instance_layers;
+}
+
+template <vkb::BindingType bindingType>
 inline typename VulkanSample<bindingType>::RenderContextType const &VulkanSample<bindingType>::get_render_context() const
 {
 	assert(render_context && "Render context is not valid");
@@ -959,7 +976,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 #if TARGET_OS_IPHONE
 	static vk::DynamicLoader dl("vulkan.framework/vulkan");
 #else
-	static vk::DynamicLoader dl;
+	static vk::DynamicLoader        dl;
 #endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 

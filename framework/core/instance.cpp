@@ -76,6 +76,41 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 }
 #endif
 
+bool validate_layers(std::unordered_map<const char *, bool> &required,
+                     const std::vector<VkLayerProperties>   &available)
+{
+	std::vector<const char *> remove_vec;
+	for (auto layer : required)
+	{
+		bool found = false;
+		for (auto &available_layer : available)
+		{
+			if (strcmp(available_layer.layerName, layer.first) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			if (!layer.second)
+			{
+				LOGW("Optional Layer {} not found, removing it", layer.first)
+				remove_vec.push_back(layer.first);
+				continue;
+			}
+			LOGE("Validation Layer {} not found", layer.first)
+			return false;
+		}
+	}
+	for (auto &rem : remove_vec)
+	{
+		required.erase(rem);
+	}
+	return true;
+}
+
 bool validate_layers(const std::vector<const char *>      &required,
                      const std::vector<VkLayerProperties> &available)
 {
@@ -186,6 +221,7 @@ bool enable_all_extensions(const std::vector<const char *>           required_ex
 Instance::Instance(const std::string                            &application_name,
                    const std::unordered_map<const char *, bool> &required_extensions,
                    const std::vector<const char *>              &required_validation_layers,
+                   const std::unordered_map<const char *, bool> &requested_layers,
                    bool                                          headless,
                    uint32_t                                      api_version)
 {
@@ -304,6 +340,20 @@ Instance::Instance(const std::string                            &application_nam
 		for (const auto &layer : requested_validation_layers)
 		{
 			LOGI("	\t{}", layer);
+		}
+	}
+	else
+	{
+		throw std::runtime_error("Required validation layers are missing.");
+	}
+
+	std::unordered_map<const char *, bool> layers = (std::unordered_map<const char *, bool>) (requested_layers);
+	if (validate_layers(layers, supported_validation_layers))
+	{
+		LOGI("Enabled Validation Layers:")
+		for (const auto &layer : layers)
+		{
+			LOGI("	\t{}", layer.first);
 		}
 	}
 	else
