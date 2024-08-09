@@ -30,6 +30,7 @@
 
 #include "core/util/logging.hpp"
 #include "force_close/force_close.h"
+#include "glsl_compiler.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
@@ -134,66 +135,7 @@ ExitCode Platform::main_loop_frame()
 			{
 				if (!start_app())
 				{
-					LOGE("Failed to load requested application");
-					return ExitCode::FatalError;
-				}
-
-				// Compensate for load times of the app by rendering the first frame pre-emptively
-				timer.tick<Timer::Seconds>();
-				active_app->update(0.01667f);
-			}
-
-			update();
-
-			if (active_app && active_app->should_close())
-			{
-				std::string id = active_app->get_name();
-				on_app_close(id);
-				active_app->finish();
-			}
-
-			window->process_events();
-		}
-		catch (std::exception &e)
-		{
-			LOGE("Error Message: {}", e.what());
-			LOGE("Failed when running application {}", active_app->get_name());
-
-			on_app_error(active_app->get_name());
-
-            if (app_requested())
-            {
-                LOGI("Attempting to load next application");
-            }
-            else
-            {
-				set_last_error(e.what());
-                return ExitCode::FatalError;
-            }
-        }
-    }
-
-	return ExitCode::Success;
-}
-
-ExitCode Platform::main_loop()
-{
-	if (!app_requested())
-	{
-		return ExitCode::NoSample;
-	}
-
-	while (!window->should_close() && !close_requested)
-	{
-		try
-		{
-			// Load the requested app
-			if (app_requested())
-			{
-				if (!start_app())
-				{
-					LOGE("Failed to load requested application");
-					return ExitCode::FatalError;
+					throw std::runtime_error("Failed to load requested application");
 				}
 
 				// Compensate for load times of the app by rendering the first frame pre-emptively
@@ -225,7 +167,64 @@ ExitCode Platform::main_loop()
 			}
 			else
 			{
-                set_last_error(e.what());
+				set_last_error(e.what());
+				return ExitCode::FatalError;
+			}
+		}
+	}
+
+	return ExitCode::Success;
+}
+
+ExitCode Platform::main_loop()
+{
+	if (!app_requested())
+	{
+		return ExitCode::NoSample;
+	}
+
+	while (!window->should_close() && !close_requested)
+	{
+		try
+		{
+			// Load the requested app
+			if (app_requested())
+			{
+				if (!start_app())
+				{
+					throw std::runtime_error("Failed to load requested application");
+				}
+
+				// Compensate for load times of the app by rendering the first frame pre-emptively
+				timer.tick<Timer::Seconds>();
+				active_app->update(0.01667f);
+			}
+
+			update();
+
+			if (active_app && active_app->should_close())
+			{
+				std::string id = active_app->get_name();
+				on_app_close(id);
+				active_app->finish();
+			}
+
+			window->process_events();
+		}
+		catch (std::exception &e)
+		{
+			LOGE("Error Message: {}", e.what());
+			LOGE("Failed when running application {}", active_app->get_name());
+
+			on_app_error(active_app->get_name());
+
+			if (app_requested())
+			{
+				LOGI("Attempting to load next application");
+			}
+			else
+			{
+				set_last_error(e.what());
 				return ExitCode::FatalError;
 			}
 		}
@@ -419,6 +418,9 @@ bool Platform::start_app()
 
 		active_app->finish();
 	}
+
+	// Reset target environment to default prior to each sample to properly support batch mode
+	vkb::GLSLCompiler::reset_target_environment();
 
 	active_app = requested_app_info->create();
 

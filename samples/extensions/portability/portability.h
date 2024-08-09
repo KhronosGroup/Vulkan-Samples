@@ -28,7 +28,7 @@ class Portability : public ApiVulkanSample
   public:
 	bool bloom             = true;
 	bool display_skysphere = true;
-#ifdef VK_ENABLE_BETA_EXTENSIONS
+#ifdef VKB_ENABLE_PORTABILITY
 	VkPhysicalDevicePortabilitySubsetFeaturesKHR portability_features{};
 #endif
 

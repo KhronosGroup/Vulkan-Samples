@@ -197,7 +197,7 @@ endif()
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
 
-    if(DEFINED Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
+    if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
         compile_hlsl_shaders(
             SHADERS_HLSL ${TARGET_SHADERS_HLSL}
             DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}

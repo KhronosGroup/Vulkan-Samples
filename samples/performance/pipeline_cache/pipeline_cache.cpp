@@ -42,15 +42,29 @@ PipelineCache::~PipelineCache()
 	if (pipeline_cache != VK_NULL_HANDLE)
 	{
 		/* Get size of pipeline cache */
-		size_t size{};
-		VK_CHECK(vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, nullptr));
+		size_t   size{};
+		VkResult result = vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, nullptr);
+		if (result == VK_SUCCESS && size > 0)
+		{
+			/* Get data of pipeline cache */
+			std::vector<uint8_t> data(size);
+			result = vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, data.data());
+			if (result == VK_SUCCESS && size > 0)
+			{
+				if (size < data.size())
+				{
+					data.resize(size);
+				}
 
-		/* Get data of pipeline cache */
-		std::vector<uint8_t> data(size);
-		VK_CHECK(vkGetPipelineCacheData(get_device().get_handle(), pipeline_cache, &size, data.data()));
+				/* Write pipeline cache data to a file in binary format */
+				vkb::fs::write_temp(data, "pipeline_cache.data");
+			}
+		}
 
-		/* Write pipeline cache data to a file in binary format */
-		vkb::fs::write_temp(data, "pipeline_cache.data");
+		if (result != VK_SUCCESS || size == 0)
+		{
+			LOGE("Detected Vulkan error: {}, pipeline cache not saved.", vkb::to_string(result));
+		}
 
 		/* Destroy Vulkan pipeline cache */
 		vkDestroyPipelineCache(get_device().get_handle(), pipeline_cache, nullptr);
