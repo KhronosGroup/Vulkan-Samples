@@ -137,6 +137,7 @@ set(ORDER_LIST
     #HPP Performance Samples
     "hpp_pipeline_cache"
     "hpp_swapchain_images"
+	"hpp_texture_compression_comparison"
     
     #General Samples
     "mobile_nerf")

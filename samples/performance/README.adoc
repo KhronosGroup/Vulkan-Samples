@@ -49,9 +49,17 @@ The most straightforward and flexible approach is to re-create them for each fra
 The problem of descriptor management is intertwined with that of buffer management, that is choosing how to pack data in `VkBuffer` objects.
 This sample will explore a few options to improve both descriptor and buffer management.
 
+=== xref:./{performance_samplespath}hpp_pipeline_cache/README.adoc[HPP Pipeline cache]
+
+A transcoded version of the Performance sample <<pipeline_cache,Pipeline cache>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+
 === xref:./{performance_samplespath}hpp_swapchain_images/README.adoc[HPP Swapchain images]
 
 A transcoded version of the Performance sample <<swapchain_images,Swapchain images>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+
+=== xref:./{performance_samplespath}hpp_texture_compression_comparison/README.adoc[HPP Texture compression comparison]
+
+A transcoded version of the Performance sample <<texture_compression_comparison,Texture compression comparison>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./{performance_samplespath}image_compression_control/README.adoc[Image compression control]
 

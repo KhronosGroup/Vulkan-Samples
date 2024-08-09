@@ -24,10 +24,11 @@
 #include "platform/application.h"
 #include "rendering/hpp_render_pipeline.h"
 #include "scene_graph/components/camera.h"
+#include "scene_graph/hpp_scene.h"
 #include "scene_graph/scripts/animation.h"
 
 #if defined(PLATFORM__MACOS)
-#include <TargetConditionals.h>
+#	include <TargetConditionals.h>
 #endif
 
 namespace vkb
@@ -143,6 +144,7 @@ class VulkanSample : public vkb::Application
 	using RenderContextType  = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
 	using RenderPipelineType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderPipeline, vkb::RenderPipeline>::type;
 	using RenderTargetType   = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 	using Extent2DType       = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
 	using SurfaceFormatType  = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
@@ -265,7 +267,7 @@ class VulkanSample : public vkb::Application
 	InstanceType const                   &get_instance() const;
 	RenderPipelineType                   &get_render_pipeline();
 	RenderPipelineType const             &get_render_pipeline() const;
-	sg::Scene                            &get_scene();
+	SceneType                            &get_scene();
 	StatsType                            &get_stats();
 	SurfaceType                           get_surface() const;
 	std::vector<SurfaceFormatType>       &get_surface_priority_list();
@@ -385,7 +387,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Holds all scene information
 	 */
-	std::unique_ptr<sg::Scene> scene;
+	std::unique_ptr<vkb::scene_graph::HPPScene> scene;
 
 	std::unique_ptr<vkb::HPPGui> gui;
 
@@ -821,10 +823,17 @@ inline typename VulkanSample<bindingType>::RenderPipelineType &VulkanSample<bind
 }
 
 template <vkb::BindingType bindingType>
-inline sg::Scene &VulkanSample<bindingType>::get_scene()
+inline typename VulkanSample<bindingType>::SceneType &VulkanSample<bindingType>::get_scene()
 {
 	assert(scene && "Scene not loaded");
-	return *scene;
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return *scene;
+	}
+	else
+	{
+		return reinterpret_cast<vkb::sg::Scene &>(*scene);
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -959,7 +968,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 #if TARGET_OS_IPHONE
 	static vk::DynamicLoader dl("vulkan.framework/vulkan");
 #else
-	static vk::DynamicLoader dl;
+	static vk::DynamicLoader        dl;
 #endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 
