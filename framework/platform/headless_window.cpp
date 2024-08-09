@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,12 +26,22 @@ HeadlessWindow::HeadlessWindow(const Window::Properties &properties) :
 
 VkSurfaceKHR HeadlessWindow::create_surface(Instance &instance)
 {
-	return VK_NULL_HANDLE;
+	return create_surface(instance.get_handle(), VK_NULL_HANDLE);
 }
 
-VkSurfaceKHR HeadlessWindow::create_surface(VkInstance, VkPhysicalDevice)
+VkSurfaceKHR HeadlessWindow::create_surface(VkInstance instance, VkPhysicalDevice)
 {
-	return VK_NULL_HANDLE;
+	VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+	if (instance)
+	{
+		VkHeadlessSurfaceCreateInfoEXT info{};
+		info.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT;
+
+		VK_CHECK(vkCreateHeadlessSurfaceEXT(instance, &info, VK_NULL_HANDLE, &surface));
+	}
+
+	return surface;
 }
 
 bool HeadlessWindow::should_close()
@@ -52,6 +62,6 @@ float HeadlessWindow::get_dpi_factor() const
 
 std::vector<const char *> HeadlessWindow::get_required_surface_extensions() const
 {
-	return {};
+	return {VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME};
 }
 }        // namespace vkb

@@ -27,7 +27,7 @@
 #include "scene_graph/scripts/animation.h"
 
 #if defined(PLATFORM__MACOS)
-#include <TargetConditionals.h>
+#	include <TargetConditionals.h>
 #endif
 
 namespace vkb
@@ -172,7 +172,7 @@ class VulkanSample : public vkb::Application
 	 * @brief Create the Vulkan instance used by this sample
 	 * @note Can be overridden to implement custom instance creation
 	 */
-	virtual std::unique_ptr<InstanceType> create_instance(bool headless);
+	virtual std::unique_ptr<InstanceType> create_instance();
 
 	/**
 	 * @brief Override this to customise the creation of the render_context
@@ -476,9 +476,9 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 }
 
 template <vkb::BindingType bindingType>
-inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance(bool headless)
+inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance()
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -959,7 +959,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 #if TARGET_OS_IPHONE
 	static vk::DynamicLoader dl("vulkan.framework/vulkan");
 #else
-	static vk::DynamicLoader dl;
+	static vk::DynamicLoader        dl;
 #endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 
@@ -997,11 +997,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		instance = create_instance(headless);
+		instance = create_instance();
 	}
 	else
 	{
-		instance.reset(reinterpret_cast<vkb::core::HPPInstance *>(create_instance(headless).release()));
+		instance.reset(reinterpret_cast<vkb::core::HPPInstance *>(create_instance().release()));
 	}
 
 	// initialize C++-Bindings default dispatcher, second step

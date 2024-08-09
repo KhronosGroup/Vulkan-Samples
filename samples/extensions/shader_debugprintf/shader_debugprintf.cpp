@@ -1,4 +1,5 @@
 /* Copyright (c) 2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -394,7 +395,7 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 }
 
 // This sample overrides the instance creation part of the framework to chain in additional structures
-std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
+std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 {
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
