@@ -71,6 +71,7 @@ struct Vertex
 	glm::vec2 uv;
 	glm::vec4 joint0;
 	glm::vec4 weight0;
+	glm::vec3 color;
 };
 
 /**
