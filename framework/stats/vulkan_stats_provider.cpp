@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2024, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -308,7 +308,7 @@ bool VulkanStatsProvider::is_supported(const CounterSamplingConfig &sampling_con
 	device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 	device_features.pNext = &perf_query_features;
 
-	vkGetPhysicalDeviceFeatures2(device.get_gpu().get_handle(), &device_features);
+	vkGetPhysicalDeviceFeatures2KHR(device.get_gpu().get_handle(), &device_features);
 	if (!perf_query_features.performanceCounterQueryPools)
 	{
 		return false;
