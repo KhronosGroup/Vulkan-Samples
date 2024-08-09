@@ -65,11 +65,9 @@ class Platform
 
 	/**
 	 * @brief Handles the main loop of the platform
-	 * This should be overriden if a platform requires a specific main loop setup.
 	 * @return An exit code representing the outcome of the loop
 	 */
 	ExitCode main_loop();
-	ExitCode main_loop_frame();
 
 	/**
 	 * @brief Runs the application for one frame
@@ -130,6 +128,8 @@ class Platform
 	static const uint32_t MIN_WINDOW_HEIGHT;
 
   protected:
+	virtual bool uses_internal_looping() { return true; }
+
 	std::unique_ptr<CommandParser> parser;
 
 	std::vector<Plugin *> active_plugins;

@@ -58,7 +58,7 @@ int platform_main(const vkb::PlatformContext &);
 
 -(void) renderLoop {
     if(!_displayLink.isPaused && [UIApplication sharedApplication].applicationState == UIApplicationStateActive) {
-        _code = ((vkb::IosPlatform*)_context->userPlatform)->main_loop_frame();
+        _code = ((vkb::IosPlatform*)_context->userPlatform)->main_loop();
     }
 }
 

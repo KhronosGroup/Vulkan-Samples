@@ -33,6 +33,7 @@ public:
     void* view;
 
 protected:
+	bool uses_internal_looping() override { return false; }
     virtual void create_window(const Window::Properties &properties) override;
 };
 }        // namespace vkb
