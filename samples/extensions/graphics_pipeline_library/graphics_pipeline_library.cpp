@@ -62,8 +62,10 @@ GraphicsPipelineLibrary::GraphicsPipelineLibrary()
 void GraphicsPipelineLibrary::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
-	VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT &requested_graphics_pipeline_libary_features = gpu.request_extension_features<VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT);
-	requested_graphics_pipeline_libary_features.graphicsPipelineLibrary                             = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT,
+	                         graphicsPipelineLibrary);
 }
 
 GraphicsPipelineLibrary::~GraphicsPipelineLibrary()

@@ -45,8 +45,10 @@ ConditionalRendering::~ConditionalRendering()
 void ConditionalRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// We need to enable conditional rendering using a new feature struct
-	auto &requested_extension_features                = gpu.request_extension_features<VkPhysicalDeviceConditionalRenderingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
-	requested_extension_features.conditionalRendering = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceConditionalRenderingFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT,
+	                         conditionalRendering);
 }
 
 void ConditionalRendering::build_command_buffers()
