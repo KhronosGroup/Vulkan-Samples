@@ -160,7 +160,7 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 	// If VK_KHR_portability_enumeration is available at runtime, enable the extension and flag for instance creation
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
-	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
@@ -174,7 +174,7 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
-	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 	{
 		enabled_extensions.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
 
