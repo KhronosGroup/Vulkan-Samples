@@ -62,7 +62,7 @@ void HostImageCopy::request_gpu_features(vkb::PhysicalDevice &gpu)
     Unlike the texture(3d/array/etc) samples, this one uses the VK_EXT_host_image_copy to drasticly simplify the process
     of uploading an image from the host to the GPU. This new extension adds a way of directly uploading image data from
     host memory to an optimal tiled image on the device (GPU). This no longer requires a staging buffer in between, as we can
-    now directly copy data stored in host memory to the image. The extension also adds new functionality to simplfy image barriers
+    now directly copy data stored in host memory to the image. The extension also adds new functionality to simplify image barriers
 */
 void HostImageCopy::load_texture()
 {
@@ -109,19 +109,19 @@ void HostImageCopy::load_texture()
 	}
 
 	// Create optimal tiled target image on the device
-	VkImageCreateInfo imageCreateInfo = vkb::initializers::image_create_info();
-	imageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
-	imageCreateInfo.format            = image_format;
-	imageCreateInfo.mipLevels         = texture.mip_levels;
-	imageCreateInfo.arrayLayers       = 1;
-	imageCreateInfo.samples           = VK_SAMPLE_COUNT_1_BIT;
-	imageCreateInfo.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	imageCreateInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
-	imageCreateInfo.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageCreateInfo.extent            = {texture.width, texture.height, 1};
+	VkImageCreateInfo image_create_info = vkb::initializers::image_create_info();
+	image_create_info.imageType         = VK_IMAGE_TYPE_2D;
+	image_create_info.format            = image_format;
+	image_create_info.mipLevels         = texture.mip_levels;
+	image_create_info.arrayLayers       = 1;
+	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
+	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+	image_create_info.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_create_info.extent            = {texture.width, texture.height, 1};
 	// For images that use host image copy we need to specify the VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT usage flag
-	imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT;
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &imageCreateInfo, nullptr, &texture.image));
+	image_create_info.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT;
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &texture.image));
 
 	// Setup memory for backing the image on the device
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
@@ -133,7 +133,7 @@ void HostImageCopy::load_texture()
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
 
 	// With host image copy we can directly copy from the KTX image in host memory to the device
-	// This is pretty straight forward, as the KTX image is already tightly packed, doesn't need and swizzle and as such matches
+	// This is pretty straight forward, as the KTX image is already tightly packed, doesn't need any swizzle and as such matches
 	// what the device expects
 
 	// Set up copy information for all mip levels stored in the image
@@ -167,7 +167,7 @@ void HostImageCopy::load_texture()
 	subresource_range.levelCount   = texture.mip_levels;
 	subresource_range.layerCount   = 1;
 
-	// VK_EXT_host_image_copy als introduces a simplified way of doing the required image transition on the host
+	// VK_EXT_host_image_copy also introduces a simplified way of doing the required image transition on the host
 	// This no longer requires a dedicated command buffer to submit the barrier
 	// We also no longer need multiple transitions, and only have to do one for the final layout
 	VkHostImageLayoutTransitionInfoEXT host_image_layout_transition_info{};
@@ -190,7 +190,7 @@ void HostImageCopy::load_texture()
 
 	vkCopyMemoryToImageEXT(get_device().get_handle(), &copy_memory_info);
 
-	// Once uploaded, the ktx_texture can be safeld destroyed
+	// Once uploaded, the ktx_texture can be safely destroyed
 	ktxTexture_Destroy(ktx_texture);
 
 	// Calculate valid filter and mipmap modes
@@ -496,7 +496,7 @@ void HostImageCopy::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_host_image_copy()
+std::unique_ptr<vkb::VulkanSampleC> create_host_image_copy()
 {
 	return std::make_unique<HostImageCopy>();
 }

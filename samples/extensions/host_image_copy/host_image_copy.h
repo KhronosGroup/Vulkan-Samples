@@ -73,4 +73,4 @@ class HostImageCopy : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_host_image_copy();
+std::unique_ptr<vkb::VulkanSampleC> create_host_image_copy();
