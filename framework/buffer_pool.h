@@ -55,21 +55,27 @@ class BufferAllocation
 	void update(const T &value, uint32_t offset = 0);
 
   private:
-	BufferType    *buffer      = nullptr;
-	DeviceSizeType base_offset = 0;
-	DeviceSizeType size        = 0;
+	vkb::core::HPPBuffer *buffer = nullptr;
+	vk::DeviceSize        offset = 0;
+	vk::DeviceSize        size   = 0;
 };
 
 using BufferAllocationC   = BufferAllocation<vkb::BindingType::C>;
 using BufferAllocationCpp = BufferAllocation<vkb::BindingType::Cpp>;
 
-template <vkb::BindingType bindingType>
-BufferAllocation<bindingType>::BufferAllocation(BufferType &buffer, DeviceSizeType size, DeviceSizeType offset) :
-    buffer{&buffer},
-    size{size},
-    base_offset{offset}
-{
-}
+template <>
+inline BufferAllocation<vkb::BindingType::Cpp>::BufferAllocation(vkb::core::HPPBuffer &buffer, vk::DeviceSize size, vk::DeviceSize offset) :
+    buffer(&buffer),
+    offset(offset),
+    size(size)
+{}
+
+template <>
+inline BufferAllocation<vkb::BindingType::C>::BufferAllocation(vkb::core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset) :
+    buffer(reinterpret_cast<vkb::core::HPPBuffer *>(&buffer)),
+    offset(static_cast<vk::DeviceSize>(offset)),
+    size(static_cast<vk::DeviceSize>(size))
+{}
 
 template <vkb::BindingType bindingType>
 bool BufferAllocation<bindingType>::empty() const
@@ -81,19 +87,40 @@ template <vkb::BindingType bindingType>
 typename BufferAllocation<bindingType>::BufferType &BufferAllocation<bindingType>::get_buffer()
 {
 	assert(buffer && "Invalid buffer pointer");
-	return *buffer;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return *buffer;
+	}
+	else
+	{
+		return reinterpret_cast<vkb::core::Buffer &>(*buffer);
+	}
 }
 
 template <vkb::BindingType bindingType>
 typename BufferAllocation<bindingType>::DeviceSizeType BufferAllocation<bindingType>::get_offset() const
 {
-	return base_offset;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return offset;
+	}
+	else
+	{
+		return static_cast<VkDeviceSize>(offset);
+	}
 }
 
 template <vkb::BindingType bindingType>
 typename BufferAllocation<bindingType>::DeviceSizeType BufferAllocation<bindingType>::get_size() const
 {
-	return size;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return size;
+	}
+	else
+	{
+		return static_cast<VkDeviceSize>(size);
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -103,7 +130,7 @@ void BufferAllocation<bindingType>::update(const std::vector<uint8_t> &data, uin
 
 	if (offset + data.size() <= size)
 	{
-		buffer->update(data, to_u32(base_offset) + offset);
+		buffer->update(data, to_u32(this->offset) + offset);
 	}
 	else
 	{
@@ -200,7 +227,7 @@ BufferAllocation<bindingType> BufferBlock<bindingType>::allocate(DeviceSizeType 
 		}
 		else
 		{
-			return BufferAllocationC{reinterpret_cast<vkb::core::Buffer &>(buffer), static_cast<VkDeviceSize>(size), static_cast<VkDeviceSize>(offset)};
+			return BufferAllocationC{reinterpret_cast<vkb::core::Buffer &>(buffer), static_cast<VkDeviceSize>(size), static_cast<VkDeviceSize>(aligned)};
 		}
 	}
 
@@ -293,11 +320,11 @@ class BufferPool
 	void reset();
 
   private:
-	vkb::core::HPPDevice       &device;
-	std::vector<BufferBlockCpp> buffer_blocks;         /// List of blocks requested
-	vk::DeviceSize              block_size = 0;        /// Minimum size of the blocks
-	vk::BufferUsageFlags        usage;
-	VmaMemoryUsage              memory_usage{};
+	vkb::core::HPPDevice                        &device;
+	std::vector<std::unique_ptr<BufferBlockCpp>> buffer_blocks;         /// List of blocks requested (need to be pointers in order to keep their address constant on vector resizing)
+	vk::DeviceSize                               block_size = 0;        /// Minimum size of the blocks
+	vk::BufferUsageFlags                         usage;
+	VmaMemoryUsage                               memory_usage{};
 };
 
 using BufferPoolC   = BufferPool<vkb::BindingType::C>;
@@ -315,10 +342,10 @@ BufferBlock<bindingType> &BufferPool<bindingType>::request_buffer_block(DeviceSi
 	// Find a block in the range of the blocks which can fit the minimum size
 	auto it = minimal ? std::find_if(buffer_blocks.begin(),
 	                                 buffer_blocks.end(),
-	                                 [&minimum_size](const BufferBlockCpp &buffer_block) { return (buffer_block.get_size() == minimum_size) && buffer_block.can_allocate(minimum_size); }) :
+	                                 [&minimum_size](auto const &buffer_block) { return (buffer_block->get_size() == minimum_size) && buffer_block->can_allocate(minimum_size); }) :
 	                    std::find_if(buffer_blocks.begin(),
 	                                 buffer_blocks.end(),
-	                                 [&minimum_size](const BufferBlockCpp &buffer_block) { return buffer_block.can_allocate(minimum_size); });
+	                                 [&minimum_size](auto const &buffer_block) { return buffer_block->can_allocate(minimum_size); });
 
 	if (it == buffer_blocks.end())
 	{
@@ -327,23 +354,29 @@ BufferBlock<bindingType> &BufferPool<bindingType>::request_buffer_block(DeviceSi
 		vk::DeviceSize new_block_size = minimal ? minimum_size : std::max(block_size, minimum_size);
 
 		// Create a new block and get the iterator on it
-		it = buffer_blocks.emplace(buffer_blocks.end(), BufferBlockCpp(device, new_block_size, usage, memory_usage));
+		it = buffer_blocks.emplace(buffer_blocks.end(), std::make_unique<BufferBlockCpp>(device, new_block_size, usage, memory_usage));
 	}
 
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return *it;
+		return *it->get();
 	}
 	else
 	{
-		return reinterpret_cast<BufferBlockC &>(*it);
+		return reinterpret_cast<BufferBlockC &>(*it->get());
 	}
 }
 
 template <vkb::BindingType bindingType>
 void BufferPool<bindingType>::reset()
 {
-	buffer_blocks.clear();
+	// Attention: Resetting the BufferPool is not supposed to clear the BufferBlocks, but just reset them!
+	//						The actual VkBuffers are used to hash the DescriptorSet in RenderFrame::request_descriptor_set.
+	//						Don't know (for now) how that works with resetted buffers!
+	for (auto &buffer_block : buffer_blocks)
+	{
+		buffer_block->reset();
+	}
 }
 
 }        // namespace vkb
