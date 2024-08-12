@@ -233,6 +233,17 @@ if("FATAL_ERROR" IN_LIST Vulkan_FIND_COMPONENTS)
     list(REMOVE_ITEM Vulkan_FIND_COMPONENTS "FATAL_ERROR")
 endif()
 
+# FindVulkan only works correctly with the default CMAKE_FIND_FRAMEWORK
+# value: FIRST. If LAST it will find the macOS dylibs instead of the iOS
+# frameworks when IOS is true. If ALWAYS it will fail to find the macOS
+# dylibs. If NEVER it will fail to find the iOS frameworks. If frameworks
+# are ever included in the SDK for macOS, the search mechanism will need
+# revisiting.
+if(DEFINED CMAKE_FIND_FRAMEWORK)
+    set(_Vulkan_saved_cmake_find_framework ${CMAKE_FIND_FRAMEWORK})
+    set(CMAKE_FIND_FRAMEWORK FIRST)
+endif()
+
 if(IOS)
     get_filename_component(Vulkan_Target_SDK "$ENV{VULKAN_SDK}/.." REALPATH)
     list(APPEND CMAKE_FRAMEWORK_PATH "${Vulkan_Target_SDK}/iOS/lib")
@@ -287,7 +298,7 @@ else()
             "$ENV{VULKAN_SDK}/lib"
     )
 endif()
-if(APPLE AND DEFINED ENV{VULKAN_SDK})
+if(APPLE AND DEFINED Vulkan_Target_SDK)
     list(APPEND _Vulkan_hint_include_search_paths
             "${Vulkan_Target_SDK}/macOS/include"
     )
@@ -301,7 +312,7 @@ if(APPLE AND DEFINED ENV{VULKAN_SDK})
         )
     else()
         list(APPEND _Vulkan_hint_library_search_paths
-                "${Vulkan_Target_SDK}}/lib"
+                "${Vulkan_Target_SDK}/lib"
         )
     endif()
 endif()
@@ -318,7 +329,7 @@ find_library(Vulkan_LIBRARY
         HINTS
         ${_Vulkan_hint_library_search_paths}
 )
-message(STATUS vulkan_library ${Vulkan_LIBRARY} search paths ${_Vulkan_hint_library_search_paths})
+message(STATUS "vulkan_library ${Vulkan_LIBRARY} search paths ${_Vulkan_hint_library_search_paths}")
 mark_as_advanced(Vulkan_LIBRARY)
 
 find_library(Vulkan_Layer_API_DUMP
@@ -522,6 +533,11 @@ if (dxc IN_LIST Vulkan_FIND_COMPONENTS)
     mark_as_advanced(Vulkan_dxc_EXECUTABLE)
 endif()
 
+if(DEFINED _Vulkan_saved_cmake_find_framework)
+    set(CMAKE_FIND_FRAMEWORK ${_Vulkan_saved_cmake_find_framework})
+    unset(_Vulkan_saved_cmake_find_framework)
+endif()
+
 if(Vulkan_GLSLC_EXECUTABLE)
     set(Vulkan_glslc_FOUND TRUE)
 else()
@@ -652,9 +668,18 @@ find_package_handle_standard_args(Vulkan
 
 if(Vulkan_FOUND AND NOT TARGET Vulkan::Vulkan)
     add_library(Vulkan::Vulkan UNKNOWN IMPORTED)
+    get_filename_component(_Vulkan_lib_extension ${Vulkan_LIBRARIES} LAST_EXT)
+    if(_Vulkan_lib_extension STREQUAL ".framework" AND CMAKE_VERSION VERSION_LESS 3.28)
+        set_target_properties(Vulkan::Vulkan PROPERTIES
+                # Prior to 3.28 must reference library just inside the framework.
+                IMPORTED_LOCATION "${Vulkan_LIBRARIES}/vulkan")
+    else()
+        set_target_properties(Vulkan::Vulkan PROPERTIES
+                IMPORTED_LOCATION "${Vulkan_LIBRARIES}")
+    endif()
     set_target_properties(Vulkan::Vulkan PROPERTIES
-            IMPORTED_LOCATION "${Vulkan_LIBRARIES}"
             INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
+    unset(_Vulkan_lib_extension)
 endif()
 
 if(Vulkan_FOUND AND NOT TARGET Vulkan::Headers)
