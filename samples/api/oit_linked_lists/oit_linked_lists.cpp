@@ -17,6 +17,7 @@
 
 #include "oit_linked_lists.h"
 #include <algorithm>
+#include <vulkan/vulkan_core.h>
 
 OITLinkedLists::OITLinkedLists()
 {
@@ -44,6 +45,86 @@ OITLinkedLists::~OITLinkedLists()
 
 	vkDestroySampler(get_device().get_handle(), background_texture.sampler, nullptr);
 	object.reset();
+}
+
+void OITLinkedLists::setup_render_pass()
+{
+	std::array<VkAttachmentDescription, 2> attachments = {};
+	// Color attachment
+	attachments[0].format         = get_render_context().get_format();
+	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[0].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	// Depth attachment
+	attachments[1].format         = depth_format;
+	attachments[1].samples        = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference color_reference = {};
+	color_reference.attachment            = 0;
+	color_reference.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depth_reference = {};
+	depth_reference.attachment            = 1;
+	depth_reference.layout                = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass_description    = {};
+	subpass_description.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass_description.colorAttachmentCount    = 1;
+	subpass_description.pColorAttachments       = &color_reference;
+	subpass_description.pDepthStencilAttachment = &depth_reference;
+	subpass_description.inputAttachmentCount    = 0;
+	subpass_description.pInputAttachments       = nullptr;
+	subpass_description.preserveAttachmentCount = 0;
+	subpass_description.pPreserveAttachments    = nullptr;
+	subpass_description.pResolveAttachments     = nullptr;
+
+	// Subpass dependencies for layout transitions
+	std::array<VkSubpassDependency, 3> dependencies;
+
+	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass      = 0;
+	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[0].srcAccessMask   = VK_ACCESS_NONE_KHR;
+	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[1].srcSubpass      = 0;
+	dependencies[1].dstSubpass      = 0;
+	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[1].srcAccessMask   = VK_ACCESS_SHADER_WRITE_BIT;
+	dependencies[1].dstAccessMask   = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[2].srcSubpass      = 0;
+	dependencies[2].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[2].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[2].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[2].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[2].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkRenderPassCreateInfo render_pass_create_info = {};
+	render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachments.size());
+	render_pass_create_info.pAttachments           = attachments.data();
+	render_pass_create_info.subpassCount           = 1;
+	render_pass_create_info.pSubpasses             = &subpass_description;
+	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
+	render_pass_create_info.pDependencies          = dependencies.data();
+
+	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass));
 }
 
 bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
@@ -139,67 +220,55 @@ void OITLinkedLists::build_command_buffers()
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 		{
-			// Gather pass
+			// Gather
+			VkClearValue clear_values[2];
+			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values[1].depthStencil = {0.0f, 0};
+
+			render_pass_begin_info.framebuffer     = framebuffers[i];
+			render_pass_begin_info.renderPass      = render_pass;
+			render_pass_begin_info.clearValueCount = 2;
+			render_pass_begin_info.pClearValues    = clear_values;
+
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			{
-				render_pass_begin_info.framebuffer     = gather_framebuffer;
-				render_pass_begin_info.renderPass      = gather_render_pass;
-				render_pass_begin_info.clearValueCount = 0;
+				VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+				vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-				vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-				{
-					VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-					vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+				VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+				vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-					VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-					vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
-					vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
-
-					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
-					draw_model(object, draw_cmd_buffers[i], kInstanceCount);
-				}
-				vkCmdEndRenderPass(draw_cmd_buffers[i]);
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
+				draw_model(object, draw_cmd_buffers[i], kInstanceCount);
 			}
 
+			// image layout transition
 			VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-			vkb::image_layout_transition(
-			    draw_cmd_buffers[i], linked_list_head_image->get_handle(),
-			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			    VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-			    VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
-			    subresource_range);
+			VkImageMemoryBarrier    image_memory_barrier{};
+			image_memory_barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			image_memory_barrier.srcAccessMask       = VK_ACCESS_SHADER_WRITE_BIT;
+			image_memory_barrier.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT;
+			image_memory_barrier.oldLayout           = VK_IMAGE_LAYOUT_GENERAL;
+			image_memory_barrier.newLayout           = VK_IMAGE_LAYOUT_GENERAL;
+			image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			image_memory_barrier.image               = linked_list_head_image->get_handle();
+			image_memory_barrier.subresourceRange    = subresource_range;
+			vkCmdPipelineBarrier(draw_cmd_buffers[i], VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 
-			// Combine pass
+			// Combine
 			{
-				VkClearValue clear_values[2];
-				clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-				clear_values[1].depthStencil = {0.0f, 0};
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, background_pipeline);
+				vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
-				render_pass_begin_info.framebuffer     = framebuffers[i];
-				render_pass_begin_info.renderPass      = render_pass;
-				render_pass_begin_info.clearValueCount = 2;
-				render_pass_begin_info.pClearValues    = clear_values;
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
+				vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
-				vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-				{
-					VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-					vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-					VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-					vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-					vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
-
-					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, background_pipeline);
-					vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
-
-					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
-					vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
-
-					draw_ui(draw_cmd_buffers[i]);
-				}
-				vkCmdEndRenderPass(draw_cmd_buffers[i]);
+				draw_ui(draw_cmd_buffers[i]);
 			}
+			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
@@ -209,42 +278,17 @@ void OITLinkedLists::build_command_buffers()
 
 void OITLinkedLists::create_sized_objects(const uint32_t width, const uint32_t height)
 {
-	create_gather_pass_objects(width, height);
 	create_fragment_resources(width, height);
 	clear_sized_resources();
 }
 
 void OITLinkedLists::destroy_sized_objects()
 {
-	vkDestroyFramebuffer(get_device().get_handle(), gather_framebuffer, nullptr);
-	vkDestroyRenderPass(get_device().get_handle(), gather_render_pass, nullptr);
-
 	fragment_counter.reset();
 	fragment_buffer.reset();
 	fragment_max_count = 0;
 	linked_list_head_image_view.reset();
 	linked_list_head_image.reset();
-}
-
-void OITLinkedLists::create_gather_pass_objects(const uint32_t width, const uint32_t height)
-{
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-
-	VkRenderPassCreateInfo render_pass_create_info = {};
-	render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	render_pass_create_info.subpassCount           = 1;
-	render_pass_create_info.pSubpasses             = &subpass;
-
-	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &gather_render_pass));
-
-	VkFramebufferCreateInfo framebuffer_create_info = vkb::initializers::framebuffer_create_info();
-	framebuffer_create_info.renderPass              = gather_render_pass;
-	framebuffer_create_info.width                   = width;
-	framebuffer_create_info.height                  = height;
-	framebuffer_create_info.layers                  = 1;
-
-	VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &gather_framebuffer));
 }
 
 void OITLinkedLists::create_fragment_resources(const uint32_t width, const uint32_t height)
@@ -425,7 +469,7 @@ void OITLinkedLists::create_pipelines()
 			shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
 			shader_stages[1] = load_shader("oit_linked_lists/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-			pipeline_create_info.renderPass = gather_render_pass;
+			pipeline_create_info.renderPass = render_pass;
 
 			VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &gather_pipeline));
 		}

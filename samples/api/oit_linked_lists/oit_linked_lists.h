@@ -27,6 +27,7 @@ class OITLinkedLists : public ApiVulkanSample
 	OITLinkedLists();
 	~OITLinkedLists();
 
+	void setup_render_pass() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 	void render(float delta_time) override;
@@ -94,9 +95,6 @@ class OITLinkedLists : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer>    fragment_buffer;
 	std::unique_ptr<vkb::core::Buffer>    fragment_counter;
 	glm::uint                             fragment_max_count = 0U;
-
-	VkRenderPass  gather_render_pass = VK_NULL_HANDLE;
-	VkFramebuffer gather_framebuffer = VK_NULL_HANDLE;
 
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 	VkDescriptorPool      descriptor_pool       = VK_NULL_HANDLE;
