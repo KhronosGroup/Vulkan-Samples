@@ -153,10 +153,10 @@ void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
 	eds_feature_support       = {};
 	eds_feature_support.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
 
-	VkPhysicalDeviceFeatures2 features2{};
-	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	VkPhysicalDeviceFeatures2KHR features2{};
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 	features2.pNext = &eds_feature_support;
-	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+	vkGetPhysicalDeviceFeatures2KHR(gpu.get_handle(), &features2);
 
 	{
 		// Only request the features that we support
