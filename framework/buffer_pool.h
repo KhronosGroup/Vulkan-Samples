@@ -370,7 +370,13 @@ BufferBlock<bindingType> &BufferPool<bindingType>::request_buffer_block(DeviceSi
 template <vkb::BindingType bindingType>
 void BufferPool<bindingType>::reset()
 {
-	buffer_blocks.clear();
+	// Attention: Resetting the BufferPool is not supposed to clear the BufferBlocks, but just reset them!
+	//						The actual VkBuffers are used to hash the DescriptorSet in RenderFrame::request_descriptor_set.
+	//						Don't know (for now) how that works with resetted buffers!
+	for (auto &buffer_block : buffer_blocks)
+	{
+		buffer_block->reset();
+	}
 }
 
 }        // namespace vkb
