@@ -112,6 +112,7 @@
 *** xref:samples/performance/hpp_swapchain_images/README.adoc[Swapchain images (Vulkan-Hpp)]
 ** xref:samples/performance/texture_compression_basisu/README.adoc[Texture compression basisu]
 ** xref:samples/performance/texture_compression_comparison/README.adoc[Texture compression comparison]
+*** xref:samples/performance/hpp_texture_compression_comparison/README.adoc[Texture compression comparison (Vulkan-Hpp)]
 ** xref:samples/performance/wait_idle/README.adoc[Wait idle]
 * xref:samples/tooling/README.adoc[Tooling samples]
 ** xref:samples/tooling/profiles/README.adoc[Profiles]

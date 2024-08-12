@@ -21,6 +21,10 @@ include(android_package)
 # create sample app project
 project(vulkan_samples LANGUAGES C CXX)
 
+if(IOS AND CMAKE_VERSION VERSION_LESS 3.20)
+    message(FATAL_ERROR "Configuring iOS apps requires a minimum CMake version of 3.20")
+endif()
+
 add_subdirectory(plugins)
 add_subdirectory(apps)
 

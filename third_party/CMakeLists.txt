@@ -440,3 +440,12 @@ target_include_directories(opencl SYSTEM INTERFACE ${OPENCL_INCLUDE_DIR})
 add_subdirectory(catch2)
 set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
 set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")
+
+# Tracy
+if (VKB_PROFILING)
+    set(TRACY_ENABLE ${VKB_PROFILING})
+    set(TRACY_TIMER_FALLBACK ON)
+    add_subdirectory(tracy)
+    add_compile_definitions(TRACY_NO_INVARIANT_CHECK=1)
+    set_property(TARGET TracyClient PROPERTY FOLDER "ThirdParty")
+endif()

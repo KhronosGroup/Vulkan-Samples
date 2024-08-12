@@ -148,6 +148,7 @@ set(SCENE_GRAPH_FILES
     scene_graph/node.h
     scene_graph/scene.h
     scene_graph/script.h
+    scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
     scene_graph/node.cpp
@@ -173,7 +174,10 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/image/ktx.h
     scene_graph/components/image/stb.h
     scene_graph/components/hpp_image.h
+    scene_graph/components/hpp_material.h
+    scene_graph/components/hpp_mesh.h
     scene_graph/components/hpp_sub_mesh.h
+    scene_graph/components/hpp_texture.h
     # Source Files
     scene_graph/components/aabb.cpp
     scene_graph/components/camera.cpp
@@ -554,4 +558,12 @@ endif()
 
 if(VKB_DO_CLANG_TIDY)
     set_target_properties(framework PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
+endif()
+
+if (VKB_PROFILING)
+    ## Enable profling
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_PROFILING=1)
+else()
+    ## Disable profiling
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_PROFILING=0)
 endif()

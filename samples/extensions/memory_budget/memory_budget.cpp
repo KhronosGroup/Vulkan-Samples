@@ -147,7 +147,7 @@ void MemoryBudget::initialize_device_memory_properties()
 	physical_device_memory_budget_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
 	physical_device_memory_budget_properties.pNext = nullptr;
 	// Initialize physical device memory properties structure variables
-	device_memory_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+	device_memory_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2_KHR;
 	device_memory_properties.pNext = &physical_device_memory_budget_properties;
 }
 
@@ -197,7 +197,7 @@ std::string MemoryBudget::read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryH
 
 void MemoryBudget::update_device_memory_properties()
 {
-	vkGetPhysicalDeviceMemoryProperties2(get_device().get_gpu().get_handle(), &device_memory_properties);
+	vkGetPhysicalDeviceMemoryProperties2KHR(get_device().get_gpu().get_handle(), &device_memory_properties);
 	device_memory_heap_count = device_memory_properties.memoryProperties.memoryHeapCount;
 
 	device_memory_total_usage  = 0;

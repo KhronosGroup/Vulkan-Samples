@@ -27,6 +27,8 @@
 #include "common/glm_common.h"
 #include <glm/gtc/type_ptr.hpp>
 
+#include <core/util/profiling.hpp>
+
 #include "api_vulkan_sample.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
@@ -408,6 +410,8 @@ GLTFLoader::GLTFLoader(Device &device) :
 
 std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Load GLTF Scene");
+
 	std::string err;
 	std::string warn;
 
@@ -450,6 +454,8 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 
 std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Load GLTF Model");
+
 	std::string err;
 	std::string warn;
 
@@ -492,6 +498,8 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 
 sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Process Scene");
+
 	auto scene = sg::Scene();
 
 	scene.set_name("gltf_scene");
@@ -727,6 +735,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 	for (auto &gltf_mesh : model.meshes)
 	{
+		PROFILE_SCOPE("Processing Mesh");
+
 		auto mesh = parse_mesh(gltf_mesh);
 
 		for (size_t i_primitive = 0; i_primitive < gltf_mesh.primitives.size(); i_primitive++)
@@ -1087,6 +1097,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Process Model");
+
 	auto submesh = std::make_unique<sg::SubMesh>();
 
 	std::vector<core::Buffer> transient_buffers;
