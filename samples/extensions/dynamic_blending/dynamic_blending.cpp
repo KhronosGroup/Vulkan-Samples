@@ -173,10 +173,10 @@ void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
 	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
 	                         extendedDynamicState3ColorBlendEquation);
 
-	{
-		assert(gpu.get_extension_features<VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT).advancedBlendCoherentOperations);
-		gpu.add_extension_features<VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT).advancedBlendCoherentOperations = VK_TRUE;
-	}
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT,
+	                         advancedBlendCoherentOperations);
 }
 
 void DynamicBlending::prepare_uniform_buffers()
