@@ -381,9 +381,9 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 			model_buffer.bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
 			    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
 			model_buffer.object_id = model_buffer.bottom_level_acceleration_structure->add_triangle_geometry(
-			    model_buffer.is_static ? vertex_buffer : dynamic_vertex_buffer,
-			    model_buffer.is_static ? index_buffer : dynamic_index_buffer,
-			    model_buffer.transform_matrix_buffer,
+			    model_buffer.is_static ? *vertex_buffer : *dynamic_vertex_buffer,
+			    model_buffer.is_static ? *index_buffer : *dynamic_index_buffer,
+			    *model_buffer.transform_matrix_buffer,
 			    static_cast<uint32_t>(model_buffer.num_triangles),
 			    static_cast<uint32_t>(model_buffer.num_vertices) - 1,
 			    sizeof(NewVertex),

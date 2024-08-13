@@ -38,9 +38,9 @@ AccelerationStructure::~AccelerationStructure()
 	}
 }
 
-uint64_t AccelerationStructure::add_triangle_geometry(std::unique_ptr<vkb::core::BufferC> &vertex_buffer,
-                                                      std::unique_ptr<vkb::core::BufferC> &index_buffer,
-                                                      std::unique_ptr<vkb::core::BufferC> &transform_buffer,
+uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::BufferC &vertex_buffer,
+                                                      vkb::core::BufferC &index_buffer,
+                                                      vkb::core::BufferC &transform_buffer,
                                                       uint32_t triangle_count, uint32_t max_vertex,
                                                       VkDeviceSize vertex_stride, uint32_t transform_offset,
                                                       VkFormat vertex_format, VkGeometryFlagsKHR flags,
@@ -57,9 +57,9 @@ uint64_t AccelerationStructure::add_triangle_geometry(std::unique_ptr<vkb::core:
 	geometry.geometry.triangles.maxVertex                   = max_vertex;
 	geometry.geometry.triangles.vertexStride                = vertex_stride;
 	geometry.geometry.triangles.indexType                   = VK_INDEX_TYPE_UINT32;
-	geometry.geometry.triangles.vertexData.deviceAddress    = vertex_buffer_data_address == 0 ? vertex_buffer->get_device_address() : vertex_buffer_data_address;
-	geometry.geometry.triangles.indexData.deviceAddress     = index_buffer_data_address == 0 ? index_buffer->get_device_address() : index_buffer_data_address;
-	geometry.geometry.triangles.transformData.deviceAddress = transform_buffer_data_address == 0 ? transform_buffer->get_device_address() : transform_buffer_data_address;
+	geometry.geometry.triangles.vertexData.deviceAddress    = vertex_buffer_data_address == 0 ? vertex_buffer.get_device_address() : vertex_buffer_data_address;
+	geometry.geometry.triangles.indexData.deviceAddress     = index_buffer_data_address == 0 ? index_buffer.get_device_address() : index_buffer_data_address;
+	geometry.geometry.triangles.transformData.deviceAddress = transform_buffer_data_address == 0 ? transform_buffer.get_device_address() : transform_buffer_data_address;
 
 	uint64_t index = geometries.size();
 	geometries.insert({index, {geometry, triangle_count, transform_offset}});

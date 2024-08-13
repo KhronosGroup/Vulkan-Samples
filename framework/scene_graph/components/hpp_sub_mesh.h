@@ -46,6 +46,11 @@ class HPPSubMesh : private vkb::sg::SubMesh
 		return static_cast<vk::IndexType>(vkb::sg::SubMesh::index_type);
 	}
 
+	const HPPMaterial *get_material() const
+	{
+		return reinterpret_cast<vkb::scene_graph::components::HPPMaterial const *>(vkb::sg::SubMesh::get_material());
+	}
+
 	vkb::core::BufferCpp const &get_vertex_buffer(std::string const &name) const
 	{
 		return reinterpret_cast<vkb::core::BufferCpp const &>(vkb::sg::SubMesh::vertex_buffers.at(name));

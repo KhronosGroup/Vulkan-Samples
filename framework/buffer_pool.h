@@ -52,24 +52,24 @@ class BufferAllocation
 	void update(const T &value, uint32_t offset = 0);
 
   private:
-	vkb::core::BufferCpp *buffer      = nullptr;
-	vk::DeviceSize        base_offset = 0;
-	vk::DeviceSize        size        = 0;
+	vkb::core::BufferCpp *buffer = nullptr;
+	vk::DeviceSize        offset = 0;
+	vk::DeviceSize        size   = 0;
 };
 
 using BufferAllocationC   = BufferAllocation<vkb::BindingType::C>;
 using BufferAllocationCpp = BufferAllocation<vkb::BindingType::Cpp>;
 
 template <>
-inline BufferAllocation<vkb::BindingType::Cpp>::BufferAllocation(vkb::core::HPPBuffer &buffer, vk::DeviceSize size, vk::DeviceSize offset) :
+inline BufferAllocation<vkb::BindingType::Cpp>::BufferAllocation(vkb::core::BufferCpp &buffer, vk::DeviceSize size, vk::DeviceSize offset) :
     buffer(&buffer),
     offset(offset),
     size(size)
 {}
 
 template <>
-inline BufferAllocation<vkb::BindingType::C>::BufferAllocation(vkb::core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset) :
-    buffer(reinterpret_cast<vkb::core::HPPBuffer *>(&buffer)),
+inline BufferAllocation<vkb::BindingType::C>::BufferAllocation(vkb::core::BufferC &buffer, VkDeviceSize size, VkDeviceSize offset) :
+    buffer(reinterpret_cast<vkb::core::BufferCpp *>(&buffer)),
     offset(static_cast<vk::DeviceSize>(offset)),
     size(static_cast<vk::DeviceSize>(size))
 {}

@@ -274,9 +274,9 @@ void RayQueries::create_bottom_level_acceleration_structure()
 		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
 		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
 		bottom_level_acceleration_structure->add_triangle_geometry(
-		    vertex_buffer,
-		    index_buffer,
-		    transform_matrix_buffer,
+		    *vertex_buffer,
+		    *index_buffer,
+		    *transform_matrix_buffer,
 		    static_cast<uint32_t>(model.indices.size()),
 		    static_cast<uint32_t>(model.vertices.size()) - 1,
 		    sizeof(Vertex),
