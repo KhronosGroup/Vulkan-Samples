@@ -98,6 +98,7 @@ void TimelineSemaphore::setup_shared_resources()
 	// Images and image views
 	{
 		const auto            present_index = get_device().get_queue_by_present(0).get_family_index();
+		auto                  sharing_mode  = VK_SHARING_MODE_CONCURRENT;
 		std::vector<uint32_t> queue_families{compute.queue_family_index};
 
 		if (graphics.queue_family_index != compute.queue_family_index)
@@ -110,16 +111,24 @@ void TimelineSemaphore::setup_shared_resources()
 			queue_families.push_back(present_index);
 		}
 
+		if (queue_families.size() <= 1)
+		{
+			sharing_mode = VK_SHARING_MODE_EXCLUSIVE;
+		}
+
 		for (int i = 0; i < NumAsyncFrames; ++i)
 		{
 			// Need CONCURRENT usage here since we will sample from the image in both graphics and compute queues.
-			shared.images[i] = std::make_unique<vkb::core::Image>(get_device(), VkExtent3D{grid_width, grid_height, 1},
-			                                                      VK_FORMAT_R8G8B8A8_UNORM,
-			                                                      VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			                                                      VMA_MEMORY_USAGE_GPU_ONLY,
-			                                                      VK_SAMPLE_COUNT_1_BIT,
-			                                                      1, 1, VK_IMAGE_TILING_OPTIMAL,
-			                                                      0, static_cast<uint32_t>(queue_families.size()), queue_families.data());
+			shared.images[i] = std::make_unique<vkb::core::Image>(get_device(), vkb::core::ImageBuilder(VkExtent3D{grid_width, grid_height, 1})
+			                                                                        .with_format(VK_FORMAT_R8G8B8A8_UNORM)
+			                                                                        .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+			                                                                        .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY)
+			                                                                        .with_sample_count(VK_SAMPLE_COUNT_1_BIT)
+			                                                                        .with_mip_levels(1)
+			                                                                        .with_array_layers(1)
+			                                                                        .with_tiling(VK_IMAGE_TILING_OPTIMAL)
+			                                                                        .with_queue_families(static_cast<uint32_t>(queue_families.size()), queue_families.data())
+			                                                                        .with_sharing_mode(sharing_mode));
 
 			shared.image_views[i] = std::make_unique<vkb::core::ImageView>(*shared.images[i], VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 		}
