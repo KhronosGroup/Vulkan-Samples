@@ -32,4 +32,6 @@ add_sample(
     SHADER_FILES_HLSL
         "ray_tracing_position_fetch/hlsl/closesthit.rchit.hlsl"
         "ray_tracing_position_fetch/hlsl/miss.rmiss.hlsl"
-        "ray_tracing_position_fetch/hlsl/raygen.rgen.hlsl")
+        "ray_tracing_position_fetch/hlsl/raygen.rgen.hlsl"
+        DXC_ADDITIONAL_ARGUMENTS
+        "-fspv-extension=SPV_KHR_ray_query")
