@@ -16,6 +16,7 @@
  */
 
 #include "timeline_semaphore.h"
+#include "common/vk_initializers.h"
 
 // What we're trying to demonstrate here is:
 // - Out-of-order submission using threads which synchronize GPU work with each other using timeline semaphores.
@@ -29,17 +30,6 @@ namespace
 {
 static constexpr unsigned grid_width  = 64;
 static constexpr unsigned grid_height = 64;
-
-VkTimelineSemaphoreSubmitInfo create_timeline_submit_info(uint32_t waitValueCount, uint64_t *waitValue, uint32_t signalValueCount, uint64_t *signalValue)
-{
-	return VkTimelineSemaphoreSubmitInfo{
-	    VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
-	    NULL,
-	    waitValueCount,
-	    waitValue,
-	    signalValueCount,
-	    signalValue};
-}
 
 }        // namespace
 
@@ -73,6 +63,7 @@ TimelineSemaphore::~TimelineSemaphore()
 
 		vkDestroyDescriptorSetLayout(vk_device, shared.storage_layout, nullptr);
 		vkDestroyDescriptorSetLayout(vk_device, shared.sampled_layout, nullptr);
+		vkDestroyDescriptorPool(vk_device, shared.descriptor_pool, nullptr);
 
 		vkDestroySemaphore(vk_device, timeline.semaphore, nullptr);
 	}
@@ -106,28 +97,29 @@ void TimelineSemaphore::setup_shared_resources()
 
 	// Images and image views
 	{
-		uint32_t queue_families[2]{};
-		uint32_t num_queue_families{};
+		const auto            present_index = get_device().get_queue_by_present(0).get_family_index();
+		std::vector<uint32_t> queue_families{compute.queue_family_index};
 
-		// Need CONCURRENT usage here since we will sample from the image
-		// in both graphics and compute queues.
-		if (get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT) !=
-		    get_device().get_queue_by_present(0).get_family_index())
+		if (graphics.queue_family_index != compute.queue_family_index)
 		{
-			queue_families[0]  = get_device().get_queue_by_present(0).get_family_index();
-			queue_families[1]  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
-			num_queue_families = 2;
+			queue_families.push_back(graphics.queue_family_index);
+		}
+
+		if (compute.queue_family_index != present_index && graphics.queue_family_index != present_index)
+		{
+			queue_families.push_back(present_index);
 		}
 
 		for (int i = 0; i < NumAsyncFrames; ++i)
 		{
+			// Need CONCURRENT usage here since we will sample from the image in both graphics and compute queues.
 			shared.images[i] = std::make_unique<vkb::core::Image>(get_device(), VkExtent3D{grid_width, grid_height, 1},
 			                                                      VK_FORMAT_R8G8B8A8_UNORM,
 			                                                      VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			                                                      VMA_MEMORY_USAGE_GPU_ONLY,
 			                                                      VK_SAMPLE_COUNT_1_BIT,
 			                                                      1, 1, VK_IMAGE_TILING_OPTIMAL,
-			                                                      0, num_queue_families, queue_families);
+			                                                      0, static_cast<uint32_t>(queue_families.size()), queue_families.data());
 
 			shared.image_views[i] = std::make_unique<vkb::core::ImageView>(*shared.images[i], VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 		}
@@ -155,15 +147,15 @@ void TimelineSemaphore::setup_shared_resources()
 
 		for (int i = 0; i < NumAsyncFrames; ++i)
 		{
-			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &storage_alloc_info, &shared.storage_images[i]));
-			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &sampled_alloc_info, &shared.sampled_images[i]));
+			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &storage_alloc_info, &shared.storage_descriptor_sets[i]));
+			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &sampled_alloc_info, &shared.sampled_descriptor_sets[i]));
 
 			auto general_info  = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, shared.image_views[i]->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
 			auto readonly_info = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, shared.image_views[i]->get_handle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 			const VkWriteDescriptorSet writes[2] = {
-			    vkb::initializers::write_descriptor_set(shared.storage_images[i], VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0, &general_info),
-			    vkb::initializers::write_descriptor_set(shared.sampled_images[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &readonly_info),
+			    vkb::initializers::write_descriptor_set(shared.storage_descriptor_sets[i], VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0, &general_info),
+			    vkb::initializers::write_descriptor_set(shared.sampled_descriptor_sets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &readonly_info),
 			};
 
 			vkUpdateDescriptorSets(get_device().get_handle(), 2, writes, 0, nullptr);
@@ -173,6 +165,7 @@ void TimelineSemaphore::setup_shared_resources()
 
 void TimelineSemaphore::build_command_buffers()
 {
+	// Unused, but required to resolve pure virtual function inherited from ApiVulkanSample
 }
 
 void TimelineSemaphore::create_timeline_semaphore()
@@ -297,7 +290,7 @@ void TimelineSemaphore::do_compute_work()
 		build_compute_command_buffers(elapsed);
 
 		uint64_t                      signal_value  = get_timeline_stage_value(Timeline::draw);
-		VkTimelineSemaphoreSubmitInfo timeline_info = create_timeline_submit_info(0, nullptr, 1, &signal_value);
+		VkTimelineSemaphoreSubmitInfo timeline_info = vkb::initializers::timeline_semaphore_submit_info(0, nullptr, 1, &signal_value);
 
 		VkSubmitInfo submit_info         = vkb::initializers::submit_info();
 		submit_info.pNext                = &timeline_info;
@@ -359,7 +352,7 @@ void TimelineSemaphore::setup_game_of_life()
 	VK_CHECK(vkResetCommandBuffer(compute.command_buffer, 0));
 	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
 
-	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_images[1], 0, nullptr);
+	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_descriptor_sets[1], 0, nullptr);
 
 	//  On the first iteration, we initialize the game of life.
 	vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.init_pipeline);
@@ -406,7 +399,7 @@ void TimelineSemaphore::build_compute_command_buffers(const float elapsed)
 	auto frame_index = timeline.frame % NumAsyncFrames;
 	auto prev_index  = (timeline.frame - 1) % NumAsyncFrames;
 
-	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_images[frame_index], 0, nullptr);
+	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_descriptor_sets[frame_index], 0, nullptr);
 
 	if (elapsed > 1.0f)
 	{
@@ -421,7 +414,7 @@ void TimelineSemaphore::build_compute_command_buffers(const float elapsed)
 	}
 
 	// Bind previous iteration's texture.
-	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 1, 1, &shared.sampled_images[prev_index], 0, nullptr);
+	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 1, 1, &shared.sampled_descriptor_sets[prev_index], 0, nullptr);
 
 	VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
 	image_barrier.srcAccessMask        = 0;
@@ -461,7 +454,7 @@ void TimelineSemaphore::do_graphics_work()
 		VkSemaphore                   wait_semaphores[]   = {timeline.semaphore, semaphores.acquired_image_ready};
 		uint64_t                      signal_values[]     = {get_timeline_stage_value(Timeline::present), 0};
 		VkSemaphore                   signal_semaphores[] = {timeline.semaphore, semaphores.render_complete};
-		VkTimelineSemaphoreSubmitInfo timeline_info       = create_timeline_submit_info(2, wait_values, 2, signal_values);
+		VkTimelineSemaphoreSubmitInfo timeline_info       = vkb::initializers::timeline_semaphore_submit_info(2, wait_values, 2, signal_values);
 
 		VkSubmitInfo submit_info         = vkb::initializers::submit_info();
 		submit_info.pNext                = &timeline_info;
@@ -592,7 +585,7 @@ void TimelineSemaphore::build_graphics_command_buffer()
 	vkCmdSetViewport(graphics.command_buffer, 0, 1, &viewport);
 	vkCmdSetScissor(graphics.command_buffer, 0, 1, &scissor);
 
-	vkCmdBindDescriptorSets(graphics.command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics.pipeline_layout, 0, 1, &shared.sampled_images[frame_index], 0, nullptr);
+	vkCmdBindDescriptorSets(graphics.command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics.pipeline_layout, 0, 1, &shared.sampled_descriptor_sets[frame_index], 0, nullptr);
 	vkCmdDraw(graphics.command_buffer, 3, 1, 0, 0);
 
 	draw_ui(graphics.command_buffer);
@@ -617,12 +610,11 @@ bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	setup_compute_resources();
+	setup_graphics_resources();
 	setup_shared_resources();
 
-	setup_compute_resources();
 	setup_compute_pipeline();
-
-	setup_graphics_resources();
 	setup_graphics_pipeline();
 
 	setup_game_of_life();
@@ -655,11 +647,6 @@ void TimelineSemaphore::render(float delta_time)
 
 	// Signal to the worker threads that they can proceed to the next frame's work
 	signal_next_frame();
-}
-
-bool TimelineSemaphore::resize(const uint32_t width, const uint32_t height)
-{
-	return ApiVulkanSample::resize(width, height);
 }
 
 std::unique_ptr<vkb::Application> create_timeline_semaphore()

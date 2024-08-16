@@ -58,8 +58,8 @@ class TimelineSemaphore : public ApiVulkanSample
 	{
 		VkDescriptorSetLayout storage_layout;
 		VkDescriptorSetLayout sampled_layout;
-		VkDescriptorSet       storage_images[NumAsyncFrames];
-		VkDescriptorSet       sampled_images[NumAsyncFrames];
+		VkDescriptorSet       storage_descriptor_sets[NumAsyncFrames];
+		VkDescriptorSet       sampled_descriptor_sets[NumAsyncFrames];
 		VkDescriptorPool      descriptor_pool;
 
 		std::unique_ptr<vkb::core::Sampler>   immutable_sampler;
@@ -123,7 +123,6 @@ class TimelineSemaphore : public ApiVulkanSample
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
-	virtual bool resize(const uint32_t width, const uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_timeline_semaphore();
