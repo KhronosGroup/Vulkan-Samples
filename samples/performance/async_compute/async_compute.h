@@ -33,6 +33,8 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	virtual ~AsyncComputeSample() = default;
 
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void update(float delta_time) override;
