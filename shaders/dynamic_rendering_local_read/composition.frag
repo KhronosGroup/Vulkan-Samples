@@ -30,7 +30,7 @@ struct Light {
 	float radius;
 };
 
-layout(std140, binding = 3) buffer LightsBuffer
+layout(std140, binding = 3) readonly buffer LightsBuffer
 {
    Light lights[ ];
 };
