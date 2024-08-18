@@ -64,11 +64,17 @@ class Platform
 	virtual ExitCode initialize(const std::vector<Plugin *> &plugins);
 
 	/**
-	 * @brief Handles the main loop of the platform
-	 * This should be overriden if a platform requires a specific main loop setup.
+	 * @brief Handles the main update and render loop
 	 * @return An exit code representing the outcome of the loop
 	 */
 	ExitCode main_loop();
+
+	/**
+	 * @brief Handles the update and render of a frame.
+	 * Called either from main_loop(), or from a platform-specific
+	 * frame-looping mechanism, typically tied to platform screen refeshes.
+	 * @return An exit code representing the outcome of the loop
+	 */
 	ExitCode main_loop_frame();
 
 	/**
