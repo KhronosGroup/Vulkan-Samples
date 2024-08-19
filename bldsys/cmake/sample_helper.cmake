@@ -197,7 +197,7 @@ endif()
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
 
-    if(DEFINED Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
+    if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
         foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
             get_filename_component(HLSL_SPV_FILE ${SHADER_FILE_HLSL} NAME_WLE)
             get_filename_component(bare_name ${HLSL_SPV_FILE} NAME_WLE)
