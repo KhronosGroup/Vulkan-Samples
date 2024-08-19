@@ -356,46 +356,49 @@ void TimelineSemaphore::setup_compute_resources()
 
 void TimelineSemaphore::setup_game_of_life()
 {
-	auto begin_info  = vkb::initializers::command_buffer_begin_info();
-	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	VK_CHECK(vkResetCommandBuffer(compute.command_buffer, 0));
-	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
+	for (int i = 0; i < NumAsyncFrames; ++i)
+	{
+		auto begin_info  = vkb::initializers::command_buffer_begin_info();
+		begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		VK_CHECK(vkResetCommandBuffer(compute.command_buffer, 0));
+		VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
 
-	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_descriptor_sets[1], 0, nullptr);
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_descriptor_sets[i], 0, nullptr);
 
-	//  On the first iteration, we initialize the game of life.
-	vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.init_pipeline);
+		//  On the first iteration, we initialize the game of life.
+		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.init_pipeline);
 
-	VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
-	image_barrier.srcAccessMask        = 0;
-	image_barrier.dstAccessMask        = VK_ACCESS_SHADER_WRITE_BIT;
-	image_barrier.image                = shared.images[1]->get_handle();
-	image_barrier.subresourceRange     = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-	image_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-	image_barrier.newLayout            = VK_IMAGE_LAYOUT_GENERAL;
+		VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
+		image_barrier.srcAccessMask        = 0;
+		image_barrier.dstAccessMask        = VK_ACCESS_SHADER_WRITE_BIT;
+		image_barrier.image                = shared.images[i]->get_handle();
+		image_barrier.subresourceRange     = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
+		image_barrier.newLayout            = VK_IMAGE_LAYOUT_GENERAL;
 
-	// The semaphore takes care of srcStageMask.
-	vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+		// The semaphore takes care of srcStageMask.
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
 
-	vkCmdDispatch(compute.command_buffer, grid_width / 8, grid_height / 8, 1);
+		vkCmdDispatch(compute.command_buffer, grid_width / 8, grid_height / 8, 1);
 
-	image_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-	image_barrier.dstAccessMask = 0;
-	image_barrier.oldLayout     = VK_IMAGE_LAYOUT_GENERAL;
-	image_barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		image_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		image_barrier.dstAccessMask = 0;
+		image_barrier.oldLayout     = VK_IMAGE_LAYOUT_GENERAL;
+		image_barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	// The semaphore takes care of dstStageMask.
-	vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+		// The semaphore takes care of dstStageMask.
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
 
-	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
+		VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
 
-	VkSubmitInfo submit_info       = vkb::initializers::submit_info();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &compute.command_buffer;
+		VkSubmitInfo submit_info       = vkb::initializers::submit_info();
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers    = &compute.command_buffer;
 
-	VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
+		VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
 
-	VK_CHECK(get_device().wait_idle());
+		VK_CHECK(get_device().wait_idle());
+	}
 }
 
 void TimelineSemaphore::build_compute_command_buffers(const float elapsed)
