@@ -501,7 +501,7 @@ if(${VKB_VULKAN_DEBUG})
 endif()
 
 if(${VKB_ENABLE_PORTABILITY})
-    message(STATUS "Vulkan Portability extension is enabled")
+    message(STATUS "Vulkan Portability Enumeration and Portability Subset extensions are enabled")
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_ENABLE_PORTABILITY)
 endif()
 

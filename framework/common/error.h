@@ -54,15 +54,14 @@ class VulkanException : public std::runtime_error
 }        // namespace vkb
 
 /// @brief Helper macro to test the result of Vulkan calls which can return an error.
-#define VK_CHECK(x)                                                 \
-	do                                                              \
-	{                                                               \
-		VkResult err = x;                                           \
-		if (err)                                                    \
-		{                                                           \
-			LOGE("Detected Vulkan error: {}", vkb::to_string(err)); \
-			abort();                                                \
-		}                                                           \
+#define VK_CHECK(x)                                                                    \
+	do                                                                                 \
+	{                                                                                  \
+		VkResult err = x;                                                              \
+		if (err)                                                                       \
+		{                                                                              \
+			throw std::runtime_error("Detected Vulkan error: " + vkb::to_string(err)); \
+		}                                                                              \
 	} while (0)
 
 #define ASSERT_VK_HANDLE(handle)        \

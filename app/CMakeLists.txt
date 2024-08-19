@@ -41,17 +41,15 @@ if(ANDROID)
     endif()
 
     add_library(${PROJECT_NAME} SHARED ${SRC})
-elseif (APPLE)
-    if(IOS)
-        list(REMOVE_AT SRC 0)
-        list(APPEND SRC
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/main.mm
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.h
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.m
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.h
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.mm
-        )
-    endif ()
+elseif(IOS)
+	list(REMOVE_AT SRC 0)
+	list(APPEND SRC
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/main.mm
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.h
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.m
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.h
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.mm
+	)
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRC})
 else()
     add_executable(${PROJECT_NAME} WIN32 ${SRC})

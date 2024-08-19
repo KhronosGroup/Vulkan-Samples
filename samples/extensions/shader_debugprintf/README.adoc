@@ -84,6 +84,47 @@ This then needs to be chained into the instance creation:
     instance_create_info.pNext = &validation_features;
 ----
 
+*UPDATE:* This sample now leverages an alternative mechanism provided by the Vulkan Samples framework to simplify enablement of the `VK_LAYER_KHRONOS_validation` layer and the `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT` feature:
+
+[,cpp]
+----
+const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
+{
+	// Initialize validation layer override list to default (empty)
+	std::vector<const char *> validation_layers = ApiVulkanSample::get_validation_layers();
+
+	// Force activation of validation layer for access to debugPrintfEXT feature
+	validation_layers.push_back("VK_LAYER_KHRONOS_validation");
+
+	return validation_layers;
+}
+----
+
+The `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT` feature is enabled by the new `VK_EXT_layer_settings` extension which is supported by the Vulkan Samples framework and used during instance creation. If the layer settings extension is available at runtime, the Vulkan Samples framework will enable the requested `debugPrintfEXT` feature using the `VkLayerSettingEXT` structure shown below.  If `VK_EXT_layer_settings` is not available at runtime, the sample falls back to the custom `create_instance()` logic described above.
+
+[,cpp]
+----
+ShaderDebugPrintf::ShaderDebugPrintf()
+{
+	...
+	
+	// If layer settings available, use it to configure validation layer for debugPrintfEXT
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
+
+	VkLayerSettingEXT layerSetting;
+	layerSetting.pLayerName   = "VK_LAYER_KHRONOS_validation";
+	layerSetting.pSettingName = "enables";
+	layerSetting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
+	layerSetting.valueCount   = 1;
+
+	// Make this static so layer setting reference remains valid after leaving constructor scope
+	static const char *layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
+	layerSetting.pValues            = &layerEnables;
+
+	add_layer_setting(layerSetting);
+}
+----
+
 == Displaying debug printf output in your application
 
 If all you want to do is read the shader printf messages in a debugger like RenderDoc there's no additional work involved. Simply run your application with above instance setup and a printf in your shader and you can read those messages. Or use VkConfig from the LunarG SDK to redirect the messages to a specific output.

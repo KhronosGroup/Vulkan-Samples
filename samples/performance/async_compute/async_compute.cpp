@@ -38,6 +38,15 @@ AsyncComputeSample::AsyncComputeSample()
 	config.insert<vkb::BoolSetting>(1, double_buffer_hdr_frames, true);
 }
 
+void AsyncComputeSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+#ifdef VKB_ENABLE_PORTABILITY
+	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
+	auto &requested_portability_subset_features                     = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
+	requested_portability_subset_features.mutableComparisonSamplers = VK_TRUE;
+#endif
+}
+
 void AsyncComputeSample::draw_gui()
 {
 	get_gui().show_options_window(
@@ -717,18 +726,21 @@ void AsyncComputeSample::update(float delta_time)
 
 void AsyncComputeSample::finish()
 {
-	for (auto &sem : hdr_wait_semaphores)
+	if (has_device())
 	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
-	}
+		for (auto &sem : hdr_wait_semaphores)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
+		}
 
-	if (compute_post_semaphore)
-	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		if (compute_post_semaphore)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		}
 	}
 }
 

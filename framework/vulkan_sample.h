@@ -147,6 +147,7 @@ class VulkanSample : public vkb::Application
 	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 	using Extent2DType       = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using LayerSettingType   = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
 	using SurfaceFormatType  = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
 	using SurfaceType        = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
@@ -251,6 +252,12 @@ class VulkanSample : public vkb::Application
 	 * @param optional (Optional) Whether the extension is optional
 	 */
 	void add_instance_extension(const char *extension, bool optional = false);
+
+	/**
+	 * @brief Add a sample-specific layer setting
+	 * @param layerSetting The layer setting
+	 */
+	void add_layer_setting(LayerSettingType const &layerSetting);
 
 	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
@@ -360,6 +367,13 @@ class VulkanSample : public vkb::Application
 	 */
 	std::unordered_map<const char *, bool> const &get_instance_extensions() const;
 
+	/**
+	 * @brief Get sample-specific layer settings.
+	 *
+	 * @return Vector of layer settings. Default is empty vector.
+	 */
+	std::vector<LayerSettingType> const &get_layer_settings() const;
+
 	/// <summary>
 	/// PRIVATE MEMBERS
 	/// </summary>
@@ -418,6 +432,9 @@ class VulkanSample : public vkb::Application
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
 
+	/** @brief Vector of layer settings to be enabled for this example (must be set in the derived constructor) */
+	std::vector<vk::LayerSettingEXT> layer_settings;
+
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
 	uint32_t api_version = VK_API_VERSION_1_0;
 
@@ -462,6 +479,19 @@ inline void VulkanSample<bindingType>::add_instance_extension(const char *extens
 }
 
 template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_layer_setting(LayerSettingType const &layerSetting)
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		layer_settings.push_back(layerSetting);
+	}
+	else
+	{
+		layer_settings.push_back(reinterpret_cast<VkLayerSettingEXT const &>(layerSetting));
+	}
+}
+
+template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSample<bindingType>::create_device(PhysicalDeviceType &gpu)
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -480,7 +510,7 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance(bool headless)
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), headless, api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -764,6 +794,19 @@ template <vkb::BindingType bindingType>
 inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::get_instance_extensions() const
 {
 	return instance_extensions;
+}
+
+template <vkb::BindingType bindingType>
+inline std::vector<typename VulkanSample<bindingType>::LayerSettingType> const &VulkanSample<bindingType>::get_layer_settings() const
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return layer_settings;
+	}
+	else
+	{
+		return reinterpret_cast<std::vector<VkLayerSettingEXT> const &>(layer_settings);
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -1052,6 +1095,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
 		}
 	}
+
+#ifdef VKB_ENABLE_PORTABILITY
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	add_device_extension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, /*optional=*/true);
+#endif
 
 #ifdef VKB_VULKAN_DEBUG
 	if (!debug_utils)
