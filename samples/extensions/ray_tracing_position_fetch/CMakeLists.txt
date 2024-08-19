@@ -34,4 +34,4 @@ add_sample(
         "ray_tracing_position_fetch/hlsl/miss.rmiss.hlsl"
         "ray_tracing_position_fetch/hlsl/raygen.rgen.hlsl"
         DXC_ADDITIONAL_ARGUMENTS
-        "-fspv-extension=SPV_KHR_ray_query")
+        "-fspv-extension=SPV_KHR_ray_query -fspv-extension=SPV_KHR_ray_tracing")
