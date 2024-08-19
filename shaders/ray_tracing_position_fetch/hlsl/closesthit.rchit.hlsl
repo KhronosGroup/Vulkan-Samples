@@ -37,11 +37,11 @@ ConstantBuffer<UBO> ubo : register(b2);
 #define HitTriangleVertexPositionsKHR 5335
 #define RayTracingPositionFetchKHR 5336
 
+[[vk::ext_extension("SPV_KHR_ray_tracing_position_fetch")]]
+[[vk::ext_capability(RayTracingPositionFetchKHR)]]
 [[vk::ext_builtin_input(HitTriangleVertexPositionsKHR)]]
 const static float3 gl_HitTriangleVertexPositions[3];
 
-[[vk::ext_extension("SPV_KHR_ray_tracing_position_fetch")]]
-[[vk::ext_capability(RayTracingPositionFetchKHR)]]
 [shader("closesthit")]
 void main(inout Payload p, in Attributes attribs)
 {
