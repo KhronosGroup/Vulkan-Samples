@@ -49,6 +49,10 @@ target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
 
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
+if(VKB_ENABLE_PORTABILITY)
+	# When portability is enabled, must enable Vulkan beta extensions for access to VK_KHR_portability_subset
+    target_compile_definitions(vulkan INTERFACE VK_ENABLE_BETA_EXTENSIONS)
+endif()
 
 if(ANDROID)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)

@@ -186,6 +186,7 @@ bool enable_all_extensions(const std::vector<const char *>             required_
 HPPInstance::HPPInstance(const std::string                            &application_name,
                          const std::unordered_map<const char *, bool> &required_extensions,
                          const std::vector<const char *>              &required_validation_layers,
+                         const std::vector<vk::LayerSettingEXT>       &required_layer_settings,
                          bool                                          headless,
                          uint32_t                                      api_version)
 {
@@ -211,7 +212,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
+	bool portability_enumeration_available = enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
 #ifdef USE_VALIDATION_LAYER_FEATURES
@@ -326,7 +327,10 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	if (portability_enumeration_available)
+	{
+		instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	}
 #endif
 
 #ifdef USE_VALIDATION_LAYER_FEATURES
@@ -346,6 +350,17 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 		instance_info.pNext            = &validation_features_info;
 	}
 #endif
+
+	vk::LayerSettingsCreateInfoEXT layerSettingsCreateInfo;
+
+	// If layer settings extension enabled by sample, then activate layer settings during instance creation
+	if (std::find(enabled_extensions.begin(), enabled_extensions.end(), VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) != enabled_extensions.end())
+	{
+		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(required_layer_settings.size());
+		layerSettingsCreateInfo.pSettings    = required_layer_settings.data();
+		layerSettingsCreateInfo.pNext        = instance_info.pNext;
+		instance_info.pNext                  = &layerSettingsCreateInfo;
+	}
 
 	// Create the Vulkan instance
 	handle = vk::createInstance(instance_info);
