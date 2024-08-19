@@ -198,45 +198,58 @@ endif()
     endif()
 
     if(DEFINED Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
-        compile_hlsl_shaders(
-            SHADERS_HLSL ${TARGET_SHADERS_HLSL}
-            DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}
-        )
+        foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
+            get_filename_component(HLSL_SPV_FILE ${SHADER_FILE_HLSL} NAME_WLE)
+            get_filename_component(bare_name ${HLSL_SPV_FILE} NAME_WLE)
+            get_filename_component(extension ${HLSL_SPV_FILE} LAST_EXT)
+            get_filename_component(directory ${SHADER_FILE_HLSL} DIRECTORY)
+            string(REGEX REPLACE "[.]+" "" extension ${extension})
+            set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-spv")
+            set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}.${extension}.spv)
+            file(MAKE_DIRECTORY ${OUTPUT_DIR})
+
+            set(DXC_PROFILE_TYPE "")
+            set(DXC_PROFILE_VER "6_1")
+            if(${extension} STREQUAL "vert")
+                set(DXC_PROFILE_TYPE "vs")
+            elseif(${extension} STREQUAL "frag")
+                set(DXC_PROFILE_TYPE "ps")
+                set(DXC_PROFILE_VER "6_4")
+            elseif(${extension} STREQUAL "rgen" OR ${extension} STREQUAL "rmiss" OR ${extension} STREQUAL "rchit")
+                list(APPEND TARGET_DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_ray_tracing -fspv-target-env=vulkan1.1spirv1.4")
+                set(DXC_PROFILE_TYPE "lib")
+                set(DXC_PROFILE_VER "6_3")
+            elseif(${extension} STREQUAL "comp")
+                set(DXC_PROFILE_TYPE "cs")
+            elseif(${extension} STREQUAL "geom")
+                set(DXC_PROFILE_TYPE "gs")
+            elseif(${extension} STREQUAL "tesc")
+                set(DXC_PROFILE_TYPE "hs")
+            elseif(${extension} STREQUAL "tese")
+                set(DXC_PROFILE_TYPE "ds")
+            elseif(${extension} STREQUAL "mesh")
+                list(APPEND TARGET_DXC_ADDITIONAL_ARGUMENTS "-fspv-target-env=vulkan1.1spirv1.4")
+                set(DXC_PROFILE_TYPE "ms")
+                set(DXC_PROFILE_VER "6_6")
+            endif()
+            set(DXC_PROFILE ${DXC_PROFILE_TYPE}_${DXC_PROFILE_VER})
+            if(NOT "${TARGET_DXC_ADDITIONAL_ARGUMENTS}" STREQUAL "")
+                string(REPLACE " " ";" TARGET_DXC_ADDITIONAL_ARGUMENTS "${TARGET_DXC_ADDITIONAL_ARGUMENTS}")
+            endif ()
+            add_custom_command( PRE_BUILD
+                    OUTPUT ${OUTPUT_FILE}
+                    COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${SHADER_FILE_HLSL} -Fo ${OUTPUT_FILE}
+                    COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                    MAIN_DEPENDENCY ${SHADER_FILE_HLSL}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+            if(NOT TARGET ${bare_name}-${extension})
+                add_custom_target(${bare_name}-${extension} DEPENDS ${OUTPUT_FILE})
+            endif()
+            add_dependencies(${PROJECT_NAME} ${bare_name}-${extension})
+            set_source_files_properties(${OUTPUT_FILE} PROPERTIES
+                    MACOSX_PACKAGE_LOCATION Resources
+            )
+        endforeach()
     endif()
-endfunction()
-
-function(compile_hlsl_shaders)
-    set(options)
-    set(oneValueArgs DXC_ADDITIONAL_ARGUMENTS)
-    set(multiValueArgs SHADERS_HLSL)
-
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
-        set(HLSL_SPV_FILE ${SHADER_FILE_HLSL}.spv)
-        # Omit the .hlsl. part for the output file to make loading those easier
-        string(REPLACE ".hlsl." "." HLSL_SPV_FILE "${HLSL_SPV_FILE}")
-
-        if(${SHADER_FILE_HLSL} MATCHES "[^-]+.vert.hlsl")
-            set(DXC_PROFILE "vs_6_1")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.frag.hlsl")
-            set(DXC_PROFILE "ps_6_4")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.rgen.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rmiss.hlsl" OR ${SHADER_FILE_HLSL} MATCHES "[^-]+.rchit.hlsl")
-            set(DXC_PROFILE "lib_6_3")
-            set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.comp.hlsl")
-            set(DXC_PROFILE "cs_6_1")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.geom.hlsl")
-            set(DXC_PROFILE "gs_6_1")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.tesc.hlsl")
-            set(DXC_PROFILE "hs_6_1")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.tese.hlsl")
-            set(DXC_PROFILE "ds_6_1")
-        elseif(${SHADER_FILE_HLSL} MATCHES "[^-]+.mesh.hlsl")
-            set(DXC_PROFILE "ms_6_6")
-            set(DXC_TARGET "-fspv-target-env=vulkan1.1spirv1.4")
-        endif()
-
-        execute_process(COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main -fspv-extension=SPV_KHR_ray_tracing ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${DXC_TARGET} ${SHADER_FILE_HLSL} -Fo ${HLSL_SPV_FILE})
-    endforeach()
 endfunction()
