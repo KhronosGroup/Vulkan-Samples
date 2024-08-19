@@ -356,13 +356,13 @@ void TimelineSemaphore::setup_compute_resources()
 
 void TimelineSemaphore::setup_game_of_life()
 {
+	auto begin_info  = vkb::initializers::command_buffer_begin_info();
+	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	VK_CHECK(vkResetCommandBuffer(compute.command_buffer, 0));
+	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
+
 	for (int i = 0; i < NumAsyncFrames; ++i)
 	{
-		auto begin_info  = vkb::initializers::command_buffer_begin_info();
-		begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		VK_CHECK(vkResetCommandBuffer(compute.command_buffer, 0));
-		VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
-
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &shared.storage_descriptor_sets[i], 0, nullptr);
 
 		//  On the first iteration, we initialize the game of life.
@@ -388,17 +388,17 @@ void TimelineSemaphore::setup_game_of_life()
 
 		// The semaphore takes care of dstStageMask.
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
-
-		VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
-
-		VkSubmitInfo submit_info       = vkb::initializers::submit_info();
-		submit_info.commandBufferCount = 1;
-		submit_info.pCommandBuffers    = &compute.command_buffer;
-
-		VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
-
-		VK_CHECK(get_device().wait_idle());
 	}
+
+	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
+
+	VkSubmitInfo submit_info       = vkb::initializers::submit_info();
+	submit_info.commandBufferCount = 1;
+	submit_info.pCommandBuffers    = &compute.command_buffer;
+
+	VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
+
+	VK_CHECK(get_device().wait_idle());
 }
 
 void TimelineSemaphore::build_compute_command_buffers(const float elapsed)
