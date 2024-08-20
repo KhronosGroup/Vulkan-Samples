@@ -117,6 +117,7 @@
 ** xref:samples/tooling/profiles/README.adoc[Profiles]
 * xref:samples/general/README.adoc[General samples]
 ** xref:samples/general/mobile_nerf/README.adoc[Mobile NeRF]
+** xref:samples/general/mobile_nerf_rayquery/README.adoc[Mobile NeRF Ray Query]
 * xref:docs/README.adoc[General documentation]
 ** xref:docs/build.adoc[Build guide]
 ** xref:docs/memory_limits.adoc[Memory limits]

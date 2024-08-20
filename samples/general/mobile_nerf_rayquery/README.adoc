@@ -1,0 +1,33 @@
+////
+- Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+= Mobile NeRF Ray Query
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/general/mobile_nerf_rayquery[Khronos Vulkan samples github repository].
+endif::[]
+
+NeRF is a new 3D representation method in Computer Vision that creates images of a 3D scene using several 2D pictures taken from different viewpoints.
+This method constructs a representation of the 3D volume. Various adaptations of NeRF target different use cases, including MobileNeRF, which focuses on rendering NeRF efficiently on mobile phones by leveraging existing traditional graphic hardware.
+
+This version enhances the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/general/mobile_nerf[previous MobileNeRF implementation] implementation by using the Vulkan Ray Query feature, which leverages the hardware ray tracing capabilities of the Adreno GPU.
+This enhancement greatly boosts performance in most use cases. Additionally, the Vulkan API provides great flexibility for modifying and optimizing the rendering pipeline and shaders, enabling more functionalities while delivering optimal performance.
+
+== Notes
+The original source code is also licensed under Apache-2.0, all shader files used by the sample have comments to indicate changes, when applicable.
