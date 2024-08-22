@@ -118,8 +118,12 @@ vulkan_samples sample swapchain_images
 # Run AFBC sample in benchmark mode for 5000 frames
 vulkan_samples sample afbc --benchmark --stop-after-frame 5000
 
-# Run bonza test offscreen
-vulkan_samples test bonza --headless
+# Run compute nbody using headless_surface and take a screenshot of frame 5 
+# Note: headless_surface uses VK_EXT_headless_surface.
+# This will create a surface and a Swapchain, but present will be a no op.
+# The extension is supported by Swiftshader(https://github.com/google/swiftshader).
+# It allows to quickly test content in environments without a GPU.
+vulkan_samples sample compute_nbody --headless_surface -screenshot 5
 
 # Run all the performance samples for 10 seconds in each configuration
 vulkan_samples batch --category performance --duration 10

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2022, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ class WindowOptions : public WindowOptionsTags
 	vkb::FlagCommand width_flag      = {vkb::FlagType::OneValue, "width", "", "Initial window width"};
 	vkb::FlagCommand height_flag     = {vkb::FlagType::OneValue, "height", "", "Initial window height"};
 	vkb::FlagCommand fullscreen_flag = {vkb::FlagType::FlagOnly, "fullscreen", "", "Run in fullscreen mode"};
-	vkb::FlagCommand headless_flag   = {vkb::FlagType::FlagOnly, "headless", "", "Run in headless mode"};
+	vkb::FlagCommand headless_flag   = {vkb::FlagType::FlagOnly, "headless_surface", "", "Run in headless surface mode. A Surface and swap-chain is still created using VK_EXT_headless_surface."};
 	vkb::FlagCommand borderless_flag = {vkb::FlagType::FlagOnly, "borderless", "", "Run in borderless mode"};
 	vkb::FlagCommand stretch_flag    = {vkb::FlagType::FlagOnly, "stretch", "", "Stretch window to fullscreen (direct-to-display only)"};
 	vkb::FlagCommand vsync_flag      = {vkb::FlagType::OneValue, "vsync", "", "Force vsync {ON | OFF}. If not set samples decide how vsync is set"};

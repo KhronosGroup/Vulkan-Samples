@@ -1066,7 +1066,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		throw std::runtime_error("Failed to create window surface.");
 	}
 
-	auto &gpu = instance->get_suitable_gpu(surface);
+	auto &gpu = instance->get_suitable_gpu(surface, headless);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
@@ -1086,7 +1086,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	}
 
 	// Creating vulkan device, specifying the swapchain extension always
-	if (!headless || get_instance().is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
+	// If using VK_EXT_headless_surface, we still create and use a swap-chain
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 

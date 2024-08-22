@@ -86,9 +86,10 @@ class Instance
 	/**
 	 * @brief Tries to find the first available discrete GPU that can render to the given surface
 	 * @param surface to test against
+	 * @param headless_surface Is surface created with VK_EXT_headless_surface
 	 * @returns A valid physical device
 	 */
-	PhysicalDevice &get_suitable_gpu(VkSurfaceKHR);
+	PhysicalDevice &get_suitable_gpu(VkSurfaceKHR surface, bool headless_surface);
 
 	/**
 	 * @brief Tries to find the first available discrete GPU

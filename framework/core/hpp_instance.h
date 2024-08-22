@@ -93,9 +93,11 @@ class HPPInstance
 	/**
 	 * @brief Tries to find the first available discrete GPU that can render to the given surface
 	 * @param surface to test against
+	 * @param headless_surface Is surface created with VK_EXT_headless_surface
 	 * @returns A valid physical device
+
 	 */
-	HPPPhysicalDevice &get_suitable_gpu(vk::SurfaceKHR);
+	HPPPhysicalDevice &get_suitable_gpu(vk::SurfaceKHR surface, bool headless_surface);
 
 	/**
 	 * @brief Checks if the given extension is enabled in the vk::Instance

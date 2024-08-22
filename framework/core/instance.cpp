@@ -493,7 +493,7 @@ PhysicalDevice &Instance::get_first_gpu()
 	return *gpus[0];
 }
 
-PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
+PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface, bool headless_surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
@@ -506,6 +506,10 @@ PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
 		}
 		return *gpus[selected_gpu_index.value()];
+	}
+	if (headless_surface)
+	{
+		LOGW("Using headless surface with multiple GPUs. Considered explicitly selecting the target GPU.")
 	}
 
 	// Find a discrete GPU

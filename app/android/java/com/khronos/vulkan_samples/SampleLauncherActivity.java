@@ -292,7 +292,7 @@ public class SampleLauncherActivity extends AppCompatActivity {
             arguments.add("--benchmark");
         }
         if (isHeadless) {
-            arguments.add("--headless");
+            arguments.add("--headless_surface");
         }
         String[] argArray = new String[arguments.size()];
         sendArgumentsToPlatform(arguments.toArray(argArray));
