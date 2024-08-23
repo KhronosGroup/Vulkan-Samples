@@ -68,7 +68,7 @@ class MobileNerfRayQuery : public ApiVulkanSample
 #define BIAS_2_COUNT (4)
 
 	// some typedef for each model
-	struct mlp_weights
+	struct MLP_Weights
 	{
 		float data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT +
 		           BIAS_0_COUNT + BIAS_1_COUNT + BIAS_2_COUNT];        // Array of floats
@@ -119,7 +119,7 @@ class MobileNerfRayQuery : public ApiVulkanSample
 	std::vector<Model> models;
 
 	// MLPs for each model
-	std::vector<mlp_weights>                        mlp_weight_vector;
+	std::vector<MLP_Weights>                        mlp_weight_vector;
 	std::vector<std::unique_ptr<vkb::core::Buffer>> weights_buffers;
 
 	// Global uniform buffer
@@ -201,4 +201,4 @@ class MobileNerfRayQuery : public ApiVulkanSample
 	void create_texture_helper(std::string const &texturePath, Texture &texture_input);
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mobile_nerf_rayquery();
+std::unique_ptr<vkb::VulkanSampleC> create_mobile_nerf_rayquery();
