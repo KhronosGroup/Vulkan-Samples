@@ -95,6 +95,9 @@ MobileNerfRayQuery::MobileNerfRayQuery()
 
 	set_api_version(VK_API_VERSION_1_1);
 
+	// Required by VK_EXT_scalar_block_layout
+	add_device_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
 	// Required by VK_KHR_acceleration_structure
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
