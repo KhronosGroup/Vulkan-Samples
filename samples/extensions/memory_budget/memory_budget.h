@@ -74,9 +74,9 @@ class MemoryBudget : public ApiVulkanSample
 	// Contains the instanced data
 	struct InstanceBuffer
 	{
-		std::unique_ptr<vkb::core::Buffer> buffer;
-		size_t                             size = 0;
-		VkDescriptorBufferInfo             descriptor{};
+		std::unique_ptr<vkb::core::BufferC> buffer;
+		size_t                              size = 0;
+		VkDescriptorBufferInfo              descriptor{};
 	} instance_buffer;
 
 	struct UBOVS
@@ -90,7 +90,7 @@ class MemoryBudget : public ApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> scene;
+		std::unique_ptr<vkb::core::BufferC> scene;
 	} uniform_buffers;
 
 	VkPipelineLayout pipeline_layout{};

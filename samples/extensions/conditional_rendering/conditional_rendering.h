@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,8 +26,8 @@
 class ConditionalRendering : public ApiVulkanSample
 {
   public:
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
-	std::unique_ptr<vkb::core::Buffer> index_buffer  = nullptr;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer = nullptr;
+	std::unique_ptr<vkb::core::BufferC> index_buffer  = nullptr;
 
 	std::unique_ptr<vkb::sg::Scene> scene;
 	struct SceneNode
@@ -43,7 +43,7 @@ class ConditionalRendering : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 view;
 	} uniform_data;
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
 	VkPipeline            pipeline;
 	VkPipelineLayout      pipeline_layout;
@@ -56,8 +56,8 @@ class ConditionalRendering : public ApiVulkanSample
 		glm::vec4 color;
 	} push_const_block;
 
-	std::vector<int32_t>               conditional_visibility_list;
-	std::unique_ptr<vkb::core::Buffer> conditional_visibility_buffer;
+	std::vector<int32_t>                conditional_visibility_list;
+	std::unique_ptr<vkb::core::BufferC> conditional_visibility_buffer;
 
 	ConditionalRendering();
 	~ConditionalRendering();

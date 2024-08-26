@@ -30,13 +30,13 @@ class RayTracingPositionFetch : public ApiVulkanSample
 	std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure{nullptr};
 	std::unique_ptr<vkb::core::AccelerationStructure> top_level_acceleration_structure{nullptr};
 
-	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer>                index_buffer;
+	std::unique_ptr<vkb::core::BufferC>               vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC>               index_buffer;
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
 
-	std::unique_ptr<vkb::core::Buffer> raygen_shader_binding_table;
-	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
-	std::unique_ptr<vkb::core::Buffer> hit_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> raygen_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> miss_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> hit_shader_binding_table;
 
 	struct StorageImage
 	{
@@ -54,7 +54,7 @@ class RayTracingPositionFetch : public ApiVulkanSample
 		glm::mat4 proj_inverse{1.0f};
 		int32_t   display_mode{0};
 	} uniform_data;
-	std::unique_ptr<vkb::core::Buffer> ubo;
+	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};

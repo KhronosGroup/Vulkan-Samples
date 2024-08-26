@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,7 +41,7 @@ void ResourceBindingState::clear_dirty(uint32_t set)
 	resource_sets[set].clear_dirty();
 }
 
-void ResourceBindingState::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
+void ResourceBindingState::bind_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_sets[set].bind_buffer(buffer, offset, range, binding, array_element);
 
@@ -96,7 +96,7 @@ void ResourceSet::clear_dirty(uint32_t binding, uint32_t array_element)
 	resource_bindings[binding][array_element].dirty = false;
 }
 
-void ResourceSet::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t binding, uint32_t array_element)
+void ResourceSet::bind_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t binding, uint32_t array_element)
 {
 	resource_bindings[binding][array_element].dirty  = true;
 	resource_bindings[binding][array_element].buffer = &buffer;

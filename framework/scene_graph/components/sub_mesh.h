@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,9 +60,9 @@ class SubMesh : public Component
 
 	std::uint32_t vertex_indices = 0;
 
-	std::unordered_map<std::string, core::Buffer> vertex_buffers;
+	std::unordered_map<std::string, vkb::core::BufferC> vertex_buffers;
 
-	std::unique_ptr<core::Buffer> index_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
 
 	void set_attribute(const std::string &name, const VertexAttribute &attribute);
 

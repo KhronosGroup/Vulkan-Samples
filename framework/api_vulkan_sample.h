@@ -200,7 +200,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	 * @param size The size of the descriptor (default: VK_WHOLE_SIZE)
 	 * @param offset The offset of the descriptor (default: 0)
 	 */
-	VkDescriptorBufferInfo create_descriptor(vkb::core::Buffer &buffer, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+	VkDescriptorBufferInfo create_descriptor(vkb::core::BufferC &buffer, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
 	/**
 	 * @brief Creates an image descriptor

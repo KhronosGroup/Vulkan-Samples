@@ -439,10 +439,10 @@ void HPPInstancing::prepare_instance_data()
 
 	auto const &device = get_device();
 
-	vkb::core::HPPBuffer staging_buffer(get_device(), instance_buffer.size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vkb::core::BufferCpp staging_buffer(get_device(), instance_buffer.size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_buffer.update(instance_data.data(), instance_buffer.size);
 
-	instance_buffer.buffer = std::make_unique<vkb::core::HPPBuffer>(
+	instance_buffer.buffer = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), instance_buffer.size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy to staging buffer
@@ -461,7 +461,7 @@ void HPPInstancing::prepare_instance_data()
 void HPPInstancing::prepare_uniform_buffers()
 {
 	uniform_buffers.scene =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffer(0.0f);
 }
