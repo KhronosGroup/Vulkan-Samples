@@ -213,10 +213,10 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
 	const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 
 	// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
@@ -224,7 +224,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	    1.0f, 0.0f, 0.0f, 0.0f,
 	    0.0f, 1.0f, 0.0f, 0.0f,
 	    0.0f, 0.0f, 1.0f, 0.0f};
-	std::unique_ptr<vkb::core::Buffer> transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
 	VkDeviceOrHostAddressConstKHR vertex_data_device_address{};
@@ -269,7 +269,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	    &acceleration_structure_build_sizes_info);
 
 	// Create a buffer to hold the acceleration structure
-	bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
+	bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    acceleration_structure_build_sizes_info.accelerationStructureSize,
 	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
@@ -343,10 +343,10 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 	acceleration_structure_instance.accelerationStructureReference         = bottom_level_acceleration_structure.device_address;
 
-	std::unique_ptr<vkb::core::Buffer> instances_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                                          sizeof(VkAccelerationStructureInstanceKHR),
-	                                                                                          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> instances_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                                            sizeof(VkAccelerationStructureInstanceKHR),
+	                                                                                            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
 
 	VkDeviceOrHostAddressConstKHR instance_data_device_address{};
@@ -380,7 +380,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	    &acceleration_structure_build_sizes_info);
 
 	// Create a buffer to hold the acceleration structure
-	top_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
+	top_level_acceleration_structure.buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    acceleration_structure_build_sizes_info.accelerationStructureSize,
 	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
@@ -476,9 +476,9 @@ void RaytracingBasic::create_shader_binding_tables()
 
 	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	miss_shader_binding_table   = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	hit_shader_binding_table    = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
@@ -666,10 +666,10 @@ void RaytracingBasic::delete_acceleration_structure(AccelerationStructure &accel
 */
 void RaytracingBasic::create_uniform_buffer()
 {
-	ubo = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                          sizeof(uniform_data),
-	                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	ubo = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                           sizeof(uniform_data),
+	                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
 	ubo->convert_and_update(uniform_data);
 
 	update_uniform_buffers();

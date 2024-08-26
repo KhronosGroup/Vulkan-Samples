@@ -44,8 +44,8 @@ class TimestampQueries : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> matrices;
-		std::unique_ptr<vkb::core::Buffer> params;
+		std::unique_ptr<vkb::core::BufferC> matrices;
+		std::unique_ptr<vkb::core::BufferC> params;
 	} uniform_buffers;
 
 	struct UBOVS

@@ -253,7 +253,7 @@ void Profiles::generate_textures()
 	image_view.subresourceRange.baseArrayLayer = 0;
 	image_view.subresourceRange.layerCount     = 1;
 
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
 
 	textures.resize(32);
 	for (size_t i = 0; i < textures.size(); i++)
@@ -399,16 +399,16 @@ void Profiles::generate_cubes()
 
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -689,10 +689,10 @@ void Profiles::prepare_pipelines()
 void Profiles::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        sizeof(ubo_vs),
-	                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         sizeof(ubo_vs),
+	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

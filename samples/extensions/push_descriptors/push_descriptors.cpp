@@ -250,18 +250,18 @@ void PushDescriptors::prepare_pipelines()
 void PushDescriptors::prepare_uniform_buffers()
 {
 	// Vertex shader scene uniform buffer block
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(UboScene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(UboScene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Vertex shader cube model uniform buffer blocks
 	for (auto &cube : cubes)
 	{
-		cube.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-		                                                          sizeof(glm::mat4),
-		                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+		cube.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                           sizeof(glm::mat4),
+		                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffers();

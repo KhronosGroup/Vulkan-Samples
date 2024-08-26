@@ -268,10 +268,10 @@ void MeshShaderCulling::prepare_pipelines()
 
 void MeshShaderCulling::prepare_uniform_buffers()
 {
-	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                     sizeof(ubo_cull),
-	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(ubo_cull),
+	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 

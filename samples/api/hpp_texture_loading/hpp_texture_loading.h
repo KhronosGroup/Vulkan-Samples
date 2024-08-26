@@ -93,14 +93,14 @@ class HPPTextureLoading : public HPPApiVulkanSample
   private:
 	vk::DescriptorSet                     descriptor_set;
 	vk::DescriptorSetLayout               descriptor_set_layout;
-	std::unique_ptr<vkb::core::HPPBuffer> index_buffer;
+	std::unique_ptr<vkb::core::BufferCpp> index_buffer;
 	uint32_t                              index_count;
 	vk::Pipeline                          pipeline;
 	vk::PipelineLayout                    pipeline_layout;
 	Texture                               texture;
-	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferCpp> vertex_buffer;
 	VertexShaderData                      vertex_shader_data;
-	std::unique_ptr<vkb::core::HPPBuffer> vertex_shader_data_buffer;
+	std::unique_ptr<vkb::core::BufferCpp> vertex_shader_data_buffer;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_texture_loading();

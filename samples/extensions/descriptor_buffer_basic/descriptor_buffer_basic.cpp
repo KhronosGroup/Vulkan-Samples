@@ -281,16 +281,16 @@ void DescriptorBufferBasic::prepare_pipelines()
 void DescriptorBufferBasic::prepare_descriptor_buffer()
 {
 	// This buffer will contain resource descriptors for all the uniform buffers (one per cube and one with global matrices)
-	uniform_binding_descriptor.buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                        (static_cast<uint32_t>(cubes.size()) + 1) * uniform_binding_descriptor.size,
-	                                                                        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_binding_descriptor.buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                         (static_cast<uint32_t>(cubes.size()) + 1) * uniform_binding_descriptor.size,
+	                                                                         VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Samplers and combined images need to be stored in a separate buffer due to different flags (VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT) (one image per cube)
-	image_binding_descriptor.buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      static_cast<uint32_t>(cubes.size()) * image_binding_descriptor.size,
-	                                                                      VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	image_binding_descriptor.buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       static_cast<uint32_t>(cubes.size()) * image_binding_descriptor.size,
+	                                                                       VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Put the descriptors into the above buffers
 
@@ -346,18 +346,18 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 void DescriptorBufferBasic::prepare_uniform_buffers()
 {
 	// Vertex shader scene uniform buffer block
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(UboScene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(UboScene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Vertex shader cube model uniform buffer blocks
 	for (auto &cube : cubes)
 	{
-		cube.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-		                                                          sizeof(glm::mat4),
-		                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+		cube.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                           sizeof(glm::mat4),
+		                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffers();

@@ -702,13 +702,13 @@ void HPPTimestampQueries::prepare_time_stamps()
 void HPPTimestampQueries::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	uniform_buffers.matrices = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                                  sizeof(ubo_matrices),
 	                                                                  vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	uniform_buffers.params = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                                sizeof(ubo_params),
 	                                                                vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);

@@ -179,7 +179,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	}
 
 	// Move shading rate pattern data to staging buffer
-	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), buffer_size, shading_rate_pattern_data);
+	vkb::core::BufferC staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), buffer_size, shading_rate_pattern_data);
 	delete[] shading_rate_pattern_data;
 
 	// Upload the buffer containing the shading rates to the image that'll be used as the shading rate attachment inside our renderpass
@@ -647,10 +647,10 @@ void FragmentShadingRate::prepare_pipelines()
 
 void FragmentShadingRate::prepare_uniform_buffers()
 {
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(ubo_scene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(ubo_scene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
