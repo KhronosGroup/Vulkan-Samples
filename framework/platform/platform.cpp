@@ -121,55 +121,52 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 
 ExitCode Platform::main_loop_frame()
 {
-	if (!app_requested())
+	try
 	{
-		return ExitCode::NoSample;
-	}
-
-	if (!window->should_close() && !close_requested)
-	{
-		try
+		// Load the requested app
+		if (app_requested())
 		{
-			// Load the requested app
-			if (app_requested())
+			if (!start_app())
 			{
-				if (!start_app())
-				{
-					throw std::runtime_error("Failed to load requested application");
-				}
-
-				// Compensate for load times of the app by rendering the first frame pre-emptively
-				timer.tick<Timer::Seconds>();
-				active_app->update(0.01667f);
+				throw std::runtime_error("Failed to load requested application");
 			}
 
-			update();
-
-			if (active_app && active_app->should_close())
-			{
-				std::string id = active_app->get_name();
-				on_app_close(id);
-				active_app->finish();
-			}
-
-			window->process_events();
+			// Compensate for load times of the app by rendering the first frame pre-emptively
+			timer.tick<Timer::Seconds>();
+			active_app->update(0.01667f);
 		}
-		catch (std::exception &e)
+
+		if (!active_app)
 		{
-			LOGE("Error Message: {}", e.what());
-			LOGE("Failed when running application {}", active_app->get_name());
+			return ExitCode::NoSample;
+		}
 
-			on_app_error(active_app->get_name());
+		update();
 
-			if (app_requested())
-			{
-				LOGI("Attempting to load next application");
-			}
-			else
-			{
-				set_last_error(e.what());
-				return ExitCode::FatalError;
-			}
+		if (active_app->should_close())
+		{
+			std::string id = active_app->get_name();
+			on_app_close(id);
+			active_app->finish();
+		}
+
+		window->process_events();
+	}
+	catch (std::exception &e)
+	{
+		LOGE("Error Message: {}", e.what());
+		LOGE("Failed when running application {}", active_app->get_name());
+
+		on_app_error(active_app->get_name());
+
+		if (app_requested())
+		{
+			LOGI("Attempting to load next application");
+		}
+		else
+		{
+			set_last_error(e.what());
+			return ExitCode::FatalError;
 		}
 	}
 
@@ -183,54 +180,13 @@ ExitCode Platform::main_loop()
 		return ExitCode::NoSample;
 	}
 
-	while (!window->should_close() && !close_requested)
+	ExitCode exit_code = ExitCode::Success;
+	while ((exit_code == ExitCode::Success) && !window->should_close() && !close_requested)
 	{
-		try
-		{
-			// Load the requested app
-			if (app_requested())
-			{
-				if (!start_app())
-				{
-					throw std::runtime_error("Failed to load requested application");
-				}
-
-				// Compensate for load times of the app by rendering the first frame pre-emptively
-				timer.tick<Timer::Seconds>();
-				active_app->update(0.01667f);
-			}
-
-			update();
-
-			if (active_app && active_app->should_close())
-			{
-				std::string id = active_app->get_name();
-				on_app_close(id);
-				active_app->finish();
-			}
-
-			window->process_events();
-		}
-		catch (std::exception &e)
-		{
-			LOGE("Error Message: {}", e.what());
-			LOGE("Failed when running application {}", active_app->get_name());
-
-			on_app_error(active_app->get_name());
-
-			if (app_requested())
-			{
-				LOGI("Attempting to load next application");
-			}
-			else
-			{
-				set_last_error(e.what());
-				return ExitCode::FatalError;
-			}
-		}
+		exit_code = main_loop_frame();
 	}
 
-	return ExitCode::Success;
+	return exit_code;
 }
 
 void Platform::update()
