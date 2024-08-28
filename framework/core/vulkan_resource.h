@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/vk_common.h"
+#include "vulkan_type_mapping.h"
 
 #include <utility>
 #include <vulkan/vulkan.hpp>
@@ -30,57 +31,6 @@ class Device;
 namespace core
 {
 class HPPDevice;
-
-// Mapping from VkHandle type to vk::Handle type -> can be removed when it materializes in vulkan.hpp
-namespace detail
-{
-template <typename HandleType>
-struct HPPType
-{
-};
-
-template <>
-struct HPPType<VkBuffer>
-{
-	using Type = vk::Buffer;
-};
-
-template <>
-struct HPPType<VkCommandBuffer>
-{
-	using Type = vk::CommandBuffer;
-};
-
-template <>
-struct HPPType<VkDevice>
-{
-	using Type = vk::Device;
-};
-
-template <>
-struct HPPType<VkImage>
-{
-	using Type = vk::Image;
-};
-
-template <>
-struct HPPType<VkImageView>
-{
-	using Type = vk::ImageView;
-};
-
-template <>
-struct HPPType<VkRenderPass>
-{
-	using Type = vk::RenderPass;
-};
-
-template <>
-struct HPPType<VkSampler>
-{
-	using Type = vk::Sampler;
-};
-}        // namespace detail
 
 /// Inherit this for any Vulkan object with a handle of type `HPPHandle`.
 ///
@@ -117,21 +67,7 @@ class VulkanResource
 
   private:
 	// we always want to store a vk::Handle as a resource, so we have to figure out that type, depending on the BindingType!
-	template <vkb::BindingType BT, typename T>
-	struct DetermineResourceType
-	{
-	};
-	template <typename T>
-	struct DetermineResourceType<vkb::BindingType::Cpp, T>
-	{
-		using Type = T;
-	};
-	template <typename T>
-	struct DetermineResourceType<vkb::BindingType::C, T>
-	{
-		using Type = typename detail::HPPType<T>::Type;
-	};
-	using ResourceType = typename DetermineResourceType<bindingType, Handle>::Type;
+	using ResourceType = typename vkb::VulkanTypeMapping<bindingType, Handle>::Type;
 
 	std::string  debug_name;
 	HPPDevice   *device;
