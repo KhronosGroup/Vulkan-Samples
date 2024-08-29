@@ -224,7 +224,7 @@ BufferAllocation<bindingType> BufferBlock<bindingType>::allocate(DeviceSizeType 
 		}
 		else
 		{
-			return BufferAllocationC{reinterpret_cast<vkb::core::BufferC &>(buffer), static_cast<VkDeviceSize>(size), static_cast<VkDeviceSize>(offset)};
+			return BufferAllocationC{reinterpret_cast<vkb::core::BufferC &>(buffer), static_cast<VkDeviceSize>(size), static_cast<VkDeviceSize>(aligned)};
 		}
 	}
 
