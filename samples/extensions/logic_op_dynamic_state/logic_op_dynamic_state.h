@@ -73,8 +73,8 @@ class LogicOpDynamicState : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> common;
-		std::unique_ptr<vkb::core::Buffer> baseline;
+		std::unique_ptr<vkb::core::BufferC> common;
+		std::unique_ptr<vkb::core::BufferC> baseline;
 	} uniform_buffers;
 
 	struct
@@ -92,10 +92,10 @@ class LogicOpDynamicState : public ApiVulkanSample
 
 	struct Cube
 	{
-		std::unique_ptr<vkb::core::Buffer> vertices_pos;
-		std::unique_ptr<vkb::core::Buffer> vertices_norm;
-		std::unique_ptr<vkb::core::Buffer> indices;
-		uint32_t                           index_count{};
+		std::unique_ptr<vkb::core::BufferC> vertices_pos;
+		std::unique_ptr<vkb::core::BufferC> vertices_norm;
+		std::unique_ptr<vkb::core::BufferC> indices;
+		uint32_t                            index_count{};
 	} cube;
 
 	struct GUI_settings

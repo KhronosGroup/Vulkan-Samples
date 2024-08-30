@@ -326,14 +326,14 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 void DynamicPrimitiveClipping::prepare_uniform_buffers()
 {
 	// We will render the same object twice using two different sets of parameters called "positive" and "negative".
-	uniform_buffers.buffer_positive = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      sizeof(UBOVS),
-	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.buffer_negative = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      sizeof(UBOVS),
-	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_positive = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       sizeof(UBOVS),
+	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_negative = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       sizeof(UBOVS),
+	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

@@ -398,7 +398,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	image_view.image                           = test_image.image;
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view, nullptr, &test_image.image_view));
 
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t), nullptr);
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t), nullptr);
 
 	// Generate a random texture.
 	// Fairly simple, create different colors and some different patterns.

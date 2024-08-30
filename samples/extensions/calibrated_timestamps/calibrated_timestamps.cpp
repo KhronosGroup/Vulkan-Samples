@@ -698,8 +698,8 @@ void CalibratedTimestamps::prepare_pipelines()
 
 void CalibratedTimestamps::prepare_uniform_buffers()
 {
-	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.params   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.params   = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 	uniform_buffers.params->convert_and_update(ubo_params);

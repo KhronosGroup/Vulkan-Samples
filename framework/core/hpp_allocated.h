@@ -80,6 +80,12 @@ class HPPAllocated : public Allocated<
 	HPPAllocated &operator=(HPPAllocated const &) = delete;
 	HPPAllocated &operator=(HPPAllocated &&rhs)   = default;
 
+	// Import the base class constructors
+	template <typename... Args>
+	HPPAllocated(const VmaAllocationCreateInfo &alloc_create_info, Args &&...args) :
+	    Parent(alloc_create_info, std::forward<Args>(args)...)
+	{}
+
 	/**
 	 * @brief Copies byte data into the buffer
 	 * @param data The data to copy from

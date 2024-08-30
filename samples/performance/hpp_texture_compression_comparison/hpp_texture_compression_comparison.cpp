@@ -176,8 +176,8 @@ std::pair<std::unique_ptr<vkb::scene_graph::components::HPPImage>, HPPTextureCom
 
 std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionComparison::create_image(ktxTexture2 *ktx_texture, const std::string &name)
 {
-	std::unique_ptr<vkb::core::HPPBuffer> staging_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), ktx_texture->dataSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferCpp> staging_buffer =
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), ktx_texture->dataSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	memcpy(staging_buffer->map(), ktx_texture->pData, ktx_texture->dataSize);
 
 	const auto vk_format = static_cast<vk::Format>(ktx_texture->vkFormat);

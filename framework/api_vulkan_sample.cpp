@@ -973,7 +973,7 @@ void ApiVulkanSample::handle_surface_changes()
 	}
 }
 
-VkDescriptorBufferInfo ApiVulkanSample::create_descriptor(vkb::core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset)
+VkDescriptorBufferInfo ApiVulkanSample::create_descriptor(vkb::core::BufferC &buffer, VkDeviceSize size, VkDeviceSize offset)
 {
 	VkDescriptorBufferInfo descriptor{};
 	descriptor.buffer = buffer.get_handle();
@@ -1025,7 +1025,7 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> bufferCopyRegions;
@@ -1121,7 +1121,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
@@ -1220,7 +1220,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;

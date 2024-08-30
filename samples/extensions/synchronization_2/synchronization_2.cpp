@@ -307,12 +307,12 @@ void Synchronization2::prepare_storage_buffers()
 
 	// Staging
 	// SSBO won't be changed on the host after upload so copy to device local memory
-	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), particle_buffer);
+	vkb::core::BufferC staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), particle_buffer);
 
-	compute.storage_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                             storage_buffer_size,
-	                                                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                             VMA_MEMORY_USAGE_GPU_ONLY);
+	compute.storage_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                              storage_buffer_size,
+	                                                              VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                              VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffer to storage buffer
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -731,16 +731,16 @@ void Synchronization2::prepare_compute()
 void Synchronization2::prepare_uniform_buffers()
 {
 	// Compute shader uniform buffer block
-	compute.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                             sizeof(compute.ubo),
-	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	// Vertex shader uniform buffer block
-	graphics.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                              sizeof(graphics.ubo),
+	compute.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                              sizeof(compute.ubo),
 	                                                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	// Vertex shader uniform buffer block
+	graphics.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                               sizeof(graphics.ubo),
+	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_compute_uniform_buffers(1.0f);
 	update_graphics_uniform_buffers();

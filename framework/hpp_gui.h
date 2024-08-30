@@ -260,8 +260,8 @@ class HPPGui
   private:
 	PushConstBlock                           push_const_block;
 	VulkanSampleCpp                         &sample;
-	std::unique_ptr<vkb::core::HPPBuffer>    vertex_buffer;
-	std::unique_ptr<vkb::core::HPPBuffer>    index_buffer;
+	std::unique_ptr<vkb::core::BufferCpp>    vertex_buffer;
+	std::unique_ptr<vkb::core::BufferCpp>    index_buffer;
 	size_t                                   last_vertex_buffer_size = 0;
 	size_t                                   last_index_buffer_size  = 0;
 	float                                    content_scale_factor    = 1.0f;        // Scale factor to apply due to a difference between the window and GL pixel sizes

@@ -121,9 +121,9 @@ void GshaderToMshader::render(float delta_time)
  */
 void GshaderToMshader::prepare_uniform_buffers()
 {
-	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubos[0]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffer_gs = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubos[1]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffer_ms = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubos[2]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubos[0]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_gs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubos[1]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_ms = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubos[2]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 

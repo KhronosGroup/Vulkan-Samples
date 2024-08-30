@@ -248,7 +248,7 @@ void CommandBuffer::push_constants(const std::vector<uint8_t> &values)
 	}
 }
 
-void CommandBuffer::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
+void CommandBuffer::bind_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_binding_state.bind_buffer(buffer, offset, range, set, binding, array_element);
 }
@@ -268,15 +268,15 @@ void CommandBuffer::bind_input(const core::ImageView &image_view, uint32_t set, 
 	resource_binding_state.bind_input(image_view, set, binding, array_element);
 }
 
-void CommandBuffer::bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets)
+void CommandBuffer::bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::BufferC>> &buffers, const std::vector<VkDeviceSize> &offsets)
 {
 	std::vector<VkBuffer> buffer_handles(buffers.size(), VK_NULL_HANDLE);
 	std::transform(buffers.begin(), buffers.end(), buffer_handles.begin(),
-	               [](const core::Buffer &buffer) { return buffer.get_handle(); });
+	               [](const vkb::core::BufferC &buffer) { return buffer.get_handle(); });
 	vkCmdBindVertexBuffers(get_handle(), first_binding, to_u32(buffer_handles.size()), buffer_handles.data(), offsets.data());
 }
 
-void CommandBuffer::bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type)
+void CommandBuffer::bind_index_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkIndexType index_type)
 {
 	vkCmdBindIndexBuffer(get_handle(), buffer.get_handle(), offset, index_type);
 }
@@ -369,7 +369,7 @@ void CommandBuffer::draw_indexed(uint32_t index_count, uint32_t instance_count, 
 	vkCmdDrawIndexed(get_handle(), index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
-void CommandBuffer::draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride)
+void CommandBuffer::draw_indexed_indirect(const vkb::core::BufferC &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride)
 {
 	flush(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
@@ -383,14 +383,14 @@ void CommandBuffer::dispatch(uint32_t group_count_x, uint32_t group_count_y, uin
 	vkCmdDispatch(get_handle(), group_count_x, group_count_y, group_count_z);
 }
 
-void CommandBuffer::dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset)
+void CommandBuffer::dispatch_indirect(const vkb::core::BufferC &buffer, VkDeviceSize offset)
 {
 	flush(VK_PIPELINE_BIND_POINT_COMPUTE);
 
 	vkCmdDispatchIndirect(get_handle(), buffer.get_handle(), offset);
 }
 
-void CommandBuffer::update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data)
+void CommandBuffer::update_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data)
 {
 	vkCmdUpdateBuffer(get_handle(), buffer.get_handle(), offset, data.size(), data.data());
 }
@@ -409,7 +409,7 @@ void CommandBuffer::resolve_image(const core::Image &src_img, const core::Image 
 	                  to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size)
+void CommandBuffer::copy_buffer(const vkb::core::BufferC &src_buffer, const vkb::core::BufferC &dst_buffer, VkDeviceSize size)
 {
 	VkBufferCopy copy_region = {};
 	copy_region.size         = size;
@@ -423,14 +423,14 @@ void CommandBuffer::copy_image(const core::Image &src_img, const core::Image &ds
 	               to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions)
+void CommandBuffer::copy_buffer_to_image(const vkb::core::BufferC &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions)
 {
 	vkCmdCopyBufferToImage(get_handle(), buffer.get_handle(),
 	                       image.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	                       to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions)
+void CommandBuffer::copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const vkb::core::BufferC &buffer, const std::vector<VkBufferImageCopy> &regions)
 {
 	vkCmdCopyImageToBuffer(get_handle(), image.get_handle(), image_layout,
 	                       buffer.get_handle(), to_u32(regions.size()), regions.data());
@@ -461,7 +461,7 @@ void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, cons
 	                             subresource_range);
 }
 
-void CommandBuffer::buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier)
+void CommandBuffer::buffer_memory_barrier(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier)
 {
 	VkBufferMemoryBarrier buffer_memory_barrier{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER};
 	buffer_memory_barrier.srcAccessMask = memory_barrier.src_access_mask;

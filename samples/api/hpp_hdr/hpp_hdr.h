@@ -174,8 +174,8 @@ class HPPHDR : public HPPApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::HPPBuffer> matrices;
-		std::unique_ptr<vkb::core::HPPBuffer> params;
+		std::unique_ptr<vkb::core::BufferCpp> matrices;
+		std::unique_ptr<vkb::core::BufferCpp> params;
 	};
 
   private:

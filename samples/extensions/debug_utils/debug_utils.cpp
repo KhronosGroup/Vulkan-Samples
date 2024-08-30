@@ -1052,10 +1052,10 @@ void DebugUtils::prepare_pipelines()
 void DebugUtils::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                               sizeof(ubo_vs),
-	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                sizeof(ubo_vs),
+	                                                                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

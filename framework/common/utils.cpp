@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -56,11 +56,11 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	auto height   = render_context.get_surface_extent().height;
 	auto dst_size = width * height * 4;
 
-	core::Buffer dst_buffer{render_context.get_device(),
-	                        dst_size,
-	                        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                        VMA_MEMORY_USAGE_GPU_TO_CPU,
-	                        VMA_ALLOCATION_CREATE_MAPPED_BIT};
+	vkb::core::BufferC dst_buffer{render_context.get_device(),
+	                              dst_size,
+	                              VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                              VMA_MEMORY_USAGE_GPU_TO_CPU,
+	                              VMA_ALLOCATION_CREATE_MAPPED_BIT};
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 

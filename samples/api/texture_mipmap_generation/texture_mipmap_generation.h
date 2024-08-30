@@ -61,7 +61,7 @@ class TextureMipMapGeneration : public ApiVulkanSample
 		float     lod_bias      = 0.0f;
 		int32_t   sampler_index = 2;
 	} ubo;
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
 	VkPipeline            pipeline              = VK_NULL_HANDLE;
 	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
