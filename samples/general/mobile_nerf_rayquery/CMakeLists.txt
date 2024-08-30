@@ -25,4 +25,7 @@ add_sample_with_tags(
     AUTHOR "Qualcomm"
     NAME "Mobile NeRF Ray Query"
     DESCRIPTION "A Mobile Neural Radiance Field synthesizer sample using ray query, based on textured polygons."
-)
+    SHADER_FILES_GLSL
+        "mobile_nerf_rayquery/quad.vert"
+        "mobile_nerf_rayquery/rayquery_morpheus_combo.frag"
+        "mobile_nerf_rayquery/rayquery_morpheus.frag")

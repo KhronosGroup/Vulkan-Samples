@@ -54,7 +54,7 @@ class MobileNerfRayQuery : public ApiVulkanSample
 		alignas(16) glm::vec3 camera_up;
 		alignas(16) glm::vec3 camera_lookat;
 		alignas(8) glm::vec2 img_dim;
-		alignas(4) float tan_half_fov;
+		alignas(4) float tan_half_fov{};
 	} global_uniform;
 
 #define WEIGHTS_0_COUNT (176)
@@ -99,8 +99,8 @@ class MobileNerfRayQuery : public ApiVulkanSample
 
 	struct Model
 	{
-		int model_index;
-		int sub_model_num;
+		int model_index{};
+		int sub_model_num{};
 
 		std::vector<Vertex>                  vertices;
 		std::vector<std::array<uint32_t, 3>> indices;
@@ -109,8 +109,8 @@ class MobileNerfRayQuery : public ApiVulkanSample
 		Texture texture_input_0, texture_input_1;
 
 		// Each model has its vertex buffer and index buffer. In ray query, they are storage buffers.
-		std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
-		std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
+		std::unique_ptr<vkb::core::BufferC> vertex_buffer{nullptr};
+		std::unique_ptr<vkb::core::BufferC> index_buffer{nullptr};
 
 		// Each model has its BLAS
 		std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure{nullptr};
@@ -119,16 +119,13 @@ class MobileNerfRayQuery : public ApiVulkanSample
 	std::vector<Model> models;
 
 	// MLPs for each model
-	std::vector<MLP_Weights>                        mlp_weight_vector;
-	std::vector<std::unique_ptr<vkb::core::Buffer>> weights_buffers;
+	std::vector<MLP_Weights>                         mlp_weight_vector;
+	std::vector<std::unique_ptr<vkb::core::BufferC>> weights_buffers;
 
 	// Global uniform buffer
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
-	std::vector<VkFramebuffer> framebuffers_nerf;
-	VkRenderPass               render_pass_nerf{VK_NULL_HANDLE};
-
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	VkPipeline       pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
@@ -150,7 +147,7 @@ class MobileNerfRayQuery : public ApiVulkanSample
 
 	// For loading mobile nerf assets map
 	json                     asset_map;
-	int                      num_models;
+	int                      num_models  = 0;
 	bool                     combo_mode  = false;
 	bool                     do_rotation = false;
 	std::vector<std::string> model_path;
@@ -181,9 +178,6 @@ class MobileNerfRayQuery : public ApiVulkanSample
 	void initialize_mlp_uniform_buffers(int model_index);
 	void update_uniform_buffer();
 	void update_weights_buffers();
-
-	void setup_framebuffers();
-	void update_render_pass();
 
 	void create_pipeline_layout();
 	void create_descriptor_pool();

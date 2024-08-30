@@ -47,7 +47,7 @@ struct RequestFeature
 template <typename T>
 struct CopyBuffer
 {
-	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *buffer_name)
+	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::BufferC> &buffers, const char *buffer_name)
 	{
 		auto iter = buffers.find(buffer_name);
 		if (iter == buffers.cend())
@@ -95,9 +95,6 @@ MobileNerfRayQuery::MobileNerfRayQuery()
 
 	set_api_version(VK_API_VERSION_1_1);
 
-	// Required by VK_EXT_scalar_block_layout
-	add_device_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
 	// Required by VK_KHR_acceleration_structure
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
@@ -119,19 +116,6 @@ MobileNerfRayQuery::~MobileNerfRayQuery()
 {
 	if (has_device())
 	{
-		if (render_pass_nerf)
-		{
-			vkDestroyRenderPass(get_device().get_handle(), render_pass_nerf, nullptr);
-		}
-
-		for (uint32_t i = 0; i < framebuffers_nerf.size(); i++)
-		{
-			if (framebuffers_nerf[i])
-			{
-				vkDestroyFramebuffer(get_device().get_handle(), framebuffers_nerf[i], nullptr);
-			}
-		}
-
 		auto device_ptr = get_device().get_handle();
 
 		for (auto &model : models)
@@ -175,15 +159,10 @@ bool MobileNerfRayQuery::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	load_shaders();
-	update_render_pass();
-	setup_framebuffers();
-	// Because we have our own customized render pass, the UI render pass need to be updated with load on load so it won't
-	// clear out the written color attachment
-	update_render_pass_flags(RenderPassCreateFlags::ColorAttachmentLoad);
 
 	// Setup camera
 	camera.type  = vkb::CameraType::LookAt;
-	camera_pos.y = -camera_pos.y;        // flip y to keep consistency of the init pos between rayquery and rasterization
+	camera_pos.y = -camera_pos.y;
 	camera_set_look_at(camera, camera_pos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.01f, 256.0f);
@@ -338,9 +317,13 @@ void MobileNerfRayQuery::read_json_map()
 
 	// Load combo models or a single model. In combo mode, we have multiple sets of weights.
 	if (!asset_map["combo"].is_null())
+	{
 		combo_mode = asset_map["combo"].get<bool>();
+	}
 	else
+	{
 		combo_mode = false;
+	}
 
 	if (combo_mode)
 	{
@@ -606,97 +589,6 @@ void MobileNerfRayQuery::load_shaders()
 	    VK_SHADER_STAGE_FRAGMENT_BIT);
 }
 
-void MobileNerfRayQuery::update_render_pass()
-{
-	// 0: Depth attachment
-	// 1: Swapchain attachment
-	std::array<VkAttachmentDescription, 2> attachments = {};
-	// Depth attachment
-	attachments[0].format         = depth_format;
-	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
-	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[0].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	// Swapchain  attachment
-	attachments[1].format         = get_render_context().get_swapchain().get_format();
-	attachments[1].samples        = VK_SAMPLE_COUNT_1_BIT;
-	attachments[1].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[1].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference depth_reference = {};
-	depth_reference.attachment            = 0;
-	depth_reference.layout                = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentReference swapchain_reference = {};
-	swapchain_reference.attachment            = 1;
-	swapchain_reference.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass    = {};
-	subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount    = 1;
-	subpass.pColorAttachments       = &swapchain_reference;
-	subpass.pDepthStencilAttachment = &depth_reference;
-	subpass.inputAttachmentCount    = 0;
-	subpass.pInputAttachments       = nullptr;
-	subpass.preserveAttachmentCount = 0;
-	subpass.pPreserveAttachments    = nullptr;
-	subpass.pResolveAttachments     = nullptr;
-
-	VkRenderPassCreateInfo render_pass_create_info = {};
-	render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachments.size());
-	render_pass_create_info.pAttachments           = attachments.data();
-	render_pass_create_info.subpassCount           = 1;
-	render_pass_create_info.pSubpasses             = &subpass;
-
-	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &render_pass_nerf));
-}
-
-void MobileNerfRayQuery::setup_framebuffers()
-{
-	// Delete existing frame buffers
-	if (framebuffers_nerf.size() > 0)
-	{
-		for (uint32_t i = 0; i < framebuffers_nerf.size(); i++)
-		{
-			if (framebuffers_nerf[i] != VK_NULL_HANDLE)
-			{
-				vkDestroyFramebuffer(get_device().get_handle(), framebuffers_nerf[i], nullptr);
-			}
-		}
-	}
-
-	std::vector<VkImageView> views;
-	views.resize(2);
-	views[0] = depth_stencil.view;
-
-	// Depth/Stencil attachment is the same for all frame buffers
-	VkFramebufferCreateInfo framebuffer_create_info = {};
-	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebuffer_create_info.pNext                   = NULL;
-	framebuffer_create_info.renderPass              = render_pass_nerf;
-	framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(views.size());
-	framebuffer_create_info.pAttachments            = views.data();
-	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
-	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
-	framebuffer_create_info.layers                  = 1;
-
-	framebuffers_nerf.resize(swapchain_buffers.size());
-
-	for (uint32_t i = 0; i < framebuffers_nerf.size(); i++)
-	{
-		views[1] = swapchain_buffers[i].view;
-		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &framebuffers_nerf[i]));
-	}
-}
-
 void MobileNerfRayQuery::load_scene(int model_index, int sub_model_index, int models_entry)
 {
 	Model &model = models[models_entry];
@@ -817,13 +709,13 @@ void MobileNerfRayQuery::create_static_object_buffers(int models_entry)
 	const VkBufferUsageFlags staging_flags      = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 	// Create destination buffers
-	model.vertex_buffer = std::make_unique<vkb::core::Buffer>(
+	model.vertex_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    vertex_buffer_size,
 	    buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	    VMA_MEMORY_USAGE_GPU_ONLY);
 	model.vertex_buffer->set_debug_name(fmt::format("Model #{} vertices", models_entry));
-	model.index_buffer = std::make_unique<vkb::core::Buffer>(
+	model.index_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    index_buffer_size,
 	    buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -831,14 +723,14 @@ void MobileNerfRayQuery::create_static_object_buffers(int models_entry)
 	model.index_buffer->set_debug_name(fmt::format("Model #{} indices", models_entry));
 
 	// Create staging buffers
-	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = std::make_unique<vkb::core::Buffer>(
+	std::unique_ptr<vkb::core::BufferC> staging_vertex_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    vertex_buffer_size,
 	    staging_flags,
 	    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_vertex_buffer->update(model.vertices);
 
-	std::unique_ptr<vkb::core::Buffer> staging_index_buffer = std::make_unique<vkb::core::Buffer>(
+	std::unique_ptr<vkb::core::BufferC> staging_index_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(),
 	    index_buffer_size,
 	    staging_flags,
@@ -859,18 +751,18 @@ void MobileNerfRayQuery::create_uniforms()
 	weights_buffers.resize(num_models);
 
 	LOGI("Creating camera view uniform buffer");
-	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                     sizeof(global_uniform),
-	                                                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(global_uniform),
+	                                                      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	for (int i = 0; i < num_models; i++)
 	{
 		LOGI("Creating mlp weights uniform buffer for model {}", i);
-		weights_buffers[i] = std::make_unique<vkb::core::Buffer>(get_device(),
-		                                                         sizeof(MLP_Weights),
-		                                                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+		weights_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                          sizeof(MLP_Weights),
+		                                                          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffer();
@@ -881,13 +773,13 @@ void MobileNerfRayQuery::update_uniform_buffer()
 {
 	assert(uniform_buffer);
 
-	camera.set_perspective(fov, (float) width / (float) height, 0.01f, 200.0f);
+	camera.set_perspective(fov, static_cast<float>(width) / static_cast<float>(height), 0.01f, 200.0f);
 	const float tan_half_fov = tan(0.5 * fov / 180.0f * 3.141592653589793f);
 
-	global_uniform.camera_position = camera.position;
+	global_uniform.camera_position = glm::inverse(camera.matrices.view) * glm::vec4(0, 0, 0, 1);
 	global_uniform.camera_side     = glm::vec3(camera.matrices.view[0][0], camera.matrices.view[1][0], camera.matrices.view[2][0]);
 	global_uniform.camera_up       = glm::vec3(camera.matrices.view[0][1], camera.matrices.view[1][1], camera.matrices.view[2][1]);
-	global_uniform.camera_lookat   = glm::vec3(camera.matrices.view[0][2], camera.matrices.view[1][2], camera.matrices.view[2][2]);
+	global_uniform.camera_lookat   = -glm::vec3(camera.matrices.view[0][2], camera.matrices.view[1][2], camera.matrices.view[2][2]);
 	global_uniform.img_dim         = glm::vec2(width, height);
 	global_uniform.tan_half_fov    = tan_half_fov;
 
@@ -962,11 +854,11 @@ void MobileNerfRayQuery::create_top_level_acceleration_structure()
 
 	LOGI("model num: {}", models.size());
 
-	const size_t                       instancesDataSize = sizeof(VkAccelerationStructureInstanceKHR) * acceleration_structure_instances.size();
-	std::unique_ptr<vkb::core::Buffer> instances_buffer  = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                                              instancesDataSize,
-                                                                                              VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                                                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+	const size_t                        instancesDataSize = sizeof(VkAccelerationStructureInstanceKHR) * acceleration_structure_instances.size();
+	std::unique_ptr<vkb::core::BufferC> instances_buffer  = std::make_unique<vkb::core::BufferC>(get_device(),
+                                                                                                instancesDataSize,
+                                                                                                VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                                                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(acceleration_structure_instances.data(), instancesDataSize);
 
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
@@ -996,7 +888,7 @@ void MobileNerfRayQuery::create_bottom_level_acceleration_structure(int model_en
 		    M[0][1], M[1][1], M[2][1], -M[3][1],
 		    M[0][2], M[1][2], M[2][2], M[3][2]};
 	}
-	std::unique_ptr<vkb::core::Buffer> transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
 	if (model.bottom_level_acceleration_structure == nullptr)
@@ -1004,9 +896,9 @@ void MobileNerfRayQuery::create_bottom_level_acceleration_structure(int model_en
 		model.bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
 		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
 		model.bottom_level_acceleration_structure->add_triangle_geometry(
-		    model.vertex_buffer,
-		    model.index_buffer,
-		    transform_matrix_buffer,
+		    *model.vertex_buffer,
+		    *model.index_buffer,
+		    *transform_matrix_buffer,
 		    model.indices.size(),
 		    model.vertices.size(),
 		    sizeof(Vertex),
@@ -1272,7 +1164,7 @@ void MobileNerfRayQuery::prepare_pipelines()
 	VkPipelineVertexInputStateCreateInfo vertex_input_state{};
 	vertex_input_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass_nerf, 0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 	pipeline_create_info.pVertexInputState            = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState          = &input_assembly_state;
 	pipeline_create_info.pRasterizationState          = &rasterization_state;
@@ -1297,53 +1189,30 @@ void MobileNerfRayQuery::build_command_buffers()
 		view_port_width  = width;
 	}
 
-	// In case the screen is resized, need to update the storage image size and descriptor set
-	// Note that the texture_rendered image has already been recreated at this point
-	if (!prepared)
-	{
-		setup_framebuffers();
-	}
+	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkCommandBufferBeginInfo  command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
-	std::vector<VkClearValue> clear_values;
-
-	clear_values.resize(2);
-	clear_values[0].depthStencil = {1.0f, 0};
-	clear_values[1].color        = {{1.0f, 1.0f, 1.0f, 1.0f}};
+	VkClearValue clear_values[2];
+	clear_values[0].color        = default_clear_color;
+	clear_values[1].depthStencil = {1.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass               = render_pass_nerf;
+	render_pass_begin_info.renderPass               = render_pass;
 	render_pass_begin_info.renderArea.offset.x      = 0;
 	render_pass_begin_info.renderArea.offset.y      = 0;
 	render_pass_begin_info.renderArea.extent.width  = width;
 	render_pass_begin_info.renderArea.extent.height = height;
-	render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
-	render_pass_begin_info.pClearValues             = clear_values.data();
-
-	VkClearValue clear_values_UI[2];
-	clear_values_UI[0].color        = default_clear_color;
-	clear_values_UI[1].depthStencil = {1.0f, 0};
-
-	VkRenderPassBeginInfo render_pass_begin_info_UI    = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info_UI.renderPass               = render_pass;
-	render_pass_begin_info_UI.renderArea.offset.x      = 0;
-	render_pass_begin_info_UI.renderArea.offset.y      = 0;
-	render_pass_begin_info_UI.renderArea.extent.width  = width;
-	render_pass_begin_info_UI.renderArea.extent.height = height;
-	render_pass_begin_info_UI.clearValueCount          = 2;
-	render_pass_begin_info_UI.pClearValues             = clear_values_UI;
-
-	VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+	render_pass_begin_info.clearValueCount          = 2;
+	render_pass_begin_info.pClearValues             = clear_values;
 
 	for (size_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		render_pass_begin_info.framebuffer = framebuffers_nerf[i];
+		render_pass_begin_info.framebuffer = framebuffers[i];
 
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) view_port_width, (float) view_port_height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(view_port_width), static_cast<float>(view_port_height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
@@ -1364,13 +1233,8 @@ void MobileNerfRayQuery::build_command_buffers()
 		VkDeviceSize offsets[1] = {0};
 		vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-		// Render UI
-		render_pass_begin_info_UI.framebuffer = framebuffers[i];
-
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_UI, VK_SUBPASS_CONTENTS_INLINE);
 		draw_ui(draw_cmd_buffers[i]);
+
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));

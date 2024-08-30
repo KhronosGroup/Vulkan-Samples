@@ -77,12 +77,12 @@ layout(set = 0, binding = 2) uniform mlp_weights
                BIAS_0_COUNT + BIAS_1_COUNT + BIAS_2_COUNT)/4];        // Array of floats
 } weights_arr[];
 
-layout(set = 1, binding = 0, scalar) buffer Vertices
+layout(set = 1, binding = 0, scalar) readonly buffer Vertices
 {
   Vertex vertices[];
 } vertices_set[];
 
-layout(set = 2, binding = 0, scalar) buffer Indices
+layout(set = 2, binding = 0, scalar) readonly buffer Indices
 {
   uint indices[];
 } indices_set[];
