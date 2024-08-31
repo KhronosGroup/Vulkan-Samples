@@ -67,6 +67,7 @@ class DynamicLineRasterization : public ApiVulkanSample
 
 		int                      selected_rasterization_mode = 0;
 		std::vector<std::string> rasterization_mode_names    = {"DEFAULT", "RECT", "BRESENHAM", "SMOOTH"};
+		std::vector<bool>        rasterization_mode_support  = {true, true, true, true};
 
 		bool  stipple_enabled = true;
 		float line_width      = 1.0f;

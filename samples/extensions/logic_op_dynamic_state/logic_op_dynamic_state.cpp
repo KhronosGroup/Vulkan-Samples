@@ -200,6 +200,20 @@ void LogicOpDynamicState::build_command_buffers()
  */
 void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	// Check whether the device supports extended dynamic state2 features
+	VkPhysicalDeviceExtendedDynamicState2FeaturesEXT extended_dynamic_state2_features;
+	extended_dynamic_state2_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
+	extended_dynamic_state2_features.pNext = VK_NULL_HANDLE;
+	VkPhysicalDeviceFeatures2 features2;
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.pNext = &extended_dynamic_state2_features;
+	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+
+	if (!extended_dynamic_state2_features.extendedDynamicState2 || !extended_dynamic_state2_features.extendedDynamicState2LogicOp)
+	{
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support required extended dynamic state2 features!");
+	}
+
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
 	auto &requested_extended_dynamic_state2_features =

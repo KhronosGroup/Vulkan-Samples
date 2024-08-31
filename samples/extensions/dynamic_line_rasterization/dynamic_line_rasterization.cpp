@@ -382,7 +382,7 @@ void DynamicLineRasterization::build_command_buffers()
 		vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0u, 1u, &descriptor_set, 0u, nullptr);
 
 		// While dynamic parameterization is not utilized for the grid, it should be called before the first draw command to prevent validation layer warnings.
-		vkCmdSetLineRasterizationModeEXT(cmd_buff, static_cast<VkLineRasterizationModeEXT>(gui_settings.selected_rasterization_mode));
+		vkCmdSetLineRasterizationModeEXT(cmd_buff, static_cast<VkLineRasterizationModeEXT>(gui_settings.rasterization_mode_support[gui_settings.selected_rasterization_mode] ? gui_settings.selected_rasterization_mode : 0));
 		vkCmdSetLineWidth(cmd_buff, gui_settings.line_width);
 		vkCmdSetLineStippleEnableEXT(cmd_buff, static_cast<VkBool32>(gui_settings.stipple_enabled));
 		vkCmdSetLineStippleEXT(cmd_buff, gui_settings.stipple_factor, gui_settings.stipple_pattern);
@@ -429,15 +429,35 @@ void DynamicLineRasterization::build_command_buffers()
 
 void DynamicLineRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	// Check whether the device supports line rasterization features
+	VkPhysicalDeviceLineRasterizationFeaturesEXT line_rasterization_features;
+	line_rasterization_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
+	line_rasterization_features.pNext = VK_NULL_HANDLE;
+	VkPhysicalDeviceFeatures2 features2;
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.pNext = &line_rasterization_features;
+	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+
+	if (!line_rasterization_features.rectangularLines || !line_rasterization_features.stippledRectangularLines)
+	{
+		gui_settings.rasterization_mode_support[VK_LINE_RASTERIZATION_MODE_RECTANGULAR_KHR] = false;
+		gui_settings.rasterization_mode_names[VK_LINE_RASTERIZATION_MODE_RECTANGULAR_KHR] += " (unsupported)";
+	}
+	if (!line_rasterization_features.bresenhamLines || !line_rasterization_features.stippledBresenhamLines)
+	{
+		gui_settings.rasterization_mode_support[VK_LINE_RASTERIZATION_MODE_BRESENHAM_KHR] = false;
+		gui_settings.rasterization_mode_names[VK_LINE_RASTERIZATION_MODE_BRESENHAM_KHR] += " (unsupported)";
+	}
+	if (!line_rasterization_features.smoothLines || !line_rasterization_features.stippledSmoothLines)
+	{
+		gui_settings.rasterization_mode_support[VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_KHR] = false;
+		gui_settings.rasterization_mode_names[VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_KHR] += " (unsupported)";
+	}
+
 	{
 		auto &features = gpu.request_extension_features<VkPhysicalDeviceLineRasterizationFeaturesEXT>(
 		    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT);
-		features.smoothLines              = VK_TRUE;
-		features.stippledSmoothLines      = VK_TRUE;
-		features.bresenhamLines           = VK_TRUE;
-		features.stippledBresenhamLines   = VK_TRUE;
-		features.rectangularLines         = VK_TRUE;
-		features.stippledRectangularLines = VK_TRUE;
+		features = line_rasterization_features;
 	}
 	{
 		auto &features =
