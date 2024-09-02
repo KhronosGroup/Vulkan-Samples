@@ -761,7 +761,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 				vkb::core::BufferC buffer{device,
 				                          vertex_data.size(),
-				                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | additional_buffer_usage_flags,
 				                          VMA_MEMORY_USAGE_CPU_TO_GPU};
 				buffer.update(vertex_data);
 				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
@@ -804,7 +804,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 				submesh->index_buffer = std::make_unique<vkb::core::BufferC>(device,
 				                                                             index_data.size(),
-				                                                             VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				                                                             VK_BUFFER_USAGE_INDEX_BUFFER_BIT | additional_buffer_usage_flags,
 				                                                             VMA_MEMORY_USAGE_GPU_TO_CPU);
 				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
 				                                                  gltf_mesh.name, i_primitive));

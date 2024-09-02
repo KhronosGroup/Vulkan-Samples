@@ -273,16 +273,18 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	{
 		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
 		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-		bottom_level_acceleration_structure->add_triangle_geometry(
-		    *vertex_buffer,
-		    *index_buffer,
-		    *transform_matrix_buffer,
-		    static_cast<uint32_t>(model.indices.size()),
-		    static_cast<uint32_t>(model.vertices.size()) - 1,
-		    sizeof(Vertex),
-		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
-		    get_buffer_device_address(vertex_buffer->get_handle()),
-		    get_buffer_device_address(index_buffer->get_handle()));
+		bottom_level_acceleration_structure->add_triangle_geometry(*vertex_buffer,
+		                                                           *index_buffer,
+		                                                           *transform_matrix_buffer,
+		                                                           static_cast<uint32_t>(model.indices.size()),
+		                                                           static_cast<uint32_t>(model.vertices.size()) - 1,
+		                                                           sizeof(Vertex),
+		                                                           0,
+		                                                           VK_FORMAT_R32G32B32_SFLOAT,
+		                                                           VK_INDEX_TYPE_UINT32,
+		                                                           VK_GEOMETRY_OPAQUE_BIT_KHR,
+		                                                           get_buffer_device_address(vertex_buffer->get_handle()),
+		                                                           get_buffer_device_address(index_buffer->get_handle()));
 	}
 	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
