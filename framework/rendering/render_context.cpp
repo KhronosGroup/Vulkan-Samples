@@ -130,6 +130,10 @@ void RenderContext::update_swapchain(const uint32_t image_count)
 	device.wait_idle();
 
 	swapchain = std::make_unique<Swapchain>(*swapchain, image_count);
+#if defined(PLATFORM__MACOS)
+	// Workaround on macOS/iOS to avoid blank screen when only changing image_count
+	swapchain = std::make_unique<Swapchain>(*swapchain, image_count);
+#endif
 
 	recreate();
 }
@@ -145,6 +149,10 @@ void RenderContext::update_swapchain(const std::set<VkImageUsageFlagBits> &image
 	device.get_resource_cache().clear_framebuffers();
 
 	swapchain = std::make_unique<Swapchain>(*swapchain, image_usage_flags);
+#if defined(PLATFORM__MACOS)
+	// Workaround on macOS/iOS to avoid blank screen when only changing image_usage_flags
+	swapchain = std::make_unique<Swapchain>(*swapchain, image_usage_flags);
+#endif
 
 	recreate();
 }
@@ -168,6 +176,10 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 	}
 
 	swapchain = std::make_unique<Swapchain>(*swapchain, VkExtent2D{width, height}, transform);
+#if defined(PLATFORM__MACOS)
+	// Workaround on macOS/iOS to avoid blank screen when only changing transform
+	swapchain = std::make_unique<Swapchain>(*swapchain, VkExtent2D{width, height}, transform);
+#endif
 
 	// Save the preTransform attribute for future rotations
 	pre_transform = transform;

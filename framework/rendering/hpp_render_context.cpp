@@ -119,6 +119,10 @@ void HPPRenderContext::update_swapchain(const uint32_t image_count)
 	device.get_handle().waitIdle();
 
 	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_count);
+#if defined(PLATFORM__MACOS)
+	// Workaround on macOS/iOS to avoid blank screen when only changing image_count
+	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_count);
+#endif
 
 	recreate();
 }
@@ -134,6 +138,10 @@ void HPPRenderContext::update_swapchain(const std::set<vk::ImageUsageFlagBits> &
 	device.get_resource_cache().clear_framebuffers();
 
 	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_usage_flags);
+#if defined(PLATFORM__MACOS)
+	// Workaround on macOS/iOS to avoid blank screen when only changing image_usage_flags
+	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_usage_flags);
+#endif
 
 	recreate();
 }
@@ -157,6 +165,10 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent, const vk::Su
 	}
 
 	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, vk::Extent2D{width, height}, transform);
+#if defined(PLATFORM__MACOS)
+	// Workaround on macOS/iOS to avoid blank screen when only changing transform
+	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, vk::Extent2D{width, height}, transform);
+#endif
 
 	// Save the preTransform attribute for future rotations
 	pre_transform = transform;
