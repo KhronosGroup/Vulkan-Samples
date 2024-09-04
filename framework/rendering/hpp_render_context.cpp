@@ -119,10 +119,6 @@ void HPPRenderContext::update_swapchain(const uint32_t image_count)
 	device.get_handle().waitIdle();
 
 	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_count);
-#if defined(PLATFORM__MACOS)
-	// Workaround on macOS/iOS to avoid blank screen when only changing image_count
-	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_count);
-#endif
 
 	recreate();
 }
@@ -138,10 +134,6 @@ void HPPRenderContext::update_swapchain(const std::set<vk::ImageUsageFlagBits> &
 	device.get_resource_cache().clear_framebuffers();
 
 	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_usage_flags);
-#if defined(PLATFORM__MACOS)
-	// Workaround on macOS/iOS to avoid blank screen when only changing image_usage_flags
-	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_usage_flags);
-#endif
 
 	recreate();
 }
@@ -165,10 +157,6 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent, const vk::Su
 	}
 
 	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, vk::Extent2D{width, height}, transform);
-#if defined(PLATFORM__MACOS)
-	// Workaround on macOS/iOS to avoid blank screen when only changing transform
-	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, vk::Extent2D{width, height}, transform);
-#endif
 
 	// Save the preTransform attribute for future rotations
 	pre_transform = transform;
@@ -314,7 +302,13 @@ void HPPRenderContext::begin_frame()
 
 		if (result == vk::Result::eSuboptimalKHR || result == vk::Result::eErrorOutOfDateKHR)
 		{
+#if defined(PLATFORM__MACOS)
+			// On Apple platforms, force swapchain update on both eSuboptimalKHR and eErrorOutOfDateKHR
+			// eSuboptimalKHR may occur on macOS/iOS following changes to swapchain other than extent/size
+			bool swapchain_updated = handle_surface_changes(true);
+#else
 			bool swapchain_updated = handle_surface_changes(result == vk::Result::eErrorOutOfDateKHR);
+#endif
 
 			if (swapchain_updated)
 			{

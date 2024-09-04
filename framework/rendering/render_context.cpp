@@ -130,10 +130,6 @@ void RenderContext::update_swapchain(const uint32_t image_count)
 	device.wait_idle();
 
 	swapchain = std::make_unique<Swapchain>(*swapchain, image_count);
-#if defined(PLATFORM__MACOS)
-	// Workaround on macOS/iOS to avoid blank screen when only changing image_count
-	swapchain = std::make_unique<Swapchain>(*swapchain, image_count);
-#endif
 
 	recreate();
 }
@@ -149,10 +145,6 @@ void RenderContext::update_swapchain(const std::set<VkImageUsageFlagBits> &image
 	device.get_resource_cache().clear_framebuffers();
 
 	swapchain = std::make_unique<Swapchain>(*swapchain, image_usage_flags);
-#if defined(PLATFORM__MACOS)
-	// Workaround on macOS/iOS to avoid blank screen when only changing image_usage_flags
-	swapchain = std::make_unique<Swapchain>(*swapchain, image_usage_flags);
-#endif
 
 	recreate();
 }
@@ -176,10 +168,6 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 	}
 
 	swapchain = std::make_unique<Swapchain>(*swapchain, VkExtent2D{width, height}, transform);
-#if defined(PLATFORM__MACOS)
-	// Workaround on macOS/iOS to avoid blank screen when only changing transform
-	swapchain = std::make_unique<Swapchain>(*swapchain, VkExtent2D{width, height}, transform);
-#endif
 
 	// Save the preTransform attribute for future rotations
 	pre_transform = transform;
@@ -339,7 +327,13 @@ void RenderContext::begin_frame()
 
 		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+#if defined(PLATFORM__MACOS)
+			// On Apple platforms, force swapchain update on both VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR
+			// VK_SUBOPTIMAL_KHR may occur on macOS/iOS following changes to swapchain other than extent/size
+			bool swapchain_updated = handle_surface_changes(true);
+#else
 			bool swapchain_updated = handle_surface_changes(result == VK_ERROR_OUT_OF_DATE_KHR);
+#endif
 
 			if (swapchain_updated)
 			{
