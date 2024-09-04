@@ -337,7 +337,10 @@ void RenderContext::begin_frame()
 
 			if (swapchain_updated)
 			{
-				result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
+				// Need to destroy and reallocate acquired_semaphore since it may have already been signaled
+				vkDestroySemaphore(device.get_handle(), acquired_semaphore, nullptr);
+				acquired_semaphore = prev_frame.request_semaphore_with_ownership();
+				result             = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
 			}
 		}
 

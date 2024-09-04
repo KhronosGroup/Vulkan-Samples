@@ -312,6 +312,9 @@ void HPPRenderContext::begin_frame()
 
 			if (swapchain_updated)
 			{
+				// Need to destroy and reallocate acquired_semaphore since it may have already been signaled
+				device.get_handle().destroySemaphore(acquired_semaphore);
+				acquired_semaphore                   = prev_frame.request_semaphore_with_ownership();
 				std::tie(result, active_frame_index) = swapchain->acquire_next_image(acquired_semaphore);
 			}
 		}
