@@ -30,9 +30,14 @@
 // The Vulkan Profiles library is part of the SDK and has been copied to the sample's folder for convenience
 #include "vulkan_profiles.hpp"
 
-// This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux
-#define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
-#define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
+// This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux, and the VP_LUNARG_desktop_portability_2021_subset profile on portability platforms like macOS
+#if (defined(VKB_ENABLE_PORTABILITY) && defined(VP_LUNARG_desktop_portability_2021_subset))
+#	define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_NAME
+#	define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_SPEC_VERSION
+#else
+#	define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
+#	define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
+#endif
 
 Profiles::Profiles()
 {
@@ -145,6 +150,55 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 	}
 
 	VkInstanceCreateInfo create_info{};
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	uint32_t instance_extension_count;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+
+	// If VK_KHR_portability_enumeration is available at runtime, enable the extension and flag for instance creation
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	}
+
+#	if defined(PLATFORM__MACOS) && TARGET_OS_OSX
+	// On macOS use layer setting to configure MoltenVK for using Metal argument buffers (needed for descriptor indexing/scaling)
+	VkLayerSettingEXT            layerSetting{};
+	const int32_t                useMetalArgumentBuffers = 1;
+	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{};
+
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+	{
+		enabled_extensions.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
+
+		layerSetting.pLayerName   = "MoltenVK";
+		layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
+		layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
+		layerSetting.valueCount   = 1;
+		layerSetting.pValues      = &useMetalArgumentBuffers;
+
+		layerSettingsCreateInfo.sType        = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
+		layerSettingsCreateInfo.settingCount = 1;
+		layerSettingsCreateInfo.pSettings    = &layerSetting;
+
+		create_info.pNext = &layerSettingsCreateInfo;
+	}
+	else
+	{
+		// If layer settings is not available at runtime, set macOS environment variable for support of older Vulkan SDKs
+		// Will not work in batch mode, but is the best we can do short of using the deprecated MoltenVK private config API
+		setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "1", 1);
+	}
+#	endif
+#endif
+
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
@@ -199,7 +253,7 @@ void Profiles::generate_textures()
 	image_view.subresourceRange.baseArrayLayer = 0;
 	image_view.subresourceRange.layerCount     = 1;
 
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
 
 	textures.resize(32);
 	for (size_t i = 0; i < textures.size(); i++)
@@ -345,16 +399,16 @@ void Profiles::generate_cubes()
 
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -635,10 +689,10 @@ void Profiles::prepare_pipelines()
 void Profiles::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        sizeof(ubo_vs),
-	                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         sizeof(ubo_vs),
+	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

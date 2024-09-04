@@ -124,6 +124,7 @@ set(ORDER_LIST
     "hpp_hello_triangle"
 	"hpp_hlsl_shaders"
 	"hpp_instancing"
+	"hpp_oit_depth_peeling"
 	"hpp_oit_linked_lists"
 	"hpp_separate_image_sampler"
 	"hpp_terrain_tessellation"
@@ -136,6 +137,7 @@ set(ORDER_LIST
     #HPP Performance Samples
     "hpp_pipeline_cache"
     "hpp_swapchain_images"
+	"hpp_texture_compression_comparison"
     
     #General Samples
     "mobile_nerf")

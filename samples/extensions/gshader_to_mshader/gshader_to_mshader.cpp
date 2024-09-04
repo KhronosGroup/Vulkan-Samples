@@ -121,9 +121,9 @@ void GshaderToMshader::render(float delta_time)
  */
 void GshaderToMshader::prepare_uniform_buffers()
 {
-	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubos[0]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffer_gs = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubos[1]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffer_ms = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubos[2]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubos[0]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_gs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubos[1]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_ms = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubos[2]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -429,6 +429,10 @@ void GshaderToMshader::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	auto &requested_vertex_input_features      = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
 	requested_vertex_input_features.meshShader = VK_TRUE;
+
+	// we explicitly don't want those features!!
+	requested_vertex_input_features.multiviewMeshShader                    = VK_FALSE;
+	requested_vertex_input_features.primitiveFragmentShadingRateMeshShader = VK_FALSE;
 
 	if (gpu.get_features().geometryShader)
 	{

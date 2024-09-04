@@ -183,10 +183,11 @@ class AllocatedBase
   public:
 	AllocatedBase() = default;
 	AllocatedBase(const VmaAllocationCreateInfo &alloc_create_info);
+	AllocatedBase(AllocatedBase const &) = delete;
 	AllocatedBase(AllocatedBase &&other) noexcept;
 
 	AllocatedBase &operator=(const AllocatedBase &) = delete;
-	AllocatedBase &operator=(AllocatedBase &&)      = delete;
+	AllocatedBase &operator=(AllocatedBase &&)      = default;
 
 	const uint8_t *get_data() const;
 	VkDeviceMemory get_memory() const;
@@ -275,14 +276,16 @@ class AllocatedBase
 template <
     typename HandleType,
     typename MemoryType = VkDeviceMemory,
-    typename ParentType = vkb::core::VulkanResource<vkb::BindingType::C, HandleType>>
+    typename ParentType = vkb::core::VulkanResourceC<HandleType>>
 class Allocated : public ParentType, public AllocatedBase
 {
   public:
 	using ParentType::ParentType;
 
-	Allocated()                  = delete;
-	Allocated(const Allocated &) = delete;
+	Allocated()                                  = delete;
+	Allocated(const Allocated &)                 = delete;
+	Allocated &operator=(Allocated const &other) = delete;
+	Allocated &operator=(Allocated &&other)      = default;
 
 	// Import the base class constructors
 	template <typename... Args>

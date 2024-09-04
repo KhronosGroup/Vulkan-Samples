@@ -62,6 +62,10 @@ A transcoded version of the API sample <<hlsl_shaders,HLSL Shaders>> that illust
 
 A transcoded version of the API sample <<instancing,Instancing>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
+=== xref:./{api_samplespath}hpp_oit_depth_peeling/README.adoc[HPP OIT Depth Peeling]
+
+A transcoded version of the API sample <<oit_depth_peeling,OIT Depth Peeling>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+
 === xref:./{api_samplespath}hpp_oit_linked_lists/README.adoc[HPP OIT Linked Lists]
 
 A transcoded version of the API sample <<oit_linked_lists,OIT Linked Lists>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.

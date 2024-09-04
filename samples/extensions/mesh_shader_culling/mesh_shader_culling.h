@@ -26,8 +26,8 @@
 class MeshShaderCulling : public ApiVulkanSample
 {
   private:
-	int32_t                            density_level = 2;
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer{};
+	int32_t                             density_level = 2;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer{};
 
 	VkPipeline            pipeline              = VK_NULL_HANDLE;
 	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
@@ -70,4 +70,4 @@ class MeshShaderCulling : public ApiVulkanSample
 	void get_query_results();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shader_culling();
+std::unique_ptr<vkb::VulkanSampleC> create_mesh_shader_culling();

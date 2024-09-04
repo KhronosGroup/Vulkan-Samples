@@ -43,11 +43,21 @@ class RenderTarget;
 class Subpass;
 struct LightingState;
 
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+struct LightingState;
+using LightingStateC = LightingState<vkb::BindingType::C>;
+template <vkb::BindingType bindingType>
+class Subpass;
+using SubpassC = Subpass<vkb::BindingType::C>;
+}        // namespace rendering
+
 /**
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCommandBuffer>
+class CommandBuffer : public vkb::core::VulkanResourceC<VkCommandBuffer>
 {
   public:
 	enum class ResetMode
@@ -111,7 +121,11 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 
 	void clear(VkClearAttachment info, VkClearRect rect);
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+	void begin_render_pass(const RenderTarget                                           &render_target,
+	                       const std::vector<LoadStoreInfo>                             &load_store_infos,
+	                       const std::vector<VkClearValue>                              &clear_values,
+	                       const std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &subpasses,
+	                       VkSubpassContents                                             contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	void begin_render_pass(const RenderTarget &render_target, const RenderPass &render_pass, const Framebuffer &framebuffer, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
@@ -152,7 +166,7 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 		stored_push_constants.insert(stored_push_constants.end(), data.begin(), data.end());
 	}
 
-	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 
@@ -160,11 +174,11 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 
 	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
+	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::BufferC>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
-	void bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type);
+	void bind_index_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkIndexType index_type);
 
-	void bind_lighting(LightingState &lighting_state, uint32_t set, uint32_t binding);
+	void bind_lighting(vkb::rendering::LightingStateC &lighting_state, uint32_t set, uint32_t binding);
 
 	void set_viewport_state(const ViewportState &state_info);
 
@@ -196,29 +210,29 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 
 	void draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
 
-	void draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride);
+	void draw_indexed_indirect(const vkb::core::BufferC &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride);
 
 	void dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
 
-	void dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset);
+	void dispatch_indirect(const vkb::core::BufferC &buffer, VkDeviceSize offset);
 
-	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
+	void update_buffer(const vkb::core::BufferC &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
 
 	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
 
 	void resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions);
 
-	void copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size);
+	void copy_buffer(const vkb::core::BufferC &src_buffer, const vkb::core::BufferC &dst_buffer, VkDeviceSize size);
 
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
 
-	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
+	void copy_buffer_to_image(const vkb::core::BufferC &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
 
-	void copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions);
+	void copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const vkb::core::BufferC &buffer, const std::vector<VkBufferImageCopy> &regions);
 
 	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier) const;
 
-	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
+	void buffer_memory_barrier(const vkb::core::BufferC &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
 	void set_update_after_bind(bool update_after_bind_);
 
@@ -236,7 +250,9 @@ class CommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::C, VkCo
 	 */
 	VkResult reset(ResetMode reset_mode);
 
-	RenderPass &get_render_pass(const vkb::RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<std::unique_ptr<Subpass>> &subpasses);
+	RenderPass &get_render_pass(const vkb::RenderTarget                                      &render_target,
+	                            const std::vector<LoadStoreInfo>                             &load_store_infos,
+	                            const std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &subpasses);
 
 	const VkCommandBufferLevel level;
 

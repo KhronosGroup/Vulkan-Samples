@@ -33,7 +33,7 @@
  *        multi-threaded recording, as well as the different
  *        strategies for recycling command buffers every frame
  */
-class CommandBufferUsage : public vkb::VulkanSample<vkb::BindingType::C>
+class CommandBufferUsage : public vkb::VulkanSampleC
 {
   public:
 	CommandBufferUsage();
@@ -147,4 +147,4 @@ class CommandBufferUsage : public vkb::VulkanSample<vkb::BindingType::C>
 	uint32_t max_thread_count{0};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_command_buffer_usage();
+std::unique_ptr<vkb::VulkanSampleC> create_command_buffer_usage();

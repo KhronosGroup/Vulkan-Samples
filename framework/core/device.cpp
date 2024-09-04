@@ -27,7 +27,7 @@ Device::Device(PhysicalDevice                        &gpu,
                VkSurfaceKHR                           surface,
                std::unique_ptr<DebugUtils>          &&debug_utils,
                std::unordered_map<const char *, bool> requested_extensions) :
-    vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>{VK_NULL_HANDLE, this},        // Recursive, but valid
+    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
     resource_cache{*this}
@@ -407,7 +407,7 @@ const Queue &Device::get_suitable_graphics_queue() const
 	return get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 }
 
-void Device::copy_buffer(vkb::core::Buffer &src, vkb::core::Buffer &dst, VkQueue queue, VkBufferCopy *copy_region)
+void Device::copy_buffer(vkb::core::BufferC &src, vkb::core::BufferC &dst, VkQueue queue, VkBufferCopy *copy_region)
 {
 	assert(dst.get_size() <= src.get_size());
 	assert(src.get_handle());

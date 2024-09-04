@@ -280,5 +280,10 @@ inline void VulkanResource<bindingType, Handle>::set_handle(Handle hdl)
 {
 	handle = hdl;
 }
+
+template <typename Handle>
+using VulkanResourceC = VulkanResource<vkb::BindingType::C, Handle>;
+template <typename Handle>
+using VulkanResourceCpp = VulkanResource<vkb::BindingType::Cpp, Handle>;
 }        // namespace core
 }        // namespace vkb

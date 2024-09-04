@@ -21,6 +21,10 @@ include(android_package)
 # create sample app project
 project(vulkan_samples LANGUAGES C CXX)
 
+if(IOS AND CMAKE_VERSION VERSION_LESS 3.20)
+    message(FATAL_ERROR "Configuring iOS apps requires a minimum CMake version of 3.20")
+endif()
+
 add_subdirectory(plugins)
 add_subdirectory(apps)
 
@@ -37,17 +41,15 @@ if(ANDROID)
     endif()
 
     add_library(${PROJECT_NAME} SHARED ${SRC})
-elseif (APPLE)
-    if(IOS)
-        list(REMOVE_AT SRC 0)
-        list(APPEND SRC
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/main.mm
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.h
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.m
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.h
-                ${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.mm
-        )
-    endif ()
+elseif(IOS)
+	list(REMOVE_AT SRC 0)
+	list(APPEND SRC
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/main.mm
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.h
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.m
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.h
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.mm
+	)
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRC})
 else()
     add_executable(${PROJECT_NAME} WIN32 ${SRC})

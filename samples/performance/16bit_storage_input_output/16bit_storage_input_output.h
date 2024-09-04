@@ -22,7 +22,7 @@
 /**
  * @brief Using 16-bit storage features to reduce bandwidth for input-output data between vertex and fragment shaders.
  */
-class KHR16BitStorageInputOutputSample : public vkb::VulkanSample<vkb::BindingType::C>
+class KHR16BitStorageInputOutputSample : public vkb::VulkanSampleC
 {
   public:
 	KHR16BitStorageInputOutputSample();
@@ -60,4 +60,4 @@ class KHR16BitStorageInputOutputSample : public vkb::VulkanSample<vkb::BindingTy
 	bool supports_16bit_storage{false};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_storage_input_output();
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_storage_input_output();

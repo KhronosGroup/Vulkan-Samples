@@ -18,7 +18,6 @@
 #include "hpp_gui.h"
 #include "vulkan_sample.h"
 #include <common/hpp_utils.h>
-#include <core/hpp_buffer.h>
 #include <core/hpp_command_pool.h>
 #include <imgui_internal.h>
 
@@ -68,7 +67,7 @@ const ImGuiWindowFlags HPPGui::common_flags  = ImGuiWindowFlags_NoMove |
 const ImGuiWindowFlags HPPGui::options_flags = HPPGui::common_flags;
 const ImGuiWindowFlags HPPGui::info_flags    = HPPGui::common_flags | ImGuiWindowFlags_NoInputs;
 
-HPPGui::HPPGui(VulkanSample<BindingType::Cpp> &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
+HPPGui::HPPGui(VulkanSampleCpp &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
     sample{sample_}, content_scale_factor{window.get_content_scale_factor()}, dpi_factor{window.get_dpi_factor() * content_scale_factor}, explicit_update{explicit_update}, stats_view(stats)
 {
 	ImGui::CreateContext();
@@ -145,7 +144,7 @@ HPPGui::HPPGui(VulkanSample<BindingType::Cpp> &sample_, const vkb::Window &windo
 
 	// Upload font data into the vulkan image memory
 	{
-		vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(device, upload_size, font_data);
+		vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(device, upload_size, font_data);
 
 		auto &command_buffer = device.get_command_pool().request_command_buffer();
 
@@ -236,14 +235,14 @@ HPPGui::HPPGui(VulkanSample<BindingType::Cpp> &sample_, const vkb::Window &windo
 		auto &device = sample.get_render_context().get_device();
 
 		vertex_buffer =
-		    vkb::core::HPPBufferBuilder(1)
+		    vkb::core::BufferBuilderCpp(1)
 		        .with_usage(vk::BufferUsageFlagBits::eVertexBuffer)
 		        .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
 		        .with_debug_name("GUI vertex buffer")
 		        .build_unique(device);
 
 		index_buffer =
-		    vkb::core::HPPBufferBuilder(1)
+		    vkb::core::BufferBuilderCpp(1)
 		        .with_usage(vk::BufferUsageFlagBits::eIndexBuffer)
 		        .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
 		        .with_debug_name("GUI index buffer")
@@ -379,7 +378,7 @@ bool HPPGui::update_buffers()
 		last_vertex_buffer_size = vertex_buffer_size;
 		updated                 = true;
 
-		vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(sample.get_render_context().get_device(), vertex_buffer_size,
+		vertex_buffer = std::make_unique<vkb::core::BufferCpp>(sample.get_render_context().get_device(), vertex_buffer_size,
 		                                                       vk::BufferUsageFlagBits::eVertexBuffer,
 		                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
 		vertex_buffer->set_debug_name("GUI vertex buffer");
@@ -390,7 +389,7 @@ bool HPPGui::update_buffers()
 		last_index_buffer_size = index_buffer_size;
 		updated                = true;
 
-		index_buffer = std::make_unique<vkb::core::HPPBuffer>(sample.get_render_context().get_device(), index_buffer_size,
+		index_buffer = std::make_unique<vkb::core::BufferCpp>(sample.get_render_context().get_device(), index_buffer_size,
 		                                                      vk::BufferUsageFlagBits::eIndexBuffer,
 		                                                      VMA_MEMORY_USAGE_GPU_TO_CPU);
 		index_buffer->set_debug_name("GUI index buffer");
@@ -430,7 +429,7 @@ void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
 
 	vertex_allocation.update(vertex_data);
 
-	std::vector<std::reference_wrapper<const core::HPPBuffer>> buffers;
+	std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> buffers;
 	buffers.emplace_back(std::ref(vertex_allocation.get_buffer()));
 
 	command_buffer.bind_vertex_buffers(0, buffers, {vertex_allocation.get_offset()});
@@ -545,7 +544,7 @@ void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
 	}
 	else
 	{
-		std::vector<std::reference_wrapper<const vkb::core::HPPBuffer>> buffers;
+		std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> buffers;
 		buffers.push_back(*vertex_buffer);
 		command_buffer.bind_vertex_buffers(0, buffers, {0});
 
@@ -742,11 +741,11 @@ void HPPGui::show_top_window(const std::string &app_name, const vkb::stats::HPPS
 	// Transparent background
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
 	ImVec2 size{ImGui::GetIO().DisplaySize.x, 0.0f};
-    ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
 	// Top left
 	ImVec2 pos{0.0f, 0.0f};
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 
 	bool is_open = true;
 	ImGui::Begin("Top", &is_open, common_flags);
@@ -800,7 +799,7 @@ void HPPGui::show_debug_window(const DebugInfo &debug_info, const ImVec2 &positi
 	}
 
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
-    ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowContentSize(ImVec2{io.DisplaySize.x, 0.0f});
 
 	bool                   is_open = true;
@@ -896,7 +895,7 @@ void HPPGui::show_options_window(std::function<void()> body, const uint32_t line
 	const ImVec2 size = ImVec2(window_width, 0);
 	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 	const ImVec2 pos = ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - window_height);
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 	const ImGuiWindowFlags flags   = (ImGuiWindowFlags_NoMove |
                                     ImGuiWindowFlags_NoScrollbar |
                                     ImGuiWindowFlags_NoTitleBar |
@@ -919,7 +918,7 @@ void HPPGui::show_simple_window(const std::string &name, uint32_t last_fps, std:
 	ImGui::NewFrame();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
 	ImGui::TextUnformatted(sample.get_render_context().get_device().get_gpu().get_properties().deviceName.data());

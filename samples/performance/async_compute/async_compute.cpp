@@ -38,6 +38,15 @@ AsyncComputeSample::AsyncComputeSample()
 	config.insert<vkb::BoolSetting>(1, double_buffer_hdr_frames, true);
 }
 
+void AsyncComputeSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+#ifdef VKB_ENABLE_PORTABILITY
+	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
+	auto &requested_portability_subset_features                     = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
+	requested_portability_subset_features.mutableComparisonSamplers = VK_TRUE;
+#endif
+}
+
 void AsyncComputeSample::draw_gui()
 {
 	get_gui().show_options_window(
@@ -597,7 +606,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	}
 
 	command_buffer.bind_pipeline_layout(*blur_up_pipeline);
-	for (uint32_t index = blur_chain_views.size() - 2; index >= 1; index--)
+	for (uint32_t index = static_cast<uint32_t>(blur_chain_views.size() - 2); index >= 1; index--)
 	{
 		dispatch_pass(*blur_chain_views[index], *blur_chain_views[index + 1], index == 1);
 	}
@@ -717,22 +726,25 @@ void AsyncComputeSample::update(float delta_time)
 
 void AsyncComputeSample::finish()
 {
-	for (auto &sem : hdr_wait_semaphores)
+	if (has_device())
 	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
-	}
+		for (auto &sem : hdr_wait_semaphores)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
+		}
 
-	if (compute_post_semaphore)
-	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		if (compute_post_semaphore)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		}
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_async_compute()
+std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 {
 	return std::make_unique<AsyncComputeSample>();
 }
@@ -769,7 +781,7 @@ void AsyncComputeSample::ShadowMapForwardSubpass::set_shadow_map(const vkb::core
 
 void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::CommandBuffer &command_buffer)
 {
-	auto shadow_matrix = vkb::vulkan_style_projection(shadow_camera.get_projection()) * shadow_camera.get_view();
+	auto shadow_matrix = vkb::rendering::vulkan_style_projection(shadow_camera.get_projection()) * shadow_camera.get_view();
 
 	shadow_matrix = glm::translate(glm::vec3(0.5f, 0.5f, 0.0f)) * glm::scale(glm::vec3(0.5f, 0.5f, 1.0f)) * shadow_matrix;
 
@@ -787,7 +799,7 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::CommandBuffer &comma
 }
 
 AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader) :
-    vkb::Subpass(render_context, std::move(vertex_shader), std::move(fragment_shader))
+    vkb::rendering::SubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader))
 {
 }
 
@@ -801,7 +813,7 @@ void AsyncComputeSample::CompositeSubpass::set_texture(const vkb::core::ImageVie
 
 void AsyncComputeSample::CompositeSubpass::prepare()
 {
-	auto &device   = render_context.get_device();
+	auto &device   = get_render_context().get_device();
 	auto &vertex   = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
 	auto &fragment = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
 	layout         = &device.get_resource_cache().request_pipeline_layout({&vertex, &fragment});

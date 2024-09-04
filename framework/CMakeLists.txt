@@ -40,7 +40,6 @@ set(FRAMEWORK_FILES
     timer.h
     camera.h
     hpp_api_vulkan_sample.h
-    hpp_buffer_pool.h
     hpp_fence_pool.h
     hpp_glsl_compiler.h
     hpp_gltf_loader.h
@@ -57,7 +56,6 @@ set(FRAMEWORK_FILES
     spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
-    buffer_pool.cpp
     fence_pool.cpp
     heightmap.cpp
     semaphore_pool.cpp
@@ -119,7 +117,6 @@ set(RENDERING_FILES
     rendering/hpp_render_frame.h
     rendering/hpp_render_pipeline.h
     rendering/hpp_render_target.h
-    rendering/hpp_subpass.h
     # Source files
     rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
@@ -130,7 +127,6 @@ set(RENDERING_FILES
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
-    rendering/subpass.cpp
     rendering/hpp_render_context.cpp
     rendering/hpp_render_frame.cpp
     rendering/hpp_render_target.cpp)
@@ -152,6 +148,7 @@ set(SCENE_GRAPH_FILES
     scene_graph/node.h
     scene_graph/scene.h
     scene_graph/script.h
+    scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
     scene_graph/node.cpp
@@ -177,7 +174,10 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/image/ktx.h
     scene_graph/components/image/stb.h
     scene_graph/components/hpp_image.h
+    scene_graph/components/hpp_material.h
+    scene_graph/components/hpp_mesh.h
     scene_graph/components/hpp_sub_mesh.h
+    scene_graph/components/hpp_texture.h
     # Source Files
     scene_graph/components/aabb.cpp
     scene_graph/components/camera.cpp
@@ -250,7 +250,6 @@ set(CORE_FILES
     core/query_pool.h
     core/acceleration_structure.h
     core/hpp_allocated.h
-    core/hpp_buffer.h
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
     core/hpp_debug.h
@@ -289,7 +288,6 @@ set(CORE_FILES
     core/swapchain.cpp
     core/command_buffer.cpp
     core/allocated.cpp
-    core/buffer.cpp
     core/image_core.cpp
     core/image_view.cpp
     core/sampled_image.cpp
@@ -299,7 +297,6 @@ set(CORE_FILES
     core/render_pass.cpp
     core/query_pool.cpp
     core/acceleration_structure.cpp
-    core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp
     core/hpp_debug.cpp
@@ -501,7 +498,7 @@ if(${VKB_VULKAN_DEBUG})
 endif()
 
 if(${VKB_ENABLE_PORTABILITY})
-    message(STATUS "Vulkan Portability extension is enabled")
+    message(STATUS "Vulkan Portability Enumeration and Portability Subset extensions are enabled")
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_ENABLE_PORTABILITY)
 endif()
 
@@ -558,4 +555,12 @@ endif()
 
 if(VKB_DO_CLANG_TIDY)
     set_target_properties(framework PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
+endif()
+
+if (VKB_PROFILING)
+    ## Enable profling
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_PROFILING=1)
+else()
+    ## Disable profiling
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_PROFILING=0)
 endif()

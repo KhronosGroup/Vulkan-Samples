@@ -246,7 +246,7 @@ void KHR16BitStorageInputOutputSample::recreate_swapchain()
 	get_render_context().update_swapchain(image_usage_flags);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_storage_input_output()
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_storage_input_output()
 {
 	return std::make_unique<KHR16BitStorageInputOutputSample>();
 }

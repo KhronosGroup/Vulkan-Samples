@@ -118,18 +118,18 @@ void PatchControlPoints::render(float delta_time)
  */
 void PatchControlPoints::prepare_uniform_buffers()
 {
-	uniform_buffers.common               = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                 sizeof(ubo_common),
-                                                                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.dynamic_tessellation = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                           sizeof(ubo_tess),
-	                                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.static_tessellation  = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                              sizeof(ubo_tess),
-                                                                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.common               = std::make_unique<vkb::core::BufferC>(get_device(),
+                                                                  sizeof(ubo_common),
+                                                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.dynamic_tessellation = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                            sizeof(ubo_tess),
+	                                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.static_tessellation  = std::make_unique<vkb::core::BufferC>(get_device(),
+                                                                               sizeof(ubo_tess),
+                                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -603,7 +603,7 @@ void PatchControlPoints::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_patch_control_points()
+std::unique_ptr<vkb::VulkanSampleC> create_patch_control_points()
 {
 	return std::make_unique<PatchControlPoints>();
 }

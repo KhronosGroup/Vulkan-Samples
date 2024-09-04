@@ -27,6 +27,8 @@
 #include "common/glm_common.h"
 #include <glm/gtc/type_ptr.hpp>
 
+#include <core/util/profiling.hpp>
+
 #include "api_vulkan_sample.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
@@ -283,7 +285,7 @@ inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uin
 	return result;
 }
 
-inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &staging_buffer, sg::Image &image)
+inline void upload_image_to_gpu(CommandBuffer &command_buffer, vkb::core::BufferC &staging_buffer, sg::Image &image)
 {
 	// Clean up the image data, as they are copied in the staging buffer
 	image.clear_data();
@@ -406,8 +408,10 @@ GLTFLoader::GLTFLoader(Device &device) :
 {
 }
 
-std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index)
+std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Load GLTF Scene");
+
 	std::string err;
 	std::string warn;
 
@@ -445,11 +449,13 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 		model_path.clear();
 	}
 
-	return std::make_unique<sg::Scene>(load_scene(scene_index));
+	return std::make_unique<sg::Scene>(load_scene(scene_index, additional_buffer_usage_flags));
 }
 
-std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer)
+std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Load GLTF Model");
+
 	std::string err;
 	std::string warn;
 
@@ -487,11 +493,13 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 		model_path.clear();
 	}
 
-	return std::move(load_model(index, storage_buffer));
+	return std::move(load_model(index, storage_buffer, additional_buffer_usage_flags));
 }
 
-sg::Scene GLTFLoader::load_scene(int scene_index)
+sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Process Scene");
+
 	auto scene = sg::Scene();
 
 	scene.set_name("gltf_scene");
@@ -573,7 +581,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	size_t image_index = 0;
 	while (image_index < image_count)
 	{
-		std::vector<core::Buffer> transient_buffers;
+		std::vector<vkb::core::BufferC> transient_buffers;
 
 		auto &command_buffer = device.request_command_buffer();
 
@@ -589,7 +597,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 			auto &image = image_components[image_index];
 
-			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, image->get_data());
+			core::Buffer stage_buffer = vkb::core::BufferC::create_staging_buffer(device, image->get_data());
 
 			batch_size += image->get_data().size();
 
@@ -727,6 +735,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 	for (auto &gltf_mesh : model.meshes)
 	{
+		PROFILE_SCOPE("Processing Mesh");
+
 		auto mesh = parse_mesh(gltf_mesh);
 
 		for (size_t i_primitive = 0; i_primitive < gltf_mesh.primitives.size(); i_primitive++)
@@ -749,10 +759,10 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 					submesh->vertices_count = to_u32(model.accessors[attribute.second].count);
 				}
 
-				core::Buffer buffer{device,
-				                    vertex_data.size(),
-				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-				                    VMA_MEMORY_USAGE_CPU_TO_GPU};
+				vkb::core::BufferC buffer{device,
+				                          vertex_data.size(),
+				                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				                          VMA_MEMORY_USAGE_CPU_TO_GPU};
 				buffer.update(vertex_data);
 				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
 				                                  gltf_mesh.name, i_primitive, attrib_name));
@@ -792,10 +802,10 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 						break;
 				}
 
-				submesh->index_buffer = std::make_unique<core::Buffer>(device,
-				                                                       index_data.size(),
-				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+				submesh->index_buffer = std::make_unique<vkb::core::BufferC>(device,
+				                                                             index_data.size(),
+				                                                             VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				                                                             VMA_MEMORY_USAGE_GPU_TO_CPU);
 				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
 				                                                  gltf_mesh.name, i_primitive));
 
@@ -1085,11 +1095,13 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	return scene;
 }
 
-std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage_buffer)
+std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
 {
+	PROFILE_SCOPE("Process Model");
+
 	auto submesh = std::make_unique<sg::SubMesh>();
 
-	std::vector<core::Buffer> transient_buffers;
+	std::vector<vkb::core::BufferC> transient_buffers;
 
 	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -1117,6 +1129,8 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 	size_t vertex_count = accessor.count;
 	auto  &buffer_view  = model.bufferViews[accessor.bufferView];
 	pos                 = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
+
+	submesh->vertices_count = static_cast<uint32_t>(vertex_count);
 
 	if (gltf_primitive.attributes.find("NORMAL") != gltf_primitive.attributes.end())
 	{
@@ -1160,12 +1174,12 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			aligned_vertex_data.push_back(vert);
 		}
 
-		core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, aligned_vertex_data);
+		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, aligned_vertex_data);
 
-		core::Buffer buffer{device,
-		                    aligned_vertex_data.size() * sizeof(AlignedVertex),
-		                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-		                    VMA_MEMORY_USAGE_GPU_ONLY};
+		vkb::core::BufferC buffer{device,
+		                          aligned_vertex_data.size() * sizeof(AlignedVertex),
+		                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		                          VMA_MEMORY_USAGE_GPU_ONLY};
 
 		command_buffer.copy_buffer(stage_buffer, buffer, aligned_vertex_data.size() * sizeof(AlignedVertex));
 
@@ -1188,12 +1202,12 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			vertex_data.push_back(vert);
 		}
 
-		core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, vertex_data);
+		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, vertex_data);
 
-		core::Buffer buffer{device,
-		                    vertex_data.size() * sizeof(Vertex),
-		                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		                    VMA_MEMORY_USAGE_GPU_ONLY};
+		vkb::core::BufferC buffer{device,
+		                          vertex_data.size() * sizeof(Vertex),
+		                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		                          VMA_MEMORY_USAGE_GPU_ONLY};
 
 		command_buffer.copy_buffer(stage_buffer, buffer, vertex_data.size() * sizeof(Vertex));
 
@@ -1245,12 +1259,12 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			// vertex_indices and index_buffer are used for meshlets now
 			submesh->vertex_indices = static_cast<uint32_t>(meshlets.size());
 
-			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, meshlets);
+			vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, meshlets);
 
-			submesh->index_buffer = std::make_unique<core::Buffer>(device,
-			                                                       meshlets.size() * sizeof(Meshlet),
-			                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-			                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+			submesh->index_buffer = std::make_unique<vkb::core::BufferC>(device,
+			                                                             meshlets.size() * sizeof(Meshlet),
+			                                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			                                                             VMA_MEMORY_USAGE_GPU_ONLY);
 
 			command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, meshlets.size() * sizeof(Meshlet));
 
@@ -1258,12 +1272,12 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		}
 		else
 		{
-			core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(device, index_data);
+			vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, index_data);
 
-			submesh->index_buffer = std::make_unique<core::Buffer>(device,
-			                                                       index_data.size(),
-			                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-			                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+			submesh->index_buffer = std::make_unique<vkb::core::BufferC>(device,
+			                                                             index_data.size(),
+			                                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			                                                             VMA_MEMORY_USAGE_GPU_ONLY);
 
 			command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, index_data.size());
 

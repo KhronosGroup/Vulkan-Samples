@@ -36,20 +36,20 @@ jobs:
     container: ghcr.io/khronosgroupactions/doxygen:1.9.5
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - run: mkdir -p doxygen
-    - run: doxygen docs/doxygen/doxyfile
-    - run: if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
+      - uses: actions/checkout@v4
+      - run: mkdir -p doxygen
+      - run: doxygen docs/doxygen/doxyfile
+      - run: if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
 
   copyright_headers:
     name: Copyright Headers Check
     container: ghcr.io/khronosgroupactions/copyright-check:latest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
-    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
-    - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
+      - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+      - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
+      - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   snake_case_check:
     name: Snake Case Check
@@ -57,27 +57,35 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v3
-    - run: python3 /usr/local/bin/snake_case_check.py $TARGET_BRANCH > snake-report.txt
-    - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
+      - uses: actions/checkout@v4
+      - run: python3 /usr/local/bin/snake_case_check.py $TARGET_BRANCH > snake-report.txt
+      - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
   clang_format:
     name: Clang Format Check
     container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
-    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
-    - name: Run Clang Format diff
-      id: clang-diff
-      run: echo "changes=$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> $GITHUB_OUTPUT
-    - name: Count Diff Lines
-      continue-on-error: true
-      id: count-diff
-      run: echo "line-count=$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
-    - name: Assert
-      run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo "${{ steps.clang-diff.outputs.changes }}"; exit 1; fi
+      - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+      - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
+      - name: Run Clang Format diff
+        id: clang-diff
+        run: |
+          echo "changes=$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> $GITHUB_OUTPUT
+          echo "$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> clang-issues.diff
+      - name: Count Diff Lines
+        continue-on-error: true
+        id: count-diff
+        run: echo "line-count=$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-issues.diff
+          path: clang-issues.diff
+          retention-days: 3
+      - name: Assert
+        run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo "${{ steps.clang-diff.outputs.changes }}"; exit 1; fi
 
   clang_tidy:
     name: Clang Tidy Check
@@ -87,19 +95,19 @@ jobs:
     continue-on-error: true # we currently don't track clang-tidy warnings as errors. in the future this will change
     if: ${{needs.changed-files.outputs.all}}
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: "recursive"
-    - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
-    - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Bbuild/clang
-    - run: |
-        /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }}
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+      - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Bbuild/clang
+      - run: |
+          /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }}
 
   pre-commit:
     name: Pre-Commit Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
         continue-on-error: true # we currently don't track pre-commit warnings as errors. in the future this will change. for this step to pass we will need to run `pre-commit run --all-files`

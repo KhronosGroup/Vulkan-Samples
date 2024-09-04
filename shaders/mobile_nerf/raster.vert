@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
  * ------------------------------------------------------------------------
  *
  * THIS IS A MODIFIED VERSION OF THE ORIGINAL FILE
- * 
+ *
  * The original file, along with the original Apache-2.0 LICENSE can be found at:
  * https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf
  *
@@ -50,7 +50,7 @@ layout(location = 1) out vec3 rayDirection;
 void main(void)
 {
 	texCoord_frag = texCoord;
-	
+
 	vec3 pos = position + posOffset;
 
 	gl_Position = global_uniform.proj * global_uniform.view * global_uniform.model * vec4(pos.x, -pos.y, pos.z, 1.0);

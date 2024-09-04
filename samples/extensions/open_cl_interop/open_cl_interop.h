@@ -115,10 +115,10 @@ class OpenCLInterop : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count{0};
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	uint32_t                            index_count{0};
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
 
 	// @todo: rename
 	VkSemaphore cl_update_vk_semaphore{VK_NULL_HANDLE};
@@ -129,4 +129,4 @@ class OpenCLInterop : public ApiVulkanSample
 	float total_time_passed{0};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop();
+std::unique_ptr<vkb::VulkanSampleC> create_open_cl_interop();

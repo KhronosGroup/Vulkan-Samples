@@ -29,7 +29,7 @@
 
 namespace vkb
 {
-RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses_) :
+RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &&subpasses_) :
     subpasses{std::move(subpasses_)}
 {
 	prepare();
@@ -55,13 +55,13 @@ void RenderPipeline::prepare()
 	}
 }
 
-void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)
+void RenderPipeline::add_subpass(std::unique_ptr<vkb::rendering::SubpassC> &&subpass)
 {
 	subpass->prepare();
 	subpasses.emplace_back(std::move(subpass));
 }
 
-std::vector<std::unique_ptr<Subpass>> &RenderPipeline::get_subpasses()
+std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &RenderPipeline::get_subpasses()
 {
 	return subpasses;
 }
@@ -125,7 +125,7 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 	active_subpass_index = 0;
 }
 
-std::unique_ptr<Subpass> &RenderPipeline::get_active_subpass()
+std::unique_ptr<vkb::rendering::SubpassC> &RenderPipeline::get_active_subpass()
 {
 	return subpasses[active_subpass_index];
 }

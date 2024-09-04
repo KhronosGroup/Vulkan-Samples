@@ -90,13 +90,13 @@ class HPPOITLinkedLists : public HPPApiVulkanSample
 	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> object;
 	HPPTexture                                                background_texture;
 
-	std::unique_ptr<vkb::core::HPPBuffer> scene_constants;
-	std::unique_ptr<vkb::core::HPPBuffer> instance_data;
+	std::unique_ptr<vkb::core::BufferCpp> scene_constants;
+	std::unique_ptr<vkb::core::BufferCpp> instance_data;
 
 	std::unique_ptr<vkb::core::HPPImage>     linked_list_head_image;
 	std::unique_ptr<vkb::core::HPPImageView> linked_list_head_image_view;
-	std::unique_ptr<vkb::core::HPPBuffer>    fragment_buffer;
-	std::unique_ptr<vkb::core::HPPBuffer>    fragment_counter;
+	std::unique_ptr<vkb::core::BufferCpp>    fragment_buffer;
+	std::unique_ptr<vkb::core::BufferCpp>    fragment_counter;
 	glm::uint                                fragment_max_count = 0U;
 
 	vk::RenderPass  gather_render_pass = nullptr;

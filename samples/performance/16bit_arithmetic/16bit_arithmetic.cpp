@@ -101,10 +101,10 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	// Upload the blob buffer.
 	auto &device = get_render_context().get_device();
 
-	blob_buffer         = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16),
-                                                      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                                                      VMA_MEMORY_USAGE_GPU_ONLY);
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(device, initial_data_fp16);
+	blob_buffer         = std::make_unique<vkb::core::BufferC>(device, sizeof(initial_data_fp16),
+                                                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(device, initial_data_fp16);
 
 	auto &cmd = device.request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
@@ -191,7 +191,7 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::RenderContext &context,
                                                                      vkb::ShaderSource &&vertex_source,
                                                                      vkb::ShaderSource &&fragment_source) :
-    vkb::Subpass(context, std::move(vertex_source), std::move(fragment_source))
+    vkb::rendering::SubpassC(context, std::move(vertex_source), std::move(fragment_source))
 {
 	set_output_attachments({0});
 }
@@ -348,7 +348,7 @@ void KHR16BitArithmeticSample::draw_gui()
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic()
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_arithmetic()
 {
 	return std::make_unique<KHR16BitArithmeticSample>();
 }

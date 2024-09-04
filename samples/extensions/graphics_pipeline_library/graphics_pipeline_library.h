@@ -42,7 +42,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 		glm::vec4 lightPos   = glm::vec4(-10.0f, -5.0f, 15.0f, 0.0f);
 	} ubo_vs;
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer{nullptr};
 
 	struct
 	{

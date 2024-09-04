@@ -92,7 +92,7 @@ void FragmentShaderBarycentric::load_assets()
  */
 void FragmentShaderBarycentric::prepare_uniform_buffers()
 {
-	ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	ubo = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -272,7 +272,7 @@ void FragmentShaderBarycentric::create_pipeline()
 	graphics_create.layout              = pipeline_layout;
 
 	// Skybox pipeline (background cube)
-	vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipelines.skybox);
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipelines.skybox));
 
 	// Object pipeline
 	shader_stages[0] = load_shader("fragment_shader_barycentric/object.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -280,7 +280,7 @@ void FragmentShaderBarycentric::create_pipeline()
 
 	// Flip cull mode
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
-	vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipelines.object);
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipelines.object));
 }
 
 /**
@@ -398,7 +398,7 @@ void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shader_barycentric()
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shader_barycentric()
 {
 	return std::make_unique<FragmentShaderBarycentric>();
 }

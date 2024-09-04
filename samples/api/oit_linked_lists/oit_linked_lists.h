@@ -86,13 +86,13 @@ class OITLinkedLists : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::SubMesh> object;
 	Texture                           background_texture;
 
-	std::unique_ptr<vkb::core::Buffer> scene_constants;
-	std::unique_ptr<vkb::core::Buffer> instance_data;
+	std::unique_ptr<vkb::core::BufferC> scene_constants;
+	std::unique_ptr<vkb::core::BufferC> instance_data;
 
 	std::unique_ptr<vkb::core::Image>     linked_list_head_image;
 	std::unique_ptr<vkb::core::ImageView> linked_list_head_image_view;
-	std::unique_ptr<vkb::core::Buffer>    fragment_buffer;
-	std::unique_ptr<vkb::core::Buffer>    fragment_counter;
+	std::unique_ptr<vkb::core::BufferC>   fragment_buffer;
+	std::unique_ptr<vkb::core::BufferC>   fragment_counter;
 	glm::uint                             fragment_max_count = 0U;
 
 	VkRenderPass  gather_render_pass = VK_NULL_HANDLE;
@@ -113,4 +113,4 @@ class OITLinkedLists : public ApiVulkanSample
 	float   background_grayscale  = 0.3f;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_linked_lists();
+std::unique_ptr<vkb::VulkanSampleC> create_oit_linked_lists();

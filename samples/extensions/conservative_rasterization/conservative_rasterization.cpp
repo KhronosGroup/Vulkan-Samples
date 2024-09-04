@@ -353,19 +353,19 @@ void ConservativeRasterization::load_assets()
 	uint32_t index_buffer_size               = triangle.index_count * sizeof(uint32_t);
 
 	// Host visible source buffers (staging)
-	vkb::core::Buffer vertex_staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertex_buffer);
-	vkb::core::Buffer index_staging_buffer  = vkb::core::Buffer::create_staging_buffer(get_device(), index_buffer);
+	vkb::core::BufferC vertex_staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), vertex_buffer);
+	vkb::core::BufferC index_staging_buffer  = vkb::core::BufferC::create_staging_buffer(get_device(), index_buffer);
 
 	// Device local destination buffers
-	triangle.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        vertex_buffer_size,
-	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
+	triangle.vertices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         vertex_buffer_size,
+	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
-	triangle.indices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                       index_buffer_size,
-	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+	triangle.indices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                        index_buffer_size,
+	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from host to device
 	get_device().copy_buffer(vertex_staging_buffer, *triangle.vertices, queue);
@@ -548,10 +548,10 @@ void ConservativeRasterization::prepare_pipelines()
 // Prepare and initialize uniform buffer containing shader uniforms
 void ConservativeRasterization::prepare_uniform_buffers()
 {
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(ubo_scene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(ubo_scene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers_scene();
 }
@@ -632,7 +632,7 @@ void ConservativeRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_conservative_rasterization()
+std::unique_ptr<vkb::VulkanSampleC> create_conservative_rasterization()
 {
 	return std::make_unique<ConservativeRasterization>();
 }

@@ -93,7 +93,7 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(VulkanSample<vkb::BindingType::C> &sample_, const Window &window, const Stats *stats, const float font_size, bool explicit_update) :
+Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const float font_size, bool explicit_update) :
     sample{sample_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},
@@ -174,7 +174,7 @@ Gui::Gui(VulkanSample<vkb::BindingType::C> &sample_, const Window &window, const
 
 	// Upload font data into the vulkan image memory
 	{
-		core::Buffer stage_buffer = core::Buffer::create_staging_buffer(device, upload_size, font_data);
+		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, upload_size, font_data);
 
 		auto &command_buffer = device.request_command_buffer();
 
@@ -259,10 +259,10 @@ Gui::Gui(VulkanSample<vkb::BindingType::C> &sample_, const Window &window, const
 
 	if (explicit_update)
 	{
-		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer = std::make_unique<vkb::core::BufferC>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
 		vertex_buffer->set_debug_name("GUI vertex buffer");
 
-		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer = std::make_unique<vkb::core::BufferC>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
 		index_buffer->set_debug_name("GUI index buffer");
 	}
 }
@@ -410,9 +410,9 @@ bool Gui::update_buffers()
 		updated                 = true;
 
 		vertex_buffer.reset();
-		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), vertex_buffer_size,
-		                                               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		                                               VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer = std::make_unique<vkb::core::BufferC>(sample.get_render_context().get_device(), vertex_buffer_size,
+		                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		                                                     VMA_MEMORY_USAGE_GPU_TO_CPU);
 		vertex_buffer->set_debug_name("GUI vertex buffer");
 	}
 
@@ -422,9 +422,9 @@ bool Gui::update_buffers()
 		updated                = true;
 
 		index_buffer.reset();
-		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), index_buffer_size,
-		                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		                                              VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer = std::make_unique<vkb::core::BufferC>(sample.get_render_context().get_device(), index_buffer_size,
+		                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
 		index_buffer->set_debug_name("GUI index buffer");
 	}
 
@@ -466,7 +466,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer, RenderFrame &render_fram
 
 	vertex_allocation.update(vertex_data);
 
-	std::vector<std::reference_wrapper<const core::Buffer>> buffers;
+	std::vector<std::reference_wrapper<const vkb::core::BufferC>> buffers;
 	buffers.emplace_back(std::ref(vertex_allocation.get_buffer()));
 
 	std::vector<VkDeviceSize> offsets{vertex_allocation.get_offset()};
@@ -587,7 +587,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	}
 	else
 	{
-		std::vector<std::reference_wrapper<const vkb::core::Buffer>> buffers;
+		std::vector<std::reference_wrapper<const vkb::core::BufferC>> buffers;
 		buffers.push_back(*vertex_buffer);
 		command_buffer.bind_vertex_buffers(0, buffers, {0});
 
@@ -794,11 +794,11 @@ void Gui::show_top_window(const std::string &app_name, const Stats *stats, Debug
 	// Transparent background
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
 	ImVec2 size{ImGui::GetIO().DisplaySize.x, 0.0f};
-    ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
 	// Top left
 	ImVec2 pos{0.0f, 0.0f};
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 
 	bool is_open = true;
 	ImGui::Begin("Top", &is_open, common_flags);
@@ -852,7 +852,7 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	}
 
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
-    ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowContentSize(ImVec2{io.DisplaySize.x, 0.0f});
 
 	bool                   is_open = true;
@@ -948,7 +948,7 @@ void Gui::show_options_window(std::function<void()> body, const uint32_t lines)
 	const ImVec2 size = ImVec2(window_width, 0);
 	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 	const ImVec2 pos = ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - window_height);
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 	const ImGuiWindowFlags flags   = (ImGuiWindowFlags_NoMove |
                                     ImGuiWindowFlags_NoScrollbar |
                                     ImGuiWindowFlags_NoTitleBar |
@@ -971,7 +971,7 @@ void Gui::show_simple_window(const std::string &name, uint32_t last_fps, std::fu
 	ImGui::NewFrame();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
 	ImGui::TextUnformatted(std::string(sample.get_render_context().get_device().get_gpu().get_properties().deviceName).c_str());
