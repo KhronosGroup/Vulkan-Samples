@@ -32,4 +32,7 @@ add_sample_with_tags(
    SHADER_FILES_HLSL
         "ray_tracing_basic/hlsl/raygen.rgen.hlsl"
         "ray_tracing_basic/hlsl/miss.rmiss.hlsl"
-        "ray_tracing_basic/hlsl/closesthit.rchit.hlsl")
+        "ray_tracing_basic/hlsl/closesthit.rchit.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS
+        "-fspv-extension=SPV_KHR_ray_query"
+)

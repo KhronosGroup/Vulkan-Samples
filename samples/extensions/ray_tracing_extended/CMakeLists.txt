@@ -33,5 +33,5 @@ add_sample_with_tags(
         "ray_tracing_extended/hlsl/raygen.rgen.hlsl"
         "ray_tracing_extended/hlsl/miss.rmiss.hlsl"
         "ray_tracing_extended/hlsl/closesthit.rchit.hlsl"
-    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing")
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing -fspv-extension=SPV_KHR_ray_query")
 
