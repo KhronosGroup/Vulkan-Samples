@@ -60,6 +60,7 @@
 ** xref:samples/extensions/dynamic_line_rasterization/README.adoc[Dynamic line rasterization]
 ** xref:samples/extensions/dynamic_primitive_clipping/README.adoc[Dynamic primitive clipping]
 ** xref:samples/extensions/dynamic_rendering/README.adoc[Dynamic rendering]
+** xref:samples/extensions/dynamic_rendering_local_read/README.adoc[Dynamic rendering local read]
 ** xref:samples/extensions/extended_dynamic_state2/README.adoc[Extended dynamic state2]
 ** xref:samples/extensions/fragment_shader_barycentric/README.adoc[Fragment shader barycentric]
 ** xref:samples/extensions/fragment_shading_rate/README.adoc[Fragment shading rate]

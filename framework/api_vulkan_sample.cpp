@@ -593,7 +593,10 @@ ApiVulkanSample::~ApiVulkanSample()
 			vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
 		}
 		destroy_command_buffers();
-		vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
+		if (render_pass != VK_NULL_HANDLE)
+		{
+			vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
+		}
 		for (uint32_t i = 0; i < framebuffers.size(); i++)
 		{
 			vkDestroyFramebuffer(get_device().get_handle(), framebuffers[i], nullptr);
