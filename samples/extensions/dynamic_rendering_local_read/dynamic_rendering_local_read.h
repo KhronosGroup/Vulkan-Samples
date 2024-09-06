@@ -65,8 +65,8 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> ubo_vs;
-		std::unique_ptr<vkb::core::Buffer> ssbo_lights;
+		std::unique_ptr<vkb::core::BufferC> ubo_vs;
+		std::unique_ptr<vkb::core::BufferC> ssbo_lights;
 	} buffers;
 
 	struct PushConstantSceneNode
