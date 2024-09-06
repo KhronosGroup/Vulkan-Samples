@@ -1,0 +1,169 @@
+////
+- Copyright (c) 2024, Sascha Willems
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Host image copy
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/host_image_copy[Khronos Vulkan samples github repository].
+endif::[]
+
+:pp: {plus}{plus}
+
+== Overview
+
+A common thing in Vulkan is copying image data to the GPU to sample from it in a shader (e.g. for texturing objects). Often that image data is coming from a file stored on disk (e.g. in KTX format) and needs to be moved from the host to the device.
+
+Depending on the memory setup of the implementation, this requires uploading the image data to a host visible buffer and then copying it over to a device local buffer to make it usable as an image in a shader. This also requires multiple image transitions (barriers). This is commonly referred to as "staging".
+
+In some scenarios like streaming image data from disk, this way of uploading image data may come with drawbacks like added memory requirements and unnecessary copies. These may result in negative effects like memory swapping or stuttering.
+
+The `VK_EXT_host_image_copy` extension aims to improve this by providing a direct way of moving image data from host memory to/from the device without having to go through such a staging process. It also simplifies the image transition process.
+
+NOTE: A staged upload usually has to first perform a CPU copy of data to a GPU-visible buffer and then uses the GPU to convert that data into the optimal format. A host-image copy does the copy and conversion using the CPU alone. In many circumstances this can actually be faster than the staged approach even though the GPU is not involved in the transfer.
+
+== Enabling the Extension
+
+The `VK_EXT_host_image_copy` extension needs to be enabled at device level. Depending on the Vulkan version you target, additional extensions might need to be enabled. See the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html#_extension_and_version_dependencies[extension and version dependencies] of the extension spec for details.
+
+In addition to the extension(s) you also need to enable the `hostImageCopy` for the extension structure:
+
+[,cpp]
+----
+VkPhysicalDeviceHostImageCopyFeaturesEXT host_image_copy_features{};
+...
+host_image_copy_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_FEATURES_EXT;
+host_image_copy_features.hostImageCopy = VK_TRUE;
+// Chain into device creation
+----
+
+== Checking for image format support
+
+Even though all image formats that support sampling need to support host image copies, other image formats may not. So it's always a good idea to check for host image copy support for the image format that you want to copy to. This is done by checking if the `VK_FORMAT_FEATURE_2_HOST_IMAGE_TRANSFER_BIT_EXT` bit is set:
+
+[,cpp]
+----
+VkFormat image_format = VK_FORMAT_...;
+...
+
+VkFormatProperties3 format_properties_3{};
+format_properties_3.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3_KHR;
+
+// Properties3 need to be chained into Properties2
+VkFormatProperties2 format_properties_2{};
+format_properties_2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+format_properties_2.pNext = &format_properties_3;
+
+// Get format properties for the select image format
+vkGetPhysicalDeviceFormatProperties2(physical_device, image_format, &format_properties_2);
+
+if ((format_properties_3.optimalTilingFeatures & VK_FORMAT_FEATURE_2_HOST_IMAGE_TRANSFER_BIT_EXT) == 0)
+{
+    // Fallback to a different format or use other means of uploading data
+}
+----
+
+== Setting up the image
+
+The target of our copy will be a device local image in optimal tiling format. Setting this up is not much different than with other ways of uploading image data:
+
+[,cpp]
+----
+VkImageCreateInfo imageCreateInfo = vkb::initializers::image_create_info();
+imageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
+imageCreateInfo.format            = image_format;
+imageCreateInfo.mipLevels         = 1;
+imageCreateInfo.arrayLayers       = 1;
+imageCreateInfo.samples           = VK_SAMPLE_COUNT_1_BIT;
+imageCreateInfo.tiling            = VK_IMAGE_TILING_OPTIMAL;
+imageCreateInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+imageCreateInfo.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+imageCreateInfo.extent            = {texture.width, texture.height, 1};
+imageCreateInfo.usage             = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT;
+VK_CHECK(vkCreateImage(get_device().get_handle(), &imageCreateInfo, nullptr, &texture.image));
+...
+// Bind memory
+----
+
+The only differences compared to staging are the usage flags. We no longer need the `VK_IMAGE_USAGE_TRANSFER_DST_BIT` flag and replace it with `VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT` to let the implementation know that we'll be using host image copies.
+
+== Simplified image layout transitions
+
+Using staging you'd have to submit multiple barriers. One that transitions the image as a destination for transfers and, after doing the copy, another one that transitions to the image to a shader read layout so it can be sampled in e.g. a fragment shader. These barriers then need to be submitted to a queue using a command buffer.
+
+`VK_EXT_host_image_copy` simplifies this process in two ways: First you only need one transition for the final usage layout (e.g. shader read), second you can do that transition on the host without having to setup and issue a command buffer using the `vkTransitionImageLayoutEXT` function.
+
+So for copying host memory to a device image all you need is this single barrier call:
+
+[,cpp]
+----
+VkHostImageLayoutTransitionInfoEXT host_image_layout_transition_info{};
+host_image_layout_transition_info.sType            = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO_EXT;
+host_image_layout_transition_info.image            = texture.image;
+host_image_layout_transition_info.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
+host_image_layout_transition_info.newLayout        = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+host_image_layout_transition_info.subresourceRange = subresource_range;
+----
+
+`oldLayout` is the one that device image was created with initially, `newLayout` is the actual usage layout of the image after the copy operation.
+
+== Copy image data from host to image
+
+If the selected image format supports host copies we can copy image data from host memory to the device image like this:
+
+[,cpp]
+----
+// Setup host to image copy
+VkMemoryToImageCopyEXT memory_to_image_copy{};
+
+memory_to_image_copy.sType                           = VK_STRUCTURE_TYPE_MEMORY_TO_IMAGE_COPY_EXT;
+memory_to_image_copy.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+memory_to_image_copy.imageSubresource.mipLevel       = 0;
+memory_to_image_copy.imageSubresource.baseArrayLayer = 0;
+memory_to_image_copy.imageSubresource.layerCount     = 1;
+memory_to_image_copy.imageExtent.width               = image_width;
+memory_to_image_copy.imageExtent.height              = image_height;
+memory_to_image_copy.imageExtent.depth               = 1;
+memory_to_image_copy.pHostPointer                    = host_memory_address;
+
+// Issue the copy
+VkCopyMemoryToImageInfoEXT copy_memory_info{};
+copy_memory_info.sType          = VK_STRUCTURE_TYPE_COPY_MEMORY_TO_IMAGE_INFO_EXT;
+copy_memory_info.dstImage       = texture.image;
+copy_memory_info.dstImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+copy_memory_info.regionCount    = static_cast<uint32_t>(memory_to_image_copies.size());
+copy_memory_info.pRegions       = &memory_to_image_copy;
+
+vkCopyMemoryToImageEXT(device, &copy_memory_info);
+----
+
+`pHostPointer` points to the source data in host memory. So for e.g. copying multiple mip levels one would setup multiple  `VkMemoryToImageCopyEXT` elements and offset `pHostPointer` to point at the start of each mip level in host memory. That makes it very easy to copy from arbitrary locations in host memory, no matter if data is tightly packed or stored behind different addresses.
+
+== The sample
+
+The sample is a variation of the texture loading api sample and replaces the staging approach for uploading an image with a host image copy. Looking at both samples is an easy way of comparing the two approaches and how much easier things get when using host image copies.
+
+== Conclusion
+
+Aside from the use-case shown in this sample, the `VK_EXT_host_image_copy` extension also can do image copies to host memory and image to image copies on the host. All these can simplify image copies and help reduce memory requirements and improve performance.
+
+== Additional Resources
+
+* https://www.khronos.org/blog/copying-images-on-the-host-in-vulkan[Copying Images on the Host in Vulkan]
+* https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_host_image_copy.html[Extension proposal]
+* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html[Specification]
+* https://vulkan.gpuinfo.org/displayextensiondetail?extension=VK_EXT_host_image_copy[Extension device support]
