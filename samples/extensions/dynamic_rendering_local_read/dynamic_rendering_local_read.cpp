@@ -432,8 +432,8 @@ void DynamicRenderingLocalRead::create_attachments()
 
 void DynamicRenderingLocalRead::prepare_buffers()
 {
-	buffers.ubo_vs      = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(shader_data_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	buffers.ssbo_lights = std::make_unique<vkb::core::Buffer>(get_device(), lights.size() * sizeof(Light), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	buffers.ubo_vs      = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(shader_data_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	buffers.ssbo_lights = std::make_unique<vkb::core::BufferC>(get_device(), lights.size() * sizeof(Light), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffer();
 	update_lights_buffer();

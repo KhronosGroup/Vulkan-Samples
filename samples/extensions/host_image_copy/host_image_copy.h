@@ -46,7 +46,7 @@ class HostImageCopy : public ApiVulkanSample
 		float     lod_bias = 0.0f;
 	} ubo_vs;
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
