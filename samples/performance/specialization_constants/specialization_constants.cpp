@@ -162,7 +162,7 @@ void SpecializationConstants::draw_gui()
 	    /* lines = */ lines);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_specialization_constants()
+std::unique_ptr<vkb::VulkanSampleC> create_specialization_constants()
 {
 	return std::make_unique<SpecializationConstants>();
 }

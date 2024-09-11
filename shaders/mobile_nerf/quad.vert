@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
  * ------------------------------------------------------------------------
  *
  * THIS IS A MODIFIED VERSION OF THE ORIGINAL FILE
- * 
+ *
  * The original file, along with the original Apache-2.0 LICENSE can be found at:
  * https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf
  *
@@ -31,7 +31,7 @@ out gl_PerVertex {
 	vec4 gl_Position;
 };
 
-void main() 
+void main()
 {
 	vec2 outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
 	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);

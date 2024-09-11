@@ -255,7 +255,7 @@ void LayoutTransitions::draw_gui()
 	    /* lines = */ 2);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_layout_transitions()
+std::unique_ptr<vkb::VulkanSampleC> create_layout_transitions()
 {
 	return std::make_unique<LayoutTransitions>();
 }

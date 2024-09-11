@@ -47,7 +47,7 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::SubMesh> skybox;
 	std::unique_ptr<vkb::sg::SubMesh> object;
 
-	std::unique_ptr<vkb::core::Buffer> ubo;
+	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	struct
 	{
@@ -85,4 +85,4 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	void draw();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shader_barycentric();
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shader_barycentric();

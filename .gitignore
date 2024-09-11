@@ -14,3 +14,7 @@ tags
 *~
 .*.sw*
 .sw*
+.tracy
+
+# macOS
+.DS_Store

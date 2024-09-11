@@ -593,7 +593,10 @@ ApiVulkanSample::~ApiVulkanSample()
 			vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
 		}
 		destroy_command_buffers();
-		vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
+		if (render_pass != VK_NULL_HANDLE)
+		{
+			vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
+		}
 		for (uint32_t i = 0; i < framebuffers.size(); i++)
 		{
 			vkDestroyFramebuffer(get_device().get_handle(), framebuffers[i], nullptr);
@@ -973,7 +976,7 @@ void ApiVulkanSample::handle_surface_changes()
 	}
 }
 
-VkDescriptorBufferInfo ApiVulkanSample::create_descriptor(vkb::core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset)
+VkDescriptorBufferInfo ApiVulkanSample::create_descriptor(vkb::core::BufferC &buffer, VkDeviceSize size, VkDeviceSize offset)
 {
 	VkDescriptorBufferInfo descriptor{};
 	descriptor.buffer = buffer.get_handle();
@@ -1025,7 +1028,7 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> bufferCopyRegions;
@@ -1121,7 +1124,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
@@ -1220,7 +1223,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::core::Buffer stage_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
@@ -1308,11 +1311,11 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	return texture;
 }
 
-std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer)
+std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	vkb::GLTFLoader loader{get_device()};
 
-	std::unique_ptr<vkb::sg::SubMesh> model = loader.read_model_from_file(file, index, storage_buffer);
+	std::unique_ptr<vkb::sg::SubMesh> model = loader.read_model_from_file(file, index, storage_buffer, additional_buffer_usage_flags);
 
 	if (!model)
 	{

@@ -267,7 +267,7 @@ void HPPTextureMipMapGeneration::load_assets()
 	check_format_features(format);
 
 	// Create a host-visible staging buffer that contains the raw image data
-	vkb::core::HPPBuffer staging_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), ktx_texture->dataSize, ktx_texture->pData);
+	vkb::core::BufferCpp staging_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), ktx_texture->dataSize, ktx_texture->pData);
 
 	// now, the ktx_texture can be destroyed
 	ktxTexture_Destroy(ktx_texture);
@@ -369,7 +369,7 @@ void HPPTextureMipMapGeneration::prepare_camera()
 void HPPTextureMipMapGeneration::prepare_uniform_buffers()
 {
 	// Shared parameter uniform buffer block
-	uniform_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	uniform_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                        sizeof(ubo),
 	                                                        vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);

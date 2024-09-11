@@ -65,14 +65,26 @@ template <typename HandleType>
 class HPPAllocated : public Allocated<
                          HandleType,
                          vk::DeviceMemory,
-                         vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>
+                         vkb::core::VulkanResourceCpp<HandleType>>
 {
-	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>;
+	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::VulkanResourceCpp<HandleType>>;
 
   public:
 	using Parent::get_handle;
 	using Parent::Parent;
 	using Parent::update;
+
+	HPPAllocated()                                = delete;
+	HPPAllocated(HPPAllocated const &)            = delete;
+	HPPAllocated(HPPAllocated &&rhs)              = default;
+	HPPAllocated &operator=(HPPAllocated const &) = delete;
+	HPPAllocated &operator=(HPPAllocated &&rhs)   = default;
+
+	// Import the base class constructors
+	template <typename... Args>
+	HPPAllocated(const VmaAllocationCreateInfo &alloc_create_info, Args &&...args) :
+	    Parent(alloc_create_info, std::forward<Args>(args)...)
+	{}
 
 	/**
 	 * @brief Copies byte data into the buffer

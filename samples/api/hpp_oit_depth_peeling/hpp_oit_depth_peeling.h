@@ -181,7 +181,7 @@ class HPPOITDepthPeeling : public HPPApiVulkanSample
 	std::array<Layer, kLayerMaxCount>                         layers          = {};
 	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> model           = {};
 	vk::Sampler                                               point_sampler   = {};
-	std::unique_ptr<vkb::core::HPPBuffer>                     scene_constants = {};
+	std::unique_ptr<vkb::core::BufferCpp>                     scene_constants = {};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_oit_depth_peeling();
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_oit_depth_peeling();

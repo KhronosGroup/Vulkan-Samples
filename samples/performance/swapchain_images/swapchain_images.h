@@ -25,7 +25,7 @@
 /**
  * @brief Using triple buffering over double buffering
  */
-class SwapchainImages : public vkb::VulkanSample<vkb::BindingType::C>
+class SwapchainImages : public vkb::VulkanSampleC
 {
   public:
 	SwapchainImages();
@@ -46,4 +46,4 @@ class SwapchainImages : public vkb::VulkanSample<vkb::BindingType::C>
 	int last_swapchain_image_count{3};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_swapchain_images();
+std::unique_ptr<vkb::VulkanSampleC> create_swapchain_images();

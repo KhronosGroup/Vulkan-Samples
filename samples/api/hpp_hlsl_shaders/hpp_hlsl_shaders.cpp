@@ -59,7 +59,7 @@ bool HPPHlslShaders::prepare(const vkb::ApplicationOptions &options)
 		generate_quad();
 
 		// Vertex shader uniform buffer block
-		uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+		uniform_buffer_vs = std::make_unique<vkb::core::BufferCpp>(get_device(),
 		                                                           sizeof(ubo_vs),
 		                                                           vk::BufferUsageFlagBits::eUniformBuffer,
 		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -330,13 +330,13 @@ void HPPHlslShaders::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	vertex_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                       vertex_buffer_size,
 	                                                       vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
 	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	index_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                      index_buffer_size,
 	                                                      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
 	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);

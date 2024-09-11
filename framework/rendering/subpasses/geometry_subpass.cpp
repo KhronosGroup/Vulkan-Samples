@@ -235,7 +235,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 		if (buffer_iter != sub_mesh.vertex_buffers.end())
 		{
-			std::vector<std::reference_wrapper<const core::Buffer>> buffers;
+			std::vector<std::reference_wrapper<const vkb::core::BufferC>> buffers;
 			buffers.emplace_back(std::ref(buffer_iter->second));
 
 			// Bind vertex buffers only for the attribute locations defined

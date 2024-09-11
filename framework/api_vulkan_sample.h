@@ -71,6 +71,7 @@ struct Vertex
 	glm::vec2 uv;
 	glm::vec4 joint0;
 	glm::vec4 weight0;
+	glm::vec3 color;
 };
 
 /**
@@ -99,7 +100,7 @@ struct Meshlet
  *
  * See vkb::VulkanSample for documentation
  */
-class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
+class ApiVulkanSample : public vkb::VulkanSampleC
 {
   public:
 	ApiVulkanSample() = default;
@@ -200,7 +201,7 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	 * @param size The size of the descriptor (default: VK_WHOLE_SIZE)
 	 * @param offset The offset of the descriptor (default: 0)
 	 */
-	VkDescriptorBufferInfo create_descriptor(vkb::core::Buffer &buffer, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+	VkDescriptorBufferInfo create_descriptor(vkb::core::BufferC &buffer, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
 	/**
 	 * @brief Creates an image descriptor
@@ -235,8 +236,9 @@ class ApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::C>
 	 * @param file The filename of the model to load
 	 * @param index The index of the model to load from the GLTF file (default: 0)
 	 * @param storage_buffer Set true to store model in SSBO
+	 * @param additional_buffer_usage_flags Additional buffer usage flags to be applied to vertex and index buffers
 	 */
-	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false);
+	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer

@@ -294,10 +294,10 @@ void ConditionalRendering::prepare_pipelines()
 void ConditionalRendering::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                     sizeof(uniform_data),
-	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(uniform_data),
+	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -316,10 +316,10 @@ void ConditionalRendering::prepare_visibility_buffer()
 	// Conditional values are 32 bits wide and if it's zero the rendering commands are discarded
 	// We therefore create a buffer that can hold int32 conditional values for all nodes in the glTF scene
 	// The extension also introduces the new buffer usage flag VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT that we need to set
-	conditional_visibility_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                    sizeof(int32_t) * conditional_visibility_list.size(),
-	                                                                    VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT,
-	                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	conditional_visibility_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                     sizeof(int32_t) * conditional_visibility_list.size(),
+	                                                                     VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT,
+	                                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_visibility_buffer();
 }

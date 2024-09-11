@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, The Khronos Group
+- Copyright (c) 2023-2024, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -280,4 +280,3 @@ This is pretty much the same as the `vk::CommandBuffer::writeTimestamp` function
 == Verdict
 
 Even though timestamp queries are limited due to how a GPU works, they can still be useful for profiling and finding performance GPU bottlenecks.
-ul for profiling and finding performance GPU bottlenecks.

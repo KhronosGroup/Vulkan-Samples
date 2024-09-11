@@ -450,7 +450,7 @@ void ShaderObject::load_assets()
 
 void ShaderObject::prepare_uniform_buffers()
 {
-	camera_mats_ubo_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(camera_mats_ubo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_mats_ubo_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(camera_mats_ubo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void ShaderObject::update_uniform_buffers()
@@ -912,18 +912,18 @@ void ShaderObject::generate_terrain()
 	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
 
 	// Create staging buffers
-	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
-	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
+	vkb::core::BufferC vertex_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
+	vkb::core::BufferC index_staging  = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	terrain.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                       vertex_buffer_size,
-	                                                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	terrain.vertices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                        vertex_buffer_size,
+	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
+
+	terrain.indices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                       index_buffer_size,
+	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                       VMA_MEMORY_USAGE_GPU_ONLY);
-
-	terrain.indices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                      index_buffer_size,
-	                                                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                      VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -2024,7 +2024,7 @@ void ShaderObject::Shader::destroy(VkDevice device)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_shader_object()
+std::unique_ptr<vkb::VulkanSampleC> create_shader_object()
 {
 	return std::make_unique<ShaderObject>();
 }

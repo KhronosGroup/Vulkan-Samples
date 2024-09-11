@@ -45,7 +45,7 @@ class HPPDescriptorSetLayout;
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::CommandBuffer>
+class HPPCommandBuffer : public vkb::core::VulkanResourceCpp<vk::CommandBuffer>
 {
   public:
 	struct RenderPassBinding
@@ -103,34 +103,34 @@ class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp,
 	                                            const vkb::core::HPPFramebuffer       &framebuffer,
 	                                            const std::vector<vk::ClearValue>     &clear_values,
 	                                            vk::SubpassContents                    contents = vk::SubpassContents::eInline);
-	void                      bind_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
+	void                      bind_buffer(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 	void                      bind_image(const vkb::core::HPPImageView &image_view, const vkb::core::HPPSampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 	void                      bind_image(const vkb::core::HPPImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
-	void                      bind_index_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::IndexType index_type);
+	void                      bind_index_buffer(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, vk::IndexType index_type);
 	void                      bind_input(const vkb::core::HPPImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 	void                      bind_lighting(vkb::rendering::LightingStateCpp &lighting_state, uint32_t set, uint32_t binding);
 	void                      bind_pipeline_layout(vkb::core::HPPPipelineLayout &pipeline_layout);
 	void                      bind_vertex_buffers(uint32_t                                                               first_binding,
-	                                              const std::vector<std::reference_wrapper<const vkb::core::HPPBuffer>> &buffers,
+	                                              const std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> &buffers,
 	                                              const std::vector<vk::DeviceSize>                                     &offsets);
 	void                      blit_image(const vkb::core::HPPImage &src_img, const vkb::core::HPPImage &dst_img, const std::vector<vk::ImageBlit> &regions);
-	void                      buffer_memory_barrier(const vkb::core::HPPBuffer                &buffer,
+	void                      buffer_memory_barrier(const vkb::core::BufferCpp                &buffer,
 	                                                vk::DeviceSize                             offset,
 	                                                vk::DeviceSize                             size,
 	                                                const vkb::common::HPPBufferMemoryBarrier &memory_barrier);
 	void                      clear(vk::ClearAttachment info, vk::ClearRect rect);
-	void                      copy_buffer(const vkb::core::HPPBuffer &src_buffer, const vkb::core::HPPBuffer &dst_buffer, vk::DeviceSize size);
-	void                      copy_buffer_to_image(const vkb::core::HPPBuffer &buffer, const vkb::core::HPPImage &image, const std::vector<vk::BufferImageCopy> &regions);
+	void                      copy_buffer(const vkb::core::BufferCpp &src_buffer, const vkb::core::BufferCpp &dst_buffer, vk::DeviceSize size);
+	void                      copy_buffer_to_image(const vkb::core::BufferCpp &buffer, const vkb::core::HPPImage &image, const std::vector<vk::BufferImageCopy> &regions);
 	void                      copy_image(const vkb::core::HPPImage &src_img, const vkb::core::HPPImage &dst_img, const std::vector<vk::ImageCopy> &regions);
 	void                      copy_image_to_buffer(const vkb::core::HPPImage              &image,
 	                                               vk::ImageLayout                         image_layout,
-	                                               const vkb::core::HPPBuffer             &buffer,
+	                                               const vkb::core::BufferCpp             &buffer,
 	                                               const std::vector<vk::BufferImageCopy> &regions);
 	void                      dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
-	void                      dispatch_indirect(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset);
+	void                      dispatch_indirect(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset);
 	void                      draw(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
 	void                      draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
-	void                      draw_indexed_indirect(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, uint32_t draw_count, uint32_t stride);
+	void                      draw_indexed_indirect(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, uint32_t draw_count, uint32_t stride);
 	vk::Result                end();
 	void                      end_query(const vkb::core::HPPQueryPool &query_pool, uint32_t query);
 	void                      end_render_pass();
@@ -191,7 +191,7 @@ class HPPCommandBuffer : public vkb::core::VulkanResource<vkb::BindingType::Cpp,
 	void set_vertex_input_state(const vkb::rendering::HPPVertexInputState &state_info);
 	void set_viewport(uint32_t first_viewport, const std::vector<vk::Viewport> &viewports);
 	void set_viewport_state(const vkb::rendering::HPPViewportState &state_info);
-	void update_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, const std::vector<uint8_t> &data);
+	void update_buffer(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, const std::vector<uint8_t> &data);
 	void write_timestamp(vk::PipelineStageFlagBits pipeline_stage, const vkb::core::HPPQueryPool &query_pool, uint32_t query);
 
   private:

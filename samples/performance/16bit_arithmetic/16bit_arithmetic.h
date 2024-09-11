@@ -23,7 +23,7 @@
 /**
  * @brief Using 16-bit arithmetic extension to improve arithmetic throughput
  */
-class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
+class KHR16BitArithmeticSample : public vkb::VulkanSampleC
 {
   public:
 	KHR16BitArithmeticSample();
@@ -48,7 +48,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> subpasses;
 	std::vector<VkClearValue>                              clear_values;
 
-	std::unique_ptr<vkb::core::Buffer>    blob_buffer;
+	std::unique_ptr<vkb::core::BufferC>   blob_buffer;
 	std::unique_ptr<vkb::core::Image>     image;
 	std::unique_ptr<vkb::core::ImageView> image_view;
 	std::unique_ptr<vkb::core::Sampler>   sampler;
@@ -69,4 +69,4 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
 	};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic();
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_arithmetic();

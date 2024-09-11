@@ -326,14 +326,14 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 void DynamicPrimitiveClipping::prepare_uniform_buffers()
 {
 	// We will render the same object twice using two different sets of parameters called "positive" and "negative".
-	uniform_buffers.buffer_positive = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      sizeof(UBOVS),
-	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.buffer_negative = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      sizeof(UBOVS),
-	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_positive = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       sizeof(UBOVS),
+	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_negative = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       sizeof(UBOVS),
+	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -387,7 +387,7 @@ void DynamicPrimitiveClipping::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_primitive_clipping()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_primitive_clipping()
 {
 	return std::make_unique<DynamicPrimitiveClipping>();
 }

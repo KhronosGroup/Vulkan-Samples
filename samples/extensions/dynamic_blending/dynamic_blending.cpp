@@ -118,16 +118,16 @@ void DynamicBlending::prepare_scene()
 	vertex_buffer_size     = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
 	auto index_buffer_size = indices.size() * sizeof(uint32_t);
 
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_GPU_TO_CPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 
 	face_preferences[0].index_offset      = 0;
@@ -153,10 +153,10 @@ void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
 	eds_feature_support       = {};
 	eds_feature_support.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
 
-	VkPhysicalDeviceFeatures2 features2{};
-	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	VkPhysicalDeviceFeatures2KHR features2{};
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 	features2.pNext = &eds_feature_support;
-	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+	vkGetPhysicalDeviceFeatures2KHR(gpu.get_handle(), &features2);
 
 	{
 		// Only request the features that we support
@@ -174,8 +174,8 @@ void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void DynamicBlending::prepare_uniform_buffers()
 {
-	camera_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	color_ubo  = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ColorUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_ubo = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	color_ubo  = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ColorUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void DynamicBlending::update_uniform_buffers()
@@ -684,7 +684,7 @@ bool DynamicBlending::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_blending()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_blending()
 {
 	return std::make_unique<DynamicBlending>();
 }

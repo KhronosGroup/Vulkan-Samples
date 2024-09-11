@@ -26,12 +26,14 @@
 /**
  * @brief Using multiple queues to achieve more parallelism on the GPU
  */
-class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
+class AsyncComputeSample : public vkb::VulkanSampleC
 {
   public:
 	AsyncComputeSample();
 
 	virtual ~AsyncComputeSample() = default;
+
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
@@ -118,4 +120,4 @@ class AsyncComputeSample : public vkb::VulkanSample<vkb::BindingType::C>
 	vkb::RenderTarget &get_current_forward_render_target();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_async_compute();
+std::unique_ptr<vkb::VulkanSampleC> create_async_compute();

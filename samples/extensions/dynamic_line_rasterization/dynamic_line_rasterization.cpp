@@ -118,22 +118,22 @@ void DynamicLineRasterization::prepare_scene()
 	uint32_t cube_index_buffer_size  = static_cast<uint32_t>(cube_indices.size() * sizeof(uint32_t));
 	uint32_t edges_index_buffer_size = static_cast<uint32_t>(edges_indices.size() * sizeof(uint32_t));
 
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	cube_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        cube_index_buffer_size,
-	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
-	cube_index_buffer->update(cube_indices.data(), cube_index_buffer_size);
-
-	edges_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                         edges_index_buffer_size,
+	cube_index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         cube_index_buffer_size,
 	                                                         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+	cube_index_buffer->update(cube_indices.data(), cube_index_buffer_size);
+
+	edges_index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                          edges_index_buffer_size,
+	                                                          VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	edges_index_buffer->update(edges_indices.data(), edges_index_buffer_size);
 
 	fill_color = glm::vec4(0.957f, 0.384f, 0.024f, 0.1f);
@@ -271,7 +271,7 @@ void DynamicLineRasterization::create_pipelines()
 
 void DynamicLineRasterization::prepare_uniform_buffers()
 {
-	camera_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_ubo = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void DynamicLineRasterization::update_uniform_buffers()
@@ -522,7 +522,7 @@ bool DynamicLineRasterization::resize(const uint32_t width, const uint32_t heigh
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_line_rasterization()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_line_rasterization()
 {
 	return std::make_unique<DynamicLineRasterization>();
 }

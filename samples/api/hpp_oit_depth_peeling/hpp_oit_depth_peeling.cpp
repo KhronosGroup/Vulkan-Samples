@@ -487,7 +487,7 @@ void HPPOITDepthPeeling::create_point_sampler()
 void HPPOITDepthPeeling::create_scene_constants_buffer()
 {
 	scene_constants =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(SceneConstants), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(SceneConstants), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void HPPOITDepthPeeling::load_assets()
@@ -553,7 +553,7 @@ void HPPOITDepthPeeling::update_scene_constants()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_oit_depth_peeling()
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_oit_depth_peeling()
 {
 	return std::make_unique<HPPOITDepthPeeling>();
 }

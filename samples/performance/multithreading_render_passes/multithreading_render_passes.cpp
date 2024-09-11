@@ -39,6 +39,15 @@ MultithreadingRenderPasses::MultithreadingRenderPasses()
 	config.insert<vkb::IntSetting>(2, multithreading_mode, 2);
 }
 
+void MultithreadingRenderPasses::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+#ifdef VKB_ENABLE_PORTABILITY
+	// Since shadowmap_sampler_create_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
+	auto &requested_portability_subset_features                     = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
+	requested_portability_subset_features.mutableComparisonSamplers = VK_TRUE;
+#endif
+}
+
 bool MultithreadingRenderPasses::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))
@@ -542,7 +551,7 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_push_constants(vkb::Comm
 	return;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multithreading_render_passes()
+std::unique_ptr<vkb::VulkanSampleC> create_multithreading_render_passes()
 {
 	return std::make_unique<MultithreadingRenderPasses>();
 }

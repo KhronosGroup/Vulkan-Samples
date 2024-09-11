@@ -36,7 +36,7 @@ struct alignas(16) CustomForwardLights
 /**
  * @brief Using specialization constants
  */
-class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
+class SpecializationConstants : public vkb::VulkanSampleC
 {
   public:
 	SpecializationConstants();
@@ -71,7 +71,7 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 		 * @return BufferAllocation A buffer allocation created for use in shaders
 		 */
 		template <typename T>
-		vkb::BufferAllocation allocate_custom_lights(vkb::CommandBuffer &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
+		vkb::BufferAllocationC allocate_custom_lights(vkb::CommandBuffer &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
 		{
 			T light_info;
 			light_info.count = vkb::to_u32(light_count);
@@ -95,8 +95,8 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 
 			std::copy(lights.begin(), lights.end(), light_info.lights);
 
-			auto                 &render_frame = get_render_context().get_active_frame();
-			vkb::BufferAllocation light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
+			auto                  &render_frame = get_render_context().get_active_frame();
+			vkb::BufferAllocationC light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
 			light_buffer.update(light_info);
 
 			return light_buffer;
@@ -121,4 +121,4 @@ class SpecializationConstants : public vkb::VulkanSample<vkb::BindingType::C>
 	int specialization_constants_enabled{0};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_specialization_constants();
+std::unique_ptr<vkb::VulkanSampleC> create_specialization_constants();

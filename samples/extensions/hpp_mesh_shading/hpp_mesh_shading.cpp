@@ -193,7 +193,7 @@ void HPPMeshShading::draw()
 	HPPApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_mesh_shading()
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_mesh_shading()
 {
 	return std::make_unique<HPPMeshShading>();
 }
