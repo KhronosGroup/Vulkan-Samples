@@ -360,11 +360,6 @@ void MobileNerfRayQuery::read_json_map()
 		LOGI("Using VK_FORMAT_R32G32B32A32_SFLOAT for feature texture");
 		feature_map_format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	}
-	else if (textureType == "8bit")
-	{
-		LOGI("Using VK_FORMAT_R8G8B8A8_UNORM for feature texture");
-		feature_map_format = VK_FORMAT_R8G8B8A8_UNORM;
-	}
 	else
 	{
 		LOGW("Unrecognized feature texture type, using VK_FORMAT_R32G32B32A32_SFLOAT");
@@ -374,7 +369,7 @@ void MobileNerfRayQuery::read_json_map()
 	// Rotation mode
 	do_rotation = raw_asset_map["rotation"].get<bool>();
 
-	// Read view port size. Use defualt setting (1280x720) if size is 0.
+	// Read view port size. Use default setting (1280x720) if size is 0.
 	view_port_width  = raw_asset_map["width"].get<int>();
 	view_port_height = raw_asset_map["height"].get<int>();
 
@@ -392,7 +387,7 @@ void MobileNerfRayQuery::read_json_map()
 	}
 	else
 	{
-		LOGW("Fail to read camera position. Use defualt value.");
+		LOGW("Fail to read camera position. Use default value.");
 	}
 
 	// Read instancing rendering settings.
@@ -445,12 +440,9 @@ void MobileNerfRayQuery::initialize_mlp_uniform_buffers(int model_index)
 	// Record a index of the first sub-model
 	const auto first_sub_model = models.size();
 	int        obj_num         = data["obj_num"].get<int>();
-
-	// Here we know the actual number of sub models
-	const auto next_sub_model_index = models.size();
 	models.resize(models.size() + obj_num);
 
-	for (int i = next_sub_model_index; i < models.size(); i++)
+	for (int i = first_sub_model; i < models.size(); i++)
 	{
 		models[i].model_index = model_index;
 	}
@@ -626,7 +618,8 @@ void MobileNerfRayQuery::load_scene(int model_index, int sub_model_index, int mo
 					model.vertices.resize(vertex_start_index + pts_.size());
 					for (size_t i = 0; i < pts_.size(); ++i)
 					{
-						model.vertices[vertex_start_index + i].position  = pts_[i];
+						model.vertices[vertex_start_index + i].position = pts_[i];
+						model.vertices[vertex_start_index + i].position.y *= -1.0f;
 						model.vertices[vertex_start_index + i].tex_coord = glm::vec2(texcoord_[i].x, 1.0f - texcoord_[i].y);
 					}
 				}
@@ -776,12 +769,10 @@ void MobileNerfRayQuery::update_uniform_buffer()
 	camera.set_perspective(fov, static_cast<float>(width) / static_cast<float>(height), 0.01f, 200.0f);
 	const float tan_half_fov = tan(0.5 * fov / 180.0f * 3.141592653589793f);
 
-	global_uniform.camera_position = glm::inverse(camera.matrices.view) * glm::vec4(0, 0, 0, 1);
-	global_uniform.camera_side     = glm::vec3(camera.matrices.view[0][0], camera.matrices.view[1][0], camera.matrices.view[2][0]);
-	global_uniform.camera_up       = glm::vec3(camera.matrices.view[0][1], camera.matrices.view[1][1], camera.matrices.view[2][1]);
-	global_uniform.camera_lookat   = -glm::vec3(camera.matrices.view[0][2], camera.matrices.view[1][2], camera.matrices.view[2][2]);
-	global_uniform.img_dim         = glm::vec2(width, height);
-	global_uniform.tan_half_fov    = tan_half_fov;
+	global_uniform.view_inverse = glm::inverse(camera.matrices.view);
+	global_uniform.proj_inverse = glm::inverse(camera.matrices.perspective);
+	global_uniform.img_dim      = glm::vec2(width, height);
+	global_uniform.tan_half_fov = tan_half_fov;
 
 	uniform_buffer->update(&global_uniform, sizeof(GlobalUniform));
 }

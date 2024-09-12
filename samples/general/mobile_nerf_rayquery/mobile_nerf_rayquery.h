@@ -49,10 +49,8 @@ class MobileNerfRayQuery : public ApiVulkanSample
   private:
 	struct GlobalUniform
 	{
-		alignas(16) glm::vec3 camera_position;
-		alignas(16) glm::vec3 camera_side;
-		alignas(16) glm::vec3 camera_up;
-		alignas(16) glm::vec3 camera_lookat;
+		alignas(16) glm::mat4 view_inverse;
+		alignas(16) glm::mat4 proj_inverse;
 		alignas(8) glm::vec2 img_dim;
 		alignas(4) float tan_half_fov{};
 	} global_uniform;

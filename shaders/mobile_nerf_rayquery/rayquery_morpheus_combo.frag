@@ -42,10 +42,8 @@ struct Vertex
 
 struct GlobalUniform
 {
-    vec3 camera_position;
-    vec3 camera_side;
-    vec3 camera_up;
-    vec3 camera_lookat;
+    mat4 view_inverse;
+    mat4 proj_inverse;
     vec2 img_dim;
     float tan_half_fov;
 };
@@ -189,20 +187,12 @@ vec3 evaluateNetwork(  vec4 f0,  vec4 f1,  vec4 viewdir,  uint idx)
 }
 
 vec3 CalcRayDirComp(GlobalUniform params) {
-    // On [0.0, 1.0]
-    vec2 img_sample = vec2(gl_FragCoord.xy / params.img_dim);
+	  const vec2 inUV = gl_FragCoord.xy / params.img_dim;
+	  vec2 d = inUV * 2.0 - 1.0;
+    vec4 target = params.proj_inverse * vec4(d.x, d.y, 1, 1);
+	  vec4 direction = params.view_inverse * vec4(normalize(target.xyz), 0);
 
-    // Transform into [-0.5, 0.5]
-    vec2 hom_sample = img_sample - vec2(0.5f, 0.5f);
-    hom_sample.y *= -1.0f; // Vertical flip so that origin is top-left
-
-    // Transform into [-dim.x/dim.y/2, dim.x/dim.y/2] x [-0.5, 0.5]
-    vec2 c_sample = hom_sample * params.img_dim / params.img_dim.y;
-
-    // Calculate direction to image plane
-    const vec3 rayDir = vec3(params.camera_lookat * 0.5 / params.tan_half_fov + c_sample.x * params.camera_side + c_sample.y * params.camera_up);
-
-    return normalize(rayDir);
+    return normalize(direction.xyz);
 }
 
 //////////////////////////////////////////////////////////////
@@ -230,6 +220,7 @@ vec3 Convert_sRGB_ToLinear(vec3 value)
 void main(void)
 {
     vec3 rayDirection = CalcRayDirComp(params);
+    vec3 camPosition = (params.view_inverse * vec4(0,0,0,1)).xyz;
 
     // initialize a ray query object
     rayQueryEXT rayQuery;
@@ -243,7 +234,7 @@ void main(void)
                           topLevelAS,                       // Top-level acceleration structure
                           rayFlags,                         // Ray flags, treat all geometry as non-opaque
                           0xFF,                             // 8-bit instance mask, trace against all instances
-                          params.camera_position,           // Ray origin
+                          camPosition,                      // Ray origin
                           tmin,                             // Minimum t-value
                           rayDirection,                     // Ray direction
                           tmax);                            // Maximum t-value
@@ -299,6 +290,7 @@ void main(void)
 void main(void)
 {
     vec3 rayDirection = CalcRayDirComp(params);
+    vec3 camPosition = (params.view_inverse * vec4(0,0,0,1)).xyz;
 
     // initialize a ray query object
     rayQueryEXT rayQuery;
@@ -309,7 +301,7 @@ void main(void)
                           topLevelAS,                       // Top-level acceleration structure
                           rayFlags,                         // Ray flags, treat all geometry as opaque
                           0xFF,                             // 8-bit instance mask, trace against all instances
-                          params.camera_position,           // Ray origin
+                          camPosition,                      // Ray origin
                           tmin,                             // Minimum t-value
                           rayDirection,                     // Ray direction
                           tmax);                            // Maximum t-value
