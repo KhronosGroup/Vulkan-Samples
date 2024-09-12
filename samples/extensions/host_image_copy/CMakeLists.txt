@@ -19,19 +19,15 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample(
+add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
-    NAME "Ray tracing position fetch"
-    DESCRIPTION "Uses the VK_KHR_ray_tracing_position_fetch to fetch vertex positions from an acceleration structure"
+    NAME "Host image copy"
+    DESCRIPTION "Use the VK_EXT_host_image_copy extension to simplify image data upload to the GPU"
     SHADER_FILES_GLSL
-        "ray_tracing_position_fetch/glsl/closesthit.rchit"
-        "ray_tracing_position_fetch/glsl/miss.rmiss"
-        "ray_tracing_position_fetch/glsl/raygen.rgen"
+        "texture_loading/glsl/texture.vert"
+        "texture_loading/glsl/texture.frag"
     SHADER_FILES_HLSL
-        "ray_tracing_position_fetch/hlsl/closesthit.rchit.hlsl"
-        "ray_tracing_position_fetch/hlsl/miss.rmiss.hlsl"
-        "ray_tracing_position_fetch/hlsl/raygen.rgen.hlsl"
-        DXC_ADDITIONAL_ARGUMENTS
-        "-fspv-extension=SPV_KHR_ray_query -fspv-extension=SPV_KHR_ray_tracing")
+        "texture_loading/hlsl/texture.vert.hlsl"
+        "texture_loading/hlsl/texture.frag.hlsl")
