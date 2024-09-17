@@ -27,7 +27,7 @@ layout (binding = 0) uniform UboView
 
 layout (binding = 1) buffer InstanceArray
 {
-	mat4 model[SCENE_MESH_COUNT];
+	mat4 model[125];
 } instanceArray;
 
 layout (location = 0) out vec3 outColor;
