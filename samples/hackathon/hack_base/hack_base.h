@@ -18,8 +18,19 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include "Stopwatch.h"
 
 #define OBJECT_INSTANCES 125
+
+enum class MeasurementPoints : uint16_t
+{
+    FullDrawCall = 0,
+    PrepareFrame,
+	QueueFillingOperations,
+	QueueVkQueueSubmitOperation,
+	SubmitFrame,
+	HackRenderFunction
+};
 
 class hack_base : public ApiVulkanSample
 {
@@ -92,6 +103,9 @@ protected:
   std::vector<VkVertexInputBindingDescription> vertex_input_bindings;
   std::vector<VkVertexInputAttributeDescription> vertex_input_attributes;
   VkPipelineVertexInputStateCreateInfo vertex_input_state;
+
+  // Timing utilities
+  TimeMeasurements stopwatch;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_hack_base();

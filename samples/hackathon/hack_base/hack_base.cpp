@@ -244,16 +244,30 @@ void hack_base::update_rotation(float delta_time)
 
 void hack_base::draw()
 {
-	ApiVulkanSample::prepare_frame();
+	ScopedTiming _(stopwatch, (int) MeasurementPoints::FullDrawCall);
+    
+    {
+	    ScopedTiming _(stopwatch, (int) MeasurementPoints::PrepareFrame);
+	    ApiVulkanSample::prepare_frame();
+    }
 
-	// Command buffer to be submitted to the queue
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers = &draw_cmd_buffers[current_buffer];
+    {
+		ScopedTiming _(stopwatch, (int) MeasurementPoints::QueueFillingOperations);
+		// Command buffer to be submitted to the queue
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+	}
 
-	// Submit to queue
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	{
+		ScopedTiming _(stopwatch, (int) MeasurementPoints::QueueVkQueueSubmitOperation);
+	    // Submit to queue
+	    VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+    }
 
-	ApiVulkanSample::submit_frame();
+    {
+		ScopedTiming _(stopwatch, (int) MeasurementPoints::SubmitFrame);
+	    ApiVulkanSample::submit_frame();
+    }
 }
 
 void hack_base::prepare_view_uniform_buffer()
@@ -310,7 +324,10 @@ void hack_base::render(float delta_time)
 	if (!paused)
 	{
 		update_rotation(delta_time);
-		hack_render(delta_time);
+        {
+			ScopedTiming _(stopwatch, (int) MeasurementPoints::HackRenderFunction);
+		    hack_render(delta_time);
+        }
 	}
 	if (camera.updated)
 	{
