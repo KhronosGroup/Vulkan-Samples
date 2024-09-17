@@ -18,7 +18,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "Stopwatch.h"
+#include "TimeMeasurements.h"
 
 #define OBJECT_INSTANCES 125
 
