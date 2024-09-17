@@ -100,7 +100,7 @@ void HostImageCopy::load_texture()
 	VkFormatProperties2 format_properties_2{};
 	format_properties_2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
 	format_properties_2.pNext = &format_properties_3;
-	vkGetPhysicalDeviceFormatProperties2(get_device().get_gpu().get_handle(), image_format, &format_properties_2);
+	vkGetPhysicalDeviceFormatProperties2KHR(get_device().get_gpu().get_handle(), image_format, &format_properties_2);
 
 	if ((format_properties_3.optimalTilingFeatures & VK_FORMAT_FEATURE_2_HOST_IMAGE_TRANSFER_BIT_EXT) == 0)
 	{
