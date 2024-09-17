@@ -25,7 +25,7 @@ public:
   hack_push_constant();
   virtual ~hack_push_constant();
 
-  void build_command_buffers() override;
+  void draw(VkCommandBuffer &commandBuffer);
 
   void setup_descriptor_pool();
   void setup_descriptor_set_layout();
@@ -34,7 +34,7 @@ public:
   void prepare_pipelines();
 
   virtual void hack_prepare() override;
-  virtual void hack_render(float delta_time) override;
+  virtual void hack_render(VkCommandBuffer &commandBuffer) override;
 
 private:
   VkPushConstantRange   range;
