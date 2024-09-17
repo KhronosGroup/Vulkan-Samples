@@ -113,7 +113,9 @@ class hack_base : public ApiVulkanSample
 	VkPipelineVertexInputStateCreateInfo           vertex_input_state;
 
 	// Timing utilities
-	TimeMeasurements stopwatch;
+	const size_t     sMaxNumberOfDataPoints = 10000;
+	TimeMeasurements mTimeMeasurements = TimeMeasurements(sMaxNumberOfDataPoints);
+	uint16_t         mFrameNumber = 0;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_hack_base();

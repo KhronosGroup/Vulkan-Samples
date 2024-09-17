@@ -245,30 +245,38 @@ void hack_base::update_rotation(float delta_time)
 
 void hack_base::draw()
 {
-	ScopedTiming _(stopwatch, (int) MeasurementPoints::FullDrawCall);
+	ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::FullDrawCall);
 
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::PrepareFrame);
+		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::PrepareFrame);
 		ApiVulkanSample::prepare_frame();
 	}
 
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::QueueFillingOperations);
+		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::QueueFillingOperations);
 		// Command buffer to be submitted to the queue
 		submit_info.commandBufferCount = 1;
 		submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	}
 
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::QueueVkQueueSubmitOperation);
+		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::QueueVkQueueSubmitOperation);
 		// Submit to queue
 		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	}
 
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::SubmitFrame);
+		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::SubmitFrame);
 		ApiVulkanSample::submit_frame();
 	}
+
+    mFrameNumber++;
+
+    if (mFrameNumber >= sMaxNumberOfDataPoints && mTimeMeasurements.isEnabled())
+    {
+		mTimeMeasurements.disable();
+		mTimeMeasurements.writeToJsonFile();
+    }
 }
 
 void hack_base::prepare_view_uniform_buffer()
@@ -310,7 +318,7 @@ bool hack_base::prepare(const vkb::ApplicationOptions &options)
 	prepare_view_uniform_buffer();
 
     {
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::HackPrepareFunction);
+		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::HackPrepareFunction);
 	    hack_prepare();
     }
 
@@ -329,7 +337,7 @@ void hack_base::render(float delta_time)
 	{
 		update_rotation(delta_time);
 		{
-			ScopedTiming _(stopwatch, (int) MeasurementPoints::HackRenderFunction);
+			ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::HackRenderFunction);
 			hack_render(delta_time);
 		}
 	}

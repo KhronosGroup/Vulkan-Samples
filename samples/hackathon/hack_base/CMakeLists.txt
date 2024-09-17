@@ -25,6 +25,13 @@ add_sample(
     AUTHOR "<<Contributor>>"
     NAME "hack_base"
     DESCRIPTION "Sample description"
+    FILES
+        json.hpp
+        TimeMeasurements.cpp
+        TimeMeasurements.h
+        utils.h
     SHADER_FILES_GLSL
         "triangle.vert"
         "triangle.frag")
+
+target_sources(${FOLDER_NAME} PRIVATE json.hpp TimeMeasurements.cpp TimeMeasurements.h utils.h)
