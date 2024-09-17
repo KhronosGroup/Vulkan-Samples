@@ -100,16 +100,16 @@ class HPPOITLinkedLists : public HPPApiVulkanSample
 	glm::uint                                fragment_max_count = 0U;
 
 	vk::RenderPass  gather_render_pass = nullptr;
-	vk::Framebuffer gather_framebuffer;
+	vk::Framebuffer gather_framebuffer = nullptr;
 
 	vk::DescriptorSetLayout descriptor_set_layout = nullptr;
 	vk::DescriptorPool      descriptor_pool       = nullptr;
 	vk::DescriptorSet       descriptor_set        = nullptr;
 
-	vk::PipelineLayout pipeline_layout = nullptr;
-	vk::Pipeline       gather_pipeline;
-	vk::Pipeline       background_pipeline;
-	vk::Pipeline       combine_pipeline;
+	vk::PipelineLayout pipeline_layout     = nullptr;
+	vk::Pipeline       gather_pipeline     = nullptr;
+	vk::Pipeline       background_pipeline = nullptr;
+	vk::Pipeline       combine_pipeline    = nullptr;
 
 	bool    sort_fragments        = true;
 	bool    camera_auto_rotation  = false;
