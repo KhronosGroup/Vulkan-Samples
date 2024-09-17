@@ -23,10 +23,8 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "<<Contributor>>"
-    NAME "hack_base"
+    NAME ${FOLDER_NAME}
     DESCRIPTION "Sample description"
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
-
-target_sources(${FOLDER_NAME} PRIVATE json.hpp TimeMeasurements.cpp TimeMeasurements.h utils.h)
+        "hackathon/glsl/array_buffer.vert"
+        "hackathon/glsl/base.frag")

@@ -17,31 +17,13 @@
 
 #pragma once
 
-#include "hack_base.h"
+#include "../hack_emulated_uniform_buffer/hack_emulated_uniform_buffer.h"
 
-class hack_push_constant : public hack_base
+class hack_emulated_uniform_structuredbuffer : public hack_emulated_uniform_buffer
 {
+protected:
 public:
-  hack_push_constant();
-  virtual ~hack_push_constant();
-
-  void draw(VkCommandBuffer &commandBuffer);
-
-  void setup_descriptor_pool();
-  void setup_descriptor_set_layout();
-  void setup_descriptor_set();
-
-  void prepare_pipelines();
-
-  virtual void hack_prepare() override;
-  virtual void hack_render(VkCommandBuffer &commandBuffer) override;
-
-private:
-  VkPushConstantRange   range;
-  VkPipeline            pipeline;
-  VkPipelineLayout      pipeline_layout;
-  VkDescriptorSet       descriptor_set;
-  VkDescriptorSetLayout descriptor_set_layout;
+  hack_emulated_uniform_structuredbuffer();
 };
 
-std::unique_ptr<vkb::VulkanSampleC> create_hack_push_constant();
+std::unique_ptr<vkb::VulkanSampleC> create_hack_emulated_uniform_structuredbuffer();

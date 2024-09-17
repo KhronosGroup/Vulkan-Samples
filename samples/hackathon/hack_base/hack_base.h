@@ -22,17 +22,6 @@
 
 #define OBJECT_INSTANCES 125
 
-enum class MeasurementPoints : uint16_t
-{
-	FullDrawCall = 0,
-	PrepareFrame,
-	QueueFillingOperations,
-	QueueVkQueueSubmitOperation,
-	SubmitFrame,
-	HackRenderFunction,
-	HackPrepareFunction
-};
-
 class hack_base : public ApiVulkanSample
 {
   protected:
@@ -64,21 +53,21 @@ class hack_base : public ApiVulkanSample
 	void generate_rotations();
 	void update_rotation(float delta_time);
 
-	void draw();
+	void begin_command_buffer(VkCommandBuffer &commandBuffer, VkFramebuffer &frameBuffer);
+	void end_command_buffer(VkCommandBuffer &commandBuffer);
 
 	void prepare_view_uniform_buffer();
 	void update_view_uniform_buffer();
 
-	void build_command_buffers() override
-	{}
+	void build_command_buffers() override{/* no op - We are dynamically building the command buffers every frame. */};
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	// Replacement for `prepare` base interface
-	virtual void hack_prepare(){};
+	virtual void hack_prepare() {};
 	// Replacement for `render` base interface
-	virtual void hack_render(float delta_time){};
+	virtual void hack_render(VkCommandBuffer &commandBuffer) {};
 
   protected:
 	// The cube

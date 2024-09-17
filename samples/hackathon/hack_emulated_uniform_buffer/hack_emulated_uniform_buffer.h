@@ -19,19 +19,19 @@
 
 #include "hack_base.h"
 
-class hack_multiple_uniform_buffer : public hack_base
+class hack_emulated_uniform_buffer : public hack_base
 {
 protected:
-  struct UniformBuffers
+  struct EmulatedUniformBuffer
   {
-    std::unique_ptr<vkb::core::BufferC> single[OBJECT_INSTANCES];
-  } uniform_buffers;
+    std::unique_ptr<vkb::core::BufferC> buffer;
+  } emulated_uniform_buffer;
 
 public:
-  hack_multiple_uniform_buffer();
-  virtual ~hack_multiple_uniform_buffer();
+  hack_emulated_uniform_buffer();
+  virtual ~hack_emulated_uniform_buffer();
 
-  void draw(VkCommandBuffer &commandBuffer);
+  void draw(VkCommandBuffer& commandBuffer);
 
   void setup_descriptor_pool();
   void setup_descriptor_set_layout();
@@ -39,17 +39,23 @@ public:
 
   void prepare_pipelines();
 
-  void prepare_uniform_buffer();
-  void update_uniform_buffer();
+  void prepare_emulated_uniform_buffer();
+  void update_emulated_uniform_buffer();
 
   virtual void hack_prepare() override;
-  virtual void hack_render(VkCommandBuffer &commandBuffer) override;
+  virtual void hack_render(VkCommandBuffer& commandBuffer) override;
 
-private:
+protected:
+  VkDescriptorType emulated_type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+
   VkPipeline            pipeline;
   VkPipelineLayout      pipeline_layout;
   VkDescriptorSet       descriptor_set[OBJECT_INSTANCES];
+  VkBufferView buffer_views[OBJECT_INSTANCES];
   VkDescriptorSetLayout descriptor_set_layout;
+
+  // Emulated uniform buffer might require additional padding for alignment.
+  size_t dynamic_alignment = 0;
 };
 
-std::unique_ptr<vkb::VulkanSampleC> create_hack_multiple_uniform_buffer();
+std::unique_ptr<vkb::VulkanSampleC> create_hack_emulated_uniform_buffer();

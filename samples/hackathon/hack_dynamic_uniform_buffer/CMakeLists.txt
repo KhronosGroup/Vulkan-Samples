@@ -26,8 +26,5 @@ add_sample(
     NAME ${FOLDER_NAME}
     DESCRIPTION "Sample description"
     SHADER_FILES_GLSL
-        "dynamic_uniform_buffers/glsl/base.vert"
-        "dynamic_uniform_buffers/glsl/base.frag"
-    SHADER_FILES_HLSL
-        "dynamic_uniform_buffers/hlsl/base.vert.hlsl"
-        "dynamic_uniform_buffers/hlsl/base.frag.hlsl")
+        "hackathon/glsl/ubo.vert"
+        "hackathon/glsl/base.frag")

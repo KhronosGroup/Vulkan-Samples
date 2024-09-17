@@ -21,6 +21,7 @@
 
 hack_multiple_uniform_buffer::hack_multiple_uniform_buffer()
 {
+	set_shading_language(vkb::ShadingLanguage::GLSL);
 	title = "Hack: Multiple uniform buffers";
 }
 
@@ -37,57 +38,21 @@ hack_multiple_uniform_buffer::~hack_multiple_uniform_buffer()
 	}
 }
 
-void hack_multiple_uniform_buffer::build_command_buffers()
+void hack_multiple_uniform_buffer::draw(VkCommandBuffer &commandBuffer)
 {
-	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-	VkClearValue clear_values[2];
-	clear_values[0].color = default_clear_color;
-	clear_values[1].depthStencil = { 0.0f, 0 };
+	VkDeviceSize offsets[1] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertex_buffer->get(), offsets);
+	vkCmdBindIndexBuffer(commandBuffer, index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
-	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass = render_pass;
-	render_pass_begin_info.renderArea.offset.x = 0;
-	render_pass_begin_info.renderArea.offset.y = 0;
-	render_pass_begin_info.renderArea.extent.width = width;
-	render_pass_begin_info.renderArea.extent.height = height;
-	render_pass_begin_info.clearValueCount = 2;
-	render_pass_begin_info.pClearValues = clear_values;
-
-	for (int32_t i = 0; i < static_cast<int32_t>(draw_cmd_buffers.size()); ++i)
+	// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
+	for (size_t j = 0; j < OBJECT_INSTANCES; j++)
 	{
-		render_pass_begin_info.framebuffer = framebuffers[i];
+		// Bind the descriptor set for rendering a mesh using the dynamic offset
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set[j], 0, nullptr);
 
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
-
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-		VkDeviceSize offsets[1] = { 0 };
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
-
-		// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
-		for (size_t j = 0; j < OBJECT_INSTANCES; j++)
-		{
-			// Bind the descriptor set for rendering a mesh using the dynamic offset
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set[j], 0, nullptr);
-
-			vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
-		}
-
-		draw_ui(draw_cmd_buffers[i]);
-
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+		vkCmdDrawIndexed(commandBuffer, index_count, 1, 0, 0, 0);
 	}
 }
 
@@ -199,10 +164,10 @@ void hack_multiple_uniform_buffer::prepare_uniform_buffer()
 		                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
-	update_uniform_buffer(0.0f, true);
+	update_uniform_buffer();
 }
 
-void hack_multiple_uniform_buffer::update_uniform_buffer(float delta_time, bool force)
+void hack_multiple_uniform_buffer::update_uniform_buffer()
 {
 	for (size_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
@@ -222,12 +187,14 @@ void hack_multiple_uniform_buffer::hack_prepare()
 	build_command_buffers();
 }
 
-void hack_multiple_uniform_buffer::hack_render(float delta_time)
+void hack_multiple_uniform_buffer::hack_render(VkCommandBuffer &commandBuffer)
 {
 	if (!paused)
 	{
-		update_uniform_buffer(delta_time);
+		update_uniform_buffer();
 	}
+
+	draw(commandBuffer);
 }
 
 ///

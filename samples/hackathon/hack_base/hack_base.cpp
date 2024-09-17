@@ -243,40 +243,42 @@ void hack_base::update_rotation(float delta_time)
 	}
 }
 
-void hack_base::draw()
+void hack_base::begin_command_buffer(VkCommandBuffer &commandBuffer, VkFramebuffer &frameBuffer)
 {
-	ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::FullDrawCall);
+	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	{
-		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::PrepareFrame);
-		ApiVulkanSample::prepare_frame();
-	}
+	VkClearValue clear_values[2];
+	clear_values[0].color        = default_clear_color;
+	clear_values[1].depthStencil = {0.0f, 0};
 
-	{
-		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::QueueFillingOperations);
-		// Command buffer to be submitted to the queue
-		submit_info.commandBufferCount = 1;
-		submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	}
+	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+	render_pass_begin_info.renderPass               = render_pass;
+	render_pass_begin_info.renderArea.offset.x      = 0;
+	render_pass_begin_info.renderArea.offset.y      = 0;
+	render_pass_begin_info.renderArea.extent.width  = width;
+	render_pass_begin_info.renderArea.extent.height = height;
+	render_pass_begin_info.clearValueCount          = 2;
+	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = frameBuffer;
 
-	{
-		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::QueueVkQueueSubmitOperation);
-		// Submit to queue
-		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-	}
+	VK_CHECK(vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info));
 
-	{
-		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::SubmitFrame);
-		ApiVulkanSample::submit_frame();
-	}
+	vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    mFrameNumber++;
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    if (mFrameNumber >= sMaxNumberOfDataPoints && mTimeMeasurements.isEnabled())
-    {
-		mTimeMeasurements.disable();
-		mTimeMeasurements.writeToJsonFile();
-    }
+	VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+}
+
+void hack_base::end_command_buffer(VkCommandBuffer &commandBuffer)
+{
+	draw_ui(commandBuffer);
+
+	vkCmdEndRenderPass(commandBuffer);
+
+	VK_CHECK(vkEndCommandBuffer(commandBuffer));
 }
 
 void hack_base::prepare_view_uniform_buffer()
@@ -318,7 +320,7 @@ bool hack_base::prepare(const vkb::ApplicationOptions &options)
 	prepare_view_uniform_buffer();
 
     {
-		ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::HackPrepareFunction);
+		ScopedTiming _(mTimeMeasurements, MeasurementPoints::HackPrepareFunction);
 	    hack_prepare();
     }
 
@@ -328,22 +330,71 @@ bool hack_base::prepare(const vkb::ApplicationOptions &options)
 
 void hack_base::render(float delta_time)
 {
+	ScopedTiming _(mTimeMeasurements, MeasurementPoints::FullDrawCall);
+
+	// Early out if init failed.
 	if (!prepared)
 	{
 		return;
 	}
-	draw();
+
+	// Frame tick
 	if (!paused)
 	{
 		update_rotation(delta_time);
-		{
-			ScopedTiming _(mTimeMeasurements, (int) MeasurementPoints::HackRenderFunction);
-			hack_render(delta_time);
-		}
 	}
+
+	// Sample prepare thingy
+	{
+		ScopedTiming _(mTimeMeasurements, MeasurementPoints::PrepareFrame);
+		ApiVulkanSample::prepare_frame();
+	}
+
+	// Reset and begin our draw command buffer.
+	VkCommandBuffer &currentCommandBuffer = draw_cmd_buffers[current_buffer];
+	VkFramebuffer &currentFrameBuffer = framebuffers[current_buffer];
+	vkResetCommandBuffer(currentCommandBuffer, 0);
+	begin_command_buffer(currentCommandBuffer, currentFrameBuffer);
+
+	// Render our sample
+	{
+		ScopedTiming _(mTimeMeasurements, MeasurementPoints::HackRenderFunction);
+		hack_render(currentCommandBuffer);
+	}
+
+	// Update camera
 	if (camera.updated)
 	{
 		update_view_uniform_buffer();
+	}
+
+	// End the draw command buffer
+	end_command_buffer(currentCommandBuffer);
+
+	// Command buffer to be submitted to the queue
+	{
+		ScopedTiming _(mTimeMeasurements, MeasurementPoints::QueueFillingOperations);
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers    = &currentCommandBuffer;
+	}
+
+	// Submit to queue
+	{
+		ScopedTiming _(mTimeMeasurements, MeasurementPoints::QueueVkQueueSubmitOperation);
+		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	}
+
+	{
+		ScopedTiming _(mTimeMeasurements, MeasurementPoints::SubmitFrame);
+		ApiVulkanSample::submit_frame();
+	}
+
+	mFrameNumber++;
+
+	if (mFrameNumber >= sMaxNumberOfDataPoints && mTimeMeasurements.isEnabled())
+	{
+		mTimeMeasurements.disable();
+		mTimeMeasurements.writeToJsonFile();
 	}
 }
 

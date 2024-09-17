@@ -1,5 +1,4 @@
 #include "TimeMeasurements.h"
-#include "utils.h"
 
 #include "json.hpp"
 
@@ -13,7 +12,7 @@ void TimeMeasurements::writeToJsonFile()
 		iter->second->calculateSummarizations();
 
 		nlohmann::json timingsOfTypeJsonObj;
-		timingsOfTypeJsonObj["Name"] = Utils::MeasurementPointsToString(iter->first);
+		timingsOfTypeJsonObj["Name"]            = MeasurementPointsUtils::MeasurementPointsToString(iter->first);
 		timingsOfTypeJsonObj["DataPointsCount"] = iter->second->mDataPoints.size();
 
 		nlohmann::json dataPointsJsonArray = nlohmann::json::array();

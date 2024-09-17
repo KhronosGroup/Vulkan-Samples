@@ -12,7 +12,7 @@ enum class MeasurementPoints : uint16_t
 	HackPrepareFunction
 };
 
-struct Utils
+struct MeasurementPointsUtils
 {
     static std::string MeasurementPointsToString(MeasurementPoints measurementPoint)
     {

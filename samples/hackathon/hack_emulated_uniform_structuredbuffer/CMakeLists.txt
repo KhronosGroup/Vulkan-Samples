@@ -23,10 +23,8 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "<<Contributor>>"
-    NAME "hack_base"
+    NAME "hack_emulated_uniform_structuredbuffer"
     DESCRIPTION "Sample description"
-    SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
-
-target_sources(${FOLDER_NAME} PRIVATE json.hpp TimeMeasurements.cpp TimeMeasurements.h utils.h)
+    SHADER_FILES_HLSL
+        "hackathon/hlsl/emulated_uniform.structuredbuffer.vert.hlsl"
+        "hackathon/hlsl/emulated_uniform.frag.hlsl")

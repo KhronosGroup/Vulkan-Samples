@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils.h"
+
 #include <algorithm>
 #include <chrono>
 #include <iterator>
@@ -28,10 +30,10 @@ struct TimingsOfType
 	SummarizedTimings      mSummary;
 
 	TimingsOfType(uint32_t maxNumberOfDataPoints) :
-        mSummary(SummarizedTimings())
+	    mSummary(SummarizedTimings())
 	{
 		mDataPoints.reserve(maxNumberOfDataPoints);
-    }
+	}
 
 	void calculateSummarizations()
 	{
@@ -71,7 +73,7 @@ class TimeMeasurements
 	    mMaxNumberOfDataPoints(maxNumberOfDataPoints)
 	{}
 
-	void addTime(uint16_t label, long long value)
+	void addTime(MeasurementPoints label, long long value)
 	{
 		if (!mEnabled)
 			return;
@@ -95,22 +97,22 @@ class TimeMeasurements
 	{
 		mEnabled = false;
 	}
-    bool isEnabled() const
-    {
+	bool isEnabled() const
+	{
 		return mEnabled;
-    }
+	}
 
   private:
-	bool                                               mEnabled = true;
-	std::mutex                                         mTimesLock;
-	std::map<uint16_t, std::unique_ptr<TimingsOfType>> mTimes;
-	size_t                                             mMaxNumberOfDataPoints;
+	bool                                                        mEnabled = true;
+	std::mutex                                                  mTimesLock;
+	std::map<MeasurementPoints, std::unique_ptr<TimingsOfType>> mTimes;
+	size_t                                                      mMaxNumberOfDataPoints;
 };
 
 class ScopedTiming
 {
   public:
-	ScopedTiming(TimeMeasurements &sw, uint16_t label) :
+	ScopedTiming(TimeMeasurements &sw, MeasurementPoints label) :
 	    mSw(sw), mLabel(label), mStartTime(std::chrono::high_resolution_clock::now()){};
 
 	~ScopedTiming()
@@ -121,6 +123,6 @@ class ScopedTiming
 
   private:
 	TimeMeasurements                     &mSw;
-	uint16_t                              mLabel;
+	MeasurementPoints                     mLabel;
 	std::chrono::steady_clock::time_point mStartTime;
 };
