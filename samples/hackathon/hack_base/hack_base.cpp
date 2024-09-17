@@ -309,7 +309,10 @@ bool hack_base::prepare(const vkb::ApplicationOptions &options)
 	generate_rotations();
 	prepare_view_uniform_buffer();
 
-	hack_prepare();
+    {
+		ScopedTiming _(stopwatch, MeasurementPoints::HackPrepareFunction);
+	    hack_prepare();
+    }
 
 	prepared = true;
 	return true;

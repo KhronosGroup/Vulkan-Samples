@@ -29,7 +29,8 @@ enum class MeasurementPoints : uint16_t
 	QueueFillingOperations,
 	QueueVkQueueSubmitOperation,
 	SubmitFrame,
-	HackRenderFunction
+	HackRenderFunction,
+	HackPrepareFunction
 };
 
 class hack_base : public ApiVulkanSample
