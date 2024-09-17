@@ -46,20 +46,10 @@ public:
   virtual void hack_render(float delta_time) override;
 
 private:
-  // One big uniform buffer that contains all matrices
-  // Note that we need to manually allocate the data to cope for GPU-specific uniform buffer offset alignments
-  struct UboDataDynamic
-  {
-    glm::mat4* model = nullptr;
-  } ubo_data_dynamic;
-
   VkPipeline            pipeline;
   VkPipelineLayout      pipeline_layout;
   VkDescriptorSet       descriptor_set;
   VkDescriptorSetLayout descriptor_set_layout;
-
-  // Dynamic uniform buffer might require additional padding for alignment.
-  size_t dynamic_alignment = 0;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_hack_dynamic_uniform_buffer();

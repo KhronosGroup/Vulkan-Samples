@@ -28,11 +28,6 @@ hack_dynamic_uniform_buffer::~hack_dynamic_uniform_buffer()
 {
 	if (has_device())
 	{
-		if (ubo_data_dynamic.model)
-		{
-			aligned_free(ubo_data_dynamic.model);
-		}
-
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
@@ -83,7 +78,7 @@ void hack_dynamic_uniform_buffer::build_command_buffers()
 		for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
 		{
 			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
-			uint32_t dynamic_offset = j * static_cast<uint32_t>(dynamic_alignment);
+			uint32_t dynamic_offset = j * static_cast<uint32_t>(alignment);
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 1, &dynamic_offset);
 
@@ -152,7 +147,7 @@ void hack_dynamic_uniform_buffer::setup_descriptor_set()
 	VkDescriptorBufferInfo view_buffer_descriptor = create_descriptor(*view_uniform_buffer.view);
 
 	// Pass the  actual dynamic alignment as the descriptor's size
-	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, dynamic_alignment);
+	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, alignment);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 		// Binding 0 : Projection/View matrix uniform buffer
@@ -203,16 +198,14 @@ void hack_dynamic_uniform_buffer::prepare_dynamic_uniform_buffer()
 
 	// Calculate required alignment based on minimum device offset alignment
 	size_t min_ubo_alignment = static_cast<size_t>(get_device().get_gpu().get_properties().limits.minUniformBufferOffsetAlignment);
-	dynamic_alignment = sizeof(glm::mat4);
+	size_t dynamic_alignment = sizeof(glm::mat4);
 	if (min_ubo_alignment > 0)
 	{
 		dynamic_alignment = (dynamic_alignment + min_ubo_alignment - 1) & ~(min_ubo_alignment - 1);
 	}
 
-	size_t buffer_size = OBJECT_INSTANCES * dynamic_alignment;
-
-	ubo_data_dynamic.model = static_cast<glm::mat4*>(aligned_alloc(buffer_size, dynamic_alignment));
-	assert(ubo_data_dynamic.model);
+	size_t buffer_size;
+	prepare_aligned_cubes(dynamic_alignment, &buffer_size);
 
 	std::cout << "minUniformBufferOffsetAlignment = " << min_ubo_alignment << std::endl;
 	std::cout << "dynamicAlignment = " << dynamic_alignment << std::endl;
@@ -229,14 +222,7 @@ void hack_dynamic_uniform_buffer::prepare_dynamic_uniform_buffer()
 
 void hack_dynamic_uniform_buffer::update_dynamic_uniform_buffer(float delta_time, bool force)
 {
-	for (uint32_t index = 0; index < OBJECT_INSTANCES; index++)
-	{
-		// Aligned offset
-		auto model_mat = (glm::mat4*)(((uint64_t)ubo_data_dynamic.model + (index * dynamic_alignment)));
-		*model_mat = cubes[index];
-	}
-
-	uniform_buffers.dynamic->update(ubo_data_dynamic.model, static_cast<size_t>(uniform_buffers.dynamic->get_size()));
+	uniform_buffers.dynamic->update(aligned_cubes, static_cast<size_t>(uniform_buffers.dynamic->get_size()));
 	// Flush to make changes visible to the device
 	uniform_buffers.dynamic->flush();
 }
