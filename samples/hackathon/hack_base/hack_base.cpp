@@ -330,7 +330,7 @@ bool hack_base::prepare(const vkb::ApplicationOptions &options)
 
 void hack_base::render(float delta_time)
 {
-	ScopedTiming _(stopwatch, (int) MeasurementPoints::FullDrawCall);
+	ScopedTiming _(stopwatch, MeasurementPoints::FullDrawCall);
 
 	// Early out if init failed.
 	if (!prepared)
@@ -346,7 +346,7 @@ void hack_base::render(float delta_time)
 
 	// Sample prepare thingy
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::PrepareFrame);
+		ScopedTiming _(stopwatch, MeasurementPoints::PrepareFrame);
 		ApiVulkanSample::prepare_frame();
 	}
 
@@ -358,7 +358,7 @@ void hack_base::render(float delta_time)
 
 	// Render our sample
 	{
-		ScopedTiming     _(stopwatch, (int) MeasurementPoints::HackRenderFunction);
+		ScopedTiming     _(stopwatch, MeasurementPoints::HackRenderFunction);
 		hack_render(currentCommandBuffer);
 	}
 
@@ -373,19 +373,19 @@ void hack_base::render(float delta_time)
 
 	// Command buffer to be submitted to the queue
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::QueueFillingOperations);
+		ScopedTiming _(stopwatch, MeasurementPoints::QueueFillingOperations);
 		submit_info.commandBufferCount = 1;
 		submit_info.pCommandBuffers    = &currentCommandBuffer;
 	}
 
 	// Submit to queue
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::QueueVkQueueSubmitOperation);
+		ScopedTiming _(stopwatch, MeasurementPoints::QueueVkQueueSubmitOperation);
 		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	}
 
 	{
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::SubmitFrame);
+		ScopedTiming _(stopwatch, MeasurementPoints::SubmitFrame);
 		ApiVulkanSample::submit_frame();
 	}
 }

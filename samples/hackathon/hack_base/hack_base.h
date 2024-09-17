@@ -22,17 +22,6 @@
 
 #define OBJECT_INSTANCES 125
 
-enum class MeasurementPoints : uint16_t
-{
-	FullDrawCall = 0,
-	PrepareFrame,
-	QueueFillingOperations,
-	QueueVkQueueSubmitOperation,
-	SubmitFrame,
-	HackRenderFunction,
-	HackPrepareFunction
-};
-
 class hack_base : public ApiVulkanSample
 {
   protected:

@@ -9,6 +9,17 @@
 #include <string>
 #include <vector>
 
+enum class MeasurementPoints : uint16_t
+{
+	FullDrawCall = 0,
+	PrepareFrame,
+	QueueFillingOperations,
+	QueueVkQueueSubmitOperation,
+	SubmitFrame,
+	HackRenderFunction,
+	HackPrepareFunction
+};
+
 struct SummarizedTimings
 {
 	long long mMin;
@@ -57,7 +68,7 @@ struct TimingsOfType
 class TimeMeasurements
 {
   public:
-	void addTime(uint16_t label, long long value)
+	void addTime(MeasurementPoints label, long long value)
 	{
 		if (mTimes.count(label) == 0)
 		{
@@ -76,13 +87,13 @@ class TimeMeasurements
 
   private:
 	std::mutex                                         mTimesLock;
-	std::map<uint16_t, std::unique_ptr<TimingsOfType>> mTimes;
+	std::map<MeasurementPoints, std::unique_ptr<TimingsOfType>> mTimes;
 };
 
 class ScopedTiming
 {
   public:
-	ScopedTiming(TimeMeasurements &sw, uint16_t label) :
+	ScopedTiming(TimeMeasurements &sw, MeasurementPoints label) :
 	    mSw(sw), mLabel(label), mStartTime(std::chrono::high_resolution_clock::now()){};
 
 	~ScopedTiming()
@@ -93,6 +104,6 @@ class ScopedTiming
 
   private:
 	TimeMeasurements                     &mSw;
-	uint16_t                              mLabel;
+	MeasurementPoints                     mLabel;
 	std::chrono::steady_clock::time_point mStartTime;
 };
