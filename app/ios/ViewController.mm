@@ -46,6 +46,8 @@ int platform_main(const vkb::PlatformContext &);
         argv[i] = s.UTF8String;
     }
 
+	self.vulkan_view.contentScaleFactor = UIScreen.mainScreen.nativeScale;
+
     context = create_platform_context((int)args.count, const_cast<char**>(argv));
     _context = (vkb::IosPlatformContext*)context.get();
     _context->view = self.vulkan_view;
