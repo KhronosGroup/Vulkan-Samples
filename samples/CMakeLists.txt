@@ -18,9 +18,11 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Creates a list of the subdirectories within this folder
-scan_dirs(
-        DIR ${CMAKE_CURRENT_SOURCE_DIR}
-        LIST SUB_DIRS)
+# scan_dirs(
+#         DIR ${CMAKE_CURRENT_SOURCE_DIR}
+#         LIST SUB_DIRS)
+
+list(APPEND SUB_DIRS "hackathon")
 
 # List of all samples
 set(TOTAL_SAMPLE_ID_LIST)
@@ -130,15 +132,15 @@ set(ORDER_LIST
 	"hpp_terrain_tessellation"
 	"hpp_texture_loading"
 	"hpp_texture_mipmap_generation"
-	
+
 	#HPP Extension Samples
 	"hpp_mesh_shading"
-	
+
     #HPP Performance Samples
     "hpp_pipeline_cache"
     "hpp_swapchain_images"
 	"hpp_texture_compression_comparison"
-    
+
     #General Samples
     "mobile_nerf")
 
