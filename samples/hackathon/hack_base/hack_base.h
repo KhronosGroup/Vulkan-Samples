@@ -17,87 +17,103 @@
 
 #pragma once
 
+#include "TimeMeasurements.h"
 #include "api_vulkan_sample.h"
 
 #define OBJECT_INSTANCES 125
 
+enum class MeasurementPoints : uint16_t
+{
+	FullDrawCall = 0,
+	PrepareFrame,
+	QueueFillingOperations,
+	QueueVkQueueSubmitOperation,
+	SubmitFrame,
+	HackRenderFunction,
+	HackPrepareFunction
+};
+
 class hack_base : public ApiVulkanSample
 {
-protected:
-  void* aligned_alloc(size_t size, size_t alignment);
-  void  aligned_free(void* data);
+  protected:
+	void *aligned_alloc(size_t size, size_t alignment);
+	void  aligned_free(void *data);
 
-  struct Vertex
-  {
-    float pos[3];
-    float color[3];
-  };
+	struct Vertex
+	{
+		float pos[3];
+		float color[3];
+	};
 
-  struct UboVS
-  {
-    glm::mat4 projection;
-    glm::mat4 view;
-  } ubo_vs;
+	struct UboVS
+	{
+		glm::mat4 projection;
+		glm::mat4 view;
+	} ubo_vs;
 
-  struct ViewUniformBuffer
-  {
-    std::unique_ptr<vkb::core::BufferC> view;
-  } view_uniform_buffer;
+	struct ViewUniformBuffer
+	{
+		std::unique_ptr<vkb::core::BufferC> view;
+	} view_uniform_buffer;
 
-public:
-  hack_base();
-  virtual ~hack_base();
+  public:
+	hack_base();
+	virtual ~hack_base();
 
-  void generate_cube();
-  void generate_rotations();
-  void update_rotation(float delta_time);
+	void generate_cube();
+	void generate_rotations();
+	void update_rotation(float delta_time);
 
-  void draw();
+	void draw();
 
-  void prepare_view_uniform_buffer();
-  void update_view_uniform_buffer();
+	void prepare_view_uniform_buffer();
+	void update_view_uniform_buffer();
 
-  void build_command_buffers() override {}
-  virtual bool prepare(const vkb::ApplicationOptions& options) override;
-  virtual void render(float delta_time) override;
-  virtual bool resize(const uint32_t width, const uint32_t height) override;
+	void build_command_buffers() override
+	{}
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
+	virtual void render(float delta_time) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-  // Replacement for `prepare` base interface
-  virtual void hack_prepare() {};
-  // Replacement for `render` base interface
-  virtual void hack_render(float delta_time) {};
+	// Replacement for `prepare` base interface
+	virtual void hack_prepare(){};
+	// Replacement for `render` base interface
+	virtual void hack_render(float delta_time){};
 
-protected:
-  // The cube
-  std::unique_ptr<vkb::core::BufferC> vertex_buffer;
-  std::unique_ptr<vkb::core::BufferC> index_buffer;
-  uint32_t                            index_count = 0;
+  protected:
+	// The cube
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	uint32_t                            index_count = 0;
 
-  // Store random per-object rotations for the cubes
-  glm::vec3 rotations[OBJECT_INSTANCES];
-  glm::vec3 rotation_speeds[OBJECT_INSTANCES];
-  float animation_timer = 0.0f;
+	// Store random per-object rotations for the cubes
+	glm::vec3 rotations[OBJECT_INSTANCES];
+	glm::vec3 rotation_speeds[OBJECT_INSTANCES];
+	float     animation_timer = 0.0f;
 
-  // Alignment setup calls for the test cases
-  size_t alignment;
-  void *aligned_cubes = nullptr;
+	// Alignment setup calls for the test cases
+	size_t alignment;
+	void  *aligned_cubes = nullptr;
 
-  void prepare_aligned_cubes(size_t alignment = sizeof(glm::mat4), size_t* out_buffer_size = nullptr);
-  glm::mat4 *get_aligned_cube(size_t index);
+	void       prepare_aligned_cubes(size_t alignment = sizeof(glm::mat4), size_t *out_buffer_size = nullptr);
+	glm::mat4 *get_aligned_cube(size_t index);
 
-  // Pipeline defaults
-  VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
-  VkPipelineRasterizationStateCreateInfo rasterization_state;
-  VkPipelineColorBlendAttachmentState blend_attachment_state;
-  VkPipelineColorBlendStateCreateInfo color_blend_state;
-  VkPipelineDepthStencilStateCreateInfo depth_stencil_state;
-  VkPipelineViewportStateCreateInfo viewport_state;
-  VkPipelineMultisampleStateCreateInfo multisample_state;
-  std::vector<VkDynamicState> dynamic_state_enables;
-  VkPipelineDynamicStateCreateInfo dynamic_state;
-  std::vector<VkVertexInputBindingDescription> vertex_input_bindings;
-  std::vector<VkVertexInputAttributeDescription> vertex_input_attributes;
-  VkPipelineVertexInputStateCreateInfo vertex_input_state;
+	// Pipeline defaults
+	VkPipelineInputAssemblyStateCreateInfo         input_assembly_state;
+	VkPipelineRasterizationStateCreateInfo         rasterization_state;
+	VkPipelineColorBlendAttachmentState            blend_attachment_state;
+	VkPipelineColorBlendStateCreateInfo            color_blend_state;
+	VkPipelineDepthStencilStateCreateInfo          depth_stencil_state;
+	VkPipelineViewportStateCreateInfo              viewport_state;
+	VkPipelineMultisampleStateCreateInfo           multisample_state;
+	std::vector<VkDynamicState>                    dynamic_state_enables;
+	VkPipelineDynamicStateCreateInfo               dynamic_state;
+	std::vector<VkVertexInputBindingDescription>   vertex_input_bindings;
+	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes;
+	VkPipelineVertexInputStateCreateInfo           vertex_input_state;
+
+	// Timing utilities
+	TimeMeasurements stopwatch;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_hack_base();
