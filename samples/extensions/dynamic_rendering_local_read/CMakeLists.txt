@@ -23,15 +23,12 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
-    NAME "Ray tracing position fetch"
-    DESCRIPTION "Uses the VK_KHR_ray_tracing_position_fetch to fetch vertex positions from an acceleration structure"
+    NAME "Dynamic Rendering local reads"
+    DESCRIPTION "Demonstrates the dynamic rendering local read extension to use input attachments with dynamic rendering"
     SHADER_FILES_GLSL
-        "ray_tracing_position_fetch/glsl/closesthit.rchit"
-        "ray_tracing_position_fetch/glsl/miss.rmiss"
-        "ray_tracing_position_fetch/glsl/raygen.rgen"
-    SHADER_FILES_HLSL
-        "ray_tracing_position_fetch/hlsl/closesthit.rchit.hlsl"
-        "ray_tracing_position_fetch/hlsl/miss.rmiss.hlsl"
-        "ray_tracing_position_fetch/hlsl/raygen.rgen.hlsl"
-        DXC_ADDITIONAL_ARGUMENTS
-        "-fspv-extension=SPV_KHR_ray_query -fspv-extension=SPV_KHR_ray_tracing")
+        "dynamic_rendering_local_read/composition.frag"
+        "dynamic_rendering_local_read/composition.vert"
+        "dynamic_rendering_local_read/scene_opaque.vert"
+        "dynamic_rendering_local_read/scene_opaque.frag"
+        "dynamic_rendering_local_read/scene_transparent.vert"
+        "dynamic_rendering_local_read/scene_transparent.frag")
