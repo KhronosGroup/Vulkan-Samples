@@ -87,7 +87,11 @@ void HPPApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
-	render(delta_time);
+	if (has_render_context())
+	{
+		render(delta_time);
+	}
+
 	camera.update(delta_time);
 	if (camera.moving())
 	{
