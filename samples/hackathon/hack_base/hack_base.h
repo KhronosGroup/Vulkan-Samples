@@ -102,7 +102,13 @@ class hack_base : public ApiVulkanSample
 	VkPipelineVertexInputStateCreateInfo           vertex_input_state;
 
 	// Timing utilities
-	TimeMeasurements stopwatch;
+
+    // This will do two things
+    // Measurements will stop after sMaxNumberOfDataPoints of frames measured
+    // Initialize all the arrays in the background with sMaxNumberOfDataPoints empty slots. It still uses vector::push_back(), so even if some measurements are done twice per frame it will not die, but will do an alloc inbetween, which will be slow, so try to avoid measuring twice
+	const size_t     sMaxNumberOfDataPoints = 10000;
+	TimeMeasurements mTimeMeasurements = TimeMeasurements(sMaxNumberOfDataPoints);
+	uint16_t         mFrameNumber = 0;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_hack_base();

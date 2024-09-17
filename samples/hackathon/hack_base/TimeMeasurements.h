@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils.h"
+
 #include <algorithm>
 #include <chrono>
 #include <iterator>
@@ -8,17 +10,6 @@
 #include <numeric>
 #include <string>
 #include <vector>
-
-enum class MeasurementPoints : uint16_t
-{
-	FullDrawCall = 0,
-	PrepareFrame,
-	QueueFillingOperations,
-	QueueVkQueueSubmitOperation,
-	SubmitFrame,
-	HackRenderFunction,
-	HackPrepareFunction
-};
 
 struct SummarizedTimings
 {
@@ -36,11 +27,13 @@ struct TimingsOfType
 {
 	std::mutex             mDataPointsLock;
 	std::vector<long long> mDataPoints;
-	SummarizedTimings      mSummarize;
+	SummarizedTimings      mSummary;
 
-	TimingsOfType() :
-	    mSummarize(SummarizedTimings())
-	{}
+	TimingsOfType(uint32_t maxNumberOfDataPoints) :
+	    mSummary(SummarizedTimings())
+	{
+		mDataPoints.reserve(maxNumberOfDataPoints);
+	}
 
 	void calculateSummarizations()
 	{
@@ -52,15 +45,23 @@ struct TimingsOfType
 
 		std::sort(copy.begin(), copy.end());
 
-		if (copy.size() > 1)
+		if (copy.size() >= 1)
 		{
-			mSummarize.mMin     = copy[0];
-			mSummarize.mAverage = std::accumulate(copy.begin(), copy.end(), 0ll) / copy.size();
-			mSummarize.mMean    = copy[copy.size() / 2];
-			mSummarize.mP90     = copy[copy.size() * 0.9];
-			mSummarize.mP95     = copy[copy.size() * 0.95];
-			mSummarize.mP99     = copy[copy.size() * 0.99];
-			mSummarize.mMax     = copy[copy.size() - 1];
+			mSummary.mMin     = copy[0];
+			mSummary.mAverage = std::accumulate(copy.begin(), copy.end(), 0ll) / copy.size();
+			mSummary.mMean    = copy[copy.size() / 2];
+
+			long long varianceTemp = 0;
+			for (auto iter = copy.begin(); iter != copy.end(); iter++)
+			{
+				varianceTemp += ((*iter - mSummary.mMean) * (*iter - mSummary.mMean));
+			}
+			mSummary.mVariance = varianceTemp * (1 / copy.size());
+
+			mSummary.mP90 = copy[copy.size() * 0.9];
+			mSummary.mP95 = copy[copy.size() * 0.95];
+			mSummary.mP99 = copy[copy.size() * 0.99];
+			mSummary.mMax = copy[copy.size() - 1];
 		}
 	}
 };
@@ -68,14 +69,21 @@ struct TimingsOfType
 class TimeMeasurements
 {
   public:
+	TimeMeasurements(size_t maxNumberOfDataPoints) :
+	    mMaxNumberOfDataPoints(maxNumberOfDataPoints)
+	{}
+
 	void addTime(MeasurementPoints label, long long value)
 	{
+		if (!mEnabled)
+			return;
+
 		if (mTimes.count(label) == 0)
 		{
 			mTimesLock.lock();
 			if (mTimes.count(label) == 0)
 			{
-				mTimes.try_emplace(label, std::unique_ptr<TimingsOfType>(new TimingsOfType()));
+				mTimes.try_emplace(label, std::unique_ptr<TimingsOfType>(new TimingsOfType(mMaxNumberOfDataPoints)));
 			}
 			mTimesLock.unlock();
 		}
@@ -84,10 +92,21 @@ class TimeMeasurements
 		mTimes[label]->mDataPoints.push_back(value);
 		mTimes[label]->mDataPointsLock.unlock();
 	}
+	void writeToJsonFile();
+	void disable()
+	{
+		mEnabled = false;
+	}
+	bool isEnabled() const
+	{
+		return mEnabled;
+	}
 
   private:
-	std::mutex                                         mTimesLock;
+	bool                                                        mEnabled = true;
+	std::mutex                                                  mTimesLock;
 	std::map<MeasurementPoints, std::unique_ptr<TimingsOfType>> mTimes;
+	size_t                                                      mMaxNumberOfDataPoints;
 };
 
 class ScopedTiming
