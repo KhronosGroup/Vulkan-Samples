@@ -320,7 +320,7 @@ bool hack_base::prepare(const vkb::ApplicationOptions &options)
 	prepare_view_uniform_buffer();
 
     {
-		ScopedTiming _(stopwatch, (int) MeasurementPoints::HackPrepareFunction);
+		ScopedTiming _(stopwatch, MeasurementPoints::HackPrepareFunction);
 	    hack_prepare();
     }
 
