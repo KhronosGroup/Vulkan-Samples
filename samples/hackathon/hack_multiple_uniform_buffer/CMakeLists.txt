@@ -23,7 +23,7 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "<<Contributor>>"
-    NAME "hack_dynamic_uniform_buffer"
+    NAME ${FOLDER_NAME}
     DESCRIPTION "Sample description"
     SHADER_FILES_GLSL
         "dynamic_uniform_buffers/glsl/base.vert"
