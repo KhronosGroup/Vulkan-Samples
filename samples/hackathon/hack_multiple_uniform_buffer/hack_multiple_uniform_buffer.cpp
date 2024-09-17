@@ -21,6 +21,7 @@
 
 hack_multiple_uniform_buffer::hack_multiple_uniform_buffer()
 {
+	set_shading_language(vkb::ShadingLanguage::GLSL);
 	title = "Hack: Multiple uniform buffers";
 }
 

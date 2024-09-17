@@ -21,6 +21,9 @@
 
 hack_dynamic_uniform_buffer::hack_dynamic_uniform_buffer()
 {
+	// Force HLSL to not have to implement all shaders twice.
+	set_shading_language(vkb::ShadingLanguage::GLSL);
+
 	title = "Hack: Dynamic uniform buffers";
 }
 
@@ -63,8 +66,8 @@ void hack_dynamic_uniform_buffer::setup_descriptor_pool()
 	std::vector<VkDescriptorPoolSize> pool_sizes =
 	{
 			vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-			vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
-			vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1) };
+			vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1)
+	};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 		vkb::initializers::descriptor_pool_create_info(
@@ -80,8 +83,8 @@ void hack_dynamic_uniform_buffer::setup_descriptor_set_layout()
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
 	{
 			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
-			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2) };
+			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1)
+	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
 		vkb::initializers::descriptor_set_layout_create_info(

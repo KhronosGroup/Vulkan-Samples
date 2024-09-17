@@ -21,6 +21,7 @@
 
 hack_push_constant::hack_push_constant()
 {
+	set_shading_language(vkb::ShadingLanguage::GLSL);
 	title = "Hack: Constant push";
 }
 

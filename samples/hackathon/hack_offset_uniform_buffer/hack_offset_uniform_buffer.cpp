@@ -21,6 +21,7 @@
 
 hack_offset_uniform_buffer::hack_offset_uniform_buffer()
 {
+	set_shading_language(vkb::ShadingLanguage::GLSL);
 	title = "Hack: Offset uniform buffers";
 }
 
