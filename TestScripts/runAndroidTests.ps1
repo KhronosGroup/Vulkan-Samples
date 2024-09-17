@@ -31,7 +31,7 @@ function PullTestData()
     if (-not (Test-Path "$PSScriptRoot/TestResults")) { mkdir "$PSScriptRoot/TestResults" | Out-Null }
     if (-not (Test-Path "$PSScriptRoot/TestResults/$timestamp")) { mkdir "$PSScriptRoot/TestResults/$timestamp" | Out-Null }
 
-    & $PathToAdb shell "run-as com.khronos.vulkan_samples cat /data/data/com.khronos.vulkan_samples/files/data.log" > "$PSScriptRoot/TestResults/$timestamp/data.log"
+    & $PathToAdb shell "run-as com.khronos.vulkan_samples cat /data/data/com.khronos.vulkan_samples/files/data.json" > "$PSScriptRoot/TestResults/$timestamp/data.json"
 }
 
 try
