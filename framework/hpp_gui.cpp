@@ -407,7 +407,7 @@ bool HPPGui::update_buffers()
 	return updated;
 }
 
-void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
+BufferAllocationCpp HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
 {
 	ImDrawData                     *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
@@ -439,6 +439,8 @@ void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
 	index_allocation.update(index_data);
 
 	command_buffer.bind_index_buffer(index_allocation.get_buffer(), index_allocation.get_offset(), vk::IndexType::eUint16);
+
+	return vertex_allocation;
 }
 
 void HPPGui::resize(uint32_t width, uint32_t height) const
@@ -537,16 +539,22 @@ void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
 	// Push constants
 	command_buffer.push_constants(push_transform);
 
+	std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> vertex_buffers;
+	std::vector<vk::DeviceSize>                                     vertex_offsets;
+
 	// If a render context is used, then use the frames buffer pools to allocate GUI vertex/index data from
 	if (!explicit_update)
 	{
-		update_buffers(command_buffer);
+		// Save vertex buffer allocation in case we need to rebind with vertex_offset, e.g. for iOS Simulator
+		auto vertex_allocation = update_buffers(command_buffer);
+		vertex_buffers.push_back(vertex_allocation.get_buffer());
+		vertex_offsets.push_back(vertex_allocation.get_offset());
 	}
 	else
 	{
-		std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> buffers;
-		buffers.push_back(*vertex_buffer);
-		command_buffer.bind_vertex_buffers(0, buffers, {0});
+		vertex_buffers.push_back(*vertex_buffer);
+		vertex_offsets.push_back(0);
+		command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
 
 		command_buffer.bind_index_buffer(*index_buffer, 0, vk::IndexType::eUint16);
 	}
@@ -604,7 +612,13 @@ void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
 			command_buffer.draw_indexed(cmd->ElemCount, 1, index_offset, vertex_offset, 0);
 			index_offset += cmd->ElemCount;
 		}
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+		// iOS Simulator does not support vkCmdDrawIndexed() with vertex_offset > 0, so rebind vertex buffer instead
+		vertex_offsets.back() += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
+		command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
+#else
 		vertex_offset += cmd_list->VtxBuffer.Size;
+#endif
 	}
 }
 
@@ -630,8 +644,9 @@ void HPPGui::draw(vk::CommandBuffer command_buffer) const
 	glm::mat4 push_transform = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, -1.0f, 0.0f)), glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
 	command_buffer.pushConstants<glm::mat4>(pipeline_layout->get_handle(), vk::ShaderStageFlagBits::eVertex, 0, push_transform);
 
-	vk::DeviceSize offset = 0;
-	command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
+	vk::DeviceSize vertex_offsets[1]    = {0};
+	vk::Buffer     vertex_buffer_handle = vertex_buffer->get_handle();
+	command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
 
 	command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint16);
 
@@ -653,7 +668,13 @@ void HPPGui::draw(vk::CommandBuffer command_buffer) const
 			command_buffer.drawIndexed(cmd->ElemCount, 1, index_offset, vertex_offset, 0);
 			index_offset += cmd->ElemCount;
 		}
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+		// iOS Simulator does not support vkCmdDrawIndexed() with vertex_offset > 0, so rebind vertex buffer instead
+		vertex_offsets[0] += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
+		command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
+#else
 		vertex_offset += cmd_list->VtxBuffer.Size;
+#endif
 	}
 }
 

@@ -256,9 +256,10 @@ class Gui
 
 	/**
 	 * @brief Updates Vulkan buffers
-	 * @param frame Frame to render into
+	 * @param command_buffer Command buffer to draw into
+	 * @return Vertex buffer allocation
 	 */
-	void update_buffers(CommandBuffer &command_buffer, RenderFrame &render_frame);
+	BufferAllocationC update_buffers(CommandBuffer &command_buffer);
 
 	static const double press_time_ms;
 
