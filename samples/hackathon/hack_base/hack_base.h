@@ -87,8 +87,14 @@ protected:
   // Store random per-object rotations for the cubes
   glm::vec3 rotations[OBJECT_INSTANCES];
   glm::vec3 rotation_speeds[OBJECT_INSTANCES];
-  glm::mat4 cubes[OBJECT_INSTANCES];
   float animation_timer = 0.0f;
+
+  // Alignment setup calls for the test cases
+  size_t alignment;
+  void *aligned_cubes = nullptr;
+
+  void prepare_aligned_cubes(size_t alignment = sizeof(glm::mat4), size_t* out_buffer_size = nullptr);
+  glm::mat4 *get_aligned_cube(size_t index);
 
   // Pipeline defaults
   VkPipelineInputAssemblyStateCreateInfo input_assembly_state;

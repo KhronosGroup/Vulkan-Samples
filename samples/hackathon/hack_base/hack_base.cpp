@@ -113,6 +113,10 @@ hack_base::hack_base()
 
 hack_base::~hack_base()
 {
+	if (aligned_cubes)
+	{
+		aligned_free(aligned_cubes);
+	}
 }
 
 
@@ -223,7 +227,6 @@ void hack_base::update_rotation(float delta_time)
 				auto fz = static_cast<float>(z);
 				auto index = x * dim * dim + y * dim + z;
 
-
 				// Update rotations
 				rotations[index] += animation_timer * rotation_speeds[index];
 
@@ -232,7 +235,7 @@ void hack_base::update_rotation(float delta_time)
 					-((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
 					-((fdim * offset.z) / 2.0f) + offset.z / 2.0f + fz * offset.z);
 
-				glm::mat4* model_mat = &cubes[index];
+				glm::mat4 *model_mat = get_aligned_cube(index);
 				*model_mat = glm::translate(glm::mat4(1.0f), pos);
 				*model_mat = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
 				*model_mat = glm::rotate(*model_mat, rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -340,6 +343,31 @@ bool hack_base::resize(const uint32_t width, const uint32_t height)
 	ApiVulkanSample::resize(width, height);
 	update_view_uniform_buffer();
 	return true;
+}
+
+void hack_base::prepare_aligned_cubes(size_t alignment, size_t *out_buffer_size)
+{
+	// In case we change the alignment
+	if (aligned_cubes)
+	{
+		aligned_free(aligned_cubes);
+	}
+
+	this->alignment = alignment;
+	size_t buffer_size = OBJECT_INSTANCES * alignment;
+
+	aligned_cubes = static_cast<glm::mat4 *>(aligned_alloc(buffer_size, alignment));
+	assert(aligned_cubes);
+
+	if (out_buffer_size)
+	{
+		*out_buffer_size = buffer_size;
+	}
+}
+
+glm::mat4 *hack_base::get_aligned_cube(size_t index)
+{
+	return (glm::mat4 *) (((size_t) aligned_cubes + (index * alignment)));
 }
 
 ///

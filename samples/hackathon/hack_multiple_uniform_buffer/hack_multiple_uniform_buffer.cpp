@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-#include "hack_dynamic_uniform_buffer.h"
+#include "hack_multiple_uniform_buffer.h"
 
 #include "benchmark_mode/benchmark_mode.h"
 
-hack_dynamic_uniform_buffer::hack_dynamic_uniform_buffer()
+hack_multiple_uniform_buffer::hack_multiple_uniform_buffer()
 {
-	title = "Hack: Dynamic uniform buffers";
+	title = "Hack: Multiple uniform buffers";
 }
 
-hack_dynamic_uniform_buffer::~hack_dynamic_uniform_buffer()
+hack_multiple_uniform_buffer::~hack_multiple_uniform_buffer()
 {
 	if (has_device())
 	{
@@ -37,7 +37,7 @@ hack_dynamic_uniform_buffer::~hack_dynamic_uniform_buffer()
 	}
 }
 
-void hack_dynamic_uniform_buffer::build_command_buffers()
+void hack_multiple_uniform_buffer::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -75,12 +75,10 @@ void hack_dynamic_uniform_buffer::build_command_buffers()
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
 		// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
-		for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
+		for (size_t j = 0; j < OBJECT_INSTANCES; j++)
 		{
-			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
-			uint32_t dynamic_offset = j * static_cast<uint32_t>(alignment);
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 1, &dynamic_offset);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set[j], 0, nullptr);
 
 			vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
 		}
@@ -93,31 +91,28 @@ void hack_dynamic_uniform_buffer::build_command_buffers()
 	}
 }
 
-void hack_dynamic_uniform_buffer::setup_descriptor_pool()
+void hack_multiple_uniform_buffer::setup_descriptor_pool()
 {
 	// Example uses one ubo and one image sampler
 	std::vector<VkDescriptorPoolSize> pool_sizes =
 	{
-			vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-			vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
-			vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1) };
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 * OBJECT_INSTANCES)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 		vkb::initializers::descriptor_pool_create_info(
 			static_cast<uint32_t>(pool_sizes.size()),
 			pool_sizes.data(),
-			2);
+	        1 + OBJECT_INSTANCES);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void hack_dynamic_uniform_buffer::setup_descriptor_set_layout()
+void hack_multiple_uniform_buffer::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
 	{
 			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
-			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2) };
+	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
 		vkb::initializers::descriptor_set_layout_create_info(
@@ -134,41 +129,41 @@ void hack_dynamic_uniform_buffer::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
-void hack_dynamic_uniform_buffer::setup_descriptor_set()
+void hack_multiple_uniform_buffer::setup_descriptor_set()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
-		vkb::initializers::descriptor_set_allocate_info(
-			descriptor_pool,
-			&descriptor_set_layout,
-			1);
+	    vkb::initializers::descriptor_set_allocate_info(
+	        descriptor_pool,
+	        &descriptor_set_layout,
+	        1);
 
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
 	VkDescriptorBufferInfo view_buffer_descriptor = create_descriptor(*view_uniform_buffer.view);
 
-	// Pass the  actual dynamic alignment as the descriptor's size
-	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, alignment);
+	for (size_t i = 0; i < OBJECT_INSTANCES; i++)
+	{
+		VkDescriptorBufferInfo cube_buffer_descriptor = create_descriptor(*uniform_buffers.single[i], alignment);
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-		// Binding 0 : Projection/View matrix uniform buffer
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
-		// Binding 1 : Instance matrix as dynamic uniform buffer
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
-	};
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set[i]));
+		std::vector<VkWriteDescriptorSet> write_descriptor_sets  = {
+            // Binding 0 : Projection/View matrix uniform buffer
+		    vkb::initializers::write_descriptor_set(descriptor_set[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
+            // Binding 1 : Instance matrix as dynamic uniform buffer
+		    vkb::initializers::write_descriptor_set(descriptor_set[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &cube_buffer_descriptor),
+        };
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	}
+
 }
 
-void hack_dynamic_uniform_buffer::prepare_pipelines()
+void hack_multiple_uniform_buffer::prepare_pipelines()
 {
-
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
 	shader_stages[0] = load_shader("dynamic_uniform_buffers", "base.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_uniform_buffers", "base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 		vkb::initializers::pipeline_create_info(
@@ -191,45 +186,35 @@ void hack_dynamic_uniform_buffer::prepare_pipelines()
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
-void hack_dynamic_uniform_buffer::prepare_dynamic_uniform_buffer()
+void hack_multiple_uniform_buffer::prepare_uniform_buffer()
 {
-	// Allocate data for the dynamic uniform buffer object
-	// We allocate this manually as the alignment of the offset differs between GPUs
-
-	// Calculate required alignment based on minimum device offset alignment
-	size_t min_ubo_alignment = static_cast<size_t>(get_device().get_gpu().get_properties().limits.minUniformBufferOffsetAlignment);
-	size_t dynamic_alignment = sizeof(glm::mat4);
-	if (min_ubo_alignment > 0)
-	{
-		dynamic_alignment = (dynamic_alignment + min_ubo_alignment - 1) & ~(min_ubo_alignment - 1);
-	}
-
-	size_t buffer_size;
-	prepare_aligned_cubes(dynamic_alignment, &buffer_size);
-
-	std::cout << "minUniformBufferOffsetAlignment = " << min_ubo_alignment << std::endl;
-	std::cout << "dynamicAlignment = " << dynamic_alignment << std::endl;
+	prepare_aligned_cubes(sizeof(glm::mat4), nullptr);
 
 	// Vertex shader uniform buffer block
+	for (size_t i = 0; i < OBJECT_INSTANCES; i++)
+	{
+		uniform_buffers.single[i] = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                                 alignment,
+		                                                                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 
-	uniform_buffers.dynamic = std::make_unique<vkb::core::BufferC>(get_device(),
-		buffer_size,
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_dynamic_uniform_buffer(0.0f, true);
+	update_uniform_buffer(0.0f, true);
 }
 
-void hack_dynamic_uniform_buffer::update_dynamic_uniform_buffer(float delta_time, bool force)
+void hack_multiple_uniform_buffer::update_uniform_buffer(float delta_time, bool force)
 {
-	uniform_buffers.dynamic->update(aligned_cubes, static_cast<size_t>(uniform_buffers.dynamic->get_size()));
-	// Flush to make changes visible to the device
-	uniform_buffers.dynamic->flush();
+	for (size_t i = 0; i < OBJECT_INSTANCES; i++)
+	{
+		uniform_buffers.single[i]->update(get_aligned_cube(i), static_cast<size_t>(uniform_buffers.single[i]->get_size()));
+		// Flush to make changes visible to the device
+		uniform_buffers.single[i]->flush();
+	}
 }
 
-void hack_dynamic_uniform_buffer::hack_prepare()
+void hack_multiple_uniform_buffer::hack_prepare()
 {
-	prepare_dynamic_uniform_buffer();
+	prepare_uniform_buffer();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
 	setup_descriptor_pool();
@@ -237,16 +222,16 @@ void hack_dynamic_uniform_buffer::hack_prepare()
 	build_command_buffers();
 }
 
-void hack_dynamic_uniform_buffer::hack_render(float delta_time)
+void hack_multiple_uniform_buffer::hack_render(float delta_time)
 {
 	if (!paused)
 	{
-		update_dynamic_uniform_buffer(delta_time);
+		update_uniform_buffer(delta_time);
 	}
 }
 
-/// 
-std::unique_ptr<vkb::VulkanSampleC> create_hack_dynamic_uniform_buffer()
+///
+std::unique_ptr<vkb::VulkanSampleC> create_hack_multiple_uniform_buffer()
 {
-	return std::make_unique<hack_dynamic_uniform_buffer>();
+	return std::make_unique<hack_multiple_uniform_buffer>();
 }

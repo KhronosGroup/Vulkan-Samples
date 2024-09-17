@@ -19,17 +19,17 @@
 
 #include "hack_base.h"
 
-class hack_dynamic_uniform_buffer : public hack_base
+class hack_multiple_uniform_buffer : public hack_base
 {
 protected:
   struct UniformBuffers
   {
-    std::unique_ptr<vkb::core::BufferC> dynamic;
+    std::unique_ptr<vkb::core::BufferC> single[OBJECT_INSTANCES];
   } uniform_buffers;
 
 public:
-  hack_dynamic_uniform_buffer();
-  virtual ~hack_dynamic_uniform_buffer();
+  hack_multiple_uniform_buffer();
+  virtual ~hack_multiple_uniform_buffer();
 
   void build_command_buffers() override;
 
@@ -39,8 +39,8 @@ public:
 
   void prepare_pipelines();
 
-  void prepare_dynamic_uniform_buffer();
-  void update_dynamic_uniform_buffer(float delta_time, bool force = false);
+  void prepare_uniform_buffer();
+  void update_uniform_buffer(float delta_time, bool force = false);
 
   virtual void hack_prepare() override;
   virtual void hack_render(float delta_time) override;
@@ -48,8 +48,8 @@ public:
 private:
   VkPipeline            pipeline;
   VkPipelineLayout      pipeline_layout;
-  VkDescriptorSet       descriptor_set;
+  VkDescriptorSet       descriptor_set[OBJECT_INSTANCES];
   VkDescriptorSetLayout descriptor_set_layout;
 };
 
-std::unique_ptr<vkb::VulkanSampleC> create_hack_dynamic_uniform_buffer();
+std::unique_ptr<vkb::VulkanSampleC> create_hack_multiple_uniform_buffer();
