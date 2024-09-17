@@ -21,6 +21,8 @@
 
 hack_array_buffer::hack_array_buffer()
 {
+	set_shading_language(vkb::ShadingLanguage::GLSL);
+
 	title = "Hack: Array buffer";
 }
 
