@@ -58,16 +58,17 @@ int platform_main(const vkb::PlatformContext &);
 
 -(void) renderLoop {
     if(!_displayLink.isPaused && [UIApplication sharedApplication].applicationState == UIApplicationStateActive) {
-        _code = ((vkb::IosPlatform*)_context->userPlatform)->main_loop_frame();
+		if(_code == vkb::ExitCode::Success) {
+			_code = ((vkb::IosPlatform*)_context->userPlatform)->main_loop_frame();
+		}
+		else {
+			// On ExitCode error, remove displayLink from run loop and terminate any active sample or batch run
+			[_displayLink invalidate];
+			((vkb::IosPlatform*)_context->userPlatform)->terminate(_code);
+
+			// Not typically allowed for iOS apps, but exit here given this is an Xcode-controlled dev application
+			exit(0);
+		}
     }
-}
-
-- (void)dealloc {
-    [_displayLink invalidate];
-    [_displayLink release];
-    ((vkb::IosPlatform*)_context->userPlatform)->terminate(_code);
-
-    [self.vulkan_view release];
-    [super dealloc];
 }
 @end
