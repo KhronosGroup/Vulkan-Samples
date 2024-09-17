@@ -80,9 +80,10 @@ protected:
 
   // Alignment setup calls for the test cases
   size_t alignment;
-  glm::mat4 *aligned_cubes = nullptr;
+  void *aligned_cubes = nullptr;
 
   void prepare_aligned_cubes(size_t alignment = sizeof(glm::mat4), size_t* out_buffer_size = nullptr);
+  glm::mat4 *get_aligned_cube(size_t index);
 
   // Pipeline defaults
   VkPipelineInputAssemblyStateCreateInfo input_assembly_state;

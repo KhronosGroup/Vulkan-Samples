@@ -206,7 +206,7 @@ void hack_multiple_uniform_buffer::update_uniform_buffer(float delta_time, bool 
 {
 	for (size_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
-		uniform_buffers.single[i]->update(aligned_cubes + i, static_cast<size_t>(uniform_buffers.single[i]->get_size()));
+		uniform_buffers.single[i]->update(get_aligned_cube(i), static_cast<size_t>(uniform_buffers.single[i]->get_size()));
 		// Flush to make changes visible to the device
 		uniform_buffers.single[i]->flush();
 	}
