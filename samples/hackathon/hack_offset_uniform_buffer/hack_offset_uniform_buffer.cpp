@@ -162,8 +162,8 @@ void hack_offset_uniform_buffer::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
-	shader_stages[0] = load_shader("dynamic_uniform_buffers", "base.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_uniform_buffers", "base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("hackathon", "ubo.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("hackathon", "base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 		vkb::initializers::pipeline_create_info(
