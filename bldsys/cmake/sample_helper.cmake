@@ -22,7 +22,7 @@
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_sample)
-    set(options)  
+    set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
@@ -35,10 +35,10 @@ function(add_sample)
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
         DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
+        TAGS
             "any"
         FILES
-            ${SRC_FILES}
+            ${TARGET_FILES}
         LIBS
             ${TARGET_LIBS}
         SHADER_FILES_GLSL
@@ -84,7 +84,7 @@ function(add_sample_with_tags)
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
         DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
+        TAGS
             ${TARGET_TAGS}
         FILES
             ${SRC_FILES}
@@ -123,7 +123,7 @@ function(vkb_add_test)
 endfunction()
 
 function(add_project)
-    set(options)  
+    set(options)
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
@@ -152,7 +152,7 @@ function(add_project)
     if (TARGET_SHADERS_HLSL)
         source_group("\\Shaders\\hlsl" FILES ${TARGET_SHADERS_HLSL})
         # Disable automatic compilation of HLSL shaders for MSVC
-        set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
+        set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
@@ -171,7 +171,7 @@ endif()
         target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
-    # capitalise the first letter of the category  (performance -> Performance) 
+    # capitalise the first letter of the category  (performance -> Performance)
     string(SUBSTRING ${TARGET_CATEGORY} 0 1 FIRST_LETTER)
     string(TOUPPER ${FIRST_LETTER} FIRST_LETTER)
     string(REGEX REPLACE "^.(.*)" "${FIRST_LETTER}\\1" CATEGORY "${TARGET_CATEGORY}")
@@ -179,7 +179,7 @@ endif()
     if(${TARGET_TYPE} STREQUAL "Sample")
         # set sample properties
         set_target_properties(${PROJECT_NAME}
-            PROPERTIES 
+            PROPERTIES
                 SAMPLE_CATEGORY ${TARGET_CATEGORY}
                 SAMPLE_AUTHOR ${TARGET_AUTHOR}
                 SAMPLE_NAME ${TARGET_NAME}

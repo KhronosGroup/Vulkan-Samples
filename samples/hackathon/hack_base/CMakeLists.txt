@@ -25,9 +25,10 @@ add_sample(
     AUTHOR "<<Contributor>>"
     NAME "hack_base"
     DESCRIPTION "Sample description"
+    FILES
+        "utils.h"
+        "TimeMeasurements.h"
+        "TimeMeasurements.cpp"
     SHADER_FILES_GLSL
         "triangle.vert"
         "triangle.frag")
-
-# There is a FILES parameter for add_sample, but somehow it doesn't work. I don't know why, but as the ${FOLDER_NAME} is the target name, just doing it manually works as well.
-target_sources(${FOLDER_NAME} PRIVATE json.hpp TimeMeasurements.cpp TimeMeasurements.h utils.h)
