@@ -264,9 +264,9 @@ void hack_base::begin_command_buffer(VkCommandBuffer &commandBuffer, VkFramebuff
 	VK_CHECK(vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info));
 
 	VkMemoryBarrier memoryBarrier = {};
-	memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-	memoryBarrier.srcAccessMask = VkAccessFlagBits::VK_ACCESS_HOST_WRITE_BIT;
-	memoryBarrier.dstAccessMask = VkAccessFlagBits::VK_ACCESS_SHADER_READ_BIT;
+	memoryBarrier.sType           = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+	memoryBarrier.srcAccessMask   = VkAccessFlagBits::VK_ACCESS_HOST_WRITE_BIT;
+	memoryBarrier.dstAccessMask   = VkAccessFlagBits::VK_ACCESS_SHADER_READ_BIT;
 
 	vkCmdPipelineBarrier(commandBuffer, VkPipelineStageFlagBits::VK_PIPELINE_STAGE_HOST_BIT, VkPipelineStageFlagBits::VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 
@@ -326,10 +326,10 @@ bool hack_base::prepare(const vkb::ApplicationOptions &options)
 	generate_rotations();
 	prepare_view_uniform_buffer();
 
-    {
+	{
 		ScopedTiming _(mTimeMeasurements, MeasurementPoints::HackPrepareFunction);
-	    hack_prepare();
-    }
+		hack_prepare();
+	}
 
 	prepared = true;
 	return true;
@@ -359,7 +359,7 @@ void hack_base::render(float delta_time)
 
 	// Reset and begin our draw command buffer.
 	VkCommandBuffer &currentCommandBuffer = draw_cmd_buffers[current_buffer];
-	VkFramebuffer &currentFrameBuffer = framebuffers[current_buffer];
+	VkFramebuffer   &currentFrameBuffer   = framebuffers[current_buffer];
 	vkResetCommandBuffer(currentCommandBuffer, 0);
 	begin_command_buffer(currentCommandBuffer, currentFrameBuffer);
 
@@ -398,7 +398,7 @@ void hack_base::render(float delta_time)
 
 	mFrameNumber++;
 
-	if (mFrameNumber >= sMaxNumberOfDataPoints && mTimeMeasurements.isEnabled())
+	if (mFrameNumber >= HackConstants::MaxNumberOfDataPoints && mTimeMeasurements.isEnabled())
 	{
 		mTimeMeasurements.disable();
 		mTimeMeasurements.writeToJsonFile();

@@ -59,15 +59,15 @@ class hack_base : public ApiVulkanSample
 	void prepare_view_uniform_buffer();
 	void update_view_uniform_buffer();
 
-	void build_command_buffers() override{/* no op - We are dynamically building the command buffers every frame. */};
+	void         build_command_buffers() override{/* no op - We are dynamically building the command buffers every frame. */};
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	// Replacement for `prepare` base interface
-	virtual void hack_prepare() {};
+	virtual void hack_prepare(){};
 	// Replacement for `render` base interface
-	virtual void hack_render(VkCommandBuffer &commandBuffer) {};
+	virtual void hack_render(VkCommandBuffer &commandBuffer){};
 
   protected:
 	// The cube
@@ -102,13 +102,8 @@ class hack_base : public ApiVulkanSample
 	VkPipelineVertexInputStateCreateInfo           vertex_input_state;
 
 	// Timing utilities
-
-    // This will do two things
-    // Measurements will stop after sMaxNumberOfDataPoints of frames measured
-    // Initialize all the arrays in the background with sMaxNumberOfDataPoints empty slots. It still uses vector::push_back(), so even if some measurements are done twice per frame it will not die, but will do an alloc inbetween, which will be slow, so try to avoid measuring twice
-	const size_t     sMaxNumberOfDataPoints = 10000;
-	TimeMeasurements mTimeMeasurements = TimeMeasurements(sMaxNumberOfDataPoints);
-	uint16_t         mFrameNumber = 0;
+	TimeMeasurements mTimeMeasurements = TimeMeasurements();
+	uint16_t         mFrameNumber      = 0;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_hack_base();

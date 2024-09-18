@@ -2,6 +2,8 @@
 
 #include "utils.h"
 
+#include "json.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <iterator>
@@ -25,14 +27,22 @@ struct SummarizedTimings
 
 struct TimingsOfType
 {
-	std::mutex             mDataPointsLock;
-	std::vector<long long> mDataPoints;
-	SummarizedTimings      mSummary;
+	SummarizedTimings mSummary;
 
-	TimingsOfType(uint32_t maxNumberOfDataPoints) :
+	TimingsOfType() :
 	    mSummary(SummarizedTimings())
+	{}
+
+	void addTiming(long long value)
 	{
-		mDataPoints.reserve(maxNumberOfDataPoints);
+		// Just ignore all values that go over the measurement limit
+		if (mNextIdxToFill >= mDataPoints.size())
+			return;
+
+		mDataPointsLock.lock();
+		mDataPoints[mNextIdxToFill] = value;
+		mNextIdxToFill++;
+		mDataPointsLock.unlock();
 	}
 
 	void calculateSummarizations()
@@ -64,15 +74,18 @@ struct TimingsOfType
 			mSummary.mMax = copy[copy.size() - 1];
 		}
 	}
+
+	nlohmann::json toJson();
+
+  private:
+	std::mutex                                                  mDataPointsLock;
+	std::array<long long, HackConstants::MaxNumberOfDataPoints> mDataPoints;
+	size_t                                                      mNextIdxToFill = 0;
 };
 
 class TimeMeasurements
 {
   public:
-	TimeMeasurements(size_t maxNumberOfDataPoints) :
-	    mMaxNumberOfDataPoints(maxNumberOfDataPoints)
-	{}
-
 	void addTime(MeasurementPoints label, long long value)
 	{
 		if (!mEnabled)
@@ -83,14 +96,12 @@ class TimeMeasurements
 			mTimesLock.lock();
 			if (mTimes.count(label) == 0)
 			{
-				mTimes.try_emplace(label, std::unique_ptr<TimingsOfType>(new TimingsOfType(mMaxNumberOfDataPoints)));
+				mTimes.try_emplace(label, std::unique_ptr<TimingsOfType>(new TimingsOfType()));
 			}
 			mTimesLock.unlock();
 		}
 
-		mTimes[label]->mDataPointsLock.lock();
-		mTimes[label]->mDataPoints.push_back(value);
-		mTimes[label]->mDataPointsLock.unlock();
+		mTimes[label]->addTiming(value);
 	}
 	void writeToJsonFile();
 	void disable()
@@ -106,7 +117,6 @@ class TimeMeasurements
 	bool                                                        mEnabled = true;
 	std::mutex                                                  mTimesLock;
 	std::map<MeasurementPoints, std::unique_ptr<TimingsOfType>> mTimes;
-	size_t                                                      mMaxNumberOfDataPoints;
 };
 
 class ScopedTiming

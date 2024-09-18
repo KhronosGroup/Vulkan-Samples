@@ -1,9 +1,32 @@
 #include "TimeMeasurements.h"
 
-// That is from https://github.com/nlohmann/json
-// We might need to include a license for that, but as it is only for hacking and internal things I think it is fine for now.
-// If we can't use it we have to find an alternative json lib or write it ourselves
-#include "json.hpp"
+nlohmann::json TimingsOfType::toJson()
+{
+	calculateSummarizations();
+
+	nlohmann::json timingsOfTypeJsonObj;
+	timingsOfTypeJsonObj["DataPointsCount"] = mNextIdxToFill;
+
+	nlohmann::json dataPointsJsonArray = nlohmann::json::array();
+    for (int i = 0; i < mNextIdxToFill; ++i)
+    {
+		dataPointsJsonArray.push_back(mDataPoints[i]);
+    }
+	timingsOfTypeJsonObj["DataPoints"] = dataPointsJsonArray;
+
+	nlohmann::json summaryJsonObj;
+	summaryJsonObj["min"]           = mSummary.mMin;
+	summaryJsonObj["avg"]           = mSummary.mAverage;
+	summaryJsonObj["mean"]          = mSummary.mMean;
+	summaryJsonObj["variance"]      = mSummary.mVariance;
+	summaryJsonObj["p90"]           = mSummary.mP90;
+	summaryJsonObj["p95"]           = mSummary.mP95;
+	summaryJsonObj["p99"]           = mSummary.mP99;
+	summaryJsonObj["max"]           = mSummary.mMax;
+	timingsOfTypeJsonObj["Summary"] = summaryJsonObj;
+
+	return timingsOfTypeJsonObj;
+}
 
 // Converts the full TimeMeasurements to a json object and writes it to a file called "data.json"
 void TimeMeasurements::writeToJsonFile()
@@ -13,27 +36,8 @@ void TimeMeasurements::writeToJsonFile()
 
 	for (auto iter = mTimes.begin(); iter != mTimes.end(); iter++)
 	{
-		iter->second->calculateSummarizations();
-
-		nlohmann::json timingsOfTypeJsonObj;
-		timingsOfTypeJsonObj["Name"]            = MeasurementPointsUtils::MeasurementPointsToString(iter->first);
-		timingsOfTypeJsonObj["DataPointsCount"] = iter->second->mDataPoints.size();
-
-		nlohmann::json dataPointsJsonArray = nlohmann::json::array();
-		std::copy(iter->second->mDataPoints.begin(), iter->second->mDataPoints.end(), std::back_inserter(dataPointsJsonArray));
-		timingsOfTypeJsonObj["DataPoints"] = dataPointsJsonArray;
-
-		nlohmann::json summaryJsonObj;
-		summaryJsonObj["min"]           = iter->second->mSummary.mMin;
-		summaryJsonObj["avg"]           = iter->second->mSummary.mAverage;
-		summaryJsonObj["mean"]          = iter->second->mSummary.mMean;
-		summaryJsonObj["variance"]      = iter->second->mSummary.mVariance;
-		summaryJsonObj["p90"]           = iter->second->mSummary.mP90;
-		summaryJsonObj["p95"]           = iter->second->mSummary.mP95;
-		summaryJsonObj["p99"]           = iter->second->mSummary.mP99;
-		summaryJsonObj["max"]           = iter->second->mSummary.mMax;
-		timingsOfTypeJsonObj["Summary"] = summaryJsonObj;
-
+		nlohmann::json timingsOfTypeJsonObj = iter->second->toJson();
+		timingsOfTypeJsonObj["Name"] = MeasurementPointsUtils::MeasurementPointsToString(iter->first);
 		measurementsJsonArray.push_back(timingsOfTypeJsonObj);
 	}
 
