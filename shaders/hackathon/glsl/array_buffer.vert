@@ -27,7 +27,7 @@ layout (binding = 0) uniform UboView
 
 layout (binding = 1) buffer InstanceArray
 {
-	mat4 model[125];
+	mat4 model[1000];
 } instanceArray;
 
 layout (location = 0) out vec3 outColor;

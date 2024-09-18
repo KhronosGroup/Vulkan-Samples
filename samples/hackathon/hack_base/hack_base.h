@@ -20,7 +20,7 @@
 #include "TimeMeasurements.h"
 #include "api_vulkan_sample.h"
 
-#define OBJECT_INSTANCES 125
+#define OBJECT_INSTANCES 1000
 
 class hack_base : public ApiVulkanSample
 {
