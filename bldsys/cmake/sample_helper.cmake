@@ -38,7 +38,7 @@ function(add_sample)
         TAGS 
             "any"
         FILES
-            ${SRC_FILES}
+            ${TARGET_FILES}
         LIBS
             ${TARGET_LIBS}
         SHADER_FILES_GLSL
