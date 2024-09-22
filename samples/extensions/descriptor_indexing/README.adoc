@@ -445,8 +445,3 @@ Adding debug symbols to the SPIR-V helps here, but that's another topic.
 == Conclusion
 
 Descriptor indexing is a highly potent extension, but with great power comes great responsibility to use all debug tools available to you.
-s to the SPIR-V helps here, but that's another topic.
-
-== Conclusion
-
-Descriptor indexing is a highly potent extension, but with great power comes great responsibility to use all debug tools available to you.
