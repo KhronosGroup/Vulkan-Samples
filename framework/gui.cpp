@@ -446,7 +446,7 @@ BufferAllocationC Gui::update_buffers(CommandBuffer &command_buffer)
 
 	if (!draw_data)
 	{
-		return;
+		return BufferAllocationC{};
 	}
 
 	size_t vertex_buffer_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
@@ -454,7 +454,7 @@ BufferAllocationC Gui::update_buffers(CommandBuffer &command_buffer)
 
 	if ((vertex_buffer_size == 0) || (index_buffer_size == 0))
 	{
-		return;
+		return BufferAllocationC{};
 	}
 
 	std::vector<uint8_t> vertex_data(vertex_buffer_size);
@@ -590,8 +590,11 @@ void Gui::draw(CommandBuffer &command_buffer)
 	{
 		// Save vertex buffer allocation in case we need to rebind with vertex_offset, e.g. for iOS Simulator
 		auto vertex_allocation = update_buffers(command_buffer);
-		vertex_buffers.push_back(vertex_allocation.get_buffer());
-		vertex_offsets.push_back(vertex_allocation.get_offset());
+		if (!vertex_allocation.empty())
+		{
+			vertex_buffers.push_back(vertex_allocation.get_buffer());
+			vertex_offsets.push_back(vertex_allocation.get_offset());
+		}
 	}
 	else
 	{
@@ -657,8 +660,11 @@ void Gui::draw(CommandBuffer &command_buffer)
 		}
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 		// iOS Simulator does not support vkCmdDrawIndexed() with vertex_offset > 0, so rebind vertex buffer instead
-		vertex_offsets.back() += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
-		command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
+		if (!vertex_offsets.empty())
+		{
+			vertex_offsets.back() += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
+			command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
+		}
 #else
 		vertex_offset += cmd_list->VtxBuffer.Size;
 #endif
