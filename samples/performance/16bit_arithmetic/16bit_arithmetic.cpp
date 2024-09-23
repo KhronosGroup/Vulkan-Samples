@@ -223,17 +223,24 @@ void KHR16BitArithmeticSample::VisualizationSubpass::prepare()
 
 void KHR16BitArithmeticSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto &storage_16bit_features =
-	    gpu.request_extension_features<VkPhysicalDevice16BitStorageFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
-	auto &arithmetic_16bit_8bit =
-	    gpu.request_extension_features<VkPhysicalDeviceFloat16Int8FeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR);
-
 	// Required features.
-	storage_16bit_features.storageBuffer16BitAccess = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDevice16BitStorageFeatures,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
+	                         storageBuffer16BitAccess);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDevice16BitStorageFeatures,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
+	                         uniformAndStorageBuffer16BitAccess);
 
 	// Optional features.
-	supported_extensions     = arithmetic_16bit_8bit.shaderFloat16 == VK_TRUE;
-	supports_push_constant16 = storage_16bit_features.storagePushConstant16 == VK_TRUE;
+	supported_extensions = REQUEST_OPTIONAL_FEATURE(gpu,
+	                                                VkPhysicalDeviceFloat16Int8FeaturesKHR,
+	                                                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+	                                                shaderFloat16);
+
+	supports_push_constant16 =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, storagePushConstant16);
 }
 
 void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
