@@ -387,7 +387,10 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 			    static_cast<uint32_t>(model_buffer.num_triangles),
 			    static_cast<uint32_t>(model_buffer.num_vertices) - 1,
 			    sizeof(NewVertex),
-			    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
+			    0,
+			    VK_FORMAT_R32G32B32_SFLOAT,
+			    VK_INDEX_TYPE_UINT32,
+			    VK_GEOMETRY_OPAQUE_BIT_KHR,
 			    model_buffer.vertex_offset + (model_buffer.is_static ? static_vertex_handle : dynamic_vertex_handle),
 			    model_buffer.index_offset + (model_buffer.is_static ? static_index_handle : dynamic_index_handle));
 		}

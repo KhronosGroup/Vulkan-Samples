@@ -54,6 +54,7 @@ class AccelerationStructure
 	 * @param vertex_stride Stride of the vertex structure
 	 * @param transform_offset Offset of this geometry in the transform data buffer
 	 * @param vertex_format Format of the vertex structure
+	 * @param index_type Type of the indices
 	 * @param flags Ray tracing geometry flags
 	 * @param vertex_buffer_data_address set this if don't want the vertex_buffer data_address
 	 * @param index_buffer_data_address set this if don't want the index_buffer data_address
@@ -67,6 +68,7 @@ class AccelerationStructure
 	                               VkDeviceSize        vertex_stride,
 	                               uint32_t            transform_offset              = 0,
 	                               VkFormat            vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
+	                               VkIndexType         index_type                    = VK_INDEX_TYPE_UINT32,
 	                               VkGeometryFlagsKHR  flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
 	                               uint64_t            vertex_buffer_data_address    = 0,
 	                               uint64_t            index_buffer_data_address     = 0,
