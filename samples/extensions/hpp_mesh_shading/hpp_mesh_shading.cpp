@@ -80,8 +80,7 @@ void HPPMeshShading::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &meshFeatures      = gpu.request_extension_features<vk::PhysicalDeviceMeshShaderFeaturesEXT>();
-	meshFeatures.meshShader = true;
+	HPP_REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceMeshShaderFeaturesEXT, meshShader);
 }
 
 /*

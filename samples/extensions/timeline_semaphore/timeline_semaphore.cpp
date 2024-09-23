@@ -610,9 +610,10 @@ void TimelineSemaphore::build_graphics_command_buffer()
 void TimelineSemaphore::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Need to enable the timelineSemaphore feature.
-	auto &features = gpu.request_extension_features<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR);
-	features.timelineSemaphore = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceTimelineSemaphoreFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR,
+	                         timelineSemaphore);
 }
 
 bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)
