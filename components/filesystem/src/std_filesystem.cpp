@@ -79,7 +79,7 @@ bool StdFileSystem::create_directory(const Path &path)
 
 	if (ec)
 	{
-		throw std::runtime_error("Failed to create directory");
+		throw std::runtime_error("Failed to create directory at path: " + path.string());
 	}
 
 	return !ec;
@@ -91,7 +91,7 @@ std::vector<uint8_t> StdFileSystem::read_chunk(const Path &path, size_t offset, 
 
 	if (!file.is_open())
 	{
-		throw std::runtime_error("Failed to open file for reading");
+		throw std::runtime_error("Failed to open file for reading at path: " + path.string());
 	}
 
 	auto size = stat_file(path).size;
@@ -122,7 +122,7 @@ void StdFileSystem::write_file(const Path &path, const std::vector<uint8_t> &dat
 
 	if (!file.is_open())
 	{
-		throw std::runtime_error("Failed to open file for writing");
+		throw std::runtime_error("Failed to open file for writing at path: " + path.string());
 	}
 
 	file.write(reinterpret_cast<const char *>(data.data()), data.size());
@@ -136,7 +136,7 @@ void StdFileSystem::remove(const Path &path)
 
 	if (ec)
 	{
-		throw std::runtime_error("Failed to remove file");
+		throw std::runtime_error("Failed to remove file at path:" + path.string());
 	}
 }
 
