@@ -92,11 +92,8 @@ void ApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
-	if (has_render_context())
-	{
-		render(delta_time);
-	}
-
+	assert(has_render_context());
+	render(delta_time);
 	camera.update(delta_time);
 	if (camera.moving())
 	{
