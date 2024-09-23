@@ -36,27 +36,6 @@ LayoutTransitions::LayoutTransitions()
 
 	config.insert<vkb::IntSetting>(0, reinterpret_cast<int &>(layout_transition_type), LayoutTransitionType::UNDEFINED);
 	config.insert<vkb::IntSetting>(1, reinterpret_cast<int &>(layout_transition_type), LayoutTransitionType::LAST_LAYOUT);
-
-#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
-	// On iOS Simulator use layer setting to disable MoltenVK Metal argument buffers
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
-
-	VkLayerSettingEXT layerSetting;
-	layerSetting.pLayerName   = "MoltenVK";
-	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
-	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
-	layerSetting.valueCount   = 1;
-
-	// Make this static so layer setting reference remains valid after leaving constructor scope
-	static const int32_t useMetalArgumentBuffers = 0;
-	layerSetting.pValues                         = &useMetalArgumentBuffers;
-
-	add_layer_setting(layerSetting);
-
-	// On iOS Simulator also set environment variable as fallback in case layer settings not available at runtime with older SDKs
-	// Will not work in batch mode, but is the best we can do short of using the deprecated MoltenVK private config API
-	setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "0", 1);
-#endif
 }
 
 bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
