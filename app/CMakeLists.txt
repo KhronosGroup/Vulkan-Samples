@@ -99,13 +99,19 @@ endif()
 # Enable building from XCode for IOS
 if(IOS)
     set(CMAKE_MACOSX_BUNDLE YES)
-    set(MACOSX_BUNDLE_GUI_IDENTIFIER com.khronos.vulkansamples)
+    if(NOT DEFINED MACOSX_BUNDLE_GUI_IDENTIFIER)
+        if(NOT ${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator" AND DEFINED CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM)
+            message(FATAL_ERROR "BUILDING for iOS device with a specified development team requires setting the MACOSX_BUNDLE_GUI_IDENTIFIER")
+		else()
+			set(MACOSX_BUNDLE_GUI_IDENTIFIER com.khronos.vulkansamples)
+		endif()
+	endif()
     if(NOT DEFINED CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM)
-        if(CMAKE_OSX_SYSROOT STREQUAL ios)
-            message(FATAL_ERROR "BUILDING for iOS device requires setting the CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM,
-                            It is safe to build for iossimulator without code signing")
+        if(NOT ${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator")
+            message(FATAL_ERROR "BUILDING for iOS device requires setting the CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM;
+                            note that it is safe to build for iOS Simulator without code signing")
         else()
-            message("Building for ios simulator without a code signing identity; this is allowed, turning off code signing")
+            message(STATUS "Building for iOS Simulator without a code signing identity; this is allowed, turning off code signing")
             set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO")
             set_target_properties(${PROJECT_NAME} PROPERTIES
                     XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED            "NO"
@@ -119,8 +125,8 @@ if(IOS)
                 XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY		"YES"
         )
     endif ()
-    find_package(Vulkan COMPONENTS MoltenVK REQUIRED)
-    if(${Vulkan_VERSION} VERSION_GREATER_EQUAL 1.3.278)
+    # No need to search for Vulkan package or MoltenVK library, Vulkan cache variables already defined on Apple platforms by global_options.cmake
+    if(Vulkan_LIBRARY AND ${Vulkan_VERSION} VERSION_GREATER_EQUAL 1.3.278)
         target_sources(${PROJECT_NAME} PRIVATE
                 ${Vulkan_Target_SDK}/iOS/share/vulkan
         )
@@ -145,25 +151,35 @@ if(IOS)
             MACOSX_PACKAGE_LOCATION Resources
     )
     set(FRAMEWORKS_TO_EMBED)
-    list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_MoltenVK_LIBRARY};${Vulkan_LIBRARIES};")
-    # trouble is can't turn this on/off if XCode decides to build debug and we're configured for release.  Need to revist
-    #if(("${VKB_DEBUG}" STREQUAL "ON") OR ("${VKB_VALIDATION_LAYERS}" STREQUAL "ON"))
-        list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_Layer_VALIDATION}")
-    #endif ()
+	if(Vulkan_MoltenVK_LIBRARY)
+		list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_MoltenVK_LIBRARY};")
+	else()
+		message(FATAL_ERROR "Can't find MoltenVK library. Please install the Vulkan SDK or MoltenVK project and set VULKAN_SDK.")
+	endif()
+	if(Vulkan_LIBRARY)
+		list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_LIBRARY};")
+	endif()
+	if(Vulkan_Layer_VALIDATION)
+		# trouble is can't turn this on/off if XCode decides to build debug and we're configured for release.  Need to revist
+		# note the Vulkan validation layer must be present and enabled even in release mode for the shader_debugprintf sample
+		#if(("${VKB_DEBUG}" STREQUAL "ON") OR ("${VKB_VALIDATION_LAYERS}" STREQUAL "ON"))
+			list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_Layer_VALIDATION}")
+		#endif()
+    endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/ios/Info.plist
+            # These are already defined by the ios Info.plist file specified above
+            #MACOSX_BUNDLE_SHORT_VERSION_STRING 1.0.0
+            #MACOSX_BUNDLE_BUNDLE_VERSION 1.0.0
+            #MACOSX_BUNDLE_BUNDLE_NAME "vulkan samples"
     )
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
-            BUNDLE_IDENTIFIER com.khronos.vulkansamples
-            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER com.khronos.vulkansamples
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER ${MACOSX_BUNDLE_GUI_IDENTIFIER}
             XCODE_ATTRIBUTE_CLANG_ENABLE_MODULES "YES"
             XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks"
             XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic" # already default value
             XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
-            MACOSX_BUNDLE_SHORT_VERSION_STRING 1.0.0
-            MACOSX_BUNDLE_BUNDLE_VERSION 1.0.0
-            MACOSX_BUNDLE_BUNDLE_NAME "vulkan samples"
             XCODE_EMBED_FRAMEWORKS  "${FRAMEWORKS_TO_EMBED}"
             XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY	"YES"
             XCODE_ATTRIBUTE_SKIP_INSTALL  NO
