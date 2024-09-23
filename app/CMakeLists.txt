@@ -23,6 +23,8 @@ project(vulkan_samples LANGUAGES C CXX)
 
 if(IOS AND CMAKE_VERSION VERSION_LESS 3.20)
     message(FATAL_ERROR "Configuring iOS apps requires a minimum CMake version of 3.20")
+elseif(APPLE AND NOT IOS AND CMAKE_VERSION VERSION_LESS 3.17)
+    message(FATAL_ERROR "Configuring Xcode for macOS requires a minimum CMake version of 3.17")
 endif()
 
 add_subdirectory(plugins)
@@ -83,8 +85,10 @@ endif()
 
 # Create MSVC project
 if(MSVC)
-    #Set the working directory to the source of the project so developer dont have to
+    # Set VS startup project, working directory to project root, and command line arguments to default sample
+    set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
     set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_COMMAND_ARGUMENTS "sample hello_triangle")
 
     #Configure output paths
     foreach(CONFIG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -187,4 +191,10 @@ if(IOS)
             XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING NO
             XCODE_SCHEME_ARGUMENTS "sample hello_triangle"
     )
-endif ()
+elseif(APPLE)
+	# Set Xcode working directory to project root, and command line arguments to default sample
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            XCODE_SCHEME_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            XCODE_SCHEME_ARGUMENTS "sample hello_triangle"
+	)
+endif()
