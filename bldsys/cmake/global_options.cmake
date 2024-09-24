@@ -35,7 +35,7 @@ if(APPLE)
     cmake_minimum_required(VERSION 3.24)
     set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability enumeration and subset features in the framework.  This is required to be set when running on Apple platforms." FORCE)
 
-	find_package(Vulkan OPTIONAL_COMPONENTS MoltenVK)
+	find_package(Vulkan QUIET OPTIONAL_COMPONENTS MoltenVK)
 	if(USE_MoltenVK OR NOT Vulkan_FOUND OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR (${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator" AND ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64"))))
 		# if Vulkan loader or MoltenVK for iOS was not found or using iOS Simulator on x86_64, look for MoltenVK in the Vulkan SDK, MoltenVK, and legacy MoltenVK locations
 		if(NOT Vulkan_MoltenVK_LIBRARY)
