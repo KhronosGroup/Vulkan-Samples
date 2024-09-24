@@ -59,6 +59,11 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE vkb__core vkb__filesystem apps plugins)
 
+# Force multi-config generators (VS, Xcode, Ninja Multi-Config) to build for the Release config when cmake build type is Release
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+	set(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "Release build types for multi-config generators" FORCE)
+endif()
+
 # Create android project
 if(ANDROID)
     if(CMAKE_VS_NsightTegra_VERSION)
