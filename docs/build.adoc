@@ -165,7 +165,7 @@ It is also used by CI and is a basic version installed with Visual Studio 2022.
 
 Go to the http://releases.llvm.org/download.html[LLVM downloads page] to get clang.
 
-=== Build with CMake
+=== Build with CMake and Visual Studio
 
 ____
 Please make sure, when running any sample, that you either:
@@ -177,28 +177,32 @@ ____
 `Step 1.` The following command will generate the VS project
 
 ----
-cmake -G"Visual Studio 15 2017 Win64" -S . -Bbuild/windows
+cmake -G "Visual Studio 15 2017 Win64" -S . -Bbuild/windows -DCMAKE_BUILD_TYPE=Release
 ----
 
 (Prior to CMake v3.13)
 
 ----
-cmake -G"Visual Studio 15 2017 Win64" . -Bbuild/windows
+cmake -G "Visual Studio 15 2017 Win64" . -Bbuild/windows
 ----
 
 (New in CMake v3.14.
 Visual Studio 2019 must be installed)
 
 ----
- cmake -G "Visual Studio 16 2019" -A x64 -S . -Bbuild/windows
+ cmake -G "Visual Studio 16 2019" -A x64 -S . -Bbuild/windows -DCMAKE_BUILD_TYPE=Release
 ----
 
 (New in CMake v3.21.
 Visual Studio 2022 must be installed)
 
 ----
- cmake -G "Visual Studio 17 2022" -A x64 -S . -Bbuild/windows
+ cmake -G "Visual Studio 17 2022" -A x64 -S . -Bbuild/windows -DCMAKE_BUILD_TYPE=Release
 ----
+
+Open the *vulkan_samples.sln* VS project inside build/windows and build with Ctrl-Shift-B. To run Vulkan Samples, use Visual Studio's Debug Properties selection and set the Debugging Command Arguments to --help. Click the "Local Windows Debugger" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
+
+Alternatively, for command line builds use the steps below:
 
 `Step 2.` Build the Visual Studio project
 
@@ -250,15 +254,37 @@ cmake --build build/linux --config Release --target vulkan_samples -j$(nproc)
 === Dependencies
 
 * CMake v3.12+ (Apple Silicon requires at least 3.19.2)
-* XCode v12 for Apple Silicon
+* Xcode v12 for Apple Silicon
 * Command Line Tools (CLT) for Xcode `xcode-select --install`
-* https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html[Vulkan SDK] `./install_vulkan.py`
+* https://sdk.lunarg.com/sdk/download/latest/mac/vulkan_sdk.dmg[Vulkan SDK] - Download and Install the Vulkan SDK with default options
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
 
-=== Build with CMake
+=== Set your environment variables
+
+----
+source /PATH/TO/VULKAN/SDK/setup-env.sh
+----
+
+Alternatively, to use MoltenVK built locally from its github project
+
+----
+export VULKAN_SDK=/PATH/TO/MoltenVK/Package/Release/MoltenVK
+----
+
+Then generate the project as shown below, adding the additional cmake option `-DUSE_MoltenVK=ON`. Note when using this feature the Vulkan SDK should first be installed with the _System Global Installation_ option selected.  This will ensure that *dxc* is available for HLSL shader compilation even though `VULKAN_SDK` points to the MoltenVK project.
+
+=== Build with CMake and Xcode
 
 `Step 1.` The following command will generate the project
+
+----
+cmake -G Xcode -Bbuild/mac-xcode -DCMAKE_BUILD_TYPE=Release
+----
+
+Open the *vulkan_samples* Xcode project inside build/mac-xcode and build with command-B.  To run Vulkan Samples, use Xcode's edit-scheme selection and set the arguments to --help. Click the "Play" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
+
+Alternatively, for command line builds use the steps below:
 
 ----
 cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
@@ -267,64 +293,73 @@ cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
 `Step 2.` Build the project
 
 ----
-cmake --build build/mac --config Release --target vulkan_samples -j4
+cmake --build build/mac --config Release --target vulkan_samples -j$(sysctl -n hw.ncpu)
 ----
 
 `Step 3.` Run the *Vulkan Samples* application to display the help message
 
 ----
-./build/mac/app/bin/Release/<x86_64|arm64>/vulkan_samples --help
+./build/mac/app/bin/Release/<arm64|x86_64>/vulkan_samples --help
 ----
 
 == iOS
 === Dependencies
 
 * CMake v3.28+ (Apple xcframeworks require at least 3.28)
-* XCode v12 for Apple Silicon
+* Xcode v12 for Apple Silicon
 * Command Line Tools (CLT) for Xcode `xcode-select --install`
-* https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html[Vulkan SDK] `./install_vulkan.py`
+* https://sdk.lunarg.com/sdk/download/latest/mac/vulkan_sdk.dmg[Vulkan SDK] - Download and Install the Vulkan SDK making sure "Development libraries for iOS" is selected
 * Vulkan at least version 1.3.278 to get the frameworks
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
 
-=== Set your environment variable
+=== Set your environment variables
 
-`Step 1.`  edit ~/.bash_profile
-`Step 2.`  add the environment variable
-
-----
-export VULKAN_SDK=/PATH/TO/VULKAN/SDK
-----
-
-`Step 3.` reload the bash_profile
+NB: For iOS you must run the setup-env.sh located inside the Vulkan SDK's iOS directory
 
 ----
-source ~/.bash_profile
+source /PATH/TO/VULKAN/SDK/iOS/setup-env.sh
 ----
 
-=== Build with CMake
+Alternatively, to use MoltenVK built locally from its github project
+
+----
+export VULKAN_SDK=/PATH/TO/MoltenVK/Package/Release/MoltenVK
+----
+
+Then generate the project as shown below, adding the additional cmake option `-DUSE_MoltenVK=ON`. Note when using this feature the Vulkan SDK should first be installed with the _System Global Installation_ option selected.  This will ensure that *dxc* is available for HLSL shader compilation even though `VULKAN_SDK` points to the MoltenVK project.
+
+=== Build with CMake and Xcode
 
 `Step 1.` The following command will generate the project
 
 ----
-cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_IOS_INSTALL_COMBINED=NO -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="XXXX"
+cmake -G Xcode -Bbuild/ios -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_IOS_INSTALL_COMBINED=NO -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="XXXX" -DMACOSX_BUNDLE_GUI_IDENTIFIER="com.YYYY.vulkansamples"
 ----
-NB:  You MUST change the XXXX in the above to your TeamID for code signing.  iOS will Not allow the application to run without code signing setup.
+NB:  You MUST change the XXXX in the above to your TeamID (or Organizational Unit identifier in your Apple Development certificate) for code signing, and YYYY to your bundle identifier. iOS will NOT allow the application to run without code signing and bundle identifier setup.
+
+Alternatively, you can build for the iOS Simulator without code signing or specifying a bundle identifier (a default bundle id will be used). However, depending on your host architecture, you MUST select either arm64 (Apple Silicon) or x86_64 in the command below
+
+----
+cmake -G Xcode -Bbuild/ios-sim -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=<arm64|x86_64> -DCMAKE_IOS_INSTALL_COMBINED=NO
+----
 
 `Step 2.` Build the project
 
-----
-cmake --build build/mac --config Release --target vulkan_samples -- -j 6 -sdk iphoneos -allowProvisioningUpdates
-----
+It's recommended to open the *vulkan_samples* Xcode project that is generated inside build/ios or build/ios-sim and build with command-B.
 
-It's recommended to open the XCode project that is generated inside build/mac; building can be handled with command-B.
+Alternatively, you can build with cmake as shown here
+
+----
+cmake --build build/ios --config Release --target vulkan_samples -j$(sysctl -n hw.ncpu) -- -sdk iphoneos -allowProvisioningUpdates
+----
 
 `Step 3.` Run the *Vulkan Samples* application
 
-To run Vulkan Samples, one must have an iOS device provisioned and working with XCode.  Open the XCode project and ensure that can build/install to a device through XCode normally.
-Once the bundle is created from the build command in Step 2, use the edit-scheme selection in XCode and set the arguments to have --help
+To run Vulkan Samples, one must have an iOS physical or simulator device provisioned and working with Xcode.  Open the Xcode project and ensure that can build/install to a device through Xcode normally.
+Once the bundle is created from the build command in Step 2, use the edit-scheme selection in Xcode and set the arguments to --help.
 Click the "Play" button and you should see the help output in the terminal.
-For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run
+For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
 
 == Android
 
