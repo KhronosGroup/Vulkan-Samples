@@ -36,8 +36,8 @@ if(APPLE)
     set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability enumeration and subset features in the framework.  This is required to be set when running on Apple platforms." FORCE)
 
 	find_package(Vulkan QUIET OPTIONAL_COMPONENTS MoltenVK)
-	if(USE_MoltenVK OR NOT Vulkan_FOUND OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR (${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator" AND ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64"))))
-		# if Vulkan loader or MoltenVK for iOS was not found or using iOS Simulator on x86_64, look for MoltenVK in the Vulkan SDK, MoltenVK, and legacy MoltenVK locations
+	if(USE_MoltenVK OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR (${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator" AND ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64"))))
+		# if using MoltenVK, or MoltenVK for iOS was not found, or using iOS Simulator on x86_64, look for MoltenVK in the Vulkan SDK and MoltenVK project locations
 		if(NOT Vulkan_MoltenVK_LIBRARY)
 			# since both are available in the Vulkan SDK and MoltenVK github project, make sure we look for MoltenVK framework on iOS and dylib on macOS
 			set(_saved_cmake_find_framework ${CMAKE_FIND_FRAMEWORK})
@@ -52,24 +52,26 @@ if(APPLE)
 		endif()
 
 		if(Vulkan_MoltenVK_LIBRARY)
-			# set up global Vulkan Library defines so that MoltenVK is dynamically loaded versus the Vulkan loader
+			get_filename_component(MoltenVK_LIBRARY_PATH ${Vulkan_MoltenVK_LIBRARY} DIRECTORY)
+
+			# For both iOS and macOS: set up global Vulkan Library defines so that MoltenVK is dynamically loaded versus the Vulkan loader
+			# on iOS we can control Vulkan library loading priority by selecting which libraries are embedded in the iOS application bundle
 			if(IOS)
 				add_compile_definitions(_HPP_VULKAN_LIBRARY="MoltenVK.framework/MoltenVK")
-				# unset FindVulkan.cmake cache variables so Vulkan loader, Validation Layer, and icd/layer json files will not be embedded on iOS
+				# unset FindVulkan.cmake cache variables so Vulkan loader, Validation Layer, and icd/layer json files are not embedded on iOS
 				unset(Vulkan_LIBRARY CACHE)
 				unset(Vulkan_Layer_VALIDATION CACHE)
 
-			# on macOS make sure VULKAN_SDK is defined, ensuring that MoltenVK_LIBRARY_PATH will point to the Vulkan SDK or MoltenVK project installation
-			# otherwise if DYLD_LIBRARY_PATH points to the System Global installation, Volk may dynamically load libvulkan.dylib versus libMoltenVK.dylib
-			elseif(DEFINED ENV{VULKAN_SDK})
+			# on macOS make sure that MoltenVK_LIBRARY_PATH points to the MoltenVK project installation and not to the Vulkan_LIBRARY location
+			# otherwise if DYLD_LIBRARY_PATH points to a common search path, Volk may dynamically load libvulkan.dylib versus libMoltenVK.dylib
+			elseif(NOT Vulkan_LIBRARY MATCHES "${MoltenVK_LIBRARY_PATH}")
 				add_compile_definitions(_HPP_VULKAN_LIBRARY="libMoltenVK.dylib")
 				add_compile_definitions(_GLFW_VULKAN_LIBRARY="libMoltenVK.dylib")
-				get_filename_component(MoltenVK_LIBRARY_PATH ${Vulkan_MoltenVK_LIBRARY} DIRECTORY)
 				set(ENV{DYLD_LIBRARY_PATH} "${MoltenVK_LIBRARY_PATH}:$ENV{DYLD_LIBRARY_PATH}")
 			else()
-				message(FATAL_ERROR "VULKAN_SDK is not defined. Please set VULKAN_SDK to the Vulkan SDK or MoltenVK project install location.")
+				message(FATAL_ERROR "Vulkan library found in MoltenVK search path. Please set VULKAN_SDK to the MoltenVK project install location.")
 			endif()
-			message(STATUS "Using MoltenVK Vulkan Portability library at ${Vulkan_MoltenVK_LIBRARY}")
+			message(STATUS "Using MoltenVK: ${Vulkan_MoltenVK_LIBRARY}")
 		else()
 			message(FATAL_ERROR "Can't find MoltenVK library. Please install the Vulkan SDK or MoltenVK project and set VULKAN_SDK.")
 		endif()
