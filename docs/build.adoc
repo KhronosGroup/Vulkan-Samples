@@ -177,7 +177,7 @@ ____
 `Step 1.` The following command will generate the VS project
 
 ----
-cmake -G "Visual Studio 15 2017 Win64" -S . -Bbuild/windows -DCMAKE_BUILD_TYPE=Release
+cmake -G "Visual Studio 15 2017 Win64" -S . -Bbuild/windows
 ----
 
 (Prior to CMake v3.13)
@@ -190,14 +190,14 @@ cmake -G "Visual Studio 15 2017 Win64" . -Bbuild/windows
 Visual Studio 2019 must be installed)
 
 ----
- cmake -G "Visual Studio 16 2019" -A x64 -S . -Bbuild/windows -DCMAKE_BUILD_TYPE=Release
+ cmake -G "Visual Studio 16 2019" -A x64 -S . -Bbuild/windows
 ----
 
 (New in CMake v3.21.
 Visual Studio 2022 must be installed)
 
 ----
- cmake -G "Visual Studio 17 2022" -A x64 -S . -Bbuild/windows -DCMAKE_BUILD_TYPE=Release
+ cmake -G "Visual Studio 17 2022" -A x64 -S . -Bbuild/windows
 ----
 
 Open the *vulkan_samples.sln* VS project inside build/windows and build with Ctrl-Shift-B. To run Vulkan Samples, use Visual Studio's Debug Properties selection and set the Debugging Command Arguments to --help. Click the "Local Windows Debugger" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
@@ -266,14 +266,6 @@ cmake --build build/linux --config Release --target vulkan_samples -j$(nproc)
 source /PATH/TO/VULKAN/SDK/setup-env.sh
 ----
 
-Alternatively, to use MoltenVK built locally from its github project
-
-----
-export VULKAN_SDK=/PATH/TO/MoltenVK/Package/Release/MoltenVK
-----
-
-Then generate the project as shown below, adding the additional cmake option `-DUSE_MoltenVK=ON`. Note when using this feature the Vulkan SDK should first be installed with the _System Global Installation_ option selected.  This will ensure that *dxc* is available for HLSL shader compilation even though `VULKAN_SDK` points to the MoltenVK project.
-
 === Build with CMake and Xcode
 
 `Step 1.` The following command will generate the project
@@ -320,14 +312,6 @@ NB: For iOS you must run the setup-env.sh located inside the Vulkan SDK's iOS di
 ----
 source /PATH/TO/VULKAN/SDK/iOS/setup-env.sh
 ----
-
-Alternatively, to use MoltenVK built locally from its github project
-
-----
-export VULKAN_SDK=/PATH/TO/MoltenVK/Package/Release/MoltenVK
-----
-
-Then generate the project as shown below, adding the additional cmake option `-DUSE_MoltenVK=ON`. Note when using this feature the Vulkan SDK should first be installed with the _System Global Installation_ option selected.  This will ensure that *dxc* is available for HLSL shader compilation even though `VULKAN_SDK` points to the MoltenVK project.
 
 === Build with CMake and Xcode
 
