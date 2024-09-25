@@ -93,11 +93,11 @@ void HostImageCopy::load_texture()
 	// Note: All formats that support sampling are required to support this flag
 	// So for the format used here (R8G8B8A8_UNORM) we could skip this check
 	// The flag we need to check is an extension flag, so we need to go through VkFormatProperties3
-	VkFormatProperties3 format_properties_3{};
+	VkFormatProperties3KHR format_properties_3{};
 	format_properties_3.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3_KHR;
 	// Properties3 need to be chained into Properties2
-	VkFormatProperties2 format_properties_2{};
-	format_properties_2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+	VkFormatProperties2KHR format_properties_2{};
+	format_properties_2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2_KHR;
 	format_properties_2.pNext = &format_properties_3;
 	vkGetPhysicalDeviceFormatProperties2KHR(get_device().get_gpu().get_handle(), image_format, &format_properties_2);
 
