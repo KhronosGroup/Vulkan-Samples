@@ -24,10 +24,6 @@
 #include <hpp_glsl_compiler.h>
 #include <platform/window.h>
 
-#if defined(PLATFORM__MACOS)
-#	include <TargetConditionals.h>
-#endif
-
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
 
@@ -427,8 +423,6 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 {
 #if defined(_HPP_VULKAN_LIBRARY)
 	static vk::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
-#elif TARGET_OS_IPHONE
-	static vk::DynamicLoader dl("vulkan.framework/vulkan");
 #else
 	static vk::DynamicLoader dl;
 #endif

@@ -75,6 +75,9 @@ if(APPLE)
 		else()
 			message(FATAL_ERROR "Can't find MoltenVK library. Please install the Vulkan SDK or MoltenVK project and set VULKAN_SDK.")
 		endif()
+	elseif(IOS)
+		# if not using MoltenVK on iOS, set up global Vulkan Library define for iOS Vulkan loader
+		add_compile_definitions(_HPP_VULKAN_LIBRARY="vulkan.framework/vulkan")
 	endif()
 
 	if(CMAKE_GENERATOR MATCHES "Xcode")
