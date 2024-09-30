@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -546,7 +546,7 @@ inline VkPipelineMultisampleStateCreateInfo pipeline_multisample_state_create_in
 }
 
 inline VkPipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(
-    const VkDynamicState *            dynamic_states,
+    const VkDynamicState             *dynamic_states,
     uint32_t                          dynamicStateCount,
     VkPipelineDynamicStateCreateFlags flags = 0)
 {
@@ -651,6 +651,17 @@ inline VkSpecializationInfo specialization_info(uint32_t map_entry_count, const 
 	specialization_info.dataSize      = data_size;
 	specialization_info.pData         = data;
 	return specialization_info;
+}
+
+inline VkTimelineSemaphoreSubmitInfo timeline_semaphore_submit_info(uint32_t wait_value_count, uint64_t *wait_values, uint32_t signal_value_count, uint64_t *signal_values)
+{
+	return VkTimelineSemaphoreSubmitInfo{
+	    VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
+	    NULL,
+	    wait_value_count,
+	    wait_values,
+	    signal_value_count,
+	    signal_values};
 }
 }        // namespace initializers
 }        // namespace vkb

@@ -64,8 +64,8 @@ class PhysicalDevice
 
 	void enumerate_queue_family_performance_query_counters(
 	    uint32_t                            queue_family_index,
-	    uint32_t *                          count,
-	    VkPerformanceCounterKHR *           counters,
+	    uint32_t                           *count,
+	    VkPerformanceCounterKHR            *counters,
 	    VkPerformanceCounterDescriptionKHR *descriptions) const;
 
 	const VkPhysicalDeviceFeatures get_requested_features() const;
@@ -79,7 +79,35 @@ class PhysicalDevice
 	void *get_extension_feature_chain() const;
 
 	/**
-	 * @brief Requests a third party extension to be used by the framework
+	 * @brief Get an extension features struct
+	 *
+	 *        Gets the actual extension features struct with the supported flags set.
+	 *        The flags you're interested in can be set in a corresponding struct in the structure chain
+	 *        by calling PhysicalDevice::add_extension_features()
+	 * @param type The VkStructureType for the extension you are requesting
+	 * @returns The extension feature struct
+	 */
+	template <typename T>
+	T get_extension_features(VkStructureType type)
+	{
+		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
+		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+		{
+			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+			                         " isn't enabled!");
+		}
+
+		// Get the extension features
+		T                            features{type};
+		VkPhysicalDeviceFeatures2KHR physical_device_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR};
+		physical_device_features.pNext = &features;
+		vkGetPhysicalDeviceFeatures2KHR(handle, &physical_device_features);
+
+		return features;
+	}
+
+	/**
+	 * @brief Add an extension features struct to the structure chain used for device creation
 	 *
 	 *        To have the features enabled, this function must be called before the logical device
 	 *        is created. To do this request sample specific features inside
@@ -89,45 +117,73 @@ class PhysicalDevice
 	 *        modify the struct returned by this function, it will propagate the changes to the logical
 	 *        device.
 	 * @param type The VkStructureType for the extension you are requesting
-	 * @returns The extension feature struct
+	 * @returns A reference to extension feature struct in the structure chain
 	 */
 	template <typename T>
-	T &request_extension_features(VkStructureType type)
+	T &add_extension_features(VkStructureType type)
 	{
 		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) + " isn't enabled!");
+			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+			                         " isn't enabled!");
 		}
 
-		// If the type already exists in the map, return a casted pointer to get the extension feature struct
-		auto extension_features_it = extension_features.find(type);
-		if (extension_features_it != extension_features.end())
+		// Add an (empty) extension features into the map of extension features
+		auto [it, added] = extension_features.insert({type, std::make_shared<T>(T{type})});
+		if (added)
 		{
-			return *static_cast<T *>(extension_features_it->second.get());
+			// if it was actually added, also add it to the structure chain
+			if (last_requested_extension_feature)
+			{
+				static_cast<T *>(it->second.get())->pNext = last_requested_extension_feature;
+			}
+			last_requested_extension_feature = it->second.get();
 		}
 
-		// Get the extension feature
-		VkPhysicalDeviceFeatures2KHR physical_device_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR};
-		T                            extension{type};
-		physical_device_features.pNext = &extension;
-		vkGetPhysicalDeviceFeatures2KHR(handle, &physical_device_features);
+		return *static_cast<T *>(it->second.get());
+	}
 
-		// Insert the extension feature into the extension feature map so its ownership is held
-		extension_features.insert({type, std::make_shared<T>(extension)});
-
-		// Pull out the dereferenced void pointer, we can assume its type based on the template
-		auto *extension_ptr = static_cast<T *>(extension_features.find(type)->second.get());
-
-		// If an extension feature has already been requested, we shift the linked list down by one
-		// Making this current extension the new base pointer
-		if (last_requested_extension_feature)
+	/**
+	 * @brief Request an optional features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a log message is generated.
+	 *
+	 * @returns true if the requested feature is supported, otherwise false
+	 */
+	template <typename Feature>
+	VkBool32 request_optional_feature(VkStructureType type, VkBool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		VkBool32 supported = get_extension_features<Feature>(type).*flag;
+		if (supported)
 		{
-			extension_ptr->pNext = last_requested_extension_feature;
+			add_extension_features<Feature>(type).*flag = true;
 		}
-		last_requested_extension_feature = extension_ptr;
+		else
+		{
+			LOGI("Requested optional feature <{}::{}> is not supported", featureName, flagName);
+		}
+		return supported;
+	}
 
-		return *extension_ptr;
+	/**
+	 * @brief Request a required features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a runtime_error is thrown.
+	 */
+	template <typename Feature>
+	void request_required_feature(VkStructureType type, VkBool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		if (get_extension_features<Feature>(type).*flag)
+		{
+			add_extension_features<Feature>(type).*flag = true;
+		}
+		else
+		{
+			throw std::runtime_error(std::string("Requested required feature <") + featureName + "::" + flagName + "> is not supported");
+		}
 	}
 
 	/**
@@ -183,4 +239,8 @@ class PhysicalDevice
 
 	bool high_priority_graphics_queue{};
 };
+
+#define REQUEST_OPTIONAL_FEATURE(gpu, Feature, type, flag) gpu.request_optional_feature<Feature>(type, &Feature::flag, #Feature, #flag)
+#define REQUEST_REQUIRED_FEATURE(gpu, Feature, type, flag) gpu.request_required_feature<Feature>(type, &Feature::flag, #Feature, #flag)
+
 }        // namespace vkb

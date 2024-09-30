@@ -19,6 +19,7 @@
 
 #include <unordered_set>
 
+#include "builder_base.h"
 #include "common/helpers.h"
 #include "common/vk_common.h"
 #include "core/allocated.h"
@@ -34,21 +35,22 @@ namespace core
 class Image;
 using ImagePtr = std::unique_ptr<Image>;
 
-struct ImageBuilder : public allocated::Builder<ImageBuilder, VkImageCreateInfo>
+struct ImageBuilder : public vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>
 {
   private:
-	using Parent = allocated::Builder<ImageBuilder, VkImageCreateInfo>;
+	using Parent = vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>;
 
   public:
 	ImageBuilder(VkExtent3D const &extent) :
 	    Parent(VkImageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, nullptr})
 	{
-		create_info.extent      = extent;
-		create_info.arrayLayers = 1;
-		create_info.mipLevels   = 1;
-		create_info.imageType   = VK_IMAGE_TYPE_2D;
-		create_info.format      = VK_FORMAT_R8G8B8A8_UNORM;
-		create_info.samples     = VK_SAMPLE_COUNT_1_BIT;
+		VkImageCreateInfo &create_info = get_create_info();
+		create_info.extent             = extent;
+		create_info.arrayLayers        = 1;
+		create_info.mipLevels          = 1;
+		create_info.imageType          = VK_IMAGE_TYPE_2D;
+		create_info.format             = VK_FORMAT_R8G8B8A8_UNORM;
+		create_info.samples            = VK_SAMPLE_COUNT_1_BIT;
 	}
 
 	ImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) :
@@ -58,60 +60,61 @@ struct ImageBuilder : public allocated::Builder<ImageBuilder, VkImageCreateInfo>
 
 	ImageBuilder &with_format(VkFormat format)
 	{
-		create_info.format = format;
+		get_create_info().format = format;
 		return *this;
 	}
 
 	ImageBuilder &with_usage(VkImageUsageFlags usage)
 	{
-		create_info.usage = usage;
+		get_create_info().usage = usage;
 		return *this;
 	}
 
 	ImageBuilder &with_sharing_mode(VkSharingMode sharing_mode)
 	{
-		create_info.sharingMode = sharing_mode;
+		get_create_info().sharingMode = sharing_mode;
 		return *this;
 	}
 
 	ImageBuilder &with_flags(VkImageCreateFlags flags)
 	{
-		create_info.flags = flags;
+		get_create_info().flags = flags;
 		return *this;
 	}
 
 	ImageBuilder &with_image_type(VkImageType type)
 	{
-		create_info.imageType = type;
+		get_create_info().imageType = type;
 		return *this;
 	}
 
 	ImageBuilder &with_array_layers(uint32_t layers)
 	{
-		create_info.arrayLayers = layers;
+		get_create_info().arrayLayers = layers;
 		return *this;
 	}
 
 	ImageBuilder &with_mip_levels(uint32_t levels)
 	{
-		create_info.mipLevels = levels;
+		get_create_info().mipLevels = levels;
 		return *this;
 	}
 
 	ImageBuilder &with_sample_count(VkSampleCountFlagBits sample_count)
 	{
-		create_info.samples = sample_count;
+		get_create_info().samples = sample_count;
 		return *this;
 	}
 
 	ImageBuilder &with_tiling(VkImageTiling tiling)
 	{
-		create_info.tiling = tiling;
+		get_create_info().tiling = tiling;
 		return *this;
 	}
 
 	ImageBuilder &with_implicit_sharing_mode()
 	{
+		VkImageCreateInfo &create_info = get_create_info();
 		if (create_info.queueFamilyIndexCount != 0)
 		{
 			create_info.sharingMode = VK_SHARING_MODE_CONCURRENT;

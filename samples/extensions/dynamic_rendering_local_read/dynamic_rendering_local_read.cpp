@@ -71,15 +71,12 @@ void DynamicRenderingLocalRead::request_gpu_features(vkb::PhysicalDevice &gpu)
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}
 #if defined(USE_DYNAMIC_RENDERING)
-	auto &requested_dynamic_rendering_features            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
-	requested_dynamic_rendering_features.dynamicRendering = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR, dynamicRendering);
 
-	auto &requested_dynamic_rendering_local_read_features                     = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES_KHR);
-	requested_dynamic_rendering_local_read_features.dynamicRenderingLocalRead = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES_KHR, dynamicRenderingLocalRead);
 
 	// To simplify barrier setup used for dynamic rendering, we use sync2
-	auto &requested_synchronisation2_features            = gpu.request_extension_features<VkPhysicalDeviceSynchronization2FeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR);
-	requested_synchronisation2_features.synchronization2 = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR, synchronization2);
 #endif
 }
 

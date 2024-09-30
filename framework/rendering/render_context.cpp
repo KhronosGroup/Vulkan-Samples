@@ -327,16 +327,24 @@ void RenderContext::begin_frame()
 
 		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+#if defined(PLATFORM__MACOS)
+			// On Apple platforms, force swapchain update on both VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR
+			// VK_SUBOPTIMAL_KHR may occur on macOS/iOS following changes to swapchain other than extent/size
+			bool swapchain_updated = handle_surface_changes(true);
+#else
 			bool swapchain_updated = handle_surface_changes(result == VK_ERROR_OUT_OF_DATE_KHR);
+#endif
 
 			if (swapchain_updated)
 			{
-				result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
+				// Need to destroy and reallocate acquired_semaphore since it may have already been signaled
+				vkDestroySemaphore(device.get_handle(), acquired_semaphore, nullptr);
+				acquired_semaphore = prev_frame.request_semaphore_with_ownership();
+				result             = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
 			}
 		}
 
-		// VK_SUBOPTIMAL_KHR can legitimately occur in batch mode when exiting certain samples (e.g. afbc, msaa, surface_rotation, swapchain_images)
-		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		if (result != VK_SUCCESS)
 		{
 			prev_frame.reset();
 			return;

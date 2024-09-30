@@ -28,21 +28,6 @@
 namespace
 {
 constexpr uint32_t MIN_THREAD_COUNT = 1;
-struct RequestFeature
-{
-	vkb::PhysicalDevice &gpu;
-	explicit RequestFeature(vkb::PhysicalDevice &gpu) :
-	    gpu(gpu)
-	{}
-
-	template <typename T>
-	RequestFeature &request(VkStructureType s_type, VkBool32 T::*member)
-	{
-		auto &member_feature   = gpu.request_extension_features<T>(s_type);
-		member_feature.*member = VK_TRUE;
-		return *this;
-	}
-};
 
 template <typename T>
 struct CopyBuffer
@@ -113,10 +98,18 @@ RayQueries::~RayQueries()
 
 void RayQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	RequestFeature(gpu)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, &VkPhysicalDeviceBufferDeviceAddressFeatures::bufferDeviceAddress)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, &VkPhysicalDeviceAccelerationStructureFeaturesKHR::accelerationStructure)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR, &VkPhysicalDeviceRayQueryFeaturesKHR::rayQuery);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceAccelerationStructureFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+	                         accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceRayQueryFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR,
+	                         rayQuery);
 }
 
 void RayQueries::render(float delta_time)
@@ -273,16 +266,18 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	{
 		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
 		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-		bottom_level_acceleration_structure->add_triangle_geometry(
-		    *vertex_buffer,
-		    *index_buffer,
-		    *transform_matrix_buffer,
-		    static_cast<uint32_t>(model.indices.size()),
-		    static_cast<uint32_t>(model.vertices.size()) - 1,
-		    sizeof(Vertex),
-		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
-		    get_buffer_device_address(vertex_buffer->get_handle()),
-		    get_buffer_device_address(index_buffer->get_handle()));
+		bottom_level_acceleration_structure->add_triangle_geometry(*vertex_buffer,
+		                                                           *index_buffer,
+		                                                           *transform_matrix_buffer,
+		                                                           static_cast<uint32_t>(model.indices.size()),
+		                                                           static_cast<uint32_t>(model.vertices.size()) - 1,
+		                                                           sizeof(Vertex),
+		                                                           0,
+		                                                           VK_FORMAT_R32G32B32_SFLOAT,
+		                                                           VK_INDEX_TYPE_UINT32,
+		                                                           VK_GEOMETRY_OPAQUE_BIT_KHR,
+		                                                           get_buffer_device_address(vertex_buffer->get_handle()),
+		                                                           get_buffer_device_address(index_buffer->get_handle()));
 	}
 	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
