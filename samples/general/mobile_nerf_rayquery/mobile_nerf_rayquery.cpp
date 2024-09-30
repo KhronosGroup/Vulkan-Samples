@@ -28,21 +28,6 @@
 namespace
 {
 constexpr uint32_t MIN_THREAD_COUNT = 1;
-struct RequestFeature
-{
-	vkb::PhysicalDevice &gpu;
-	explicit RequestFeature(vkb::PhysicalDevice &gpu) :
-	    gpu(gpu)
-	{}
-
-	template <typename T>
-	RequestFeature &request(VkStructureType s_type, VkBool32 T::*member)
-	{
-		auto &member_feature   = gpu.request_extension_features<T>(s_type);
-		member_feature.*member = VK_TRUE;
-		return *this;
-	}
-};
 
 template <typename T>
 struct CopyBuffer
@@ -198,15 +183,14 @@ bool MobileNerfRayQuery::prepare(const vkb::ApplicationOptions &options)
 
 void MobileNerfRayQuery::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	RequestFeature(gpu)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, &VkPhysicalDeviceBufferDeviceAddressFeatures::bufferDeviceAddress)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, &VkPhysicalDeviceAccelerationStructureFeaturesKHR::accelerationStructure)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR, &VkPhysicalDeviceRayQueryFeaturesKHR::rayQuery)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, &VkPhysicalDeviceDescriptorIndexingFeaturesEXT::shaderSampledImageArrayNonUniformIndexing)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, &VkPhysicalDeviceDescriptorIndexingFeaturesEXT::shaderStorageBufferArrayNonUniformIndexing)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, &VkPhysicalDeviceDescriptorIndexingFeaturesEXT::runtimeDescriptorArray)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, &VkPhysicalDeviceDescriptorIndexingFeaturesEXT::descriptorBindingVariableDescriptorCount)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT, &VkPhysicalDeviceScalarBlockLayoutFeaturesEXT::scalarBlockLayout);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayQueryFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR, rayQuery);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, shaderSampledImageArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, shaderStorageBufferArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, runtimeDescriptorArray);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, descriptorBindingVariableDescriptorCount);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceScalarBlockLayoutFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT, scalarBlockLayout);
 }
 
 void MobileNerfRayQuery::render(float delta_time)
@@ -893,7 +877,7 @@ void MobileNerfRayQuery::create_bottom_level_acceleration_structure(int model_en
 		    model.indices.size(),
 		    model.vertices.size(),
 		    sizeof(Vertex),
-		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
+		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_INDEX_TYPE_UINT32, VK_GEOMETRY_OPAQUE_BIT_KHR,
 		    get_buffer_device_address(model.vertex_buffer->get_handle()),
 		    get_buffer_device_address(model.index_buffer->get_handle()));
 	}
