@@ -21,8 +21,8 @@
 
 layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
-layout (binding = 0, rgba32f) uniform image2D tilde_h0_k;
-layout (binding = 1, rgba32f) uniform image2D tilde_h0_minus_k;
+layout (binding = 0, rgba32f) writeonly uniform image2D tilde_h0_k;
+layout (binding = 1, rgba32f) writeonly uniform image2D tilde_h0_minus_k;
 
 layout (std140, binding = 2) readonly buffer InputRandom
 {

@@ -151,6 +151,14 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec3 light_pos   = {100.0f, 15.0f, 10.0f};
 		glm::vec3 light_color = {1.0f, 1.0f, 1.0f};
 		glm::vec3 ocean_color = {0.0f, 0.2423423f, 0.434335435f};
+
+		bool barriers[24]	  = {true,true,true,true,
+		                     true,true,true,true,
+		                     true,true,true,true,
+		                     true,true,true,true,
+		                     true,true,true,true,
+		                     true,true,true,true
+		};
 	} ui;
 
 	uint32_t                           grid_size               = {256U};
@@ -218,8 +226,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 		struct
 		{
-			Pipeline horizontal;
-			Pipeline vertical;
+			Pipeline horizontal;	// fft.comp
+			Pipeline vertical;		// fft.comp
 		} pipelines;
 
 		std::unique_ptr<ImageAttachment> tilde_axis_y = {VK_NULL_HANDLE};
@@ -231,35 +239,35 @@ class SubgroupsOperations : public ApiVulkanSample
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;
+		Pipeline              pipeline;	// fft_invert.comp
 	} fft_inversion;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;
+		Pipeline              pipeline;	// fft_normal_map.comp
 	} fft_normal_map;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;
+		Pipeline              pipeline;	// fft_tilde_h0.comp
 	} initial_tildes;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;
+		Pipeline              pipeline;	// fft_tilde_h.comp
 	} tildes;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;
+		Pipeline              pipeline;	// butterfly_precomp.comp
 	} precompute;
 
 	struct
@@ -272,8 +280,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 		struct
 		{
-			Pipeline _default;
-			Pipeline wireframe;
+			Pipeline _default;	// ocean.*
+			Pipeline wireframe;	// ocean.*
 		} pipelines;
 	} ocean;
 
@@ -287,7 +295,7 @@ class SubgroupsOperations : public ApiVulkanSample
 			skybox_shape.reset();
 		}
 
-		Pipeline              pipeline;
+		Pipeline              pipeline;	// skybox.vert / skybox.frag
 		VkDescriptorSetLayout descriptor_set_layout;
 		VkDescriptorSet       descriptor_set;
 
