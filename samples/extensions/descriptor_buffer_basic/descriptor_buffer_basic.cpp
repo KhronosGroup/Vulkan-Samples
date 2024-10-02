@@ -429,6 +429,12 @@ bool DescriptorBufferBasic::prepare(const vkb::ApplicationOptions &options)
 	device_properties.pNext            = &descriptor_buffer_properties;
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
+	if (descriptor_buffer_properties.maxResourceDescriptorBufferBindings < 2)
+	{
+		LOGE("VkPhysicalDeviceDescriptorBufferPropertiesEXT.maxResourceDescriptorBufferBindings={}. This sample requires at least 2 to run.", descriptor_buffer_properties.maxResourceDescriptorBufferBindings);
+		return false;
+	}
+
 	/*
 	    End of extension specific functions
 	*/
