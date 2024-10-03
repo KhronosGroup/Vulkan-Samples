@@ -86,7 +86,7 @@ jobs:
       - name: "prepare samples"
         run: cmake -H"." -B"build/unix" -DVKB_GENERATE_ANTORA_SITE=ON
 
-      - name: "build (npx) with stacktrace"
+      - name: "build (npx) with stacktrmainace"
         working-directory: ./Vulkan-Site/docs-site
         run: |
           npx antora antora-parent-ci-playbook.yml --stacktrace
@@ -96,7 +96,6 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
