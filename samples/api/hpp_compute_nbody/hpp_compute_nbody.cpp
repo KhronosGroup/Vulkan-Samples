@@ -299,8 +299,8 @@ vk::DescriptorSetLayout HPPComputeNBody::create_graphics_descriptor_set_layout()
 vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 {
 	// Load shaders
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("compute_nbody/particle.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("compute_nbody/particle.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("compute_nbody", "particle.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("compute_nbody", "particle.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_bindings(0, sizeof(Particle), vk::VertexInputRate::eVertex);
@@ -399,7 +399,7 @@ void HPPComputeNBody::prepare_compute()
 
 	// Compute shader uniform buffer block
 	compute.uniform_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(compute.ubo), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(compute.ubo), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_compute_uniform_buffers(1.0f);
 
 	// Get compute queue
@@ -415,7 +415,7 @@ void HPPComputeNBody::prepare_compute()
 	// create the compute pipelines
 	// 1st pass - Particle movement calculations
 	{
-		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody/particle_calculate.comp", vk::ShaderStageFlagBits::eCompute);
+		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody", "particle_calculate.comp", vk::ShaderStageFlagBits::eCompute);
 
 		// Set some shader parameters via specialization constants
 		struct MovementSpecializationData
@@ -448,7 +448,7 @@ void HPPComputeNBody::prepare_compute()
 
 	// 2nd pass - Particle integration
 	{
-		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody/particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
+		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody", "particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
 
 		vk::SpecializationMapEntry integration_specialization_entry(0, 0, sizeof(compute.work_group_size));
 		vk::SpecializationInfo     specialization_info(1, &integration_specialization_entry, sizeof(compute.work_group_size), &compute.work_group_size);
@@ -555,9 +555,9 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 
 	// Staging
 	// SSBO won't be changed on the host after upload so copy to device local memory
-	vkb::core::HPPBuffer staging_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), particle_buffer);
+	vkb::core::BufferCpp staging_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), particle_buffer);
 
-	compute.storage_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	compute.storage_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                                storage_buffer_size,
 	                                                                vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer |
 	                                                                    vk::BufferUsageFlagBits::eTransferDst,
@@ -583,7 +583,7 @@ void HPPComputeNBody::prepare_graphics()
 
 	// Vertex shader uniform buffer block
 	graphics.uniform_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(graphics.ubo), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(graphics.ubo), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_graphics_uniform_buffers();
 
 	graphics.descriptor_set_layout = create_graphics_descriptor_set_layout();

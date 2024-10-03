@@ -21,7 +21,7 @@ jobs:
       PARALLEL: -j 2
     runs-on: "${{ matrix.platform }}-latest"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: "recursive"
       - if: ${{ matrix.platform == 'ubuntu' }}
@@ -61,7 +61,7 @@ jobs:
       PARALLEL: -j 2
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: "recursive"
       - name: Install RandR headers
@@ -85,7 +85,7 @@ jobs:
         build_type: [Debug]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -115,7 +115,7 @@ jobs:
         build_type: [Debug]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: "recursive"
 

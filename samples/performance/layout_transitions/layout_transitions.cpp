@@ -53,7 +53,7 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert"};
 	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag"};
 
-	std::unique_ptr<vkb::Subpass> gbuffer_pass =
+	std::unique_ptr<vkb::rendering::SubpassC> gbuffer_pass =
 	    std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 	gbuffer_pass->set_output_attachments({1, 2, 3});
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
@@ -62,7 +62,7 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 	auto lighting_vs = vkb::ShaderSource{"deferred/lighting.vert"};
 	auto lighting_fs = vkb::ShaderSource{"deferred/lighting.frag"};
 
-	std::unique_ptr<vkb::Subpass> lighting_subpass =
+	std::unique_ptr<vkb::rendering::SubpassC> lighting_subpass =
 	    std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, get_scene());
 	lighting_subpass->set_input_attachments({1, 2, 3});
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
@@ -255,7 +255,7 @@ void LayoutTransitions::draw_gui()
 	    /* lines = */ 2);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_layout_transitions()
+std::unique_ptr<vkb::VulkanSampleC> create_layout_transitions()
 {
 	return std::make_unique<LayoutTransitions>();
 }

@@ -80,8 +80,7 @@ void HPPMeshShading::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &meshFeatures      = gpu.request_extension_features<vk::PhysicalDeviceMeshShaderFeaturesEXT>();
-	meshFeatures.meshShader = true;
+	HPP_REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceMeshShaderFeaturesEXT, meshShader);
 }
 
 /*
@@ -129,8 +128,8 @@ void HPPMeshShading::render(float delta_time)
 vk::Pipeline HPPMeshShading::create_pipeline()
 {
 	// Load our SPIR-V shaders.
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("mesh_shading/ms.mesh", vk::ShaderStageFlagBits::eMeshEXT),
-	                                                                load_shader("mesh_shading/ps.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("mesh_shading", "ms.mesh", vk::ShaderStageFlagBits::eMeshEXT),
+	                                                                load_shader("mesh_shading", "ps.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// We will have one viewport and scissor box.
 	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
@@ -193,7 +192,7 @@ void HPPMeshShading::draw()
 	HPPApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::Cpp>> create_hpp_mesh_shading()
+std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_mesh_shading()
 {
 	return std::make_unique<HPPMeshShading>();
 }

@@ -49,6 +49,8 @@ class StdFileSystem final : public FileSystem
 
 	virtual void remove(const Path &path) override;
 
+	virtual void set_external_storage_directory(const std::string &dir) override;
+
 	const Path &external_storage_directory() const override;
 
 	const Path &temp_directory() const override;

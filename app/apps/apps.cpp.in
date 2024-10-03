@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +20,6 @@
 
 @SAMPLE_INCLUDE_FILES@
 
-@TEST_INCLUDE_FILES@
-
 namespace apps
 {
 std::vector<AppInfo> apps = {
@@ -30,10 +28,6 @@ std::vector<AppInfo> apps = {
 
 std::vector<SampleInfo> samples = {
 @SAMPLE_INFO_LIST@
-};
-
-std::vector<TestInfo> tests = {
-@TEST_INFO_LIST@
 };
 
 AppInfo *get_app(const std::string &id)
@@ -123,18 +117,6 @@ SampleInfo * get_sample(const std::string &id) {
 		}
 	}
 	return nullptr;
-}
-
-std::vector<AppInfo *> get_tests()
-{
-	std::vector<AppInfo *> app_ptrs;
-
-	for (auto &app : tests)
-	{
-		app_ptrs.push_back(&app);
-	}
-
-	return app_ptrs;
 }
 
 }        // namespace apps

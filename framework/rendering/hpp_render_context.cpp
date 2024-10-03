@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -302,10 +302,19 @@ void HPPRenderContext::begin_frame()
 
 		if (result == vk::Result::eSuboptimalKHR || result == vk::Result::eErrorOutOfDateKHR)
 		{
+#if defined(PLATFORM__MACOS)
+			// On Apple platforms, force swapchain update on both eSuboptimalKHR and eErrorOutOfDateKHR
+			// eSuboptimalKHR may occur on macOS/iOS following changes to swapchain other than extent/size
+			bool swapchain_updated = handle_surface_changes(true);
+#else
 			bool swapchain_updated = handle_surface_changes(result == vk::Result::eErrorOutOfDateKHR);
+#endif
 
 			if (swapchain_updated)
 			{
+				// Need to destroy and reallocate acquired_semaphore since it may have already been signaled
+				device.get_handle().destroySemaphore(acquired_semaphore);
+				acquired_semaphore                   = prev_frame.request_semaphore_with_ownership();
 				std::tie(result, active_frame_index) = swapchain->acquire_next_image(acquired_semaphore);
 			}
 		}

@@ -186,6 +186,7 @@ bool enable_all_extensions(const std::vector<const char *>           required_ex
 Instance::Instance(const std::string                            &application_name,
                    const std::unordered_map<const char *, bool> &required_extensions,
                    const std::vector<const char *>              &required_validation_layers,
+                   const std::vector<VkLayerSettingEXT>         &required_layer_settings,
                    bool                                          headless,
                    uint32_t                                      api_version)
 {
@@ -215,7 +216,7 @@ Instance::Instance(const std::string                            &application_nam
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
+	bool portability_enumeration_available = enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
 #ifdef USE_VALIDATION_LAYER_FEATURES
@@ -340,7 +341,7 @@ Instance::Instance(const std::string                            &application_nam
 
 		instance_info.pNext = &debug_utils_create_info;
 	}
-	else
+	else if (has_debug_report)
 	{
 		debug_report_create_info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 		debug_report_create_info.pfnCallback = debug_callback;
@@ -350,7 +351,10 @@ Instance::Instance(const std::string                            &application_nam
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	if (portability_enumeration_available)
+	{
+		instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	}
 #endif
 
 	// Some of the specialized layers need to be enabled explicitly
@@ -376,6 +380,17 @@ Instance::Instance(const std::string                            &application_nam
 	}
 #endif
 
+	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT};
+
+	// If layer settings extension enabled by sample, then activate layer settings during instance creation
+	if (std::find(enabled_extensions.begin(), enabled_extensions.end(), VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) != enabled_extensions.end())
+	{
+		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(required_layer_settings.size());
+		layerSettingsCreateInfo.pSettings    = required_layer_settings.data();
+		layerSettingsCreateInfo.pNext        = instance_info.pNext;
+		instance_info.pNext                  = &layerSettingsCreateInfo;
+	}
+
 	// Create the Vulkan instance
 	VkResult result = vkCreateInstance(&instance_info, nullptr, &handle);
 
@@ -395,7 +410,7 @@ Instance::Instance(const std::string                            &application_nam
 			throw VulkanException(result, "Could not create debug utils messenger");
 		}
 	}
-	else
+	else if (has_debug_report)
 	{
 		result = vkCreateDebugReportCallbackEXT(handle, &debug_report_create_info, nullptr, &debug_report_callback);
 		if (result != VK_SUCCESS)

@@ -55,30 +55,9 @@ MeshShaderCulling::~MeshShaderCulling()
 void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Check whether the device supports task and mesh shaders
-	VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features;
-	mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
-	mesh_shader_features.pNext = VK_NULL_HANDLE;
-	VkPhysicalDeviceFeatures2 features2;
-	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	features2.pNext = &mesh_shader_features;
-	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
-
-	if (!mesh_shader_features.taskShader || !mesh_shader_features.meshShader)
-	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support task and mesh shaders!");
-	}
-	if (!mesh_shader_features.meshShaderQueries)
-	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support mesh shader queries!");
-	}
-
-	// Enable extension features required by this sample
-	// These are passed to device creation via a pNext structure chain
-	auto &meshFeatures = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
-
-	meshFeatures.taskShader = VK_TRUE;
-	meshFeatures.meshShader = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShaderQueries);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, taskShader);
 
 	// Pipeline statistics
 	auto &requested_features = gpu.get_mutable_requested_features();
@@ -116,7 +95,7 @@ void MeshShaderCulling::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
@@ -268,10 +247,10 @@ void MeshShaderCulling::prepare_pipelines()
 
 void MeshShaderCulling::prepare_uniform_buffers()
 {
-	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                     sizeof(ubo_cull),
-	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(ubo_cull),
+	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -377,7 +356,7 @@ bool MeshShaderCulling::resize(uint32_t width, uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shader_culling()
+std::unique_ptr<vkb::VulkanSampleC> create_mesh_shader_culling()
 {
 	return std::make_unique<MeshShaderCulling>();
 }

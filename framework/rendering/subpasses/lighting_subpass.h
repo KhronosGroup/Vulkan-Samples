@@ -23,7 +23,7 @@
 #include "common/glm_common.h"
 
 // This value is per type of light that we feed into the shader
-#define MAX_DEFERRED_LIGHT_COUNT 32
+#define MAX_DEFERRED_LIGHT_COUNT 48
 
 namespace vkb
 {
@@ -47,15 +47,15 @@ struct alignas(16) LightUniform
 
 struct alignas(16) DeferredLights
 {
-	Light directional_lights[MAX_DEFERRED_LIGHT_COUNT];
-	Light point_lights[MAX_DEFERRED_LIGHT_COUNT];
-	Light spot_lights[MAX_DEFERRED_LIGHT_COUNT];
+	vkb::rendering::Light directional_lights[MAX_DEFERRED_LIGHT_COUNT];
+	vkb::rendering::Light point_lights[MAX_DEFERRED_LIGHT_COUNT];
+	vkb::rendering::Light spot_lights[MAX_DEFERRED_LIGHT_COUNT];
 };
 
 /**
  * @brief Lighting pass of Deferred Rendering
  */
-class LightingSubpass : public Subpass
+class LightingSubpass : public vkb::rendering::SubpassC
 {
   public:
 	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);

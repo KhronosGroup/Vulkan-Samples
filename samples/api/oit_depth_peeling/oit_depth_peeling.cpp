@@ -361,7 +361,7 @@ void OITDepthPeeling::create_samplers()
 
 void OITDepthPeeling::create_constant_buffers()
 {
-	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	scene_constants = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void OITDepthPeeling::create_descriptors()
@@ -572,7 +572,7 @@ void OITDepthPeeling::update_scene_constants()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_oit_depth_peeling()
+std::unique_ptr<vkb::VulkanSampleC> create_oit_depth_peeling()
 {
 	return std::make_unique<OITDepthPeeling>();
 }

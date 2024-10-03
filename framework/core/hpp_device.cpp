@@ -18,7 +18,6 @@
 #include <core/hpp_device.h>
 
 #include <common/hpp_error.h>
-#include <core/hpp_buffer.h>
 #include <core/hpp_command_pool.h>
 
 namespace vkb
@@ -90,11 +89,13 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 	// live in the same command buffer as beginQuery
 	if (is_extension_supported(VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME) && is_extension_supported(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME))
 	{
-		auto perf_counter_features     = gpu.request_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>();
-		auto host_query_reset_features = gpu.request_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>();
+		auto perf_counter_features     = gpu.get_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>();
+		auto host_query_reset_features = gpu.get_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>();
 
 		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
+			gpu.add_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>().performanceCounterQueryPools = true;
+			gpu.add_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>().hostQueryReset                    = true;
 			enabled_extensions.push_back(VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME);
 			enabled_extensions.push_back(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
 			LOGI("Performance query enabled");
@@ -332,7 +333,7 @@ std::pair<vk::Image, vk::DeviceMemory> HPPDevice::create_image(vk::Format format
 	return std::make_pair(image, memory);
 }
 
-void HPPDevice::copy_buffer(vkb::core::HPPBuffer &src, vkb::core::HPPBuffer &dst, vk::Queue queue, vk::BufferCopy *copy_region) const
+void HPPDevice::copy_buffer(vkb::core::BufferCpp &src, vkb::core::BufferCpp &dst, vk::Queue queue, vk::BufferCopy *copy_region) const
 {
 	assert(dst.get_size() <= src.get_size());
 	assert(src.get_handle());

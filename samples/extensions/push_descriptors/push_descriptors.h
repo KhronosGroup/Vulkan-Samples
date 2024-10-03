@@ -40,10 +40,10 @@ class PushDescriptors : public ApiVulkanSample
 
 	struct Cube
 	{
-		Texture                            texture;
-		std::unique_ptr<vkb::core::Buffer> uniform_buffer;
-		glm::vec3                          rotation;
-		glm::mat4                          model_mat;
+		Texture                             texture;
+		std::unique_ptr<vkb::core::BufferC> uniform_buffer;
+		glm::vec3                           rotation;
+		glm::mat4                           model_mat;
 	};
 	std::array<Cube, 2> cubes;
 
@@ -54,7 +54,7 @@ class PushDescriptors : public ApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> scene;
+		std::unique_ptr<vkb::core::BufferC> scene;
 	} uniform_buffers;
 
 	struct UboScene
@@ -83,4 +83,4 @@ class PushDescriptors : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_push_descriptors();
+std::unique_ptr<vkb::VulkanSampleC> create_push_descriptors();

@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2022-2023, Sascha Willems
+- Copyright (c) 2022-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -244,7 +244,7 @@ void drawFrame()
 		2 * sizeof(uint64_t),
 		&time_stamp_with_availibility[Current_frame * max_frames_in_flight],
 		2 * sizeof(uint64_t),
-		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);		
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
 
 	// Display time stamp for the current frame if available
 	if (time_stamp_with_availibility[current_frame * 2 + 1] != 0) {
@@ -281,4 +281,3 @@ This is pretty much the same as the `vkCmdWriteTimestamp` function used in this 
 == Verdict
 
 Even though timestamp queries are limited due to how a GPU works, they can still be useful for profiling and finding performance GPU bottlenecks.
-ul for profiling and finding performance GPU bottlenecks.

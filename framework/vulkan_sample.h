@@ -24,10 +24,11 @@
 #include "platform/application.h"
 #include "rendering/hpp_render_pipeline.h"
 #include "scene_graph/components/camera.h"
+#include "scene_graph/hpp_scene.h"
 #include "scene_graph/scripts/animation.h"
 
 #if defined(PLATFORM__MACOS)
-#include <TargetConditionals.h>
+#	include <TargetConditionals.h>
 #endif
 
 namespace vkb
@@ -143,8 +144,10 @@ class VulkanSample : public vkb::Application
 	using RenderContextType  = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
 	using RenderPipelineType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderPipeline, vkb::RenderPipeline>::type;
 	using RenderTargetType   = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 	using Extent2DType       = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using LayerSettingType   = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
 	using SurfaceFormatType  = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
 	using SurfaceType        = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
@@ -250,6 +253,12 @@ class VulkanSample : public vkb::Application
 	 */
 	void add_instance_extension(const char *extension, bool optional = false);
 
+	/**
+	 * @brief Add a sample-specific layer setting
+	 * @param layerSetting The layer setting
+	 */
+	void add_layer_setting(LayerSettingType const &layerSetting);
+
 	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
@@ -265,7 +274,7 @@ class VulkanSample : public vkb::Application
 	InstanceType const                   &get_instance() const;
 	RenderPipelineType                   &get_render_pipeline();
 	RenderPipelineType const             &get_render_pipeline() const;
-	sg::Scene                            &get_scene();
+	SceneType                            &get_scene();
 	StatsType                            &get_stats();
 	SurfaceType                           get_surface() const;
 	std::vector<SurfaceFormatType>       &get_surface_priority_list();
@@ -358,6 +367,13 @@ class VulkanSample : public vkb::Application
 	 */
 	std::unordered_map<const char *, bool> const &get_instance_extensions() const;
 
+	/**
+	 * @brief Get sample-specific layer settings.
+	 *
+	 * @return Vector of layer settings. Default is empty vector.
+	 */
+	std::vector<LayerSettingType> const &get_layer_settings() const;
+
 	/// <summary>
 	/// PRIVATE MEMBERS
 	/// </summary>
@@ -385,7 +401,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Holds all scene information
 	 */
-	std::unique_ptr<sg::Scene> scene;
+	std::unique_ptr<vkb::scene_graph::HPPScene> scene;
 
 	std::unique_ptr<vkb::HPPGui> gui;
 
@@ -415,6 +431,9 @@ class VulkanSample : public vkb::Application
 
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
+
+	/** @brief Vector of layer settings to be enabled for this example (must be set in the derived constructor) */
+	std::vector<vk::LayerSettingEXT> layer_settings;
 
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
 	uint32_t api_version = VK_API_VERSION_1_0;
@@ -460,6 +479,19 @@ inline void VulkanSample<bindingType>::add_instance_extension(const char *extens
 }
 
 template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_layer_setting(LayerSettingType const &layerSetting)
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		layer_settings.push_back(layerSetting);
+	}
+	else
+	{
+		layer_settings.push_back(reinterpret_cast<VkLayerSettingEXT const &>(layerSetting));
+	}
+}
+
+template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSample<bindingType>::create_device(PhysicalDeviceType &gpu)
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -478,7 +510,7 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance(bool headless)
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), headless, api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -508,7 +540,7 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate};
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
@@ -765,6 +797,19 @@ inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::
 }
 
 template <vkb::BindingType bindingType>
+inline std::vector<typename VulkanSample<bindingType>::LayerSettingType> const &VulkanSample<bindingType>::get_layer_settings() const
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return layer_settings;
+	}
+	else
+	{
+		return reinterpret_cast<std::vector<VkLayerSettingEXT> const &>(layer_settings);
+	}
+}
+
+template <vkb::BindingType bindingType>
 inline typename VulkanSample<bindingType>::RenderContextType const &VulkanSample<bindingType>::get_render_context() const
 {
 	assert(render_context && "Render context is not valid");
@@ -821,10 +866,17 @@ inline typename VulkanSample<bindingType>::RenderPipelineType &VulkanSample<bind
 }
 
 template <vkb::BindingType bindingType>
-inline sg::Scene &VulkanSample<bindingType>::get_scene()
+inline typename VulkanSample<bindingType>::SceneType &VulkanSample<bindingType>::get_scene()
 {
 	assert(scene && "Scene not loaded");
-	return *scene;
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return *scene;
+	}
+	else
+	{
+		return reinterpret_cast<vkb::sg::Scene &>(*scene);
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -957,9 +1009,9 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	// initialize C++-Bindings default dispatcher, first step
 #if TARGET_OS_IPHONE
-    static vk::DynamicLoader dl("vulkan.framework/vulkan");
+	static vk::DynamicLoader dl("vulkan.framework/vulkan");
 #else
-	static vk::DynamicLoader dl;
+	static vk::DynamicLoader        dl;
 #endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 
@@ -1044,6 +1096,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		}
 	}
 
+#ifdef VKB_ENABLE_PORTABILITY
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	add_device_extension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, /*optional=*/true);
+#endif
+
 #ifdef VKB_VULKAN_DEBUG
 	if (!debug_utils)
 	{
@@ -1105,7 +1162,7 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 	else
 	{
 		gui = std::make_unique<vkb::HPPGui>(
-		    *reinterpret_cast<VulkanSample<vkb::BindingType::Cpp> *>(this), window, reinterpret_cast<vkb::stats::HPPStats const *>(stats), font_size, explicit_update);
+		    *reinterpret_cast<VulkanSampleCpp *>(this), window, reinterpret_cast<vkb::stats::HPPStats const *>(stats), font_size, explicit_update);
 	}
 }
 
@@ -1365,5 +1422,8 @@ inline void VulkanSample<bindingType>::update_stats(float delta_time)
 		}
 	}
 }
+
+using VulkanSampleC   = VulkanSample<vkb::BindingType::C>;
+using VulkanSampleCpp = VulkanSample<vkb::BindingType::Cpp>;
 
 }        // namespace vkb

@@ -54,36 +54,38 @@ class AccelerationStructure
 	 * @param vertex_stride Stride of the vertex structure
 	 * @param transform_offset Offset of this geometry in the transform data buffer
 	 * @param vertex_format Format of the vertex structure
+	 * @param index_type Type of the indices
 	 * @param flags Ray tracing geometry flags
 	 * @param vertex_buffer_data_address set this if don't want the vertex_buffer data_address
 	 * @param index_buffer_data_address set this if don't want the index_buffer data_address
 	 * @param transform_buffer_data_address set this if don't want the transform_buffer data_address
 	 */
-	uint64_t add_triangle_geometry(std::unique_ptr<vkb::core::Buffer> &vertex_buffer,
-	                               std::unique_ptr<vkb::core::Buffer> &index_buffer,
-	                               std::unique_ptr<vkb::core::Buffer> &transform_buffer,
-	                               uint32_t                            triangle_count,
-	                               uint32_t                            max_vertex,
-	                               VkDeviceSize                        vertex_stride,
-	                               uint32_t                            transform_offset              = 0,
-	                               VkFormat                            vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
-	                               VkGeometryFlagsKHR                  flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
-	                               uint64_t                            vertex_buffer_data_address    = 0,
-	                               uint64_t                            index_buffer_data_address     = 0,
-	                               uint64_t                            transform_buffer_data_address = 0);
+	uint64_t add_triangle_geometry(vkb::core::BufferC &vertex_buffer,
+	                               vkb::core::BufferC &index_buffer,
+	                               vkb::core::BufferC &transform_buffer,
+	                               uint32_t            triangle_count,
+	                               uint32_t            max_vertex,
+	                               VkDeviceSize        vertex_stride,
+	                               uint32_t            transform_offset              = 0,
+	                               VkFormat            vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
+	                               VkIndexType         index_type                    = VK_INDEX_TYPE_UINT32,
+	                               VkGeometryFlagsKHR  flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
+	                               uint64_t            vertex_buffer_data_address    = 0,
+	                               uint64_t            index_buffer_data_address     = 0,
+	                               uint64_t            transform_buffer_data_address = 0);
 
-	void update_triangle_geometry(uint64_t triangleUUID, std::unique_ptr<vkb::core::Buffer> &vertex_buffer,
-	                              std::unique_ptr<vkb::core::Buffer> &index_buffer,
-	                              std::unique_ptr<vkb::core::Buffer> &transform_buffer,
-	                              uint32_t                            triangle_count,
-	                              uint32_t                            max_vertex,
-	                              VkDeviceSize                        vertex_stride,
-	                              uint32_t                            transform_offset              = 0,
-	                              VkFormat                            vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
-	                              VkGeometryFlagsKHR                  flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
-	                              uint64_t                            vertex_buffer_data_address    = 0,
-	                              uint64_t                            index_buffer_data_address     = 0,
-	                              uint64_t                            transform_buffer_data_address = 0);
+	void update_triangle_geometry(uint64_t triangleUUID, std::unique_ptr<vkb::core::BufferC> &vertex_buffer,
+	                              std::unique_ptr<vkb::core::BufferC> &index_buffer,
+	                              std::unique_ptr<vkb::core::BufferC> &transform_buffer,
+	                              uint32_t                             triangle_count,
+	                              uint32_t                             max_vertex,
+	                              VkDeviceSize                         vertex_stride,
+	                              uint32_t                             transform_offset              = 0,
+	                              VkFormat                             vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
+	                              VkGeometryFlagsKHR                   flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
+	                              uint64_t                             vertex_buffer_data_address    = 0,
+	                              uint64_t                             index_buffer_data_address     = 0,
+	                              uint64_t                             transform_buffer_data_address = 0);
 
 	/**
 	 * @brief Adds instance geometry to the acceleration structure (only valid for top level)
@@ -93,12 +95,12 @@ class AccelerationStructure
 	 * @param transform_offset Offset of this geometry in the transform data buffer
 	 * @param flags Ray tracing geometry flags
 	 */
-	uint64_t add_instance_geometry(std::unique_ptr<vkb::core::Buffer> &instance_buffer,
-	                               uint32_t                            instance_count,
-	                               uint32_t                            transform_offset = 0,
-	                               VkGeometryFlagsKHR                  flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
+	uint64_t add_instance_geometry(std::unique_ptr<vkb::core::BufferC> &instance_buffer,
+	                               uint32_t                             instance_count,
+	                               uint32_t                             transform_offset = 0,
+	                               VkGeometryFlagsKHR                   flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
 
-	void update_instance_geometry(uint64_t instance_UID, std::unique_ptr<vkb::core::Buffer> &instance_buffer,
+	void update_instance_geometry(uint64_t instance_UID, std::unique_ptr<vkb::core::BufferC> &instance_buffer,
 	                              uint32_t           instance_count,
 	                              uint32_t           transform_offset = 0,
 	                              VkGeometryFlagsKHR flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
@@ -119,7 +121,7 @@ class AccelerationStructure
 
 	uint64_t get_device_address() const;
 
-	vkb::core::Buffer *get_buffer() const
+	vkb::core::BufferC *get_buffer() const
 	{
 		return buffer.get();
 	}
@@ -148,11 +150,11 @@ class AccelerationStructure
 		bool                               updated = false;
 	};
 
-	std::unique_ptr<vkb::core::Buffer> scratch_buffer;
+	std::unique_ptr<vkb::core::BufferC> scratch_buffer;
 
 	std::map<uint64_t, Geometry> geometries{};
 
-	std::unique_ptr<vkb::core::Buffer> buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> buffer{nullptr};
 };
 }        // namespace core
 }        // namespace vkb

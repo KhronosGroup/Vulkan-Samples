@@ -214,13 +214,26 @@ void OpenGLInterop::prepare_shared_resources()
 		imageCreateInfo.usage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		VK_CHECK(vkCreateImage(deviceHandle, &imageCreateInfo, nullptr, &sharedTexture.image));
 
+		VkMemoryDedicatedAllocateInfo dedicated_allocate_info;
+		dedicated_allocate_info.sType  = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
+		dedicated_allocate_info.pNext  = nullptr;
+		dedicated_allocate_info.buffer = VK_NULL_HANDLE;
+		dedicated_allocate_info.image  = sharedTexture.image;
+
 		VkMemoryRequirements memReqs{};
 		vkGetImageMemoryRequirements(get_device().get_handle(), sharedTexture.image, &memReqs);
 
-		VkExportMemoryAllocateInfo exportAllocInfo{
-		    VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO, nullptr,
-		    VK_EXTERNAL_MEMORY_HANDLE_TYPE};
-		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &exportAllocInfo};
+		// In order to export an external handle later, we need to tell it explicitly during memory allocation
+		VkExportMemoryAllocateInfo export_memory_allocate_Info;
+		export_memory_allocate_Info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
+		export_memory_allocate_Info.pNext = &dedicated_allocate_info;
+#if WIN32
+		export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+#else
+		export_memory_allocate_Info.handleTypes       = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+#endif
+
+		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &export_memory_allocate_Info};
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex                               = get_device().get_memory_type(memReqs.memoryTypeBits,
@@ -292,18 +305,18 @@ void OpenGLInterop::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
 }
@@ -451,8 +464,8 @@ void OpenGLInterop::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
-	shader_stages[0] = load_shader("texture_loading/texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("texture_loading/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("texture_loading", "texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("texture_loading", "texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -500,10 +513,10 @@ void OpenGLInterop::prepare_pipelines()
 void OpenGLInterop::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        sizeof(ubo_vs),
-	                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         sizeof(ubo_vs),
+	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -556,6 +569,9 @@ bool OpenGLInterop::prepare(const vkb::ApplicationOptions &options)
 	glGenSemaphoresEXT(1, &gl_data->gl_complete);
 	// memory
 	glCreateMemoryObjectsEXT(1, &gl_data->mem);
+
+	GLint dedicated = GL_TRUE;
+	glMemoryObjectParameterivEXT(gl_data->mem, GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated);
 
 	// Platform specific import.
 	glImportSemaphore(gl_data->gl_ready, GL_HANDLE_TYPE, shareHandles.gl_ready);
@@ -761,7 +777,7 @@ OpenGLInterop::~OpenGLInterop()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_gl_interop()
+std::unique_ptr<vkb::VulkanSampleC> create_open_gl_interop()
 {
 	return std::make_unique<OpenGLInterop>();
 }

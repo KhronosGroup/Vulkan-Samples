@@ -190,21 +190,8 @@ bool TextureCompressionComparison::is_texture_format_supported(const TextureComp
 	return supported_by_default || supported_by_feature || supported_by_extension;
 }
 
-void TextureCompressionComparison::get_available_texture_formats()
-{
-	available_texture_formats.clear();
-
-	const auto all_formats = get_texture_formats();
-
-	// Determine which formats are supported by this device
-	std::copy_if(all_formats.cbegin(), all_formats.cend(), std::back_inserter(available_texture_formats), [this](const auto &texture_format) {
-		return is_texture_format_supported(texture_format);
-	});
-}
-
 void TextureCompressionComparison::load_assets()
 {
-	get_available_texture_formats();
 	load_scene("scenes/sponza/Sponza01.gltf");
 	if (!has_scene())
 	{
@@ -284,7 +271,7 @@ class CompressedImage : public vkb::sg::Image
 
 std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTexture2 *ktx_texture, const std::string &name)
 {
-	std::unique_ptr<vkb::core::Buffer> staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), ktx_texture->dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> staging_buffer = std::make_unique<vkb::core::BufferC>(get_device(), ktx_texture->dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	memcpy(staging_buffer->map(), ktx_texture->pData, ktx_texture->dataSize);
 
 	const auto vk_format = static_cast<VkFormat>(ktx_texture->vkFormat);
@@ -308,13 +295,13 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 			VkBufferImageCopy buffer_image_copy = {};
 			buffer_image_copy.imageSubresource  = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, mip_level, 0, 1};
 			buffer_image_copy.imageExtent       = mip_extent;
-			buffer_image_copy.bufferOffset      = offset;
+			buffer_image_copy.bufferOffset      = static_cast<uint32_t>(offset);
 			buffer_copies.push_back(buffer_image_copy);
 
 			vkb::sg::Mipmap mip_map;
 			mip_map.extent = buffer_image_copy.imageExtent;
 			mip_map.level  = mip_level;
-			mip_map.offset = offset;
+			mip_map.offset = static_cast<uint32_t>(offset);
 			mip_maps.push_back(mip_map);
 		}
 
@@ -329,25 +316,13 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 
 	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
-	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, buffer_copies.size(), buffer_copies.data());
+	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(buffer_copies.size()), buffer_copies.data());
 
 	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle(), true);
 
 	return image_out;
-}
-
-std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::string &filename)
-{
-	if (filename.empty())
-	{
-		return {};
-	}
-
-	std::ifstream                  is(filename, std::ios::binary);
-	std::istream_iterator<uint8_t> start(is), end;
-	return {start, end};
 }
 
 std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format, const std::string &name)

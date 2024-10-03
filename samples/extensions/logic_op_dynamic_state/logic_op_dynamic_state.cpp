@@ -202,14 +202,19 @@ void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	auto &requested_extended_dynamic_state2_features =
-	    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
-	requested_extended_dynamic_state2_features.extendedDynamicState2        = VK_TRUE;
-	requested_extended_dynamic_state2_features.extendedDynamicState2LogicOp = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
+	                         extendedDynamicState2);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
+	                         extendedDynamicState2LogicOp);
 
-	auto &requested_extended_dynamic_state_feature =
-	    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
-	requested_extended_dynamic_state_feature.extendedDynamicState = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
+	                         extendedDynamicState);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -222,9 +227,9 @@ void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
 void LogicOpDynamicState::prepare_uniform_buffers()
 {
 	uniform_buffers.common =
-	    std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_common), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_common), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.baseline =
-	    std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_baseline), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_baseline), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -321,8 +326,8 @@ void LogicOpDynamicState::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("logic_op_dynamic_state/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("logic_op_dynamic_state/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("logic_op_dynamic_state", "baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("logic_op_dynamic_state", "baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Use the pNext to point to the rendering create structure */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -375,8 +380,8 @@ void LogicOpDynamicState::create_pipeline()
 
 	rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-	shader_stages[0] = load_shader("logic_op_dynamic_state/background.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("logic_op_dynamic_state/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("logic_op_dynamic_state", "background.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("logic_op_dynamic_state", "background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.background));
 }
@@ -609,24 +614,24 @@ void LogicOpDynamicState::model_data_creation()
 	                                          UINT32_MAX,
 	                                          2, 3, 6, 7};
 
-	vkb::core::Buffer vertex_pos_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), vertices_pos);
-	vkb::core::Buffer vertex_norm_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices_norm);
-	vkb::core::Buffer index_staging       = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
+	vkb::core::BufferC vertex_pos_staging  = vkb::core::BufferC::create_staging_buffer(get_device(), vertices_pos);
+	vkb::core::BufferC vertex_norm_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices_norm);
+	vkb::core::BufferC index_staging       = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	cube.vertices_pos = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        vertex_buffer_size,
-	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
-
-	cube.vertices_norm = std::make_unique<vkb::core::Buffer>(get_device(),
+	cube.vertices_pos = std::make_unique<vkb::core::BufferC>(get_device(),
 	                                                         vertex_buffer_size,
 	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
-	cube.indices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.vertices_norm = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                          vertex_buffer_size,
+	                                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                          VMA_MEMORY_USAGE_GPU_ONLY);
+
+	cube.indices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -689,7 +694,7 @@ void LogicOpDynamicState::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_logic_op_dynamic_state()
+std::unique_ptr<vkb::VulkanSampleC> create_logic_op_dynamic_state()
 {
 	return std::make_unique<LogicOpDynamicState>();
 }

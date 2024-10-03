@@ -118,8 +118,8 @@ void ColorWriteEnable::prepare_pipelines()
 		std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {};
 
 		// Vertex stage of the pipeline
-		shader_stages[0] = load_shader("color_write_enable/triangle_separate_channels.vert", VK_SHADER_STAGE_VERTEX_BIT);
-		shader_stages[1] = load_shader("color_write_enable/triangle_separate_channels.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shader_stages[0] = load_shader("color_write_enable", "triangle_separate_channels.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages[1] = load_shader("color_write_enable", "triangle_separate_channels.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// We need to specify the pipeline layout and the render pass description up front as well.
 		VkGraphicsPipelineCreateInfo pipe = vkb::initializers::pipeline_create_info(pipeline_layouts.color, render_pass);
@@ -147,8 +147,8 @@ void ColorWriteEnable::prepare_pipelines()
 		std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {};
 
 		// Vertex stage of the pipeline
-		shader_stages[0] = load_shader("color_write_enable/composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-		shader_stages[1] = load_shader("color_write_enable/composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shader_stages[0] = load_shader("color_write_enable", "composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages[1] = load_shader("color_write_enable", "composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Specify we will use triangle lists to draw geometry.
 		VkPipelineInputAssemblyStateCreateInfo input_assembly = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
@@ -239,10 +239,11 @@ void ColorWriteEnable::create_attachments()
 
 void ColorWriteEnable::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	{
-		auto &features            = gpu.request_extension_features<VkPhysicalDeviceColorWriteEnableFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT);
-		features.colorWriteEnable = VK_TRUE;
-	}
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceColorWriteEnableFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT,
+	                         colorWriteEnable);
+
 	{
 		auto &features            = gpu.get_mutable_requested_features();
 		features.independentBlend = VK_TRUE;
@@ -544,7 +545,7 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 		                                                ImGuiColorEditFlags_NoSidePreview |
 		                                                    ImGuiColorEditFlags_NoSmallPreview |
 		                                                    ImGuiColorEditFlags_Float |
-                                                        ImGuiColorEditFlags_HDR))
+		                                                    ImGuiColorEditFlags_HDR))
 		{
 			rebuild_command_buffers();
 		}

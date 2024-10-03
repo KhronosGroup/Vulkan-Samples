@@ -435,7 +435,14 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	bool portability_enumeration_available = false;
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](vk::ExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		portability_enumeration_available = true;
+	}
 #endif
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -499,7 +506,10 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	if (portability_enumeration_available)
+	{
+		instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	}
 #endif
 
 	// Create the Vulkan instance
@@ -508,7 +518,7 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 	// initialize function pointers for instance
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
 
-#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR) || defined(VK_USE_PLATFORM_ANDROID_KHR)
 	// we need some additional initializing for this platform!
 	if (volkInitialize())
 	{

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,7 +41,7 @@ GeometrySubpass::GeometrySubpass(RenderContext &render_context, ShaderSource &&v
 void GeometrySubpass::prepare()
 {
 	// Build all shader variance upfront
-	auto &device = render_context.get_device();
+	auto &device = get_render_context().get_device();
 	for (auto &mesh : meshes)
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
@@ -143,7 +143,7 @@ void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &no
 {
 	GlobalUniform global_uniform;
 
-	global_uniform.camera_view_proj = camera.get_pre_rotation() * vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
+	global_uniform.camera_view_proj = camera.get_pre_rotation() * vkb::rendering::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
 	auto &render_frame = get_render_context().get_active_frame();
 
@@ -169,7 +169,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 	prepare_pipeline_state(command_buffer, front_face, sub_mesh.get_material()->double_sided);
 
 	MultisampleState multisample_state{};
-	multisample_state.rasterization_samples = sample_count;
+	multisample_state.rasterization_samples = get_sample_count();
 	command_buffer.set_multisample_state(multisample_state);
 
 	auto &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), sub_mesh.get_shader_variant());
@@ -235,7 +235,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 		if (buffer_iter != sub_mesh.vertex_buffers.end())
 		{
-			std::vector<std::reference_wrapper<const core::Buffer>> buffers;
+			std::vector<std::reference_wrapper<const vkb::core::BufferC>> buffers;
 			buffers.emplace_back(std::ref(buffer_iter->second));
 
 			// Bind vertex buffers only for the attribute locations defined
@@ -259,7 +259,7 @@ void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFr
 	command_buffer.set_rasterization_state(rasterization_state);
 
 	MultisampleState multisample_state{};
-	multisample_state.rasterization_samples = sample_count;
+	multisample_state.rasterization_samples = get_sample_count();
 	command_buffer.set_multisample_state(multisample_state);
 }
 
@@ -268,7 +268,7 @@ PipelineLayout &GeometrySubpass::prepare_pipeline_layout(CommandBuffer &command_
 	// Sets any specified resource modes
 	for (auto &shader_module : shader_modules)
 	{
-		for (auto &resource_mode : resource_mode_map)
+		for (auto &resource_mode : get_resource_mode_map())
 		{
 			shader_module->set_resource_mode(resource_mode.first, resource_mode.second);
 		}

@@ -149,7 +149,7 @@ void CommandBufferUsage::draw_gui()
 	    /* body = */ [&]() {
 		    // Secondary command buffer count
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
-		    ImGui::SliderInt("", &gui_secondary_cmd_buf_count, 0, max_secondary_command_buffer_count, "Secondary CmdBuffs: %d");
+		    ImGui::SliderInt("##secCmdBufs", &gui_secondary_cmd_buf_count, 0, max_secondary_command_buffer_count, "Secondary CmdBuffs: %d");
 		    ImGui::SameLine();
 		    ImGui::Text("Draws/buf: %.1f", subpass->get_avg_draws_per_buffer());
 
@@ -271,9 +271,10 @@ vkb::CommandBuffer *CommandBufferUsage::ForwardSubpassSecondary::record_draw_sec
                                                                                        const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
                                                                                        uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
 {
-	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	const auto &queue = get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto &secondary_command_buffer = render_context.get_active_frame().request_command_buffer(queue, state.command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY, thread_index);
+	auto &secondary_command_buffer =
+	    get_render_context().get_active_frame().request_command_buffer(queue, state.command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY, thread_index);
 
 	secondary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 
@@ -426,7 +427,7 @@ CommandBufferUsage::ForwardSubpassSecondaryState &CommandBufferUsage::ForwardSub
 	return state;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_command_buffer_usage()
+std::unique_ptr<vkb::VulkanSampleC> create_command_buffer_usage()
 {
 	return std::make_unique<CommandBufferUsage>();
 }

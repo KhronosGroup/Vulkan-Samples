@@ -177,8 +177,8 @@ vk::DescriptorSetLayout HPPTextureLoading::create_descriptor_set_layout()
 vk::Pipeline HPPTextureLoading::create_pipeline()
 {
 	// Load shaders
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {{load_shader("texture_loading/texture.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                 load_shader("texture_loading/texture.frag", vk::ShaderStageFlagBits::eFragment)}};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {{load_shader("texture_loading", "texture.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                 load_shader("texture_loading", "texture.frag", vk::ShaderStageFlagBits::eFragment)}};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
@@ -245,12 +245,12 @@ void HPPTextureLoading::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(
+	vertex_buffer = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
 	// Index buffer
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(
+	index_buffer = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
@@ -529,7 +529,7 @@ void HPPTextureLoading::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
 	vertex_shader_data_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(vertex_shader_data), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(vertex_shader_data), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

@@ -46,16 +46,18 @@ void ImageCompressionControlSample::request_gpu_features(vkb::PhysicalDevice &gp
 {
 	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 	{
-		auto &compression_control_features = gpu.request_extension_features<VkPhysicalDeviceImageCompressionControlFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT);
-
-		compression_control_features.imageCompressionControl = VK_TRUE;
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceImageCompressionControlFeaturesEXT,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT,
+		                         imageCompressionControl);
 	}
 
 	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
 	{
-		auto &compression_control_swapchain_features = gpu.request_extension_features<VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT);
-
-		compression_control_swapchain_features.imageCompressionControlSwapchain = VK_TRUE;
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT,
+		                         imageCompressionControlSwapchain);
 	}
 }
 
@@ -74,7 +76,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	vkb::ShaderSource scene_vs("base.vert");
 	vkb::ShaderSource scene_fs("base.frag");
 	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
-	scene_subpass->set_output_attachments({(int) Attachments::Color});
+	scene_subpass->set_output_attachments({static_cast<int>(Attachments::Color)});
 
 	// Forward rendering pass
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
@@ -98,7 +100,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	// Hide GUI compression options other than default if the required extension is not supported
 	if (!get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 	{
-		for (int i = 0; i < (int) TargetCompression::Count; i++)
+		for (int i = 0; i < static_cast<int>(TargetCompression::Count); i++)
 		{
 			if (static_cast<TargetCompression>(i) != TargetCompression::Default)
 			{
@@ -172,7 +174,7 @@ void ImageCompressionControlSample::create_render_context()
 			new_surface_priority_list.push_back(remaining_format);
 		}
 
-		VulkanSample<vkb::BindingType::C>::create_render_context(new_surface_priority_list);
+		vkb::VulkanSampleC::create_render_context(new_surface_priority_list);
 	}
 
 	/**
@@ -457,7 +459,7 @@ void ImageCompressionControlSample::render(vkb::CommandBuffer &command_buffer)
 	postprocessing_pass.set_uniform_data(sin(elapsed_time));
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
-	postprocessing_subpass.bind_sampled_image("color_sampler", (int) Attachments::Color);
+	postprocessing_subpass.bind_sampled_image("color_sampler", static_cast<int>(Attachments::Color));
 
 	postprocessing_pipeline->draw(command_buffer, get_render_context().get_active_frame().get_render_target());
 }
@@ -557,7 +559,7 @@ void ImageCompressionControlSample::draw_gui()
 			    ImGui::SameLine();
 		    }
 
-		    if (gui_skip_compression_values.size() >= (int) TargetCompression::Count - 1)
+		    if (gui_skip_compression_values.size() >= static_cast<int>(TargetCompression::Count) - 1)
 		    {
 			    // Single or no compression options available on this device
 			    ImGui::Text("(Extensions are not supported)");
@@ -576,7 +578,7 @@ void ImageCompressionControlSample::draw_gui()
 	    lines);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_image_compression_control()
+std::unique_ptr<vkb::VulkanSampleC> create_image_compression_control()
 {
 	return std::make_unique<ImageCompressionControlSample>();
 }

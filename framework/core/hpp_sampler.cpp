@@ -24,7 +24,7 @@ namespace vkb
 namespace core
 {
 HPPSampler::HPPSampler(vkb::core::HPPDevice &device, const vk::SamplerCreateInfo &info) :
-    vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::Sampler>{device.get_handle().createSampler(info), &device}
+    vkb::core::VulkanResourceCpp<vk::Sampler>{device.get_handle().createSampler(info), &device}
 {}
 
 HPPSampler::HPPSampler(HPPSampler &&other) :

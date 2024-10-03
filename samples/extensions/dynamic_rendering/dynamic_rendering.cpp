@@ -93,8 +93,10 @@ void DynamicRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	if (enable_dynamic)
 	{
-		auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
-		requested_dynamic_rendering.dynamicRendering = VK_TRUE;
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+		                         dynamicRendering);
 	}
 
 	if (gpu.get_features().samplerAnisotropy)
@@ -115,23 +117,24 @@ void DynamicRendering::load_assets()
 
 void DynamicRendering::prepare_uniform_buffers()
 {
-	ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	ubo = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
 
 void DynamicRendering::update_uniform_buffers()
 {
-	ubo_vs.projection       = camera.matrices.perspective;
-	ubo_vs.modelview        = camera.matrices.view * glm::mat4(1.f);
-	ubo_vs.skybox_modelview = camera.matrices.view;
+	ubo_vs.projection        = camera.matrices.perspective;
+	ubo_vs.modelview         = camera.matrices.view * glm::mat4(1.f);
+	ubo_vs.inverse_modelview = glm::inverse(camera.matrices.view);
+	ubo_vs.skybox_modelview  = camera.matrices.view;
 	ubo->convert_and_update(ubo_vs);
 }
 
 void DynamicRendering::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
 
@@ -250,8 +253,8 @@ void DynamicRendering::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_rendering/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Create graphics pipeline for dynamic rendering
 	VkFormat color_rendering_format = get_render_context().get_format();
@@ -459,7 +462,7 @@ void DynamicRendering::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_rendering()
 {
 	return std::make_unique<DynamicRendering>();
 }

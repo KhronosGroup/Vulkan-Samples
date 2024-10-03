@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2021-2024, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -189,69 +189,58 @@ This sample could trivially be done with binary semaphores of course, so in this
 
 === Async worker thread - out-of-order submission
 
-The key aspect we use to demonstrate out of order submission is a dedicated worker thread which does all work related to simulation on the async compute queue.
-It never synchronizes with the main thread except at teardown, so the only way it synchronizes is through timeline semaphores.
-Submission order is completely out-of-order in this case and forward progress in the async queue is generally blocked by the main thread submitting more work.
+The key aspects we use to demonstrate out of order submission are dedicated workers thread which perform all work related to simulation on the async compute queue, and drawing on the graphics queue.
+They never synchronize with the main thread except at teardown, so the only way to synchronize them is through timeline semaphores.
+To avoid issues when running the sample on Windows platforms (particularly when resizing the window), forward progress in the queues is throttled by the main thread (i.e. only allowing the timeline to advance
+when a render call is active).
+
 
 === Data flow
 
 To simulate "Game of Life", we allocate two images of 64x64 RGBA8.
 First, one image is initialized with initial state, and from here there is a ping-pong where image N is updated, while reading from image 1 - N.
-
 After updating image N, the main thread will sample from image N.
-Before async compute updates the same image index N again, it must wait for graphics queue to complete.
-With the double buffer in play, the async queue can run ahead for a little while and it will be mostly stalled by graphics queue.
 
-The sequential flow of the rendering is something like, assuming two timeline semaphores A and G:
+The sequential flow of the rendering is something like:
 
-* Async compute write image 1.
-* Async compute signal A = 1.
-* Graphics wait A = 1.
-* Graphics read image 1.
-* Graphics signal G = 1.
-* Async compute wait A = 1.
-(Could use pipeline barrier of course, but hey!)
-* Async compute write image 0.
-* Async compute signal A = 2.
-* Graphics wait A = 2.
-* Graphics read image 0.
-* Graphics signal G = 2.
-* Async compute wait G = 1.
-(Resolve write-after-read hazard)
-* Async compute wait A = 2.
-(Could use pipeline barrier of course, but hey!)
-* Async compute wait host A = 1.
-(Wait for command buffer to retire so we can re-record it!)
-* Async compute write image 1.
-* Async compute signal A = 3.
-* Graphics wait A = 3.
-* Graphics read image 1.
-* Graphics signal G = 3.
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
+* Main: acquires the swapchain image
+* Main: signal "submit"
+* Main: wait for "present"
+* Compute: wait for "image_acquired" (binary semaphore)
+* Graphics: wait for "draw"
+* Compute: write image
+* Compute: signal "draw"
+* Compute: wait for "end of frame"
+* Graphics: read image
+* Graphics: signal "present"
+* Graphics: wait for "end of frame"
+* Main: present swapchain
+* Main: signals "end of frame"
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
 
 And so on ...
 With out of order signal, we can end up observing this order of submissions instead.
 
-* Async compute write image 1.
-* Async compute signal A = 1.
-* Async compute wait A = 1.
-* Async compute write image 0.
-* Async compute signal A = 2.
-* Async compute wait G = 1.
-(Out of order submission, queue progress is stalled, but we can keep recording)
-* Async compute wait A = 2.
-* Async compute wait host A = 1.
-* Async compute write image 1.
-* Async compute signal A = 3.
-* Graphics wait A = 1.
-* Graphics read image 1.
-* Graphics signal G = 1.
-(Unblocks queue forward progress)
-* Graphics wait A = 2.
-* Graphics read image 0.
-* Graphics signal G = 2.
-* Graphics wait A = 3.
-* Graphics read image 1.
-* Graphics signal G = 3.
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
+* Main: acquires the swapchain image
+* Main: signal "submit"
+* Graphics: wait for "draw"
+* Compute: wait for "image_acquired" (binary semaphore)
+* Compute: write image
+* Compute: signal "draw"
+* Graphics: read image
+* Graphics: signal "present"
+* Main: wait for "present"
+* Main: present swapchain
+* Compute: wait for "end of frame"
+* Main: signals "end of frame"
+* Graphics: wait for "end of frame"
+* Compute: wait for "submit"
+* Graphics: wait for "submit"
 
 When submitting out of order, it is important that you don't just submit work way ahead of where the GPU actually is, since the latency becomes extremely large.
 The natural place to keep submission explosion under control here is the place where we wait for the timeline on host, since we need to re-record command buffers anyways.
@@ -269,37 +258,44 @@ Instead, just wait for timeline semaphores on host to "drain" the GPU, or if you
 Similar to `vkDeviceWaitIdle`, when tearing down the application, an out-of-order submission might be waiting on work which never comes, and that queue becomes deadlocked.
 To alleviate this, we can make use of host signalling of timeline semaphores to unblock everything in one fell swoop.
 
-From `TimelineSemaphore::finish()`:
+From `TimelineSemaphore::finish_timeline_workers()`:
 
 [,cpp]
 ----
-// Draining queues which submit out-of-order can be quite tricky, since QueueWaitIdle can deadlock for threads which want to run ahead.
-// If we call Submit waiting for a semaphore which is yet to be signalled,
-// QueueWaitIdle will not finish until a signal in another thread happens.
-// Here's an approach we can use to safely tear down the queue.
+	graphics_worker.alive = false;
+	compute_worker.alive  = false;
 
-// Drain the main thread timeline.
-// The async queue might be stalled waiting on the main queue to finish rendering a future frame which it never completes,
-// but we might never hit that count, since we're tearing down the application now.
-wait_timeline_cpu(main_thread_timeline);
+	signal_timeline(Timeline::MAX_STAGES);
 
-// Now we're guaranteed that the graphics timeline is at N and the async compute queue is blocked at N + num_frames + 1, waiting for N + 1 to finish.
-// Since we're not reading any more in graphics queue, we can jump bump the timeline on CPU towards infinity.
-// On the next loop iteration, we will exit the rendering loop and QueueWaitIdle will not be blocked on async thread anymore.
-// Just bump the timeline by INT32_MAX which is min-spec for maxTimelineSemaphoreValueDifference.
-// This is a useful way to mark a timeline semaphore as "permanently" signalled.
-main_thread_timeline.timeline += std::numeric_limits<int32_t>::max();
+	if (graphics_worker.thread.joinable())
+	{
+		graphics_worker.thread.join();
+	}
 
-// Order matters here, this works kinda like a condition variable.
-// If the timeline update is observed, we should see that the worker is not alive anymore.
-async_compute_worker.alive = false;
-signal_timeline_cpu(main_thread_timeline, main_thread_timeline_lock);
+	if (compute_worker.thread.joinable())
+	{
+		compute_worker.thread.join();
+	}
+----
 
-// This will now complete in finite time.
-if (async_compute_worker.thread.joinable())
-{
-    async_compute_worker.thread.join();
-}
+From `TimelineSemaphore::finish_timeline_workers()`:
+
+[,cpp]
+----
+	graphics_worker.alive = false;
+	compute_worker.alive  = false;
+
+	signal_timeline(Timeline::MAX_STAGES);
+
+	if (graphics_worker.thread.joinable())
+	{
+		graphics_worker.thread.join();
+	}
+
+	if (compute_worker.thread.joinable())
+	{
+		compute_worker.thread.join();
+	}
 ----
 
 === Out-of-order submission fallbacks for single queue implementations
@@ -364,10 +360,6 @@ ApiVulkanSample::submit_frame();
 
 Timeline semaphores grants a lot of flexibility to applications.
 With modern approaches of task graphs, many threads and free flowing synchronization, timeline semaphores simplify a lot of things and removes the need for emulating a similar concept with binary semaphores and fences.
-
-Be careful with out-of-order submissions.
-There are various pitfalls with this approach which have been outlined in this sample.
-s.
 
 Be careful with out-of-order submissions.
 There are various pitfalls with this approach which have been outlined in this sample.

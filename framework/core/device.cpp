@@ -27,7 +27,7 @@ Device::Device(PhysicalDevice                        &gpu,
                VkSurfaceKHR                           surface,
                std::unique_ptr<DebugUtils>          &&debug_utils,
                std::unordered_map<const char *, bool> requested_extensions) :
-    vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>{VK_NULL_HANDLE, this},        // Recursive, but valid
+    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
     resource_cache{*this}
@@ -89,11 +89,17 @@ Device::Device(PhysicalDevice                        &gpu,
 	if (is_extension_supported("VK_KHR_performance_query") &&
 	    is_extension_supported("VK_EXT_host_query_reset"))
 	{
-		auto perf_counter_features     = gpu.request_extension_features<VkPhysicalDevicePerformanceQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
-		auto host_query_reset_features = gpu.request_extension_features<VkPhysicalDeviceHostQueryResetFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
+		auto perf_counter_features =
+		    gpu.get_extension_features<VkPhysicalDevicePerformanceQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
+		auto host_query_reset_features =
+		    gpu.get_extension_features<VkPhysicalDeviceHostQueryResetFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
 
 		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
+			gpu.add_extension_features<VkPhysicalDevicePerformanceQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR)
+			    .performanceCounterQueryPools = VK_TRUE;
+			gpu.add_extension_features<VkPhysicalDeviceHostQueryResetFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES).hostQueryReset =
+			    VK_TRUE;
 			enabled_extensions.push_back("VK_KHR_performance_query");
 			enabled_extensions.push_back("VK_EXT_host_query_reset");
 			LOGI("Performance query enabled");
@@ -407,7 +413,7 @@ const Queue &Device::get_suitable_graphics_queue() const
 	return get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 }
 
-void Device::copy_buffer(vkb::core::Buffer &src, vkb::core::Buffer &dst, VkQueue queue, VkBufferCopy *copy_region)
+void Device::copy_buffer(vkb::core::BufferC &src, vkb::core::BufferC &dst, VkQueue queue, VkBufferCopy *copy_region)
 {
 	assert(dst.get_size() <= src.get_size());
 	assert(src.get_handle());

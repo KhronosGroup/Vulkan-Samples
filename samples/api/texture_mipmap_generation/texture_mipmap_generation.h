@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,12 +61,12 @@ class TextureMipMapGeneration : public ApiVulkanSample
 		float     lod_bias      = 0.0f;
 		int32_t   sampler_index = 2;
 	} ubo;
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
-	VkPipeline            pipeline;
-	VkPipelineLayout      pipeline_layout;
-	VkDescriptorSet       descriptor_set;
-	VkDescriptorSetLayout descriptor_set_layout;
+	VkPipeline            pipeline              = VK_NULL_HANDLE;
+	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
+	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
+	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 
 	TextureMipMapGeneration();
 	~TextureMipMapGeneration();

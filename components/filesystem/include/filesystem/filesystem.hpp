@@ -54,8 +54,9 @@ class FileSystem
 	virtual void                 write_file(const Path &path, const std::vector<uint8_t> &data) = 0;
 	virtual void                 remove(const Path &path)                                       = 0;
 
-	virtual const Path &external_storage_directory() const = 0;
-	virtual const Path &temp_directory() const             = 0;
+	virtual void        set_external_storage_directory(const std::string &dir) = 0;
+	virtual const Path &external_storage_directory() const                     = 0;
+	virtual const Path &temp_directory() const                                 = 0;
 
 	void write_file(const Path &path, const std::string &data);
 

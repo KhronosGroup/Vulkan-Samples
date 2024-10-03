@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Arm Limited and Contributors
+/* Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@
 
 @SAMPLE_NAME@::~@SAMPLE_NAME@()
 {
-	if (device)
+	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), sample_pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), sample_pipeline_layout, nullptr);
@@ -168,7 +168,7 @@ void @SAMPLE_NAME@::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_@SAMPLE_NAME_FILE@()
+std::unique_ptr<vkb::VulkanSampleC> create_@SAMPLE_NAME_FILE@()
 {
 	return std::make_unique<@SAMPLE_NAME@>();
 }

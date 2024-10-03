@@ -194,8 +194,7 @@ bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &op
 
 void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto &features_16bit_storage = gpu.request_extension_features<VkPhysicalDevice16BitStorageFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
-	supports_16bit_storage       = features_16bit_storage.storageInputOutput16 == VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, storageInputOutput16);
 }
 
 void KHR16BitStorageInputOutputSample::update(float delta_time)
@@ -246,7 +245,7 @@ void KHR16BitStorageInputOutputSample::recreate_swapchain()
 	get_render_context().update_swapchain(image_usage_flags);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_storage_input_output()
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_storage_input_output()
 {
 	return std::make_unique<KHR16BitStorageInputOutputSample>();
 }

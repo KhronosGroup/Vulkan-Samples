@@ -241,7 +241,7 @@ void PostProcessingComputePass::draw(CommandBuffer &command_buffer, RenderTarget
 	{
 		auto &render_frame = parent->get_render_context().get_active_frame();
 
-		uniform_alloc = std::make_unique<BufferAllocation>(render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_data.size()));
+		uniform_alloc = std::make_unique<BufferAllocationC>(render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_data.size()));
 		uniform_alloc->update(uniform_data);
 
 		// Bind buffer to set = 0, binding = 0

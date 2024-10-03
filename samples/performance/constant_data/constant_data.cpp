@@ -55,7 +55,7 @@ inline MVPUniform fill_mvp(vkb::sg::Node &node, vkb::sg::Camera &camera)
 
 	mvp.model = transform.get_world_matrix();
 
-	mvp.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
+	mvp.camera_view_proj = vkb::rendering::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
 	mvp.scale = glm::mat4(1.0f);
 
@@ -125,8 +125,10 @@ void ConstantData::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
 	}
-
-	gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
+	else
+	{
+		throw std::runtime_error("Requested required feature <VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics> is not supported");
+	}
 }
 
 void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
@@ -276,7 +278,7 @@ void ConstantData::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_constant_data()
+std::unique_ptr<vkb::VulkanSampleC> create_constant_data()
 {
 	return std::make_unique<ConstantData>();
 }
@@ -284,7 +286,7 @@ std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_constant_data()
 void ConstantData::ConstantDataSubpass::prepare()
 {
 	// Build all shader variance upfront
-	auto &device = render_context.get_device();
+	auto &device = get_render_context().get_device();
 
 	for (auto &mesh : meshes)
 	{
@@ -295,7 +297,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 			// Copied from vkb::ForwardSubpass
 			variant.add_definitions({"SCENE_MESH_COUNT " + std::to_string(scene.get_components<vkb::sg::SubMesh>().size())});
 			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
-			variant.add_definitions(vkb::light_type_definitions);
+			variant.add_definitions(vkb::rendering::light_type_definitions);
 
 			// If struct size is 256 we add a definition so the uniform has more values
 			if (struct_size == 256)

@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2023, Sascha Willems
- * Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2023-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,7 +33,7 @@ class MemoryBudget : public ApiVulkanSample
   private:
 	// Memory budget extension related variables
 	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
-	VkPhysicalDeviceMemoryProperties2         device_memory_properties{};
+	VkPhysicalDeviceMemoryProperties2KHR      device_memory_properties{};
 
 	struct ConvertedMemory
 	{
@@ -74,9 +74,9 @@ class MemoryBudget : public ApiVulkanSample
 	// Contains the instanced data
 	struct InstanceBuffer
 	{
-		std::unique_ptr<vkb::core::Buffer> buffer;
-		size_t                             size = 0;
-		VkDescriptorBufferInfo             descriptor{};
+		std::unique_ptr<vkb::core::BufferC> buffer;
+		size_t                              size = 0;
+		VkDescriptorBufferInfo              descriptor{};
 	} instance_buffer;
 
 	struct UBOVS
@@ -90,7 +90,7 @@ class MemoryBudget : public ApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> scene;
+		std::unique_ptr<vkb::core::BufferC> scene;
 	} uniform_buffers;
 
 	VkPipelineLayout pipeline_layout{};

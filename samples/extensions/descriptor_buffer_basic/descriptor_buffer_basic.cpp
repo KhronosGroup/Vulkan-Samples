@@ -71,12 +71,16 @@ void DescriptorBufferBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	// Enable features required for this example
 
 	// We need device addresses for buffers in certain places
-	auto &requested_buffer_device_address_features               = gpu.request_extension_features<VkPhysicalDeviceBufferDeviceAddressFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
-	requested_buffer_device_address_features.bufferDeviceAddress = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+	                         bufferDeviceAddress);
 
 	// We need to enable the descriptor buffer feature of the VK_EXT_descriptor_buffer extension
-	auto &requested_buffer_descriptor_buffer_features            = gpu.request_extension_features<VkPhysicalDeviceDescriptorBufferFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT);
-	requested_buffer_descriptor_buffer_features.descriptorBuffer = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceDescriptorBufferFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
+	                         descriptorBuffer);
 }
 
 void DescriptorBufferBasic::build_command_buffers()
@@ -268,8 +272,8 @@ void DescriptorBufferBasic::prepare_pipelines()
 	pipeline_create_info.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("descriptor_buffer_basic/cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("descriptor_buffer_basic/cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("descriptor_buffer_basic", "cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("descriptor_buffer_basic", "cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
@@ -281,16 +285,16 @@ void DescriptorBufferBasic::prepare_pipelines()
 void DescriptorBufferBasic::prepare_descriptor_buffer()
 {
 	// This buffer will contain resource descriptors for all the uniform buffers (one per cube and one with global matrices)
-	uniform_binding_descriptor.buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                        (static_cast<uint32_t>(cubes.size()) + 1) * uniform_binding_descriptor.size,
-	                                                                        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_binding_descriptor.buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                         (static_cast<uint32_t>(cubes.size()) + 1) * uniform_binding_descriptor.size,
+	                                                                         VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Samplers and combined images need to be stored in a separate buffer due to different flags (VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT) (one image per cube)
-	image_binding_descriptor.buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      static_cast<uint32_t>(cubes.size()) * image_binding_descriptor.size,
-	                                                                      VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	image_binding_descriptor.buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       static_cast<uint32_t>(cubes.size()) * image_binding_descriptor.size,
+	                                                                       VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Put the descriptors into the above buffers
 
@@ -346,18 +350,18 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 void DescriptorBufferBasic::prepare_uniform_buffers()
 {
 	// Vertex shader scene uniform buffer block
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(UboScene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(UboScene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Vertex shader cube model uniform buffer blocks
 	for (auto &cube : cubes)
 	{
-		cube.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-		                                                          sizeof(glm::mat4),
-		                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+		cube.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                           sizeof(glm::mat4),
+		                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffers();
@@ -448,7 +452,9 @@ bool DescriptorBufferBasic::prepare(const vkb::ApplicationOptions &options)
 void DescriptorBufferBasic::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (animate)
 	{
@@ -468,7 +474,7 @@ void DescriptorBufferBasic::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_buffer_basic()
+std::unique_ptr<vkb::VulkanSampleC> create_descriptor_buffer_basic()
 {
 	return std::make_unique<DescriptorBufferBasic>();
 }

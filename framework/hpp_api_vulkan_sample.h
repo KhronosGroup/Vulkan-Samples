@@ -53,6 +53,7 @@ struct HPPVertex
 	glm::vec2 uv;
 	glm::vec4 joint0;
 	glm::vec4 weight0;
+	glm::vec3 color;
 };
 
 /**
@@ -60,7 +61,7 @@ struct HPPVertex
  *
  * See vkb::ApiVulkanSample for documentation
  */
-class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
+class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 {
   public:
 	HPPApiVulkanSample() = default;
@@ -200,8 +201,11 @@ class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 	 * @brief Loads in a single model from a GLTF file
 	 * @param file The filename of the model to load
 	 * @param index The index of the model to load from the GLTF file (default: 0)
+	 * @param storage_buffer Set true to store model in SSBO
+	 * @param additional_buffer_usage_flags Additional buffer usage flags to be applied to vertex and index buffers
 	 */
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> load_model(const std::string &file, uint32_t index = 0);
+	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> load_model(
+	    const std::string &file, uint32_t index = 0, bool storage_buffer = false, vk::BufferUsageFlags additional_buffer_usage_flags = {});
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer
@@ -303,6 +307,14 @@ class HPPApiVulkanSample : public vkb::VulkanSample<vkb::BindingType::Cpp>
 	 * @param src_language The shader language
 	 */
 	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
+
+	/**
+	 * @brief Load a SPIR-V shader based on current shader language selection
+	 * @param sample_folder_name Base folder where the shaders are located (without GLSL/HLSL sub folder)
+	 * @param shader_filename Base name of the shader file
+	 * @param stage The shader stage
+	 */
+	vk::PipelineShaderStageCreateInfo load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage);
 
 	/**
 	 * @brief Updates the overlay

@@ -91,16 +91,16 @@ class MultiDrawIndirect : public ApiVulkanSample
 		uint32_t                              n_mip_maps;
 	};
 
-	std::vector<SceneModel>            models;
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	std::unique_ptr<vkb::core::Buffer> model_information_buffer;
-	std::unique_ptr<vkb::core::Buffer> scene_uniform_buffer;
-	std::vector<Texture>               textures;
-	std::vector<VkDescriptorImageInfo> image_descriptors;
-	bool                               m_freeze_cull      = false;
-	bool                               m_enable_mdi       = true;
-	bool                               m_requires_rebuild = false;
+	std::vector<SceneModel>             models;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	std::unique_ptr<vkb::core::BufferC> model_information_buffer;
+	std::unique_ptr<vkb::core::BufferC> scene_uniform_buffer;
+	std::vector<Texture>                textures;
+	std::vector<VkDescriptorImageInfo>  image_descriptors;
+	bool                                m_freeze_cull      = false;
+	bool                                m_enable_mdi       = true;
+	bool                                m_requires_rebuild = false;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
@@ -118,11 +118,11 @@ class MultiDrawIndirect : public ApiVulkanSample
 	VkDescriptorSet       gpu_cull_descriptor_set{VK_NULL_HANDLE};
 
 	// Device Address
-	VkPipeline                         device_address_pipeline{VK_NULL_HANDLE};
-	VkPipelineLayout                   device_address_pipeline_layout{VK_NULL_HANDLE};
-	VkDescriptorSetLayout              device_address_descriptor_set_layout{VK_NULL_HANDLE};
-	VkDescriptorSet                    device_address_descriptor_set{VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> device_address_buffer{nullptr};
+	VkPipeline                          device_address_pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout                    device_address_pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSetLayout               device_address_descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSet                     device_address_descriptor_set{VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> device_address_buffer{nullptr};
 
 	std::vector<vkb::CommandBuffer> compute_command_buffers{};
 	const vkb::Queue               *compute_queue{nullptr};
@@ -131,8 +131,8 @@ class MultiDrawIndirect : public ApiVulkanSample
 	// CPU Draw Calls
 	void                                      cpu_cull();
 	std::vector<VkDrawIndexedIndirectCommand> cpu_commands;
-	std::unique_ptr<vkb::core::Buffer>        cpu_staging_buffer;
-	std::unique_ptr<vkb::core::Buffer>        indirect_call_buffer;
+	std::unique_ptr<vkb::core::BufferC>       cpu_staging_buffer;
+	std::unique_ptr<vkb::core::BufferC>       indirect_call_buffer;
 
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
@@ -150,4 +150,4 @@ class MultiDrawIndirect : public ApiVulkanSample
 	bool m_supports_buffer_device  = false;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multi_draw_indirect();
+std::unique_ptr<vkb::VulkanSampleC> create_multi_draw_indirect();

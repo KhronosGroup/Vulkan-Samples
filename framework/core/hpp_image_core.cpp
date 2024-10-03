@@ -79,14 +79,14 @@ HPPImage::HPPImage(HPPDevice              &device,
 {}
 
 HPPImage::HPPImage(HPPDevice &device, HPPImageBuilder const &builder) :
-    HPPAllocated{builder.alloc_create_info, nullptr, &device}, create_info{builder.create_info}
+    HPPAllocated{builder.get_allocation_create_info(), nullptr, &device}, create_info{builder.get_create_info()}
 {
 	get_handle()           = create_image(create_info.operator const VkImageCreateInfo &());
 	subresource.arrayLayer = create_info.arrayLayers;
 	subresource.mipLevel   = create_info.mipLevels;
-	if (!builder.debug_name.empty())
+	if (!builder.get_debug_name().empty())
 	{
-		set_debug_name(builder.debug_name);
+		set_debug_name(builder.get_debug_name());
 	}
 }
 

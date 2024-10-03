@@ -25,54 +25,30 @@ namespace vkb
 {
 namespace allocated
 {
-
-template <
-    typename BuilderType,
-    typename CreateInfoType>
-struct HPPBuilder : public Builder<BuilderType, CreateInfoType, vk::SharingMode>
-{
-  private:
-	using Parent = Builder<BuilderType, CreateInfoType, vk::SharingMode>;
-
-  protected:
-	HPPBuilder(const HPPBuilder &other) = delete;
-
-	HPPBuilder(const CreateInfoType &create_info) :
-	    Parent(create_info)
-	{}
-
-  public:
-	BuilderType &with_vma_required_flags(const vk::MemoryPropertyFlags &flags)
-	{
-		Parent::alloc_create_info.requiredFlags = flags.operator VkMemoryPropertyFlags();
-		return *static_cast<BuilderType *>(this);
-	}
-
-	BuilderType &with_vma_preferred_flags(const vk::MemoryPropertyFlags &flags)
-	{
-		Parent::alloc_create_info.preferredFlags = flags.operator VkMemoryPropertyFlags();
-		return *static_cast<BuilderType *>(this);
-	}
-
-	BuilderType &with_sharing(vk::SharingMode sharingMode)
-	{
-		Parent::create_info.sharingMode = sharingMode;
-		return *static_cast<BuilderType *>(this);
-	}
-};
-
 template <typename HandleType>
 class HPPAllocated : public Allocated<
                          HandleType,
                          vk::DeviceMemory,
-                         vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>
+                         vkb::core::VulkanResourceCpp<HandleType>>
 {
-	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::VulkanResource<vkb::BindingType::Cpp, HandleType>>;
+	using Parent = Allocated<HandleType, vk::DeviceMemory, vkb::core::VulkanResourceCpp<HandleType>>;
 
   public:
 	using Parent::get_handle;
 	using Parent::Parent;
 	using Parent::update;
+
+	HPPAllocated()                                = delete;
+	HPPAllocated(HPPAllocated const &)            = delete;
+	HPPAllocated(HPPAllocated &&rhs)              = default;
+	HPPAllocated &operator=(HPPAllocated const &) = delete;
+	HPPAllocated &operator=(HPPAllocated &&rhs)   = default;
+
+	// Import the base class constructors
+	template <typename... Args>
+	HPPAllocated(const VmaAllocationCreateInfo &alloc_create_info, Args &&...args) :
+	    Parent(alloc_create_info, std::forward<Args>(args)...)
+	{}
 
 	/**
 	 * @brief Copies byte data into the buffer

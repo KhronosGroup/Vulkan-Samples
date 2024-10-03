@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Thomas Atkinson
+/* Copyright (c) 2023-2024, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,12 +23,12 @@
 
 #if defined(__clang__)
 // CLANG ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS()                             \
-		_Pragma("clang diagnostic push")                        \
-		    _Pragma("clang diagnostic ignored \"-Wall\"")       \
-		        _Pragma("clang diagnostic ignored \"-Wextra\"") \
-		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"")
-
+#	define VKBP_DISABLE_WARNINGS()                                                \
+		_Pragma("clang diagnostic push")                                           \
+		    _Pragma("clang diagnostic ignored \"-Wall\"")                          \
+		        _Pragma("clang diagnostic ignored \"-Wextra\"")                    \
+		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"") \
+		                _Pragma("clang diagnostic ignored \"-Wnullability-completeness\"")
 #	define VKBP_ENABLE_WARNINGS() \
 		_Pragma("clang diagnostic pop")
 #elif defined(__GNUC__) || defined(__GNUG__)

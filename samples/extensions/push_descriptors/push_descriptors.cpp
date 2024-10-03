@@ -238,8 +238,8 @@ void PushDescriptors::prepare_pipelines()
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("push_descriptors/cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("push_descriptors/cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("push_descriptors", "cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("push_descriptors", "cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
@@ -250,18 +250,18 @@ void PushDescriptors::prepare_pipelines()
 void PushDescriptors::prepare_uniform_buffers()
 {
 	// Vertex shader scene uniform buffer block
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(UboScene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(UboScene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Vertex shader cube model uniform buffer blocks
 	for (auto &cube : cubes)
 	{
-		cube.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-		                                                          sizeof(glm::mat4),
-		                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+		cube.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                           sizeof(glm::mat4),
+		                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffers();
@@ -391,7 +391,7 @@ void PushDescriptors::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_push_descriptors()
+std::unique_ptr<vkb::VulkanSampleC> create_push_descriptors()
 {
 	return std::make_unique<PushDescriptors>();
 }

@@ -88,14 +88,14 @@ void DynamicPrimitiveClipping::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Features required by vkCmdSetDepthClipEnableEXT().
-	{
-		auto &features           = gpu.request_extension_features<VkPhysicalDeviceDepthClipEnableFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT);
-		features.depthClipEnable = VK_TRUE;
-	}
-	{
-		auto &features                                = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
-		features.extendedDynamicState3DepthClipEnable = VK_TRUE;
-	}
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceDepthClipEnableFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT,
+	                         depthClipEnable);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3DepthClipEnable);
 }
 
 void DynamicPrimitiveClipping::build_command_buffers()
@@ -303,8 +303,8 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 
 	// Load shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_primitive_clipping/primitive_clipping.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_primitive_clipping/primitive_clipping.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_primitive_clipping", "primitive_clipping.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_primitive_clipping", "primitive_clipping.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// We need to specify the pipeline layout and the render pass description up front as well.
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass);
@@ -326,14 +326,14 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 void DynamicPrimitiveClipping::prepare_uniform_buffers()
 {
 	// We will render the same object twice using two different sets of parameters called "positive" and "negative".
-	uniform_buffers.buffer_positive = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      sizeof(UBOVS),
-	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.buffer_negative = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                      sizeof(UBOVS),
-	                                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_positive = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       sizeof(UBOVS),
+	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_negative = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                       sizeof(UBOVS),
+	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -387,7 +387,7 @@ void DynamicPrimitiveClipping::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_primitive_clipping()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_primitive_clipping()
 {
 	return std::make_unique<DynamicPrimitiveClipping>();
 }

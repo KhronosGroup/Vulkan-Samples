@@ -95,8 +95,7 @@ bool HPPTimestampQueries::resize(const uint32_t width, const uint32_t height)
 void HPPTimestampQueries::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
 	// We need to enable the command pool reset feature in the extension struct
-	auto &requested_extension_features          = gpu.request_extension_features<vk::PhysicalDeviceHostQueryResetFeaturesEXT>();
-	requested_extension_features.hostQueryReset = true;
+	HPP_REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceHostQueryResetFeaturesEXT, hostQueryReset);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -256,11 +255,11 @@ void HPPTimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 		// The timestampPeriod property of the device tells how many nanoseconds such a timestep translates to on the selected device
 		float timestampFrequency = get_device().get_gpu().get_properties().limits.timestampPeriod;
 
-		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", float(time_stamps.values[1] - time_stamps.values[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Pass 2: %s %.3f ms", (bloom.enabled ? "First bloom pass" : "Scene display"), float(time_stamps.values[3] - time_stamps.values[2]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", static_cast<float>(time_stamps.values[1] - time_stamps.values[0]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 2: %s %.3f ms", (bloom.enabled ? "First bloom pass" : "Scene display"), static_cast<float>(time_stamps.values[3] - time_stamps.values[2]) * timestampFrequency / 1000000.0f);
 		if (bloom.enabled)
 		{
-			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps.values[5] - time_stamps.values[4]) * timestampFrequency / 1000000.0f);
+			drawer.text("Pass 3: Second bloom pass %.3f ms", static_cast<float>(time_stamps.values[5] - time_stamps.values[4]) * timestampFrequency / 1000000.0f);
 			drawer.set_dirty(true);
 		}
 	}
@@ -307,8 +306,8 @@ vk::DescriptorPool HPPTimestampQueries::create_descriptor_pool()
 
 vk::Pipeline HPPTimestampQueries::create_bloom_pipeline(uint32_t direction)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "bloom.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "bloom.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -351,8 +350,8 @@ vk::Pipeline HPPTimestampQueries::create_bloom_pipeline(uint32_t direction)
 
 vk::Pipeline HPPTimestampQueries::create_composition_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "composition.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "composition.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state;
 	blend_attachment_state.colorWriteMask =
@@ -416,8 +415,8 @@ vk::Image HPPTimestampQueries::create_image(vk::Format format, vk::ImageUsageFla
 
 vk::Pipeline HPPTimestampQueries::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -627,7 +626,7 @@ void HPPTimestampQueries::prepare_composition()
 
 void HPPTimestampQueries::prepare_models()
 {
-	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment},
 	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}}};
 
@@ -702,13 +701,13 @@ void HPPTimestampQueries::prepare_time_stamps()
 void HPPTimestampQueries::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	uniform_buffers.matrices = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                                  sizeof(ubo_matrices),
 	                                                                  vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	uniform_buffers.params = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                                sizeof(ubo_params),
 	                                                                vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -767,9 +766,10 @@ void HPPTimestampQueries::update_params()
 
 void HPPTimestampQueries::update_uniform_buffers()
 {
-	ubo_matrices.projection       = camera.matrices.perspective;
-	ubo_matrices.modelview        = camera.matrices.view * models.transforms[models.object_index];
-	ubo_matrices.skybox_modelview = camera.matrices.view;
+	ubo_matrices.projection        = camera.matrices.perspective;
+	ubo_matrices.modelview         = camera.matrices.view * models.transforms[models.object_index];
+	ubo_matrices.skybox_modelview  = camera.matrices.view;
+	ubo_matrices.inverse_modelview = glm::inverse(camera.matrices.view);
 	uniform_buffers.matrices->convert_and_update(ubo_matrices);
 }
 

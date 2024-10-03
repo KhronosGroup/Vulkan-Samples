@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Sascha Willems
+# Copyright (c) 2019-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,6 +26,13 @@ add_sample_with_tags(
     NAME "Ray tracing basic"
     DESCRIPTION "Basic example for hardware accelerated ray tracing"
     SHADER_FILES_GLSL
-        "khr_ray_tracing_basic/raygen.rgen"
-        "khr_ray_tracing_basic/miss.rmiss"
-        "khr_ray_tracing_basic/closesthit.rchit")
+        "ray_tracing_basic/glsl/raygen.rgen"
+        "ray_tracing_basic/glsl/miss.rmiss"
+        "ray_tracing_basic/glsl/closesthit.rchit"
+   SHADER_FILES_HLSL
+        "ray_tracing_basic/hlsl/raygen.rgen.hlsl"
+        "ray_tracing_basic/hlsl/miss.rmiss.hlsl"
+        "ray_tracing_basic/hlsl/closesthit.rchit.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS
+        "-fspv-extension=SPV_KHR_ray_query"
+)
