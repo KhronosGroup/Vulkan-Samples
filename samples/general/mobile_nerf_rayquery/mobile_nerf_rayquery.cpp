@@ -27,8 +27,6 @@
 
 namespace
 {
-constexpr uint32_t MIN_THREAD_COUNT = 1;
-
 template <typename T>
 struct CopyBuffer
 {
