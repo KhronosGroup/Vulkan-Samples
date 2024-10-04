@@ -91,6 +91,8 @@ jobs:
 
 # Deployment job
   deploy:
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions: write-all
     environment:
       name: github-pages
     runs-on: ubuntu-latest
