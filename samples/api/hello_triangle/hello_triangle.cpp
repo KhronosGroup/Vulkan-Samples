@@ -200,7 +200,7 @@ void HelloTriangle::init_instance(Context                         &context,
 	bool portability_enumeration_available = false;
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
-	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		portability_enumeration_available = true;
