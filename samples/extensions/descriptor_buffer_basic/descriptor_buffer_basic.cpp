@@ -431,7 +431,7 @@ bool DescriptorBufferBasic::prepare(const vkb::ApplicationOptions &options)
 
 	if (descriptor_buffer_properties.maxResourceDescriptorBufferBindings < 2)
 	{
-		LOGE("VkPhysicalDeviceDescriptorBufferPropertiesEXT.maxResourceDescriptorBufferBindings={}. This sample requires at least 2 to run.", descriptor_buffer_properties.maxResourceDescriptorBufferBindings);
+		LOGE("VkPhysicalDeviceDescriptorBufferPropertiesEXT.maxResourceDescriptorBufferBindings={}. Sample requires at least 2 to run.", descriptor_buffer_properties.maxResourceDescriptorBufferBindings);
 		return false;
 	}
 
