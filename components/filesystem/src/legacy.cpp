@@ -99,7 +99,7 @@ void create_path(const std::string &root, const std::string &path)
 	for (auto it = path.begin(); it != path.end(); ++it)
 	{
 		it = std::find(it, path.end(), '/');
-		create_directory(root + std::string(path.begin(), it));
+		create_directory(root + '/' + std::string(path.begin(), it));
 	}
 }
 
