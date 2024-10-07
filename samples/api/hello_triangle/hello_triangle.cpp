@@ -1080,7 +1080,9 @@ HelloTriangle::~HelloTriangle()
 
 bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
+	// Headless is not supported to keep this sample as simple as possible
 	assert(options.window != nullptr);
+	assert(options.window->get_window_mode() != vkb::Window::Mode::Headless);
 
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 

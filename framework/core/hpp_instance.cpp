@@ -1,4 +1,5 @@
 /* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -187,7 +188,6 @@ HPPInstance::HPPInstance(const std::string                            &applicati
                          const std::unordered_map<const char *, bool> &required_extensions,
                          const std::vector<const char *>              &required_validation_layers,
                          const std::vector<vk::LayerSettingEXT>       &required_layer_settings,
-                         bool                                          headless,
                          uint32_t                                      api_version)
 {
 	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
@@ -232,20 +232,11 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	}
 #endif
 
-	// Try to enable headless surface extension if it exists
-	if (headless)
-	{
-		const bool has_headless_surface = enable_extension(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME,
-		                                                   available_instance_extensions, enabled_extensions);
-		if (!has_headless_surface)
-		{
-			LOGW("{} is not available, disabling swapchain creation", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
-		}
-	}
-	else
-	{
-		enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-	}
+	// Specific surface extensions are obtained from  Window::get_required_surface_extensions
+	// They are already added to required_extensions by VulkanSample::prepare
+
+	// If using VK_EXT_headless_surface, we still create and use a surface
+	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
 	// which will be used for stats gathering where available.
@@ -445,7 +436,7 @@ vk::Instance HPPInstance::get_handle() const
 	return handle;
 }
 
-vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surface)
+vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surface, bool headless_surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
@@ -458,6 +449,10 @@ vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surfa
 			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
 		}
 		return *gpus[selected_gpu_index.value()];
+	}
+	if ( headless_surface )
+	{
+		LOGW("Using headless surface with multiple GPUs. Considered explicitly selecting the target GPU.")
 	}
 
 	// Find a discrete GPU

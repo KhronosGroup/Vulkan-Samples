@@ -1,4 +1,5 @@
 /* Copyright (c) 2022-2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -121,7 +122,7 @@ std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 
 // This sample overrides the instance creation part of the framework
 // Instead of manually setting up all properties we use the Vulkan Profiles library to simplify instance setup
-std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
+std::unique_ptr<vkb::Instance> Profiles::create_instance()
 {
 	// Initialize Volk Vulkan Loader
 	VkResult result = volkInitialize();
