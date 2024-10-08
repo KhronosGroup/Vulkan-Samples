@@ -62,6 +62,8 @@ class SubgroupsOperations : public ApiVulkanSample
 	void update_uniform_buffers();
 
 	static glm::vec2 rndGaussian();
+	uint32_t         grid_size;
+
 
 	struct Pipeline
 	{
@@ -73,8 +75,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct GridBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> vertex      = {VK_NULL_HANDLE};
-		std::unique_ptr<vkb::core::Buffer> index       = {VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::BufferC> vertex      = {VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::BufferC> index       = {VK_NULL_HANDLE};
 		uint32_t                           index_count = {0u};
 	};
 
@@ -119,7 +121,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct FFTInvertUbo
 	{
 		alignas(4) int32_t page_idx   = {-1};
-		alignas(4) uint32_t grid_size = {grid_size};
+		alignas(4) uint32_t grid_size = {256u};
 	};
 
 	struct TimeUbo
@@ -142,6 +144,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct GuiConfig
 	{
 		bool  wireframe          = {true};
+		bool  subgroups_enabled  = {true};
 		float choppines          = {0.1f};
 		float displacement_scale = {0.5f};
 		float amplitude          = {32.0f};
@@ -161,16 +164,15 @@ class SubgroupsOperations : public ApiVulkanSample
 		};
 	} ui;
 
-	uint32_t                           grid_size               = {256U};
-	std::unique_ptr<vkb::core::Buffer> skybox_ubo              = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> ocean_params_ubo        = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> camera_position_ubo     = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> camera_ubo              = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> tessellation_params_ubo = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> fft_params_ubo          = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> fft_time_ubo            = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo          = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer      = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> skybox_ubo              = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> ocean_params_ubo        = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> camera_position_ubo     = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> camera_ubo              = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> tessellation_params_ubo = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> fft_params_ubo          = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> fft_time_ubo            = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> invert_fft_ubo          = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> bit_reverse_buffer      = {VK_NULL_HANDLE};
 
 	std::vector<glm::vec4> input_random;
 
@@ -197,7 +199,7 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> fft_input_random;
+		std::unique_ptr<vkb::core::BufferC> fft_input_random;
 		std::unique_ptr<ImageAttachment>   fft_input_htilde0;
 		std::unique_ptr<ImageAttachment>   fft_input_htilde0_conj;
 

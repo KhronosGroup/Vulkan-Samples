@@ -67,7 +67,7 @@ void main()
         else
         {
             result.z = bit_reversed_indices.data[int(pos.y - 1)];
-            result.w =  bit_reversed_indices.data[int(pos.y)];
+            result.w = bit_reversed_indices.data[int(pos.y)];
         }
     }
     else

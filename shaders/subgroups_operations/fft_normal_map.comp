@@ -32,7 +32,7 @@ void main()
 {
     uint N = fftUbo.grid_size;
     ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
-    const float offset = 1.0f;
+    const float offset = 1.0f / 125.0f;
 
     vec3 v0 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, -offset))).rgb;
     vec3 v1 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, offset))).rgb;
@@ -45,9 +45,19 @@ void main()
     vec3 c0 = v0 - v1 / 2.0f * v01_length;
     vec3 c1 = v2 - v3 / 2.0f * v23_length;
 
-    // c0 = f(n - 1) - f(n + 1) / 2h; h - length(f(n + 1) - f(n - 1)) // left - right
-    // c1 = f(m - 1) - f(m + 1) / 2h; h - length(f(m + 1) - f(m - 1)) // top - bottom
-    // n = cross(c0, c1)
+
+ //   float v0 = imageLoad(fft_displacement_map, pixel_pos).g;
+ //   float v1 = imageLoad(fft_displacement_map, ivec2(pixel_pos.x + offset, pixel_pos.y)).g;
+ //   float v2 = imageLoad(fft_displacement_map, ivec2(pixel_pos.x, pixel_pos.y + offset)).g;
+ //   float v3 = imageLoad(fft_displacement_map, ivec2(pixel_pos.x - offset, pixel_pos.y)).g;
+ //   float v4 = imageLoad(fft_displacement_map, ivec2(pixel_pos.x, pixel_pos.y - offset)).g;
+ //   float v5 = imageLoad(fft_displacement_map, ivec2(pixel_pos.x + offset, pixel_pos.y + offset)).g;
+ //   float v6 = imageLoad(fft_displacement_map, ivec2(pixel_pos.x + offset, pixel_pos.y - offset)).g;
+ //   float v7 = imageLoad(fft_displacement_map, ivec2(pixel_pos.x - offset, pixel_pos.y + offset)).g;
+ //
+ //   vec3 normal = vec3(0.0f, 0.0f, 1.0f / 3.0f);
+ //   normal.y = v0 + 2.0f * v4 + v6 - v7 - 2.0f * v2 - v5;
+ //   normal.x = v0 + 2.0f * v3 + v7 - v6 - 2.0f * v1 - v5;
 
     vec3 result = cross(c0, c1);
     imageStore(fft_normal_map, pixel_pos, vec4(normalize(result), 1.0f));

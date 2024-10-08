@@ -61,6 +61,8 @@ SubgroupsOperations::SubgroupsOperations()
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.01f, 256.0f);
 	camera.set_position({0.0f, 5.0f, 0.0f});
 	camera.translation_speed = {15.0f};
+
+	grid_size = 256U;
 }
 
 SubgroupsOperations::~SubgroupsOperations()
@@ -785,7 +787,7 @@ void SubgroupsOperations::load_assets()
 	}
 
 	auto input_random_size       = static_cast<VkDeviceSize>(input_random.size() * sizeof(glm::vec4));
-	fft_buffers.fft_input_random = std::make_unique<vkb::core::Buffer>(get_device(),
+	fft_buffers.fft_input_random = std::make_unique<vkb::core::BufferC>(get_device(),
 	                                                                   input_random_size,
 	                                                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -814,14 +816,14 @@ glm::vec2 SubgroupsOperations::rndGaussian()
 
 void SubgroupsOperations::prepare_uniform_buffers()
 {
-	skybox_ubo              = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SkyboxUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	camera_ubo              = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	camera_position_ubo     = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraPositionUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	fft_params_ubo          = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTParametersUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	fft_time_ubo            = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	invert_fft_ubo          = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTInvertUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	tessellation_params_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TessellationParamsUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	ocean_params_ubo        = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(OceanParamsUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	skybox_ubo              = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SkyboxUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_ubo              = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_position_ubo     = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(CameraPositionUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	fft_params_ubo          = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(FFTParametersUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	fft_time_ubo            = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	invert_fft_ubo          = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(FFTInvertUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	tessellation_params_ubo = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(TessellationParamsUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	ocean_params_ubo        = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(OceanParamsUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -869,12 +871,12 @@ void SubgroupsOperations::generate_plane()
 	auto index_buffer_size  = vkb::to_u32(indices.size() * sizeof(uint32_t));
 	ocean.grid.index_count  = vkb::to_u32(indices.size());
 
-	ocean.grid.vertex = std::make_unique<vkb::core::Buffer>(get_device(),
+	ocean.grid.vertex = std::make_unique<vkb::core::BufferC>(get_device(),
 	                                                        vertex_buffer_size,
 	                                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	ocean.grid.index = std::make_unique<vkb::core::Buffer>(get_device(),
+	ocean.grid.index = std::make_unique<vkb::core::BufferC>(get_device(),
 	                                                       index_buffer_size,
 	                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -1335,6 +1337,11 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 			}
 		}
 
+		if (drawer.checkbox("Subgroups enable", &ui.subgroups_enabled))
+		{
+			build_compute_command_buffer();
+		}
+
 		if (drawer.header("Light"))
 		{
 			drawer.slider_float("Position x", &ui.light_pos.x, -1000.0f, 1000.0f);
@@ -1532,7 +1539,7 @@ void SubgroupsOperations::create_butterfly_texture()
 	for (uint32_t i = 0; i < grid_size; ++i)
 		bit_reverse_arr.push_back(reverse(i));
 
-	bit_reverse_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(uint32_t) * bit_reverse_arr.size(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	bit_reverse_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(uint32_t) * bit_reverse_arr.size(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	bit_reverse_buffer->update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
 
 	VkDescriptorBufferInfo bit_reverse_descriptor = create_descriptor(*bit_reverse_buffer);
