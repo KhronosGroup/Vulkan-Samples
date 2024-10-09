@@ -455,7 +455,7 @@ void OITLinkedLists::create_pipelines()
 			blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 			blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
 			blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 			blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
 
 			shader_stages[0] = load_shader("oit_linked_lists/combine.vert", VK_SHADER_STAGE_VERTEX_BIT);
