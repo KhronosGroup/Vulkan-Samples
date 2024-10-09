@@ -27,8 +27,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
     void                                       *pUserData)
 {
-	// Look for Validation Layer message id names: WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed UNASSIGNED with older Vulkan SDKs)
-	if (strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
+	// Look for Validation Layer message id names: VVL-DEBUG-PRINTF or WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed WARNING and UNASSIGNED with older Vulkan SDKs)
+	if (strcmp(pCallbackData->pMessageIdName, "VVL-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
 	{
 		// Validation messages are a bit verbose, but we only want the text from the shader, so we cut off everything before the first word from the shader message
 		// See scene.vert: debugPrintfEXT("Position = %v4f", outPos);
@@ -433,8 +433,15 @@ const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
 // This sample overrides the instance creation part of the framework to chain in additional structures
 std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 {
-	uint32_t instanceApiVersion;
-	VK_CHECK(vkEnumerateInstanceVersion(&instanceApiVersion));
+	uint32_t layer_property_count;
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, nullptr));
+	std::vector<VkLayerProperties> layer_properties(layer_property_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, layer_properties.data()));
+
+	// Find validation layer properties so we can extract the VVL version and select the correct Vulkan API based on SDK release
+	const auto vvl_properties = std::find_if(layer_properties.begin(),
+	                                         layer_properties.end(),
+	                                         [](VkLayerProperties const &properties) { return strcmp(properties.layerName, "VK_LAYER_KHRONOS_validation") == 0; });
 
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
@@ -442,14 +449,14 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
 	// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
-	// For backwards compatibility with SDKs < 1.3.272 without VK_EXT_layer_settings, the remainder of this custom override is required
+	// For this case set Vulkan API version and return via parent class, otherwise the remainder of this custom override is required
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
 	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 	{
 		// debugPrintfEXT layer feature requires Vulkan API 1.1, but use API 1.2 until VVL performance fix is available in SDKs > 1.3.290
 		// See VVL issue https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7562 for defect and fix information
-		set_api_version(instanceApiVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1);
+		set_api_version(vvl_properties != layer_properties.end() && vvl_properties->specVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1);
 
 		// Run standard create_instance() from framework (with set_api_version and layer settings support) and return
 		return VulkanSample::create_instance(headless);
@@ -480,7 +487,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
-	app_info.apiVersion       = instanceApiVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1;
+	app_info.apiVersion       = vvl_properties != layer_properties.end() && vvl_properties->specVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1;
 
 	// Shader printf is a feature of the validation layers that needs to be enabled
 	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
