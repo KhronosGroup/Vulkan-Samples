@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@ namespace vkb
 {
 namespace core
 {
-Sampler::Sampler(vkb::Device &d, const VkSamplerCreateInfo &info) :
+Sampler::Sampler(vkb::core::DeviceC &d, const VkSamplerCreateInfo &info) :
     VulkanResource{VK_NULL_HANDLE, &d}
 {
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &info, nullptr, &get_handle()));

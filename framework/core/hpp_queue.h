@@ -25,10 +25,12 @@ namespace vkb
 namespace core
 {
 template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+
+template <vkb::BindingType bindingType>
 class CommandBuffer;
 using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
-
-class HPPDevice;
 
 /**
  * @brief A wrapper class for vk::Queue
@@ -37,7 +39,7 @@ class HPPDevice;
 class HPPQueue
 {
   public:
-	HPPQueue(HPPDevice &device, uint32_t family_index, vk::QueueFamilyProperties properties, vk::Bool32 can_present, uint32_t index);
+	HPPQueue(vkb::core::DeviceCpp &device, uint32_t family_index, vk::QueueFamilyProperties const &properties, vk::Bool32 can_present, uint32_t index);
 
 	HPPQueue(const HPPQueue &) = default;
 
@@ -47,7 +49,7 @@ class HPPQueue
 
 	HPPQueue &operator=(HPPQueue &&) = delete;
 
-	const HPPDevice &get_device() const;
+	const vkb::core::DeviceCpp &get_device() const;
 
 	vk::Queue get_handle() const;
 
@@ -64,7 +66,7 @@ class HPPQueue
 	vk::Result present(const vk::PresentInfoKHR &present_infos) const;
 
   private:
-	HPPDevice &device;
+	vkb::core::DeviceCpp &device;
 
 	vk::Queue handle;
 

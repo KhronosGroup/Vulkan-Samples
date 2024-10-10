@@ -176,7 +176,7 @@ Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const
 	{
 		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, upload_size, font_data);
 
-		auto command_buffer = device.request_command_buffer();
+		auto command_buffer = device.get_command_pool().request_command_buffer();
 
 		FencePool fence_pool{device};
 
@@ -222,7 +222,7 @@ Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const
 
 		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-		queue.submit(*command_buffer, device.request_fence());
+		queue.submit(*command_buffer, device.get_fence_pool().request_fence());
 
 		// Wait for the command buffer to finish its work before destroying the staging buffer
 		device.get_fence_pool().wait();

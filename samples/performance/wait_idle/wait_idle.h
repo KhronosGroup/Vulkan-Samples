@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,7 +38,7 @@ class WaitIdle : public vkb::VulkanSampleC
 	class CustomRenderContext : public vkb::RenderContext
 	{
 	  public:
-		CustomRenderContext(vkb::Device &device, VkSurfaceKHR surface, const vkb::Window &window, int &wait_idle_enabled);
+		CustomRenderContext(vkb::core::DeviceC &device, VkSurfaceKHR surface, const vkb::Window &window, int &wait_idle_enabled);
 
 		virtual void wait_frame() override;
 

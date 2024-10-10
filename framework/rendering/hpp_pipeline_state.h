@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,15 +49,23 @@ struct HPPColorBlendState
 	std::vector<HPPColorBlendAttachmentState> attachments;
 };
 
+struct HPPStencilOpState
+{
+	vk::StencilOp fail_op       = vk::StencilOp::eReplace;
+	vk::StencilOp pass_op       = vk::StencilOp::eReplace;
+	vk::StencilOp depth_fail_op = vk::StencilOp::eReplace;
+	vk::CompareOp compare_op    = vk::CompareOp::eNever;
+};
+
 struct HPPDepthStencilState
 {
-	vk::Bool32     depth_test_enable        = true;
-	vk::Bool32     depth_write_enable       = true;
-	vk::CompareOp  depth_compare_op         = vk::CompareOp::eGreater;        // Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
-	vk::Bool32     depth_bounds_test_enable = false;
-	vk::Bool32     stencil_test_enable      = false;
-	StencilOpState front;
-	StencilOpState back;
+	vk::Bool32        depth_test_enable        = true;
+	vk::Bool32        depth_write_enable       = true;
+	vk::CompareOp     depth_compare_op         = vk::CompareOp::eGreater;        // Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::Bool32        depth_bounds_test_enable = false;
+	vk::Bool32        stencil_test_enable      = false;
+	HPPStencilOpState front;
+	HPPStencilOpState back;
 };
 
 struct HPPInputAssemblyState
@@ -88,14 +96,6 @@ struct HPPRasterizationState
 
 class HPPSpecializationConstantState : private vkb::SpecializationConstantState
 {};
-
-struct HPPStencilOpState
-{
-	vk::StencilOp fail_op       = vk::StencilOp::eReplace;
-	vk::StencilOp pass_op       = vk::StencilOp::eReplace;
-	vk::StencilOp depth_fail_op = vk::StencilOp::eReplace;
-	vk::CompareOp compare_op    = vk::CompareOp::eNever;
-};
 
 struct HPPVertexInputState
 {

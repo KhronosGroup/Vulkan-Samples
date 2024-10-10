@@ -17,14 +17,18 @@
 
 #pragma once
 
-#include "common/helpers.h"
-#include "common/vk_common.h"
 #include "core/vulkan_resource.h"
 
 namespace vkb
 {
-struct Attachment;
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
+
+struct Attachment;
 
 struct SubpassInfo
 {
@@ -46,7 +50,7 @@ struct SubpassInfo
 class RenderPass : public vkb::core::VulkanResourceC<VkRenderPass>
 {
   public:
-	RenderPass(Device                           &device,
+	RenderPass(vkb::core::DeviceC               &device,
 	           const std::vector<Attachment>    &attachments,
 	           const std::vector<LoadStoreInfo> &load_store_infos,
 	           const std::vector<SubpassInfo>   &subpasses);

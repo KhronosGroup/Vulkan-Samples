@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,12 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 /// Types of shader resources
 enum class ShaderResourceType
@@ -195,11 +200,11 @@ class ShaderSource
 class ShaderModule
 {
   public:
-	ShaderModule(Device &              device,
+	ShaderModule(vkb::core::DeviceC   &device,
 	             VkShaderStageFlagBits stage,
-	             const ShaderSource &  glsl_source,
-	             const std::string &   entry_point,
-	             const ShaderVariant & shader_variant);
+	             const ShaderSource   &glsl_source,
+	             const std::string    &entry_point,
+	             const ShaderVariant  &shader_variant);
 
 	ShaderModule(const ShaderModule &) = delete;
 
@@ -239,7 +244,7 @@ class ShaderModule
 	void set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode);
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	/// Shader unique id
 	size_t id;

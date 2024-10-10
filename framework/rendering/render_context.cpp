@@ -23,13 +23,13 @@ namespace vkb
 {
 VkFormat RenderContext::DEFAULT_VK_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
 
-RenderContext::RenderContext(Device                                &device,
+RenderContext::RenderContext(vkb::core::DeviceC                    &device,
                              VkSurfaceKHR                           surface,
                              const Window                          &window,
                              VkPresentModeKHR                       present_mode,
                              const std::vector<VkPresentModeKHR>   &present_mode_priority_list,
                              const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list) :
-    device{device}, window{window}, queue{device.get_suitable_graphics_queue()}, surface_extent{window.get_extent().width, window.get_extent().height}
+    device{device}, window{window}, queue{device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0)}, surface_extent{window.get_extent().width, window.get_extent().height}
 {
 	if (surface != VK_NULL_HANDLE)
 	{
@@ -433,7 +433,7 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 		present_info.pImageIndices      = &active_frame_index;
 
 		VkDisplayPresentInfoKHR disp_present_info{};
-		if (device.is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		if (device.get_gpu().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
 		    window.get_display_present_info(&disp_present_info, surface_extent.width, surface_extent.height))
 		{
 			// Add display present info if supported and wanted
@@ -503,7 +503,7 @@ void RenderContext::release_owned_semaphore(VkSemaphore semaphore)
 	frame.get_semaphore_pool().release_owned_semaphore(semaphore);
 }
 
-Device &RenderContext::get_device()
+vkb::core::DeviceC &RenderContext::get_device()
 {
 	return device;
 }

@@ -16,15 +16,15 @@
  */
 
 #include "hpp_pipeline_layout.h"
+#include "core/device.h"
 
-#include <core/hpp_device.h>
 #include <core/hpp_shader_module.h>
 
 namespace vkb
 {
 namespace core
 {
-HPPPipelineLayout::HPPPipelineLayout(vkb::core::HPPDevice &device, const std::vector<vkb::core::HPPShaderModule *> &shader_modules) :
+HPPPipelineLayout::HPPPipelineLayout(vkb::core::DeviceCpp &device, const std::vector<vkb::core::HPPShaderModule *> &shader_modules) :
     device{device},
     shader_modules{shader_modules}
 {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 #pragma once
 
 #include "core/hpp_image.h"
+#include "core/hpp_image_view.h"
 #include <functional>
 #include <memory>
 
@@ -97,7 +98,7 @@ class HPPRenderTarget
 	vk::ImageLayout              get_layout(uint32_t attachment) const;
 
   private:
-	core::HPPDevice const          &device;
+	vkb::core::DeviceCpp const     &device;
 	vk::Extent2D                    extent;
 	std::vector<core::HPPImage>     images;
 	std::vector<core::HPPImageView> views;

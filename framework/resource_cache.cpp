@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@ namespace vkb
 namespace
 {
 template <class T, class... A>
-T &request_resource(Device &device, ResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &... args)
+T &request_resource(vkb::core::DeviceC &device, ResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
 {
 	std::lock_guard<std::mutex> guard(resource_mutex);
 
@@ -35,7 +35,7 @@ T &request_resource(Device &device, ResourceRecord &recorder, std::mutex &resour
 }
 }        // namespace
 
-ResourceCache::ResourceCache(Device &device) :
+ResourceCache::ResourceCache(vkb::core::DeviceC &device) :
     device{device}
 {
 }

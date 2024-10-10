@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,10 +23,12 @@
 
 namespace vkb
 {
-class Device;
-
 namespace core
 {
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+
 /**
  * @brief Wraps setup and access for a ray tracing top- or bottom-level acceleration structure
  */
@@ -38,7 +40,7 @@ class AccelerationStructure
 	 * @param device A valid Vulkan device
 	 * @param type The type of the acceleration structure (top- or bottom-level)
 	 */
-	AccelerationStructure(Device                        &device,
+	AccelerationStructure(vkb::core::DeviceC            &device,
 	                      VkAccelerationStructureTypeKHR type);
 
 	~AccelerationStructure();
@@ -132,7 +134,7 @@ class AccelerationStructure
 	}
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	VkAccelerationStructureKHR handle{VK_NULL_HANDLE};
 
