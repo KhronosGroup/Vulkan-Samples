@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,8 +24,10 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice;
-}
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+}        // namespace core
 
 /**
  * @brief facade class around vkb::FencePool, providing a vulkan.hpp-based interface
@@ -38,8 +40,8 @@ class HPPFencePool : private vkb::FencePool
 	using vkb::FencePool::reset;
 	using vkb::FencePool::wait;
 
-	HPPFencePool(vkb::core::HPPDevice &device) :
-	    vkb::FencePool(reinterpret_cast<vkb::Device &>(device))
+	HPPFencePool(vkb::core::DeviceCpp &device) :
+	    vkb::FencePool(reinterpret_cast<vkb::core::DeviceC &>(device))
 	{}
 
 	vk::Fence request_fence()

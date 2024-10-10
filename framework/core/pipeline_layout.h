@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,14 +24,13 @@
 
 namespace vkb
 {
-class Device;
 class ShaderModule;
 class DescriptorSetLayout;
 
 class PipelineLayout
 {
   public:
-	PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules);
+	PipelineLayout(vkb::core::DeviceC &device, const std::vector<ShaderModule *> &shader_modules);
 
 	PipelineLayout(const PipelineLayout &) = delete;
 
@@ -58,7 +57,7 @@ class PipelineLayout
 	VkShaderStageFlags get_push_constant_range_stage(uint32_t size, uint32_t offset = 0) const;
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	VkPipelineLayout handle{VK_NULL_HANDLE};
 

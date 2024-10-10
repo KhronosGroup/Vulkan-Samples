@@ -22,7 +22,7 @@ namespace vkb
 {
 namespace core
 {
-vkb::core::CommandPoolBase::CommandPoolBase(vkb::core::HPPDevice           &device_,
+vkb::core::CommandPoolBase::CommandPoolBase(vkb::core::DeviceCpp           &device_,
                                             uint32_t                        queue_family_index,
                                             vkb::rendering::RenderFrameCpp *render_frame_,
                                             size_t                          thread_index,
@@ -75,7 +75,7 @@ CommandPoolBase::~CommandPoolBase()
 	}
 }
 
-vkb::core::HPPDevice &CommandPoolBase::get_device()
+vkb::core::DeviceCpp &CommandPoolBase::get_device()
 {
 	return device;
 }

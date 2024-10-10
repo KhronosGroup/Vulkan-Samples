@@ -16,7 +16,7 @@
  */
 
 #include "core/hpp_swapchain.h"
-#include "core/hpp_device.h"
+#include "core/device.h"
 #include "core/hpp_physical_device.h"
 
 namespace vkb
@@ -272,7 +272,7 @@ HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const vk::Extent2D &exte
                  old_swapchain.get_handle()}
 {}
 
-HPPSwapchain::HPPSwapchain(HPPDevice                               &device,
+HPPSwapchain::HPPSwapchain(vkb::core::DeviceCpp                    &device,
                            vk::SurfaceKHR                           surface,
                            const vk::PresentModeKHR                 present_mode,
                            const std::vector<vk::PresentModeKHR>   &present_mode_priority_list,
@@ -362,7 +362,7 @@ bool HPPSwapchain::is_valid() const
 	return !!handle;
 }
 
-HPPDevice const &HPPSwapchain::get_device() const
+vkb::core::DeviceCpp const &HPPSwapchain::get_device() const
 {
 	return device;
 }

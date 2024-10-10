@@ -284,7 +284,7 @@ void TimestampQueries::create_attachment(VkFormat format, VkImageUsageFlagBits u
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->mem, 0));
 
@@ -958,7 +958,7 @@ bool TimestampQueries::prepare(const vkb::ApplicationOptions &options)
 	if (!device_limits.timestampComputeAndGraphics)
 	{
 		// Check if the graphics queue used in this sample supports time stamps
-		VkQueueFamilyProperties graphics_queue_family_properties = get_device().get_suitable_graphics_queue().get_properties();
+		VkQueueFamilyProperties graphics_queue_family_properties = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_properties();
 		if (graphics_queue_family_properties.timestampValidBits == 0)
 		{
 			throw std::runtime_error{"The selected graphics queue family does not support timestamp queries!"};

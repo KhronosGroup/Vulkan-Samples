@@ -72,7 +72,7 @@ void SparseImage::create_sparse_bind_queue()
 
 	if (sparse_queue_family_index == 0xFF)
 	{
-		sparse_queue_family_index = get_device().get_queue_family_index(VK_QUEUE_SPARSE_BINDING_BIT);
+		sparse_queue_family_index = vkb::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_SPARSE_BINDING_BIT);
 	}
 	vkGetDeviceQueue(get_device().get_handle(), sparse_queue_family_index, 0U, &sparse_queue);
 }
@@ -1507,9 +1507,10 @@ void SparseImage::create_sparse_texture_image()
 	reset_mip_table();
 
 	// Memory allocation required data
-	virtual_texture.memory_allocations.device               = get_device().get_handle();
-	virtual_texture.memory_allocations.page_size            = virtual_texture.page_size;
-	virtual_texture.memory_allocations.memory_type_index    = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	virtual_texture.memory_allocations.device    = get_device().get_handle();
+	virtual_texture.memory_allocations.page_size = virtual_texture.page_size;
+	virtual_texture.memory_allocations.memory_type_index =
+	    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	virtual_texture.memory_allocations.pages_per_allocation = PAGES_PER_ALLOC;
 
 	// Setting the constant data for memory page binding via vkQueueBindSparse()

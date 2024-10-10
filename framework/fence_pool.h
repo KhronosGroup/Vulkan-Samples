@@ -21,12 +21,17 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 class FencePool
 {
   public:
-	FencePool(Device &device);
+	FencePool(vkb::core::DeviceC &device);
 
 	FencePool(const FencePool &) = delete;
 
@@ -45,7 +50,7 @@ class FencePool
 	VkResult reset();
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	std::vector<VkFence> fences;
 

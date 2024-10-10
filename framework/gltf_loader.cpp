@@ -403,7 +403,7 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
     {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
-GLTFLoader::GLTFLoader(Device &device) :
+GLTFLoader::GLTFLoader(vkb::core::DeviceC &device) :
     device{device}
 {
 }
@@ -582,7 +582,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	{
 		std::vector<vkb::core::BufferC> transient_buffers;
 
-		auto command_buffer = device.request_command_buffer();
+		auto command_buffer = device.get_command_pool().request_command_buffer();
 
 		command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
@@ -611,7 +611,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-		queue.submit(*command_buffer, device.request_fence());
+		queue.submit(*command_buffer, device.get_fence_pool().request_fence());
 
 		device.get_fence_pool().wait();
 		device.get_fence_pool().reset();
@@ -1109,7 +1109,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto command_buffer = device.request_command_buffer();
+	auto command_buffer = device.get_command_pool().request_command_buffer();
 
 	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -1316,7 +1316,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 	command_buffer->end();
 
-	queue.submit(*command_buffer, device.request_fence());
+	queue.submit(*command_buffer, device.get_fence_pool().request_fence());
 
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();

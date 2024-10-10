@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ const VkExtent2D &Framebuffer::get_extent() const
 	return extent;
 }
 
-Framebuffer::Framebuffer(Device &device, const RenderTarget &render_target, const RenderPass &render_pass) :
+Framebuffer::Framebuffer(vkb::core::DeviceC &device, const RenderTarget &render_target, const RenderPass &render_pass) :
     device{device},
     extent{render_target.get_extent()}
 {

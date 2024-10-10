@@ -191,10 +191,11 @@ void AsyncComputeSample::setup_queues()
 
 	if (async_enabled)
 	{
-		uint32_t graphics_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
-		uint32_t compute_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+		const auto &queue_family_properties = get_device().get_gpu().get_queue_family_properties();
+		uint32_t    graphics_family_index   = vkb::get_queue_family_index(queue_family_properties, VK_QUEUE_GRAPHICS_BIT);
+		uint32_t    compute_family_index    = vkb::get_queue_family_index(queue_family_properties, VK_QUEUE_COMPUTE_BIT);
 
-		if (get_device().get_num_queues_for_queue_family(graphics_family_index) >= 2)
+		if (queue_family_properties[graphics_family_index].queueCount >= 2)
 		{
 			LOGI("Device has 2 or more graphics queues.");
 			early_graphics_queue = &get_device().get_queue(graphics_family_index, 1);
@@ -252,9 +253,9 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 
 			// Hardcoded to fit to the scene.
 			auto ortho_camera = std::make_unique<vkb::sg::OrthographicCamera>("shadow_camera",
-			                                                                  -2000, 3000,
-			                                                                  -2500, 1500,
-			                                                                  -2000, 2000);
+			                                                                  -2000.0f, 3000.0f,
+			                                                                  -2500.0f, 1500.0f,
+			                                                                  -2000.0f, 2000.0f);
 
 			ortho_camera->set_node(*node);
 			get_scene().add_component(std::move(ortho_camera), *node);

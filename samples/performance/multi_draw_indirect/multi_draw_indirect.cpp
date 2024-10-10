@@ -198,13 +198,13 @@ void MultiDrawIndirect::on_update_ui_overlay(vkb::Drawer &drawer)
 			assert(!!indirect_call_buffer && !!cpu_staging_buffer && indirect_call_buffer->get_size() == cpu_staging_buffer->get_size());
 			assert(cpu_commands.size() * sizeof(cpu_commands[0]) == cpu_staging_buffer->get_size());
 
-			auto cmd = get_device().request_command_buffer();
+			auto cmd = get_device().get_command_pool().request_command_buffer();
 			cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 			cmd->copy_buffer(*indirect_call_buffer, *cpu_staging_buffer, cpu_staging_buffer->get_size());
 			cmd->end();
 
 			auto &queue = get_device().get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
-			queue.submit(*cmd, get_device().request_fence());
+			queue.submit(*cmd, get_device().get_fence_pool().request_fence());
 			get_device().get_fence_pool().wait();
 
 			memcpy(cpu_commands.data(), cpu_staging_buffer->get_data(), cpu_staging_buffer->get_size());
@@ -347,7 +347,7 @@ void MultiDrawIndirect::load_scene()
 		texture_cmd->end();
 
 		auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-		queue.submit(*texture_cmd, get_device().request_fence());
+		queue.submit(*texture_cmd, get_device().get_fence_pool().request_fence());
 		get_device().get_fence_pool().wait();
 		get_device().get_fence_pool().reset();
 
@@ -419,7 +419,7 @@ void MultiDrawIndirect::load_scene()
 	vkb::image_layout_transition(cmd->get_handle(), imagesAndRanges, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	cmd->end();
 	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(*cmd, get_device().request_fence());
+	queue.submit(*cmd, get_device().get_fence_pool().request_fence());
 	get_device().get_fence_pool().wait();
 }
 
@@ -484,7 +484,7 @@ void MultiDrawIndirect::initialize_resources()
 	staging_index_buffer.flush();
 	staging_model_buffer.flush();
 
-	auto cmd = get_device().request_command_buffer();
+	auto cmd = get_device().get_command_pool().request_command_buffer();
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 	auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer, VkBufferUsageFlags buffer_usage_flags) {
 		auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
@@ -511,7 +511,7 @@ void MultiDrawIndirect::initialize_resources()
 
 	cmd->end();
 	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(*cmd, get_device().request_fence());
+	queue.submit(*cmd, get_device().get_fence_pool().request_fence());
 	get_device().get_fence_pool().wait();
 }
 
@@ -838,7 +838,7 @@ void MultiDrawIndirect::run_gpu_cull()
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers    = &cmd;
 
-	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, get_device().request_fence());
+	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, get_device().get_fence_pool().request_fence());
 	get_device().get_fence_pool().wait();
 	get_device().get_fence_pool().reset();
 	// we're done so dealloc it from the pool.
@@ -930,7 +930,7 @@ void MultiDrawIndirect::cpu_cull()
 	transfer_cmd->end();
 
 	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(*transfer_cmd, get_device().request_fence());
+	queue.submit(*transfer_cmd, get_device().get_fence_pool().request_fence());
 	get_device().get_fence_pool().wait();
 }
 

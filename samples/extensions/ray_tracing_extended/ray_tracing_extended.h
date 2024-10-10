@@ -195,7 +195,7 @@ class RaytracingExtended : public ApiVulkanSample
 	{
 		RaytracingScene()  = default;
 		~RaytracingScene() = default;
-		RaytracingScene(vkb::Device &device, const std::vector<SceneLoadInfo> &scenesToLoad);
+		RaytracingScene(vkb::core::DeviceC &device, const std::vector<SceneLoadInfo> &scenesToLoad);
 		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
 		std::vector<VkDescriptorImageInfo>           imageInfos;
 		std::vector<Model>                           models;

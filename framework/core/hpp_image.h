@@ -100,14 +100,14 @@ struct HPPImageBuilder : public vkb::allocated::BuilderBaseCpp<HPPImageBuilder, 
 		return *this;
 	}
 
-	HPPImage    build(HPPDevice &device) const;
-	HPPImagePtr build_unique(HPPDevice &device) const;
+	HPPImage    build(vkb::core::DeviceCpp &device) const;
+	HPPImagePtr build_unique(vkb::core::DeviceCpp &device) const;
 };
 
 class HPPImage : public vkb::allocated::AllocatedCpp<vk::Image>
 {
   public:
-	HPPImage(HPPDevice              &device,
+	HPPImage(vkb::core::DeviceCpp   &device,
 	         vk::Image               handle,
 	         const vk::Extent3D     &extent,
 	         vk::Format              format,
@@ -115,7 +115,7 @@ class HPPImage : public vkb::allocated::AllocatedCpp<vk::Image>
 	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
 	//[[deprecated("Use the HPPImageBuilder ctor instead")]]
-	HPPImage(HPPDevice              &device,
+	HPPImage(vkb::core::DeviceCpp   &device,
 	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,
@@ -128,7 +128,7 @@ class HPPImage : public vkb::allocated::AllocatedCpp<vk::Image>
 	         uint32_t                num_queue_families = 0,
 	         const uint32_t         *queue_families     = nullptr);
 
-	HPPImage(HPPDevice             &device,
+	HPPImage(vkb::core::DeviceCpp  &device,
 	         HPPImageBuilder const &builder);
 
 	HPPImage(const HPPImage &) = delete;

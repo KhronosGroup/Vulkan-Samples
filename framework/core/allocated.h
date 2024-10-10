@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024, Bradley Austin Davis. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2025, Bradley Austin Davis. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,13 +19,11 @@
 #pragma once
 
 #include "common/error.h"
+#include "core/physical_device.h"
 #include "core/vulkan_resource.h"
 
 namespace vkb
 {
-
-class Device;
-
 namespace allocated
 {
 /**
@@ -49,7 +47,7 @@ void init(const VmaAllocatorCreateInfo &create_info);
  * @tparam DeviceType The type of the device.
  * @param device The Vulkan device.
  */
-template <typename DeviceType = vkb::Device>
+template <typename DeviceType = vkb::core::DeviceC>
 void init(const DeviceType &device)
 {
 	VmaVulkanFunctions vma_vulkan_func{};
@@ -62,34 +60,37 @@ void init(const DeviceType &device)
 	allocator_info.device           = static_cast<VkDevice>(device.get_handle());
 	allocator_info.instance         = static_cast<VkInstance>(device.get_gpu().get_instance().get_handle());
 
-	bool can_get_memory_requirements = device.is_extension_supported(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-	bool has_dedicated_allocation    = device.is_extension_supported(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
-	if (can_get_memory_requirements && has_dedicated_allocation && device.is_enabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
+	bool can_get_memory_requirements = device.get_gpu().is_extension_supported(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+	bool has_dedicated_allocation    = device.get_gpu().is_extension_supported(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+	if (can_get_memory_requirements && has_dedicated_allocation && device.is_extension_enabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 	}
 
-	if (device.is_extension_supported(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) && device.is_enabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) &&
+	    device.is_extension_enabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 	}
 
-	if (device.is_extension_supported(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME) && device.is_enabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME) && device.is_extension_enabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 	}
 
-	if (device.is_extension_supported(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME) && device.is_enabled(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME) &&
+	    device.is_extension_enabled(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
 	}
 
-	if (device.is_extension_supported(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME) && device.is_enabled(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME) && device.is_extension_enabled(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT;
 	}
 
-	if (device.is_extension_supported(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME) && device.is_enabled(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME) &&
+	    device.is_extension_enabled(VK_AMD_DEVICE_COHERENT_MEMORY_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_AMD_DEVICE_COHERENT_MEMORY_BIT;
 	}
@@ -122,14 +123,14 @@ template <vkb::BindingType bindingType, typename HandleType>
 class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 {
   public:
+	using ParentType = vkb::core::VulkanResource<bindingType, HandleType>;
+
 	using BufferType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type;
 	using BufferCreateInfoType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type;
 	using DeviceMemoryType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceMemory, VkDeviceMemory>::type;
 	using DeviceSizeType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
 	using ImageCreateInfoType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ImageCreateInfo, VkImageCreateInfo>::type;
 	using ImageType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Image, VkImage>::type;
-	using DeviceType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
-	using ParentType           = vkb::core::VulkanResource<bindingType, HandleType>;
 
   public:
 	Allocated()                  = delete;
@@ -154,7 +155,7 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * lifetime of the wrapper object (which is NOT necessarily the lifetime of the handle) and the wrapper will make no attempt to apply
 	 * RAII semantics.
 	 */
-	Allocated(HandleType handle, DeviceType *device_ = nullptr);
+	Allocated(HandleType handle, vkb::core::Device<bindingType> *device_ = nullptr);
 
   public:
 	const HandleType *get() const;
@@ -383,7 +384,7 @@ inline Allocated<bindingType, HandleType>::Allocated(const VmaAllocationCreateIn
 {}
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline Allocated<bindingType, HandleType>::Allocated(HandleType handle, DeviceType *device_) :
+inline Allocated<bindingType, HandleType>::Allocated(HandleType handle, vkb::core::Device<bindingType> *device_) :
     ParentType(handle, device_)
 {}
 

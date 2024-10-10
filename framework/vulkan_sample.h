@@ -135,7 +135,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using DeviceType         = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 	using GuiType            = typename std::conditional<bindingType == BindingType::Cpp, vkb::HPPGui, vkb::Gui>::type;
 	using InstanceType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPInstance, vkb::Instance>::type;
 	using PhysicalDeviceType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPhysicalDevice, vkb::PhysicalDevice>::type;
@@ -167,7 +166,7 @@ class VulkanSample : public vkb::Application
 	 * @brief Create the Vulkan device used by this sample
 	 * @note Can be overridden to implement custom device creation
 	 */
-	virtual std::unique_ptr<DeviceType> create_device(PhysicalDeviceType &gpu);
+	virtual std::unique_ptr<vkb::core::Device<bindingType>> create_device(PhysicalDeviceType &gpu);
 
 	/**
 	 * @brief Create the Vulkan instance used by this sample
@@ -264,8 +263,8 @@ class VulkanSample : public vkb::Application
 	 */
 	void create_render_context(const std::vector<SurfaceFormatType> &surface_priority_list);
 
-	DeviceType                           &get_device();
-	DeviceType const                     &get_device() const;
+	vkb::core::Device<bindingType>       &get_device();
+	vkb::core::Device<bindingType> const &get_device() const;
 	GuiType                              &get_gui();
 	GuiType const                        &get_gui() const;
 	InstanceType                         &get_instance();
@@ -391,7 +390,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief The Vulkan device
 	 */
-	std::unique_ptr<vkb::core::HPPDevice> device;
+	std::unique_ptr<vkb::core::DeviceCpp> device;
 
 	/**
 	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
@@ -500,18 +499,18 @@ inline void VulkanSample<bindingType>::add_layer_setting(LayerSettingType const 
 }
 
 template <vkb::BindingType bindingType>
-inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSample<bindingType>::create_device(PhysicalDeviceType &gpu)
+inline std::unique_ptr<typename vkb::core::Device<bindingType>> VulkanSample<bindingType>::create_device(PhysicalDeviceType &gpu)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		return std::make_unique<vkb::core::HPPDevice>(gpu, surface, std::move(debug_utils), get_device_extensions());
+		return std::make_unique<vkb::core::DeviceCpp>(gpu, surface, std::move(debug_utils), get_device_extensions());
 	}
 	else
 	{
-		return std::make_unique<vkb::Device>(gpu,
-		                                     static_cast<VkSurfaceKHR>(surface),
-		                                     std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
-		                                     get_device_extensions());
+		return std::make_unique<vkb::core::DeviceC>(gpu,
+		                                            static_cast<VkSurfaceKHR>(surface),
+		                                            std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
+		                                            get_device_extensions());
 	}
 }
 
@@ -693,20 +692,20 @@ inline Configuration &VulkanSample<bindingType>::get_configuration()
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::DeviceType const &VulkanSample<bindingType>::get_device() const
+inline vkb::core::Device<bindingType> const &VulkanSample<bindingType>::get_device() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		return reinterpret_cast<vkb::core::HPPDevice const &>(*device);
+		return *device;
 	}
 	else
 	{
-		return *device;
+		return reinterpret_cast<vkb::core::DeviceC const &>(*device);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::DeviceType &VulkanSample<bindingType>::get_device()
+inline vkb::core::Device<bindingType> &VulkanSample<bindingType>::get_device()
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -714,7 +713,7 @@ inline typename VulkanSample<bindingType>::DeviceType &VulkanSample<bindingType>
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Device &>(*device);
+		return reinterpret_cast<vkb::core::DeviceC &>(*device);
 	}
 }
 
@@ -1151,7 +1150,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	}
 	else
 	{
-		device.reset(reinterpret_cast<vkb::core::HPPDevice *>(create_device(reinterpret_cast<vkb::PhysicalDevice &>(gpu)).release()));
+		device.reset(reinterpret_cast<vkb::core::DeviceCpp *>(create_device(reinterpret_cast<vkb::PhysicalDevice &>(gpu)).release()));
 	}
 
 	// initialize C++-Bindings default dispatcher, optional third step

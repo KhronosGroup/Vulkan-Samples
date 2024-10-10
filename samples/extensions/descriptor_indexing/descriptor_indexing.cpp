@@ -383,7 +383,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 
 	vkGetImageMemoryRequirements(get_device().get_handle(), test_image.image, &memory_requirements);
 	memory_allocation_info.allocationSize  = memory_requirements.size;
-	memory_allocation_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &test_image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), test_image.image, test_image.memory, 0));
 
@@ -471,7 +471,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	staging_buffer.flush();
 	staging_buffer.unmap();
 
-	auto cmd = get_device().request_command_buffer();
+	auto cmd = get_device().get_command_pool().request_command_buffer();
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	vkb::image_layout_transition(cmd->get_handle(), test_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -486,8 +486,9 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	cmd->end();
 
 	// Not very optimal, but it's the simplest solution.
-	get_device().get_suitable_graphics_queue().submit(*cmd, VK_NULL_HANDLE);
-	get_device().get_suitable_graphics_queue().wait_idle();
+	auto const &graphicsQueue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	graphicsQueue.submit(*cmd, VK_NULL_HANDLE);
+	graphicsQueue.wait_idle();
 
 	return test_image;
 }
