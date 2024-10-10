@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-#define LAMBERT_VAL 0.3183098861837907f
-
-layout (location = 0) in vec3 in_pos;
+layout (location = 0) in vec4 in_pos;
 layout (location = 1) in vec2 in_uv;
 
 layout (location = 0) out vec4 outFragColor;
@@ -29,6 +27,8 @@ layout (binding = 0) uniform Ubo
     mat4 view;
     mat4 model;
 } ubo;
+
+layout (binding = 1, rgba32f) uniform image2D fft_displacement_map;
 
 layout (binding = 3) uniform CameraPos
 {
@@ -46,27 +46,81 @@ layout (binding = 5) uniform OceanParamsUbo
 
 layout (binding = 6) uniform samplerCube skybox_texture_map;
 
-
 void main()
 {
+//    float ambient_strength = 0.5f;
+//    vec3 ambient = ambient_strength * ocean_ubo.light_color;
+//
+//    vec3 normal = normalize(texture(fft_normal_map, in_uv).rgb);
+//    vec3 light_dir = normalize(ocean_ubo.light_position - in_pos.xyz);
+//
+//    float diff = max(dot(normal, light_dir), 0.0f);
+//    vec3 diffuse = ambient * diff;
+//
+//    vec3 view_dir = normalize(cam.position.xyz - in_pos.xyz);
+//    vec3 halfway_dir = normalize(light_dir + view_dir);
+//
+//    vec3 reflection_dir = reflect(-light_dir, normal);
+//
+//    float specular_strength = 0.5f;
+//    float spec = pow(max(dot(normal, halfway_dir), 0.0f), 64.0f);
+//    vec3 specular = specular_strength * spec * ocean_ubo.light_color;
+//    vec3 result =  (ambient + diffuse + specular) * ocean_ubo.ocean_color;
 
-    // TODO: implement BRDF reflections; code below is temporary solution
-    vec3 normal = normalize(texture(fft_normal_map, in_uv).rgb);
-    vec3 ambient = ocean_ubo.light_color * ocean_ubo.ocean_color;
-    vec3 light_dir = normalize(ocean_ubo.light_position - in_pos);
-    float diff = max(dot(normal, light_dir), 0.0f);
-    vec3 diffuse = ambient * diff;
+    vec3 result = vec3(0.0f); // (ambient + diffuse + specular) * ocean_ubo.ocean_color;
+    ivec2 normal_texture_size = textureSize(fft_normal_map, 0);
+    vec2 offset_scale = vec2(4.0f / normal_texture_size.x, 4.0f / normal_texture_size.y);
 
-    float n_dot_l = max(0.0f, dot(normal, light_dir));
-    vec3 view_dir = normalize(cam.position.xyz - in_pos.xyz);
+    vec3 n0 = texture(fft_normal_map, in_uv + offset_scale).xyz;
+    vec3 n1 = texture(fft_normal_map, in_uv + vec2(-offset_scale.x, offset_scale.y)).xyz;
+    vec3 n2 = texture(fft_normal_map, in_uv - offset_scale).xyz;
+    vec3 n3 = texture(fft_normal_map, in_uv - vec2(-offset_scale.x, offset_scale.y)).xyz;
 
-    vec3 halfVec = normalize(light_dir + view_dir);
-    float n_dot_h = clamp(dot(normal, halfVec), 0.0f, 1.0f);
-    float spec = pow(n_dot_h, 50.0f) * 0.5f;
-    vec4 col = vec4(ambient * n_dot_l + spec, 1.0f);
-    col.r = pow(col.r, 1.0/ 2.2);
-    col.g = pow(col.g, 1.0/ 2.2);
-    col.b = pow(col.b, 1.0/ 2.2);
+    float f0 = clamp(abs(dot(n0, n2) * (-0.5f) + 0.5f), 0.0f, 1.0f);
+    float f1 = clamp(abs(dot(n1, n3) * (-0.5f) + 0.5f), 0.0f, 1.0f);
 
-    outFragColor = col; // texture(fft_normal_map, in_uv); // vec4(diffuse, 1.0f);
+    f0 = pow(f0 * 5.0f, 2.0f);
+    f1 = pow(f1 * 5.0f, 2.0f);
+
+    vec4 normal_map_data = texture(fft_normal_map, in_uv);
+
+    float fac = normal_map_data.w * clamp(max(f0, f1), 0.0f, 1.0f);
+
+    mat3 normal_matrix = mat3(ubo.model);
+
+    vec3 normal = normal_matrix * normal_map_data.xyz;
+
+    vec3 light_dir = normalize(normal_matrix * ocean_ubo.light_position);
+    vec3 view_dir = normalize(in_pos.xyz);
+
+    vec3 specular = vec3(0.0f);
+    float n_dot_vp = max(0.0f, dot(normal, light_dir));
+    float n_dot_d = dot(normal, -view_dir);
+    float diffuse = clamp(dot(normal, light_dir), 0.0, 1.0);
+
+    const float fresnel_approx_pow_factor = 2.0;
+    const float specular_power = 64.0;
+    const float specular_scale = 0.75;
+    const float dyna_range = 0.8f;
+    const vec3 ocean_dark = vec3(0.03, 0.06, 0.135);
+    if (n_dot_vp > 0.0f)
+    {
+        vec3 D = -view_dir;
+        vec3 R = normalize(reflect(-light_dir, normal));
+
+        float dir_scale = mix(pow(abs(n_dot_d), 8.0f), 1.0f - pow(abs(1.0f - n_dot_d), 4.0f), n_dot_d);
+        specular = vec3(0.8f) * vec3(pow(max(dot(R, D), 0.0f), specular_power) * specular_scale * dir_scale);
+    }
+
+    float fresnel = clamp(pow(1.0f + n_dot_d, -fresnel_approx_pow_factor) * dyna_range, 0.0f, 1.0f);
+    vec3 ambient = fresnel * ocean_ubo.ocean_color * ocean_dark;
+    vec3 water_color = (1.0f - fresnel) *  ocean_ubo.light_color *  ocean_ubo.ocean_color * diffuse;
+    result = ambient + water_color + specular;
+
+    // gamma correction
+    result.r = pow(result.r, 1.0f / 2.2f);
+    result.g = pow(result.g, 1.0f / 2.2f);
+    result.b = pow(result.b, 1.0f / 2.2f);
+
+    outFragColor = texture(fft_normal_map, in_uv); // vec4(result, 1.0f);
 }

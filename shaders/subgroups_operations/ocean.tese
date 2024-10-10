@@ -20,7 +20,7 @@ layout (triangles, equal_spacing, ccw) in;
 
 layout (location = 0) in vec2 inUv[];
 
-layout (location = 0) out vec3 outPos;
+layout (location = 0) out vec4 outPos;
 layout (location = 1) out vec2 outUV;
 
 layout (binding = 0) uniform Ubo
@@ -69,5 +69,6 @@ void main()
     world_pos.z -= fft_texel.z * tessParams.choppines;
 
     outUV = interpolate_2d(inUv[0], inUv[1], inUv[2]) / 256;
+    outPos = ubo.view * vec4(world_pos, 1.0f);
     gl_Position = ubo.projection * ubo.view * ubo.model * vec4(world_pos, 1.0f);
 }
