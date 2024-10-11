@@ -46,28 +46,15 @@ layout (binding = 5) uniform OceanParamsUbo
 
 layout (binding = 6) uniform samplerCube skybox_texture_map;
 
+const float fresnel_approx_pow_factor = 2.0;
+const float specular_power = 16.0;
+const float specular_scale = 0.75;
+const float dyna_range = 0.8f;
+const vec3 ocean_dark = vec3(0.03, 0.06, 0.135);
+
 void main()
 {
-//    float ambient_strength = 0.5f;
-//    vec3 ambient = ambient_strength * ocean_ubo.light_color;
-//
-//    vec3 normal = normalize(texture(fft_normal_map, in_uv).rgb);
-//    vec3 light_dir = normalize(ocean_ubo.light_position - in_pos.xyz);
-//
-//    float diff = max(dot(normal, light_dir), 0.0f);
-//    vec3 diffuse = ambient * diff;
-//
-//    vec3 view_dir = normalize(cam.position.xyz - in_pos.xyz);
-//    vec3 halfway_dir = normalize(light_dir + view_dir);
-//
-//    vec3 reflection_dir = reflect(-light_dir, normal);
-//
-//    float specular_strength = 0.5f;
-//    float spec = pow(max(dot(normal, halfway_dir), 0.0f), 64.0f);
-//    vec3 specular = specular_strength * spec * ocean_ubo.light_color;
-//    vec3 result =  (ambient + diffuse + specular) * ocean_ubo.ocean_color;
-
-    vec3 result = vec3(0.0f); // (ambient + diffuse + specular) * ocean_ubo.ocean_color;
+    vec3 result = vec3(0.0f);
     ivec2 normal_texture_size = textureSize(fft_normal_map, 0);
     vec2 offset_scale = vec2(4.0f / normal_texture_size.x, 4.0f / normal_texture_size.y);
 
@@ -84,10 +71,9 @@ void main()
 
     vec4 normal_map_data = texture(fft_normal_map, in_uv);
 
-    float fac = normal_map_data.w * clamp(max(f0, f1), 0.0f, 1.0f);
+    float fac = (normal_map_data.z / 125.0f) * clamp(max(f0, f1), 0.0f, 1.0f);
 
     mat3 normal_matrix = mat3(ubo.model);
-
     vec3 normal = normal_matrix * normal_map_data.xyz;
 
     vec3 light_dir = normalize(normal_matrix * ocean_ubo.light_position);
@@ -98,23 +84,18 @@ void main()
     float n_dot_d = dot(normal, -view_dir);
     float diffuse = clamp(dot(normal, light_dir), 0.0, 1.0);
 
-    const float fresnel_approx_pow_factor = 2.0;
-    const float specular_power = 64.0;
-    const float specular_scale = 0.75;
-    const float dyna_range = 0.8f;
-    const vec3 ocean_dark = vec3(0.03, 0.06, 0.135);
     if (n_dot_vp > 0.0f)
     {
         vec3 D = -view_dir;
         vec3 R = normalize(reflect(-light_dir, normal));
 
         float dir_scale = mix(pow(abs(n_dot_d), 8.0f), 1.0f - pow(abs(1.0f - n_dot_d), 4.0f), n_dot_d);
-        specular = vec3(0.8f) * vec3(pow(max(dot(R, D), 0.0f), specular_power) * specular_scale * dir_scale);
+        specular = vec3(0.8f) * vec3(pow(max(dot(R, D), 0.0f), specular_power) * specular_scale * dir_scale)  * ocean_ubo.light_color;
     }
 
     float fresnel = clamp(pow(1.0f + n_dot_d, -fresnel_approx_pow_factor) * dyna_range, 0.0f, 1.0f);
-    vec3 ambient = fresnel * ocean_ubo.ocean_color * ocean_dark;
-    vec3 water_color = (1.0f - fresnel) *  ocean_ubo.light_color *  ocean_ubo.ocean_color * diffuse;
+    vec3 ambient = fresnel * ocean_ubo.ocean_color;
+    vec3 water_color = (1.0f - fresnel) *  ocean_ubo.ocean_color * ocean_dark * diffuse;
     result = ambient + water_color + specular;
 
     // gamma correction
@@ -122,5 +103,5 @@ void main()
     result.g = pow(result.g, 1.0f / 2.2f);
     result.b = pow(result.b, 1.0f / 2.2f);
 
-    outFragColor = texture(fft_normal_map, in_uv); // vec4(result, 1.0f);
+    outFragColor = vec4(result, 1.0f);
 }

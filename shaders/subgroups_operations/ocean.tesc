@@ -24,10 +24,10 @@ layout(location = 0) out vec2 outUv[];
 
 void main()
 {
-    gl_TessLevelOuter[0] = 1.0f;
-    gl_TessLevelOuter[1] = 1.0f;
-    gl_TessLevelOuter[2] = 1.0f;
-    gl_TessLevelOuter[3] = 1.0f;
+    gl_TessLevelOuter[0] = 2.0f;
+    gl_TessLevelOuter[1] = 2.0f;
+    gl_TessLevelOuter[2] = 2.0f;
+    gl_TessLevelOuter[3] = 2.0f;
 
     gl_TessLevelInner[0] = gl_TessLevelOuter[3];
 

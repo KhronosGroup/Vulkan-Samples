@@ -154,14 +154,6 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec3 light_pos   = {100.0f, 15.0f, 10.0f};
 		glm::vec3 light_color = {1.0f, 1.0f, 1.0f};
 		glm::vec3 ocean_color = {0.0f, 0.2423423f, 0.434335435f};
-
-		bool barriers[24]	  = {true,true,true,true,
-		                     true,true,true,true,
-		                     true,true,true,true,
-		                     true,true,true,true,
-		                     true,true,true,true,
-		                     true,true,true,true
-		};
 	} ui;
 
 	std::unique_ptr<vkb::core::BufferC> skybox_ubo              = {VK_NULL_HANDLE};
