@@ -344,9 +344,12 @@ ____
 We use this environment in the CI https://github.com/KhronosGroupActions/android-ndk-build[Android NDK Repository]
 ____
 
-It is highly recommended to install https://d.android.com/studio[Android Studio] to build, run and trace the sample project.
-Android Studio uses the following plugins/tools to build samples:
+=== Android Studio (Recommended)
 
+It is highly recommended to install https://d.android.com/studio[Android Studio] to build, run and trace the sample project. The samples require Android Studio Ladybug.
+
+Android Studio uses the following plugins/tools to build samples:
+ 
 * Android Gradle Plugin
 * CMake Plugin, which installs and uses Ninja
 * NDK
