@@ -2,13 +2,14 @@ plugins {
 	id 'com.android.application'
 }
 
-ext.vvl_version='1.3.275.0'
+ext.vvl_version='1.3.296.0'
 apply from: "./download_vvl.gradle"
 
 android {
 	compileSdk 33
-	buildToolsVersion "33.0.0"
-	ndkVersion "25.2.9519653"
+	buildToolsVersion '34.0.0'
+	ndkVersion '27.0.12077973'
+	namespace "com.khronos.vulkan_samples"
 
 	defaultConfig {
 		applicationId "com.khronos.vulkan_samples"
@@ -64,11 +65,11 @@ android {
 		}
 	}
 
-	lintOptions {
-		checkReleaseBuilds false
+	lint {
 		abortOnError false
+		checkReleaseBuilds false
 	}
-
+	
 	buildFeatures {
 		viewBinding true
 		prefab true
