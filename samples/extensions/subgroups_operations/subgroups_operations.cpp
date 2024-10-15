@@ -114,7 +114,6 @@ bool SubgroupsOperations::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	// ocean.graphics_queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
 	ocean.graphics_queue_family_index = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
 
 	load_assets();

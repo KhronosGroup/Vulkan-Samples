@@ -1,4 +1,4 @@
- # Copyright (c) 2023, Mobica Limited
+ # Copyright (c) 2024, Mobica Limited
  #
  # SPDX-License-Identifier: Apache-2.0
  #
@@ -23,7 +23,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
     NAME "subgroups_operations"
-    DESCRIPTION "Demonstrates the use of a subgroups feature"
+    DESCRIPTION "Demonstrates the use of a subgroups operations feature"
     SHADER_FILES_GLSL
          "subgroups_operations/ocean.vert"
          "subgroups_operations/ocean.frag"
