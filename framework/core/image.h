@@ -121,7 +121,7 @@ struct ImageBuilder : public vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>
 };
 
 class ImageView;
-class Image : public allocated::Allocated<VkImage>
+class Image : public vkb::allocated::AllocatedC<VkImage>
 {
   public:
 	Image(vkb::Device          &device,

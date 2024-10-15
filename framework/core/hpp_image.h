@@ -18,8 +18,8 @@
 #pragma once
 
 #include "builder_base.h"
+#include "core/allocated.h"
 #include "core/vulkan_resource.h"
-#include "hpp_allocated.h"
 #include <unordered_set>
 
 namespace vkb
@@ -105,7 +105,7 @@ struct HPPImageBuilder : public vkb::BuilderBaseCpp<HPPImageBuilder, vk::ImageCr
 	HPPImagePtr build_unique(HPPDevice &device) const;
 };
 
-class HPPImage : public allocated::HPPAllocated<vk::Image>
+class HPPImage : public vkb::allocated::AllocatedCpp<vk::Image>
 {
   public:
 	HPPImage(HPPDevice              &device,
