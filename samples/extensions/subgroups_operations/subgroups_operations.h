@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2024, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,7 +50,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_descriptor_set_layout();
 	void create_descriptor_set();
 	void create_pipelines();
-	void create_skybox();
 
 	void create_initial_tides();
 	void create_tildas();
@@ -84,11 +83,6 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(16) glm::mat4 projection;
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 model;
-	};
-
-	struct SkyboxUbo
-	{
-		alignas(16) glm::mat4 mvp;
 	};
 
 	struct OceanParamsUbo
@@ -148,7 +142,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		float displacement_scale = {0.5f};
 		float amplitude          = {32.0f};
 		float length             = {1900.0f};
-		Wind  wind;
+		Wind  wind{};
 
 		glm::vec3 light_pos   = {100.0f, 15.0f, 10.0f};
 		glm::vec3 light_color = {1.0f, 1.0f, 1.0f};
@@ -277,24 +271,6 @@ class SubgroupsOperations : public ApiVulkanSample
 			Pipeline wireframe;        // ocean.*
 		} pipelines;
 	} ocean;
-
-	struct Skybox
-	{
-		void destroy(VkDevice device)
-		{
-			pipeline.destroy(device);
-			vkDestroySampler(device, skybox_texture.sampler, nullptr);
-			vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
-			skybox_shape.reset();
-		}
-
-		Pipeline              pipeline;        // skybox.vert / skybox.frag
-		VkDescriptorSetLayout descriptor_set_layout;
-		VkDescriptorSet       descriptor_set;
-
-		Texture                           skybox_texture;
-		std::unique_ptr<vkb::sg::SubMesh> skybox_shape;
-	} skybox;
 
 	VkPhysicalDeviceSubgroupProperties subgroups_properties{};
 

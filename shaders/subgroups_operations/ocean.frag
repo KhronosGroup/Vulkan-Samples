@@ -44,8 +44,6 @@ layout (binding = 5) uniform OceanParamsUbo
     vec3 ocean_color;
 } ocean_ubo;
 
-layout (binding = 6) uniform samplerCube skybox_texture_map;
-
 const float fresnel_approx_pow_factor = 2.0;
 const float specular_power = 16.0;
 const float specular_scale = 0.75;

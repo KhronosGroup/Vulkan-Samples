@@ -14,7 +14,6 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-
  get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
  get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
  get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
@@ -26,8 +25,6 @@ add_sample(
     NAME "subgroups_operations"
     DESCRIPTION "Demonstrates the use of a subgroups feature"
     SHADER_FILES_GLSL
-         "subgroups_operations/skybox.vert"
-         "subgroups_operations/skybox.frag"
          "subgroups_operations/ocean.vert"
          "subgroups_operations/ocean.frag"
          "subgroups_operations/ocean.tesc"
@@ -38,4 +35,3 @@ add_sample(
          "subgroups_operations/fft_tilde_h0.comp"
          "subgroups_operations/fft_normal_map.comp"
          "subgroups_operations/fft.comp")
-
