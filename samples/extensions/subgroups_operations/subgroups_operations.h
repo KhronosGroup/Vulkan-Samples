@@ -19,6 +19,8 @@
 
 #include "api_vulkan_sample.h"
 
+#define DEBUG_SUBGROUPS_SWITCH_ENABLE
+
 class SubgroupsOperations : public ApiVulkanSample
 {
   public:
@@ -147,6 +149,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec3 light_pos   = {100.0f, 15.0f, 10.0f};
 		glm::vec3 light_color = {1.0f, 1.0f, 1.0f};
 		glm::vec3 ocean_color = {0.0f, 0.2423423f, 0.434335435f};
+		std::vector<std::string> supported_features;
 	} ui;
 
 	std::unique_ptr<vkb::core::BufferC> skybox_ubo              = {VK_NULL_HANDLE};
@@ -215,6 +218,10 @@ class SubgroupsOperations : public ApiVulkanSample
 		{
 			Pipeline horizontal;        // fft.comp
 			Pipeline vertical;          // fft.comp
+#ifdef DEBUG_SUBGROUPS_SWITCH_ENABLE
+			Pipeline horizontal_subgroups_off;        // fft_subgroups_off.comp
+			Pipeline vertical_subgroups_off;          // fft_subgroups_off.comp
+#endif
 		} pipelines;
 
 		std::unique_ptr<ImageAttachment> tilde_axis_y = {VK_NULL_HANDLE};
@@ -227,6 +234,10 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;        // fft_invert.comp
+#ifdef DEBUG_SUBGROUPS_SWITCH_ENABLE
+		Pipeline              pipeline_subgroups_off;        // fft_invert_subgroups_off.comp
+#endif
+
 	} fft_inversion;
 
 	struct
@@ -234,6 +245,9 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;        // fft_normal_map.comp
+#ifdef DEBUG_SUBGROUPS_SWITCH_ENABLE
+		Pipeline pipeline_subgroups_off;        // fft_normal_map_subgroups_off.comp
+#endif
 	} fft_normal_map;
 
 	struct
@@ -241,6 +255,9 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;        // fft_tilde_h0.comp
+#ifdef DEBUG_SUBGROUPS_SWITCH_ENABLE
+		Pipeline pipeline_subgroups_off;        // fft_tilde_h0_subgroups_off.comp
+#endif
 	} initial_tildes;
 
 	struct
@@ -248,6 +265,9 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;        // fft_tilde_h.comp
+#ifdef DEBUG_SUBGROUPS_SWITCH_ENABLE
+		Pipeline pipeline_subgroups_off;        // fft_tilde_h_subgroups_off.comp
+#endif
 	} tildes;
 
 	struct
@@ -255,6 +275,9 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;        // butterfly_precomp.comp
+#ifdef DEBUG_SUBGROUPS_SWITCH_ENABLE
+		Pipeline pipeline_subgroups_off;        // butterfly_precomp_subgroups_off.comp
+#endif
 	} precompute;
 
 	struct

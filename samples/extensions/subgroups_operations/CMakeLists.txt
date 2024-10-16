@@ -34,4 +34,10 @@ add_sample(
          "subgroups_operations/fft_tilde_h.comp"
          "subgroups_operations/fft_tilde_h0.comp"
          "subgroups_operations/fft_normal_map.comp"
-         "subgroups_operations/fft.comp")
+         "subgroups_operations/fft.comp"
+         "subgroups_operations/fft_invert_subgroups_off.comp"
+         "subgroups_operations/butterfly_precomp_subgroups_off.comp"
+         "subgroups_operations/fft_tilde_h_subgroups_off.comp"
+         "subgroups_operations/fft_tilde_h0_subgroups_off.comp"
+         "subgroups_operations/fft_normal_map_subgroups_off.comp"
+         "subgroups_operations/fft_subgroups_off.comp")
