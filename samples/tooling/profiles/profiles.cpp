@@ -58,6 +58,16 @@ Profiles::~Profiles()
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
 std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 {
+	// Check if the profile is supported at device level
+	VkBool32 profile_supported;
+	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
+	if (!profile_supported)
+	{
+		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
+	}
+
+	// If the profile is supported, we can start setting things up and use the profiles library for that
+
 	// Simplified queue setup (only graphics)
 	uint32_t                selected_queue_family   = 0;
 	const auto             &queue_family_properties = gpu.get_queue_family_properties();
@@ -86,15 +96,7 @@ std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
-	// Check if the profile is supported at device level
-	VkBool32 profile_supported;
-	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
-	if (!profile_supported)
-	{
-		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
-	}
-
-	// Create the device using the profile tool library
+	// Create the device using the profiles library
 	VpDeviceCreateInfo deviceCreateInfo{};
 	deviceCreateInfo.pCreateInfo             = &create_info;
 	deviceCreateInfo.pEnabledFullProfiles    = &profile_properties;
@@ -201,7 +203,7 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 	// Note: We don't explicitly set an application info here so the one from the profile is used
 	// This also defines the api version to be used
 
-	// Create the instance using the profile tool library
+	// Create the instance using the profiles library
 	VpInstanceCreateInfo instance_create_info{};
 	instance_create_info.pEnabledFullProfiles    = &profile_properties;
 	instance_create_info.enabledFullProfileCount = 1;
