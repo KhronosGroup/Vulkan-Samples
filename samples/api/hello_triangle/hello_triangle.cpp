@@ -153,9 +153,6 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
 
 /**
  * @brief Initializes the Vulkan instance.
- *
- * @param required_instance_extensions The required Vulkan instance extensions.
- * @param required_validation_layers The required Vulkan validation layers
  */
 void HelloTriangle::init_instance()
 {
