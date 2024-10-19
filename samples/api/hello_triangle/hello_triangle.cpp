@@ -366,6 +366,7 @@ void HelloTriangle::init_device()
 
 	// The sample uses a single graphics queue
 	const float queue_priority = 1.0f;
+
 	VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
 	queue_info.queueFamilyIndex = context.graphics_queue_index;
 	queue_info.queueCount       = 1;
