@@ -109,7 +109,7 @@ class HelloTriangle : public vkb::Application
 		 */
 		VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
 
-		/// The debug report callback.
+		/// The debug utility callback.
 		VkDebugUtilsMessengerEXT debug_callback = VK_NULL_HANDLE;
 
 		/// A set of semaphores that can be reused.
