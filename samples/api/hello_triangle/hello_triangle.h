@@ -130,33 +130,33 @@ class HelloTriangle : public vkb::Application
 
 	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
 
-	void init_instance(Context &context);
+	void init_instance();
 
-	void init_device(Context &context);
+	void init_device();
 
-	void init_per_frame(Context &context, PerFrame &per_frame);
+	void init_per_frame(PerFrame &per_frame);
 
-	void teardown_per_frame(Context &context, PerFrame &per_frame);
+	void teardown_per_frame(PerFrame &per_frame);
 
-	void init_swapchain(Context &context);
+	void init_swapchain();
 
-	void init_render_pass(Context &context);
+	void init_render_pass();
 
-	VkShaderModule load_shader_module(Context &context, const char *path);
+	VkShaderModule load_shader_module(const char *path);
 
-	void init_pipeline(Context &context);
+	void init_pipeline();
 
-	VkResult acquire_next_image(Context &context, uint32_t *image);
+	VkResult acquire_next_image(uint32_t *image);
 
-	void render_triangle(Context &context, uint32_t swapchain_index);
+	void render_triangle(uint32_t swapchain_index);
 
-	VkResult present_image(Context &context, uint32_t index);
+	VkResult present_image(uint32_t index);
 
-	void init_framebuffers(Context &context);
+	void init_framebuffers();
 
-	void teardown_framebuffers(Context &context);
+	void teardown_framebuffers();
 
-	void teardown(Context &context);
+	void teardown();
 
   private:
 	Context context;
