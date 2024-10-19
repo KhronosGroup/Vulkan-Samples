@@ -314,6 +314,7 @@ void HelloTriangle::init_device()
 		throw std::runtime_error("No physical device found.");
 	}
 
+	// For simplicity, the sample selects the first gpu that has a graphics and present queue
 	std::vector<VkPhysicalDevice> gpus(gpu_count);
 	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, gpus.data()));
 
@@ -348,7 +349,7 @@ void HelloTriangle::init_device()
 
 	if (context.graphics_queue_index < 0)
 	{
-		LOGE("Did not find suitable queue which supports graphics and presentation.");
+		throw std::runtime_error("Did not find suitable device with a queue that supports graphics and presentation.");
 	}
 
 	uint32_t device_extension_count;
@@ -363,9 +364,8 @@ void HelloTriangle::init_device()
 		throw std::runtime_error("Required device extensions are missing.");
 	}
 
-	float queue_priority = 1.0f;
-
-	// Create one queue
+	// The sample uses a single graphics queue
+	const float queue_priority = 1.0f;
 	VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
 	queue_info.queueFamilyIndex = context.graphics_queue_index;
 	queue_info.queueCount       = 1;
@@ -942,7 +942,7 @@ VkResult HelloTriangle::present_image(uint32_t index)
  */
 void HelloTriangle::init_framebuffers()
 {
-	VkDevice device = context.device;
+	context.swapchain_framebuffers.clear();
 
 	// Create framebuffer for each swapchain image view
 	for (auto &image_view : context.swapchain_image_views)
@@ -957,26 +957,10 @@ void HelloTriangle::init_framebuffers()
 		fb_info.layers          = 1;
 
 		VkFramebuffer framebuffer;
-		VK_CHECK(vkCreateFramebuffer(device, &fb_info, nullptr, &framebuffer));
+		VK_CHECK(vkCreateFramebuffer(context.device, &fb_info, nullptr, &framebuffer));
 
 		context.swapchain_framebuffers.push_back(framebuffer);
 	}
-}
-
-/**
- * @brief Tears down the framebuffers. If our swapchain changes, we will call this, and create a new swapchain.
- */
-void HelloTriangle::teardown_framebuffers()
-{
-	// Wait until device is idle before teardown.
-	vkQueueWaitIdle(context.queue);
-
-	for (auto &framebuffer : context.swapchain_framebuffers)
-	{
-		vkDestroyFramebuffer(context.device, framebuffer, nullptr);
-	}
-
-	context.swapchain_framebuffers.clear();
 }
 
 HelloTriangle::HelloTriangle()
@@ -989,7 +973,10 @@ HelloTriangle::~HelloTriangle()
 	// This is done by doing a device wait idle, which blocks until the GPU signals
 	vkDeviceWaitIdle(context.device);
 
-	teardown_framebuffers();
+	for (auto &framebuffer : context.swapchain_framebuffers)
+	{
+		vkDestroyFramebuffer(context.device, framebuffer, nullptr);
+	}
 
 	for (auto &per_frame : context.per_frame)
 	{
@@ -1127,7 +1114,11 @@ bool HelloTriangle::resize(const uint32_t, const uint32_t)
 	}
 
 	vkDeviceWaitIdle(context.device);
-	teardown_framebuffers();
+
+	for (auto &framebuffer : context.swapchain_framebuffers)
+	{
+		vkDestroyFramebuffer(context.device, framebuffer, nullptr);
+	}
 
 	init_swapchain();
 	init_framebuffers();

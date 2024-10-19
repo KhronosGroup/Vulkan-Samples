@@ -154,10 +154,6 @@ class HelloTriangle : public vkb::Application
 
 	void init_framebuffers();
 
-	void teardown_framebuffers();
-
-	void teardown();
-
   private:
 	Context context;
 
