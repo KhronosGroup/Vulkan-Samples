@@ -358,7 +358,7 @@ void HelloTriangle::init_device(Context                         &context,
 
 	if (context.graphics_queue_index < 0)
 	{
-		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
+		LOGE("Did not find suitable queue which supports graphics and presentation.");
 	}
 
 	uint32_t device_extension_count;
@@ -368,7 +368,7 @@ void HelloTriangle::init_device(Context                         &context,
 
 	if (!validate_extensions(required_device_extensions, device_extensions))
 	{
-		throw std::runtime_error("Required device extensions are missing, will try without.");
+		throw std::runtime_error("Required device extensions are missing.");
 	}
 
 	float queue_priority = 1.0f;
