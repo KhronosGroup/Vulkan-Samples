@@ -361,6 +361,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	/**
 	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
 	 */
 	void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
 
