@@ -154,7 +154,6 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
 /**
  * @brief Initializes the Vulkan instance.
  *
- * @param context A newly created Vulkan context.
  * @param required_instance_extensions The required Vulkan instance extensions.
  * @param required_validation_layers The required Vulkan validation layers
  */
@@ -305,8 +304,6 @@ void HelloTriangle::init_instance()
 
 /**
  * @brief Initializes the Vulkan physical device and logical device.
- *
- * @param context A Vulkan context with an instance already set up.
  */
 void HelloTriangle::init_device()
 {
@@ -391,7 +388,6 @@ void HelloTriangle::init_device()
 
 /**
  * @brief Initializes per frame data.
- * @param context A newly created Vulkan context.
  * @param per_frame The data of a frame.
  */
 void HelloTriangle::init_per_frame(PerFrame &per_frame)
@@ -414,7 +410,6 @@ void HelloTriangle::init_per_frame(PerFrame &per_frame)
 
 /**
  * @brief Tears down the frame data.
- * @param context The Vulkan context.
  * @param per_frame The data of a frame.
  */
 void HelloTriangle::teardown_per_frame(PerFrame &per_frame)
@@ -457,7 +452,6 @@ void HelloTriangle::teardown_per_frame(PerFrame &per_frame)
 
 /**
  * @brief Initializes the Vulkan swapchain.
- * @param context A Vulkan context with a physical device already set up.
  */
 void HelloTriangle::init_swapchain()
 {
@@ -604,7 +598,6 @@ void HelloTriangle::init_swapchain()
 
 /**
  * @brief Initializes the Vulkan render pass.
- * @param context A Vulkan context with a device already set up.
  */
 void HelloTriangle::init_render_pass()
 {
@@ -669,7 +662,6 @@ void HelloTriangle::init_render_pass()
 
 /**
  * @brief Helper function to load a shader module.
- * @param context A Vulkan context with a device.
  * @param path The path for the shader (relative to the assets directory).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
@@ -706,7 +698,6 @@ VkShaderModule HelloTriangle::load_shader_module(const char *path)
 
 /**
  * @brief Initializes the Vulkan pipeline.
- * @param context A Vulkan context with a device and a render pass already set up.
  */
 void HelloTriangle::init_pipeline()
 {
@@ -794,7 +785,6 @@ void HelloTriangle::init_pipeline()
 
 /**
  * @brief Acquires an image from the swapchain.
- * @param context A Vulkan context with a swapchain already set up.
  * @param[out] image The swapchain index for the acquired image.
  * @returns Vulkan result code
  */
@@ -854,7 +844,6 @@ VkResult HelloTriangle::acquire_next_image(uint32_t *image)
 
 /**
  * @brief Renders a triangle to the specified swapchain image.
- * @param context A Vulkan context set up for rendering.
  * @param swapchain_index The swapchain index for the image being rendered.
  */
 void HelloTriangle::render_triangle(uint32_t swapchain_index)
@@ -936,7 +925,6 @@ void HelloTriangle::render_triangle(uint32_t swapchain_index)
 
 /**
  * @brief Presents an image to the swapchain.
- * @param context The Vulkan context, with a swapchain and per-frame resources already set up.
  * @param index The swapchain index previously obtained from @ref acquire_next_image.
  * @returns Vulkan result code
  */
@@ -954,7 +942,6 @@ VkResult HelloTriangle::present_image(uint32_t index)
 
 /**
  * @brief Initializes the Vulkan framebuffers.
- * @param context A Vulkan context with the render pass already set up.
  */
 void HelloTriangle::init_framebuffers()
 {
@@ -981,7 +968,6 @@ void HelloTriangle::init_framebuffers()
 
 /**
  * @brief Tears down the framebuffers. If our swapchain changes, we will call this, and create a new swapchain.
- * @param context The Vulkan context.
  */
 void HelloTriangle::teardown_framebuffers()
 {
