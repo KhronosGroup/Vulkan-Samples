@@ -996,13 +996,14 @@ void HelloTriangle::teardown_framebuffers()
 	context.swapchain_framebuffers.clear();
 }
 
-/**
- * @brief Tears down the Vulkan context.
- * @param context The Vulkan context.
- */
-void HelloTriangle::teardown()
+HelloTriangle::HelloTriangle()
 {
-	// Don't release anything until the GPU is completely idle.
+}
+
+HelloTriangle::~HelloTriangle()
+{
+	// When destroying the application, we need to make sure the GPU is no longer accessing any resources
+	// This is done by doing a device wait idle, which blocks until the GPU signals
 	vkDeviceWaitIdle(context.device);
 
 	teardown_framebuffers();
@@ -1042,37 +1043,24 @@ void HelloTriangle::teardown()
 	if (context.swapchain != VK_NULL_HANDLE)
 	{
 		vkDestroySwapchainKHR(context.device, context.swapchain, nullptr);
-		context.swapchain = VK_NULL_HANDLE;
 	}
 
 	if (context.surface != VK_NULL_HANDLE)
 	{
 		vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
-		context.surface = VK_NULL_HANDLE;
 	}
 
 	if (context.device != VK_NULL_HANDLE)
 	{
 		vkDestroyDevice(context.device, nullptr);
-		context.device = VK_NULL_HANDLE;
 	}
 
 	if (context.debug_callback != VK_NULL_HANDLE)
 	{
 		vkDestroyDebugUtilsMessengerEXT(context.instance, context.debug_callback, nullptr);
-		context.debug_callback = VK_NULL_HANDLE;
 	}
 
 	vk_instance.reset();
-}
-
-HelloTriangle::HelloTriangle()
-{
-}
-
-HelloTriangle::~HelloTriangle()
-{
-	teardown();
 }
 
 bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
