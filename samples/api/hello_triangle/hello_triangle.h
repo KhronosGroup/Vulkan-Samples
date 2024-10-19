@@ -130,12 +130,9 @@ class HelloTriangle : public vkb::Application
 
 	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
 
-	void init_instance(Context                         &context,
-	                   const std::vector<const char *> &required_instance_extensions,
-	                   const std::vector<const char *> &required_validation_layers);
+	void init_instance(Context &context);
 
-	void init_device(Context                         &context,
-	                 const std::vector<const char *> &required_device_extensions);
+	void init_device(Context &context);
 
 	void init_per_frame(Context &context, PerFrame &per_frame);
 

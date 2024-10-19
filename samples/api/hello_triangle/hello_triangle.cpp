@@ -158,9 +158,7 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
  * @param required_instance_extensions The required Vulkan instance extensions.
  * @param required_validation_layers The required Vulkan validation layers
  */
-void HelloTriangle::init_instance(Context                         &context,
-                                  const std::vector<const char *> &required_instance_extensions,
-                                  const std::vector<const char *> &required_validation_layers)
+void HelloTriangle::init_instance(Context &context)
 {
 	LOGI("Initializing vulkan instance.");
 
@@ -175,7 +173,7 @@ void HelloTriangle::init_instance(Context                         &context,
 	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
-	std::vector<const char *> active_instance_extensions(required_instance_extensions);
+	std::vector<const char *> required_instance_extensions{VK_KHR_SURFACE_EXTENSION_NAME};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Validation layers help finding wrong api usage, we enable them when explicitly requested or in debug builds
@@ -186,7 +184,7 @@ void HelloTriangle::init_instance(Context                         &context,
 		if (strcmp(ext.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
 		{
 			has_debug_utils = true;
-			active_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			required_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			break;
 		}
 	}
@@ -198,36 +196,36 @@ void HelloTriangle::init_instance(Context                         &context,
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	bool portability_enumeration_available = false;
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
 	                [](VkExtensionProperties extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
-		active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		required_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		portability_enumeration_available = true;
 	}
 #endif
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
-	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_METAL_EXT)
-	active_instance_extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
-	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XLIB_KHR)
-	active_instance_extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-	active_instance_extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
-	active_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
+	required_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
 #else
 #	pragma error Platform not supported
 #endif
 
-	if (!validate_extensions(active_instance_extensions, available_instance_extensions))
+	if (!validate_extensions(required_instance_extensions, available_instance_extensions))
 	{
 		throw std::runtime_error("Required instance extensions are missing.");
 	}
@@ -238,7 +236,7 @@ void HelloTriangle::init_instance(Context                         &context,
 	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
 
-	std::vector<const char *> requested_validation_layers(required_validation_layers);
+	std::vector<const char *> requested_validation_layers{};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
@@ -266,8 +264,8 @@ void HelloTriangle::init_instance(Context                         &context,
 
 	VkInstanceCreateInfo instance_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 	instance_info.pApplicationInfo        = &app;
-	instance_info.enabledExtensionCount   = vkb::to_u32(active_instance_extensions.size());
-	instance_info.ppEnabledExtensionNames = active_instance_extensions.data();
+	instance_info.enabledExtensionCount   = vkb::to_u32(required_instance_extensions.size());
+	instance_info.ppEnabledExtensionNames = required_instance_extensions.data();
 	instance_info.enabledLayerCount       = vkb::to_u32(requested_validation_layers.size());
 	instance_info.ppEnabledLayerNames     = requested_validation_layers.data();
 
@@ -309,10 +307,8 @@ void HelloTriangle::init_instance(Context                         &context,
  * @brief Initializes the Vulkan physical device and logical device.
  *
  * @param context A Vulkan context with an instance already set up.
- * @param required_device_extensions The required Vulkan device extensions.
  */
-void HelloTriangle::init_device(Context                         &context,
-                                const std::vector<const char *> &required_device_extensions)
+void HelloTriangle::init_device(Context &context)
 {
 	LOGI("Initializing vulkan device.");
 
@@ -366,6 +362,8 @@ void HelloTriangle::init_device(Context                         &context,
 	std::vector<VkExtensionProperties> device_extensions(device_extension_count);
 	VK_CHECK(vkEnumerateDeviceExtensionProperties(context.gpu, nullptr, &device_extension_count, device_extensions.data()));
 
+	// Since this sample has visual output, the device needs to support the swapchain extension
+	std::vector<const char *> required_device_extensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 	if (!validate_extensions(required_device_extensions, device_extensions))
 	{
 		throw std::runtime_error("Required device extensions are missing.");
@@ -1081,7 +1079,7 @@ bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
 	assert(options.window != nullptr);
 
-	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
+	init_instance(context);
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
@@ -1095,7 +1093,7 @@ bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 		throw std::runtime_error("Failed to create window surface.");
 	}
 
-	init_device(context, {"VK_KHR_swapchain"});
+	init_device(context);
 
 	init_swapchain(context);
 
