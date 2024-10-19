@@ -88,6 +88,21 @@ cd Vulkan-Samples
 
 Follow build instructions for your platform below.
 
+[NOTE]
+====
+The full repository is very large, and some ISPs appear to have trouble
+providing a robust connection to github while the clone is being made.
+
+If you notice problems such as submodules downloading at reported rates in
+the tens of kB/s, or fatal timeout errors occurring, these may be due to
+network routing issues to github within your ISP's internal network, rather
+than anything wrong in your own networking setup.
+
+It can be very difficult to get ISPs to acknowledge such problems exist much
+less to fix them. In this case, consider trying the clone while running a
+VPN service.
+====
+
 == Build
 
 === Supported Platforms
