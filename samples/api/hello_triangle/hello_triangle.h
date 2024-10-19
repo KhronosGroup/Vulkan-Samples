@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -110,7 +110,7 @@ class HelloTriangle : public vkb::Application
 		VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
 
 		/// The debug report callback.
-		VkDebugReportCallbackEXT debug_callback = VK_NULL_HANDLE;
+		VkDebugUtilsMessengerEXT debug_callback = VK_NULL_HANDLE;
 
 		/// A set of semaphores that can be reused.
 		std::vector<VkSemaphore> recycled_semaphores;
