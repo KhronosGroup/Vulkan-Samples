@@ -412,9 +412,6 @@ void HelloTriangle::init_per_frame(Context &context, PerFrame &per_frame)
 	cmd_buf_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	cmd_buf_info.commandBufferCount = 1;
 	VK_CHECK(vkAllocateCommandBuffers(context.device, &cmd_buf_info, &per_frame.primary_command_buffer));
-
-	per_frame.device      = context.device;
-	per_frame.queue_index = context.graphics_queue_index;
 }
 
 /**
@@ -458,9 +455,6 @@ void HelloTriangle::teardown_per_frame(Context &context, PerFrame &per_frame)
 
 		per_frame.swapchain_release_semaphore = VK_NULL_HANDLE;
 	}
-
-	per_frame.device      = VK_NULL_HANDLE;
-	per_frame.queue_index = -1;
 }
 
 /**
@@ -474,7 +468,7 @@ void HelloTriangle::init_swapchain(Context &context)
 
 	VkSurfaceFormatKHR format = vkb::select_surface_format(context.gpu, context.surface);
 
-	VkExtent2D swapchain_size;
+	VkExtent2D swapchain_size{};
 	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 	{
 		swapchain_size.width  = context.swapchain_dimensions.width;
@@ -880,7 +874,7 @@ void HelloTriangle::render_triangle(Context &context, uint32_t swapchain_index)
 	vkBeginCommandBuffer(cmd, &begin_info);
 
 	// Set clear color values.
-	VkClearValue clear_value;
+	VkClearValue clear_value{};
 	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
 
 	// Begin the render pass.

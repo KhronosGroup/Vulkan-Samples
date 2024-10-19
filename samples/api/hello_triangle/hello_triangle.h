@@ -47,19 +47,11 @@ class HelloTriangle : public vkb::Application
 	 */
 	struct PerFrame
 	{
-		VkDevice device = VK_NULL_HANDLE;
-
-		VkFence queue_submit_fence = VK_NULL_HANDLE;
-
-		VkCommandPool primary_command_pool = VK_NULL_HANDLE;
-
-		VkCommandBuffer primary_command_buffer = VK_NULL_HANDLE;
-
-		VkSemaphore swapchain_acquire_semaphore = VK_NULL_HANDLE;
-
-		VkSemaphore swapchain_release_semaphore = VK_NULL_HANDLE;
-
-		int32_t queue_index;
+		VkFence         queue_submit_fence          = VK_NULL_HANDLE;
+		VkCommandPool   primary_command_pool        = VK_NULL_HANDLE;
+		VkCommandBuffer primary_command_buffer      = VK_NULL_HANDLE;
+		VkSemaphore     swapchain_acquire_semaphore = VK_NULL_HANDLE;
+		VkSemaphore     swapchain_release_semaphore = VK_NULL_HANDLE;
 	};
 
 	/**
