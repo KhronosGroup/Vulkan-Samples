@@ -1337,21 +1337,6 @@ inline void VulkanSample<bindingType>::update_debug_window()
 	                                                             to_string(render_context->get_swapchain().get_format()) + " (" +
 	                                                                 to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) +
 	                                                                 "bpp)");
-
-	if (scene != nullptr)
-	{
-		get_debug_info().template insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
-		get_debug_info().template insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<sg::Texture>().size()));
-
-		if (auto camera = scene->get_components<vkb::sg::Camera>()[0])
-		{
-			if (auto camera_node = camera->get_node())
-			{
-				const glm::vec3 &pos = camera_node->get_transform().get_translation();
-				get_debug_info().template insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
-			}
-		}
-	}
 }
 
 template <vkb::BindingType bindingType>
