@@ -62,7 +62,6 @@ class HPPScene : private vkb::sg::Scene
 		}
 		else
 		{
-			assert(false);        // path never passed -> Please add a type-check here!
 			return false;
 		}
 	}
