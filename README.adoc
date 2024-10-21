@@ -128,11 +128,6 @@ vulkan_samples batch --category performance --duration 10
 adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
 ----
 
-== Tests
-
-* System Test - xref:docs/testing.adoc#system-test[Usage Guide]
-* Generate Sample - xref:docs/testing.adoc#generate-sample-test[Usage Guide]
-
 == License
 
 See link:LICENSE[LICENSE].
