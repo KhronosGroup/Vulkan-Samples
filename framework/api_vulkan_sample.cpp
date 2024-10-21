@@ -304,6 +304,7 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 						{
 							get_gui().visible = !get_gui().visible;
 						}
+						break;
 					default:
 						break;
 				}
@@ -703,7 +704,7 @@ void ApiVulkanSample::setup_depth_stencil()
 
 void ApiVulkanSample::setup_framebuffer()
 {
-	VkImageView attachments[2];
+	VkImageView attachments[2]{};
 
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[1] = depth_stencil.view;
@@ -781,7 +782,7 @@ void ApiVulkanSample::setup_render_pass()
 	subpass_description.pResolveAttachments     = nullptr;
 
 	// Subpass dependencies for layout transitions
-	std::array<VkSubpassDependency, 2> dependencies;
+	std::array<VkSubpassDependency, 2> dependencies{};
 
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
@@ -866,7 +867,7 @@ void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 	subpass_description.pResolveAttachments     = nullptr;
 
 	// Subpass dependencies for layout transitions
-	std::array<VkSubpassDependency, 2> dependencies;
+	std::array<VkSubpassDependency, 2> dependencies{};
 
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
