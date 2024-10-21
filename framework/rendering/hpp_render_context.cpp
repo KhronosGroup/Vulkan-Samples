@@ -1,4 +1,5 @@
 /* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -95,7 +96,7 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -110,7 +111,7 @@ void HPPRenderContext::update_swapchain(const uint32_t image_count)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image count in headless mode, skipping.");
+		LOGW("Can't update the swapchains image count. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -127,7 +128,7 @@ void HPPRenderContext::update_swapchain(const std::set<vk::ImageUsageFlagBits> &
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image usage in headless mode, skipping.");
+		LOGW("Can't update the swapchains image usage. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -142,7 +143,7 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent, const vk::Su
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent and surface transform in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent and surface transform. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -199,7 +200,7 @@ bool HPPRenderContext::handle_surface_changes(bool force_update)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't handle surface changes in headless mode, skipping.");
+		LOGW("Can't handle surface changes. No swapchain, offscreen rendering detected, skipping.");
 		return false;
 	}
 

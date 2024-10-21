@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,9 @@
 namespace vkb
 {
 /**
- * @brief Surface-less implementation of a Window, for use in headless rendering
+ * @brief Surface-less implementation of a Window using VK_EXT_headless_surface.
+ * A surface and swapchain are still created but the the present operation resolves to a no op.
+ * Useful for testing and benchmarking in CI environments.
  */
 class HeadlessWindow : public Window
 {
