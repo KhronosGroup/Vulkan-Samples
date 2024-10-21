@@ -30,14 +30,9 @@
 // The Vulkan Profiles library is part of the SDK and has been copied to the sample's folder for convenience
 #include "vulkan_profiles.hpp"
 
-// This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux, and the VP_LUNARG_desktop_portability_2021_subset profile on portability platforms like macOS
-#if (defined(VKB_ENABLE_PORTABILITY) && defined(VP_LUNARG_desktop_portability_2021_subset))
-#	define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_NAME
-#	define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SUBSET_SPEC_VERSION
-#else
-#	define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
-#	define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
-#endif
+// This sample will use the Khronos roadmap 2022 profile which requires Vulkan 1.3
+// For details on what this profile requires/enables, see https://docs.vulkan.org/spec/latest/appendices/roadmap.html#roadmap-2022
+const VpProfileProperties profile_properties = {VP_KHR_ROADMAP_2022_NAME, VP_KHR_ROADMAP_2022_SPEC_VERSION};
 
 Profiles::Profiles()
 {
@@ -63,6 +58,16 @@ Profiles::~Profiles()
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
 std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 {
+	// Check if the profile is supported at device level
+	VkBool32 profile_supported;
+	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
+	if (!profile_supported)
+	{
+		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
+	}
+
+	// If the profile is supported, we can start setting things up and use the profiles library for that
+
 	// Simplified queue setup (only graphics)
 	uint32_t                selected_queue_family   = 0;
 	const auto             &queue_family_properties = gpu.get_queue_family_properties();
@@ -81,26 +86,21 @@ std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 		}
 	}
 
+	std::vector<const char *> enabled_extensions;
+	enabled_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-	create_info.pNext                = gpu.get_extension_feature_chain();
-	create_info.pQueueCreateInfos    = &queue_create_info;
-	create_info.queueCreateInfoCount = 1;
+	create_info.pNext                   = gpu.get_extension_feature_chain();
+	create_info.pQueueCreateInfos       = &queue_create_info;
+	create_info.queueCreateInfoCount    = 1;
+	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
+	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
-	const VpProfileProperties profile_properties = {PROFILE_NAME, PROFILE_SPEC_VERSION};
-
-	// Check if the profile is supported at device level
-	VkBool32 profile_supported;
-	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
-	if (!profile_supported)
-	{
-		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
-	}
-
-	// Create the device using the profile tool library
+	// Create the device using the profiles library
 	VpDeviceCreateInfo deviceCreateInfo{};
-	deviceCreateInfo.pCreateInfo = &create_info;
-	deviceCreateInfo.pProfile    = &profile_properties;
-	deviceCreateInfo.flags       = VP_DEVICE_CREATE_MERGE_EXTENSIONS_BIT;
+	deviceCreateInfo.pCreateInfo             = &create_info;
+	deviceCreateInfo.pEnabledFullProfiles    = &profile_properties;
+	deviceCreateInfo.enabledFullProfileCount = 1;
 	VkDevice vulkan_device;
 	VkResult result = vpCreateDevice(gpu.get_handle(), &deviceCreateInfo, nullptr, &vulkan_device);
 
@@ -129,8 +129,6 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 	{
 		throw vkb::VulkanException(result, "Failed to initialize volk.");
 	}
-
-	const VpProfileProperties profile_properties = {PROFILE_NAME, PROFILE_SPEC_VERSION};
 
 	// Check if the profile is supported at instance level
 	VkBool32 profile_supported;
@@ -205,12 +203,11 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 	// Note: We don't explicitly set an application info here so the one from the profile is used
 	// This also defines the api version to be used
 
-	// Create the instance using the profile tool library
-	// We set VP_INSTANCE_CREATE_MERGE_EXTENSIONS_BIT so the extensions defined in the profile will be merged with the extensions we specified manually
+	// Create the instance using the profiles library
 	VpInstanceCreateInfo instance_create_info{};
-	instance_create_info.pProfile    = &profile_properties;
-	instance_create_info.pCreateInfo = &create_info;
-	instance_create_info.flags       = VP_INSTANCE_CREATE_MERGE_EXTENSIONS_BIT;
+	instance_create_info.pEnabledFullProfiles    = &profile_properties;
+	instance_create_info.enabledFullProfileCount = 1;
+	instance_create_info.pCreateInfo             = &create_info;
 	VkInstance vulkan_instance;
 
 	result = vpCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
@@ -748,7 +745,7 @@ void Profiles::view_changed()
 
 void Profiles::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.text("Enabled profile: %s", PROFILE_NAME);
+	drawer.text("Enabled profile: %s", profile_properties.profileName);
 }
 
 std::unique_ptr<vkb::Application> create_profiles()
