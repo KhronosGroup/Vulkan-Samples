@@ -433,15 +433,24 @@ const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
 // This sample overrides the instance creation part of the framework to chain in additional structures
 std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 {
+	// Enumerate all instance layer properties so we can find and use the validation layer (VVL) version in subsequent steps
+	// The VVL version is needed to work around validation layer performance issues when running with Vulkan SDKs <= 1.3.290
 	uint32_t layer_property_count;
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, nullptr));
 	std::vector<VkLayerProperties> layer_properties(layer_property_count);
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, layer_properties.data()));
 
-	// Find validation layer properties so we can extract the VVL version and select the correct Vulkan API based on SDK release
 	const auto vvl_properties = std::find_if(layer_properties.begin(),
 	                                         layer_properties.end(),
 	                                         [](VkLayerProperties const &properties) { return strcmp(properties.layerName, "VK_LAYER_KHRONOS_validation") == 0; });
+
+	// debugPrintfEXT layer feature requires Vulkan API 1.1, but override with API 1.2 for Vulkan SDKs <= 1.3.290 to work around VVL performance defect
+	// See VVL issue https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7562 for defect and fix information (fix available in SDK 1.3.296)
+	auto debugprintf_api_version = VK_API_VERSION_1_1;
+	if (vvl_properties != layer_properties.end() && vvl_properties->specVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290))
+	{
+		debugprintf_api_version = VK_API_VERSION_1_2;
+	}
 
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
@@ -449,14 +458,12 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
 	// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
-	// For this case set Vulkan API version and return via parent class, otherwise the remainder of this custom override is required
+	// For this case set Vulkan API version and return via base class, otherwise the remainder of this custom override is required
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
 	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 	{
-		// debugPrintfEXT layer feature requires Vulkan API 1.1, but use API 1.2 until VVL performance fix is available in SDKs > 1.3.290
-		// See VVL issue https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7562 for defect and fix information
-		set_api_version(vvl_properties != layer_properties.end() && vvl_properties->specVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1);
+		set_api_version(debugprintf_api_version);
 
 		// Run standard create_instance() from framework (with set_api_version and layer settings support) and return
 		return VulkanSample::create_instance(headless);
@@ -487,7 +494,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
-	app_info.apiVersion       = vvl_properties != layer_properties.end() && vvl_properties->specVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1;
+	app_info.apiVersion       = debugprintf_api_version;
 
 	// Shader printf is a feature of the validation layers that needs to be enabled
 	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
