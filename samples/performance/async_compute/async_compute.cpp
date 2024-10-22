@@ -654,6 +654,9 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 
 void AsyncComputeSample::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	if (last_async_enabled != async_enabled)
 	{
 		setup_queues();

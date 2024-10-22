@@ -103,6 +103,9 @@ void CommandBufferUsage::prepare_render_context()
 
 void CommandBufferUsage::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	auto &subpass_state = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get())->get_state();
 
 	// Process GUI input
