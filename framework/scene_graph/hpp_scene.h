@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include "components/hpp_mesh.h"
 #include "scene.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/components/hpp_mesh.h"
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/animation.h"
 
@@ -37,7 +38,8 @@ class HPPScene : private vkb::sg::Scene
 	template <class T>
 	std::vector<T *> get_components() const
 	{
-		if constexpr (std::is_same<T, vkb::sg::Script>::value)
+		if constexpr (std::is_same<T, vkb::sg::Animation>::value || std::is_same<T, vkb::sg::Camera>::value || std::is_same<T, vkb::sg::Script>::value ||
+		              std::is_same<T, vkb::sg::SubMesh>::value || std::is_same<T, vkb::sg::Texture>::value)
 		{
 			return vkb::sg::Scene::get_components<T>();
 		}
@@ -56,9 +58,14 @@ class HPPScene : private vkb::sg::Scene
 	template <class T>
 	bool has_component() const
 	{
-		if constexpr (std::is_same<T, vkb::sg::Animation>::value || std::is_same<T, vkb::sg::Script>::value)
+		if constexpr (std::is_same<T, vkb::sg::Animation>::value || std::is_same<T, vkb::sg::Camera>::value || std::is_same<T, vkb::sg::Script>::value ||
+		              std::is_same<T, vkb::sg::SubMesh>::value || std::is_same<T, vkb::sg::Texture>::value)
 		{
 			return vkb::sg::Scene::has_component(typeid(T));
+		}
+		else if constexpr (std::is_same<T, vkb::scene_graph::components::HPPMesh>::value)
+		{
+			return vkb::sg::Scene::has_component<vkb::sg::Mesh>();
 		}
 		else
 		{
