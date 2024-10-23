@@ -44,21 +44,6 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 	title = "Shader debugprintf";
 
 	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
-
-	// If layer settings available, use it to configure validation layer for debugPrintfEXT
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
-
-	VkLayerSettingEXT layerSetting;
-	layerSetting.pLayerName   = "VK_LAYER_KHRONOS_validation";
-	layerSetting.pSettingName = "enables";
-	layerSetting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
-	layerSetting.valueCount   = 1;
-
-	// Make this static so layer setting reference remains valid after leaving constructor scope
-	static const char *layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
-	layerSetting.pValues            = &layerEnables;
-
-	add_layer_setting(layerSetting);
 }
 
 ShaderDebugPrintf::~ShaderDebugPrintf()
@@ -465,14 +450,27 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	{
 		set_api_version(debugprintf_api_version);
 
-		// Run standard create_instance() from framework (with set_api_version and layer settings support) and return
+		// Since layer settings extension is available, use it to configure validation layer for debugPrintfEXT
+		add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
+
+		VkLayerSettingEXT layerSetting;
+		layerSetting.pLayerName   = "VK_LAYER_KHRONOS_validation";
+		layerSetting.pSettingName = "enables";
+		layerSetting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
+		layerSetting.valueCount   = 1;
+
+		// Make this static so layer setting reference remains valid after leaving constructor scope
+		static const char *layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
+		layerSetting.pValues            = &layerEnables;
+
+		add_layer_setting(layerSetting);
+
+		// Run standard create_instance() from framework with set_api_version(), add_instance_extension(), and add_layer_setting() support
 		return VulkanSample::create_instance(headless);
 	}
 
 	// Run remainder of this custom create_instance() (without layer settings support) and return
 	std::vector<const char *> enabled_extensions;
-	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-
 	for (const char *extension_name : window->get_required_surface_extensions())
 	{
 		enabled_extensions.push_back(extension_name);
@@ -495,6 +493,9 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
 	app_info.apiVersion       = debugprintf_api_version;
+
+	// Legacy extension for configuring validation layer features using VkValidationFeaturesEXT
+	enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 
 	// Shader printf is a feature of the validation layers that needs to be enabled
 	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
