@@ -451,8 +451,6 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 		set_api_version(debugprintf_api_version);
 
 		// Since layer settings extension is available, use it to configure validation layer for debugPrintfEXT
-		add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ false);
-
 		VkLayerSettingEXT layerSetting;
 		layerSetting.pLayerName   = "VK_LAYER_KHRONOS_validation";
 		layerSetting.pSettingName = "enables";
@@ -465,7 +463,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 
 		add_layer_setting(layerSetting);
 
-		// Run standard create_instance() from framework with set_api_version(), add_instance_extension(), and add_layer_setting() support
+		// Run standard create_instance() from framework with set_api_version() and add_layer_setting() support
 		return VulkanSample::create_instance(headless);
 	}
 
