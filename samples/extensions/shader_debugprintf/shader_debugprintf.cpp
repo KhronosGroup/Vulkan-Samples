@@ -68,6 +68,11 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 
 void ShaderDebugPrintf::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	// debugPrintfEXT requires fragmentStoresAndAtomics, vertexPipelineStoresAndAtomics, and shaderInt64
+	gpu.get_mutable_requested_features().fragmentStoresAndAtomics       = VK_TRUE;
+	gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
+	gpu.get_mutable_requested_features().shaderInt64                    = VK_TRUE;
+
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -467,8 +472,10 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 		return VulkanSample::create_instance(headless);
 	}
 
-	// Run remainder of this custom create_instance() (without layer settings support) and return
+	// As a fallack, run remainder of this custom create_instance() override (without layer settings support) and return
 	std::vector<const char *> enabled_extensions;
+	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+
 	for (const char *extension_name : window->get_required_surface_extensions())
 	{
 		enabled_extensions.push_back(extension_name);
@@ -492,7 +499,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 	app_info.pEngineName      = "Vulkan Samples";
 	app_info.apiVersion       = debugprintf_api_version;
 
-	// Legacy extension for configuring validation layer features using VkValidationFeaturesEXT
+	// Enable VK_EXT_validation_features extension for configuring validation layer features using VkValidationFeaturesEXT
 	enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 
 	// Shader printf is a feature of the validation layers that needs to be enabled
