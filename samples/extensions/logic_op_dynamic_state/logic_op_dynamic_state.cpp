@@ -35,6 +35,7 @@ LogicOpDynamicState::LogicOpDynamicState()
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
+	add_device_extension(VK_EXT_PRIMITIVE_TOPOLOGY_LIST_RESTART_EXTENSION_NAME);
 }
 
 LogicOpDynamicState::~LogicOpDynamicState()
@@ -215,6 +216,11 @@ void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
 	                         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT,
 	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
 	                         extendedDynamicState);
+
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT,
+	                         primitiveTopologyListRestart);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
