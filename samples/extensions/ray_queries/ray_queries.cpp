@@ -286,9 +286,9 @@ void RayQueries::load_node(vkb::sg::Node &node)
 {
 	if (node.has_component<vkb::sg::Mesh>())
 	{
-		auto &mesh             = node.get_component<vkb::sg::Mesh>();
-		auto &transform_matrix = node.get_transform().get_world_matrix();
-		auto &normal_matrix    = glm::transpose(glm::inverse(glm::mat3(transform_matrix)));
+		auto     &mesh             = node.get_component<vkb::sg::Mesh>();
+		glm::mat4 transform_matrix = node.get_transform().get_world_matrix();
+		glm::mat3 normal_matrix    = glm::transpose(glm::inverse(glm::mat3(transform_matrix)));
 
 		for (auto &&sub_mesh : mesh.get_submeshes())
 		{
