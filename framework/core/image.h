@@ -115,10 +115,7 @@ struct ImageBuilder : public vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>
 	ImageBuilder &with_implicit_sharing_mode()
 	{
 		VkImageCreateInfo &create_info = get_create_info();
-		if (create_info.queueFamilyIndexCount != 0)
-		{
-			create_info.sharingMode = VK_SHARING_MODE_CONCURRENT;
-		}
+		create_info.sharingMode        = create_info.queueFamilyIndexCount != 0 ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
 		return *this;
 	}
 
