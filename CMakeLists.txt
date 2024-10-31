@@ -58,6 +58,11 @@ endif()
 # globally add VKB_DEBUG for the debug build
 add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)
 
+# globally set -fno-strict-aliasing, needed due to using reinterpret_cast
+if (!MSVC)
+  add_compile_options(-fno_strict_aliasing)
+endif()
+
 if(MSVC AND (DEFINED CMAKE_C_COMPILER_LAUNCHER))
     message(DEBUG "Setting MSVC flags to /Z7 for ccache compatibility.  Current flags: ${CMAKE_CXX_FLAGS_DEBUG}")
     string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
