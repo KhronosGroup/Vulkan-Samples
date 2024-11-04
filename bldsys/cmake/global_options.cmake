@@ -83,7 +83,18 @@ if(APPLE)
 		endif()
 	elseif(IOS)
 		# if not using MoltenVK on iOS, set up global Vulkan Library define for iOS Vulkan loader
-		add_compile_definitions(_HPP_VULKAN_LIBRARY=${Vulkan_LIBRARY})
+		message(STATUS "Using iOS Vulkan loader")
+		add_compile_definitions(_HPP_VULKAN_LIBRARY="vulkan.framework/vulkan")
+	elseif(Vulkan_LIBRARY)
+		# This is a patch for newer macOS versions where the Vulkan Loader is not found in the default search paths
+		# In the future this can be removed when the Vulkan SDK is updated to install the loader in the default search paths or when the
+		# VulkanHPP DynamicLoader is updated to search for the loader in the Vulkan SDK install location
+		string(FIND "${Vulkan_LIBRARY}" "/usr/local/lib" VULKAN_LIBRARY_PREFIX)
+		if(VULKAN_LIBRARY_PREFIX EQUAL 0)
+			message(STATUS "Vulkan found in /usr/local/lib. Patching RPATH.")
+			set(CMAKE_INSTALL_RPATH "/usr/local/lib;${CMAKE_INSTALL_RPATH}")
+			set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+		endif()
 	endif()
 
 	if(CMAKE_GENERATOR MATCHES "Xcode")
