@@ -124,3 +124,38 @@ TEST_CASE("Read binary file", "[filesystem]")
 
 	delete_test_file(fs, test_file);
 }
+
+TEST_CASE("Create Directory", "[filesystem]")
+{
+	vkb::filesystem::init();
+
+	auto fs = vkb::filesystem::get();
+
+	const auto test_dir = fs->temp_directory() / "vulkan_samples_directory_test" / "test_dir";
+
+	REQUIRE(fs->create_directory(test_dir));
+	REQUIRE(fs->exists(test_dir));
+	REQUIRE(fs->is_directory(test_dir));
+
+	std::vector<uint8_t> data = {0, 1, 2, 3, 4, 5};
+	for (uint8_t i : data)
+	{
+		// Create sub directories
+		const auto sub_dir = test_dir / fmt::format("sub_dir_{}", i);
+		REQUIRE(fs->create_directory(sub_dir));
+	}
+
+	// Check in a separate pass to ensure create_directory called multiple times doesn't fail
+	for (uint8_t i : data)
+	{
+		// Check sub directories
+		const auto sub_dir = test_dir / fmt::format("sub_dir_{}", i);
+		REQUIRE(fs->exists(sub_dir));
+		REQUIRE(fs->is_directory(sub_dir));
+	}
+
+	// Remove both the directory and its parent
+	fs->remove(fs->temp_directory() / "vulkan_samples_directory_test");
+
+	REQUIRE_FALSE(fs->exists(test_dir));
+}

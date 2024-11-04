@@ -75,7 +75,7 @@ bool StdFileSystem::create_directory(const Path &path)
 {
 	std::error_code ec;
 
-	std::filesystem::create_directory(path, ec);
+	std::filesystem::create_directories(path, ec);
 
 	if (ec)
 	{
@@ -132,7 +132,7 @@ void StdFileSystem::remove(const Path &path)
 {
 	std::error_code ec;
 
-	std::filesystem::remove(path, ec);
+	std::filesystem::remove_all(path, ec);
 
 	if (ec)
 	{
