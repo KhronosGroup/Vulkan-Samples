@@ -159,3 +159,25 @@ TEST_CASE("Create Directory", "[filesystem]")
 
 	REQUIRE_FALSE(fs->exists(test_dir));
 }
+
+TEST_CASE("Remove File Test", "[filesystem]")
+{
+	vkb::filesystem::init();
+
+	auto fs = vkb::filesystem::get();
+
+	const auto test_file = fs->temp_directory() / "vulkan_samples_remove_file_test" / "remove_test.txt";
+
+	REQUIRE(fs->create_directory(test_file.parent_path()));
+
+	fs->write_file(test_file, "Hello, World!");
+
+	REQUIRE(fs->exists(test_file));
+	REQUIRE(fs->is_file(test_file));
+
+	REQUIRE_NOTHROW(fs->remove(test_file));
+
+	REQUIRE_FALSE(fs->exists(test_file));
+
+	fs->remove(test_file.parent_path());
+}
