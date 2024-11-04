@@ -1296,6 +1296,8 @@ inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::update(float delta_time)
 {
+	vkb::Application::update(delta_time);
+
 	update_scene(delta_time);
 
 	update_gui(delta_time);
