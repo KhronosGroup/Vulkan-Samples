@@ -36,6 +36,10 @@ if(APPLE)
     set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability enumeration and subset features in the framework.  This is required to be set when running on Apple platforms." FORCE)
 
 	find_package(Vulkan QUIET OPTIONAL_COMPONENTS MoltenVK)
+
+	message(STATUS "Vulkan library: ${Vulkan_LIBRARY}")
+	message(STATUS "Vulkan headers: ${Vulkan_INCLUDE_DIR}")
+
 	if(USE_MoltenVK OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR (${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator" AND ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64"))))
 		# if using MoltenVK, or MoltenVK for iOS was not found, or using iOS Simulator on x86_64, look for MoltenVK in the Vulkan SDK and MoltenVK project locations
 		if(NOT Vulkan_MoltenVK_LIBRARY)
@@ -50,6 +54,8 @@ if(APPLE)
 			set(CMAKE_FIND_FRAMEWORK ${_saved_cmake_find_framework})
 			unset(_saved_cmake_find_framework)
 		endif()
+
+		message(STATUS "MoltenVK library: ${Vulkan_MoltenVK_LIBRARY}")
 
 		if(Vulkan_MoltenVK_LIBRARY)
 			get_filename_component(MoltenVK_LIBRARY_PATH ${Vulkan_MoltenVK_LIBRARY} DIRECTORY)
@@ -77,7 +83,7 @@ if(APPLE)
 		endif()
 	elseif(IOS)
 		# if not using MoltenVK on iOS, set up global Vulkan Library define for iOS Vulkan loader
-		add_compile_definitions(_HPP_VULKAN_LIBRARY="vulkan.framework/vulkan")
+		add_compile_definitions(_HPP_VULKAN_LIBRARY=${Vulkan_LIBRARY})
 	endif()
 
 	if(CMAKE_GENERATOR MATCHES "Xcode")
