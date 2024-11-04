@@ -83,7 +83,7 @@ jobs:
       - name: "build (npx) with stacktrmainace"
         working-directory: ./Vulkan-Site/docs-site
         run: |
-          npx antora antora-parent-ci-playbook.yml --stacktrace
+          npx antora --log-failure-level=error antora-parent-ci-playbook.yml --stacktrace
           touch build/site/.nojekyll
 
 # Deployment job
