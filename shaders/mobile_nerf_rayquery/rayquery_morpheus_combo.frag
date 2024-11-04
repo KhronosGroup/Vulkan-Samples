@@ -30,9 +30,8 @@
 #extension GL_EXT_ray_query : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
-// Uncomment this to use opaque mode
-// Should be faster, but would get VK_ERROR_DEVICE_LOST on some AMD devices
-// #define USE_OPAQUE
+// Opaque mode is the fastest, but could result into VK_ERROR_DEVICE_LOST on some AMD devices
+#define USE_OPAQUE
 
 struct Vertex
 {
