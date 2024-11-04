@@ -300,6 +300,7 @@ void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 						{
 							get_gui().visible = !get_gui().visible;
 						}
+						break;
 					default:
 						break;
 				}
