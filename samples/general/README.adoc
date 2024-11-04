@@ -25,3 +25,7 @@ The goal of these samples is to demonstrate different techniques or showcase com
 === xref:./{general_samplespath}mobile_nerf/README.adoc[Mobile NeRF]
 
 A Neural Radiance Field synthesizer sample, based on textured polygons.
+
+=== xref:./{general_samplespath}mobile_nerf_rayquery/README.adoc[Mobile NeRF Ray Query]
+
+A Mobile Neural Radiance Field synthesizer sample using ray query, based on textured polygons.
