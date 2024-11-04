@@ -327,11 +327,13 @@ void HPPTerrainTessellation::draw()
 	if (statistics.query_supported)
 	{
 		// Read query results for displaying in next frame
-		statistics.results =
-		    get_device()
-		        .get_handle()
-		        .getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64)
-		        .value;
+		auto result = get_device()
+		                  .get_handle()
+		                  .getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64);
+		if (result.result == vk::Result::eSuccess)
+		{
+			statistics.results = result.value;
+		}
 	}
 
 	HPPApiVulkanSample::submit_frame();
