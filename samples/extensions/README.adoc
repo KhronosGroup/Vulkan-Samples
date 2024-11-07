@@ -50,6 +50,10 @@ See this https://www.khronos.org/blog/streamlining-subpasses[this blogpost].
 Push descriptors apply the push constants concept to descriptor sets.
 Instead of creating per-object descriptor sets, this example passes descriptors at command buffer creation time.
 
+=== xref:./{extension_samplespath}hpp_push_descriptors/README.adoc[HPP Push Descriptors]
+
+A transcoded version of the Extensions sample <<push_descriptors,Push Descriptors>> that illustrates the usage of the C{pp} bindings of vulkan provided by Vulkan-Hpp.
+
 === xref:./{extension_samplespath}debug_utils/README.adoc[Debug Utilities]
 
 *Extension*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils[`VK_EXT_debug_utils`]
@@ -107,7 +111,7 @@ This replaces the vertex /  geometry shader standard pipeline.
 
 === xref:./{extension_samplespath}hpp_mesh_shading/README.adoc[HPP Mesh shading]
 
-A transcoded version of the Extensions sample <<mesh_shading,Mesh shading>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the Extensions sample <<mesh_shading,Mesh shading>> that illustrates the usage of the C{pp} bindings of vulkan provided by Vulkan-Hpp.
 
 === xref:./{extension_samplespath}open_gl_interop/README.adoc[OpenGL interoperability]
 
