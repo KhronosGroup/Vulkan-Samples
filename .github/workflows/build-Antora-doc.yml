@@ -86,12 +86,8 @@ jobs:
           output="$(npx antora antora-parent-ci-playbook.yml --stacktrace | \
             jq 'select(.msg | contains(" not found: guide:ROOT:index.adoc") | not)' | \
             jq 'select(.msg | contains(" not found: tutorial:ROOT:00_Introduction.adoc") | not)' | \
-            jq 'select(.msg | contains(" not found: https://github.com/wolfpld/tracy/releases/tag/v0.10") | not)' | \
             jq 'select(.msg | contains(" not found: guide::hlsl.adoc") | not)' | \
-            jq 'select(.msg | contains(" not found: guide::high_level_shader_language_comparison.adoc") | not)' | \
-            jq 'select(.msg | contains(" not found: guide::hlsl.adoc") | not)' | \
-            jq 'select(.msg | contains(" not found: guide::hlsl.adoc") | not)' | \
-            jq 'select(.msg | contains(" not found: guide::hlsl.adoc") | not)' \
+            jq 'select(.msg | contains(" not found: guide::high_level_shader_language_comparison.adoc") | not)' \
           )"
           if [[ -n $output ]]
           then
