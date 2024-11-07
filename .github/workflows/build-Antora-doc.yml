@@ -89,7 +89,7 @@ jobs:
             jq 'select("msg" | contains(" not found: tutorial:ROOT:00_Introduction.adoc") | not)' | \
             jq 'select("msg" | contains(" not found: guide::hlsl.adoc") | not)' | \
             jq 'select("msg" | contains(" not found: guide::high_level_shader_language_comparison.adoc") | not)' |\
-            jq -r . | jq -cM | npx pino-pretty
+            jq -r .
           )"
           if [[ -n $output ]]
           then
