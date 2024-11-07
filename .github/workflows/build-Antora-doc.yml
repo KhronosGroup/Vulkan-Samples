@@ -84,7 +84,7 @@ jobs:
         working-directory: ./Vulkan-Site/docs-site
         run: |
           output="$(npx antora --log-level=error --log-format=json antora-parent-ci-playbook.yml --stacktrace | \
-            grep -Pzo '\{(?>[^\{\}]|(?R))*\}' | \
+            grep -Pzo '\{(?>[^\{\}]|(?R))*\}' 2>/dev/null | \
             jq 'select(msg | contains(" not found: guide:ROOT:index.adoc") | not)' | \
             jq 'select(msg | contains(" not found: tutorial:ROOT:00_Introduction.adoc") | not)' | \
             jq 'select(msg | contains(" not found: guide::hlsl.adoc") | not)' | \
