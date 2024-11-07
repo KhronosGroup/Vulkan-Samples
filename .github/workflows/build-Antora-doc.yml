@@ -80,11 +80,24 @@ jobs:
       - name: "prepare samples"
         run: cmake -H"." -B"build/unix" -DVKB_GENERATE_ANTORA_SITE=ON
 
-      - name: "build (npx) with stacktrmainace"
+      - name: "build (npx) with stacktrace"
         working-directory: ./Vulkan-Site/docs-site
         run: |
-          npx antora --log-failure-level=error antora-parent-ci-playbook.yml --stacktrace
-          touch build/site/.nojekyll
+          output="$(npx antora --log-level=error --log-format=json antora-parent-ci-playbook.yml --stacktrace | \
+            grep -Pzo '\{(?>[^\{\}]|(?R))*\}' 2>/dev/null | \
+            jq 'del(."time",."file",."source",."name")' | \
+            jq 'select(."msg" | contains(" not found: guide:ROOT:INDEX.adoc")| not)' | \
+            jq 'select(."msg" | contains(" not found: guide:ROOT:index.adoc") | not)' | \
+            jq 'select(."msg" | contains(" not found: tutorial:ROOT:00_Introduction.adoc") | not)' | \
+            jq 'select(."msg" | contains(" not found: guide::hlsl.adoc") | not)' | \
+            jq 'select(."msg" | contains(" not found: guide::high_level_shader_language_comparison.adoc") | not)' \
+          )"
+          if [[ -n $output ]]
+          then
+            printf -- "%s\n" "$output"
+            exit 1
+          fi
+#          touch build/site/.nojekyll
 
 # Deployment job
   # deploy:
