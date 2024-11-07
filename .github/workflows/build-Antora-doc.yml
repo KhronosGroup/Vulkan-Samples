@@ -83,7 +83,7 @@ jobs:
       - name: "build (npx) with stacktrace"
         working-directory: ./Vulkan-Site/docs-site
         run: |
-          output="$(npx antora antora-parent-ci-playbook.yml --stacktrace | \
+          output="$(npx antora --log-format=json antora-parent-ci-playbook.yml --stacktrace | \
             jq 'select(.msg | contains(" not found: guide:ROOT:index.adoc") | not)' | \
             jq 'select(.msg | contains(" not found: tutorial:ROOT:00_Introduction.adoc") | not)' | \
             jq 'select(.msg | contains(" not found: guide::hlsl.adoc") | not)' | \
