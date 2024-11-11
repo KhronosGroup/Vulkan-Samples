@@ -22,10 +22,11 @@
 #include "vulkan_type_mapping.h"
 #include <vulkan/vulkan.hpp>
 
-namespace vkb {
+namespace vkb
+{
 
-namespace allocated {
-
+namespace allocated
+{
 
 /**
  * @brief Many Vulkan resource types (most notably Images and to a lesser extent Buffers)
@@ -46,7 +47,7 @@ namespace allocated {
  * For instance, the VMA create and usage flags are set here, but the image or buffer
  * usage flags are handled in the derived builder classes specific to those types.
  *
- * @example The following is an example of how the builder pattern is used in the codebase:
+ * The following is an example of how the builder pattern is used in the codebase:
  ```cpp
         vkb::core::ImageBuilder(VkExtent3D{grid_width, grid_height, 1})
             .with_format(VK_FORMAT_R8G8B8A8_UNORM)
@@ -258,6 +259,5 @@ inline BuilderType &BuilderBase<bindingType, BuilderType, CreateInfoType>::with_
 	return *static_cast<BuilderType *>(this);
 }
 
-} // namespace allocated
-} // namespace vkb
-
+}        // namespace allocated
+}        // namespace vkb

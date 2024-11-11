@@ -141,8 +141,8 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
   protected:
 	/**
 	 * @brief The VMA-specific constructor for new objects. This should only be visible to derived classes.
-	 * @tparam Args Additional constructor arguments needed for the derived class.  Typically a `VkImageCreateInfo` or `VkBufferCreateInfo` struct.
 	 * @param allocation_create_info All of the non-resource-specific information needed by the VMA to allocate the memory.
+	 * @param args Additional constructor arguments needed for the derived class. Typically a `VkImageCreateInfo` or `VkBufferCreateInfo` struct.
 	 */
 	template <typename... Args>
 	Allocated(const VmaAllocationCreateInfo &allocation_create_info, Args &&...args);
@@ -346,14 +346,14 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * @brief A pointer to the allocation memory, if the memory is HOST_VISIBLE and is currently (or persistently) mapped.
 	 * Contains null otherwise.
 	 */
-	uint8_t                *mapped_data            = nullptr;
+	uint8_t *mapped_data = nullptr;
 	/**
 	 * @brief This flag is set to true if the memory is coherent and doesn't need to be flushed after writes.
 	 *
 	 * @note This is initialized at allocation time to avoid subsequent need to call a function to fetch the
 	 * allocation information from the VMA, since this property won't change for the lifetime of the allocation.
 	 */
-	bool                    coherent               = false;
+	bool coherent = false;
 	/**
 	 * @brief This flag is set to true if the memory is persistently mapped (i.e. not just HOST_VISIBLE, but available
 	 * as a pointer to the application for the lifetime of the allocation).
@@ -361,7 +361,7 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * @note This is initialized at allocation time to avoid subsequent need to call a function to fetch the
 	 * allocation information from the VMA, since this property won't change for the lifetime of the allocation.
 	 */
-	bool                    persistent             = false;
+	bool persistent = false;
 };
 
 template <vkb::BindingType bindingType, typename HandleType>

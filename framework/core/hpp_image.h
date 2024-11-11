@@ -31,7 +31,6 @@ class HPPImageView;
 class HPPImage;
 using HPPImagePtr = std::unique_ptr<HPPImage>;
 
-
 struct HPPImageBuilder : public vkb::allocated::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>
 {
   private:
