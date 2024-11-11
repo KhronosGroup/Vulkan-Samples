@@ -33,9 +33,9 @@ using BufferPtr = std::unique_ptr<Buffer<bindingType>>;
 
 template <vkb::BindingType bindingType>
 struct BufferBuilder
-    : public vkb::BuilderBase<bindingType,
-                              BufferBuilder<bindingType>,
-                              typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type>
+    : public vkb::allocated::BuilderBase<bindingType,
+                                         BufferBuilder<bindingType>,
+                                         typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type>
 {
   public:
 	using BufferCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateFlags, VkBufferCreateFlags>::type;
@@ -47,7 +47,7 @@ struct BufferBuilder
 	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 
   private:
-	using ParentType = vkb::BuilderBase<bindingType, BufferBuilder<bindingType>, BufferCreateInfoType>;
+	using ParentType = vkb::allocated::BuilderBase<bindingType, BufferBuilder<bindingType>, BufferCreateInfoType>;
 
   public:
 	BufferBuilder(DeviceSizeType size);
