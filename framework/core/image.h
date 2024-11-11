@@ -35,10 +35,10 @@ namespace core
 class Image;
 using ImagePtr = std::unique_ptr<Image>;
 
-struct ImageBuilder : public vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>
+struct ImageBuilder : public vkb::allocated::BuilderBaseC<ImageBuilder, VkImageCreateInfo>
 {
   private:
-	using Parent = vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>;
+	using Parent = vkb::allocated::BuilderBaseC<ImageBuilder, VkImageCreateInfo>;
 
   public:
 	ImageBuilder(VkExtent3D const &extent) :

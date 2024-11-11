@@ -33,10 +33,14 @@ VmaAllocator &get_memory_allocator()
 
 void init(const VmaAllocatorCreateInfo &create_info)
 {
-	VkResult result = vmaCreateAllocator(&create_info, &get_memory_allocator());
-	if (result != VK_SUCCESS)
+	auto &allocator = get_memory_allocator();
+	if (allocator == VK_NULL_HANDLE)
 	{
-		throw VulkanException{result, "Cannot create allocator"};
+		VkResult result = vmaCreateAllocator(&create_info, &allocator);
+		if (result != VK_SUCCESS)
+		{
+			throw VulkanException{result, "Cannot create allocator"};
+		}
 	}
 }
 

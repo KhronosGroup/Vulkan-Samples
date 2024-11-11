@@ -31,10 +31,11 @@ class HPPImageView;
 class HPPImage;
 using HPPImagePtr = std::unique_ptr<HPPImage>;
 
-struct HPPImageBuilder : public vkb::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>
+
+struct HPPImageBuilder : public vkb::allocated::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>
 {
   private:
-	using Parent = vkb::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>;
+	using Parent = vkb::allocated::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>;
 
   public:
 	HPPImageBuilder(vk::Extent3D const &extent) :
