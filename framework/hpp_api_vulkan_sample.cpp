@@ -1,4 +1,5 @@
 /* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,11 +47,8 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info                   = vk::SubmitInfo();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
 
-	if (window->get_window_mode() != vkb::Window::Mode::Headless)
-	{
-		submit_info.setWaitSemaphores(semaphores.acquired_image_ready);
-		submit_info.setSignalSemaphores(semaphores.render_complete);
-	}
+	submit_info.setWaitSemaphores(semaphores.acquired_image_ready);
+	submit_info.setSignalSemaphores(semaphores.render_complete);
 
 	queue = get_device().get_suitable_graphics_queue().get_handle();
 

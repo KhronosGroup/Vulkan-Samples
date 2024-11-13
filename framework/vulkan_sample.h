@@ -175,7 +175,7 @@ class VulkanSample : public vkb::Application
 	 * @brief Create the Vulkan instance used by this sample
 	 * @note Can be overridden to implement custom instance creation
 	 */
-	virtual std::unique_ptr<InstanceType> create_instance(bool headless);
+	virtual std::unique_ptr<InstanceType> create_instance();
 
 	/**
 	 * @brief Override this to customise the creation of the render_context
@@ -508,9 +508,9 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 }
 
 template <vkb::BindingType bindingType>
-inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance(bool headless)
+inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance()
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), headless, api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -1049,11 +1049,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		instance = create_instance(headless);
+		instance = create_instance();
 	}
 	else
 	{
-		instance.reset(reinterpret_cast<vkb::core::HPPInstance *>(create_instance(headless).release()));
+		instance.reset(reinterpret_cast<vkb::core::HPPInstance *>(create_instance().release()));
 	}
 
 	// initialize C++-Bindings default dispatcher, second step
@@ -1066,7 +1066,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		throw std::runtime_error("Failed to create window surface.");
 	}
 
-	auto &gpu = instance->get_suitable_gpu(surface);
+	auto &gpu = instance->get_suitable_gpu(surface, headless);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
@@ -1086,7 +1086,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	}
 
 	// Creating vulkan device, specifying the swapchain extension always
-	if (!headless || get_instance().is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
+	// If using VK_EXT_headless_surface, we still create and use a swap-chain
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
