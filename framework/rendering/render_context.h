@@ -51,7 +51,7 @@ class Window;
  * For normal rendering (using a swapchain), the RenderContext can be created by passing in a
  * swapchain. A RenderFrame will then be created for each Swapchain image.
  *
- * For headless rendering (no swapchain), the RenderContext can be given a valid Device, and
+ * For offscreen rendering (no swapchain), the RenderContext can be given a valid Device, and
  * a width and height. A single RenderFrame will then be created.
  */
 class RenderContext
@@ -63,7 +63,7 @@ class RenderContext
 	/**
 	 * @brief Constructor
 	 * @param device A valid device
-	 * @param surface A surface, VK_NULL_HANDLE if in headless mode
+	 * @param surface A surface, VK_NULL_HANDLE if in offscreen mode
 	 * @param window The window where the surface was created
 	 * @param present_mode Requests to set the present mode of the swapchain
 	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode
