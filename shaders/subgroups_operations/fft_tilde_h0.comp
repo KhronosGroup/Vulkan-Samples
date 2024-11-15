@@ -1,0 +1,80 @@
+#version 450
+#extension GL_KHR_shader_subgroup_basic : enable
+/* Copyright (c) 2024, Mobica Limited
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define PI 3.14159265358979f
+#define GRAVITY 9.81f
+
+layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+layout (binding = 0, rgba32f) writeonly uniform image2D tilde_h0_k;
+layout (binding = 1, rgba32f) writeonly uniform image2D tilde_h0_minus_k;
+
+layout (std140, binding = 2) readonly buffer InputRandom
+{
+    vec4 data[];
+} input_random;
+
+layout (std140, binding = 3) uniform FFTParametersUbo
+{
+    float amplitude;
+    float len;
+    uint  grid_size;
+    vec2  wind;
+} input_params;
+
+float SuppressionFactor(float k_magnitude_sq)
+{
+    float suppress_length = 0.1;
+    return exp(-k_magnitude_sq * suppress_length * suppress_length);
+}
+
+float PhillipsSpectrum(vec2 k, float k_magnitude_sq, float l_phillips, vec2 wind_direction)
+{
+    return input_params.amplitude
+            * ((exp(-1.0 / (k_magnitude_sq * l_phillips * l_phillips))
+            * pow(dot(normalize(k), wind_direction), 2))
+            * SuppressionFactor(k_magnitude_sq))
+            / (k_magnitude_sq * k_magnitude_sq);
+}
+
+void main()
+{
+    vec2 wind_direction = normalize(input_params.wind);
+    float wind_speed = length(input_params.wind);
+
+    vec2 pos = vec2(gl_GlobalInvocationID.xy) - (input_params.grid_size / 2.0);
+    ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+
+    vec2 k = vec2((2.0 * PI * pos.x) / input_params.len, (2.0 * PI * pos.y) / input_params.len);
+
+    float k_magnitude = length(k);
+    if (k_magnitude < 0.00001)
+        k_magnitude = 0.00001;
+
+    float l_phillips = (wind_speed * wind_speed) / GRAVITY;
+
+    uint idx = pixel_pos.x  + pixel_pos.y * input_params.grid_size;
+    vec4 rnd = input_random.data[idx];
+
+    float h0_k = clamp(sqrt(PhillipsSpectrum(k, k_magnitude * k_magnitude, l_phillips, wind_direction) / 2.0), -4000.0, 4000.0);
+    float h0_minus_k = clamp(sqrt(PhillipsSpectrum(-k, k_magnitude * k_magnitude, l_phillips, wind_direction) / 2.0), -4000.0, 4000.0);
+
+    imageStore(tilde_h0_k, pixel_pos, vec4(rnd.xy * h0_k, 0.0, 1.0));
+    imageStore(tilde_h0_minus_k, pixel_pos, vec4(rnd.zw * h0_minus_k, 0.0, 1.0));
+}

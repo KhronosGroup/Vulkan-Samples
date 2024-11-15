@@ -1,0 +1,98 @@
+﻿////
+Copyright (c) 2024, Mobica Limited
+
+SPDX-License-Identifier: Apache-2.0
+
+Licensed under the Apache License, Version 2.0 the "License";
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////
+
+= Subgroups Operations
+
+== Overview
+
+The example demonstrates the use of the feature subgroups operations. An ocean animation based on the FFT is implemented to demonstrate this feature (Fast Fourier Transform https://en.wikipedia.org/wiki/Fast_Fourier_transform).
+image:image/image.png[]
+
+Subgroups operation feature introduces a mechanism to share data between the invocations that run in parallel on a single compute unit. 
+
+
+== GLSL Shaders
+
+To make full use of the feature subgroups operation, one of the following extensions must be enabled:
+
+* `#extension GL_KHR_shader_subgroup_basic`
+
+* `#extension GL_KHR_shader_subgroup_vote`
+
+* `#extension GL_KHR_shader_subgroup_ballot`
+
+* `#extension GL_KHR_shader_subgroup_arithmetic`
+
+* `#extension GL_KHR_shader_subgroup_shuffle`
+
+* `#extension GL_KHR_shader_subgroup_shuffle_relative`
+
+* `#extension GL_KHR_shader_subgroup_clustered`
+
+* `#extension GL_KHR_shader_subgroup_quad`
+
+
+This sample focuse on `GL_KHR_shader_subgroup_basic` extension.
+More about subgroups you can read in this article https://www.khronos.org/blog/vulkan-subgroup-tutorial.
+
+
+== Enabling the Feature
+
+In order to use subgroups operations, the required extensions must be enabled, an instance of the Vulkan API must be created with a minimum of version 1.1 and SPIR-V 1.4 must be used.
+
+VkDevice must be created with this `VK_EXT_subgroup_size_control` extension.
+It is also required to enable `VK_KHR_spirv_1_4` and `VK_KHR_shader_float_controls` in addition (`VK_KHR_spirv_1_4` requires this).
+
+
+To get the properties of the supported subgroups, the following should be taken:
+[,cpp]
+----
+VkPhysicalDeviceSubgroupProperties subgroups_properties;
+subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+subgroups_properties.pNext = VK_NULL_HANDLE;
+
+VkPhysicalDeviceProperties2 device_properties2 = {};
+device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+device_properties2.pNext                       = &subgroups_properties;
+vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
+----
+
+
+== Documentation
+
+* https://docs.vulkan.org/guide/latest/subgroups.html
+
+* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceSubgroupProperties.html
+
+* https://www.khronos.org/blog/vulkan-subgroup-tutorial
+
+
+== Sources
+The implementation was based on the following sources:
+
+* https://tore.tuhh.de/entities/publication/1cd390d3-732b-41c1-aa2b-07b71a64edd2
+* https://people.computing.clemson.edu/~jtessen/reports/papers_files/coursenotes2004.pdf
+* https://github.com/achalpandeyy/OceanFFT
+* https://github.com/deiss/fftocean
+* https://github.com/iamyoukou/fftWater
+
+== Authors
+* Patryk Jastrzębski
+* Krzysztof Dmitruk
+* Seweryn Zielas
+* Piotr Plenański
