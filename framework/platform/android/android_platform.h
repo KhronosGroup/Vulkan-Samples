@@ -81,8 +81,7 @@ inline bool process_android_events(android_app *app)
 	int ident;
 	int events;
 
-	while ((ident = ALooper_pollOnce(0, nullptr, &events,
-	                                (void **) &source)) > ALOOPER_POLL_TIMEOUT)
+	while ((ident = ALooper_pollOnce(0, nullptr, &events, (void **) &source)) > ALOOPER_POLL_TIMEOUT)
 	{
 		if (source)
 		{
