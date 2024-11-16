@@ -76,5 +76,6 @@ dependencies {
 }
 
 project.afterEvaluate{
+    project.getTasks().getByName("mergeDebugJniLibFolders").dependsOn(unzip)
     project.getTasks().getByName("mergeReleaseJniLibFolders").dependsOn(unzip)
 }
