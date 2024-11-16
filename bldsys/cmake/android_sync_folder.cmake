@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2023, Arm Limited and Contributors
+ Copyright (c) 2019-2024, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -23,7 +23,7 @@ set(CMAKE_MODULE_PATH
 set(FOLDER_DIR ${FOLDER_DIR})
 set(DEVICE_DIR ${DEVICE_DIR})
 
-find_package(Adb 1.0.39 REQUIRED)
+find_package(adb 1.0.39 REQUIRED)
 
 # Sync files to temporary directory
 get_filename_component(DIR_PATH "${FOLDER_DIR}" DIRECTORY)
