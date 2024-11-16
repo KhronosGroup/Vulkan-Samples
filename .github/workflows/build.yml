@@ -90,10 +90,10 @@ jobs:
           submodules: "recursive"
 
       - name: set up JDK 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          java-version: "11"
-          distribution: "temurin"
+          java-version: "17"
+          distribution: "zulu"
           cache: gradle
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
