@@ -144,6 +144,9 @@ std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_main_ren
 
 void MultithreadingRenderPasses::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	update_scene(delta_time);
 
 	update_stats(delta_time);

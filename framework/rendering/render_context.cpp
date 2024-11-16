@@ -106,7 +106,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -121,7 +121,7 @@ void RenderContext::update_swapchain(const uint32_t image_count)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image count in headless mode, skipping.");
+		LOGW("Can't update the swapchains image count. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -138,7 +138,7 @@ void RenderContext::update_swapchain(const std::set<VkImageUsageFlagBits> &image
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image usage in headless mode, skipping.");
+		LOGW("Can't update the swapchains image usage. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -153,7 +153,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent and surface transform in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent and surface transform. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -179,7 +179,7 @@ void RenderContext::update_swapchain(const VkImageCompressionFlagsEXT compressio
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains compression in headless mode, skipping.");
+		LOGW("Can't update the swapchains compression. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -228,7 +228,7 @@ bool RenderContext::handle_surface_changes(bool force_update)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't handle surface changes in headless mode, skipping.");
+		LOGW("Can't handle surface changes. No swapchain, offscreen rendering detected, skipping.");
 		return false;
 	}
 

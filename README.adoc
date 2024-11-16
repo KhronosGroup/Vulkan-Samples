@@ -88,6 +88,21 @@ cd Vulkan-Samples
 
 Follow build instructions for your platform below.
 
+[NOTE]
+====
+The full repository is very large, and some ISPs appear to have trouble
+providing a robust connection to github while the clone is being made.
+
+If you notice problems such as submodules downloading at reported rates in
+the tens of kB/s, or fatal timeout errors occurring, these may be due to
+network routing issues to github within your ISP's internal network, rather
+than anything wrong in your own networking setup.
+
+It can be very difficult to get ISPs to acknowledge such problems exist much
+less to fix them. In this case, consider trying the clone while running a
+VPN service.
+====
+
 == Build
 
 === Supported Platforms
@@ -118,8 +133,12 @@ vulkan_samples sample swapchain_images
 # Run AFBC sample in benchmark mode for 5000 frames
 vulkan_samples sample afbc --benchmark --stop-after-frame 5000
 
-# Run bonza test offscreen
-vulkan_samples test bonza --headless
+# Run compute nbody using headless_surface and take a screenshot of frame 5 
+# Note: headless_surface uses VK_EXT_headless_surface.
+# This will create a surface and a Swapchain, but present will be a no op.
+# The extension is supported by Swiftshader(https://github.com/google/swiftshader).
+# It allows to quickly test content in environments without a GPU.
+vulkan_samples sample compute_nbody --headless_surface -screenshot 5
 
 # Run all the performance samples for 10 seconds in each configuration
 vulkan_samples batch --category performance --duration 10
@@ -127,11 +146,6 @@ vulkan_samples batch --category performance --duration 10
 # Run Swapchain Images sample on an Android device
 adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
 ----
-
-== Tests
-
-* System Test - xref:docs/testing.adoc#system-test[Usage Guide]
-* Generate Sample - xref:docs/testing.adoc#generate-sample-test[Usage Guide]
 
 == License
 

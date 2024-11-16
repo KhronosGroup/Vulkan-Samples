@@ -82,6 +82,8 @@ void AsyncComputeSample::prepare_render_targets()
 	     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
 	};
+	color_targets[0].set_debug_name("color_targets[0]");
+	color_targets[1].set_debug_name("color_targets[1]");
 
 	// Should only really need one depth target, but vkb::RenderTarget needs to own the resource.
 	vkb::core::Image depth_targets[2]{
@@ -92,6 +94,8 @@ void AsyncComputeSample::prepare_render_targets()
 	     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
 	};
+	depth_targets[0].set_debug_name("depth_targets[0]");
+	depth_targets[1].set_debug_name("depth_targets[1]");
 
 	// 8K shadow-map overkill to stress devices.
 	// Min-spec is 4K however, so clamp to that if required.
@@ -108,6 +112,7 @@ void AsyncComputeSample::prepare_render_targets()
 	vkb::core::Image shadow_target{get_device(), shadow_resolution, VK_FORMAT_D16_UNORM,
 	                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	                               VMA_MEMORY_USAGE_GPU_ONLY};
+	shadow_target.set_debug_name("shadow_target");
 
 	// Create a simple mip-chain used for bloom blur.
 	// Could technically mip-map the HDR target,
@@ -202,7 +207,7 @@ void AsyncComputeSample::setup_queues()
 
 		if (graphics_family_index == compute_family_index)
 		{
-			LOGI("Device has does not have a dedicated compute queue family.");
+			LOGI("Device does not have a dedicated compute queue family.");
 			post_compute_queue = early_graphics_queue;
 		}
 		else
@@ -324,6 +329,7 @@ void AsyncComputeSample::render_shadow_pass()
 {
 	auto &queue          = *early_graphics_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("shadow_pass");
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	auto &views = shadow_render_target->get_views();
@@ -370,6 +376,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 {
 	auto &queue          = *early_graphics_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("forward_offscreen_pass");
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -447,6 +454,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 {
 	auto &queue          = *present_graphics_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("swapchain");
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -514,6 +522,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 {
 	auto &queue          = *post_compute_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("compute_post");
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -523,7 +532,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	if (early_graphics_queue->get_family_index() != post_compute_queue->get_family_index())
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		memory_barrier.src_access_mask = 0;
 		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
@@ -654,6 +663,9 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 
 void AsyncComputeSample::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	if (last_async_enabled != async_enabled)
 	{
 		setup_queues();

@@ -342,17 +342,17 @@ add_subdirectory(astc)
 # ASTC apparently tries to build for x86_64 even on Mac arm64 architectures,
 # but we can force it to build for the correct arch
 # Upstream bug: https://github.com/ARM-software/astc-encoder/issues/458
-if(IOS AND (CMAKE_SYSTEM_PROCESSOR STREQUAL "") )
-    set(CMAKE_SYSTEM_PROCESSOR "arm64")
+if(IOS)
+	if(${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator")
+		# handle iOS Simulator case, which should always match CMAKE_HOST_SYSTEM_PROCESSOR
+		set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR})
+	else()
+		set(CMAKE_SYSTEM_PROCESSOR arm64)
+	endif()
 endif ()
 if (APPLE AND (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
     set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
 endif()
-
-# if targeting iOS, that's always arm64 even when the host OS is x86-64
-if(IOS)
-    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
-endif ()
 
 # astc doesn't have separate directories for it's source code and public interface.  Additionally, it includes it's
 # own copy of STB. In order to avoid conflicts, we copy the only header we need to the build directory and alter the
