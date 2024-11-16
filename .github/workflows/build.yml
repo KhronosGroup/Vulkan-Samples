@@ -89,7 +89,7 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: set up JDK 11
+      - name: set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: "17"
