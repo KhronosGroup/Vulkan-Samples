@@ -151,25 +151,7 @@ adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_sam
 
 See link:LICENSE[LICENSE].
 
-This project has some third-party dependencies, each of which may have independent licensing:
-
-* https://github.com/ARM-software/astc-encoder[astc-encoder]: ASTC Evaluation Codec
-* https://github.com/vit-vit/CTPL[CTPL]: Thread Pool Library
-* https://github.com/docopt/docopt.cpp[docopt]: A C{pp}11 port of the Python argument parsing library
-* https://github.com/glfw/glfw[glfw]: A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
-* https://github.com/g-truc/glm[glm]: OpenGL Mathematics
-* https://github.com/KhronosGroup/glslang[glslang]: Shader front end and validator
-* https://github.com/ocornut/imgui[dear imgui]: Immediate Mode Graphical User Interface
-* https://github.com/ARM-software/HWCPipe[HWCPipe]: Interface to mobile Hardware Counters
-* https://github.com/KhronosGroup/KTX-Software[KTX-Software]: Khronos Texture Library and Tools
-* https://github.com/gabime/spdlog[spdlog]: Fast C{pp} logging library
-* https://github.com/KhronosGroup/SPIRV-Cross[SPIRV-Cross]: Parses and converts SPIR-V to other shader languages
-* https://github.com/nothings/stb[stb]: Single-file public domain (or MIT licensed) libraries
-* https://github.com/syoyo/tinygltf[tinygltf]: Header only C{pp}11 glTF 2.0 file parser
-* https://github.com/nlohmann/json[nlohmann json]: C{pp} JSON Library (included by https://github.com/syoyo/tinygltf[tinygltf])
-* https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator[vma]: Vulkan Memory Allocator
-* https://github.com/zeux/volk[volk]: Meta loader for Vulkan API
-* https://github.com/KhronosGroup/Vulkan-Docs[vulkan]: Sources for the formal documentation of the Vulkan API
+This project has several xref:./third_party/README.adoc[third-party dependencies]
 
 This project uses assets from https://github.com/KhronosGroup/Vulkan-Samples-Assets[vulkan-samples-assets].
 Each one has its own license.
