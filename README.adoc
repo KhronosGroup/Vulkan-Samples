@@ -45,8 +45,8 @@ ifdef::site-gen-antora[]
 endif::[]
 
 ifndef::site-gen-antora[]
-* https://github.com/KhronosGroup/Vulkan-Guide[Vulkan Guide]
-* https://vulkan-tutorial.com/[Get Started in Vulkan]
+* https://docs.vulkan.org/guide/latest/index.html[Vulkan Guide]
+* https://docs.vulkan.org/tutorial/latest/index.html[Get Started in Vulkan]
 endif::[]
 
 xref:samples/performance/README.adoc[Performance samples] show the recommended best practice together with real-time profiling information.
