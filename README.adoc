@@ -109,8 +109,9 @@ VPN service.
 
 * Windows - xref:./docs/build.adoc#windows[Build Guide]
 * Linux - xref:./docs/build.adoc#linux[Build Guide]
-* macOS - xref:./docs/build.adoc#macos[Build Guide]
 * Android - xref:./docs/build.adoc#android[Build Guide]
+* macOS - xref:./docs/build.adoc#macos[Build Guide]
+* iOS - xref:./docs/build.adoc#ios[Build Guide]
 
 == Usage
 
