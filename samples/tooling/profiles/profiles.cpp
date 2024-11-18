@@ -46,6 +46,8 @@ Profiles::~Profiles()
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
+		for (auto &tex : textures)
+			vkFreeMemory(get_device().get_handle(), tex.memory, nullptr);
 
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 
