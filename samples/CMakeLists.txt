@@ -133,6 +133,7 @@ set(ORDER_LIST
 	
 	#HPP Extension Samples
 	"hpp_mesh_shading"
+	"hpp_push_descriptors"
 	
     #HPP Performance Samples
     "hpp_pipeline_cache"
