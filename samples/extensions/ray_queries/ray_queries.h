@@ -88,6 +88,7 @@ class RayQueries : public ApiVulkanSample
 
 	void build_command_buffers() override;
 	void create_uniforms();
+	void load_node(vkb::sg::Node &node);
 	void load_scene();
 	void create_descriptor_pool();
 	void create_descriptor_sets();

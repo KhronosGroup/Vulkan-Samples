@@ -1,4 +1,5 @@
 /* Copyright (c) 2019-2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,13 +50,10 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
 
-	if (window->get_window_mode() != vkb::Window::Mode::Headless)
-	{
-		submit_info.waitSemaphoreCount   = 1;
-		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
-		submit_info.signalSemaphoreCount = 1;
-		submit_info.pSignalSemaphores    = &semaphores.render_complete;
-	}
+	submit_info.waitSemaphoreCount   = 1;
+	submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
+	submit_info.signalSemaphoreCount = 1;
+	submit_info.pSignalSemaphores    = &semaphores.render_complete;
 
 	queue = get_device().get_suitable_graphics_queue().get_handle();
 
@@ -304,6 +302,7 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 						{
 							get_gui().visible = !get_gui().visible;
 						}
+						break;
 					default:
 						break;
 				}
@@ -703,7 +702,7 @@ void ApiVulkanSample::setup_depth_stencil()
 
 void ApiVulkanSample::setup_framebuffer()
 {
-	VkImageView attachments[2];
+	VkImageView attachments[2]{};
 
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[1] = depth_stencil.view;
@@ -781,7 +780,7 @@ void ApiVulkanSample::setup_render_pass()
 	subpass_description.pResolveAttachments     = nullptr;
 
 	// Subpass dependencies for layout transitions
-	std::array<VkSubpassDependency, 2> dependencies;
+	std::array<VkSubpassDependency, 2> dependencies{};
 
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
@@ -866,7 +865,7 @@ void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 	subpass_description.pResolveAttachments     = nullptr;
 
 	// Subpass dependencies for layout transitions
-	std::array<VkSubpassDependency, 2> dependencies;
+	std::array<VkSubpassDependency, 2> dependencies{};
 
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;

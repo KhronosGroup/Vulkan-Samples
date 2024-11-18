@@ -1,4 +1,5 @@
 /* Copyright (c) 2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -423,7 +424,7 @@ const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
 }
 
 // This sample overrides the instance creation part of the framework to chain in additional structures
-std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
+std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 {
 	auto debugprintf_api_version = VK_API_VERSION_1_1;
 
@@ -478,7 +479,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance(bool headless)
 			add_layer_setting(layerSetting);
 
 			// Run standard create_instance() from framework with set_api_version() and add_layer_setting() support
-			return VulkanSample::create_instance(headless);
+			return VulkanSample::create_instance();
 		}
 	}
 

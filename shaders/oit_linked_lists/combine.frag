@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2023, Google
+/* Copyright (c) 2023-2024, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -54,9 +54,9 @@ layout (location = 0) out vec4 outFragColor;
 vec4 blendColors(uint packedSrcColor, vec4 dstColor)
 {
 	const vec4 srcColor = unpackUnorm4x8(packedSrcColor);
-	return vec4(
-		mix(dstColor.rgb, srcColor.rgb, srcColor.a),
-		dstColor.a * (1.0f - srcColor.a));
+	float alphaResult = srcColor.a + dstColor.a * (1.0f - srcColor.a);
+	vec3 rgbResult = (srcColor.rgb * srcColor.a + dstColor.rgb * dstColor.a * (1.0f - srcColor.a)) / alphaResult;
+	return vec4(rgbResult, alphaResult);
 }
 
 // Sort and blend fragments from the linked list.
@@ -70,7 +70,7 @@ vec4 mergeWithSort(uint firstFragmentIndex)
 	uint sortedFragmentCount = 0U;
 	const uint kSortedFragmentMaxCount = min(sceneConstants.sortedFragmentCount, SORTED_FRAGMENT_MAX_COUNT);
 
-	vec4 color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	vec4 color = vec4(0.0f);
 	uint fragmentIndex = firstFragmentIndex;
 	while(fragmentIndex != LINKED_LIST_END_SENTINEL)
 	{
@@ -123,14 +123,13 @@ vec4 mergeWithSort(uint firstFragmentIndex)
 	{
 		color = blendColors(sortedFragments[i].x, color);
 	}
-	color.a = 1.0f - color.a;
 	return color;
 }
 
 // Blend fragments from the linked list without sorting them.
 vec4 mergeWithoutSort(uint firstFragmentIndex)
 {
-	vec4 color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	vec4 color = vec4(0.0f);
 	uint fragmentIndex = firstFragmentIndex;
 	while(fragmentIndex != LINKED_LIST_END_SENTINEL)
 	{
@@ -138,7 +137,6 @@ vec4 mergeWithoutSort(uint firstFragmentIndex)
 		fragmentIndex = fragment.x;
 		color = blendColors(fragment.y, color);
 	}
-	color.a = 1.0f - color.a;
 	return color;
 }
 

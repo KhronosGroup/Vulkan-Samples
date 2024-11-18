@@ -134,6 +134,7 @@ RaytracingReflection::~RaytracingReflection()
 void RaytracingReflection::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES, scalarBlockLayout);
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, accelerationStructure);
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, rayTracingPipeline);
 
