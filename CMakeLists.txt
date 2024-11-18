@@ -59,8 +59,8 @@ endif()
 add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)
 
 # globally set -fno-strict-aliasing, needed due to using reinterpret_cast
-if (!MSVC)
-  add_compile_options(-fno_strict_aliasing)
+if (NOT MSVC)
+  add_compile_options(-fno-strict-aliasing)
 endif()
 
 if(MSVC AND (DEFINED CMAKE_C_COMPILER_LAUNCHER))

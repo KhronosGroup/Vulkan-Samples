@@ -123,7 +123,7 @@ inline BuilderType &BuilderBase<bindingType, BuilderType, CreateInfoType>::with_
 template <vkb::BindingType bindingType, typename BuilderType, typename CreateInfoType>
 inline BuilderType &BuilderBase<bindingType, BuilderType, CreateInfoType>::with_implicit_sharing_mode()
 {
-	create_info.sharingMode = (create_info.queueFamilyIndexCount != 0) ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive;
+	create_info.sharingMode = (1 < create_info.queueFamilyIndexCount) ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive;
 	return *static_cast<BuilderType *>(this);
 }
 
@@ -153,11 +153,11 @@ inline BuilderType &BuilderBase<bindingType, BuilderType, CreateInfoType>::with_
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		create_info.sharingMode = static_cast<VkSharingMode>(sharing_mode);
+		create_info.sharingMode = sharing_mode;
 	}
 	else
 	{
-		create_info.sharingMode = sharing_mode;
+		create_info.sharingMode = static_cast<vk::SharingMode>(sharing_mode);
 	}
 	return *static_cast<BuilderType *>(this);
 }

@@ -101,15 +101,6 @@ struct HPPImageBuilder : public vkb::BuilderBaseCpp<HPPImageBuilder, vk::ImageCr
 		return *this;
 	}
 
-	HPPImageBuilder &with_implicit_sharing_mode()
-	{
-		if (create_info.queueFamilyIndexCount != 0)
-		{
-			create_info.sharingMode = vk::SharingMode::eConcurrent;
-		}
-		return *this;
-	}
-
 	HPPImage    build(HPPDevice &device) const;
 	HPPImagePtr build_unique(HPPDevice &device) const;
 };

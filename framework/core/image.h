@@ -70,12 +70,6 @@ struct ImageBuilder : public vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>
 		return *this;
 	}
 
-	ImageBuilder &with_sharing_mode(VkSharingMode sharing_mode)
-	{
-		get_create_info().sharingMode = sharing_mode;
-		return *this;
-	}
-
 	ImageBuilder &with_flags(VkImageCreateFlags flags)
 	{
 		get_create_info().flags = flags;
@@ -109,16 +103,6 @@ struct ImageBuilder : public vkb::BuilderBaseC<ImageBuilder, VkImageCreateInfo>
 	ImageBuilder &with_tiling(VkImageTiling tiling)
 	{
 		get_create_info().tiling = tiling;
-		return *this;
-	}
-
-	ImageBuilder &with_implicit_sharing_mode()
-	{
-		VkImageCreateInfo &create_info = get_create_info();
-		if (create_info.queueFamilyIndexCount != 0)
-		{
-			create_info.sharingMode = VK_SHARING_MODE_CONCURRENT;
-		}
 		return *this;
 	}
 
