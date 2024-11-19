@@ -96,6 +96,13 @@ class MSAASample : public vkb::VulkanSample<vkb::BindingType::C>
 	std::unique_ptr<vkb::PostProcessingPipeline> postprocessing_pipeline{};
 
 	/**
+	 * @brief Postprocessing pipeline using multi-sampled depth
+	 *        Read in the output color and depth attachments from the
+	 *        scene subpass and use them to apply a screen-based effect
+	 */
+	std::unique_ptr<vkb::PostProcessingPipeline> ms_depth_postprocessing_pipeline{};
+
+	/**
 	 * @brief Update MSAA options and accordingly set the load/store
 	 *        attachment operations for the renderpasses
 	 *        This will trigger a swapchain recreation
