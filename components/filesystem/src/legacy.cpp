@@ -96,10 +96,11 @@ void create_directory(const std::string &path)
 
 void create_path(const std::string &root, const std::string &path)
 {
-	for (auto it = path.begin(); it != path.end(); ++it)
+	std::filesystem::path full_path = std::filesystem::path(root) / path;
+
+	if (!vkb::filesystem::get()->create_directory(full_path))
 	{
-		it = std::find(it, path.end(), '/');
-		create_directory(root + '/' + std::string(path.begin(), it));
+		ERRORF("Failed to create directory: {}", full_path.string());
 	}
 }
 
