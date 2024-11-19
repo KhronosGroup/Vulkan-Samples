@@ -39,9 +39,10 @@ layout(rgba16f, set = 0, binding = 1) writeonly uniform mediump image2D o_result
 
 layout(push_constant) uniform Registers
 {
-	uint16_t  num_blobs;
-	float16_t seed;
-	i16vec2   range;
+	// Fallback for implementations which do not support PushConstant16.
+	uint  num_blobs;
+	float seed;
+	ivec2 range;
 }
 registers;
 
