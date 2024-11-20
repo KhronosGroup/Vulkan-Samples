@@ -1070,7 +1070,7 @@ void HelloTriangleV13::render_triangle(uint32_t swapchain_index)
 		                           &context.per_frame[swapchain_index].swapchain_release_semaphore));
 	}
 
-	VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT};
 
 	VkSubmitInfo info{
 	    .sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
