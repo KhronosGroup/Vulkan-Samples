@@ -277,13 +277,6 @@ void HelloTriangleV13::init_instance()
 	}
 #endif
 
-#if (defined(VKB_ENABLE_PORTABILITY))
-	if (portability_enumeration_available)
-	{
-		instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-	}
-#endif
-
 	// Create the Vulkan instance
 	VK_CHECK(vkCreateInstance(&instance_info, nullptr, &context.instance));
 
