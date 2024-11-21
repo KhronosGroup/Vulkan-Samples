@@ -605,7 +605,7 @@ void HelloTriangleV13::init_swapchain()
 
 	VkSwapchainKHR old_swapchain = context.swapchain;
 
-	//one bitmask needs to be set according to the priority of presentation engine
+	// one bitmask needs to be set according to the priority of presentation engine
 	VkCompositeAlphaFlagBitsKHR composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	if (surface_properties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
 	{
@@ -626,7 +626,7 @@ void HelloTriangleV13::init_swapchain()
 
 	VkSwapchainCreateInfoKHR info{
 	    .sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-	    .surface          = context.surface,							// The surface onto which images will be presented
+	    .surface          = context.surface,                            // The surface onto which images will be presented
 	    .minImageCount    = desired_swapchain_images,                   // Minimum number of images in the swapchain (number of buffers)
 	    .imageFormat      = format.format,                              // Format of the swapchain images (e.g., VK_FORMAT_B8G8R8A8_SRGB)
 	    .imageColorSpace  = format.colorSpace,                          // Color space of the images (e.g., VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -638,7 +638,7 @@ void HelloTriangleV13::init_swapchain()
 	    .compositeAlpha   = composite,                                  // Alpha blending to apply (e.g., opaque, pre-multiplied)
 	    .presentMode      = swapchain_present_mode,                     // Presentation mode (e.g., vsync settings)
 	    .clipped          = true,                                       // Whether to clip obscured pixels (improves performance)
-	    .oldSwapchain     = old_swapchain};                             // Handle to the old swapchain, if replacing an existing one
+	    .oldSwapchain     = old_swapchain};                                 // Handle to the old swapchain, if replacing an existing one
 
 	VK_CHECK(vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain));
 
