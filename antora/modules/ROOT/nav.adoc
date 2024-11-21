@@ -91,6 +91,7 @@
 ** xref:samples/extensions/synchronization_2/README.adoc[Synchronization 2]
 ** xref:samples/extensions/timeline_semaphore/README.adoc[Timeline semaphore]
 ** xref:samples/extensions/vertex_dynamic_state/README.adoc[Vertex dynamic state]
+** xref:samples/extensions/dynamic_multisample_rasterization/README.adoc[Dynamic multisample rasterization]
 * xref:samples/performance/README.adoc[Performance samples]
 ** xref:samples/performance/16bit_arithmetic/README.adoc[16bit arithmetic]
 ** xref:samples/performance/16bit_storage_input_output/README.adoc[16bit storage input output]

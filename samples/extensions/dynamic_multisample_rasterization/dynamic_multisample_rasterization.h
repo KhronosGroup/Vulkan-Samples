@@ -26,8 +26,8 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	virtual ~DynamicMultisampleRasterization();
 
   private:
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
-	std::unique_ptr<vkb::core::Buffer> index_buffer  = nullptr;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer = nullptr;
+	std::unique_ptr<vkb::core::BufferC> index_buffer  = nullptr;
 
 	std::unique_ptr<vkb::sg::Scene>    scene;
 	std::vector<VkDescriptorImageInfo> image_infos;
@@ -48,10 +48,12 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 view;
 	} uniform_data;
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
-	VkPipeline            pipeline{VK_NULL_HANDLE};
-	VkPipeline            pipeline_inversed_rasterizer{VK_NULL_HANDLE};
+	VkPipeline            pipeline_opaque{VK_NULL_HANDLE};
+	VkPipeline            pipeline_opaque_flipped{VK_NULL_HANDLE};
+	VkPipeline            pipeline_transparent{VK_NULL_HANDLE};
+	VkPipeline            pipeline_transparent_flipped{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};

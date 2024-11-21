@@ -23,8 +23,8 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
-    NAME "Extended Dynamic State3 Multisample Rasterization"
-    DESCRIPTION "Sample description"
+    NAME "Dynamic Multisample Rasterization"
+    DESCRIPTION "Demonstrate how to use dynamic multisample rasterization (MSAA) from VK_EXT_extended_dynamic_state3 extension"
     SHADER_FILES_GLSL
         "dynamic_multisample_rasterization/model.vert"
         "dynamic_multisample_rasterization/model.frag")

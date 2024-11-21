@@ -36,8 +36,10 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 {
 	if (has_device())
 	{
-		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipeline_inversed_rasterizer, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipeline_opaque, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipeline_opaque_flipped, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipeline_transparent, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipeline_transparent_flipped, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 
@@ -51,25 +53,14 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 
 void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Query the extended dynamic state support
-	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
-	extended_dynamic_state_3_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
-
-	VkPhysicalDeviceFeatures2 features2{};
-	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	features2.pNext = &extended_dynamic_state_3_features;
-	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
-
-	if (extended_dynamic_state_3_features.extendedDynamicState3RasterizationSamples)
-	{
-		VkPhysicalDeviceExtendedDynamicState3FeaturesEXT requested_feature                                                                                        = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT};
-		requested_feature.extendedDynamicState3RasterizationSamples                                                                                               = VK_TRUE;
-		gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT) = requested_feature;
-	}
-
-	// Dynamic Rendering
-	auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
-	requested_dynamic_rendering.dynamicRendering = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3RasterizationSamples);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+	                         dynamicRendering);
 }
 
 const std::string to_string(VkSampleCountFlagBits count)
@@ -137,7 +128,7 @@ bool DynamicMultisampleRasterization::prepare(const vkb::ApplicationOptions &opt
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(1.9f, 10.f, -18.f));
 	camera.set_rotation(glm::vec3(0.f, -40.f, 0.f));
-	camera.rotation_speed = 0.01f;
+	camera.rotation_speed = 0.1f;
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
@@ -276,28 +267,28 @@ void DynamicMultisampleRasterization::build_command_buffers()
 
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_opaque);
 
 		for (auto &node : scene_nodes_opaque)
 		{
 			draw_node(draw_cmd_buffers[i], node);
 		}
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_inversed_rasterizer);
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_opaque_flipped);
 
 		for (auto &node : scene_nodes_opaque_flipped)
 		{
 			draw_node(draw_cmd_buffers[i], node);
 		}
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_transparent);
 
 		for (auto &node : scene_nodes_transparent)
 		{
 			draw_node(draw_cmd_buffers[i], node);
 		}
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_inversed_rasterizer);
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_transparent_flipped);
 
 		for (auto &node : scene_nodes_transparent_flipped)
 		{
@@ -575,7 +566,7 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 	            VK_COLOR_COMPONENT_G_BIT |
 	            VK_COLOR_COMPONENT_B_BIT |
 	            VK_COLOR_COMPONENT_A_BIT,
-	        VK_TRUE);
+	        VK_FALSE);
 
 	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
 	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -620,9 +611,6 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 	        pipeline_layout,
 	        VK_NULL_HANDLE,
 	        0);
-
-	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
 
 	// Create graphics pipeline for dynamic rendering
 	VkFormat color_rendering_format = get_render_context().get_format();
@@ -674,18 +662,20 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 	shader_stages[0] = load_shader("dynamic_multisample_rasterization/model.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_multisample_rasterization/model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+	// Add a pipeline for the opaque counterclockwise faces
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_opaque));
 
-	// Add another pipeline since parts of the scene have to be rendered using VK_FRONT_FACE_CLOCKWISE
-	VkPipelineRasterizationStateCreateInfo rasterization_state_inversed_rasterizer =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_CLOCKWISE,
-	        0);
+	// Add a pipeline for the opaque clockwise faces
+	rasterization_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_opaque_flipped));
 
-	pipeline_create_info.pRasterizationState = &rasterization_state_inversed_rasterizer;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_inversed_rasterizer));
+	// Add a pipeline for the transparent clockwise faces
+	blend_attachment_state.blendEnable = VK_TRUE;
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_transparent_flipped));
+
+	// Add a pipeline for the transparent counterclockwise faces
+	rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_transparent));
 }
 
 void DynamicMultisampleRasterization::prepare_gui_pipeline()
@@ -821,10 +811,10 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 void DynamicMultisampleRasterization::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                     sizeof(uniform_data),
-	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(uniform_data),
+	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
