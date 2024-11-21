@@ -53,6 +53,20 @@ if(Vulkan_FOUND)
     else()
         message(STATUS "Couldn't find DirectX Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_dxc_EXECUTABLE cmake variable. HLSL shaders won't be compiled.")
     endif()
+    # slang compiler
+    if(NOT Vulkan_slang_exe_FOUND)
+        find_program(Vulkan_slang_EXECUTABLE
+                    NAMES slangc
+                    HINTS
+                    "$ENV{VULKAN_SDK}/Bin"
+                    "$ENV{VULKAN_SDK}/bin"
+                    )
+    endif()
+    if(Vulkan_slang_EXECUTABLE)
+        message(STATUS "Found slang Shader Compiler under ${Vulkan_slang_EXECUTABLE}")
+    else()
+        message(STATUS "Couldn't find slang Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_slang_EXECUTABLE cmake variable. Slang shaders won't be compiled.")
+    endif()
 endif()
 
 # globally add VKB_DEBUG for the debug build
