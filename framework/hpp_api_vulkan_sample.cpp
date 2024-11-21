@@ -428,6 +428,14 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 		shader_extension = ".spv";
 	}
 
+	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
+	{
+		shader_folder = "slang";
+		// slang shaders are offline compiled to SPIR-V, so source is SPV
+		src_language     = vkb::ShaderSourceLanguage::SPV;
+		shader_extension = ".spv";
+	}
+
 	std::string full_file_name = sample_folder_name + "/" + shader_folder + "/" + shader_filename + shader_extension;
 
 	shader_modules.push_back(vkb::common::load_shader(full_file_name, get_device().get_handle(), stage, src_language));

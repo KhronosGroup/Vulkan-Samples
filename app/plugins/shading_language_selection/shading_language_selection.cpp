@@ -25,7 +25,7 @@ namespace plugins
 {
 ShadingLanguageSelection::ShadingLanguageSelection() :
     ShadingLanguageSelectionTags("Shading language selection",
-                                 "A collection of flags to select shader from different shading languages (glsl, hlsl)",
+                                 "A collection of flags to select shader from different shading languages (glsl, hlsl, slang)",
                                  {}, {&shading_language_selection_options_group})
 {
 }
@@ -51,6 +51,11 @@ void ShadingLanguageSelection::init(const vkb::CommandParser &parser)
 		{
 			LOGI("Shading langauge selection: HLSL")
 			vkb::Application::set_shading_language(vkb::ShadingLanguage::HLSL);
+		}
+		else if (shading_language == "slang")
+		{
+			LOGI("Shading langauge selection: slang")
+			vkb::Application::set_shading_language(vkb::ShadingLanguage::SLANG);
 		}
 		else
 		{

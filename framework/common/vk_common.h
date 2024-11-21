@@ -132,6 +132,7 @@ enum class ShadingLanguage
 {
 	GLSL,
 	HLSL,
+    SLANG,
 };
 
 /**
