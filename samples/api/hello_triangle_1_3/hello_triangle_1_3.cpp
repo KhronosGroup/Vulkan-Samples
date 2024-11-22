@@ -638,7 +638,8 @@ void HelloTriangleV13::init_swapchain()
 	    .compositeAlpha   = composite,                                  // Alpha blending to apply (e.g., opaque, pre-multiplied)
 	    .presentMode      = swapchain_present_mode,                     // Presentation mode (e.g., vsync settings)
 	    .clipped          = true,                                       // Whether to clip obscured pixels (improves performance)
-	    .oldSwapchain     = old_swapchain};                                 // Handle to the old swapchain, if replacing an existing one
+	    .oldSwapchain     = old_swapchain                               // Handle to the old swapchain, if replacing an existing one
+	};
 
 	VK_CHECK(vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain));
 
