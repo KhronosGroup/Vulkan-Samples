@@ -1126,10 +1126,7 @@ void HelloTriangleV13::transition_image_layout(
 	vkCmdPipelineBarrier2(cmd, &dependency_info);
 }
 
-/**
- * @brief Tears down the Vulkan context.
- */
-void HelloTriangleV13::teardown()
+HelloTriangleV13::~HelloTriangleV13()
 {
 	// Don't release anything until the GPU is completely idle.
 	vkDeviceWaitIdle(context.device);
@@ -1198,11 +1195,6 @@ void HelloTriangleV13::teardown()
 	}
 
 	vk_instance.reset();
-}
-
-HelloTriangleV13::~HelloTriangleV13()
-{
-	teardown();
 }
 
 bool HelloTriangleV13::prepare(const vkb::ApplicationOptions &options)
