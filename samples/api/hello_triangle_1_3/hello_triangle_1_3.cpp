@@ -126,42 +126,6 @@ bool HelloTriangleV13::validate_layers(const std::vector<const char *>      &req
 }
 
 /**
- * @brief Find the vulkan shader stage for a given a string.
- *
- * @param ext A string containing the shader stage name.
- * @return VkShaderStageFlagBits The shader stage mapping from the given string, VK_SHADER_STAGE_VERTEX_BIT otherwise.
- */
-VkShaderStageFlagBits HelloTriangleV13::find_shader_stage(const std::string &ext)
-{
-	if (ext == "vert")
-	{
-		return VK_SHADER_STAGE_VERTEX_BIT;
-	}
-	else if (ext == "frag")
-	{
-		return VK_SHADER_STAGE_FRAGMENT_BIT;
-	}
-	else if (ext == "comp")
-	{
-		return VK_SHADER_STAGE_COMPUTE_BIT;
-	}
-	else if (ext == "geom")
-	{
-		return VK_SHADER_STAGE_GEOMETRY_BIT;
-	}
-	else if (ext == "tesc")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-	}
-	else if (ext == "tese")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-	}
-
-	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
-};
-
-/**
  * @brief Initializes the Vulkan instance.
  */
 void HelloTriangleV13::init_instance()
@@ -715,7 +679,7 @@ void HelloTriangleV13::init_swapchain()
  * @param path The path for the shader (relative to the assets directory).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
-VkShaderModule HelloTriangleV13::load_shader_module(const char *path)
+VkShaderModule HelloTriangleV13::load_shader_module(const char *path, VkShaderStageFlagBits shader_stage)
 {
 	vkb::GLSLCompiler glsl_compiler;
 
@@ -730,7 +694,7 @@ VkShaderModule HelloTriangleV13::load_shader_module(const char *path)
 	std::string           info_log;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	if (!glsl_compiler.compile_to_spirv(shader_stage, buffer, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return VK_NULL_HANDLE;
@@ -842,13 +806,13 @@ void HelloTriangleV13::init_pipeline()
 	// Vertex stage of the pipeline
 	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module("triangle.vert");
+	shader_stages[0].module = load_shader_module("triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[0].pName  = "main";
 
 	// Fragment stage of the pipeline
 	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module("triangle.frag");
+	shader_stages[1].module = load_shader_module("triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	shader_stages[1].pName  = "main";
 
 	// Pipeline rendering info (for dynamic rendering).
