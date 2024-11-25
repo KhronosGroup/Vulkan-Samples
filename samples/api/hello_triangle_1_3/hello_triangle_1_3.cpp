@@ -615,12 +615,9 @@ void HelloTriangleV13::init_swapchain()
 			vkDestroyImageView(context.device, image_view, nullptr);
 		}
 
-		uint32_t image_count;
-		VK_CHECK(vkGetSwapchainImagesKHR(context.device, old_swapchain, &image_count, nullptr));
-
-		for (size_t i = 0; i < image_count; i++)
+		for (auto &per_frame : context.per_frame)
 		{
-			teardown_per_frame(context.per_frame[i]);
+			teardown_per_frame(per_frame);
 		}
 
 		context.swapchain_image_views.clear();
