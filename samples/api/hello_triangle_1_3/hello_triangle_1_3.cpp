@@ -421,8 +421,9 @@ void HelloTriangleV13::init_vertex_buffer()
 	// Create the vertex buffer
 	VkBufferCreateInfo vertext_buffer_info{
 	    .sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-	    .flags       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	    .flags       = 0,
 	    .size        = buffer_size,
+	    .usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	    .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
 
 	VK_CHECK(vkCreateBuffer(context.device, &vertext_buffer_info, nullptr, &context.vertex_buffer));
