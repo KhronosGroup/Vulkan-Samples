@@ -145,8 +145,6 @@ class HelloTriangleV13 : public vkb::Application
 	bool validate_layers(const std::vector<const char *>      &required,
 	                     const std::vector<VkLayerProperties> &available);
 
-	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
-
 	void init_instance();
 
 	void init_device();
@@ -159,7 +157,7 @@ class HelloTriangleV13 : public vkb::Application
 
 	void init_swapchain();
 
-	VkShaderModule load_shader_module(const char *path);
+	VkShaderModule load_shader_module(const char *path, VkShaderStageFlagBits shader_stage);
 
 	void init_pipeline();
 
