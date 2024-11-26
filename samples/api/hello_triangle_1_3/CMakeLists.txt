@@ -30,4 +30,4 @@ add_sample(
     DESCRIPTION "An introduction into Vulkan using Vulkan 1.3"
     SHADER_FILES_GLSL
         "hello_triangle_1_3/triangle.vert"
-        "hello_triangle_1_3/triangle.frag")
+        "hello_triangle_1_3/triangle.frag")		
