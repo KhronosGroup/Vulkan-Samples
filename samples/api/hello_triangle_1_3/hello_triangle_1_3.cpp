@@ -674,6 +674,7 @@ void HelloTriangleV13::init_swapchain()
 /**
  * @brief Helper function to load a shader module.
  * @param path The path for the shader (relative to the assets directory).
+ * @param shader_stage The shader stage flag specifying the type of shader (e.g., VK_SHADER_STAGE_VERTEX_BIT).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
 VkShaderModule HelloTriangleV13::load_shader_module(const char *path, VkShaderStageFlagBits shader_stage)
