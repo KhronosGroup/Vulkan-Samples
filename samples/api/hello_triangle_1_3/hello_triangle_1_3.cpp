@@ -726,17 +726,10 @@ void HelloTriangleV13::init_pipeline()
 	    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX};
 
 	// Define the vertex input attribute descriptions
-	std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions{};
-
-	attribute_descriptions[0].binding  = 0;
-	attribute_descriptions[0].location = 0;
-	attribute_descriptions[0].format   = VK_FORMAT_R32G32_SFLOAT;        // vec2 for position
-	attribute_descriptions[0].offset   = offsetof(Vertex, position);
-
-	attribute_descriptions[1].binding  = 0;
-	attribute_descriptions[1].location = 1;
-	attribute_descriptions[1].format   = VK_FORMAT_R32G32B32_SFLOAT;        // vec3 for color
-	attribute_descriptions[1].offset   = offsetof(Vertex, color);
+	std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions = {{
+	    {.location = 0, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, position)},        // position
+	    {.location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, color)}         // color
+	}};
 
 	// Create the vertex input state
 	VkPipelineVertexInputStateCreateInfo vertex_input{.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -799,19 +792,17 @@ void HelloTriangleV13::init_pipeline()
 	    .pDynamicStates    = dynamic_states.data()};
 
 	// Load our SPIR-V shaders.
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-
-	// Vertex stage of the pipeline
-	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module("triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[0].pName  = "main";
-
-	// Fragment stage of the pipeline
-	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module("triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[1].pName  = "main";
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {{
+	    {.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+	     .stage  = VK_SHADER_STAGE_VERTEX_BIT,
+	     .module = load_shader_module("triangle.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	     .pName  = "main"},        // Vertex shader stage
+	    {
+	        .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+	        .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
+	        .module = load_shader_module("triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT),
+	        .pName  = "main"}        // Fragment shader stage
+	}};
 
 	// Pipeline rendering info (for dynamic rendering).
 	VkPipelineRenderingCreateInfo pipeline_rendering_info{
@@ -933,8 +924,8 @@ void HelloTriangleV13::render_triangle(uint32_t swapchain_index)
 	    VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT        // dstStage
 	);
 	// Set clear color values.
-	VkClearValue clear_value;
-	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
+	VkClearValue clear_value{
+	    .color = {{0.01f, 0.01f, 0.033f, 1.0f}}};
 
 	// Set up the rendering attachment info
 	VkRenderingAttachmentInfo color_attachment{
@@ -974,9 +965,11 @@ void HelloTriangleV13::render_triangle(uint32_t swapchain_index)
 	vkCmdSetViewport(cmd, 0, 1, &vp);
 
 	// Set scissor dynamically
-	VkRect2D scissor{};
-	scissor.extent.width  = context.swapchain_dimensions.width;
-	scissor.extent.height = context.swapchain_dimensions.height;
+	VkRect2D scissor{
+	    .extent = {
+	        .width  = context.swapchain_dimensions.width,
+	        .height = context.swapchain_dimensions.height}};
+
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 	// Since we declared VK_DYNAMIC_STATE_CULL_MODE as dynamic in the pipeline,
