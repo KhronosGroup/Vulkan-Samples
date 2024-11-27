@@ -278,10 +278,7 @@ void HelloTriangleV13::init_device()
 		VkPhysicalDeviceProperties device_properties;
 		vkGetPhysicalDeviceProperties(physical_device, &device_properties);
 
-		uint32_t major_version = VK_API_VERSION_MAJOR(device_properties.apiVersion);
-		uint32_t minor_version = VK_API_VERSION_MINOR(device_properties.apiVersion);
-
-		if ((major_version < 1) || (major_version == 1 && minor_version < 3))
+		if (device_properties.apiVersion < VK_API_VERSION_1_3)
 		{
 			LOGW("Physical device '{}' does not support Vulkan 1.3, skipping.", device_properties.deviceName);
 			continue;
