@@ -1237,7 +1237,10 @@ void HelloTriangleV13::update(float delta_time)
 	// Handle outdated error in acquire.
 	if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height);
+		if (!resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height))
+		{
+			LOGI("Resize failed");
+		}
 		res = acquire_next_swapchain_image(&index);
 	}
 
@@ -1253,7 +1256,11 @@ void HelloTriangleV13::update(float delta_time)
 	// Handle Outdated error in present.
 	if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height);
+		if (!resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height))
+		{
+			LOGI("Resize failed");
+		}
+		
 	}
 	else if (res != VK_SUCCESS)
 	{
