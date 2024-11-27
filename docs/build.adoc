@@ -365,7 +365,7 @@ ____
 
 === Android Studio (Recommended)
 
-It is highly recommended to install https://d.android.com/studio[Android Studio] to build, run and trace the sample project. The samples require Android Studio Ladybug.
+It is highly recommended to install https://d.android.com/studio[Android Studio] to build, run and trace the sample project. Building via Android Studio requires at least Ladybug 2024.2.1.
 
 Android Studio uses the following plugins/tools to build samples:
  
