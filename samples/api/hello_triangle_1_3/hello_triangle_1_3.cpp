@@ -649,12 +649,12 @@ void HelloTriangleV13::init_swapchain()
 	{
 		// Create an image view which we can render into.
 		VkImageViewCreateInfo view_info{
-		    .sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-		    .pNext      = nullptr,
-		    .flags      = 0,
-		    .image      = swapchain_images[i],
-		    .viewType   = VK_IMAGE_VIEW_TYPE_2D,
-		    .format     = context.swapchain_dimensions.format,
+		    .sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		    .pNext            = nullptr,
+		    .flags            = 0,
+		    .image            = swapchain_images[i],
+		    .viewType         = VK_IMAGE_VIEW_TYPE_2D,
+		    .format           = context.swapchain_dimensions.format,
 		    .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1}};
 
 		VkImageView image_view;
@@ -1245,7 +1245,6 @@ void HelloTriangleV13::update(float delta_time)
 		{
 			LOGI("Resize failed");
 		}
-		
 	}
 	else if (res != VK_SUCCESS)
 	{
