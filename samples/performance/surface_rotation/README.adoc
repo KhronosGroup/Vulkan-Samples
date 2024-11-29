@@ -36,7 +36,7 @@ Therefore in Vulkan the application is responsible for supporting rotation.
 
 In this sample we focus on the rotation step, and analyse the performance implications of implementing it correctly with Vulkan.
 
-./rotation_cases.jpg[Pre-rotation]
+image::./images/rotation_cases.jpg[Pre-rotation]
 
 == Pre-rotation
 
