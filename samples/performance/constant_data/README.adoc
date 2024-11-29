@@ -16,15 +16,20 @@
 - limitations under the License.
 -
 ////
-= *Constant data in Vulkan*
+= Constant data in Vulkan
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/constant_data[Khronos Vulkan samples github repository].
 endif::[]
 
+// omit in toc
 :pp: {plus}{plus}
+ifndef::site-gen-antora[]
+== Contents
+:toc:
+endif::[]
 
-== *Overview*
+== Overview
 
 The Vulkan API exposes a few different ways in which we can send uniform data into our shaders.
 There are enough methods that it raises the question "Which one is fastest?", and more often than not the answer is "It depends".
@@ -35,24 +40,9 @@ This sample aims to highlight this issue, and help move the Vulkan ecosystem to 
 This is done by having an interactive way to toggle different constant data methods that the Vulkan API expose to us.
 This can then be run on a platform of the developers choice to see the performance implications that each of them bring.
 
-== *Contents*
+== What is constant data?
 
-* <<what-is-constant-data,What is Constant Data?>>
- ** <<introduction,Introduction>>
- ** <<constant-data-in-vulkan-shaders,Constant data in Vulkan shaders>>
- ** <<vulkan-api,Vulkan API>>
-* <<sample-overview,Sample Overview>>
-* <<push-constants,Push Constants>>
-* <<descriptor-sets,Descriptor Sets>>
-* <<dynamic-descriptor-sets,Dynamic Descriptor Sets>>
-* <<update-after-bind-descriptor-sets,Update-after-bind Descriptor Sets>>
-* <<buffer-object-arrays,Buffer Object Arrays>>
-* <<further-reading,Further reading>>
-* <<best-practice-summary,Best practice summary>>
-
-== *What is constant data?*
-
-=== *Introduction*
+=== Introduction
 
 Constant data is a form of information that is supplied to the pipeline to help with shader computations.
 
@@ -65,7 +55,7 @@ This is important as because of this assumption, the data can be *shared* betwee
 
 The next section aims to cover the constant data theory, starting at the shader level before moving to the basics of how to plug in your data using Vulkan.
 
-=== *Constant data in Vulkan shaders*
+=== Constant data in Vulkan shaders
 
 Constant data is implemented in shader code by using global variables.
 
@@ -73,6 +63,7 @@ Constant data is implemented in shader code by using global variables.
 
 Take this vertex shader for example:
 
+[,glsl]
 ----
 layout(location = 0) in vec4 position;
 
@@ -90,7 +81,7 @@ We can see three global variables, each with a different *storage type*:
 * Uniforms (`uniform`)
 * Outputs (`out`)
 
-==== _Varying Types_
+==== Varying Types
 
 The global variables that use inputs (`in`) and outputs (`out`) are values that _may vary_ from one shader invocation to the next, therefore they *shouldn't* be used for constant data.
 They require a `layout location` which is used to identify a particular input/output.
@@ -99,9 +90,10 @@ They have slightly different rules for what they do depending on the shader stag
 However, generally their use is to feed values from one stage to the next (e.g.
 from vertex shader to fragment shader).
 
-_You can read more about shader stage inputs and outputs https://www.khronos.org/opengl/wiki/Type_Qualifier_%28GLSL%29#Shader_stage_inputs_and_outputs[here]._
+[NOTE]
+You can read more about shader stage inputs and outputs link:++https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Shader_stage_inputs_and_outputs++[here].
 
-==== _Uniform Types_
+==== Uniform Types
 
 Uniform types are global variables that have either the `uniform` or `buffer` storage type, these are _uniform buffer objects_ and _shader storage buffer objects_ respectively.
 They describe data which remains constant across an entire draw call, meaning that the values stay the same across the different shader stages and shader invocations.
@@ -115,15 +107,17 @@ They are _read-only_ buffers, so trying to edit them in shader code will result 
 Unlike UBOs they can be written to, meaning the values _can_ be changed in the shaders so therefore they don't always represent data that is constant.
 Having said this, depending on the implementation, they generally can hold a lot more data as opposed to UBOs.
 
-_*Note:* To check how much data we can store in uniform buffers and storage buffers, you can query the physical device for its `VkPhysicalDeviceLimits` and check the values `maxUniformBufferRange` and `maxStorageBufferRange` respectively._
+[NOTE]
+To check how much data we can store in uniform buffers and storage buffers, you can query the physical device for its `VkPhysicalDeviceLimits` and check the values `maxUniformBufferRange` and `maxStorageBufferRange` respectively._
 
-==== _Interface Blocks_
+==== Interface Blocks
 
 To implement our constant data we have to use an interface block.
 Interface blocks in shader code are used to group multiple global variables of the same `<storage>` type, so in theory they aren't necessarily solely for constant data.
 
 For example:
 
+[,glsl]
 ----
 layout(set = 0, binding = 0) uniform PerMeshData
 {
@@ -139,9 +133,9 @@ However, the difference is that they have to be given a user-defined type.
 They work exactly the same way as a `struct` in GLSL/C{pp}.
 For example, to access the model matrix in this interface block, you'd use `per_mesh_data.model_matrix`.
 
-_You can read more about interface blocks https://www.khronos.org/opengl/wiki/Interface_Block_%28GLSL%29[here]._
+You can read more about interface blocks link:https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Shader_stage_inputs_and_outputs[here].
 
-=== *Vulkan API*
+=== Vulkan API
 
 We've covered how constant data is implemented in the shader, however to push the data from the application to the shader we need to use Vulkan.
 
@@ -152,15 +146,16 @@ Buffers in Vulkan are just chunks of memory used for storing data, which can be 
 They need to be created and have their memory _manually_ allocated, and then we can copy our constant data into the allocated memory.
 This data can then be plugged into the draw calls, so that it can finally be used in our shader computations.
 
-NOTE: _The library https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator[Vulkan Memory Allocator (VMA)] is extremely good for handling a lot of the common pitfalls that come with managing your Vulkan memory, without removing the control that you would otherwise have with native Vulkan._
+[NOTE]
+The library https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator[Vulkan Memory Allocator (VMA)] is extremely good for handling a lot of the common pitfalls that come with managing your Vulkan memory, without removing the control that you would otherwise have with native Vulkan.
 
 The following links are useful for learning how to create a Vulkan buffer in your application:
 
-* https://vulkan-tutorial.com/Vertex_buffers/Vertex_buffer_creation
-* https://vulkan-tutorial.com/Vertex_buffers/Staging_buffer#page_Abstracting-buffer-creation
-* https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer#page_Uniform-buffer
+* https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/01_Vertex_buffer_creation.html[Vulkan Tutorial vertex buffer creation]
+* https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html#_abstracting_buffer_creation[Vulkan tutorial abstracting buffer creation]
+* https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html#_uniform_buffer[Vulkan tutorial uniform buffer]
 
-==== _The Methods_
+==== The Methods
 
 There are various ways to push your constant data, where this tutorial will cover a subset of these methods.
 
@@ -180,9 +175,9 @@ When we break this down, we have the following methods:
 
 *Inline uniform buffer objects* and *push descriptors* are not covered by this tutorial, please use the links above to learn more about them.
 
-== *Sample Overview*
+== Sample Overview
 
-=== *Introduction*
+=== Introduction
 
 The sample uses a mesh heavy scene which has 1856 meshes (475 KB of mesh data).
 This is to demonstrate a use case where many different calls to pushing constant data will occur during a single frame.
@@ -197,7 +192,7 @@ image::./images/graph_data.jpg[graph]
 
 These two counters will show the CPU and GPU cost respectively, so when you go to toggle the different method you can see how it changes.
 
-=== *Controls*
+=== Controls
 
 The options presented to the user lets them change the method by which we push the MVP data.
 
@@ -209,9 +204,9 @@ You can check the console log to see a warning message detailing what features w
 
 When an option is changed, the descriptor sets are flushed and recreated with their new setup, and the respective render pipeline/subpass.
 
-== *Push Constants*
+== Push Constants
 
-=== *Introduction*
+=== Introduction
 
 Push constants are usually the first method newer Vulkan programmers will stumble upon when beginning to work with constant data.
 They are straightforward to use and integrate nicely into any codebase, making them a great option to send simple data to your shaders.
@@ -220,7 +215,8 @@ A downside to push constants is that on some platforms they have strict limitati
 The Vulkan spec guarantees that drivers will support at least 128 bytes of push constants.
 Many modern implementations of Vulkan will commonly support 256 bytes and sometimes much more.
 
-_*Note:* To determine how many bytes your system supports, you can query the physical device for its `VkPhysicalDeviceLimits` and check the value `maxPushConstantsSize`._
+[NOTE]
+To determine how many bytes your system supports, you can query the physical device for its `VkPhysicalDeviceLimits` and check the value `maxPushConstantsSize`.
 
 Having said this, 128/256 bytes is still a useful amount of data, even if it isn't exactly scalable to a full game scenario.
 In the case of 128 bytes, we can at least send two float 4x4 matrices (2 * 4 * 16 = 128).
@@ -230,6 +226,7 @@ So that the shader can understand where this data will be sent, we specify a spe
 
 For example:
 
+[,glsl]
 ----
 layout(push_constant) uniform MeshData
 {
@@ -249,7 +246,7 @@ void vkCmdPushConstants(
     const void*                                 pValues);
 ----
 
-=== *Performance*
+=== Performance
 
 image::./images/push_constants_performance.jpg[push constants]
 
@@ -262,9 +259,9 @@ Having said this, descriptor sets are one of the more complex features of Vulkan
 
 Scroll down for a comparison with static descriptor sets.
 
-== *Descriptor Sets*
+== Descriptor Sets
 
-=== *Introduction*
+=== Introduction
 
 In Vulkan, resources are exposed to shaders by the use of *resource descriptors*.
 
@@ -292,7 +289,7 @@ The update process requires us to specify a list of *write operations*, where a 
 
 Then the valid *descriptor set* is bound to a command buffer so that when `vkCmdDraw*()` commands are run, the right resources are made available in the GPU.
 
-==== _Buffer Object_
+==== Buffer Object
 
 For all the descriptor set sections below, we will use one such resource known as a *buffer object*, as this will be what we use to store our MVP data.
 
@@ -300,7 +297,7 @@ A *buffer object* in Vulkan is a type of `VkBuffer`, created with the respective
 For uniform buffer objects we use the `VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT` flag, and for shader storage buffer objects we use the `VK_BUFFER_USAGE_STORAGE_BUFFER_BIT` flag.
 These map to the shader `<storage>` type ``uniform``s and ``buffer``s respectively.
 
-=== *Performance*
+=== Performance
 
 image::./images/descriptor_set_performance.jpg[single ubo]
 
@@ -309,9 +306,9 @@ While it is not straightforward to perform a 1:1 comparison between push constan
 When comparing with <<push-constants,push constants>> on an Arm Mali GPU, we can see the frametime remains the same (16.7ms), however it is the load/store cycles we want to look at.
 They drop from 266 k/s to 123 k/s, showing that the GPU is worked more in the case of push constants to achieve the same visual results.
 
-== *Dynamic Descriptor Sets*
+== Dynamic Descriptor Sets
 
-=== *Introduction*
+=== Introduction
 
 Dynamic descriptor sets differ to the regular descriptor sets because they allow an offset to be specified when we are _binding_ (`vkCmdBindDescriptorSets`) the descriptor set.
 This dynamic offset can be used in addition to the base offset used at the time of updating the descriptor set.
@@ -322,7 +319,7 @@ One case in which this can be useful is:
 . Allocating a *descriptor set* with a binding containing the `VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC` flag that then points to the *UBO* you just created.
 . In our draw call, for each mesh, _dynamically_ offset into the giant *uniform buffer object*.
 
-=== *Performance*
+=== Performance
 
 image::./images/dynamic_descriptor_set_performance.jpg[dynamic ubo]
 
@@ -330,9 +327,9 @@ In the screenshot above (taken on an S10 with a Mali G76 GPU) we can see the loa
 However, the frame time goes up from 16.7 ms to 20.9 ms.
 This is due to the extra time you need to spend every frame determining the dynamic offsets, that you need to send in the bind call (`vkCmdBindDescriptorSets`).
 
-== *Update-after-bind Descriptor Sets*
+== Update-after-bind Descriptor Sets
 
-=== *Introduction*
+=== Introduction
 
 Traditionally, *descriptor sets* require updating before they are bound to a command buffer - any further updates after it is bound will invalidate the command buffer it is bound to.
 However, this can be considered an "overly cautious" restriction when we realise that the command buffer isn't actually executed until it's submitted on a queue.
@@ -340,15 +337,16 @@ This is where newer versions of Vulkan have introduced the concept of "update af
 
 Essentially it adds in a binding flag to descriptor set layouts which allows the contents of the *descriptor set* to be updated up until the command buffer _is submitted to the queue_, rather than when the descriptor set is _bound to the command buffer_.
 
-_*Note:* Update-after-bind bindings cannot be used with dynamic descriptor sets._
+[NOTE]
+Update-after-bind bindings cannot be used with dynamic descriptor sets.
 
-=== *Performance*
+=== Performance
 
 This should come with zero performance costs, and as a result this method is designed purely for offering flexibility to your codebase.
 
-== *Buffer Object Arrays*
+== Buffer Object Arrays
 
-=== *Introduction*
+=== Introduction
 
 Another approach, which can be likened to a dynamic descriptor set, is a buffer object array.
 This is the concept of allocating all of your constant data _upfront_ in a large buffer, and writing the entire buffer to a descriptor set.
@@ -362,6 +360,7 @@ This can be achieved with a shader variant definition._
 
 Here is an example of using a `buffer` in shader code:
 
+[,glsl]
 ----
 layout(set = 0, binding = 1) buffer MeshArray
 {
@@ -418,7 +417,7 @@ for(auto &mesh : meshes)
 In the code snippet above we can see that we bind our descriptor set once, and for each mesh bind its vertex and index buffers and then execute a draw call with an incrementing value for `uint32_t firstInstance`.
 This `uint32_t` will be substituted in wherever `gl_InstanceIndex` exists in the shader code, which will pull out the required model matrix to position the mesh inside our world.
 
-=== *Performance*
+=== Performance
 
 While this could be a fast method for some devices, on Mali it is not a recommend practice as it disables a compiler optimisation technique known as *pilot shaders*.
 
@@ -430,14 +429,14 @@ image::./images/loadcycles.png[loadcycles]
 
 A few different stats are affected in the Mali GPU by using this, but the main thing is the *full read* in the *Mali Core Load/Store Cycles*.
 
-== *Further reading*
+== Further reading
 
 * The https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html[Vulkan 1.2 spec]
 * "Writing an efficient Vulkan renderer" by Arseny Kapoulkine https://zeux.io/2020/02/27/writing-an-efficient-vulkan-renderer/
 * Alexander Overvoorde's https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer[Vulkan Tutorial on Descriptors] guide
 * Vulkan Fast Paths https://gpuopen.com/wp-content/uploads/2016/03/VulkanFastPaths.pdf
 
-== *Best practice summary*
+== Best practice summary
 
 *Do*
 
