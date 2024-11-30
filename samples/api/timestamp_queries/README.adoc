@@ -104,26 +104,7 @@ For this sample we'll be using 6 time points, one for the start and one for the 
 
 == Resetting the query pool
 
-Before we can start writing data to the query pool, we need to reset it.
-When using Vulkan 1.0 or 1.1, this requires us to enable the `VK_EXT_host_query_reset` extension:
-
-[,cpp]
-----
-add_device_extension(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
-----
-
-With using Vulkan 1.2 this extension has become part of the core and we won't have to manually enable it.
-
-Independent of this, we also need to enable the `hostQueryReset` physical device feature:
-
-[,cpp]
-----
-auto &requested_extension_features= gpu.request_extension_features<VkPhysicalDeviceHostQueryResetFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT);
-requested_extension_features.hostQueryReset = VK_TRUE;
-----
-
-With features and extensions properly enabled, we can now reset the pool at the start of the command buffer, before writing the first timestamp.
-This is done using `vkCmdResetQueryPool`:
+Before we can start writing data to the query pool, we need to reset it. This is done using `vkCmdResetQueryPool` at the start of the command buffer:
 
 [,cpp]
 ----
