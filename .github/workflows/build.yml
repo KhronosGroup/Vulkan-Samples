@@ -28,7 +28,7 @@ jobs:
         name: Install RandR headers
         run: |
           sudo apt-get update
-          sudo apt install xorg-dev libglu1-mesa-dev
+          sudo apt install xorg-dev libglu1-mesa-dev libwayland-dev libxkbcommon
       - if: ${{ matrix.platform == 'windows' }}
         name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
