@@ -151,6 +151,11 @@ ExitCode Platform::main_loop_frame()
 		}
 
 		window->process_events();
+
+		if (window->should_close() || close_requested)
+		{
+			return ExitCode::Close;
+		}
 	}
 	catch (std::exception &e)
 	{
@@ -175,13 +180,8 @@ ExitCode Platform::main_loop_frame()
 
 ExitCode Platform::main_loop()
 {
-	if (!app_requested())
-	{
-		return ExitCode::NoSample;
-	}
-
 	ExitCode exit_code = ExitCode::Success;
-	while ((exit_code == ExitCode::Success) && !window->should_close() && !close_requested)
+	while (exit_code == ExitCode::Success)
 	{
 		exit_code = main_loop_frame();
 	}

@@ -93,12 +93,12 @@ class OITDepthPeeling : public ApiVulkanSample
 
 	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
 
-	VkPipelineLayout gather_pipeline_layout;
-	VkPipeline       gather_first_pipeline;
-	VkPipeline       gather_pipeline;
-	VkPipelineLayout combine_pipeline_layout;
-	VkPipeline       combine_pipeline;
-	VkPipeline       background_pipeline;
+	VkPipelineLayout gather_pipeline_layout  = VK_NULL_HANDLE;
+	VkPipeline       gather_first_pipeline   = VK_NULL_HANDLE;
+	VkPipeline       gather_pipeline         = VK_NULL_HANDLE;
+	VkPipelineLayout combine_pipeline_layout = VK_NULL_HANDLE;
+	VkPipeline       combine_pipeline        = VK_NULL_HANDLE;
+	VkPipeline       background_pipeline     = VK_NULL_HANDLE;
 
 	int32_t camera_auto_rotation = false;
 	float   background_grayscale = 0.3f;
