@@ -322,8 +322,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 		for (auto i_attachment : subpass.input_attachments)
 		{
 			auto default_layout = vkb::is_depth_format(attachment_descriptions[i_attachment].format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			auto initial_layout = attachments[i_attachment].initial_layout == VK_IMAGE_LAYOUT_UNDEFINED ? default_layout : attachments[i_attachment].initial_layout;
-			input_attachments[i].push_back(get_attachment_reference<T_AttachmentReference>(i_attachment, initial_layout));
+			input_attachments[i].push_back(get_attachment_reference<T_AttachmentReference>(i_attachment, default_layout));
 		}
 
 		for (auto r_attachment : subpass.color_resolve_attachments)
