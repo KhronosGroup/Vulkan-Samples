@@ -21,7 +21,6 @@
 #include "builder_base.h"
 #include "common/vk_common.h"
 #include "core/allocated.h"
-#include "core/hpp_allocated.h"
 
 namespace vkb
 {
@@ -34,9 +33,9 @@ using BufferPtr = std::unique_ptr<Buffer<bindingType>>;
 
 template <vkb::BindingType bindingType>
 struct BufferBuilder
-    : public vkb::BuilderBase<bindingType,
-                              BufferBuilder<bindingType>,
-                              typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type>
+    : public vkb::allocated::BuilderBase<bindingType,
+                                         BufferBuilder<bindingType>,
+                                         typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type>
 {
   public:
 	using BufferCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateFlags, VkBufferCreateFlags>::type;
@@ -48,7 +47,7 @@ struct BufferBuilder
 	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 
   private:
-	using Parent = vkb::BuilderBase<bindingType, BufferBuilder<bindingType>, BufferCreateInfoType>;
+	using ParentType = vkb::allocated::BuilderBase<bindingType, BufferBuilder<bindingType>, BufferCreateInfoType>;
 
   public:
 	BufferBuilder(DeviceSizeType size);
@@ -64,13 +63,13 @@ using BufferBuilderCpp = BufferBuilder<vkb::BindingType::Cpp>;
 
 template <>
 inline BufferBuilder<vkb::BindingType::Cpp>::BufferBuilder(vk::DeviceSize size) :
-    Parent(BufferCreateInfoType{{}, size})
+    ParentType(BufferCreateInfoType{{}, size})
 {
 }
 
 template <>
 inline BufferBuilder<vkb::BindingType::C>::BufferBuilder(VkDeviceSize size) :
-    Parent(VkBufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, nullptr, 0, size})
+    ParentType(VkBufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, nullptr, 0, size})
 {}
 
 template <vkb::BindingType bindingType>
@@ -103,18 +102,17 @@ inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_usage(Buffer
 
 template <vkb::BindingType bindingType>
 class Buffer
-    : public std::conditional<bindingType == vkb::BindingType::Cpp, allocated::HPPAllocated<vk::Buffer>, allocated::Allocated<VkBuffer>>::type
+    : public vkb::allocated::Allocated<bindingType, typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type>
 {
   public:
+	using BufferType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type;
 	using BufferUsageFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferUsageFlags, VkBufferUsageFlags>::type;
 	using DeviceSizeType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
 
-	using AllocatedType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, allocated::HPPAllocated<vk::Buffer>, allocated::Allocated<VkBuffer>>::type;
 	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 
   private:
-	using Parent = AllocatedType;
+	using ParentType = vkb::allocated::Allocated<bindingType, BufferType>;
 
   public:
 	static Buffer<bindingType> create_staging_buffer(DeviceType &device, DeviceSizeType size, const void *data);
@@ -232,7 +230,7 @@ inline Buffer<bindingType>::Buffer(DeviceType                  &device,
 
 template <vkb::BindingType bindingType>
 inline Buffer<bindingType>::Buffer(DeviceType &device, const BufferBuilder<bindingType> &builder) :
-    AllocatedType{builder.get_allocation_create_info(), nullptr, &device}, size(builder.get_create_info().size)
+    ParentType(builder.get_allocation_create_info(), nullptr, &device), size(builder.get_create_info().size)
 {
 	this->set_handle(this->create_buffer(builder.get_create_info()));
 	if (!builder.get_debug_name().empty())

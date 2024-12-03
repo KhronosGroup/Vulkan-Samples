@@ -251,7 +251,6 @@ set(CORE_FILES
     core/render_pass.h
     core/query_pool.h
     core/acceleration_structure.h
-    core/hpp_allocated.h
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
     core/hpp_debug.h
