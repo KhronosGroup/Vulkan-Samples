@@ -332,19 +332,47 @@ void HelloTriangleV13::init_device()
 	}
 
 	// Query for Vulkan 1.3 features
-	VkPhysicalDeviceFeatures2                       device_features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-	VkPhysicalDeviceVulkan13Features                vulkan13_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
-	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extended_dynamic_state_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT};
-	device_features2.pNext  = &vulkan13_features;
-	vulkan13_features.pNext = &extended_dynamic_state_features;
+	VkPhysicalDeviceFeatures2                       query_device_features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+	VkPhysicalDeviceVulkan13Features                query_vulkan13_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT query_extended_dynamic_state_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT};
+	query_device_features2.pNext  = &query_vulkan13_features;
+	query_vulkan13_features.pNext = &query_extended_dynamic_state_features;
 
-	vkGetPhysicalDeviceFeatures2(context.gpu, &device_features2);
+	vkGetPhysicalDeviceFeatures2(context.gpu, &query_device_features2);
 
-	// Enable required Vulkan 1.3 features
-	vulkan13_features.dynamicRendering                   = VK_TRUE;
-	vulkan13_features.synchronization2                   = VK_TRUE;
-	extended_dynamic_state_features.extendedDynamicState = VK_TRUE;
+	// Check if Physical device supports Vulkan 1.3 features
+	// Check if Physical device supports Vulkan 1.3 features
+	if (!query_vulkan13_features.dynamicRendering)
+	{
+		throw std::runtime_error("Dynamic Rendering feature is missing");
+	}
 
+	if (!query_vulkan13_features.synchronization2)
+	{
+		throw std::runtime_error("Synchronization2 feature is missing");
+	}
+
+	if (!query_extended_dynamic_state_features.extendedDynamicState)
+	{
+		throw std::runtime_error("Extended Dynamic State feature is missing");
+	}
+
+	// Enable only specific Vulkan 1.3 features
+
+	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT enable_extended_dynamic_state_features = {
+	    .sType                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
+	    .extendedDynamicState = VK_TRUE};
+
+	VkPhysicalDeviceVulkan13Features enable_vulkan13_features = {
+	    .sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+	    .pNext            = &enable_extended_dynamic_state_features,
+	    .synchronization2 = VK_TRUE,
+	    .dynamicRendering = VK_TRUE,
+	};
+
+	VkPhysicalDeviceFeatures2 enable_device_features2{
+	    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+	    .pNext = &enable_vulkan13_features};
 	// Create the logical device
 
 	float queue_priority = 1.0f;
@@ -358,7 +386,7 @@ void HelloTriangleV13::init_device()
 
 	VkDeviceCreateInfo device_info{
 	    .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-	    .pNext                   = &device_features2,
+	    .pNext                   = &enable_device_features2,
 	    .queueCreateInfoCount    = 1,
 	    .pQueueCreateInfos       = &queue_info,
 	    .enabledExtensionCount   = vkb::to_u32(required_device_extensions.size()),
