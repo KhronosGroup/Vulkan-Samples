@@ -815,12 +815,12 @@ void HelloTriangleV13::init_pipeline()
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {{
 	    {.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	     .stage  = VK_SHADER_STAGE_VERTEX_BIT,
-	     .module = load_shader_module("triangle.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	     .module = load_shader_module("hello_triangle_1_3/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT),
 	     .pName  = "main"},        // Vertex shader stage
 	    {
 	        .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	        .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
-	        .module = load_shader_module("triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT),
+	        .module = load_shader_module("hello_triangle_1_3/triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT),
 	        .pName  = "main"}        // Fragment shader stage
 	}};
 
