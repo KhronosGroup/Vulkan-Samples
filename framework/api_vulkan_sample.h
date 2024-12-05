@@ -113,8 +113,6 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 
 	virtual void update(float delta_time) override;
 
-	virtual void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
-
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	virtual void render(float delta_time) = 0;
@@ -363,8 +361,9 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	/**
 	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
 	 */
-	void update_overlay(float delta_time);
+	void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
 
 	/**
 	 * @brief If the gui is enabled, then record the drawing commands to a command buffer

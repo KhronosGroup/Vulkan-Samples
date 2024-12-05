@@ -66,6 +66,9 @@ bool DescriptorManagement::prepare(const vkb::ApplicationOptions &options)
 
 void DescriptorManagement::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	update_scene(delta_time);
 
 	update_gui(delta_time);

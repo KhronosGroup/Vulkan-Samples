@@ -89,11 +89,13 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 	// live in the same command buffer as beginQuery
 	if (is_extension_supported(VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME) && is_extension_supported(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME))
 	{
-		auto perf_counter_features     = gpu.request_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>();
-		auto host_query_reset_features = gpu.request_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>();
+		auto perf_counter_features     = gpu.get_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>();
+		auto host_query_reset_features = gpu.get_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>();
 
 		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
+			gpu.add_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>().performanceCounterQueryPools = true;
+			gpu.add_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>().hostQueryReset                    = true;
 			enabled_extensions.push_back(VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME);
 			enabled_extensions.push_back(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
 			LOGI("Performance query enabled");

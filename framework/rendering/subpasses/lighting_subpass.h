@@ -23,7 +23,7 @@
 #include "common/glm_common.h"
 
 // This value is per type of light that we feed into the shader
-#define MAX_DEFERRED_LIGHT_COUNT 32
+#define MAX_DEFERRED_LIGHT_COUNT 48
 
 namespace vkb
 {

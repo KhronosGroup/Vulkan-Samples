@@ -63,16 +63,18 @@ RayTracingPositionFetch::~RayTracingPositionFetch()
 void RayTracingPositionFetch::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Features required for ray tracing
-	auto &requested_buffer_device_address_features                  = gpu.request_extension_features<VkPhysicalDeviceBufferDeviceAddressFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
-	requested_buffer_device_address_features.bufferDeviceAddress    = VK_TRUE;
-	auto &requested_ray_tracing_features                            = gpu.request_extension_features<VkPhysicalDeviceRayTracingPipelineFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR);
-	requested_ray_tracing_features.rayTracingPipeline               = VK_TRUE;
-	auto &requested_acceleration_structure_features                 = gpu.request_extension_features<VkPhysicalDeviceAccelerationStructureFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR);
-	requested_acceleration_structure_features.accelerationStructure = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(
+	    gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(
+	    gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, rayTracingPipeline);
+	REQUEST_REQUIRED_FEATURE(
+	    gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, accelerationStructure);
 
 	// Sample sepcific feature
-	auto &requested_ray_tracing_position_fetch_features                   = gpu.request_extension_features<VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR);
-	requested_ray_tracing_position_fetch_features.rayTracingPositionFetch = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR,
+	                         rayTracingPositionFetch);
 }
 
 /*

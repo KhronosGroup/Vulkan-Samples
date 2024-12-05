@@ -39,6 +39,8 @@ set(FRAMEWORK_FILES
     api_vulkan_sample.h
     timer.h
     camera.h
+    builder_base.h
+    vulkan_type_mapping.h
     hpp_api_vulkan_sample.h
     hpp_fence_pool.h
     hpp_glsl_compiler.h

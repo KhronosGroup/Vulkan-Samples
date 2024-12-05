@@ -24,9 +24,6 @@
 HPPTimestampQueries::HPPTimestampQueries()
 {
 	title = "Timestamp queries";
-	// This sample uses vk::CommandBuffer::resetQueryPool to reset the timestamp query pool on the host, which requires VK_EXT_host_query_reset or Vulkan 1.2
-	add_device_extension(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
-	// This also requires us to enable the feature in the appropriate feature struct, see request_gpu_features()
 }
 
 HPPTimestampQueries::~HPPTimestampQueries()
@@ -94,10 +91,6 @@ bool HPPTimestampQueries::resize(const uint32_t width, const uint32_t height)
 
 void HPPTimestampQueries::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
-	// We need to enable the command pool reset feature in the extension struct
-	auto &requested_extension_features          = gpu.request_extension_features<vk::PhysicalDeviceHostQueryResetFeaturesEXT>();
-	requested_extension_features.hostQueryReset = true;
-
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
 	{

@@ -93,8 +93,10 @@ void DynamicRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	if (enable_dynamic)
 	{
-		auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
-		requested_dynamic_rendering.dynamicRendering = VK_TRUE;
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+		                         dynamicRendering);
 	}
 
 	if (gpu.get_features().samplerAnisotropy)
@@ -373,6 +375,10 @@ void DynamicRendering::build_command_buffers()
 		{
 			vkb::image_layout_transition(draw_cmd_buffer,
 			                             swapchain_buffers[i].image,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             0,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			                             VK_IMAGE_LAYOUT_UNDEFINED,
 			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			                             range);

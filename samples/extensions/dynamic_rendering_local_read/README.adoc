@@ -43,7 +43,7 @@ This is enabled by default, making the sample use dynamic rendering with local r
 
 == Comparison
 
-For a primer on the differences between renderpasses and dynamic rendering, see the readme of the xref:../dynamic_rendering/README.adoc[dynamic rendering sample].
+For a primer on the differences between renderpasses and dynamic rendering, see the readme of the xref:/samples/extensions/dynamic_rendering/README.adoc[dynamic rendering sample].
 
 Here is the comparison table from that example extended with the newly added features from `VK_KHR_dynamic_rendering_local_read` in *bold*:
 
@@ -80,7 +80,7 @@ The rendering setup for this sample looks like this:
 
 image::./images/deferred_setup.png[Deferred setup describing subpasses]
 
-A big criticism with renderpasses was how involved esp. the setup is. Getting renderpasses and subpasses incl. dependencies correct can be tricky and renderpasses are kinda hard to integrate into a dynamically changing setup, making them a hard fit for complex Vulkan projects like game engines. With dynamic rendering, setup is far less involved and moves mostly to command buffer creation. If you look at the sample you can easily spot how much code required by looking at the parts that are deactivated via the `dynamic_rendering_local_read` C++ define. More on this can be found in the xref:../dynamic_rendering/README.adoc[dynamic rendering sample] readme. For this sample we'll only look at draw time.
+A big criticism with renderpasses was how involved esp. the setup is. Getting renderpasses and subpasses incl. dependencies correct can be tricky and renderpasses are kinda hard to integrate into a dynamically changing setup, making them a hard fit for complex Vulkan projects like game engines. With dynamic rendering, setup is far less involved and moves mostly to command buffer creation. If you look at the sample you can easily spot how much code required by looking at the parts that are deactivated via the `dynamic_rendering_local_read` C++ define. More on this can be found in the xref:/samples/extensions/dynamic_rendering/README.adoc[dynamic rendering sample] readme. For this sample we'll only look at draw time.
 
 == Replacing subpasses for local reads
 

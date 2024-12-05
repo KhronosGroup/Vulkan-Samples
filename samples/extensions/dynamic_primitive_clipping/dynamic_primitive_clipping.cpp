@@ -88,14 +88,14 @@ void DynamicPrimitiveClipping::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Features required by vkCmdSetDepthClipEnableEXT().
-	{
-		auto &features           = gpu.request_extension_features<VkPhysicalDeviceDepthClipEnableFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT);
-		features.depthClipEnable = VK_TRUE;
-	}
-	{
-		auto &features                                = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
-		features.extendedDynamicState3DepthClipEnable = VK_TRUE;
-	}
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceDepthClipEnableFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT,
+	                         depthClipEnable);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3DepthClipEnable);
 }
 
 void DynamicPrimitiveClipping::build_command_buffers()

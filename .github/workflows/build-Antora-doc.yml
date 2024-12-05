@@ -1,0 +1,116 @@
+name: "build Antora documentation"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can
+      # access it
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+
+      - name: "Checkout Vulkan-Site"
+        uses: actions/checkout@v3
+        with:
+          # repository: KhronosGroup/Vulkan-Site
+          repository: gpx1000/Vulkan-Site
+          path: ./Vulkan-Site
+          #          ref: main
+          ref: parent-ci
+          submodules: recursive
+
+      - name: "Checkout antora ui"
+        uses: actions/checkout@v3
+        with:
+          repository: KhronosGroup/antora-ui-khronos
+          path: ./Vulkan-Site/antora-ui-khronos
+          ref: main
+
+      - name: "setup npm"
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'latest'
+          cache: 'npm'
+          cache-dependency-path: ./Vulkan-Site/docs-site/package-lock.json
+
+      - name: "force clear the npm cache"
+        run: npm cache clean --force
+
+      - name: "run npm install for ui bundle"
+        working-directory: ./Vulkan-Site/antora-ui-khronos
+        run: npm install
+
+      - name: "run npm install for docs-site"
+        working-directory: ./Vulkan-Site/docs-site
+        run: npm install
+
+      - name: "ensure we have all dependencies for building/searching/highlighting"
+        run: |
+          sudo gem install rouge
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
+          sudo apt-get install -y asciidoctor
+          pip install lxml
+
+      - name: "build the ui bundle"
+        working-directory: ./Vulkan-Site/antora-ui-khronos
+        run: |
+          npx update-browserslist-db@latest
+          ./node_modules/gulp/bin/gulp.js --version
+          ./node_modules/gulp/bin/gulp.js bundle
+
+      - name: "copy ui-bundle.zip to vulkan-site"
+        run: cp ./Vulkan-Site/antora-ui-khronos/build/ui-bundle.zip ./Vulkan-Site/docs-site/
+
+      - name: "prepare samples"
+        run: cmake -H"." -B"build/unix" -DVKB_GENERATE_ANTORA_SITE=ON
+
+      - name: "build (npx) with stacktrace"
+        working-directory: ./Vulkan-Site/docs-site
+        run: |
+          output="$(npx antora --log-level=error --log-format=json antora-parent-ci-playbook.yml --stacktrace | \
+            grep -Pzo '\{(?>[^\{\}]|(?R))*\}' 2>/dev/null | \
+            jq 'del(."time",."file",."source",."name")' | \
+            jq 'select(."msg" | contains(" not found: guide:ROOT:INDEX.adoc")| not)' | \
+            jq 'select(."msg" | contains(" not found: guide:ROOT:index.adoc") | not)' | \
+            jq 'select(."msg" | contains(" not found: tutorial:ROOT:00_Introduction.adoc") | not)' | \
+            jq 'select(."msg" | contains(" not found: guide::hlsl.adoc") | not)' | \
+            jq 'select(."msg" | contains(" not found: guide::high_level_shader_language_comparison.adoc") | not)' \
+          )"
+          if [[ -n $output ]]
+          then
+            printf -- "%s\n" "$output"
+            exit 1
+          fi
+#          touch build/site/.nojekyll
+
+# Deployment job
+  # deploy:
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    # permissions:
+      # contents: write
+    # runs-on: ubuntu-latest
+    # needs: build
+    # steps:
+      # - name: Deploy to GitHub Pages
+        # id: deployment
+        # uses: peaceiris/actions-gh-pages@v4
+        # with:
+          # github_token: ${{ secrets.GITHUB_TOKEN }}
+          # publish_dir: ./Vulkan-Site/docs-site/build/site
+# 

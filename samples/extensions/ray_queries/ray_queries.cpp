@@ -28,21 +28,6 @@
 namespace
 {
 constexpr uint32_t MIN_THREAD_COUNT = 1;
-struct RequestFeature
-{
-	vkb::PhysicalDevice &gpu;
-	explicit RequestFeature(vkb::PhysicalDevice &gpu) :
-	    gpu(gpu)
-	{}
-
-	template <typename T>
-	RequestFeature &request(VkStructureType s_type, VkBool32 T::*member)
-	{
-		auto &member_feature   = gpu.request_extension_features<T>(s_type);
-		member_feature.*member = VK_TRUE;
-		return *this;
-	}
-};
 
 template <typename T>
 struct CopyBuffer
@@ -113,10 +98,18 @@ RayQueries::~RayQueries()
 
 void RayQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	RequestFeature(gpu)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, &VkPhysicalDeviceBufferDeviceAddressFeatures::bufferDeviceAddress)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, &VkPhysicalDeviceAccelerationStructureFeaturesKHR::accelerationStructure)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR, &VkPhysicalDeviceRayQueryFeaturesKHR::rayQuery);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceAccelerationStructureFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+	                         accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceRayQueryFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR,
+	                         rayQuery);
 }
 
 void RayQueries::render(float delta_time)
@@ -193,8 +186,8 @@ bool RayQueries::prepare(const vkb::ApplicationOptions &options)
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
-	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
-	camera.set_translation(glm::vec3(0.0f, 1.5f, 0.f));
+	camera.set_rotation(glm::vec3(0.0f, 90.0f, 0.0f));
+	camera.set_translation(glm::vec3(0.0f, -2.0f, 0.f));
 
 	load_scene();
 	create_bottom_level_acceleration_structure();
@@ -273,30 +266,31 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	{
 		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
 		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-		bottom_level_acceleration_structure->add_triangle_geometry(
-		    *vertex_buffer,
-		    *index_buffer,
-		    *transform_matrix_buffer,
-		    static_cast<uint32_t>(model.indices.size()),
-		    static_cast<uint32_t>(model.vertices.size()) - 1,
-		    sizeof(Vertex),
-		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
-		    get_buffer_device_address(vertex_buffer->get_handle()),
-		    get_buffer_device_address(index_buffer->get_handle()));
+		bottom_level_acceleration_structure->add_triangle_geometry(*vertex_buffer,
+		                                                           *index_buffer,
+		                                                           *transform_matrix_buffer,
+		                                                           static_cast<uint32_t>(model.indices.size()),
+		                                                           static_cast<uint32_t>(model.vertices.size()) - 1,
+		                                                           sizeof(Vertex),
+		                                                           0,
+		                                                           VK_FORMAT_R32G32B32_SFLOAT,
+		                                                           VK_INDEX_TYPE_UINT32,
+		                                                           VK_GEOMETRY_OPAQUE_BIT_KHR,
+		                                                           get_buffer_device_address(vertex_buffer->get_handle()),
+		                                                           get_buffer_device_address(index_buffer->get_handle()));
 	}
 	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
-void RayQueries::load_scene()
+void RayQueries::load_node(vkb::sg::Node &node)
 {
-	model = {};
-
-	vkb::GLTFLoader loader{get_device()};
-	auto            scene = loader.read_scene_from_file("scenes/sponza/Sponza01.gltf");
-
-	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+	if (node.has_component<vkb::sg::Mesh>())
 	{
-		for (auto &&sub_mesh : mesh->get_submeshes())
+		auto     &mesh             = node.get_component<vkb::sg::Mesh>();
+		glm::mat4 transform_matrix = node.get_transform().get_world_matrix();
+		glm::mat3 normal_matrix    = glm::transpose(glm::inverse(glm::mat3(transform_matrix)));
+
+		for (auto &&sub_mesh : mesh.get_submeshes())
 		{
 			auto       pts_               = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
 			const auto normals_           = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
@@ -308,8 +302,9 @@ void RayQueries::load_scene()
 				const float sponza_scale = 0.01f;
 				for (size_t i = 0; i < pts_.size(); ++i)
 				{
-					model.vertices[vertex_start_index + i].position = sponza_scale * pts_[i].yzx;
-					model.vertices[vertex_start_index + i].normal   = normals_[i].yzx;
+					// For simplicity, pre-multiply the transformation
+					model.vertices[vertex_start_index + i].position = transform_matrix * sponza_scale * glm::vec4(pts_[i], 1.0f);
+					model.vertices[vertex_start_index + i].normal   = normal_matrix * normals_[i];
 				}
 			}
 
@@ -337,6 +332,21 @@ void RayQueries::load_scene()
 			}
 		}
 	}
+
+	for (auto &child : node.get_children())
+	{
+		load_node(*child);
+	}
+}
+
+void RayQueries::load_scene()
+{
+	model = {};
+
+	vkb::GLTFLoader loader{get_device()};
+	auto            scene = loader.read_scene_from_file("scenes/sponza/Sponza01.gltf");
+
+	load_node(scene->get_root_node());
 }
 
 void RayQueries::create_descriptor_pool()
@@ -400,7 +410,7 @@ void RayQueries::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
@@ -493,13 +503,15 @@ void RayQueries::update_uniform_buffers()
 {
 	assert(!!uniform_buffer);
 	global_uniform.camera_position = camera.position;
-	global_uniform.proj            = camera.matrices.perspective;
+	global_uniform.proj            = vkb::rendering::vulkan_style_projection(camera.matrices.perspective);
 	global_uniform.view            = camera.matrices.view;
 
-	const float R                 = 1.f;
-	const float P                 = 2.f * 3.14159f / 5000.f;
-	const float t                 = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_time).count()) / 1000.f;
-	global_uniform.light_position = glm::vec3(2 * R * cosf(t * P), R * sinf(t * P), -10.f);
+	const float PI                = 3.14159f;
+	const float radius            = 100.f;
+	const float speed             = 2.f * PI / 10000.f;
+	const float time              = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count());
+	const float angle             = glm::mod(time * speed, PI);
+	global_uniform.light_position = glm::vec3(0.0f, radius * sinf(angle), radius * cosf(angle));
 
 	uniform_buffer->update(&global_uniform, sizeof(global_uniform));
 }

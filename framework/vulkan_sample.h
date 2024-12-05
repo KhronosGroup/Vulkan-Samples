@@ -175,7 +175,7 @@ class VulkanSample : public vkb::Application
 	 * @brief Create the Vulkan instance used by this sample
 	 * @note Can be overridden to implement custom instance creation
 	 */
-	virtual std::unique_ptr<InstanceType> create_instance(bool headless);
+	virtual std::unique_ptr<InstanceType> create_instance();
 
 	/**
 	 * @brief Override this to customise the creation of the render_context
@@ -508,9 +508,9 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 }
 
 template <vkb::BindingType bindingType>
-inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance(bool headless)
+inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance()
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), headless, api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -540,7 +540,7 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate};
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
@@ -1008,8 +1008,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	LOGI("Initializing Vulkan sample");
 
 	// initialize C++-Bindings default dispatcher, first step
-#if TARGET_OS_IPHONE
-	static vk::DynamicLoader dl("vulkan.framework/vulkan");
+#if defined(_HPP_VULKAN_LIBRARY)
+	static vk::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
 #else
 	static vk::DynamicLoader        dl;
 #endif
@@ -1049,11 +1049,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		instance = create_instance(headless);
+		instance = create_instance();
 	}
 	else
 	{
-		instance.reset(reinterpret_cast<vkb::core::HPPInstance *>(create_instance(headless).release()));
+		instance.reset(reinterpret_cast<vkb::core::HPPInstance *>(create_instance().release()));
 	}
 
 	// initialize C++-Bindings default dispatcher, second step
@@ -1066,7 +1066,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		throw std::runtime_error("Failed to create window surface.");
 	}
 
-	auto &gpu = instance->get_suitable_gpu(surface);
+	auto &gpu = instance->get_suitable_gpu(surface, headless);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
@@ -1086,7 +1086,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	}
 
 	// Creating vulkan device, specifying the swapchain extension always
-	if (!headless || get_instance().is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
+	// If using VK_EXT_headless_surface, we still create and use a swap-chain
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
@@ -1296,6 +1296,8 @@ inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::update(float delta_time)
 {
+	vkb::Application::update(delta_time);
+
 	update_scene(delta_time);
 
 	update_gui(delta_time);

@@ -313,8 +313,7 @@ void ShaderObject::create_default_sampler()
 void ShaderObject::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable Shader Object
-	auto &requestedShaderObject        = gpu.request_extension_features<VkPhysicalDeviceShaderObjectFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT);
-	requestedShaderObject.shaderObject = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceShaderObjectFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT, shaderObject);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -330,8 +329,10 @@ void ShaderObject::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Enable Dynamic Rendering
-	auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
-	requested_dynamic_rendering.dynamicRendering = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+	                         dynamicRendering);
 
 	// Enable Geometry Shaders
 	auto &requested_geometry_shader          = gpu.get_mutable_requested_features();
@@ -978,7 +979,7 @@ void ShaderObject::build_command_buffers()
 		// Barriers for images that are rendered to
 		vkb::image_layout_transition(draw_cmd_buffer,
 		                             output_images[current_output_format].image,
-		                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		                             0,
 		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,

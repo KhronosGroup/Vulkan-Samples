@@ -43,8 +43,8 @@ void MultithreadingRenderPasses::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 #ifdef VKB_ENABLE_PORTABILITY
 	// Since shadowmap_sampler_create_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	auto &requested_portability_subset_features                     = gpu.request_extension_features<VkPhysicalDevicePortabilitySubsetFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR);
-	requested_portability_subset_features.mutableComparisonSamplers = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(
+	    gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR, mutableComparisonSamplers);
 #endif
 }
 
@@ -144,6 +144,9 @@ std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_main_ren
 
 void MultithreadingRenderPasses::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	update_scene(delta_time);
 
 	update_stats(delta_time);

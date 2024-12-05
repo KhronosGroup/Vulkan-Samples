@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "builder_base.h"
 #include "common/vk_common.h"
 #include "core/allocated.h"
 #include "core/hpp_allocated.h"
@@ -33,9 +34,9 @@ using BufferPtr = std::unique_ptr<Buffer<bindingType>>;
 
 template <vkb::BindingType bindingType>
 struct BufferBuilder
-    : public std::conditional<bindingType == vkb::BindingType::Cpp,
-                              allocated::HPPBuilder<BufferBuilder<bindingType>, vk::BufferCreateInfo>,
-                              allocated::Builder<BufferBuilder<bindingType>, VkBufferCreateInfo>>::type
+    : public vkb::BuilderBase<bindingType,
+                              BufferBuilder<bindingType>,
+                              typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type>
 {
   public:
 	using BufferCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateFlags, VkBufferCreateFlags>::type;
@@ -44,13 +45,10 @@ struct BufferBuilder
 	using DeviceSizeType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
 	using SharingModeType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SharingMode, VkSharingMode>::type;
 
-	using BuilderType = typename std::conditional<bindingType == vkb::BindingType::Cpp,
-	                                              allocated::HPPBuilder<BufferBuilder<bindingType>, vk::BufferCreateInfo>,
-	                                              allocated::Builder<BufferBuilder<bindingType>, VkBufferCreateInfo>>::type;
-	using DeviceType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
+	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 
   private:
-	using Parent = BuilderType;
+	using Parent = vkb::BuilderBase<bindingType, BufferBuilder<bindingType>, BufferCreateInfoType>;
 
   public:
 	BufferBuilder(DeviceSizeType size);
@@ -58,8 +56,6 @@ struct BufferBuilder
 	Buffer<bindingType>    build(DeviceType &device) const;
 	BufferPtr<bindingType> build_unique(DeviceType &device) const;
 	BufferBuilder         &with_flags(BufferCreateFlagsType flags);
-	BufferBuilder         &with_implicit_sharing_mode();
-	BufferBuilder         &with_sharing_mode(SharingModeType sharing_mode);
 	BufferBuilder         &with_usage(BufferUsageFlagsType usage);
 };
 
@@ -97,33 +93,9 @@ inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_flags(Buffer
 }
 
 template <vkb::BindingType bindingType>
-inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_implicit_sharing_mode()
-{
-	if (this->create_info.queueFamilyIndexCount != 0)
-	{
-		if constexpr (bindingType == vkb::BindingType::Cpp)
-		{
-			this->create_info.sharingMode = vk::SharingMode::eConcurrent;
-		}
-		else
-		{
-			this->create_info.sharingMode = static_cast<VkSharingMode>(vk::SharingMode::eConcurrent);
-		}
-	}
-	return *this;
-}
-
-template <vkb::BindingType bindingType>
-inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_sharing_mode(SharingModeType sharing_mode)
-{
-	this->create_info.sharingMode = sharing_mode;
-	return *this;
-}
-
-template <vkb::BindingType bindingType>
 inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_usage(BufferUsageFlagsType usage)
 {
-	this->create_info.usage = usage;
+	this->get_create_info().usage = usage;
 	return *this;
 }
 
@@ -191,6 +163,9 @@ class Buffer
 	DeviceSizeType get_size() const;
 
   private:
+	static Buffer<vkb::BindingType::Cpp> create_staging_buffer_impl(vkb::core::HPPDevice &device, vk::DeviceSize size, const void *data);
+
+  private:
 	vk::DeviceSize size = 0;
 };
 
@@ -207,17 +182,24 @@ inline Buffer<bindingType> Buffer<bindingType>::create_staging_buffer(DeviceType
 template <vkb::BindingType bindingType>
 inline Buffer<bindingType> Buffer<bindingType>::create_staging_buffer(DeviceType &device, DeviceSizeType size, const void *data)
 {
-	BufferBuilder<bindingType> builder(size);
-	builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		builder.with_usage(vk::BufferUsageFlagBits::eTransferSrc);
+		return create_staging_buffer_impl(device, size, data);
 	}
 	else
 	{
-		builder.with_usage(static_cast<VkBufferUsageFlagBits>(vk::BufferUsageFlagBits::eTransferSrc));
+		BufferCpp buffer = create_staging_buffer_impl(reinterpret_cast<vkb::core::HPPDevice &>(device), static_cast<vk::DeviceSize>(size), data);
+		return std::move(*reinterpret_cast<BufferC *>(&buffer));
 	}
-	Buffer result(device, builder);
+}
+
+template <vkb::BindingType bindingType>
+inline BufferCpp Buffer<bindingType>::create_staging_buffer_impl(vkb::core::HPPDevice &device, vk::DeviceSize size, const void *data)
+{
+	BufferBuilderCpp builder(size);
+	builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT)
+	    .with_usage(vk::BufferUsageFlagBits::eTransferSrc);
+	BufferCpp result(device, builder);
 	if (data != nullptr)
 	{
 		result.update(data, size);
@@ -250,12 +232,12 @@ inline Buffer<bindingType>::Buffer(DeviceType                  &device,
 
 template <vkb::BindingType bindingType>
 inline Buffer<bindingType>::Buffer(DeviceType &device, const BufferBuilder<bindingType> &builder) :
-    AllocatedType{builder.alloc_create_info, nullptr, &device}, size(builder.create_info.size)
+    AllocatedType{builder.get_allocation_create_info(), nullptr, &device}, size(builder.get_create_info().size)
 {
-	this->set_handle(this->create_buffer(builder.create_info));
-	if (!builder.debug_name.empty())
+	this->set_handle(this->create_buffer(builder.get_create_info()));
+	if (!builder.get_debug_name().empty())
 	{
-		this->set_debug_name(builder.debug_name);
+		this->set_debug_name(builder.get_debug_name());
 	}
 }
 

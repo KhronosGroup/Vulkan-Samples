@@ -28,21 +28,6 @@
 namespace
 {
 constexpr uint32_t MIN_THREAD_COUNT = 1;
-struct RequestFeature
-{
-	vkb::PhysicalDevice &gpu;
-	explicit RequestFeature(vkb::PhysicalDevice &gpu) :
-	    gpu(gpu)
-	{}
-
-	template <typename T>
-	RequestFeature &request(VkStructureType s_type, VkBool32 T::*member)
-	{
-		auto &member_feature   = gpu.request_extension_features<T>(s_type);
-		member_feature.*member = VK_TRUE;
-		return *this;
-	}
-};
 
 template <typename T>
 struct CopyBuffer
@@ -493,10 +478,9 @@ bool MobileNerf::resize(const uint32_t width, const uint32_t height)
 
 void MobileNerf::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	RequestFeature(gpu)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, &VkPhysicalDeviceDescriptorIndexingFeaturesEXT::shaderUniformBufferArrayNonUniformIndexing)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, &VkPhysicalDeviceDescriptorIndexingFeaturesEXT::runtimeDescriptorArray)
-	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, &VkPhysicalDeviceDescriptorIndexingFeaturesEXT::descriptorBindingVariableDescriptorCount);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, shaderUniformBufferArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, runtimeDescriptorArray);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, descriptorBindingVariableDescriptorCount);
 }
 
 void MobileNerf::render(float delta_time)

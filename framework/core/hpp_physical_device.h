@@ -91,7 +91,29 @@ class HPPPhysicalDevice
 	vk::PhysicalDeviceFeatures &get_mutable_requested_features();
 
 	/**
-	 * @brief Requests a third party extension to be used by the framework
+	 * @brief Get an extension features struct
+	 *
+	 *        Gets the actual extension features struct with the supported flags set.
+	 *        The flags you're interested in can be set in a corresponding struct in the structure chain
+	 *        by calling PhysicalDevice::add_extension_features()
+	 * @returns The extension feature struct
+	 */
+	template <typename HPPStructureType>
+	HPPStructureType get_extension_features()
+	{
+		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
+		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+		{
+			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+			                         " isn't enabled!");
+		}
+
+		// Get the extension feature
+		return handle.getFeatures2KHR<vk::PhysicalDeviceFeatures2KHR, HPPStructureType>().template get<HPPStructureType>();
+	}
+
+	/**
+	 * @brief Add an extension features struct to the structure chain used for device creation
 	 *
 	 *        To have the features enabled, this function must be called before the logical device
 	 *        is created. To do this request sample specific features inside
@@ -100,43 +122,73 @@ class HPPPhysicalDevice
 	 *        If the feature extension requires you to ask for certain features to be enabled, you can
 	 *        modify the struct returned by this function, it will propagate the changes to the logical
 	 *        device.
-	 * @returns The extension feature struct
+	 * @returns A reference to the extension feature struct in the structure chain
 	 */
 	template <typename HPPStructureType>
-	HPPStructureType &request_extension_features()
+	HPPStructureType &add_extension_features()
 	{
 		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) + " isn't enabled!");
+			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+			                         " isn't enabled!");
 		}
 
-		// If the type already exists in the map, return a casted pointer to get the extension feature struct
-		vk::StructureType structureType         = HPPStructureType::structureType;        // need to instantiate this value to be usable in find()!
-		auto              extension_features_it = extension_features.find(structureType);
-		if (extension_features_it != extension_features.end())
+		// Add an (empty) extension features into the map of extension features
+		auto [it, added] = extension_features.insert({HPPStructureType::structureType, std::make_shared<HPPStructureType>()});
+		if (added)
 		{
-			return *static_cast<HPPStructureType *>(extension_features_it->second.get());
+			// if it was actually added, also add it to the structure chain
+			if (last_requested_extension_feature)
+			{
+				static_cast<HPPStructureType *>(it->second.get())->pNext = last_requested_extension_feature;
+			}
+			last_requested_extension_feature = it->second.get();
 		}
 
-		// Get the extension feature
-		vk::StructureChain<vk::PhysicalDeviceFeatures2KHR, HPPStructureType> featureChain = handle.getFeatures2KHR<vk::PhysicalDeviceFeatures2KHR, HPPStructureType>();
+		return *static_cast<HPPStructureType *>(it->second.get());
+	}
 
-		// Insert the extension feature into the extension feature map so its ownership is held
-		extension_features.insert({structureType, std::make_shared<HPPStructureType>(featureChain.template get<HPPStructureType>())});
-
-		// Pull out the dereferenced void pointer, we can assume its type based on the template
-		auto *extension_ptr = static_cast<HPPStructureType *>(extension_features.find(structureType)->second.get());
-
-		// If an extension feature has already been requested, we shift the linked list down by one
-		// Making this current extension the new base pointer
-		if (last_requested_extension_feature)
+	/**
+	 * @brief Request an optional features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a log message is generated.
+	 *
+	 * @returns true if the requested feature is supported, otherwise false
+	 */
+	template <typename Feature>
+	vk::Bool32 request_optional_feature(vk::Bool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		vk::Bool32 supported = get_extension_features<Feature>().*flag;
+		if (supported)
 		{
-			extension_ptr->pNext = last_requested_extension_feature;
+			add_extension_features<Feature>().*flag = true;
 		}
-		last_requested_extension_feature = extension_ptr;
+		else
+		{
+			LOGI("Requested optional feature <{}::{}> is not supported", featureName, flagName);
+		}
+		return supported;
+	}
 
-		return *extension_ptr;
+	/**
+	 * @brief Request a required features flag
+	 *
+	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
+	 *        add_extension_features is called, otherwise a runtime_error is thrown.
+	 */
+	template <typename Feature>
+	void request_required_feature(vk::Bool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+	{
+		if (get_extension_features<Feature>().*flag)
+		{
+			add_extension_features<Feature>().*flag = true;
+		}
+		else
+		{
+			throw std::runtime_error(std::string("Requested required feature <") + featureName + "::" + flagName + "> is not supported");
+		}
 	}
 
 	/**
@@ -192,5 +244,9 @@ class HPPPhysicalDevice
 
 	bool high_priority_graphics_queue{false};
 };
+
+#define HPP_REQUEST_OPTIONAL_FEATURE(gpu, Feature, flag) gpu.request_optional_feature<Feature>(&Feature::flag, #Feature, #flag)
+#define HPP_REQUEST_REQUIRED_FEATURE(gpu, Feature, flag) gpu.request_required_feature<Feature>(&Feature::flag, #Feature, #flag)
+
 }        // namespace core
 }        // namespace vkb

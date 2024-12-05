@@ -38,7 +38,7 @@ function(add_sample)
         TAGS 
             "any"
         FILES
-            ${SRC_FILES}
+            ${TARGET_FILES}
         LIBS
             ${TARGET_LIBS}
         SHADER_FILES_GLSL
@@ -250,6 +250,7 @@ endif()
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
                     MACOSX_PACKAGE_LOCATION Resources
             )
+            set_property(TARGET ${bare_name}-${extension} PROPERTY FOLDER "HLSL_Shaders")
         endforeach()
     endif()
 endfunction()
