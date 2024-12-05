@@ -1041,6 +1041,10 @@ void HelloTriangleV13::render_triangle(uint32_t swapchain_index)
 		                           &context.per_frame[swapchain_index].swapchain_release_semaphore));
 	}
 
+	// Using TOP_OF_PIPE here to ensure that the command buffer does not begin executing any pipeline stages
+	// (including the layout transition) until the swapchain image is actually acquired (signaled by the semaphore).
+	// This prevents the GPU from starting operations too early and guarantees that the image is ready
+	// before any rendering commands run.
 	VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT};
 
 	VkSubmitInfo info{
