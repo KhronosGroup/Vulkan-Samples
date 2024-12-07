@@ -1,4 +1,5 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,7 +41,7 @@ class HPPRenderContext
 	/**
 	 * @brief Constructor
 	 * @param device A valid device
-	 * @param surface A surface, nullptr if in headless mode
+	 * @param surface A surface, nullptr if in offscreen mode
 	 * @param window The window where the surface was created
 	 * @param present_mode Requests to set the present mode of the swapchain
 	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode

@@ -69,9 +69,9 @@ class RayQueries : public ApiVulkanSample
 	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
 
 	// Buffers
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
-	std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> index_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer{nullptr};
 
 	// Ray tracing structures
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR  acceleration_structure_features{};
@@ -88,6 +88,7 @@ class RayQueries : public ApiVulkanSample
 
 	void build_command_buffers() override;
 	void create_uniforms();
+	void load_node(vkb::sg::Node &node);
 	void load_scene();
 	void create_descriptor_pool();
 	void create_descriptor_sets();
@@ -96,4 +97,4 @@ class RayQueries : public ApiVulkanSample
 	void draw();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_queries();
+std::unique_ptr<vkb::VulkanSampleC> create_ray_queries();

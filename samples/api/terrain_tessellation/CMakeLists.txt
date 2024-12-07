@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Sascha Willems
+# Copyright (c) 2019-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,16 @@ add_sample_with_tags(
     NAME "Terrain tessellation"
     DESCRIPTION "Using tessellation shaders for dynamic terrain level-of-detail"
     SHADER_FILES_GLSL
-        "terrain_tessellation/terrain.vert"
-        "terrain_tessellation/terrain.frag"
-        "terrain_tessellation/terrain.tesc"
-        "terrain_tessellation/terrain.tese"
-        "terrain_tessellation/skysphere.vert"
-        "terrain_tessellation/skysphere.frag")
+        "terrain_tessellation/glsl/terrain.vert"
+        "terrain_tessellation/glsl/terrain.frag"
+        "terrain_tessellation/glsl/terrain.tesc"
+        "terrain_tessellation/glsl/terrain.tese"
+        "terrain_tessellation/glsl/skysphere.vert"
+        "terrain_tessellation/glsl/skysphere.frag"
+    SHADER_FILES_HLSL
+        "terrain_tessellation/hlsl/terrain.vert.hlsl"
+        "terrain_tessellation/hlsl/terrain.frag.hlsl"
+        "terrain_tessellation/hlsl/terrain.tesc.hlsl"
+        "terrain_tessellation/hlsl/terrain.tese.hlsl"
+        "terrain_tessellation/hlsl/skysphere.vert.hlsl"
+        "terrain_tessellation/hlsl/skysphere.frag.hlsl")

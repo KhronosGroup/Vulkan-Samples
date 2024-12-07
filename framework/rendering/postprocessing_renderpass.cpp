@@ -114,7 +114,7 @@ PostProcessingSubpass &PostProcessingSubpass::set_draw_func(DrawFunc &&new_func)
 void PostProcessingSubpass::prepare()
 {
 	// Build all shaders upfront
-	auto &resource_cache = render_context.get_device().get_resource_cache();
+	auto &resource_cache = get_render_context().get_device().get_resource_cache();
 	resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
 	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), fs_variant);
 }
@@ -509,7 +509,7 @@ void PostProcessingRenderPass::draw(CommandBuffer &command_buffer, RenderTarget 
 	{
 		// Allocate a buffer (using the buffer pool from the active frame to store uniform values) and bind it
 		auto &render_frame   = parent->get_render_context().get_active_frame();
-		uniform_buffer_alloc = std::make_shared<BufferAllocation>(render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_data.size()));
+		uniform_buffer_alloc = std::make_shared<BufferAllocationC>(render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_data.size()));
 		uniform_buffer_alloc->update(uniform_data);
 	}
 

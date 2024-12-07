@@ -199,8 +199,8 @@ vk::Pipeline HPPTextureMipMapGeneration::create_pipeline()
 {
 	// Load shaders
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("texture_mipmap_generation/texture.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("texture_mipmap_generation/texture.frag", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("texture_mipmap_generation", "texture.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("texture_mipmap_generation", "texture.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
@@ -267,7 +267,7 @@ void HPPTextureMipMapGeneration::load_assets()
 	check_format_features(format);
 
 	// Create a host-visible staging buffer that contains the raw image data
-	vkb::core::HPPBuffer staging_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), ktx_texture->dataSize, ktx_texture->pData);
+	vkb::core::BufferCpp staging_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), ktx_texture->dataSize, ktx_texture->pData);
 
 	// now, the ktx_texture can be destroyed
 	ktxTexture_Destroy(ktx_texture);
@@ -313,18 +313,18 @@ void HPPTextureMipMapGeneration::load_assets()
 		// Prepare current mip level as image blit destination
 		vk::ImageSubresourceRange image_subresource_range(vk::ImageAspectFlagBits::eColor, i, 1, 0, 1);
 		vkb::common::image_layout_transition(
-		    copy_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, image_subresource_range);
+		    blit_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, image_subresource_range);
 
 		// Blit from previous level
 		blit_command.blitImage(texture.image, vk::ImageLayout::eTransferSrcOptimal, texture.image, vk::ImageLayout::eTransferDstOptimal, image_blit, vk::Filter::eLinear);
 
 		// Prepare current mip level as image blit source for next level
 		vkb::common::image_layout_transition(
-		    copy_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, image_subresource_range);
+		    blit_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, image_subresource_range);
 	}
 
 	// After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
-	vkb::common::image_layout_transition(copy_command,
+	vkb::common::image_layout_transition(blit_command,
 	                                     texture.image,
 	                                     vk::ImageLayout::eTransferSrcOptimal,
 	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -369,7 +369,7 @@ void HPPTextureMipMapGeneration::prepare_camera()
 void HPPTextureMipMapGeneration::prepare_uniform_buffers()
 {
 	// Shared parameter uniform buffer block
-	uniform_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	uniform_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                        sizeof(ubo),
 	                                                        vk::BufferUsageFlagBits::eUniformBuffer,
 	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);

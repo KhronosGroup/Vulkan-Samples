@@ -52,10 +52,10 @@ void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable the shading rate attachment feature required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &requested_extension_features                         = gpu.request_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
-	requested_extension_features.attachmentFragmentShadingRate = VK_TRUE;
-	requested_extension_features.pipelineFragmentShadingRate   = VK_FALSE;
-	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceFragmentShadingRateFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
+	                         attachmentFragmentShadingRate);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -179,7 +179,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	}
 
 	// Move shading rate pattern data to staging buffer
-	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), buffer_size, shading_rate_pattern_data);
+	vkb::core::BufferC staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), buffer_size, shading_rate_pattern_data);
 	delete[] shading_rate_pattern_data;
 
 	// Upload the buffer containing the shading rates to the image that'll be used as the shading rate attachment inside our renderpass
@@ -632,8 +632,8 @@ void FragmentShadingRate::prepare_pipelines()
 	pipeline_create_info.renderPass = render_pass;
 
 	// Skysphere
-	shader_stages[0] = load_shader("fragment_shading_rate/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("fragment_shading_rate/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("fragment_shading_rate", "scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("fragment_shading_rate", "scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Objects
@@ -647,10 +647,10 @@ void FragmentShadingRate::prepare_pipelines()
 
 void FragmentShadingRate::prepare_uniform_buffers()
 {
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(ubo_scene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(ubo_scene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -740,7 +740,7 @@ bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate()
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shading_rate()
 {
 	return std::make_unique<FragmentShadingRate>();
 }

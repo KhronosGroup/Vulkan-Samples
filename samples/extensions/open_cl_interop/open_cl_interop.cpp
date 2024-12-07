@@ -101,19 +101,23 @@ OpenCLInterop::OpenCLInterop()
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
 
-	// To use external memory and semaphores, we need to enable several extensions, both on the device as well as the instance
+	// To use external memory, semaphores and fences, we need to enable several extensions, both on the device as well as the instance
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_EXTENSION_NAME);
 	// Some of the extensions are platform dependent
 #ifdef _WIN32
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME);
 #else
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+	add_device_extension(VK_KHR_EXTERNAL_FENCE_FD_EXTENSION_NAME);
 #endif
 	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME);
 }
 
 OpenCLInterop::~OpenCLInterop()
@@ -285,16 +289,16 @@ void OpenCLInterop::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
 }
@@ -402,8 +406,8 @@ void OpenCLInterop::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("open_cl_interop/texture_display.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("open_cl_interop/texture_display.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("open_cl_interop", "texture_display.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("open_cl_interop", "texture_display.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -440,10 +444,10 @@ void OpenCLInterop::prepare_pipelines()
 void OpenCLInterop::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        sizeof(ubo_vs),
-	                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         sizeof(ubo_vs),
+	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -628,9 +632,9 @@ void OpenCLInterop::prepare_shared_image()
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
 	mem_properties.push_back((cl_mem_properties) fd);
 #endif
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_KHR);
 	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
-	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
+	mem_properties.push_back((cl_mem_properties) CL_MEM_DEVICE_HANDLE_LIST_END_KHR);
 	mem_properties.push_back(0);
 
 	cl_image_format cl_img_fmt{};
@@ -690,9 +694,9 @@ void OpenCLInterop::prepare_sync_objects()
 	std::vector<cl_semaphore_properties_khr> semaphore_properties{
 	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
 	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_KHR,
 	    (cl_semaphore_properties_khr) opencl_objects.device_id,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_DEVICE_HANDLE_LIST_END_KHR,
 	};
 
 	// CL to VK semaphore
@@ -904,7 +908,7 @@ bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_open_cl_interop()
+std::unique_ptr<vkb::VulkanSampleC> create_open_cl_interop()
 {
 	return std::make_unique<OpenCLInterop>();
 }

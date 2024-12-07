@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "builder_base.h"
 #include "core/vulkan_resource.h"
 #include "hpp_allocated.h"
 #include <unordered_set>
@@ -30,10 +31,10 @@ class HPPImageView;
 class HPPImage;
 using HPPImagePtr = std::unique_ptr<HPPImage>;
 
-struct HPPImageBuilder : public allocated::HPPBuilder<HPPImageBuilder, vk::ImageCreateInfo>
+struct HPPImageBuilder : public vkb::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>
 {
   private:
-	using Parent = allocated::HPPBuilder<HPPImageBuilder, vk::ImageCreateInfo>;
+	using Parent = vkb::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>;
 
   public:
 	HPPImageBuilder(vk::Extent3D const &extent) :
@@ -97,15 +98,6 @@ struct HPPImageBuilder : public allocated::HPPBuilder<HPPImageBuilder, vk::Image
 	HPPImageBuilder &with_flags(vk::ImageCreateFlags flags)
 	{
 		create_info.flags = flags;
-		return *this;
-	}
-
-	HPPImageBuilder &with_implicit_sharing_mode()
-	{
-		if (create_info.queueFamilyIndexCount != 0)
-		{
-			create_info.sharingMode = vk::SharingMode::eConcurrent;
-		}
 		return *this;
 	}
 

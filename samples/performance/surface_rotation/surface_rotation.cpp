@@ -212,7 +212,7 @@ void SurfaceRotation::recreate_swapchain()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_surface_rotation()
+std::unique_ptr<vkb::VulkanSampleC> create_surface_rotation()
 {
 	return std::make_unique<SurfaceRotation>();
 }

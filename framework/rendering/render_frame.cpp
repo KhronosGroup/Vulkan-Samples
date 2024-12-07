@@ -31,10 +31,10 @@ RenderFrame::RenderFrame(Device &device, std::unique_ptr<RenderTarget> &&render_
 {
 	for (auto &usage_it : supported_usage_map)
 	{
-		std::vector<std::pair<BufferPool, BufferBlock *>> usage_buffer_pools;
+		std::vector<std::pair<BufferPoolC, BufferBlockC *>> usage_buffer_pools;
 		for (size_t i = 0; i < thread_count; ++i)
 		{
-			usage_buffer_pools.push_back(std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024 * usage_it.second, usage_it.first}, nullptr));
+			usage_buffer_pools.push_back(std::make_pair(BufferPoolC{device, BUFFER_POOL_BLOCK_SIZE * 1024 * usage_it.second, usage_it.first}, nullptr));
 		}
 
 		auto res_ins_it = buffer_pools.emplace(usage_it.first, std::move(usage_buffer_pools));
@@ -271,7 +271,7 @@ void RenderFrame::set_descriptor_management_strategy(DescriptorManagementStrateg
 	descriptor_management_strategy = new_strategy;
 }
 
-BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)
+BufferAllocationC RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
@@ -280,7 +280,7 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	if (buffer_pool_it == buffer_pools.end())
 	{
 		LOGE("No buffer pool for buffer usage {}", usage);
-		return BufferAllocation{};
+		return BufferAllocationC{};
 	}
 
 	assert(thread_index < buffer_pool_it->second.size());

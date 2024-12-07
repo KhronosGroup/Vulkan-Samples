@@ -35,9 +35,9 @@ void LightingSubpass::prepare()
 {
 	lighting_variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
 
-	lighting_variant.add_definitions(light_type_definitions);
+	lighting_variant.add_definitions(vkb::rendering::light_type_definitions);
 	// Build all shaders upfront
-	auto &resource_cache = render_context.get_device().get_resource_cache();
+	auto &resource_cache = get_render_context().get_device().get_resource_cache();
 	resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), lighting_variant);
 	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), lighting_variant);
 }
@@ -90,7 +90,7 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	light_uniform.inv_resolution.y = 1.0f / render_target.get_extent().height;
 
 	// Inverse view projection
-	light_uniform.inv_view_proj = glm::inverse(vulkan_style_projection(camera.get_projection()) * camera.get_view());
+	light_uniform.inv_view_proj = glm::inverse(vkb::rendering::vulkan_style_projection(camera.get_projection()) * camera.get_view());
 
 	// Allocate a buffer using the buffer pool from the active frame to store uniform values and bind it
 	auto &render_frame = get_render_context().get_active_frame();

@@ -216,8 +216,8 @@ vk::DescriptorSetLayout HPPTerrainTessellation::create_sky_sphere_descriptor_set
 vk::Pipeline HPPTerrainTessellation::create_sky_sphere_pipeline()
 {
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("terrain_tessellation/skysphere.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("terrain_tessellation/skysphere.frag", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("terrain_tessellation", "skysphere.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("terrain_tessellation", "skysphere.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings an attributes
 	// Binding description
@@ -327,11 +327,13 @@ void HPPTerrainTessellation::draw()
 	if (statistics.query_supported)
 	{
 		// Read query results for displaying in next frame
-		statistics.results =
-		    get_device()
-		        .get_handle()
-		        .getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64)
-		        .value;
+		auto result = get_device()
+		                  .get_handle()
+		                  .getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64);
+		if (result.result == vk::Result::eSuccess)
+		{
+			statistics.results = result.value;
+		}
 	}
 
 	HPPApiVulkanSample::submit_frame();
@@ -411,16 +413,16 @@ void HPPTerrainTessellation::generate_terrain()
 
 	// Create staging buffers
 
-	vkb::core::HPPBuffer vertex_staging(get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vkb::core::BufferCpp vertex_staging(get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_staging.update(vertices);
 
-	vkb::core::HPPBuffer index_staging(get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vkb::core::BufferCpp index_staging(get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_staging.update(indices);
 
-	terrain.vertices = std::make_unique<vkb::core::HPPBuffer>(
+	terrain.vertices = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	terrain.indices = std::make_unique<vkb::core::HPPBuffer>(
+	terrain.indices = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
@@ -477,10 +479,10 @@ void HPPTerrainTessellation::prepare_statistics()
 
 void HPPTerrainTessellation::prepare_terrain()
 {
-	terrain.shader_stages = {load_shader("terrain_tessellation/terrain.vert", vk::ShaderStageFlagBits::eVertex),
-	                         load_shader("terrain_tessellation/terrain.frag", vk::ShaderStageFlagBits::eFragment),
-	                         load_shader("terrain_tessellation/terrain.tesc", vk::ShaderStageFlagBits::eTessellationControl),
-	                         load_shader("terrain_tessellation/terrain.tese", vk::ShaderStageFlagBits::eTessellationEvaluation)};
+	terrain.shader_stages = {load_shader("terrain_tessellation", "terrain.vert", vk::ShaderStageFlagBits::eVertex),
+	                         load_shader("terrain_tessellation", "terrain.frag", vk::ShaderStageFlagBits::eFragment),
+	                         load_shader("terrain_tessellation", "terrain.tesc", vk::ShaderStageFlagBits::eTessellationControl),
+	                         load_shader("terrain_tessellation", "terrain.tese", vk::ShaderStageFlagBits::eTessellationEvaluation)};
 
 	terrain.descriptor_set_layout = create_terrain_descriptor_set_layout();
 	terrain.pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, terrain.descriptor_set_layout});
@@ -494,11 +496,11 @@ void HPPTerrainTessellation::prepare_uniform_buffers()
 {
 	// Shared tessellation shader stages uniform buffer
 	terrain.tessellation_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Skysphere vertex shader uniform buffer
 	sky_sphere.transform_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

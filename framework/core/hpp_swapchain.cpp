@@ -292,41 +292,38 @@ HPPSwapchain::HPPSwapchain(HPPDevice                               &device,
 	this->present_mode_priority_list   = present_mode_priority_list;
 	this->surface_format_priority_list = surface_format_priority_list;
 
-	surface_formats = device.get_gpu().get_handle().getSurfaceFormatsKHR(surface);
+	std::vector<vk::SurfaceFormatKHR> surface_formats = device.get_gpu().get_handle().getSurfaceFormatsKHR(surface);
 	LOGI("Surface supports the following surface formats:");
 	for (auto &surface_format : surface_formats)
 	{
 		LOGI("  \t{}", vk::to_string(surface_format.format) + ", " + vk::to_string(surface_format.colorSpace));
 	}
 
-	present_modes = device.get_gpu().get_handle().getSurfacePresentModesKHR(surface);
+	std::vector<vk::PresentModeKHR> present_modes = device.get_gpu().get_handle().getSurfacePresentModesKHR(surface);
 	LOGI("Surface supports the following present modes:");
 	for (auto &present_mode : present_modes)
 	{
 		LOGI("  \t{}", to_string(present_mode));
 	}
 
-	// Chose best properties based on surface capabilities
+	// Choose best properties based on surface capabilities
 	vk::SurfaceCapabilitiesKHR const surface_capabilities = device.get_gpu().get_handle().getSurfaceCapabilitiesKHR(surface);
 
-	properties.image_count     = clamp(image_count,
-	                                   surface_capabilities.minImageCount,
+	properties.old_swapchain  = old_swapchain;
+	properties.image_count    = clamp(image_count,
+	                                  surface_capabilities.minImageCount,
                                    surface_capabilities.maxImageCount ? surface_capabilities.maxImageCount : std::numeric_limits<uint32_t>::max());
-	properties.extent                            = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
-	properties.array_layers                      = 1;
-	properties.surface_format                    = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
+	properties.extent         = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
+	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
+	properties.array_layers   = 1;
+
 	vk::FormatProperties const format_properties = device.get_gpu().get_handle().getFormatProperties(properties.surface_format.format);
 	this->image_usage_flags                      = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
+
 	properties.image_usage     = composite_image_flags(this->image_usage_flags);
 	properties.pre_transform   = choose_transform(transform, surface_capabilities.supportedTransforms, surface_capabilities.currentTransform);
 	properties.composite_alpha = choose_composite_alpha(vk::CompositeAlphaFlagBitsKHR::eInherit, surface_capabilities.supportedCompositeAlpha);
-
-	properties.old_swapchain = old_swapchain;
-	properties.present_mode  = present_mode;
-
-	// Revalidate the present mode and surface format
-	properties.present_mode   = choose_present_mode(properties.present_mode, present_modes, present_mode_priority_list);
-	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
+	properties.present_mode    = choose_present_mode(present_mode, present_modes, present_mode_priority_list);
 
 	vk::SwapchainCreateInfoKHR const create_info({},
 	                                             surface,
@@ -362,8 +359,6 @@ HPPSwapchain::HPPSwapchain(HPPSwapchain &&other) :
     surface{std::exchange(other.surface, nullptr)},
     handle{std::exchange(other.handle, nullptr)},
     images{std::exchange(other.images, {})},
-    surface_formats{std::exchange(other.surface_formats, {})},
-    present_modes{std::exchange(other.present_modes, {})},
     properties{std::exchange(other.properties, {})},
     present_mode_priority_list{std::exchange(other.present_mode_priority_list, {})},
     surface_format_priority_list{std::exchange(other.surface_format_priority_list, {})},

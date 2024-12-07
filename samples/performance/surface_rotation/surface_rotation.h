@@ -28,7 +28,7 @@
 /**
  * @brief Appropriate use of surface rotation
  */
-class SurfaceRotation : public vkb::VulkanSample<vkb::BindingType::C>
+class SurfaceRotation : public vkb::VulkanSampleC
 {
   public:
 	SurfaceRotation();
@@ -65,4 +65,4 @@ class SurfaceRotation : public vkb::VulkanSample<vkb::BindingType::C>
 	void handle_no_resize_rotations();
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_surface_rotation();
+std::unique_ptr<vkb::VulkanSampleC> create_surface_rotation();

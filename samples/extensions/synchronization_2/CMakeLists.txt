@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Sascha Willems
+# Copyright (c) 2021-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,12 @@ add_sample_with_tags(
     NAME "Compute N-Body simulation using VK_KHR_synchronization2"
     DESCRIPTION "Multi-pass compute dispatch N-Body particle simulation using the VK_KHR_synchronization2 to simplify barriers and queue submissions"
     SHADER_FILES_GLSL
-        "synchronization_2/particle.vert"
-        "synchronization_2/particle.frag"
-        "synchronization_2/particle_calculate.comp"
-        "synchronization_2/particle_integrate.comp")
+        "synchronization_2/glsl/particle.vert"
+        "synchronization_2/glsl/particle.frag"
+        "synchronization_2/glsl/particle_calculate.comp"
+        "synchronization_2/glsl/particle_integrate.comp"
+    SHADER_FILES_HLSL
+        "synchronization_2/hlsl/particle.vert.hlsl"
+        "synchronization_2/hlsl/particle.frag.hlsl"
+        "synchronization_2/hlsl/particle_calculate.comp.hlsl"
+        "synchronization_2/hlsl/particle_integrate.comp.hlsl")

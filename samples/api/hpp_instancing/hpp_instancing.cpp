@@ -212,8 +212,8 @@ vk::DescriptorSetLayout HPPInstancing::create_descriptor_set_layout()
 vk::Pipeline HPPInstancing::create_planet_pipeline()
 {
 	// Planet rendering pipeline
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/planet.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "planet.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing", "planet.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
@@ -258,8 +258,8 @@ vk::Pipeline HPPInstancing::create_planet_pipeline()
 
 vk::Pipeline HPPInstancing::create_rocks_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing/instancing.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("instancing/instancing.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing", "instancing.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("instancing", "instancing.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	// The instancing pipeline uses a vertex input state with two bindings
@@ -319,8 +319,8 @@ vk::Pipeline HPPInstancing::create_rocks_pipeline()
 vk::Pipeline HPPInstancing::create_starfield_pipeline()
 {
 	// Starfield rendering pipeline
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/starfield.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("instancing/starfield.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "starfield.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing", "starfield.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
@@ -439,10 +439,10 @@ void HPPInstancing::prepare_instance_data()
 
 	auto const &device = get_device();
 
-	vkb::core::HPPBuffer staging_buffer(get_device(), instance_buffer.size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vkb::core::BufferCpp staging_buffer(get_device(), instance_buffer.size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_buffer.update(instance_data.data(), instance_buffer.size);
 
-	instance_buffer.buffer = std::make_unique<vkb::core::HPPBuffer>(
+	instance_buffer.buffer = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), instance_buffer.size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy to staging buffer
@@ -461,7 +461,7 @@ void HPPInstancing::prepare_instance_data()
 void HPPInstancing::prepare_uniform_buffers()
 {
 	uniform_buffers.scene =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffer(0.0f);
 }

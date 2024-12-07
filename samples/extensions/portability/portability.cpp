@@ -36,7 +36,7 @@ Portability::Portability() :
 	// Portability is a Vulkan 1.3 extension
 	set_api_version(VK_API_VERSION_1_3);
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, /*optional*/ true);
 }
 
 Portability::~Portability()
@@ -74,23 +74,6 @@ Portability::~Portability()
 
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 	}
-}
-
-/*
- * This sample uses a modified version of the shader loading function that adds a tag to the shader
- * The tag includes the source GLSL that can then be displayed by a debugging application
- */
-VkPipelineShaderStageCreateInfo Portability::debug_load_shader(const std::string &file, VkShaderStageFlagBits stage)
-{
-	VkPipelineShaderStageCreateInfo shader_stage = {};
-	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file, get_device().get_handle(), stage);
-	shader_stage.pName                           = "main";
-	assert(shader_stage.module != VK_NULL_HANDLE);
-	shader_modules.push_back(shader_stage.module);
-
-	return shader_stage;
 }
 
 void Portability::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -725,8 +708,8 @@ void Portability::prepare_pipelines()
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
 
 	// Final fullscreen composition pass pipeline
-	shader_stages[0]                  = debug_load_shader("debug_utils/composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = debug_load_shader("debug_utils/composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                  = load_shader("debug_utils", "composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                  = load_shader("debug_utils", "composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline_create_info.layout       = pipeline_layouts.composition;
 	pipeline_create_info.renderPass   = render_pass;
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
@@ -735,8 +718,8 @@ void Portability::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
 	// Bloom pass
-	shader_stages[0]                           = debug_load_shader("debug_utils/bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                           = debug_load_shader("debug_utils/bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                           = load_shader("debug_utils", "bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                           = load_shader("debug_utils", "bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	color_blend_state.pAttachments             = &blend_attachment_state;
 	blend_attachment_state.colorWriteMask      = 0xF;
 	blend_attachment_state.blendEnable         = VK_TRUE;
@@ -794,8 +777,8 @@ void Portability::prepare_pipelines()
 	color_blend_state.attachmentCount  = 2;
 	color_blend_state.pAttachments     = blend_attachment_states.data();
 
-	shader_stages[0] = debug_load_shader("debug_utils/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = debug_load_shader("debug_utils/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("debug_utils", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("debug_utils", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Enable depth test and write
@@ -810,10 +793,10 @@ void Portability::prepare_pipelines()
 void Portability::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                               sizeof(ubo_vs),
-	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                sizeof(ubo_vs),
+	                                                                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -849,7 +832,7 @@ bool Portability::prepare(const vkb::ApplicationOptions &options)
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
-#ifdef VK_ENABLE_BETA_EXTENSIONS
+#ifdef VKB_ENABLE_PORTABILITY
 	portability_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
 	VkPhysicalDeviceFeatures2 device_features{};
 	device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -884,7 +867,7 @@ void Portability::render(float delta_time)
 
 void Portability::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-#ifdef VK_ENABLE_BETA_EXTENSIONS
+#ifdef VKB_ENABLE_PORTABILITY
 	std::string portability_support_list;
 	if (portability_features.constantAlphaColorBlendFactors)
 		portability_support_list += "constantAlphaColorBlendFactors\n";
@@ -918,7 +901,7 @@ void Portability::on_update_ui_overlay(vkb::Drawer &drawer)
 		portability_support_list += "vertexAttributeAccessBeyondStride\n";
 	drawer.text("Device Portability feature support list:\n%s", portability_support_list.c_str());
 #else
-	drawer.text("VK_ENABLE_BETA_EXTENSIONS not enabled can't list portability feature set");
+	drawer.text("VKB_ENABLE_PORTABILITY not enabled can't list portability feature set");
 #endif
 	if (drawer.header("Settings"))
 	{

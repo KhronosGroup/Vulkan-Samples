@@ -34,20 +34,20 @@ class DescriptorBufferBasic : public ApiVulkanSample
 
 	struct DescriptorData
 	{
-		VkDescriptorSetLayout              layout{VK_NULL_HANDLE};
-		std::unique_ptr<vkb::core::Buffer> buffer;
-		VkDeviceSize                       size;
-		VkDeviceSize                       offset;
+		VkDescriptorSetLayout               layout{VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::BufferC> buffer;
+		VkDeviceSize                        size;
+		VkDeviceSize                        offset;
 	};
 	DescriptorData uniform_binding_descriptor;
 	DescriptorData image_binding_descriptor;
 
 	struct Cube
 	{
-		Texture                            texture;
-		std::unique_ptr<vkb::core::Buffer> uniform_buffer;
-		glm::vec3                          rotation;
-		glm::mat4                          model_mat;
+		Texture                             texture;
+		std::unique_ptr<vkb::core::BufferC> uniform_buffer;
+		glm::vec3                           rotation;
+		glm::mat4                           model_mat;
 	};
 	std::array<Cube, 2> cubes;
 
@@ -58,7 +58,7 @@ class DescriptorBufferBasic : public ApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> scene;
+		std::unique_ptr<vkb::core::BufferC> scene;
 	} uniform_buffers;
 
 	struct UboScene
@@ -87,4 +87,4 @@ class DescriptorBufferBasic : public ApiVulkanSample
 	void         on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_buffer_basic();
+std::unique_ptr<vkb::VulkanSampleC> create_descriptor_buffer_basic();

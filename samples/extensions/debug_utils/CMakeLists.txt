@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Sascha Willems
+# Copyright (c) 2020-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,16 @@ add_sample(
     NAME "VK_EXT_Debug_Utils"
     DESCRIPTION "Demonstrates the use of the debug utils extension for tagging and labeling Vulkan objects for debugging applications like RenderDoc"
     SHADER_FILES_GLSL
-        "debug_utils/composition.vert"
-        "debug_utils/composition.frag"
-        "debug_utils/bloom.vert"
-        "debug_utils/bloom.frag"
-        "debug_utils/gbuffer.vert"
-        "debug_utils/gbuffer.frag")
+        "debug_utils/glsl/composition.vert"
+        "debug_utils/glsl/composition.frag"
+        "debug_utils/glsl/bloom.vert"
+        "debug_utils/glsl/bloom.frag"
+        "debug_utils/glsl/gbuffer.vert"
+        "debug_utils/glsl/gbuffer.frag"
+    SHADER_FILES_HLSL
+        "debug_utils/hlsl/composition.vert.hlsl"
+        "debug_utils/hlsl/composition.frag.hlsl"
+        "debug_utils/hlsl/bloom.vert.hlsl"
+        "debug_utils/hlsl/bloom.frag.hlsl"
+        "debug_utils/hlsl/gbuffer.vert.hlsl"
+        "debug_utils/hlsl/gbuffer.frag.hlsl")

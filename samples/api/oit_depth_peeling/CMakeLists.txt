@@ -23,7 +23,7 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
 	AUTHOR "Google"
-    NAME "oit_depth_peeling"
+    NAME "Order-independent transparency (depth peeling)"
 	DESCRIPTION "Order-independent transparency using depth peeling"
     SHADER_FILES_GLSL
         "oit_depth_peeling/background.frag"

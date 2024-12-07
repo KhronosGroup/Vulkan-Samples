@@ -39,6 +39,15 @@ MultithreadingRenderPasses::MultithreadingRenderPasses()
 	config.insert<vkb::IntSetting>(2, multithreading_mode, 2);
 }
 
+void MultithreadingRenderPasses::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+#ifdef VKB_ENABLE_PORTABILITY
+	// Since shadowmap_sampler_create_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
+	REQUEST_REQUIRED_FEATURE(
+	    gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR, mutableComparisonSamplers);
+#endif
+}
+
 bool MultithreadingRenderPasses::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))
@@ -135,6 +144,9 @@ std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_main_ren
 
 void MultithreadingRenderPasses::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	update_scene(delta_time);
 
 	update_stats(delta_time);
@@ -478,7 +490,7 @@ void MultithreadingRenderPasses::MainSubpass::prepare()
 void MultithreadingRenderPasses::MainSubpass::draw(vkb::CommandBuffer &command_buffer)
 {
 	ShadowUniform shadow_uniform;
-	shadow_uniform.shadowmap_projection_matrix = vkb::vulkan_style_projection(shadowmap_camera.get_projection()) * shadowmap_camera.get_view();
+	shadow_uniform.shadowmap_projection_matrix = vkb::rendering::vulkan_style_projection(shadowmap_camera.get_projection()) * shadowmap_camera.get_view();
 
 	auto &shadow_render_target = *shadow_render_targets[get_render_context().get_active_frame_index()];
 	// Bind the shadowmap texture to the proper set nd binding in shader
@@ -521,7 +533,7 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_state(vkb::Comm
 	command_buffer.set_depth_bias(-1.4f, 0.0f, -1.7f);
 
 	vkb::MultisampleState multisample_state{};
-	multisample_state.rasterization_samples = sample_count;
+	multisample_state.rasterization_samples = get_sample_count();
 	command_buffer.set_multisample_state(multisample_state);
 }
 
@@ -542,7 +554,7 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_push_constants(vkb::Comm
 	return;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_multithreading_render_passes()
+std::unique_ptr<vkb::VulkanSampleC> create_multithreading_render_passes()
 {
 	return std::make_unique<MultithreadingRenderPasses>();
 }

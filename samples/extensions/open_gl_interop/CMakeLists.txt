@@ -56,6 +56,9 @@ if (NOT (ANDROID OR DIRECT_TO_DISPLAY OR IOS))
             offscreen_context.h
             offscreen_context.cpp
         SHADER_FILES_GLSL
-            "texture_loading/texture.vert"
-            "texture_loading/texture.frag")
+            "texture_loading/glsl/texture.vert"
+            "texture_loading/glsl/texture.frag"
+        SHADER_FILES_HLSL
+            "texture_loading/hlsl/texture.vert.hlsl"
+            "texture_loading/hlsl/texture.frag.hlsl")
 endif()

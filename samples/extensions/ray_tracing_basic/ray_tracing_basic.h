@@ -35,9 +35,9 @@ struct ScratchBuffer
 // Wraps all data required for an acceleration structure
 struct AccelerationStructure
 {
-	VkAccelerationStructureKHR         handle;
-	uint64_t                           device_address;
-	std::unique_ptr<vkb::core::Buffer> buffer;
+	VkAccelerationStructureKHR          handle;
+	uint64_t                            device_address;
+	std::unique_ptr<vkb::core::BufferC> buffer;
 };
 
 class RaytracingBasic : public ApiVulkanSample
@@ -49,14 +49,14 @@ class RaytracingBasic : public ApiVulkanSample
 	AccelerationStructure bottom_level_acceleration_structure;
 	AccelerationStructure top_level_acceleration_structure;
 
-	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer>                index_buffer;
+	std::unique_ptr<vkb::core::BufferC>               vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC>               index_buffer;
 	uint32_t                                          index_count;
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
 
-	std::unique_ptr<vkb::core::Buffer> raygen_shader_binding_table;
-	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
-	std::unique_ptr<vkb::core::Buffer> hit_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> raygen_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> miss_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> hit_shader_binding_table;
 
 	struct StorageImage
 	{
@@ -73,7 +73,7 @@ class RaytracingBasic : public ApiVulkanSample
 		glm::mat4 view_inverse;
 		glm::mat4 proj_inverse;
 	} uniform_data;
-	std::unique_ptr<vkb::core::Buffer> ubo;
+	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	VkPipeline            pipeline;
 	VkPipelineLayout      pipeline_layout;
@@ -103,4 +103,4 @@ class RaytracingBasic : public ApiVulkanSample
 	virtual void  render(float delta_time) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_basic();
+std::unique_ptr<vkb::VulkanSampleC> create_ray_tracing_basic();

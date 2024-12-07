@@ -353,19 +353,19 @@ void ConservativeRasterization::load_assets()
 	uint32_t index_buffer_size               = triangle.index_count * sizeof(uint32_t);
 
 	// Host visible source buffers (staging)
-	vkb::core::Buffer vertex_staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), vertex_buffer);
-	vkb::core::Buffer index_staging_buffer  = vkb::core::Buffer::create_staging_buffer(get_device(), index_buffer);
+	vkb::core::BufferC vertex_staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), vertex_buffer);
+	vkb::core::BufferC index_staging_buffer  = vkb::core::BufferC::create_staging_buffer(get_device(), index_buffer);
 
 	// Device local destination buffers
-	triangle.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        vertex_buffer_size,
-	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
+	triangle.vertices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         vertex_buffer_size,
+	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
-	triangle.indices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                       index_buffer_size,
-	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+	triangle.indices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                        index_buffer_size,
+	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from host to device
 	get_device().copy_buffer(vertex_staging_buffer, *triangle.vertices, queue);
@@ -504,8 +504,8 @@ void ConservativeRasterization::prepare_pipelines()
 	pipeline_create_info.pStages             = shader_stages.data();
 
 	// Full screen pass
-	shader_stages[0] = load_shader("conservative_rasterization/fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("conservative_rasterization/fullscreen.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("conservative_rasterization", "fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("conservative_rasterization", "fullscreen.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Empty vertex input state (full screen triangle generated in vertex shader)
 	VkPipelineVertexInputStateCreateInfo empty_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
@@ -519,16 +519,16 @@ void ConservativeRasterization::prepare_pipelines()
 	// TODO(tomatkinson): Check support for lines
 	rasterization_state.lineWidth   = 2.0f;
 	rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
-	shader_stages[0]                = load_shader("conservative_rasterization/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                = load_shader("conservative_rasterization/triangleoverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                = load_shader("conservative_rasterization", "triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                = load_shader("conservative_rasterization", "triangleoverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.triangle_overlay));
 
 	pipeline_create_info.renderPass = offscreen_pass.render_pass;
 
 	// Triangle rendering
 	rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
-	shader_stages[0]                = load_shader("conservative_rasterization/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                = load_shader("conservative_rasterization/triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                = load_shader("conservative_rasterization", "triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                = load_shader("conservative_rasterization", "triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Basic pipeline
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.triangle));
@@ -548,10 +548,10 @@ void ConservativeRasterization::prepare_pipelines()
 // Prepare and initialize uniform buffer containing shader uniforms
 void ConservativeRasterization::prepare_uniform_buffers()
 {
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(ubo_scene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(ubo_scene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers_scene();
 }
@@ -632,7 +632,7 @@ void ConservativeRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_conservative_rasterization()
+std::unique_ptr<vkb::VulkanSampleC> create_conservative_rasterization()
 {
 	return std::make_unique<ConservativeRasterization>();
 }

@@ -1,4 +1,5 @@
 /* Copyright (c) 2022-2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,11 +46,11 @@ class Profiles : public ApiVulkanSample
 	std::vector<RandomTexture> textures;
 	VkSampler                  sampler{};
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count{0};
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	uint32_t                            index_count{0};
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
 
 	struct
 	{
@@ -80,7 +81,7 @@ class Profiles : public ApiVulkanSample
 	void                           render(float delta_time) override;
 	void                           view_changed() override;
 	std::unique_ptr<vkb::Device>   create_device(vkb::PhysicalDevice &gpu) override;
-	std::unique_ptr<vkb::Instance> create_instance(bool headless) override;
+	std::unique_ptr<vkb::Instance> create_instance() override;
 	virtual void                   on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 

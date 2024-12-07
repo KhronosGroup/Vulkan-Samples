@@ -33,7 +33,7 @@ namespace core
 {
 class HPPBuffer;
 
-class HPPDevice : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::Device>
+class HPPDevice : public vkb::core::VulkanResourceCpp<vk::Device>
 {
   public:
 	/**
@@ -103,7 +103,7 @@ class HPPDevice : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::De
 	 * @param queue The queue to submit the copy command to
 	 * @param copy_region The amount to copy, if null copies the entire buffer
 	 */
-	void copy_buffer(vkb::core::HPPBuffer &src, vkb::core::HPPBuffer &dst, vk::Queue queue, vk::BufferCopy *copy_region = nullptr) const;
+	void copy_buffer(vkb::core::BufferCpp &src, vkb::core::BufferCpp &dst, vk::Queue queue, vk::BufferCopy *copy_region = nullptr) const;
 
 	/**
 	 * @brief Requests a command buffer from the device's command pool

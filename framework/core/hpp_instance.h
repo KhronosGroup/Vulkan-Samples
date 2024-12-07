@@ -1,4 +1,5 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,14 +54,14 @@ class HPPInstance
 	 * @param application_name The name of the application
 	 * @param required_extensions The extensions requested to be enabled
 	 * @param required_validation_layers The validation layers to be enabled
-	 * @param headless Whether the application is requesting a headless setup or not
+	 * @param required_layer_settings The layer settings to be enabled
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
 	HPPInstance(const std::string                            &application_name,
 	            const std::unordered_map<const char *, bool> &required_extensions        = {},
 	            const std::vector<const char *>              &required_validation_layers = {},
-	            bool                                          headless                   = false,
+	            const std::vector<vk::LayerSettingEXT>       &required_layer_settings    = {},
 	            uint32_t                                      api_version                = VK_API_VERSION_1_0);
 
 	/**
@@ -92,9 +93,11 @@ class HPPInstance
 	/**
 	 * @brief Tries to find the first available discrete GPU that can render to the given surface
 	 * @param surface to test against
+	 * @param headless_surface Is surface created with VK_EXT_headless_surface
 	 * @returns A valid physical device
+
 	 */
-	HPPPhysicalDevice &get_suitable_gpu(vk::SurfaceKHR);
+	HPPPhysicalDevice &get_suitable_gpu(vk::SurfaceKHR surface, bool headless_surface);
 
 	/**
 	 * @brief Checks if the given extension is enabled in the vk::Instance

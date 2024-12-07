@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #pragma once
 
 #include "resource_binding_state.h"
-#include <core/hpp_buffer.h>
 #include <core/hpp_image_view.h>
 #include <core/hpp_sampler.h>
 
@@ -32,7 +31,7 @@ namespace vkb
 struct HPPResourceInfo
 {
 	bool                           dirty      = false;
-	const vkb::core::HPPBuffer    *buffer     = nullptr;
+	const vkb::core::BufferCpp    *buffer     = nullptr;
 	vk::DeviceSize                 offset     = 0;
 	vk::DeviceSize                 range      = 0;
 	const vkb::core::HPPImageView *image_view = nullptr;
@@ -59,9 +58,9 @@ class HPPResourceBindingState : private vkb::ResourceBindingState
 	using vkb::ResourceBindingState::reset;
 
   public:
-	void bind_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
+	void bind_buffer(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
 	{
-		vkb::ResourceBindingState::bind_buffer(reinterpret_cast<vkb::core::Buffer const &>(buffer),
+		vkb::ResourceBindingState::bind_buffer(reinterpret_cast<vkb::core::BufferC const &>(buffer),
 		                                       static_cast<VkDeviceSize>(offset),
 		                                       static_cast<VkDeviceSize>(range),
 		                                       set,

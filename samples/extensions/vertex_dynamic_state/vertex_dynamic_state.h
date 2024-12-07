@@ -32,6 +32,7 @@ class VertexDynamicState : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skybox_modelview;
+		glm::mat4 inverse_modelview;
 		float     modelscale = 0.15f;
 	} ubo_vs;
 
@@ -44,9 +45,9 @@ class VertexDynamicState : public ApiVulkanSample
 
 	struct Cube
 	{
-		std::unique_ptr<vkb::core::Buffer> vertices;
-		std::unique_ptr<vkb::core::Buffer> indices;
-		uint32_t                           index_count;
+		std::unique_ptr<vkb::core::BufferC> vertices;
+		std::unique_ptr<vkb::core::BufferC> indices;
+		uint32_t                            index_count;
 	} cube;
 
 	VkPipelineLayout                                   pipeline_layout{VK_NULL_HANDLE};
@@ -59,9 +60,9 @@ class VertexDynamicState : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
 
-	std::unique_ptr<vkb::sg::SubMesh>  skybox;
-	std::unique_ptr<vkb::sg::SubMesh>  object;
-	std::unique_ptr<vkb::core::Buffer> ubo;
+	std::unique_ptr<vkb::sg::SubMesh>   skybox;
+	std::unique_ptr<vkb::sg::SubMesh>   object;
+	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	VertexDynamicState();
 	~VertexDynamicState();
@@ -85,4 +86,4 @@ class VertexDynamicState : public ApiVulkanSample
 	void draw_created_model(VkCommandBuffer commandBuffer);
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_vertex_dynamic_state();
+std::unique_ptr<vkb::VulkanSampleC> create_vertex_dynamic_state();

@@ -26,7 +26,7 @@ namespace vkb
 {
 namespace core
 {
-class ImageView : public vkb::core::VulkanResource<vkb::BindingType::C, VkImageView>
+class ImageView : public vkb::core::VulkanResourceC<VkImageView>
 {
   public:
 	ImageView(Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED,

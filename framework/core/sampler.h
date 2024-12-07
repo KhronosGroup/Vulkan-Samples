@@ -30,7 +30,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler
  */
-class Sampler : public VulkanResource<vkb::BindingType::C, VkSampler>
+class Sampler : public VulkanResourceC<VkSampler>
 {
   public:
 	/**

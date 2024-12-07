@@ -25,7 +25,7 @@
 /**
  * @brief Transitioning images from UNDEFINED vs last known layout
  */
-class LayoutTransitions : public vkb::VulkanSample<vkb::BindingType::C>
+class LayoutTransitions : public vkb::VulkanSampleC
 {
   public:
 	LayoutTransitions();
@@ -60,4 +60,4 @@ class LayoutTransitions : public vkb::VulkanSample<vkb::BindingType::C>
 	LayoutTransitionType layout_transition_type{LayoutTransitionType::UNDEFINED};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_layout_transitions();
+std::unique_ptr<vkb::VulkanSampleC> create_layout_transitions();

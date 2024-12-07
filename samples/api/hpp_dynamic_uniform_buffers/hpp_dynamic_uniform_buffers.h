@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include <core/hpp_buffer.h>
 #include <hpp_api_vulkan_sample.h>
 
 #define OBJECT_INSTANCES 125
@@ -55,8 +54,8 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::HPPBuffer> view;
-		std::unique_ptr<vkb::core::HPPBuffer> dynamic;
+		std::unique_ptr<vkb::core::BufferCpp> view;
+		std::unique_ptr<vkb::core::BufferCpp> dynamic;
 	};
 
 	struct Vertex
@@ -94,7 +93,7 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	vk::DescriptorSet                     descriptor_set;
 	vk::DescriptorSetLayout               descriptor_set_layout;
 	size_t                                dynamic_alignment = 0;
-	std::unique_ptr<vkb::core::HPPBuffer> index_buffer;
+	std::unique_ptr<vkb::core::BufferCpp> index_buffer;
 	uint32_t                              index_count = 0;
 	vk::Pipeline                          pipeline;
 	vk::PipelineLayout                    pipeline_layout;
@@ -103,7 +102,7 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	UboDataDynamic                        ubo_data_dynamic;
 	UboVS                                 ubo_vs;
 	UniformBuffers                        uniform_buffers;
-	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferCpp> vertex_buffer;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_dynamic_uniform_buffers();

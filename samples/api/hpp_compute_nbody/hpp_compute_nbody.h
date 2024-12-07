@@ -57,9 +57,9 @@ class HPPComputeNBody : public HPPApiVulkanSample
 		uint32_t                              queue_family_index = ~0;
 		vk::Semaphore                         semaphore;        // Execution dependency between compute & graphic submission
 		uint32_t                              shared_data_size = 1024;
-		std::unique_ptr<vkb::core::HPPBuffer> storage_buffer;        // (Shader) storage buffer object containing the particles
+		std::unique_ptr<vkb::core::BufferCpp> storage_buffer;        // (Shader) storage buffer object containing the particles
 		ComputeUBO                            ubo;
-		std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer;        // Uniform buffer object containing particle system parameters
+		std::unique_ptr<vkb::core::BufferCpp> uniform_buffer;        // Uniform buffer object containing particle system parameters
 		uint32_t                              work_group_size = 128;
 
 		void destroy(vk::Device device)
@@ -94,7 +94,7 @@ class HPPComputeNBody : public HPPApiVulkanSample
 		uint32_t                              queue_family_index = ~0;
 		vk::Semaphore                         semaphore;        // Execution dependency between compute & graphic submission
 		GraphicsUBO                           ubo;
-		std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer;        // Contains scene matrices
+		std::unique_ptr<vkb::core::BufferCpp> uniform_buffer;        // Contains scene matrices
 
 		void destroy(vk::Device device)
 		{

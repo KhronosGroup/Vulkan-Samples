@@ -187,7 +187,9 @@ VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::ve
 		VkFormatProperties properties;
 		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
 		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+		{
 			return format;
+		}
 	}
 
 	throw std::runtime_error("No suitable blendable format could be determined");
@@ -197,7 +199,9 @@ void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFil
 {
 	// Not all formats support linear filtering, so we need to adjust them if they don't
 	if (*filter == VK_FILTER_NEAREST && (mipmapMode == nullptr || *mipmapMode == VK_SAMPLER_MIPMAP_MODE_NEAREST))
+	{
 		return;        // These must already be valid
+	}
 
 	VkFormatProperties properties;
 	vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
@@ -206,7 +210,9 @@ void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFil
 	{
 		*filter = VK_FILTER_NEAREST;
 		if (mipmapMode)
+		{
 			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		}
 	}
 }
 

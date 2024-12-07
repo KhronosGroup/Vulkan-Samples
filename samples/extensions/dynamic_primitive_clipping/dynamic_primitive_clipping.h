@@ -79,8 +79,8 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> buffer_positive;
-		std::unique_ptr<vkb::core::Buffer> buffer_negative;
+		std::unique_ptr<vkb::core::BufferC> buffer_positive;
+		std::unique_ptr<vkb::core::BufferC> buffer_negative;
 	} uniform_buffers;
 
 	// pipeline infrastructure
@@ -103,4 +103,4 @@ class DynamicPrimitiveClipping : public ApiVulkanSample
 	VkPipeline sample_pipeline{};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_primitive_clipping();
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_primitive_clipping();

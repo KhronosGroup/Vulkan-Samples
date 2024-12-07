@@ -39,7 +39,7 @@ class HPPInstancing : public HPPApiVulkanSample
 	// Contains the instanced data
 	struct InstanceBuffer
 	{
-		std::unique_ptr<vkb::core::HPPBuffer> buffer;
+		std::unique_ptr<vkb::core::BufferCpp> buffer;
 		vk::DescriptorBufferInfo              descriptor;
 		size_t                                size = 0;
 	};
@@ -79,7 +79,7 @@ class HPPInstancing : public HPPApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::HPPBuffer> scene;
+		std::unique_ptr<vkb::core::BufferCpp> scene;
 	};
 
   private:

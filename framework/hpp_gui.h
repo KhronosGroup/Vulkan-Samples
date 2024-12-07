@@ -32,6 +32,7 @@ namespace vkb
 {
 template <vkb::BindingType bindingType>
 class VulkanSample;
+using VulkanSampleCpp = VulkanSample<vkb::BindingType::Cpp>;
 
 /**
  * @brief Helper structure for fonts loaded from TTF
@@ -62,7 +63,7 @@ struct HPPFont
 	}
 
 	std::vector<uint8_t> data;
-	ImFont	          *handle = nullptr;
+	ImFont              *handle = nullptr;
 	std::string          name;
 	float                size = 0.0f;
 };
@@ -117,11 +118,11 @@ class HPPGui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	HPPGui(VulkanSample<vkb::BindingType::Cpp> &sample,
-	       const vkb::Window                   &window,
-	       const vkb::stats::HPPStats          *stats           = nullptr,
-	       float                                font_size       = 21.0f,
-	       bool                                 explicit_update = false);
+	HPPGui(VulkanSampleCpp            &sample,
+	       const vkb::Window          &window,
+	       const vkb::stats::HPPStats *stats           = nullptr,
+	       float                       font_size       = 21.0f,
+	       bool                        explicit_update = false);
 
 	/**
 	 * @brief Destroys the HPPGui
@@ -258,9 +259,9 @@ class HPPGui
 
   private:
 	PushConstBlock                           push_const_block;
-	VulkanSample<vkb::BindingType::Cpp>     &sample;
-	std::unique_ptr<vkb::core::HPPBuffer>    vertex_buffer;
-	std::unique_ptr<vkb::core::HPPBuffer>    index_buffer;
+	VulkanSampleCpp                         &sample;
+	std::unique_ptr<vkb::core::BufferCpp>    vertex_buffer;
+	std::unique_ptr<vkb::core::BufferCpp>    index_buffer;
 	size_t                                   last_vertex_buffer_size = 0;
 	size_t                                   last_index_buffer_size  = 0;
 	float                                    content_scale_factor    = 1.0f;        // Scale factor to apply due to a difference between the window and GL pixel sizes

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2023-2024, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -68,8 +68,8 @@ class CalibratedTimestamps : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> matrices{};
-		std::unique_ptr<vkb::core::Buffer> params{};
+		std::unique_ptr<vkb::core::BufferC> matrices{};
+		std::unique_ptr<vkb::core::BufferC> params{};
 	} uniform_buffers{};
 
 	struct
@@ -77,6 +77,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 		glm::mat4 projection{};
 		glm::mat4 model_view{};
 		glm::mat4 skybox_model_view{};
+		glm::mat4 inverse_modelview{};
 		float     model_scale = 0.05f;
 	} ubo_vs{};
 

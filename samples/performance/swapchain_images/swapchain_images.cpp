@@ -39,7 +39,7 @@ SwapchainImages::SwapchainImages()
 
 bool SwapchainImages::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample<vkb::BindingType::C>::prepare(options))
+	if (!vkb::VulkanSampleC::prepare(options))
 	{
 		return false;
 	}
@@ -92,7 +92,7 @@ void SwapchainImages::draw_gui()
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_swapchain_images()
+std::unique_ptr<vkb::VulkanSampleC> create_swapchain_images()
 {
 	return std::make_unique<SwapchainImages>();
 }

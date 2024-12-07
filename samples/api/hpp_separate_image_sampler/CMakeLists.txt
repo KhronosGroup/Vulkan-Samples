@@ -1,4 +1,4 @@
-# Copyright (c) 202-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "HPP Separate image sampler"
     DESCRIPTION "Displays a texture with a separated image and sampler"
     SHADER_FILES_GLSL
-        "separate_image_sampler/separate_image_sampler.vert"
-        "separate_image_sampler/separate_image_sampler.frag")
+        "separate_image_sampler/glsl/separate_image_sampler.vert"
+        "separate_image_sampler/glsl/separate_image_sampler.frag"
+    SHADER_FILES_HLSL
+        "separate_image_sampler/hlsl/separate_image_sampler.vert.hlsl"
+        "separate_image_sampler/hlsl/separate_image_sampler.frag.hlsl")

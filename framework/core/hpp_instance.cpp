@@ -1,4 +1,5 @@
 /* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -186,7 +187,7 @@ bool enable_all_extensions(const std::vector<const char *>             required_
 HPPInstance::HPPInstance(const std::string                            &application_name,
                          const std::unordered_map<const char *, bool> &required_extensions,
                          const std::vector<const char *>              &required_validation_layers,
-                         bool                                          headless,
+                         const std::vector<vk::LayerSettingEXT>       &required_layer_settings,
                          uint32_t                                      api_version)
 {
 	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
@@ -211,7 +212,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
+	bool portability_enumeration_available = enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
 #ifdef USE_VALIDATION_LAYER_FEATURES
@@ -231,20 +232,11 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	}
 #endif
 
-	// Try to enable headless surface extension if it exists
-	if (headless)
-	{
-		const bool has_headless_surface = enable_extension(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME,
-		                                                   available_instance_extensions, enabled_extensions);
-		if (!has_headless_surface)
-		{
-			LOGW("{} is not available, disabling swapchain creation", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
-		}
-	}
-	else
-	{
-		enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-	}
+	// Specific surface extensions are obtained from  Window::get_required_surface_extensions
+	// They are already added to required_extensions by VulkanSample::prepare
+
+	// If using VK_EXT_headless_surface, we still create and use a surface
+	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
 	// which will be used for stats gathering where available.
@@ -316,7 +308,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 		instance_info.pNext = &debug_utils_create_info;
 	}
-	else
+	else if (has_debug_report)
 	{
 		debug_report_create_info = vk::DebugReportCallbackCreateInfoEXT(
 		    vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning, debug_callback);
@@ -326,7 +318,10 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	if (portability_enumeration_available)
+	{
+		instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+	}
 #endif
 
 #ifdef USE_VALIDATION_LAYER_FEATURES
@@ -347,6 +342,17 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	}
 #endif
 
+	vk::LayerSettingsCreateInfoEXT layerSettingsCreateInfo;
+
+	// If layer settings extension enabled by sample, then activate layer settings during instance creation
+	if (std::find(enabled_extensions.begin(), enabled_extensions.end(), VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) != enabled_extensions.end())
+	{
+		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(required_layer_settings.size());
+		layerSettingsCreateInfo.pSettings    = required_layer_settings.data();
+		layerSettingsCreateInfo.pNext        = instance_info.pNext;
+		instance_info.pNext                  = &layerSettingsCreateInfo;
+	}
+
 	// Create the Vulkan instance
 	handle = vk::createInstance(instance_info);
 
@@ -361,7 +367,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	{
 		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(debug_utils_create_info);
 	}
-	else
+	else if (has_debug_report)
 	{
 		debug_report_callback = handle.createDebugReportCallbackEXT(debug_report_create_info);
 	}
@@ -430,7 +436,7 @@ vk::Instance HPPInstance::get_handle() const
 	return handle;
 }
 
-vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surface)
+vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surface, bool headless_surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
@@ -443,6 +449,10 @@ vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surfa
 			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
 		}
 		return *gpus[selected_gpu_index.value()];
+	}
+	if ( headless_surface )
+	{
+		LOGW("Using headless surface with multiple GPUs. Considered explicitly selecting the target GPU.")
 	}
 
 	// Find a discrete GPU

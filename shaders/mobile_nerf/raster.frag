@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
  * ------------------------------------------------------------------------
  *
  * THIS IS A MODIFIED VERSION OF THE ORIGINAL FILE
- * 
+ *
  * The original file, along with the original Apache-2.0 LICENSE can be found at:
  * https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf
  *
@@ -44,9 +44,9 @@ void main(void)
 	vec4 pixel_0 = texture(textureInput_0, flipped);
 	if (pixel_0.r == 0.0) discard;
 	vec4 pixel_1 = texture(textureInput_1, flipped);
-	o_color_0 = pixel_0;
-	o_color_1 = pixel_1;
-	
+	o_color_0 = vec4(pixel_0.xyz, pixel_0.w);
+	o_color_1 = vec4(pixel_1.xyz, pixel_1.w);
+
 	rayDirectionOut.rgb = normalize(rayDirectionIn);
 	rayDirectionOut.a = 1.0f;
 }

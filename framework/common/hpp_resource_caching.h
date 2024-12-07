@@ -134,7 +134,7 @@ struct hash<vkb::core::HPPImageView>
 {
 	size_t operator()(const vkb::core::HPPImageView &image_view) const
 	{
-		size_t result = std::hash<vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::ImageView>>()(image_view);
+		size_t result = std::hash<vkb::core::VulkanResourceCpp<vk::ImageView>>()(image_view);
 		vkb::hash_combine(result, image_view.get_image());
 		vkb::hash_combine(result, image_view.get_format());
 		vkb::hash_combine(result, image_view.get_subresource_range());

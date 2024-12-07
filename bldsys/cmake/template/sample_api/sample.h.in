@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Arm Limited and Contributors
+/* Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,4 +39,4 @@ class @SAMPLE_NAME@ : public ApiVulkanSample
 	VkPipelineLayout sample_pipeline_layout{};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_@SAMPLE_NAME_FILE@();
+std::unique_ptr<vkb::VulkanSampleC> create_@SAMPLE_NAME_FILE@();

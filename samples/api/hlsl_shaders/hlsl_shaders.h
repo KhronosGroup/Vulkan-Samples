@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Sascha Willems
+/* Copyright (c) 2021-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,11 +43,11 @@ class HlslShaders : public ApiVulkanSample
 
 	Texture texture;
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count{0};
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	uint32_t                            index_count{0};
 
-	std::unique_ptr<vkb::core::Buffer>
+	std::unique_ptr<vkb::core::BufferC>
 	    uniform_buffer_vs;
 
 	struct

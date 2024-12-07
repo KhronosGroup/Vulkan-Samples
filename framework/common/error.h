@@ -21,38 +21,11 @@
 #include <stdexcept>
 #include <string>
 
+#include "core/util/error.hpp"
+
 #include "common/strings.h"
 #include "core/util/logging.hpp"
 #include "vk_common.h"
-
-#if defined(__clang__)
-// CLANG ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS()                             \
-		_Pragma("clang diagnostic push")                        \
-		    _Pragma("clang diagnostic ignored \"-Wall\"")       \
-		        _Pragma("clang diagnostic ignored \"-Wextra\"") \
-		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"")
-
-#	define VKBP_ENABLE_WARNINGS() \
-		_Pragma("clang diagnostic pop")
-#elif defined(__GNUC__) || defined(__GNUG__)
-// GCC ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS()                           \
-		_Pragma("GCC diagnostic push")                        \
-		    _Pragma("GCC diagnostic ignored \"-Wall\"")       \
-		        _Pragma("GCC diagnostic ignored \"-Wextra\"") \
-		            _Pragma("GCC diagnostic ignored \"-Wtautological-compare\"")
-
-#	define VKBP_ENABLE_WARNINGS() \
-		_Pragma("GCC diagnostic pop")
-#elif defined(_MSC_VER)
-// MSVC ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS() \
-		__pragma(warning(push, 0))
-
-#	define VKBP_ENABLE_WARNINGS() \
-		__pragma(warning(pop))
-#endif
 
 namespace vkb
 {
@@ -81,15 +54,14 @@ class VulkanException : public std::runtime_error
 }        // namespace vkb
 
 /// @brief Helper macro to test the result of Vulkan calls which can return an error.
-#define VK_CHECK(x)                                                 \
-	do                                                              \
-	{                                                               \
-		VkResult err = x;                                           \
-		if (err)                                                    \
-		{                                                           \
-			LOGE("Detected Vulkan error: {}", vkb::to_string(err)); \
-			abort();                                                \
-		}                                                           \
+#define VK_CHECK(x)                                                                    \
+	do                                                                                 \
+	{                                                                                  \
+		VkResult err = x;                                                              \
+		if (err)                                                                       \
+		{                                                                              \
+			throw std::runtime_error("Detected Vulkan error: " + vkb::to_string(err)); \
+		}                                                                              \
 	} while (0)
 
 #define ASSERT_VK_HANDLE(handle)        \

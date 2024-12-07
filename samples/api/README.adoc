@@ -40,51 +40,55 @@ A self-contained (minimal use of framework) sample that illustrates the renderin
 
 === xref:./{api_samplespath}hpp_compute_nbody/README.adoc[HPP Compute shader N-Body simulation]
 
-A transcoded version of the API sample <<compute_nbody,Compute N-Body>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}compute_nbody/README.adoc[Compute N-Body] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_dynamic_uniform_buffers/README.adoc[HPP Dynamic Uniform Buffers]
 
-A transcoded version of the API sample <<dynamic_uniform_buffers,Dynamic Uniform buffers>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}dynamic_uniform_buffers/README.adoc[Dynamic Uniform buffers] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_hdr/README.adoc[HPP High dynamic range]
 
-A transcoded version of the API sample <<hdr,High dynamic range>>that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}hdr/README.adoc[High dynamic range] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_hello_triangle/README.adoc[HPP Hello Triangle]
 
-A transcoded version of the API sample <<hello_triangle,Hello Triangle>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}hello_triangle/README.adoc[Hello Triangle] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_hlsl_shaders/README.adoc[HPP HLSL shaders]
 
-A transcoded version of the API sample <<hlsl_shaders,HLSL Shaders>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}hlsl_shaders/README.adoc[HLSL Shaders] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_instancing/README.adoc[HPP Instancing]
 
-A transcoded version of the API sample <<instancing,Instancing>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}instancing/README.adoc[Instancing] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+
+=== xref:./{api_samplespath}hpp_oit_depth_peeling/README.adoc[HPP OIT Depth Peeling]
+
+A transcoded version of the API sample xref:./{api_samplespath}oit_depth_peeling/README.adoc[OIT Depth Peeling] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_oit_linked_lists/README.adoc[HPP OIT Linked Lists]
 
-A transcoded version of the API sample <<oit_linked_lists,OIT Linked Lists>> that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}oit_linked_lists/README.adoc[OIT Linked Lists] that illustrates the usage of the C{pp} bindings of Vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_separate_image_sampler/README.adoc[HPP Separate image sampler]
 
-A transcoded version of the API sample <<separate_image_sampler,Separate image sampler>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}separate_image_sampler/README.adoc[Separate image sampler] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_terrain_tessellation/README.adoc[HPP Terrain Tessellation]
 
-A transcoded version of the API sample <<terrain_tessellation,Terrain Tessellation>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}terrain_tessellation/README.adoc[Terrain Tessellation] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_texture_loading/README.adoc[HPP Texture Loading]
 
-A transcoded version of the API sample <<texture_loading,Texture loading>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}texture_loading/README.adoc[Texture loading] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_texture_mipmap_generation/README.adoc[HPP Texture run-time mip-map generation]
 
-A transcoded version of the API sample <<texture_mipmap_generation,Texture run-time mip-map generation>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the API sample xref:./{api_samplespath}texture_mipmap_generation/README.adoc[Texture run-time mip-map generation] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}hpp_timestamp_queries/README.adoc[HPP Timestamp queries]
 
-A transcoded version of the API sample <<timestamp_queries,Timestamp queries>> that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the API samplexref:./{api_samplespath}timestamp_queries/README.adoc[Timestamp queries] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 === xref:./{api_samplespath}instancing/README.adoc[Instancing]
 

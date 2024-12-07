@@ -1,4 +1,5 @@
 /* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +19,6 @@
 #include <hpp_api_vulkan_sample.h>
 
 #include <common/hpp_vk_common.h>
-#include <core/hpp_buffer.h>
 #include <hpp_gltf_loader.h>
 
 // Instantiate the default dispatcher
@@ -26,7 +26,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample<vkb::BindingType::Cpp>::prepare(options))
+	if (!vkb::VulkanSampleCpp::prepare(options))
 	{
 		return false;
 	}
@@ -47,11 +47,8 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info                   = vk::SubmitInfo();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
 
-	if (window->get_window_mode() != vkb::Window::Mode::Headless)
-	{
-		submit_info.setWaitSemaphores(semaphores.acquired_image_ready);
-		submit_info.setSignalSemaphores(semaphores.render_complete);
-	}
+	submit_info.setWaitSemaphores(semaphores.acquired_image_ready);
+	submit_info.setSignalSemaphores(semaphores.render_complete);
 
 	queue = get_device().get_suitable_graphics_queue().get_handle();
 
@@ -160,17 +157,17 @@ void HPPApiVulkanSample::create_render_context()
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
-	VulkanSample<vkb::BindingType::Cpp>::create_render_context(surface_priority_list);
+	vkb::VulkanSampleCpp::create_render_context(surface_priority_list);
 }
 
 void HPPApiVulkanSample::prepare_render_context()
 {
-	VulkanSample<vkb::BindingType::Cpp>::prepare_render_context();
+	vkb::VulkanSampleCpp::prepare_render_context();
 }
 
 void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 {
-	VulkanSample<vkb::BindingType::Cpp>::input_event(input_event);
+	vkb::VulkanSampleCpp::input_event(input_event);
 
 	bool gui_captures_event = false;
 
@@ -301,6 +298,7 @@ void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 						{
 							get_gui().visible = !get_gui().visible;
 						}
+						break;
 					default:
 						break;
 				}
@@ -413,11 +411,44 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
+vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage)
+{
+	// Note: this can be reworked once offline compilation for GLSL shaders is added
+
+	// Default to GLSL
+	std::string               shader_folder{"glsl"};
+	std::string               shader_extension{""};
+	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
+
+	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
+	{
+		shader_folder = "hlsl";
+		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
+		src_language     = vkb::ShaderSourceLanguage::SPV;
+		shader_extension = ".spv";
+	}
+
+	std::string full_file_name = sample_folder_name + "/" + shader_folder + "/" + shader_filename + shader_extension;
+
+	shader_modules.push_back(vkb::common::load_shader(full_file_name, get_device().get_handle(), stage, src_language));
+	assert(shader_modules.back());
+	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
+}
+
 void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (has_gui())
 	{
-		get_gui().show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() { on_update_ui_overlay(get_gui().get_drawer()); });
+		frame_count++;
+		accumulated_time += delta_time;
+		if (0.5f < accumulated_time)
+		{
+			fps              = static_cast<uint32_t>(frame_count / accumulated_time);
+			frame_count      = 0;
+			accumulated_time = 0.0f;
+		}
+
+		get_gui().show_simple_window(get_name(), fps, [this, additional_ui]() { on_update_ui_overlay(get_gui().get_drawer()); });
 
 		get_gui().update(delta_time);
 
@@ -842,7 +873,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> bufferCopyRegions;
@@ -900,7 +931,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
@@ -964,7 +995,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer = vkb::core::HPPBuffer::create_staging_buffer(get_device(), texture.image->get_data());
+	vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), texture.image->get_data());
 
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
@@ -1017,11 +1048,12 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 	return texture;
 }
 
-std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> HPPApiVulkanSample::load_model(const std::string &file, uint32_t index)
+std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>
+    HPPApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer, vk::BufferUsageFlags additional_buffer_usage_flags)
 {
 	vkb::HPPGLTFLoader loader{get_device()};
 
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> model = loader.read_model_from_file(file, index);
+	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> model = loader.read_model_from_file(file, index, storage_buffer, additional_buffer_usage_flags);
 
 	if (!model)
 	{

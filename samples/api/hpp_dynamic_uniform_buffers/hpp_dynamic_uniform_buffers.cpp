@@ -185,8 +185,8 @@ vk::DescriptorSetLayout HPPDynamicUniformBuffers::create_descriptor_set_layout()
 vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
 {
 	// Load shaders
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("dynamic_uniform_buffers/base.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers", "base.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("dynamic_uniform_buffers", "base.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
@@ -260,10 +260,10 @@ void HPPDynamicUniformBuffers::generate_cube()
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
 	vertex_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -274,7 +274,7 @@ void HPPDynamicUniformBuffers::prepare_camera()
 	camera.set_rotation(glm::vec3(0.0f));
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
@@ -303,10 +303,10 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 
 	// Static shared uniform buffer object with projection and view matrix
 	uniform_buffers.view =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	uniform_buffers.dynamic =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
 	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));

@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Sascha Willems
+# Copyright (c) 2022-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample(
     NAME "Conditional rendering"
     DESCRIPTION "Demonstrates usage of VK_EXT_conditional_rendering for conditionally toggling the visibility of sub-meshes of a complex glTF model."
     SHADER_FILES_GLSL
-        "conditional_rendering/model.vert"
-        "conditional_rendering/model.frag")
+        "conditional_rendering/glsl/model.vert"
+        "conditional_rendering/glsl/model.frag"
+    SHADER_FILES_HLSL
+        "conditional_rendering/hlsl/model.vert.hlsl"
+        "conditional_rendering/hlsl/model.frag.hlsl")

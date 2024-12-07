@@ -45,8 +45,10 @@ ConditionalRendering::~ConditionalRendering()
 void ConditionalRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// We need to enable conditional rendering using a new feature struct
-	auto &requested_extension_features                = gpu.request_extension_features<VkPhysicalDeviceConditionalRenderingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
-	requested_extension_features.conditionalRendering = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceConditionalRenderingFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT,
+	                         conditionalRendering);
 }
 
 void ConditionalRendering::build_command_buffers()
@@ -285,8 +287,8 @@ void ConditionalRendering::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	shader_stages[0] = load_shader("conditional_rendering/model.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("conditional_rendering/model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("conditional_rendering", "model.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("conditional_rendering", "model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
@@ -294,10 +296,10 @@ void ConditionalRendering::prepare_pipelines()
 void ConditionalRendering::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                     sizeof(uniform_data),
-	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(uniform_data),
+	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -316,10 +318,10 @@ void ConditionalRendering::prepare_visibility_buffer()
 	// Conditional values are 32 bits wide and if it's zero the rendering commands are discarded
 	// We therefore create a buffer that can hold int32 conditional values for all nodes in the glTF scene
 	// The extension also introduces the new buffer usage flag VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT that we need to set
-	conditional_visibility_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                    sizeof(int32_t) * conditional_visibility_list.size(),
-	                                                                    VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT,
-	                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	conditional_visibility_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                     sizeof(int32_t) * conditional_visibility_list.size(),
+	                                                                     VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT,
+	                                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_visibility_buffer();
 }

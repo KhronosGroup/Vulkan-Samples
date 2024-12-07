@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Mobica Limited
+# Copyright (c) 2023-2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,8 +26,12 @@ add_sample(
     NAME "ColorWriteEnableEXT sample"
     DESCRIPTION "Dynamic toggle of a color blend attachment display."
     SHADER_FILES_GLSL
-        "color_write_enable/triangle_separate_channels.vert"
-        "color_write_enable/triangle_separate_channels.frag"
-        "color_write_enable/composition.vert"
-        "color_write_enable/composition.frag"
-    )
+        "color_write_enable/glsl/triangle_separate_channels.vert"
+        "color_write_enable/glsl/triangle_separate_channels.frag"
+        "color_write_enable/glsl/composition.vert"
+        "color_write_enable/glsl/composition.frag"
+    SHADER_FILES_HLSL
+        "color_write_enable/hlsl/triangle_separate_channels.vert.hlsl"
+        "color_write_enable/hlsl/triangle_separate_channels.frag.hlsl"
+        "color_write_enable/hlsl/composition.vert.hlsl"
+        "color_write_enable/hlsl/composition.frag.hlsl")

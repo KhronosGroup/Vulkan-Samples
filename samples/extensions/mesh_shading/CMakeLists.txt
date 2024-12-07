@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Holochip Corporation
+# Copyright (c) 2023-2024 Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,6 +26,9 @@ add_sample_with_tags(
     NAME "Mesh shader sample"
     DESCRIPTION "Example showing how to utilize the EXT_MESH_SHADER pipeline."
     SHADER_FILES_GLSL
-        "mesh_shading/ms.mesh"
-        "mesh_shading/ps.frag"
-)
+        "mesh_shading/glsl/ms.mesh"
+        "mesh_shading/glsl/ps.frag"
+    SHADER_FILES_HLSL
+        "mesh_shading/hlsl/ms.mesh.hlsl"
+        "mesh_shading/hlsl/ps.frag.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_mesh_shader")

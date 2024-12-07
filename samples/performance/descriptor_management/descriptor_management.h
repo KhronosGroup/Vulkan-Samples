@@ -21,7 +21,7 @@
 #include "scene_graph/components/perspective_camera.h"
 #include "vulkan_sample.h"
 
-class DescriptorManagement : public vkb::VulkanSample<vkb::BindingType::C>
+class DescriptorManagement : public vkb::VulkanSampleC
 {
   public:
 	DescriptorManagement();
@@ -61,4 +61,4 @@ class DescriptorManagement : public vkb::VulkanSample<vkb::BindingType::C>
 	virtual void draw_gui() override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_management();
+std::unique_ptr<vkb::VulkanSampleC> create_descriptor_management();
