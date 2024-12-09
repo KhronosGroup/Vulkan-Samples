@@ -156,14 +156,18 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 		vkb::ShaderVariant variant;
 		if (supports_push_constant16)
 		{
-			variant.add_define("PUSH_CONSTANT_16");
+			auto &module_fp16 =
+			    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
+			                                                      vkb::ShaderSource{"16bit_arithmetic/compute_buffer_fp16.comp"}, variant);
+			compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
 		}
-
-		const char *shader = "16bit_arithmetic/compute_buffer_fp16.comp";
-		auto       &module_fp16 =
-		    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-		                                                      vkb::ShaderSource{shader}, variant);
-		compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
+		else
+		{
+			auto &module_fp16 =
+			    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
+			                                                      vkb::ShaderSource{"16bit_arithmetic/compute_buffer_fp16_fallback.comp"}, variant);
+			compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
+		}
 	}
 	else
 	{
