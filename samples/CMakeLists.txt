@@ -89,6 +89,7 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
+    "dynamic_multisample_rasterization"
     "sparse_image"
     "dynamic_primitive_clipping"
 
