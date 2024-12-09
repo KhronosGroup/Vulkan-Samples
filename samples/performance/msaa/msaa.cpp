@@ -111,16 +111,19 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource scene_vs("base.vert");
-	vkb::ShaderSource scene_fs("base.frag");
+	vkb::ShaderSource scene_vs{"base.vert"};
+	vkb::ShaderSource scene_fs{"base.frag"};
 	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
 	scene_pipeline                  = std::make_unique<vkb::RenderPipeline>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
-	vkb::ShaderSource postprocessing_vs("postprocessing/postprocessing.vert");
-	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), std::move(postprocessing_vs));
+	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert"});
 	postprocessing_pipeline->add_pass()
-	    .add_subpass(vkb::ShaderSource("postprocessing/outline.frag"));
+	    .add_subpass(vkb::ShaderSource{"postprocessing/outline.frag"});
+
+	ms_depth_postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert"});
+	ms_depth_postprocessing_pipeline->add_pass()
+	    .add_subpass(vkb::ShaderSource{"postprocessing/outline_ms_depth.frag"});
 
 	update_pipelines();
 
@@ -587,7 +590,10 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 
 	glm::vec4 near_far = {camera->get_far_plane(), camera->get_near_plane(), -1.0f, -1.0f};
 
-	auto &postprocessing_pass = postprocessing_pipeline->get_pass(0);
+	// Select the currently active pipeline
+	auto &pipeline = multisampled_depth ? ms_depth_postprocessing_pipeline : postprocessing_pipeline;
+
+	auto &postprocessing_pass = pipeline->get_pass(0);
 	postprocessing_pass.set_uniform_data(near_far);
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
@@ -596,17 +602,14 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	postprocessing_subpass.unbind_sampled_image("ms_depth_sampler");
 
 	postprocessing_subpass.get_fs_variant().clear();
-	if (multisampled_depth)
-	{
-		postprocessing_subpass.get_fs_variant().add_define("MS_DEPTH");
-	}
+
 	postprocessing_subpass
 	    .bind_sampled_image(depth_sampler_name, {depth_attachment, nullptr, nullptr, depth_writeback_resolve_supported && resolve_depth_on_writeback})
 	    .bind_sampled_image("color_sampler", i_color_resolve);
 
 	// Second render pass
 	// NOTE: Color and depth attachments are automatically transitioned to be bound as textures
-	postprocessing_pipeline->draw(command_buffer, render_target);
+	pipeline->draw(command_buffer, render_target);
 
 	if (has_gui())
 	{
