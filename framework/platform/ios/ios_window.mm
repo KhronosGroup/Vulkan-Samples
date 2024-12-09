@@ -72,6 +72,11 @@ float IosWindow::get_dpi_factor() const
 	return 1.0;
 }
 
+float IosWindow::get_content_scale_factor() const
+{
+	return [[UIScreen mainScreen] nativeScale];
+}
+
 std::vector<const char *> IosWindow::get_required_surface_extensions() const
 {
 	return {VK_EXT_METAL_SURFACE_EXTENSION_NAME};
