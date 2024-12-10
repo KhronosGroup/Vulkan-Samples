@@ -126,37 +126,37 @@ Unlike the original sample, which used hard-coded vertices in the shader, this s
 
 - **Vertex Structure Defined:**
 
-  ```cpp
+```cpp
   struct Vertex {
       glm::vec2 position;
       glm::vec3 color;
   };
-  ```
+```
 
 - **Vertex Data Stored in a Buffer:**
 
-  ```cpp
+```cpp
   std::vector<Vertex> vertices = {
       {{0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // Red Vertex
       // ... other vertices ...
   };
-  ```
+```
 
 - **Buffer Creation and Memory Allocation:**
 
-  ```cpp
+```cpp
   VkBufferCreateInfo buffer_info = { /* ... */ };
   vkCreateBuffer(device, &buffer_info, nullptr, &vertex_buffer);
 
   VkMemoryAllocateInfo alloc_info = { /* ... */ };
   vkAllocateMemory(device, &alloc_info, nullptr, &vertex_buffer_memory);
-  ```
+```
 
 - **Binding the Vertex Buffer:**
 
-  ```cpp
+```cpp
   vkCmdBindVertexBuffers(cmd, 0, 1, &vertex_buffer, &offset);
-  ```
+```
 
 **Benefits:**
 
