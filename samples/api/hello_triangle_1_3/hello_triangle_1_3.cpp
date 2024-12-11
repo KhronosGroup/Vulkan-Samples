@@ -341,7 +341,6 @@ void HelloTriangleV13::init_device()
 	vkGetPhysicalDeviceFeatures2(context.gpu, &query_device_features2);
 
 	// Check if Physical device supports Vulkan 1.3 features
-	// Check if Physical device supports Vulkan 1.3 features
 	if (!query_vulkan13_features.dynamicRendering)
 	{
 		throw std::runtime_error("Dynamic Rendering feature is missing");
