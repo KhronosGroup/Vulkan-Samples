@@ -17,10 +17,12 @@
 
 #pragma once
 
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/camera.h"
 #include "api_vulkan_sample.h"
 
+#include <VkVideoRefCountBase.h>
+#include <VulkanDeviceContext.h>
+
+class FrameProcessor;
 class video : public ApiVulkanSample
 {
 	VkPipeline            pipeline;
@@ -28,15 +30,45 @@ class video : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
 
+	// Resources for the workers
+	struct Resources
+	{
+		VkQueue         queue;
+		VkCommandPool   command_pool;
+		VkCommandBuffer command_buffer;
+
+		VkPipelineLayout pipeline_layout;
+		VkPipeline       init_pipeline;
+		VkPipeline       update_pipeline;
+		VkPipeline       mutate_pipeline;
+
+		vkb::Timer timer;
+		uint32_t   queue_family_index;
+	} decode, encode, transfer, compute;
+
+
+	VkQueueFlags           m_videoDecodeQueueFlags{}, m_videoEncodeQueueFlags{};
+	int                    m_videoDecodeQueueFamily{};
+	int					  m_videoDecodeNumQueues{};
+	int                    m_videoEncodeQueueFamily{};
+	int					  m_videoEncodeNumQueues{};
+	int 					m_videoDecodeEncodeComputeQueueFamily{};
+	int 					m_videoDecodeEncodeComputeNumQueues{};
+	bool                   m_videoDecodeQueryResultStatusSupport{};
+	bool                   m_videoEncodeQueryResultStatusSupport{};
+	VkSharedBaseObj<FrameProcessor> m_frameProcessor;
+	std::vector<BackBuffer> m_backBuffers;
+	std::queue<AcquireBuffer*> m_acquireBuffers;
+
   public:
 	video();
+	~video() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	void         build_command_buffers() override;
 
 	void         draw();
-	~video() override;
 	void render(float delta_time) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_video();
+std::unique_ptr<vkb::VulkanSampleC> create_video();
