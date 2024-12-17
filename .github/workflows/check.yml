@@ -99,7 +99,7 @@ jobs:
         with:
           submodules: "recursive"
       - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
-      - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Bbuild/clang
+      - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF -Bbuild/clang
       - run: |
           /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }}
 
