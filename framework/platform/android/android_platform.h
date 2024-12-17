@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -81,8 +81,7 @@ inline bool process_android_events(android_app *app)
 	int ident;
 	int events;
 
-	while ((ident = ALooper_pollAll(0, nullptr, &events,
-	                                (void **) &source)) >= 0)
+	while ((ident = ALooper_pollOnce(0, nullptr, &events, (void **) &source)) > ALOOPER_POLL_TIMEOUT)
 	{
 		if (source)
 		{
