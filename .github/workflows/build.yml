@@ -28,7 +28,7 @@ jobs:
         name: Install RandR headers
         run: |
           sudo apt-get update
-          sudo apt install xorg-dev libglu1-mesa-dev libwayland-dev libxkbcommon-dev
+          sudo apt install xorg-dev libglu1-mesa-dev
       - if: ${{ matrix.platform == 'windows' }}
         name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -52,7 +52,7 @@ jobs:
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
         run: |
-          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DGLFW_BUILD_WAYLAND=OFF
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_d2d:
