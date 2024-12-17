@@ -226,7 +226,7 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 * <<3d-models,3D models>>
 
 ----
-sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
+sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev libwayland-dev libxkbcommon-dev
 ----
 
 === Build with CMake

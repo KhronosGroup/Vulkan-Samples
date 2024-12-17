@@ -14,7 +14,6 @@ function(gatherAntoraAssets)
             samples
             scripts
             shaders
-            third_party
     )
     set(PAGES_DIR_SEARCH)
     set(IMAGES_DIR_SEARCH)

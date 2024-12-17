@@ -52,7 +52,7 @@ jobs:
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
         run: |
-          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DGLFW_BUILD_WAYLAND=OFF
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_v2:
@@ -76,7 +76,7 @@ jobs:
           sudo apt install xorg-dev libglu1-mesa-dev
 
       - name: Configure
-        run: cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON
+        run: cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DGLFW_BUILD_WAYLAND=OFF
 
       - name: "Build Components ${{ matrix.platform }} in ${{ matrix.build_type }}"
         run: cmake --build "build/${{ matrix.platform }}" --target vkb__components --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
