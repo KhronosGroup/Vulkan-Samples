@@ -431,6 +431,7 @@ class VulkanSample : public vkb::Application
 
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
+	std::unordered_map<const char *, bool> instance_layers;
 
 	/** @brief Vector of layer settings to be enabled for this example (must be set in the derived constructor) */
 	std::vector<vk::LayerSettingEXT> layer_settings;
