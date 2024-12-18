@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "HPP Texture loading and mapping"
     DESCRIPTION "Loading a texture and displaying it on a simple object, using vulkan.hpp"
     SHADER_FILES_GLSL
-        "texture_loading/texture.vert"
-        "texture_loading/texture.frag")
+        "texture_loading/glsl/texture.vert"
+        "texture_loading/glsl/texture.frag"
+    SHADER_FILES_HLSL
+        "texture_loading/hlsl/texture.vert.hlsl"
+        "texture_loading/hlsl/texture.frag.hlsl")

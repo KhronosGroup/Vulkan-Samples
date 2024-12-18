@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Sascha Willems
+# Copyright (c) 2021-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "Separating image and sampler"
     DESCRIPTION "Displays a texture with a separated image and sampler"
     SHADER_FILES_GLSL
-        "separate_image_sampler/separate_image_sampler.vert"
-        "separate_image_sampler/separate_image_sampler.frag")
+        "separate_image_sampler/glsl/separate_image_sampler.vert"
+        "separate_image_sampler/glsl/separate_image_sampler.frag"
+    SHADER_FILES_HLSL
+        "separate_image_sampler/hlsl/separate_image_sampler.vert.hlsl"
+        "separate_image_sampler/hlsl/separate_image_sampler.frag.hlsl")

@@ -23,7 +23,7 @@
 /**
  * @brief Using 16-bit arithmetic extension to improve arithmetic throughput
  */
-class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
+class KHR16BitArithmeticSample : public vkb::VulkanSampleC
 {
   public:
 	KHR16BitArithmeticSample();
@@ -44,11 +44,11 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
 	bool supported_extensions{false};
 	bool supports_push_constant16{false};
 
-	std::vector<vkb::LoadStoreInfo>            load_store_infos;
-	std::vector<std::unique_ptr<vkb::Subpass>> subpasses;
-	std::vector<VkClearValue>                  clear_values;
+	std::vector<vkb::LoadStoreInfo>                        load_store_infos;
+	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> subpasses;
+	std::vector<VkClearValue>                              clear_values;
 
-	std::unique_ptr<vkb::core::Buffer>    blob_buffer;
+	std::unique_ptr<vkb::core::BufferC>   blob_buffer;
 	std::unique_ptr<vkb::core::Image>     image;
 	std::unique_ptr<vkb::core::ImageView> image_view;
 	std::unique_ptr<vkb::core::Sampler>   sampler;
@@ -57,7 +57,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
 
 	unsigned frame_count{0};
 
-	struct VisualizationSubpass : vkb::Subpass
+	struct VisualizationSubpass : vkb::rendering::SubpassC
 	{
 		VisualizationSubpass(vkb::RenderContext &context, vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source);
 		virtual void prepare() override;
@@ -69,4 +69,4 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample<vkb::BindingType::C>
 	};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic();
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_arithmetic();

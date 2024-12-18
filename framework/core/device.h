@@ -50,7 +50,7 @@ struct DriverVersion
 	uint16_t patch;
 };
 
-class Device : public vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>
+class Device : public vkb::core::VulkanResourceC<VkDevice>
 {
   public:
 	/**
@@ -152,7 +152,7 @@ class Device : public vkb::core::VulkanResource<vkb::BindingType::C, VkDevice>
 	 * @param queue The queue to submit the copy command to
 	 * @param copy_region The amount to copy, if null copies the entire buffer
 	 */
-	void copy_buffer(vkb::core::Buffer &src, vkb::core::Buffer &dst, VkQueue queue, VkBufferCopy *copy_region = nullptr);
+	void copy_buffer(vkb::core::BufferC &src, vkb::core::BufferC &dst, VkQueue queue, VkBufferCopy *copy_region = nullptr);
 
 	/**
 	 * @brief Creates a command pool

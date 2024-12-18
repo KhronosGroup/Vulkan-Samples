@@ -101,10 +101,10 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	// Upload the blob buffer.
 	auto &device = get_render_context().get_device();
 
-	blob_buffer         = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16),
-                                                      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                                                      VMA_MEMORY_USAGE_GPU_ONLY);
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(device, initial_data_fp16);
+	blob_buffer         = std::make_unique<vkb::core::BufferC>(device, sizeof(initial_data_fp16),
+                                                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(device, initial_data_fp16);
 
 	auto &cmd = device.request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
@@ -191,7 +191,7 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::RenderContext &context,
                                                                      vkb::ShaderSource &&vertex_source,
                                                                      vkb::ShaderSource &&fragment_source) :
-    vkb::Subpass(context, std::move(vertex_source), std::move(fragment_source))
+    vkb::rendering::SubpassC(context, std::move(vertex_source), std::move(fragment_source))
 {
 	set_output_attachments({0});
 }
@@ -223,17 +223,24 @@ void KHR16BitArithmeticSample::VisualizationSubpass::prepare()
 
 void KHR16BitArithmeticSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto &storage_16bit_features =
-	    gpu.request_extension_features<VkPhysicalDevice16BitStorageFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
-	auto &arithmetic_16bit_8bit =
-	    gpu.request_extension_features<VkPhysicalDeviceFloat16Int8FeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR);
-
 	// Required features.
-	storage_16bit_features.storageBuffer16BitAccess = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDevice16BitStorageFeatures,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
+	                         storageBuffer16BitAccess);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDevice16BitStorageFeatures,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
+	                         uniformAndStorageBuffer16BitAccess);
 
 	// Optional features.
-	supported_extensions     = arithmetic_16bit_8bit.shaderFloat16 == VK_TRUE;
-	supports_push_constant16 = storage_16bit_features.storagePushConstant16 == VK_TRUE;
+	supported_extensions = REQUEST_OPTIONAL_FEATURE(gpu,
+	                                                VkPhysicalDeviceFloat16Int8FeaturesKHR,
+	                                                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+	                                                shaderFloat16);
+
+	supports_push_constant16 =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, storagePushConstant16);
 }
 
 void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
@@ -287,7 +294,7 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 	if (khr_16bit_arith_enabled && supports_push_constant16)
 	{
 		push16.num_blobs = push32.num_blobs;
-		push16.fp16_seed = uint16_t(glm::packHalf2x16(glm::vec2(push32.fp32_seed)));
+		push16.fp16_seed = static_cast<uint16_t>(glm::packHalf2x16(glm::vec2(push32.fp32_seed)));
 		push16.range_x   = push32.range_x;
 		push16.range_y   = push32.range_y;
 		command_buffer.push_constants(push16);
@@ -348,7 +355,7 @@ void KHR16BitArithmeticSample::draw_gui()
 	    /* lines = */ 1);
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_16bit_arithmetic()
+std::unique_ptr<vkb::VulkanSampleC> create_16bit_arithmetic()
 {
 	return std::make_unique<KHR16BitArithmeticSample>();
 }

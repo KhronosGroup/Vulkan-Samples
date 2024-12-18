@@ -115,19 +115,19 @@ void DynamicBlending::prepare_scene()
 
 	index_count = static_cast<uint32_t>(indices.size());
 
-	vertex_buffer_size     = vertices.size() * sizeof(Vertex);
+	vertex_buffer_size     = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
 	auto index_buffer_size = indices.size() * sizeof(uint32_t);
 
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_GPU_TO_CPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 
 	face_preferences[0].index_offset      = 0;
@@ -149,33 +149,40 @@ void DynamicBlending::prepare_scene()
 
 void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Query the extended dynamic state support
-	eds_feature_support       = {};
-	eds_feature_support.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
+	// We must have this or the sample isn't useful
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3ColorBlendEnable);
 
-	VkPhysicalDeviceFeatures2 features2{};
-	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	features2.pNext = &eds_feature_support;
-	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+	// Only request the features that we support
+	REQUEST_OPTIONAL_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3ColorWriteMask);
+	REQUEST_OPTIONAL_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3ColorBlendEnable);
+	REQUEST_OPTIONAL_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3ColorBlendAdvanced);
+	REQUEST_OPTIONAL_FEATURE(gpu,
+	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
+	                         extendedDynamicState3ColorBlendEquation);
 
-	{
-		// Only request the features that we support
-		auto &features                                   = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
-		features.extendedDynamicState3ColorWriteMask     = eds_feature_support.extendedDynamicState3ColorWriteMask;
-		features.extendedDynamicState3ColorBlendEnable   = VK_TRUE;        // We must have this or the sample isn't useful
-		features.extendedDynamicState3ColorBlendAdvanced = eds_feature_support.extendedDynamicState3ColorBlendAdvanced;
-		features.extendedDynamicState3ColorBlendEquation = eds_feature_support.extendedDynamicState3ColorBlendEquation;
-	}
-	{
-		auto &features                           = gpu.request_extension_features<VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT);
-		features.advancedBlendCoherentOperations = VK_TRUE;
-	}
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT,
+	                         advancedBlendCoherentOperations);
 }
 
 void DynamicBlending::prepare_uniform_buffers()
 {
-	camera_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	color_ubo  = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ColorUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_ubo = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	color_ubo  = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ColorUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void DynamicBlending::update_uniform_buffers()
@@ -294,20 +301,28 @@ void DynamicBlending::create_pipelines()
 	};
 
 	if (eds_feature_support.extendedDynamicState3ColorWriteMask)
+	{
 		dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT);
+	}
 
 	if (eds_feature_support.extendedDynamicState3ColorBlendEnable)
+	{
 		dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT);
+	}
 
 	switch (current_blend_option)
 	{
 		case 0:
 			if (eds_feature_support.extendedDynamicState3ColorBlendEquation)
+			{
 				dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT);
+			}
 			break;
 		case 1:
 			if (eds_feature_support.extendedDynamicState3ColorBlendAdvanced)
+			{
 				dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_ADVANCED_EXT);
+			}
 			break;
 	}
 
@@ -332,8 +347,8 @@ void DynamicBlending::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_blending/blending.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_blending/blending.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_blending", "blending.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_blending", "blending.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	graphics_create.pNext               = VK_NULL_HANDLE;
@@ -368,11 +383,13 @@ void DynamicBlending::update_pipeline()
 void DynamicBlending::update_color()
 {
 	for (uint32_t face = 0; face < 2; ++face)
+	{
 		for (uint32_t vertex = 0; vertex < 4; ++vertex)
 		{
 			auto &input_color             = face_preferences[face].color[vertex];
 			color.data[face * 4 + vertex] = glm::vec4(input_color[0], input_color[1], input_color[2], input_color[3]);
 		}
+	}
 	color_ubo->convert_and_update(color);
 }
 
@@ -383,7 +400,9 @@ void DynamicBlending::randomize_color(std::array<float, 4> &color, bool alpha)
 		color[i] = rnd_dist(rnd_engine);
 	}
 	if (alpha)
+	{
 		color[3] = rnd_dist(rnd_engine);
+	}
 }
 
 void DynamicBlending::update_color_uniform()
@@ -522,7 +541,9 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 		ImGui::PopID();
 		if (same_line)
+		{
 			ImGui::SameLine();
+		}
 	};
 
 	auto add_next_button = [&](int32_t &index, int32_t first, int32_t last) {
@@ -560,7 +581,9 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 			if (drawer.button("Random"))
 			{
 				for (int i = 0; i < 4; ++i)
+				{
 					randomize_color(current_face.color[i]);
+				}
 				update_color();
 			}
 			ImGui::PopID();
@@ -668,7 +691,7 @@ bool DynamicBlending::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_blending()
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_blending()
 {
 	return std::make_unique<DynamicBlending>();
 }

@@ -1,0 +1,30 @@
+////
+- Copyright (c) 2024, Sascha Willems
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Shaders
+
+== Shader languages
+
+This folder contains the textual shaders for the samples. All samples come with GLSL shaders and some optionally with HLSL shaders. For samples that support both shader language this is a good way to compare GLSL to HLSL syntax when targeting SPIR-V for Vulkan.
+
+== Further information
+
+The xref:guide:ROOT:index.adoc[Vulkan Guide] contains further information on how to use HLSL with Vulkan and how it compares to GLSL:
+
+* xref:guide::hlsl.adoc[HLSL in Vulkan]
+* xref:guide::high_level_shader_language_comparison.adoc[High level shading language comparison]

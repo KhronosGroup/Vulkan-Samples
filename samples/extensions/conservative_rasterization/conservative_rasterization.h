@@ -46,16 +46,16 @@ class ConservativeRasterization : public ApiVulkanSample
 
 	struct Triangle
 	{
-		std::unique_ptr<vkb::core::Buffer> vertices;
-		std::unique_ptr<vkb::core::Buffer> indices;
-		uint32_t                           index_count;
+		std::unique_ptr<vkb::core::BufferC> vertices;
+		std::unique_ptr<vkb::core::BufferC> indices;
+		uint32_t                            index_count;
 	} triangle;
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> scene;
+		std::unique_ptr<vkb::core::BufferC> scene;
 	} uniform_buffers;
 
 	struct UboScene
@@ -125,4 +125,4 @@ class ConservativeRasterization : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_conservative_rasterization();
+std::unique_ptr<vkb::VulkanSampleC> create_conservative_rasterization();

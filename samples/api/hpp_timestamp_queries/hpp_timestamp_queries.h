@@ -174,6 +174,7 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skybox_modelview;
+		glm::mat4 inverse_modelview;
 		float     modelscale = 0.05f;
 	};
 
@@ -184,8 +185,8 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::HPPBuffer> matrices;
-		std::unique_ptr<vkb::core::HPPBuffer> params;
+		std::unique_ptr<vkb::core::BufferCpp> matrices;
+		std::unique_ptr<vkb::core::BufferCpp> params;
 	};
 
   private:

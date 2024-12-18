@@ -55,9 +55,9 @@ class RaytracingExtended : public ApiVulkanSample
 	// Wraps all data required for an acceleration structure
 	struct AccelerationStructureExtended
 	{
-		VkAccelerationStructureKHR         handle         = nullptr;
-		uint64_t                           device_address = 0;
-		std::unique_ptr<vkb::core::Buffer> buffer;
+		VkAccelerationStructureKHR          handle         = nullptr;
+		uint64_t                            device_address = 0;
+		std::unique_ptr<vkb::core::BufferC> buffer;
 	};
 #endif
 
@@ -152,7 +152,7 @@ class RaytracingExtended : public ApiVulkanSample
 		size_t                                   num_vertices            = std::numeric_limits<size_t>::max();
 		size_t                                   num_triangles           = std::numeric_limits<size_t>::max();
 		uint32_t                                 texture_index           = std::numeric_limits<uint32_t>::max();
-		std::unique_ptr<vkb::core::Buffer>       transform_matrix_buffer = nullptr;
+		std::unique_ptr<vkb::core::BufferC>      transform_matrix_buffer = nullptr;
 		VkAccelerationStructureBuildSizesInfoKHR buildSize;
 		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
 		VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
@@ -175,11 +175,11 @@ class RaytracingExtended : public ApiVulkanSample
 	std::chrono::high_resolution_clock::time_point start       = std::chrono::high_resolution_clock::now();
 
 	// fixed buffers
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer         = nullptr;
-	std::unique_ptr<vkb::core::Buffer> index_buffer          = nullptr;
-	std::unique_ptr<vkb::core::Buffer> dynamic_vertex_buffer = nullptr;
-	std::unique_ptr<vkb::core::Buffer> dynamic_index_buffer  = nullptr;
-	std::unique_ptr<vkb::core::Buffer> instances_buffer      = nullptr;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer         = nullptr;
+	std::unique_ptr<vkb::core::BufferC> index_buffer          = nullptr;
+	std::unique_ptr<vkb::core::BufferC> dynamic_vertex_buffer = nullptr;
+	std::unique_ptr<vkb::core::BufferC> dynamic_index_buffer  = nullptr;
+	std::unique_ptr<vkb::core::BufferC> instances_buffer      = nullptr;
 
 	struct SceneLoadInfo
 	{
@@ -215,9 +215,9 @@ class RaytracingExtended : public ApiVulkanSample
 	uint32_t                                          index_count;
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
 
-	std::unique_ptr<vkb::core::Buffer> raygen_shader_binding_table;
-	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
-	std::unique_ptr<vkb::core::Buffer> hit_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> raygen_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> miss_shader_binding_table;
+	std::unique_ptr<vkb::core::BufferC> hit_shader_binding_table;
 
 	struct StorageImage
 	{
@@ -237,7 +237,7 @@ class RaytracingExtended : public ApiVulkanSample
 		glm::mat4 view_inverse;
 		glm::mat4 proj_inverse;
 	} uniform_data;
-	std::unique_ptr<vkb::core::Buffer> ubo;
+	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	struct SceneInstanceData
 	{
@@ -246,7 +246,7 @@ class RaytracingExtended : public ApiVulkanSample
 		uint32_t image_index;
 		uint32_t object_type;        // controls how shader handles object / whether to load from buffer for static objects or dynamic objects
 	};
-	std::unique_ptr<vkb::core::Buffer> data_to_model_buffer;
+	std::unique_ptr<vkb::core::BufferC> data_to_model_buffer;
 
 	std::vector<VkCommandBuffer> raytracing_command_buffers;
 	VkPipeline                   pipeline;
@@ -286,4 +286,4 @@ class RaytracingExtended : public ApiVulkanSample
 	void render(float delta_time) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_ray_tracing_extended();
+std::unique_ptr<vkb::VulkanSampleC> create_ray_tracing_extended();

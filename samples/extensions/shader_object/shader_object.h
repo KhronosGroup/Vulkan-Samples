@@ -171,9 +171,9 @@ class ShaderObject : public ApiVulkanSample
 
 	struct Terrain
 	{
-		std::unique_ptr<vkb::core::Buffer> vertices;
-		std::unique_ptr<vkb::core::Buffer> indices;
-		uint32_t                           index_count;
+		std::unique_ptr<vkb::core::BufferC> vertices;
+		std::unique_ptr<vkb::core::BufferC> indices;
+		uint32_t                            index_count;
 	} terrain;
 
 	struct CameraMatsUBO
@@ -193,7 +193,7 @@ class ShaderObject : public ApiVulkanSample
 	float elapsed_iteration_time = 0;
 	float max_iteration_time     = 0.5f;
 
-	std::unique_ptr<vkb::core::Buffer> camera_mats_ubo_buffer;
+	std::unique_ptr<vkb::core::BufferC> camera_mats_ubo_buffer;
 
 	std::unique_ptr<vkb::sg::SubMesh> skybox;
 	std::unique_ptr<vkb::sg::SubMesh> torus;
@@ -286,4 +286,4 @@ class ShaderObject : public ApiVulkanSample
 	std::default_random_engine rng;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_shader_object();
+std::unique_ptr<vkb::VulkanSampleC> create_shader_object();

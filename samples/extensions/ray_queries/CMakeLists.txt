@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Holochip Corporation
+# Copyright (c) 2021-2024, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -25,5 +25,11 @@ add_sample_with_tags(
     AUTHOR "Holochip Corporation"
     NAME "Ray queries"
     DESCRIPTION "Calculate shadows by extending a standard pipeline with ray queries"
-)
+    SHADER_FILES_GLSL
+        "ray_queries/glsl/ray_shadow.vert"
+        "ray_queries/glsl/ray_shadow.frag"
+    SHADER_FILES_HLSL
+        "ray_queries/hlsl/ray_shadow.vert.hlsl"
+        "ray_queries/hlsl/ray_shadow.frag.hlsl"
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_ray_query")
 

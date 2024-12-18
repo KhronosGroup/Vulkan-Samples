@@ -38,6 +38,15 @@ AsyncComputeSample::AsyncComputeSample()
 	config.insert<vkb::BoolSetting>(1, double_buffer_hdr_frames, true);
 }
 
+void AsyncComputeSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+#ifdef VKB_ENABLE_PORTABILITY
+	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
+	REQUEST_REQUIRED_FEATURE(
+	    gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR, mutableComparisonSamplers);
+#endif
+}
+
 void AsyncComputeSample::draw_gui()
 {
 	get_gui().show_options_window(
@@ -73,6 +82,8 @@ void AsyncComputeSample::prepare_render_targets()
 	     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
 	};
+	color_targets[0].set_debug_name("color_targets[0]");
+	color_targets[1].set_debug_name("color_targets[1]");
 
 	// Should only really need one depth target, but vkb::RenderTarget needs to own the resource.
 	vkb::core::Image depth_targets[2]{
@@ -83,6 +94,8 @@ void AsyncComputeSample::prepare_render_targets()
 	     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
 	};
+	depth_targets[0].set_debug_name("depth_targets[0]");
+	depth_targets[1].set_debug_name("depth_targets[1]");
 
 	// 8K shadow-map overkill to stress devices.
 	// Min-spec is 4K however, so clamp to that if required.
@@ -99,6 +112,7 @@ void AsyncComputeSample::prepare_render_targets()
 	vkb::core::Image shadow_target{get_device(), shadow_resolution, VK_FORMAT_D16_UNORM,
 	                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	                               VMA_MEMORY_USAGE_GPU_ONLY};
+	shadow_target.set_debug_name("shadow_target");
 
 	// Create a simple mip-chain used for bloom blur.
 	// Could technically mip-map the HDR target,
@@ -193,7 +207,7 @@ void AsyncComputeSample::setup_queues()
 
 		if (graphics_family_index == compute_family_index)
 		{
-			LOGI("Device has does not have a dedicated compute queue family.");
+			LOGI("Device does not have a dedicated compute queue family.");
 			post_compute_queue = early_graphics_queue;
 		}
 		else
@@ -315,6 +329,7 @@ void AsyncComputeSample::render_shadow_pass()
 {
 	auto &queue          = *early_graphics_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("shadow_pass");
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	auto &views = shadow_render_target->get_views();
@@ -361,6 +376,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 {
 	auto &queue          = *early_graphics_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("forward_offscreen_pass");
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -438,6 +454,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 {
 	auto &queue          = *present_graphics_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("swapchain");
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -505,6 +522,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 {
 	auto &queue          = *post_compute_queue;
 	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer.set_debug_name("compute_post");
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -514,7 +532,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	if (early_graphics_queue->get_family_index() != post_compute_queue->get_family_index())
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		memory_barrier.src_access_mask = 0;
 		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
@@ -597,7 +615,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	}
 
 	command_buffer.bind_pipeline_layout(*blur_up_pipeline);
-	for (uint32_t index = blur_chain_views.size() - 2; index >= 1; index--)
+	for (uint32_t index = static_cast<uint32_t>(blur_chain_views.size() - 2); index >= 1; index--)
 	{
 		dispatch_pass(*blur_chain_views[index], *blur_chain_views[index + 1], index == 1);
 	}
@@ -645,6 +663,9 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 
 void AsyncComputeSample::update(float delta_time)
 {
+	// don't call the parent's update, because it's done differently here... but call the grandparent's update for fps logging
+	vkb::Application::update(delta_time);
+
 	if (last_async_enabled != async_enabled)
 	{
 		setup_queues();
@@ -717,22 +738,25 @@ void AsyncComputeSample::update(float delta_time)
 
 void AsyncComputeSample::finish()
 {
-	for (auto &sem : hdr_wait_semaphores)
+	if (has_device())
 	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
-	}
+		for (auto &sem : hdr_wait_semaphores)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), sem, nullptr);
+		}
 
-	if (compute_post_semaphore)
-	{
-		// We're outside a frame context, so free the semaphore manually.
-		get_device().wait_idle();
-		vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		if (compute_post_semaphore)
+		{
+			// We're outside a frame context, so free the semaphore manually.
+			get_device().wait_idle();
+			vkDestroySemaphore(get_device().get_handle(), compute_post_semaphore, nullptr);
+		}
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_async_compute()
+std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 {
 	return std::make_unique<AsyncComputeSample>();
 }
@@ -769,7 +793,7 @@ void AsyncComputeSample::ShadowMapForwardSubpass::set_shadow_map(const vkb::core
 
 void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::CommandBuffer &command_buffer)
 {
-	auto shadow_matrix = vkb::vulkan_style_projection(shadow_camera.get_projection()) * shadow_camera.get_view();
+	auto shadow_matrix = vkb::rendering::vulkan_style_projection(shadow_camera.get_projection()) * shadow_camera.get_view();
 
 	shadow_matrix = glm::translate(glm::vec3(0.5f, 0.5f, 0.0f)) * glm::scale(glm::vec3(0.5f, 0.5f, 1.0f)) * shadow_matrix;
 
@@ -787,7 +811,7 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::CommandBuffer &comma
 }
 
 AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader) :
-    vkb::Subpass(render_context, std::move(vertex_shader), std::move(fragment_shader))
+    vkb::rendering::SubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader))
 {
 }
 
@@ -801,7 +825,7 @@ void AsyncComputeSample::CompositeSubpass::set_texture(const vkb::core::ImageVie
 
 void AsyncComputeSample::CompositeSubpass::prepare()
 {
-	auto &device   = render_context.get_device();
+	auto &device   = get_render_context().get_device();
 	auto &vertex   = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
 	auto &fragment = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
 	layout         = &device.get_resource_cache().request_pipeline_layout({&vertex, &fragment});

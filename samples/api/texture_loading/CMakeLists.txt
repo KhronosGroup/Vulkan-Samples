@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Sascha Willems
+# Copyright (c) 2019-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "Texture loading and mapping"
     DESCRIPTION "Loading a texture and displaying it on a simple object"
     SHADER_FILES_GLSL
-        "texture_loading/texture.vert"
-        "texture_loading/texture.frag")
+        "texture_loading/glsl/texture.vert"
+        "texture_loading/glsl/texture.frag"
+    SHADER_FILES_HLSL
+        "texture_loading/hlsl/texture.vert.hlsl"
+        "texture_loading/hlsl/texture.frag.hlsl")

@@ -45,4 +45,4 @@ class MeshShading : public ApiVulkanSample
 	void render(float delta_time) override;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shading();
+std::unique_ptr<vkb::VulkanSampleC> create_mesh_shading();

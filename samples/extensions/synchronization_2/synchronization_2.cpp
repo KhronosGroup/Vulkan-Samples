@@ -72,8 +72,10 @@ void Synchronization2::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Enable synchronization2 feature
-	auto &requested_synchronisation2_features            = gpu.request_extension_features<VkPhysicalDeviceSynchronization2FeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR);
-	requested_synchronisation2_features.synchronization2 = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceSynchronization2FeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR,
+	                         synchronization2);
 }
 
 void Synchronization2::load_assets()
@@ -307,12 +309,12 @@ void Synchronization2::prepare_storage_buffers()
 
 	// Staging
 	// SSBO won't be changed on the host after upload so copy to device local memory
-	vkb::core::Buffer staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), particle_buffer);
+	vkb::core::BufferC staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), particle_buffer);
 
-	compute.storage_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                             storage_buffer_size,
-	                                                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                             VMA_MEMORY_USAGE_GPU_ONLY);
+	compute.storage_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                              storage_buffer_size,
+	                                                              VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                              VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffer to storage buffer
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -457,8 +459,8 @@ void Synchronization2::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
-	shader_stages[0] = load_shader("synchronization_2/particle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("synchronization_2/particle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("synchronization_2", "particle.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("synchronization_2", "particle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -583,7 +585,7 @@ void Synchronization2::prepare_compute()
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);
 
 	// 1st pass - Particle movement calculations
-	compute_pipeline_create_info.stage = load_shader("synchronization_2/particle_calculate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage = load_shader("synchronization_2", "particle_calculate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 
 	// Set some shader parameters via specialization constants
 	struct SpecializationData
@@ -615,7 +617,7 @@ void Synchronization2::prepare_compute()
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
 
 	// 2nd pass - Particle integration
-	compute_pipeline_create_info.stage = load_shader("synchronization_2/particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage = load_shader("synchronization_2", "particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 
 	specialization_map_entries.clear();
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t)));
@@ -731,16 +733,16 @@ void Synchronization2::prepare_compute()
 void Synchronization2::prepare_uniform_buffers()
 {
 	// Compute shader uniform buffer block
-	compute.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                             sizeof(compute.ubo),
-	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	// Vertex shader uniform buffer block
-	graphics.uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                              sizeof(graphics.ubo),
+	compute.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                              sizeof(compute.ubo),
 	                                                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	// Vertex shader uniform buffer block
+	graphics.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                               sizeof(graphics.ubo),
+	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_compute_uniform_buffers(1.0f);
 	update_graphics_uniform_buffers();

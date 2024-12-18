@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Sascha Willems
+/* Copyright (c) 2019-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,14 +45,14 @@ class DynamicUniformBuffers : public ApiVulkanSample
 		float color[3];
 	};
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count = 0;
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	uint32_t                            index_count = 0;
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> view;
-		std::unique_ptr<vkb::core::Buffer> dynamic;
+		std::unique_ptr<vkb::core::BufferC> view;
+		std::unique_ptr<vkb::core::BufferC> dynamic;
 	} uniform_buffers;
 
 	struct UboVS

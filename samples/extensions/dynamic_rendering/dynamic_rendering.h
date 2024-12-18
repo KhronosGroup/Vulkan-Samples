@@ -55,12 +55,13 @@ class DynamicRendering : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skybox_modelview;
+		glm::mat4 inverse_modelview;
 		float     modelscale = 0.05f;
 	} ubo_vs;
 
-	std::unique_ptr<vkb::sg::SubMesh>  skybox;
-	std::unique_ptr<vkb::sg::SubMesh>  object;
-	std::unique_ptr<vkb::core::Buffer> ubo;
+	std::unique_ptr<vkb::sg::SubMesh>   skybox;
+	std::unique_ptr<vkb::sg::SubMesh>   object;
+	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	VkPipeline            model_pipeline{VK_NULL_HANDLE};
 	VkPipeline            skybox_pipeline{VK_NULL_HANDLE};
@@ -76,4 +77,4 @@ class DynamicRendering : public ApiVulkanSample
 	bool enable_dynamic;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering();
+std::unique_ptr<vkb::VulkanSampleC> create_dynamic_rendering();

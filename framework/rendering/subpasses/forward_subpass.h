@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,9 +36,9 @@ class Camera;
 
 struct alignas(16) ForwardLights
 {
-	Light directional_lights[MAX_FORWARD_LIGHT_COUNT];
-	Light point_lights[MAX_FORWARD_LIGHT_COUNT];
-	Light spot_lights[MAX_FORWARD_LIGHT_COUNT];
+	vkb::rendering::Light directional_lights[MAX_FORWARD_LIGHT_COUNT];
+	vkb::rendering::Light point_lights[MAX_FORWARD_LIGHT_COUNT];
+	vkb::rendering::Light spot_lights[MAX_FORWARD_LIGHT_COUNT];
 };
 
 /**

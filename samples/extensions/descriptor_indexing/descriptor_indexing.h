@@ -79,4 +79,4 @@ class DescriptorIndexing : public ApiVulkanSample
 	const VkFormat                                  format = VK_FORMAT_R8G8B8A8_UNORM;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_descriptor_indexing();
+std::unique_ptr<vkb::VulkanSampleC> create_descriptor_indexing();

@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Sascha Willems
+# Copyright (c) 2022-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample(
     NAME "VK_EXT_graphics_pipeline_library"
     DESCRIPTION "Demonstrates the use of the graphics pipeline library extension for splitting up pipeline creation into logical parts"
     SHADER_FILES_GLSL
-        "graphics_pipeline_library/shared.vert"
-        "graphics_pipeline_library/uber.frag")
+        "graphics_pipeline_library/glsl/shared.vert"
+        "graphics_pipeline_library/glsl/uber.frag"
+    SHADER_FILES_HLSL
+        "graphics_pipeline_library/hlsl/shared.vert.hlsl"
+        "graphics_pipeline_library/hlsl/uber.frag.hlsl")

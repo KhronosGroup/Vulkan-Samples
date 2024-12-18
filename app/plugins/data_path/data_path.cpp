@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Arm Limited and Contributors
+/* Copyright (c) 2022-2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,8 @@
  */
 
 #include "data_path.h"
+
+#include "filesystem/filesystem.hpp"
 
 namespace plugins
 {
@@ -35,7 +37,8 @@ void DataPath::init(const vkb::CommandParser &parser)
 {
 	if (parser.contains(&data_path_flag))
 	{
-		vkb::Platform::set_external_storage_directory(parser.as<std::string>(&data_path_flag) + "/");
+		auto fs = vkb::filesystem::get();
+		fs->set_external_storage_directory(parser.as<std::string>(&data_path_flag) + "/");
 	}
 }
 

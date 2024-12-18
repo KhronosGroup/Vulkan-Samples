@@ -26,15 +26,10 @@ endif::[]
 image::banner.jpg[Vulkan Samples banner]
 
 ifndef::site-gen-antora[]
-== Renaming Default Branch
+== Vulkan Documentation Site
 
-We have recently transitioned the repository to use the `main` branch by default.
-All remote git usage is handled automatically.
-To update your local repository to use main please use the following commands
+Documentation for the samples is best viewed at the new link:https://docs.vulkan.org/samples/latest/README.html[Vulkan Documentation Site]. The documentation uses AsciiDoc which isn't fully supported by github.
 
-----
-git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a
-----
 endif::[]
 
 == Introduction
@@ -50,8 +45,8 @@ ifdef::site-gen-antora[]
 endif::[]
 
 ifndef::site-gen-antora[]
-* https://github.com/KhronosGroup/Vulkan-Guide[Vulkan Guide]
-* https://vulkan-tutorial.com/[Get Started in Vulkan]
+* https://docs.vulkan.org/guide/latest/index.html[Vulkan Guide]
+* https://docs.vulkan.org/tutorial/latest/index.html[Get Started in Vulkan]
 endif::[]
 
 xref:samples/performance/README.adoc[Performance samples] show the recommended best practice together with real-time profiling information.
@@ -93,14 +88,51 @@ cd Vulkan-Samples
 
 Follow build instructions for your platform below.
 
+[NOTE]
+====
+The full repository is very large, and some ISPs appear to have trouble
+providing a robust connection to github while the clone is being made.
+
+If you notice problems such as submodules downloading at reported rates in
+the tens of kB/s, or fatal timeout errors occurring, these may be due to
+network routing issues to github within your ISP's internal network, rather
+than anything wrong in your own networking setup.
+
+It can be very difficult to get ISPs to acknowledge such problems exist, much
+less to fix them.
+
+One workaround is to switch the repository to use ssh protocol prior to the
+submodule download, which can be done via e.g.
+
+[source,sh]
+----
+git clone git@github.com:KhronosGroup/Vulkan-Samples.git
+cd Vulkan-Samples
+perl -i -p -e 's|https://(.*?)/|git@\1:|g' .gitmodules
+git submodule sync
+git submodule update
+----
+
+While this can be a good alternative if you are running into this connection
+issue, you must have GitHub ssh key authentication setup to use ssh
+protocol - see
+link:https://docs.github.com/en/authentication/connecting-to-github-with-ssh[Connecting
+to GitHub with SSH] for details.
+So it is a not a solution we can implement as the repository default.
+
+Another option which may help is to run github through a VPN service.
+====
+
+
 == Build
 
 === Supported Platforms
 
 * Windows - xref:./docs/build.adoc#windows[Build Guide]
 * Linux - xref:./docs/build.adoc#linux[Build Guide]
-* macOS - xref:./docs/build.adoc#macos[Build Guide]
 * Android - xref:./docs/build.adoc#android[Build Guide]
+* macOS - xref:./docs/build.adoc#macos[Build Guide]
+* iOS - xref:./docs/build.adoc#ios[Build Guide]
 
 == Usage
 
@@ -123,8 +155,12 @@ vulkan_samples sample swapchain_images
 # Run AFBC sample in benchmark mode for 5000 frames
 vulkan_samples sample afbc --benchmark --stop-after-frame 5000
 
-# Run bonza test offscreen
-vulkan_samples test bonza --headless
+# Run compute nbody using headless_surface and take a screenshot of frame 5 
+# Note: headless_surface uses VK_EXT_headless_surface.
+# This will create a surface and a Swapchain, but present will be a no op.
+# The extension is supported by Swiftshader(https://github.com/google/swiftshader).
+# It allows to quickly test content in environments without a GPU.
+vulkan_samples sample compute_nbody --headless_surface -screenshot 5
 
 # Run all the performance samples for 10 seconds in each configuration
 vulkan_samples batch --category performance --duration 10
@@ -133,34 +169,11 @@ vulkan_samples batch --category performance --duration 10
 adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
 ----
 
-== Tests
-
-* System Test - xref:docs/testing.adoc#system-test[Usage Guide]
-* Generate Sample - xref:docs/testing.adoc#generate-sample-test[Usage Guide]
-
 == License
 
 See link:LICENSE[LICENSE].
 
-This project has some third-party dependencies, each of which may have independent licensing:
-
-* https://github.com/ARM-software/astc-encoder[astc-encoder]: ASTC Evaluation Codec
-* https://github.com/vit-vit/CTPL[CTPL]: Thread Pool Library
-* https://github.com/docopt/docopt.cpp[docopt]: A C{pp}11 port of the Python argument parsing library
-* https://github.com/glfw/glfw[glfw]: A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
-* https://github.com/g-truc/glm[glm]: OpenGL Mathematics
-* https://github.com/KhronosGroup/glslang[glslang]: Shader front end and validator
-* https://github.com/ocornut/imgui[dear imgui]: Immediate Mode Graphical User Interface
-* https://github.com/ARM-software/HWCPipe[HWCPipe]: Interface to mobile Hardware Counters
-* https://github.com/KhronosGroup/KTX-Software[KTX-Software]: Khronos Texture Library and Tools
-* https://github.com/gabime/spdlog[spdlog]: Fast C{pp} logging library
-* https://github.com/KhronosGroup/SPIRV-Cross[SPIRV-Cross]: Parses and converts SPIR-V to other shader languages
-* https://github.com/nothings/stb[stb]: Single-file public domain (or MIT licensed) libraries
-* https://github.com/syoyo/tinygltf[tinygltf]: Header only C{pp}11 glTF 2.0 file parser
-* https://github.com/nlohmann/json[nlohmann json]: C{pp} JSON Library (included by https://github.com/syoyo/tinygltf[tinygltf])
-* https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator[vma]: Vulkan Memory Allocator
-* https://github.com/zeux/volk[volk]: Meta loader for Vulkan API
-* https://github.com/KhronosGroup/Vulkan-Docs[vulkan]: Sources for the formal documentation of the Vulkan API
+This project has several xref:./third_party/README.adoc[third-party dependencies]
 
 This project uses assets from https://github.com/KhronosGroup/Vulkan-Samples-Assets[vulkan-samples-assets].
 Each one has its own license.

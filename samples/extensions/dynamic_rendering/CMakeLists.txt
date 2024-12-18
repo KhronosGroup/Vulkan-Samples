@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Holochip Corporation
+# Copyright (c) 2020-2024, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -25,4 +25,9 @@ add_sample(
     AUTHOR "Holochip"
     NAME "Dynamic Rendering"
     DESCRIPTION "Demonstrates the dynamic rendering extension to streamline render passes and avoid the requirement of render pass objects"
-)
+    SHADER_FILES_GLSL
+        "dynamic_rendering/glsl/gbuffer.vert"
+        "dynamic_rendering/glsl/gbuffer.frag"
+    SHADER_FILES_HLSL
+        "dynamic_rendering/hlsl/gbuffer.vert.hlsl"
+        "dynamic_rendering/hlsl/gbuffer.frag.hlsl")

@@ -69,7 +69,7 @@ void IosWindow::close()
 
 float IosWindow::get_dpi_factor() const
 {
-    return [[UIScreen mainScreen] nativeScale] * (([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) ? 132 : 163);
+	return 1.0;
 }
 
 std::vector<const char *> IosWindow::get_required_surface_extensions() const

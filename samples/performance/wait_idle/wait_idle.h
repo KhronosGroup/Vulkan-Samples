@@ -22,7 +22,7 @@
 #include "scene_graph/components/perspective_camera.h"
 #include "vulkan_sample.h"
 
-class WaitIdle : public vkb::VulkanSample<vkb::BindingType::C>
+class WaitIdle : public vkb::VulkanSampleC
 {
   public:
 	WaitIdle();
@@ -56,4 +56,4 @@ class WaitIdle : public vkb::VulkanSample<vkb::BindingType::C>
 	int wait_idle_enabled{0};
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_wait_idle();
+std::unique_ptr<vkb::VulkanSampleC> create_wait_idle();

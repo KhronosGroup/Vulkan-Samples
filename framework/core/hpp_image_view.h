@@ -24,7 +24,7 @@ namespace vkb
 {
 namespace core
 {
-class HPPImageView : public vkb::core::VulkanResource<vkb::BindingType::Cpp, vk::ImageView>
+class HPPImageView : public vkb::core::VulkanResourceCpp<vk::ImageView>
 {
   public:
 	HPPImageView(vkb::core::HPPImage &image,

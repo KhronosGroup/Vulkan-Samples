@@ -61,7 +61,7 @@ struct PBRMaterialUniform
 /**
  * @brief This subpass is responsible for rendering a Scene
  */
-class GeometrySubpass : public Subpass
+class GeometrySubpass : public vkb::rendering::SubpassC
 {
   public:
 	/**

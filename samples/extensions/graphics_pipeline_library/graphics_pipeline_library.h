@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,7 +42,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 		glm::vec4 lightPos   = glm::vec4(-10.0f, -5.0f, 15.0f, 0.0f);
 	} ubo_vs;
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer{nullptr};
 
 	struct
 	{
@@ -78,7 +78,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
 	void         setup_descriptor_sets();
-	void         compile_shader(const std::string filename, VkShaderStageFlagBits shader_stage, std::vector<uint32_t> &spirv);
+	void         load_shader(const std::string filename, VkShaderStageFlagBits shader_stage, std::vector<uint32_t> &spirv);
 	void         prepare_pipeline_library();
 	void         prepare_new_pipeline();
 	void         pipeline_creation_threadfn();

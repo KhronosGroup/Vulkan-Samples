@@ -198,8 +198,8 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 {
 	// Load shaders
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("separate_image_sampler/separate_image_sampler.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("separate_image_sampler/separate_image_sampler.frag", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("separate_image_sampler", "separate_image_sampler.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("separate_image_sampler", "separate_image_sampler.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
@@ -296,13 +296,13 @@ void HPPSeparateImageSampler::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	vertex_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                       vertex_buffer_size,
 	                                                       vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
 	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(),
+	index_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
 	                                                      index_buffer_size,
 	                                                      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
 	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -319,7 +319,7 @@ void HPPSeparateImageSampler::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
 	uniform_buffer_vs =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

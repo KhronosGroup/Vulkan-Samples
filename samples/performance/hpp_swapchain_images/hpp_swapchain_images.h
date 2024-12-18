@@ -23,7 +23,7 @@
 /**
  * @brief Using triple buffering over double buffering, using Vulkan-Hpp
  */
-class HPPSwapchainImages : public vkb::VulkanSample<vkb::BindingType::Cpp>
+class HPPSwapchainImages : public vkb::VulkanSampleCpp
 {
   public:
 	HPPSwapchainImages();

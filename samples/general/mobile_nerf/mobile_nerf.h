@@ -61,6 +61,11 @@ class MobileNerf : public ApiVulkanSample
 		alignas(4) float tan_half_fov;
 	} global_uniform;
 
+	struct PushConstants
+	{
+		unsigned int weight_idx;
+	} push_constants;
+
 #define WEIGHTS_0_COUNT (176)
 #define WEIGHTS_1_COUNT (256)
 // The third layer weights' size is changed from 48 to 64 to make sure a 16 bytes alignement
@@ -78,13 +83,8 @@ class MobileNerf : public ApiVulkanSample
 
 	struct Vertex
 	{
-		alignas(4) glm::vec3 position;
-		alignas(4) glm::vec2 tex_coord;
-
-		bool operator==(const Vertex &other) const
-		{
-			return position == other.position && tex_coord == other.tex_coord;
-		}
+		glm::vec3 position;
+		glm::vec2 tex_coord;
 	};
 
 	struct InstancingInfo
@@ -121,18 +121,14 @@ class MobileNerf : public ApiVulkanSample
 		Texture texture_input_0, texture_input_1;
 
 		// Vulkan Buffers for each model
-		std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
-		std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
+		std::unique_ptr<vkb::core::BufferC> vertex_buffer{nullptr};
+		std::unique_ptr<vkb::core::BufferC> index_buffer{nullptr};
 
 		// Each model will have its own pipeline and descriptor set
 		VkPipeline pipeline_first_pass{VK_NULL_HANDLE};
 		// We make the descriptor set a vector for the forward mode
 		// Deferred mode will only have one set of descriptor per model
 		std::vector<VkDescriptorSet> descriptor_set_first_pass{VK_NULL_HANDLE};
-
-		// Stores references to each models mlp weights and uniform buffers
-		std::unique_ptr<vkb::core::Buffer> *weights_buffer_ref;
-		std::unique_ptr<vkb::core::Buffer> *uniform_buffer_ref;
 
 		int sub_model_num;
 		int model_index;
@@ -141,14 +137,14 @@ class MobileNerf : public ApiVulkanSample
 	std::vector<Model> models;
 
 	// MLPs for each model
-	std::vector<MLP_Weights>                        mlp_weight_vector;
-	std::vector<std::unique_ptr<vkb::core::Buffer>> weights_buffers;
+	std::vector<MLP_Weights>                         mlp_weight_vector;
+	std::vector<std::unique_ptr<vkb::core::BufferC>> weights_buffers;
 
 	// Uniform buffer for each model
-	std::vector<std::unique_ptr<vkb::core::Buffer>> uniform_buffers;
+	std::vector<std::unique_ptr<vkb::core::BufferC>> uniform_buffers;
 
-	// buffer to store instance data
-	std::unique_ptr<vkb::core::Buffer> instance_buffer{nullptr};
+	// Buffer to store instance data
+	std::unique_ptr<vkb::core::BufferC> instance_buffer{nullptr};
 
 	// Common
 	void read_json_map();
@@ -160,6 +156,7 @@ class MobileNerf : public ApiVulkanSample
 	void load_scene(int model_index, int sub_model_index, int models_entry);
 	void initialize_mlp_uniform_buffers(int model_index);
 	void update_uniform_buffers();
+	void update_weights_buffers();
 
 	void     create_texture(int model_index, int sub_model_index, int models_entry);
 	void     create_texture_helper(std::string const &texturePath, Texture &texture);
@@ -181,9 +178,16 @@ class MobileNerf : public ApiVulkanSample
 	void create_descriptor_sets_first_pass(Model &model);
 	void prepare_pipelines();
 
+	unsigned int color_attach_0_idx;
+	unsigned int color_attach_1_idx;
+	unsigned int color_attach_2_idx;
+	unsigned int color_attach_3_idx;
+	unsigned int depth_attach_idx;
+	unsigned int swapchain_attach_idx;
+
 	struct Attachments_baseline
 	{
-		FrameBufferAttachment feature_0, feature_1, feature_2;
+		FrameBufferAttachment feature_0, feature_1, feature_2, weights_idx;
 	};
 
 	std::vector<Attachments_baseline> frameAttachments;
@@ -209,21 +213,26 @@ class MobileNerf : public ApiVulkanSample
 	// For loading nerf assets map
 	json                     asset_map;
 	std::vector<std::string> model_path;
-	bool                     combo_mode;
 	std::vector<bool>        using_original_nerf_models;
-	bool                     use_deferred;
-	bool                     do_rotation;
+	bool                     combo_mode   = false;
+	bool                     use_deferred = false;
+	bool                     do_rotation  = false;
 
 	glm::vec3 camera_pos = glm::vec3(-2.2f, 2.2f, 2.2f);
+
+	// Currently combo mode translation are hard-coded
+	glm::mat4x4 combo_model_transform[4] = {
+	    glm::translate(glm::vec3(0.5, 0.75, 0)), glm::translate(glm::vec3(0.5, 0.25, 0)),
+	    glm::translate(glm::vec3(0, -0.25, 0.5)), glm::translate(glm::vec3(0, -0.75, -0.5))};
 
 	// For instancing
 	InstancingInfo instancing_info;
 
 	// Viewport Setting
-	float    fov = 60.0f;
-	uint32_t view_port_width;
-	uint32_t view_port_height;
+	float    fov                    = 60.0f;
+	uint32_t view_port_width        = width;
+	uint32_t view_port_height       = height;
 	bool     use_native_screen_size = false;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mobile_nerf();
+std::unique_ptr<vkb::VulkanSampleC> create_mobile_nerf();

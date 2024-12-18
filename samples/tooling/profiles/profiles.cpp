@@ -1,4 +1,5 @@
 /* Copyright (c) 2022-2024, Sascha Willems
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,9 +31,9 @@
 // The Vulkan Profiles library is part of the SDK and has been copied to the sample's folder for convenience
 #include "vulkan_profiles.hpp"
 
-// This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux
-#define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
-#define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
+// This sample will use the Khronos roadmap 2022 profile which requires Vulkan 1.3
+// For details on what this profile requires/enables, see https://docs.vulkan.org/spec/latest/appendices/roadmap.html#roadmap-2022
+const VpProfileProperties profile_properties = {VP_KHR_ROADMAP_2022_NAME, VP_KHR_ROADMAP_2022_SPEC_VERSION};
 
 Profiles::Profiles()
 {
@@ -45,6 +46,8 @@ Profiles::~Profiles()
 	{
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
+		for (auto &tex : textures)
+			vkFreeMemory(get_device().get_handle(), tex.memory, nullptr);
 
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 
@@ -58,6 +61,16 @@ Profiles::~Profiles()
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
 std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 {
+	// Check if the profile is supported at device level
+	VkBool32 profile_supported;
+	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
+	if (!profile_supported)
+	{
+		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
+	}
+
+	// If the profile is supported, we can start setting things up and use the profiles library for that
+
 	// Simplified queue setup (only graphics)
 	uint32_t                selected_queue_family   = 0;
 	const auto             &queue_family_properties = gpu.get_queue_family_properties();
@@ -76,26 +89,21 @@ std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 		}
 	}
 
+	std::vector<const char *> enabled_extensions;
+	enabled_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-	create_info.pNext                = gpu.get_extension_feature_chain();
-	create_info.pQueueCreateInfos    = &queue_create_info;
-	create_info.queueCreateInfoCount = 1;
+	create_info.pNext                   = gpu.get_extension_feature_chain();
+	create_info.pQueueCreateInfos       = &queue_create_info;
+	create_info.queueCreateInfoCount    = 1;
+	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
+	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
-	const VpProfileProperties profile_properties = {PROFILE_NAME, PROFILE_SPEC_VERSION};
-
-	// Check if the profile is supported at device level
-	VkBool32 profile_supported;
-	vpGetPhysicalDeviceProfileSupport(get_instance().get_handle(), gpu.get_handle(), &profile_properties, &profile_supported);
-	if (!profile_supported)
-	{
-		throw std::runtime_error{"The selected profile is not supported (error at creating the device)!"};
-	}
-
-	// Create the device using the profile tool library
+	// Create the device using the profiles library
 	VpDeviceCreateInfo deviceCreateInfo{};
-	deviceCreateInfo.pCreateInfo = &create_info;
-	deviceCreateInfo.pProfile    = &profile_properties;
-	deviceCreateInfo.flags       = VP_DEVICE_CREATE_MERGE_EXTENSIONS_BIT;
+	deviceCreateInfo.pCreateInfo             = &create_info;
+	deviceCreateInfo.pEnabledFullProfiles    = &profile_properties;
+	deviceCreateInfo.enabledFullProfileCount = 1;
 	VkDevice vulkan_device;
 	VkResult result = vpCreateDevice(gpu.get_handle(), &deviceCreateInfo, nullptr, &vulkan_device);
 
@@ -116,7 +124,7 @@ std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 
 // This sample overrides the instance creation part of the framework
 // Instead of manually setting up all properties we use the Vulkan Profiles library to simplify instance setup
-std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
+std::unique_ptr<vkb::Instance> Profiles::create_instance()
 {
 	// Initialize Volk Vulkan Loader
 	VkResult result = volkInitialize();
@@ -124,8 +132,6 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 	{
 		throw vkb::VulkanException(result, "Failed to initialize volk.");
 	}
-
-	const VpProfileProperties profile_properties = {PROFILE_NAME, PROFILE_SPEC_VERSION};
 
 	// Check if the profile is supported at instance level
 	VkBool32 profile_supported;
@@ -145,18 +151,66 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance(bool headless)
 	}
 
 	VkInstanceCreateInfo create_info{};
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	uint32_t instance_extension_count;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+
+	// If VK_KHR_portability_enumeration is available at runtime, enable the extension and flag for instance creation
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+	}
+
+#	if defined(PLATFORM__MACOS) && TARGET_OS_OSX
+	// On macOS use layer setting to configure MoltenVK for using Metal argument buffers (needed for descriptor indexing/scaling)
+	VkLayerSettingEXT            layerSetting{};
+	const int32_t                useMetalArgumentBuffers = 1;
+	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{};
+
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+	{
+		enabled_extensions.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
+
+		layerSetting.pLayerName   = "MoltenVK";
+		layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
+		layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
+		layerSetting.valueCount   = 1;
+		layerSetting.pValues      = &useMetalArgumentBuffers;
+
+		layerSettingsCreateInfo.sType        = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
+		layerSettingsCreateInfo.settingCount = 1;
+		layerSettingsCreateInfo.pSettings    = &layerSetting;
+
+		create_info.pNext = &layerSettingsCreateInfo;
+	}
+	else
+	{
+		// If layer settings is not available at runtime, set macOS environment variable for support of older Vulkan SDKs
+		// Will not work in batch mode, but is the best we can do short of using the deprecated MoltenVK private config API
+		setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "1", 1);
+	}
+#	endif
+#endif
+
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
 	// Note: We don't explicitly set an application info here so the one from the profile is used
 	// This also defines the api version to be used
 
-	// Create the instance using the profile tool library
-	// We set VP_INSTANCE_CREATE_MERGE_EXTENSIONS_BIT so the extensions defined in the profile will be merged with the extensions we specified manually
+	// Create the instance using the profiles library
 	VpInstanceCreateInfo instance_create_info{};
-	instance_create_info.pProfile    = &profile_properties;
-	instance_create_info.pCreateInfo = &create_info;
-	instance_create_info.flags       = VP_INSTANCE_CREATE_MERGE_EXTENSIONS_BIT;
+	instance_create_info.pEnabledFullProfiles    = &profile_properties;
+	instance_create_info.enabledFullProfileCount = 1;
+	instance_create_info.pCreateInfo             = &create_info;
 	VkInstance vulkan_instance;
 
 	result = vpCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
@@ -199,7 +253,7 @@ void Profiles::generate_textures()
 	image_view.subresourceRange.baseArrayLayer = 0;
 	image_view.subresourceRange.layerCount     = 1;
 
-	auto staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
+	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t));
 
 	textures.resize(32);
 	for (size_t i = 0; i < textures.size(); i++)
@@ -345,16 +399,16 @@ void Profiles::generate_cubes()
 
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                     vertex_buffer_size,
+	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                    index_buffer_size,
+	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -597,8 +651,8 @@ void Profiles::prepare_pipelines()
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("profiles/profiles.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("profiles/profiles.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("profiles", "profiles.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("profiles", "profiles.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -635,10 +689,10 @@ void Profiles::prepare_pipelines()
 void Profiles::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        sizeof(ubo_vs),
-	                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                         sizeof(ubo_vs),
+	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -694,7 +748,7 @@ void Profiles::view_changed()
 
 void Profiles::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.text("Enabled profile: %s", PROFILE_NAME);
+	drawer.text("Enabled profile: %s", profile_properties.profileName);
 }
 
 std::unique_ptr<vkb::Application> create_profiles()

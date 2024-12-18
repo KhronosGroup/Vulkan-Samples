@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Sascha Willems
+# Copyright (c) 2022-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,16 @@ add_sample_with_tags(
     NAME "Timestamp queries"
     DESCRIPTION "Using timestamp queries to fetch timing information from the GPU"
     SHADER_FILES_GLSL
-        "hdr/composition.vert"
-        "hdr/composition.frag"
-        "hdr/bloom.vert"
-        "hdr/bloom.frag"
-        "hdr/gbuffer.vert"
-        "hdr/gbuffer.frag")
+        "hdr/glsl/composition.vert"
+        "hdr/glsl/composition.frag"
+        "hdr/glsl/bloom.vert"
+        "hdr/glsl/bloom.frag"
+        "hdr/glsl/gbuffer.vert"
+        "hdr/glsl/gbuffer.frag"
+    SHADER_FILES_HLSL
+        "hdr/hlsl/composition.vert.hlsl"
+        "hdr/hlsl/composition.frag.hlsl"
+        "hdr/hlsl/bloom.vert.hlsl"
+        "hdr/hlsl/bloom.frag.hlsl"
+        "hdr/hlsl/gbuffer.vert.hlsl"
+        "hdr/hlsl/gbuffer.frag.hlsl")

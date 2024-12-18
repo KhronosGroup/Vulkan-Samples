@@ -332,18 +332,18 @@ void TerrainTessellation::generate_terrain()
 
 	// Create staging buffers
 
-	vkb::core::Buffer vertex_staging = vkb::core::Buffer::create_staging_buffer(get_device(), vertices);
-	vkb::core::Buffer index_staging  = vkb::core::Buffer::create_staging_buffer(get_device(), indices);
+	vkb::core::BufferC vertex_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
+	vkb::core::BufferC index_staging  = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	terrain.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                       vertex_buffer_size,
-	                                                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	terrain.vertices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                        vertex_buffer_size,
+	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
+
+	terrain.indices = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                       index_buffer_size,
+	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                       VMA_MEMORY_USAGE_GPU_ONLY);
-
-	terrain.indices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                      index_buffer_size,
-	                                                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                      VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -573,10 +573,10 @@ void TerrainTessellation::prepare_pipelines()
 	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages;
 
 	// Terrain tessellation pipeline
-	shader_stages[0] = load_shader("terrain_tessellation/terrain.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("terrain_tessellation/terrain.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[2] = load_shader("terrain_tessellation/terrain.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-	shader_stages[3] = load_shader("terrain_tessellation/terrain.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+	shader_stages[0] = load_shader("terrain_tessellation", "terrain.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("terrain_tessellation", "terrain.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[2] = load_shader("terrain_tessellation", "terrain.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	shader_stages[3] = load_shader("terrain_tessellation", "terrain.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(pipeline_layouts.terrain, render_pass, 0);
@@ -617,8 +617,8 @@ void TerrainTessellation::prepare_pipelines()
 	depth_stencil_state.depthWriteEnable = VK_FALSE;
 	pipeline_create_info.stageCount      = 2;
 	pipeline_create_info.layout          = pipeline_layouts.skysphere;
-	shader_stages[0]                     = load_shader("terrain_tessellation/skysphere.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                     = load_shader("terrain_tessellation/skysphere.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                     = load_shader("terrain_tessellation", "skysphere.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                     = load_shader("terrain_tessellation", "skysphere.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 }
 
@@ -626,16 +626,16 @@ void TerrainTessellation::prepare_pipelines()
 void TerrainTessellation::prepare_uniform_buffers()
 {
 	// Shared tessellation shader stages uniform buffer
-	uniform_buffers.terrain_tessellation = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                           sizeof(ubo_tess),
-	                                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.terrain_tessellation = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                            sizeof(ubo_tess),
+	                                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Skysphere vertex shader uniform buffer
-	uniform_buffers.skysphere_vertex = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                       sizeof(ubo_vs),
-	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.skysphere_vertex = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                        sizeof(ubo_vs),
+	                                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

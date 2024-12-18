@@ -50,9 +50,7 @@ void MeshShading::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &meshFeatures = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
-	meshFeatures.meshShader = VK_TRUE;
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
 }
 
 /*
@@ -81,7 +79,7 @@ void MeshShading::build_command_buffers()
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
@@ -208,8 +206,8 @@ void MeshShading::prepare_pipelines()
 	// Load our SPIR-V shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("mesh_shading/ms.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
-	shader_stages[1] = load_shader("mesh_shading/ps.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("mesh_shading", "ms.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
+	shader_stages[1] = load_shader("mesh_shading", "ps.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
@@ -234,11 +232,13 @@ void MeshShading::prepare_pipelines()
 void MeshShading::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_mesh_shading()
+std::unique_ptr<vkb::VulkanSampleC> create_mesh_shading()
 {
 	return std::make_unique<MeshShading>();
 }

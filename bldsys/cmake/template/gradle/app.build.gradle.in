@@ -2,18 +2,18 @@ plugins {
 	id 'com.android.application'
 }
 
-ext.vvl_version='1.3.275.0'
+ext.vvl_version='1.3.296.0'
 apply from: "./download_vvl.gradle"
 
 android {
-	compileSdk 33
-	buildToolsVersion "33.0.0"
-	ndkVersion "25.2.9519653"
+	ndkVersion '27.2.12479018'
+	compileSdk 35
 
 	defaultConfig {
-		applicationId "com.khronos.vulkan_samples"
+		applicationId 'com.khronos.vulkan_samples'
+	namespace "com.khronos.vulkan_samples"
 		@MIN_SDK_VERSION@
-		targetSdk 33
+		targetSdk 35
 		versionCode 1
 		versionName "1.0"
 
@@ -43,8 +43,8 @@ android {
 	}
 
 	compileOptions {
-		sourceCompatibility JavaVersion.VERSION_1_8
-		targetCompatibility JavaVersion.VERSION_1_8
+		sourceCompatibility JavaVersion.VERSION_21
+		targetCompatibility JavaVersion.VERSION_21
 	}
 
 	sourceSets {
@@ -64,11 +64,11 @@ android {
 		}
 	}
 
-	lintOptions {
-		checkReleaseBuilds false
+	lint {
 		abortOnError false
+		checkReleaseBuilds false
 	}
-
+	
 	buildFeatures {
 		viewBinding true
 		prefab true
@@ -76,9 +76,9 @@ android {
 }
 
 dependencies {
-	implementation 'androidx.appcompat:appcompat:1.6.1'
-	implementation 'com.google.android.material:material:1.8.0'
-	implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-	implementation 'androidx.core:core:1.9.0'
-	implementation 'androidx.games:games-activity:2.0.0'
+	implementation 'androidx.appcompat:appcompat:1.7.0'
+	implementation 'com.google.android.material:material:1.12.0'
+	implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+	implementation 'androidx.core:core:1.15.0'
+	implementation 'androidx.games:games-activity:3.0.5'
 }

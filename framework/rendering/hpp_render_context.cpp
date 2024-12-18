@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -95,7 +96,7 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -110,7 +111,7 @@ void HPPRenderContext::update_swapchain(const uint32_t image_count)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image count in headless mode, skipping.");
+		LOGW("Can't update the swapchains image count. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -127,7 +128,7 @@ void HPPRenderContext::update_swapchain(const std::set<vk::ImageUsageFlagBits> &
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image usage in headless mode, skipping.");
+		LOGW("Can't update the swapchains image usage. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -142,7 +143,7 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent, const vk::Su
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent and surface transform in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent and surface transform. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -199,7 +200,7 @@ bool HPPRenderContext::handle_surface_changes(bool force_update)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't handle surface changes in headless mode, skipping.");
+		LOGW("Can't handle surface changes. No swapchain, offscreen rendering detected, skipping.");
 		return false;
 	}
 
@@ -302,10 +303,19 @@ void HPPRenderContext::begin_frame()
 
 		if (result == vk::Result::eSuboptimalKHR || result == vk::Result::eErrorOutOfDateKHR)
 		{
+#if defined(PLATFORM__MACOS)
+			// On Apple platforms, force swapchain update on both eSuboptimalKHR and eErrorOutOfDateKHR
+			// eSuboptimalKHR may occur on macOS/iOS following changes to swapchain other than extent/size
+			bool swapchain_updated = handle_surface_changes(true);
+#else
 			bool swapchain_updated = handle_surface_changes(result == vk::Result::eErrorOutOfDateKHR);
+#endif
 
 			if (swapchain_updated)
 			{
+				// Need to destroy and reallocate acquired_semaphore since it may have already been signaled
+				device.get_handle().destroySemaphore(acquired_semaphore);
+				acquired_semaphore                   = prev_frame.request_semaphore_with_ownership();
 				std::tie(result, active_frame_index) = swapchain->acquire_next_image(acquired_semaphore);
 			}
 		}

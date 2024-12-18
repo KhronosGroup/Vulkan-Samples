@@ -16,7 +16,7 @@ repos:
     -   id: copyright-check
         name: copyright-check
         entry: ./scripts/copyright.py main --fix
-        language: script
+        language: python
         types: [python]
         pass_filenames: false
         always_run: true

@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Sascha Willems
+- Copyright (c) 2021-2024, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -265,4 +265,3 @@ You can also zoom in and rotate the image to see the effect of different input a
 
 NOTE: Transcoding speed suffers a lot in debug builds.
 For best performance, running a release build is advised.
-elease build is advised.

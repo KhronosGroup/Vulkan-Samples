@@ -30,18 +30,18 @@ namespace vkb
 using SampledImageMap = std::unordered_map<std::string, core::SampledImage>;
 
 /**
-* @brief A compute pass in a vkb::PostProcessingPipeline.
-*/
+ * @brief A compute pass in a vkb::PostProcessingPipeline.
+ */
 class PostProcessingComputePass : public PostProcessingPass<PostProcessingComputePass>
 {
   public:
 	PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant = {},
 	                          std::shared_ptr<core::Sampler> &&default_sampler = {});
 
-	PostProcessingComputePass(const PostProcessingComputePass &to_copy) = delete;
+	PostProcessingComputePass(const PostProcessingComputePass &to_copy)            = delete;
 	PostProcessingComputePass &operator=(const PostProcessingComputePass &to_copy) = delete;
 
-	PostProcessingComputePass(PostProcessingComputePass &&to_move) = default;
+	PostProcessingComputePass(PostProcessingComputePass &&to_move)            = default;
 	PostProcessingComputePass &operator=(PostProcessingComputePass &&to_move) = default;
 
 	void prepare(CommandBuffer &command_buffer, RenderTarget &default_render_target) override;
@@ -65,21 +65,21 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	}
 
 	/**
-	* @brief Maps the names of samplers in the shader to vkb::core::SampledImage.
-	*        These are given as samplers to the subpass, at set 0; they are bound automatically according to their name.
-	* @remarks PostProcessingPipeline::get_sampler() is used as the default sampler if none is specified.
-	*          The RenderTarget for the current PostprocessingStep is used if none is specified for attachment images.
-	*/
+	 * @brief Maps the names of samplers in the shader to vkb::core::SampledImage.
+	 *        These are given as samplers to the subpass, at set 0; they are bound automatically according to their name.
+	 * @remarks PostProcessingPipeline::get_sampler() is used as the default sampler if none is specified.
+	 *          The RenderTarget for the current PostprocessingStep is used if none is specified for attachment images.
+	 */
 	inline const SampledImageMap &get_sampled_images() const
 	{
 		return sampled_images;
 	}
 
 	/**
-	* @brief Maps the names of storage images in the shader to vkb::core::SampledImage.
-	*        These are given as image2D / image2DArray / ... to the subpass, at set 0;
-	*        they are bound automatically according to their name.
-	*/
+	 * @brief Maps the names of storage images in the shader to vkb::core::SampledImage.
+	 *        These are given as image2D / image2DArray / ... to the subpass, at set 0;
+	 *        they are bound automatically according to their name.
+	 */
 	inline const SampledImageMap &get_storage_images() const
 	{
 		return storage_images;
@@ -155,9 +155,9 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	SampledImageMap                sampled_images{};
 	SampledImageMap                storage_images{};
 
-	std::vector<uint8_t>              uniform_data{};
-	std::unique_ptr<BufferAllocation> uniform_alloc{};
-	std::vector<uint8_t>              push_constants_data{};
+	std::vector<uint8_t>               uniform_data{};
+	std::unique_ptr<BufferAllocationC> uniform_alloc{};
+	std::vector<uint8_t>               push_constants_data{};
 
 	/**
 	 * @brief Transitions sampled_images (to SHADER_READ_ONLY_OPTIMAL)

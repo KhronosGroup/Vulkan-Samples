@@ -106,7 +106,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -121,7 +121,7 @@ void RenderContext::update_swapchain(const uint32_t image_count)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image count in headless mode, skipping.");
+		LOGW("Can't update the swapchains image count. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -138,7 +138,7 @@ void RenderContext::update_swapchain(const std::set<VkImageUsageFlagBits> &image
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image usage in headless mode, skipping.");
+		LOGW("Can't update the swapchains image usage. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -153,7 +153,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent and surface transform in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent and surface transform. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -179,7 +179,7 @@ void RenderContext::update_swapchain(const VkImageCompressionFlagsEXT compressio
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains compression in headless mode, skipping.");
+		LOGW("Can't update the swapchains compression. No swapchain, offscreen rendering detected, skipping.");
 		return;
 	}
 
@@ -228,7 +228,7 @@ bool RenderContext::handle_surface_changes(bool force_update)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't handle surface changes in headless mode, skipping.");
+		LOGW("Can't handle surface changes. No swapchain, offscreen rendering detected, skipping.");
 		return false;
 	}
 
@@ -327,11 +327,20 @@ void RenderContext::begin_frame()
 
 		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+#if defined(PLATFORM__MACOS)
+			// On Apple platforms, force swapchain update on both VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR
+			// VK_SUBOPTIMAL_KHR may occur on macOS/iOS following changes to swapchain other than extent/size
+			bool swapchain_updated = handle_surface_changes(true);
+#else
 			bool swapchain_updated = handle_surface_changes(result == VK_ERROR_OUT_OF_DATE_KHR);
+#endif
 
 			if (swapchain_updated)
 			{
-				result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
+				// Need to destroy and reallocate acquired_semaphore since it may have already been signaled
+				vkDestroySemaphore(device.get_handle(), acquired_semaphore, nullptr);
+				acquired_semaphore = prev_frame.request_semaphore_with_ownership();
+				result             = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
 			}
 		}
 
@@ -375,7 +384,7 @@ VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandB
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	VK_CHECK(queue.submit({submit_info}, fence));
 
 	return signal_semaphore;
 }
@@ -394,7 +403,7 @@ void RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	VK_CHECK(queue.submit({submit_info}, fence));
 }
 
 void RenderContext::wait_frame()

@@ -64,11 +64,14 @@ void FragmentShadingRateDynamic::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable the shading rate attachment feature required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &requested_extension_features = gpu.request_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(
-	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
-	requested_extension_features.attachmentFragmentShadingRate = VK_TRUE;
-	requested_extension_features.pipelineFragmentShadingRate   = VK_TRUE;
-	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceFragmentShadingRateFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
+	                         attachmentFragmentShadingRate);
+	REQUEST_REQUIRED_FEATURE(gpu,
+	                         VkPhysicalDeviceFragmentShadingRateFeaturesKHR,
+	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
+	                         pipelineFragmentShadingRate);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -148,7 +151,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		const auto           min_shading_rate = fragment_shading_rates.front().fragmentSize;
 		std::vector<uint8_t> temp_buffer(frame_height * frame_width,
 		                                 (min_shading_rate.height >> 1) | ((min_shading_rate.width << 1) & 12));
-		auto                 staging_buffer = vkb::core::Buffer::create_staging_buffer(get_device(), temp_buffer);
+		auto                 staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), temp_buffer);
 
 		auto cmd = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -465,7 +468,7 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		const size_t old_size = small_command_buffers.size();
 		small_command_buffers.resize(draw_cmd_buffers.size(), VK_NULL_HANDLE);
 		auto allocate = vkb::initializers::command_buffer_allocate_info(command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		                                                                draw_cmd_buffers.size() - old_size);
+		                                                                static_cast<uint32_t>(draw_cmd_buffers.size() - old_size));
 		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &allocate, &small_command_buffers[old_size]));
 	}
 
@@ -801,10 +804,10 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 
 	// Transfer frequency information to buffer
 	const uint32_t buffer_size =
-	    sizeof(FrequencyInformation) + shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]);
-	frequency_information_params = std::make_unique<vkb::core::Buffer>(get_device(), buffer_size,
-	                                                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    static_cast<uint32_t>(sizeof(FrequencyInformation) + shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]));
+	frequency_information_params = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size,
+	                                                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	frequency_information_params->update(&params, sizeof(FrequencyInformation), 0);
 	frequency_information_params->update(shading_rates_u_vec_2.data(),
 	                                     shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]),
@@ -936,7 +939,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        blend_attachment_state.size(),
+	        static_cast<uint32_t>(blend_attachment_state.size()),
 	        blend_attachment_state.data());
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
@@ -1029,10 +1032,10 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 
 void FragmentShadingRateDynamic::prepare_uniform_buffers()
 {
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(ubo_scene),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             sizeof(ubo_scene),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -1127,7 +1130,7 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 	// Note: Using Revered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
-	auto command_pool_create = vkb::initializers::command_pool_create_info();
+	auto command_pool_create  = vkb::initializers::command_pool_create_info();
 	command_pool_create.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	vkCreateCommandPool(get_device().get_handle(), &command_pool_create, VK_NULL_HANDLE, &command_pool);
 
@@ -1205,7 +1208,7 @@ bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t
 	return true;
 }
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_fragment_shading_rate_dynamic()
+std::unique_ptr<vkb::VulkanSampleC> create_fragment_shading_rate_dynamic()
 {
 	return std::make_unique<FragmentShadingRateDynamic>();
 }

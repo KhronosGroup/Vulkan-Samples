@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Sascha Willems
+# Copyright (c) 2019-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,12 @@ add_sample_with_tags(
     NAME "Compute N-Body simulation"
     DESCRIPTION "Multi-pass compute dispatch N-Body particle simulation"
     SHADER_FILES_GLSL
-        "compute_nbody/particle.vert"
-        "compute_nbody/particle.frag"
-        "compute_nbody/particle_calculate.comp"
-        "compute_nbody/particle_integrate.comp")
+        "compute_nbody/glsl/particle.vert"
+        "compute_nbody/glsl/particle.frag"
+        "compute_nbody/glsl/particle_calculate.comp"
+        "compute_nbody/glsl/particle_integrate.comp"
+    SHADER_FILES_HLSL
+        "compute_nbody/hlsl/particle.vert.hlsl"
+        "compute_nbody/hlsl/particle.frag.hlsl"
+        "compute_nbody/hlsl/particle_calculate.comp.hlsl"
+        "compute_nbody/hlsl/particle_integrate.comp.hlsl")

@@ -297,30 +297,51 @@ inline vk::QueryPool create_query_pool(vk::Device device, vk::QueryType query_ty
 	return device.createQueryPool(query_pool_create_info);
 }
 
-inline vk::Sampler create_sampler(vk::PhysicalDevice gpu, vk::Device device, vk::Format format, vk::Filter filter,
-                                  vk::SamplerAddressMode sampler_address_mode, float max_anisotropy, float max_LOD)
+inline vk::Sampler create_sampler(vk::Device             device,
+                                  vk::Filter             mag_filter,
+                                  vk::Filter             min_filter,
+                                  vk::SamplerMipmapMode  mipmap_mode,
+                                  vk::SamplerAddressMode sampler_address_mode,
+                                  float                  max_anisotropy,
+                                  float                  max_LOD)
+{
+	vk::SamplerCreateInfo sampler_create_info({},
+	                                          mag_filter,
+	                                          min_filter,
+	                                          mipmap_mode,
+	                                          sampler_address_mode,
+	                                          sampler_address_mode,
+	                                          sampler_address_mode,
+	                                          0.0f,
+	                                          (1.0f < max_anisotropy),
+	                                          max_anisotropy,
+	                                          false,
+	                                          vk::CompareOp::eNever,
+	                                          0.0f,
+	                                          max_LOD,
+	                                          vk::BorderColor::eFloatOpaqueWhite);
+	return device.createSampler(sampler_create_info);
+}
+
+inline vk::Sampler create_sampler(vk::PhysicalDevice     gpu,
+                                  vk::Device             device,
+                                  vk::Format             format,
+                                  vk::Filter             filter,
+                                  vk::SamplerAddressMode sampler_address_mode,
+                                  float                  max_anisotropy,
+                                  float                  max_LOD)
 {
 	const vk::FormatProperties fmt_props = gpu.getFormatProperties(format);
 
 	bool has_linear_filter = !!(fmt_props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
 
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter               = has_linear_filter ? filter : vk::Filter::eNearest;
-	sampler_create_info.minFilter               = has_linear_filter ? filter : vk::Filter::eNearest;
-	sampler_create_info.mipmapMode              = has_linear_filter ? vk::SamplerMipmapMode::eLinear : vk::SamplerMipmapMode::eNearest;
-	sampler_create_info.addressModeU            = sampler_address_mode;
-	sampler_create_info.addressModeV            = sampler_address_mode;
-	sampler_create_info.addressModeW            = sampler_address_mode;
-	sampler_create_info.mipLodBias              = 0.0f;
-	sampler_create_info.anisotropyEnable        = (1.0f < max_anisotropy);
-	sampler_create_info.maxAnisotropy           = max_anisotropy;
-	sampler_create_info.compareEnable           = false;
-	sampler_create_info.compareOp               = vk::CompareOp::eNever;
-	sampler_create_info.minLod                  = 0.0f;
-	sampler_create_info.maxLod                  = max_LOD;
-	sampler_create_info.borderColor             = vk::BorderColor::eFloatOpaqueWhite;
-	sampler_create_info.unnormalizedCoordinates = false;
-	return device.createSampler(sampler_create_info);
+	return create_sampler(device,
+	                      has_linear_filter ? filter : vk::Filter::eNearest,
+	                      has_linear_filter ? filter : vk::Filter::eNearest,
+	                      has_linear_filter ? vk::SamplerMipmapMode::eLinear : vk::SamplerMipmapMode::eNearest,
+	                      sampler_address_mode,
+	                      max_anisotropy,
+	                      max_LOD);
 }
 
 inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage, vk::Format format)

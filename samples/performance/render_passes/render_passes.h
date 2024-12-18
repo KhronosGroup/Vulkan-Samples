@@ -26,7 +26,7 @@
 /**
  * @brief Appropriate use of render pass attachment operations
  */
-class RenderPassesSample : public vkb::VulkanSample<vkb::BindingType::C>
+class RenderPassesSample : public vkb::VulkanSampleC
 {
   public:
 	RenderPassesSample();
@@ -80,4 +80,4 @@ class RenderPassesSample : public vkb::VulkanSample<vkb::BindingType::C>
 	float frame_rate;
 };
 
-std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_render_passes();
+std::unique_ptr<vkb::VulkanSampleC> create_render_passes();

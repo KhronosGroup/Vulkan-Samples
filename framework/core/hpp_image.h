@@ -17,8 +17,9 @@
 
 #pragma once
 
+#include "builder_base.h"
+#include "core/allocated.h"
 #include "core/vulkan_resource.h"
-#include "hpp_allocated.h"
 #include <unordered_set>
 
 namespace vkb
@@ -30,10 +31,10 @@ class HPPImageView;
 class HPPImage;
 using HPPImagePtr = std::unique_ptr<HPPImage>;
 
-struct HPPImageBuilder : public allocated::HPPBuilder<HPPImageBuilder, vk::ImageCreateInfo>
+struct HPPImageBuilder : public vkb::allocated::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>
 {
   private:
-	using Parent = allocated::HPPBuilder<HPPImageBuilder, vk::ImageCreateInfo>;
+	using Parent = vkb::allocated::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>;
 
   public:
 	HPPImageBuilder(vk::Extent3D const &extent) :
@@ -100,20 +101,11 @@ struct HPPImageBuilder : public allocated::HPPBuilder<HPPImageBuilder, vk::Image
 		return *this;
 	}
 
-	HPPImageBuilder &with_implicit_sharing_mode()
-	{
-		if (create_info.queueFamilyIndexCount != 0)
-		{
-			create_info.sharingMode = vk::SharingMode::eConcurrent;
-		}
-		return *this;
-	}
-
 	HPPImage    build(HPPDevice &device) const;
 	HPPImagePtr build_unique(HPPDevice &device) const;
 };
 
-class HPPImage : public allocated::HPPAllocated<vk::Image>
+class HPPImage : public vkb::allocated::AllocatedCpp<vk::Image>
 {
   public:
 	HPPImage(HPPDevice              &device,

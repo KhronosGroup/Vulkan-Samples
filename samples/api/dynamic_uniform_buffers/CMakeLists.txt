@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Sascha Willems
+# Copyright (c) 2019-2024, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample_with_tags(
     NAME "Dynamic uniform buffers"
     DESCRIPTION "Demonstrates the use of dynamic offsets into one single uniform buffers for rendering multiple objects"
     SHADER_FILES_GLSL
-        "dynamic_uniform_buffers/base.vert"
-        "dynamic_uniform_buffers/base.frag")
+        "dynamic_uniform_buffers/glsl/base.vert"
+        "dynamic_uniform_buffers/glsl/base.frag"
+    SHADER_FILES_HLSL
+        "dynamic_uniform_buffers/hlsl/base.vert.hlsl"
+        "dynamic_uniform_buffers/hlsl/base.frag.hlsl")

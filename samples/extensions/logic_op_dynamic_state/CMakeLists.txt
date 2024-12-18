@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Mobica Limited
+# Copyright (c) 2023-2024, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,12 @@ add_sample(
     NAME "Logic operations dynamic state"
     DESCRIPTION "Demonstrate how to use logic operations dynamically, which can reduce the number of pipeline objects that are needed to be created."
     SHADER_FILES_GLSL
-    "logic_op_dynamic_state/background.vert"
-    "logic_op_dynamic_state/background.frag"
-    "logic_op_dynamic_state/baseline.vert"
-    "logic_op_dynamic_state/baseline.frag")
+        "logic_op_dynamic_state/glsl/background.vert"
+        "logic_op_dynamic_state/glsl/background.frag"
+        "logic_op_dynamic_state/glsl/baseline.vert"
+        "logic_op_dynamic_state/glsl/baseline.frag"
+    SHADER_FILES_HLSL
+        "logic_op_dynamic_state/hlsl/background.vert.hlsl"
+        "logic_op_dynamic_state/hlsl/background.frag.hlsl"
+        "logic_op_dynamic_state/hlsl/baseline.vert.hlsl"
+        "logic_op_dynamic_state/hlsl/baseline.frag.hlsl")
