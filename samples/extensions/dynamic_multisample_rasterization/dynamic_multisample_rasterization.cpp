@@ -267,32 +267,40 @@ void DynamicMultisampleRasterization::build_command_buffers()
 
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_opaque);
-
-		for (auto &node : scene_nodes_opaque)
+		if (!scene_nodes_opaque.empty())
 		{
-			draw_node(draw_cmd_buffers[i], node);
+			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_opaque);
+			for (auto &node : scene_nodes_opaque)
+			{
+				draw_node(draw_cmd_buffers[i], node);
+			}
 		}
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_opaque_flipped);
-
-		for (auto &node : scene_nodes_opaque_flipped)
+		if (!scene_nodes_opaque_flipped.empty())
 		{
-			draw_node(draw_cmd_buffers[i], node);
+			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_opaque_flipped);
+			for (auto &node : scene_nodes_opaque_flipped)
+			{
+				draw_node(draw_cmd_buffers[i], node);
+			}
 		}
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_transparent);
-
-		for (auto &node : scene_nodes_transparent)
+		if (!scene_nodes_transparent.empty())
 		{
-			draw_node(draw_cmd_buffers[i], node);
+			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_transparent);
+			for (auto &node : scene_nodes_transparent)
+			{
+				draw_node(draw_cmd_buffers[i], node);
+			}
 		}
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_transparent_flipped);
-
-		for (auto &node : scene_nodes_transparent_flipped)
+		if (!scene_nodes_transparent_flipped.empty())
 		{
-			draw_node(draw_cmd_buffers[i], node);
+			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_transparent_flipped);
+			for (auto &node : scene_nodes_transparent_flipped)
+			{
+				draw_node(draw_cmd_buffers[i], node);
+			}
 		}
 
 		draw_ui(draw_cmd_buffers[i]);
