@@ -439,6 +439,10 @@ The sample framework already has an existing abstraction normally used for enabl
 
 [,CPP]
 ----
+const std::unordered_map<const char *, bool> ShaderObject::get_validation_layers()
+{
+    return std::pair("VK_LAYER_KHRONOS_shader_object", false);
+}
 ----
 
 Because you can't rely on the Vulkan SDK to be installed on a user's system, this sample's method of loading the layer is not suitable for a real application.
