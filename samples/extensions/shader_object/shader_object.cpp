@@ -41,9 +41,6 @@ ShaderObject::ShaderObject()
 
 	// Enable extensions for sample
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
-
-	// Enable the shader object layer if it's available.  Its optional.
-	add_layer("VK_LAYER_KHRONOS_shader_object", false);
 }
 
 ShaderObject::~ShaderObject()
@@ -106,6 +103,14 @@ ShaderObject::~ShaderObject()
 
 		vkDestroyDescriptorPool(vkdevice, descriptor_pool, nullptr);
 	}
+}
+
+const std::unordered_map<const char *, bool> ShaderObject::get_validation_layers() {
+	// Validation layer is already enabled for debug builds, so initialize override list to default (empty)
+	auto validation_layers = ApiVulkanSample::get_validation_layers();
+	// Enable the shader object layer if it's available.  Its optional.
+	validation_layers.insert(std::pair("VK_LAYER_KHRONOS_shader_object", false));
+	return validation_layers;
 }
 
 bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)
@@ -416,12 +421,7 @@ void ShaderObject::load_assets()
 
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
-	// destroy created sampler before re-creating
-	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
-	vkDestroySampler(get_device().get_handle(), terrain_array_textures.sampler, nullptr);
-
 	// Setup a mirroring sampler for the height map
-	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
 	sampler_create_info.magFilter    = filter;
 	sampler_create_info.minFilter    = filter;
 	sampler_create_info.mipmapMode   = mipmap_mode;

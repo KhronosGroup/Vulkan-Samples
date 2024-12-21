@@ -436,16 +436,9 @@ The layer can be shipped with your application, and it will disable itself if a 
 The emulation layer can be enabled by adding `VK_LAYER_KHRONOS_shader_object` to `ppEnabledLayerNames` in `VkDeviceCreateInfo`.
 
 The sample framework already has an existing abstraction normally used for enabling the validation layer.
-This
-sample repurposes this mechanism to instead load the emulation layer. NB: the layer is set to be optional as that's
-what the false does.
 
 [,CPP]
 ----
-const std::unordered_map<const char *, bool> ShaderObject::get_validation_layers()
-{
-    return {"VK_LAYER_KHRONOS_shader_object", false};
-}
 ----
 
 Because you can't rely on the Vulkan SDK to be installed on a user's system, this sample's method of loading the layer is not suitable for a real application.

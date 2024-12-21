@@ -418,14 +418,14 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 }
 
 // This sample overrides the per-sample layer framework to force activation of the validation layer
-const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
+const std::unordered_map<const char *, bool> ShaderDebugPrintf::get_validation_layers()
 {
 	// Validation layer is already enabled for debug builds, so initialize override list to default (empty)
-	std::vector<const char *> validation_layers = ApiVulkanSample::get_validation_layers();
+	auto validation_layers = ApiVulkanSample::get_validation_layers();
 
 #if !defined(VKB_DEBUG) && !defined(VKB_VALIDATION_LAYERS)
 	// Force activation of validation layer on release builds for access to debugPrintfEXT feature
-	validation_layers.push_back("VK_LAYER_KHRONOS_validation");
+	validation_layers.push_back("VK_LAYER_KHRONOS_validation", true);
 #endif
 
 	return validation_layers;

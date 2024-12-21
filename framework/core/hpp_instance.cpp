@@ -75,23 +75,13 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 }
 #endif
 
-bool validate_layers(std::unordered_map<const char *, bool> &required,
+bool validate_layers(std::unordered_map<const char *, bool> &requested,
                      const std::vector<vk::LayerProperties> &available)
 {
 	std::vector<const char *> remove_vec;
-	for (auto layer : required)
+	for (auto layer : requested)
 	{
-		bool found = false;
-		for (auto &available_layer : available)
-		{
-			if (strcmp(available_layer.layerName, layer.first) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
+		if (std::none_of(available.begin(), available.end(), [&layer](vk::LayerProperties const &lp) { return lp.layerName == layer.first; }))
 		{
 			if (!layer.second)
 			{
@@ -105,7 +95,7 @@ bool validate_layers(std::unordered_map<const char *, bool> &required,
 	}
 	for (auto &rem : remove_vec)
 	{
-		required.erase(rem);
+		requested.erase(rem);
 	}
 	return true;
 }
@@ -113,25 +103,17 @@ bool validate_layers(std::unordered_map<const char *, bool> &required,
 bool validate_layers(const std::vector<const char *>        &required,
                      const std::vector<vk::LayerProperties> &available)
 {
-	for (auto layer : required)
+	auto requiredButNotAvailableIt =
+		std::find_if(required.begin(),
+					 required.end(),
+					 [&available](char const *layer) {
+						 return std::none_of(available.begin(), available.end(), [&layer](vk::LayerProperties const &lp) { return lp.layerName == layer; });
+					 });
+	if (requiredButNotAvailableIt != required.end())
 	{
-		bool found = false;
-		for (auto &available_layer : available)
-		{
-			if (strcmp(available_layer.layerName, layer) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			LOGE("Validation Layer {} not found", layer);
-			return false;
-		}
+		LOGE("Validation Layer {} not found", *requiredButNotAvailableIt);
+		return false;
 	}
-
 	return true;
 }
 }        // namespace
@@ -221,7 +203,7 @@ bool enable_all_extensions(const std::vector<const char *>             required_
 
 HPPInstance::HPPInstance(const std::string                            &application_name,
                          const std::unordered_map<const char *, bool> &required_extensions,
-                         const std::vector<const char *>              &required_validation_layers,
+                         const std::unordered_map<const char *, bool> &layers_requested,
                          const std::vector<vk::LayerSettingEXT>       &required_layer_settings,
                          uint32_t                                      api_version)
 {
@@ -305,32 +287,19 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 	std::vector<vk::LayerProperties> supported_validation_layers = vk::enumerateInstanceLayerProperties();
 
-	std::vector<const char *> requested_validation_layers(required_validation_layers);
+	std::unordered_map requested_layers(layers_requested);
 
 #ifdef USE_VALIDATION_LAYERS
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
-	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
+	std::transform(optimal_validation_layers.begin(), optimal_validation_layers.end(), std::inserter(requested_layers, requested_layers.end()),
+	[](const char *layer) { return std::pair( layer, true ); });
 #endif
 
-	if (validate_layers(requested_validation_layers, supported_validation_layers))
+	if (validate_layers(requested_layers, supported_validation_layers))
 	{
 		LOGI("Enabled Validation Layers:")
-		for (const auto &layer : requested_validation_layers)
-		{
-			LOGI("	\t{}", layer);
-		}
-	}
-	else
-	{
-		throw std::runtime_error("Required validation layers are missing.");
-	}
-
-	std::unordered_map<const char *, bool> layers = (std::unordered_map<const char *, bool>) (requested_layers);
-	if (validate_layers(layers, supported_validation_layers))
-	{
-		LOGI("Enabled Validation Layers:")
-		for (const auto &layer : layers)
+		for (const auto &layer : requested_layers)
 		{
 			LOGI("	\t{}", layer.first);
 		}
@@ -341,8 +310,10 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	}
 
 	vk::ApplicationInfo app_info(application_name.c_str(), 0, "Vulkan Samples", 0, api_version);
-
-	vk::InstanceCreateInfo instance_info({}, &app_info, requested_validation_layers, enabled_extensions);
+	std::vector<const char *> enabled_layers;
+	std::transform(requested_layers.begin(), requested_layers.end(), std::back_inserter(enabled_layers),
+		[&](const auto &layer) { return layer.first; });
+	vk::InstanceCreateInfo instance_info({}, &app_info, enabled_layers, enabled_extensions);
 
 #ifdef USE_VALIDATION_LAYERS
 	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;

@@ -93,7 +93,7 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	void                            update_uniform_buffers();
 	void                            draw();
 	bool                            prepare(const vkb::ApplicationOptions &options) override;
-	const std::vector<const char *> get_validation_layers() override;
+	const std::unordered_map<const char *, bool> get_validation_layers() override;
 	std::unique_ptr<vkb::Instance>  create_instance() override;
 	virtual void                    render(float delta_time) override;
 	virtual void                    on_update_ui_overlay(vkb::Drawer &drawer) override;
