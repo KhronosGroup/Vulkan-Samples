@@ -425,7 +425,7 @@ const std::unordered_map<const char *, bool> ShaderDebugPrintf::get_validation_l
 
 #if !defined(VKB_DEBUG) && !defined(VKB_VALIDATION_LAYERS)
 	// Force activation of validation layer on release builds for access to debugPrintfEXT feature
-	validation_layers.push_back("VK_LAYER_KHRONOS_validation", true);
+	validation_layers.insert(std::pair("VK_LAYER_KHRONOS_validation", true));
 #endif
 
 	return validation_layers;

@@ -104,11 +104,11 @@ bool validate_layers(const std::vector<const char *>        &required,
                      const std::vector<vk::LayerProperties> &available)
 {
 	auto requiredButNotAvailableIt =
-		std::find_if(required.begin(),
-					 required.end(),
-					 [&available](char const *layer) {
-						 return std::none_of(available.begin(), available.end(), [&layer](vk::LayerProperties const &lp) { return lp.layerName == layer; });
-					 });
+	    std::find_if(required.begin(),
+	                 required.end(),
+	                 [&available](char const *layer) {
+		                 return std::none_of(available.begin(), available.end(), [&layer](vk::LayerProperties const &lp) { return lp.layerName == layer; });
+	                 });
 	if (requiredButNotAvailableIt != required.end())
 	{
 		LOGE("Validation Layer {} not found", *requiredButNotAvailableIt);
@@ -293,7 +293,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
 	std::transform(optimal_validation_layers.begin(), optimal_validation_layers.end(), std::inserter(requested_layers, requested_layers.end()),
-	[](const char *layer) { return std::pair( layer, true ); });
+	               [](const char *layer) { return std::pair(layer, true); });
 #endif
 
 	if (validate_layers(requested_layers, supported_validation_layers))
@@ -309,10 +309,10 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 		throw std::runtime_error("Required validation layers are missing.");
 	}
 
-	vk::ApplicationInfo app_info(application_name.c_str(), 0, "Vulkan Samples", 0, api_version);
+	vk::ApplicationInfo       app_info(application_name.c_str(), 0, "Vulkan Samples", 0, api_version);
 	std::vector<const char *> enabled_layers;
 	std::transform(requested_layers.begin(), requested_layers.end(), std::back_inserter(enabled_layers),
-		[&](const auto &layer) { return layer.first; });
+	               [&](const auto &layer) { return layer.first; });
 	vk::InstanceCreateInfo instance_info({}, &app_info, enabled_layers, enabled_extensions);
 
 #ifdef USE_VALIDATION_LAYERS
@@ -470,7 +470,7 @@ vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surfa
 		}
 		return *gpus[selected_gpu_index.value()];
 	}
-	if ( headless_surface )
+	if (headless_surface)
 	{
 		LOGW("Using headless surface with multiple GPUs. Considered explicitly selecting the target GPU.")
 	}

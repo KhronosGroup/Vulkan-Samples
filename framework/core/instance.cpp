@@ -105,11 +105,11 @@ bool validate_layers(const std::vector<const char *>      &required,
                      const std::vector<VkLayerProperties> &available)
 {
 	auto requiredButNotAvailableIt =
-		std::find_if(required.begin(),
-					 required.end(),
-					 [&available](char const *layer) {
-						 return std::none_of(available.begin(), available.end(), [&layer](VkLayerProperties const &lp) { return lp.layerName == layer; });
-					 });
+	    std::find_if(required.begin(),
+	                 required.end(),
+	                 [&available](char const *layer) {
+		                 return std::none_of(available.begin(), available.end(), [&layer](VkLayerProperties const &lp) { return lp.layerName == layer; });
+	                 });
 	if (requiredButNotAvailableIt != required.end())
 	{
 		LOGE("Validation Layer {} not found", *requiredButNotAvailableIt);
@@ -303,7 +303,7 @@ Instance::Instance(const std::string                            &application_nam
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
 	std::transform(optimal_validation_layers.begin(), optimal_validation_layers.end(), std::inserter(requested_layers, requested_layers.end()),
-	[](const char *layer) { return std::pair( layer, true ); });
+	               [](const char *layer) { return std::pair(layer, true); });
 #endif
 
 	if (validate_layers(requested_layers, supported_validation_layers))
@@ -336,7 +336,7 @@ Instance::Instance(const std::string                            &application_nam
 
 	std::vector<const char *> enabled_layers;
 	std::transform(requested_layers.begin(), requested_layers.end(), std::back_inserter(enabled_layers),
-		[&](const auto &layer) { return layer.first; });
+	               [&](const auto &layer) { return layer.first; });
 	instance_info.enabledLayerCount   = to_u32(enabled_layers.size());
 	instance_info.ppEnabledLayerNames = enabled_layers.data();
 

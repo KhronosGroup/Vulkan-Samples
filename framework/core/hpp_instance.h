@@ -59,10 +59,10 @@ class HPPInstance
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
 	HPPInstance(const std::string                            &application_name,
-	            const std::unordered_map<const char *, bool> &required_extensions        = {},
-	            const std::unordered_map<const char *, bool> &requested_layers 		  = {},
-	            const std::vector<vk::LayerSettingEXT>       &required_layer_settings    = {},
-	            uint32_t                                      api_version                = VK_API_VERSION_1_0);
+	            const std::unordered_map<const char *, bool> &required_extensions     = {},
+	            const std::unordered_map<const char *, bool> &requested_layers        = {},
+	            const std::vector<vk::LayerSettingEXT>       &required_layer_settings = {},
+	            uint32_t                                      api_version             = VK_API_VERSION_1_0);
 
 	/**
 	 * @brief Queries the GPUs of a vk::Instance that is already created

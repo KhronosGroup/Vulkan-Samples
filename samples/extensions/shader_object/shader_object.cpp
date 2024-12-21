@@ -105,7 +105,8 @@ ShaderObject::~ShaderObject()
 	}
 }
 
-const std::unordered_map<const char *, bool> ShaderObject::get_validation_layers() {
+const std::unordered_map<const char *, bool> ShaderObject::get_validation_layers()
+{
 	// Validation layer is already enabled for debug builds, so initialize override list to default (empty)
 	auto validation_layers = ApiVulkanSample::get_validation_layers();
 	// Enable the shader object layer if it's available.  Its optional.
