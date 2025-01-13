@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Corporation
+/* Copyright (c) 2023-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -168,9 +168,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	// Determine the optimal validation layers to enable that are necessary for useful debugging
-	std::vector<const char *> optimal_validation_layers = vkb::get_optimal_validation_layers(supported_validation_layers);
-	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
+	requested_validation_layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
 	if (validate_layers(requested_validation_layers, supported_validation_layers))

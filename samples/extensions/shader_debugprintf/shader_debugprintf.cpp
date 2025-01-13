@@ -1,5 +1,5 @@
-/* Copyright (c) 2024, Sascha Willems
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2024-2025, Sascha Willems
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -415,20 +415,6 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	build_command_buffers();
 	prepared = true;
 	return true;
-}
-
-// This sample overrides the per-sample layer framework to force activation of the validation layer
-const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
-{
-	// Validation layer is already enabled for debug builds, so initialize override list to default (empty)
-	std::vector<const char *> validation_layers = ApiVulkanSample::get_validation_layers();
-
-#if !defined(VKB_DEBUG) && !defined(VKB_VALIDATION_LAYERS)
-	// Force activation of validation layer on release builds for access to debugPrintfEXT feature
-	validation_layers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
-
-	return validation_layers;
 }
 
 // This sample overrides the instance creation part of the framework to chain in additional structures
