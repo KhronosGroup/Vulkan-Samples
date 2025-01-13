@@ -36,6 +36,9 @@ cmake_minimum_required(VERSION 3.16)
 
 project(vulkan_samples)
 
+if(VKB_GENERATE_ANTORA_SITE)
+    add_subdirectory(antora)
+else ()
 # search for Vulkan SDK
 find_package(Vulkan)
 
@@ -104,5 +107,4 @@ endif()
 
 # Add vulkan app (runs all samples)
 add_subdirectory(app)
-
-add_subdirectory(antora)
+endif ()
