@@ -204,9 +204,9 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Get additional sample-specific instance layers.
 	 *
-	 * @return Vector of additional instance layers. Default is empty vector.
+	 * @return Unordered map of additional instance layers and if they are required. Default is empty map.
 	 */
-	virtual const std::vector<const char *> get_validation_layers();
+	virtual const std::unordered_map<const char *, bool> get_validation_layers();
 
 	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -906,7 +906,7 @@ inline typename VulkanSample<bindingType>::SurfaceType VulkanSample<bindingType>
 }
 
 template <vkb::BindingType bindingType>
-inline const std::vector<const char *> VulkanSample<bindingType>::get_validation_layers()
+inline const std::unordered_map<const char *, bool> VulkanSample<bindingType>::get_validation_layers()
 {
 	return {};
 }

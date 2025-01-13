@@ -105,11 +105,13 @@ ShaderObject::~ShaderObject()
 	}
 }
 
-// Currently the sample calls through this function in order to get the list of any instance layers, not just validation layers.
-// This is not suitable for a real application implementation using the layer, the layer will need to be shipped with the application.
-const std::vector<const char *> ShaderObject::get_validation_layers()
+const std::unordered_map<const char *, bool> ShaderObject::get_validation_layers()
 {
-	return {"VK_LAYER_KHRONOS_shader_object"};
+	// Validation layer is already enabled for debug builds, so initialize override list to default (empty)
+	auto validation_layers = ApiVulkanSample::get_validation_layers();
+	// Enable the shader object layer if it's available.  Its optional.
+	validation_layers.insert(std::pair("VK_LAYER_KHRONOS_shader_object", false));
+	return validation_layers;
 }
 
 bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)
@@ -229,6 +231,11 @@ void ShaderObject::setup_framebuffer()
 // Create render pass for UI drawing
 void ShaderObject::setup_render_pass()
 {
+	// delete existing render pass
+	if (render_pass != VK_NULL_HANDLE)
+	{
+		vkDestroyRenderPass(get_device().get_handle(), render_pass, VK_NULL_HANDLE);
+	}
 	VkAttachmentDescription color_attachment{};
 
 	// Color attachment set to load color and ignore stencil
@@ -416,7 +423,6 @@ void ShaderObject::load_assets()
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
 	// Setup a mirroring sampler for the height map
-	vkDestroySampler(get_device().get_handle(), heightmap_texture.sampler, nullptr);
 	sampler_create_info.magFilter    = filter;
 	sampler_create_info.minFilter    = filter;
 	sampler_create_info.mipmapMode   = mipmap_mode;
@@ -1955,7 +1961,7 @@ void ShaderObject::build_linked_shaders(VkDevice device, ShaderObject::Shader *v
 		shader_create.flags |= VK_SHADER_CREATE_LINK_STAGE_BIT_EXT;
 	}
 
-	VkShaderEXT shaderEXTs[2];
+	VkShaderEXT shaderEXTs[2] = {VK_NULL_HANDLE, VK_NULL_HANDLE};
 
 	// Create the shader objects
 	VkResult result = vkCreateShadersEXT(device,
