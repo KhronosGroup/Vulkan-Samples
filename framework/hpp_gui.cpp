@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -869,7 +869,8 @@ void HPPGui::show_stats(const vkb::stats::HPPStats &stats)
 		// Check if the stat is available in the current platform
 		if (stats.is_available(stat_index))
 		{
-			graph_label << fmt::format(graph_data.name + ": " + graph_data.format, avg * graph_data.scale_factor);
+			auto graph_value = avg * graph_data.scale_factor;
+			graph_label << std::vformat(graph_data.name + ": " + graph_data.format, std::make_format_args(graph_value));
 			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 			ImGui::PlotLines("", &graph_elements[0], static_cast<int>(graph_elements.size()), 0, graph_label.str().c_str(), graph_min, graph_max, graph_size);
 			ImGui::PopItemFlag();

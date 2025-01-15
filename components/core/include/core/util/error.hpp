@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Thomas Atkinson
+/* Copyright (c) 2023-2025, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -58,7 +58,7 @@
 template <typename... Args>
 inline void ERRORF(const std::string &format, Args &&...args)
 {
-	throw std::runtime_error(fmt::format(format, std::forward<Args>(args)...));
+	throw std::runtime_error(fmt::vformat(format, fmt::make_format_args(args...)));
 }
 
 inline void ERRORF(const std::string &message)
