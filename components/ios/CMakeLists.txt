@@ -39,4 +39,3 @@ vkb__register_tests(
 
 # attach to core
 target_link_libraries(vkb__core INTERFACE vkb__ios_platform)
-target_compile_features(vkb__core PUBLIC cxx_std_17)
