@@ -84,38 +84,6 @@ bool HelloTriangle::validate_extensions(const std::vector<const char *>         
 }
 
 /**
- * @brief Validates a list of required layers, comparing it with the available ones.
- *
- * @param required A vector containing required layer names.
- * @param available A VkLayerProperties object containing available layers.
- * @return true if all required extensions are available
- * @return false otherwise
- */
-bool HelloTriangle::validate_layers(const std::vector<const char *>      &required,
-                                    const std::vector<VkLayerProperties> &available)
-{
-	for (auto extension : required)
-	{
-		bool found = false;
-		for (auto &available_extension : available)
-		{
-			if (strcmp(available_extension.layerName, extension) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-/**
  * @brief Find the vulkan shader stage for a given a string.
  *
  * @param ext A string containing the shader stage name.
@@ -226,30 +194,27 @@ void HelloTriangle::init_instance()
 		throw std::runtime_error("Required instance extensions are missing.");
 	}
 
+	std::vector<const char *> requested_instance_layers{};
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	char const *validationLayer = "VK_LAYER_KHRONOS_validation";
+
 	uint32_t instance_layer_count;
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
 
-	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
+	std::vector<VkLayerProperties> supported_instance_layers(instance_layer_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_instance_layers.data()));
 
-	std::vector<const char *> requested_validation_layers{};
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	requested_validation_layers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
-
-	if (validate_layers(requested_validation_layers, supported_validation_layers))
+	if (std::any_of(supported_instance_layers.begin(), supported_instance_layers.end(), [&validationLayer](auto const &lp) { return strcmp(lp.layerName, validationLayer) == 0; }))
 	{
-		LOGI("Enabled Validation Layers:")
-		for (const auto &layer : requested_validation_layers)
-		{
-			LOGI("	\t{}", layer);
-		}
+		requested_instance_layers.push_back(validationLayer);
+		LOGI("Enabled Validation Layer {}", validationLayer);
 	}
 	else
 	{
-		throw std::runtime_error("Required validation layers are missing.");
+		LOGW("Validation Layer {} is not available", validationLayer);
 	}
+#endif
 
 	VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app.pApplicationName = "Hello Triangle";
@@ -260,8 +225,8 @@ void HelloTriangle::init_instance()
 	instance_info.pApplicationInfo        = &app;
 	instance_info.enabledExtensionCount   = vkb::to_u32(required_instance_extensions.size());
 	instance_info.ppEnabledExtensionNames = required_instance_extensions.data();
-	instance_info.enabledLayerCount       = vkb::to_u32(requested_validation_layers.size());
-	instance_info.ppEnabledLayerNames     = requested_validation_layers.data();
+	instance_info.enabledLayerCount       = vkb::to_u32(requested_instance_layers.size());
+	instance_info.ppEnabledLayerNames     = requested_instance_layers.data();
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Validation layers help finding wrong api usage, we enable them when explicitly requested or in debug builds

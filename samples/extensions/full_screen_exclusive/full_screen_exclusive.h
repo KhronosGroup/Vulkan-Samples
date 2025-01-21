@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Holochip Corporation
+/* Copyright (c) 2023-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -103,7 +103,6 @@ class FullScreenExclusive : public vkb::Application
 	void                         update(float delta_time) override;
 	bool                         resize(uint32_t width, uint32_t height) override;
 	static bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
-	static bool                  validate_layers(const std::vector<const char *> &required, const std::vector<VkLayerProperties> &available);
 	static VkShaderStageFlagBits find_shader_stage(const std::string &ext);
 	void                         init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
 	void                         init_device(const std::vector<const char *> &required_device_extensions);

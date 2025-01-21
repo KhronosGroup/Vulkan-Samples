@@ -49,6 +49,8 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 	// If layer settings available, use it to configure validation layer for debugPrintfEXT
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
+	add_instance_layer("VK_LAYER_KHRONOS_shader_object");
+
 	VkLayerSettingEXT layerSetting;
 	layerSetting.pLayerName   = "VK_LAYER_KHRONOS_validation";
 	layerSetting.pSettingName = "enables";
