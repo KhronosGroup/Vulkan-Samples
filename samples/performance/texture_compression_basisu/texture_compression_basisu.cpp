@@ -27,7 +27,7 @@ TextureCompressionBasisu::TextureCompressionBasisu()
 	rotation = {0.0f, 0.0f, 0.0f};
 	title    = "Basis Universal texture loading";
 
-	add_device_extension(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, /* optional */);
+	add_device_extension(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, true /* optional */);
 }
 
 TextureCompressionBasisu::~TextureCompressionBasisu()
