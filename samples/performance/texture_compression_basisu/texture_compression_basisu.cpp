@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,8 @@ TextureCompressionBasisu::TextureCompressionBasisu()
 	zoom     = -1.75f;
 	rotation = {0.0f, 0.0f, 0.0f};
 	title    = "Basis Universal texture loading";
+
+	add_device_extension(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, /* optional */);
 }
 
 TextureCompressionBasisu::~TextureCompressionBasisu()
