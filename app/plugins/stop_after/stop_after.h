@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,13 +26,13 @@ using StopAfterTags = vkb::PluginBase<vkb::tags::Stopping>;
 
 /**
  * @brief Stop After
- * 
+ *
  * Stop the execution of the app after a specific frame.
- * 
+ *
  * Usage: vulkan_sample sample afbc --stop-after-frame 100
- * 
+ *
  * TODO: Add stop after duration
- * 
+ *
  */
 class StopAfter : public StopAfterTags
 {
@@ -40,13 +41,9 @@ class StopAfter : public StopAfterTags
 
 	virtual ~StopAfter() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
+	void on_update(float delta_time) override;
 
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	virtual void on_update(float delta_time) override;
-
-	vkb::FlagCommand stop_after_frame_flag = {vkb::FlagType::OneValue, "stop-after-frame", "", "Stop the application after a certain number of frames"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 
   private:
 	uint32_t remaining_frames{0};
