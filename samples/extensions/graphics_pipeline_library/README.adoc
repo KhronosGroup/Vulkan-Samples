@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2022-2023, Sascha Willems
+- Copyright (c) 2022-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -147,7 +147,7 @@ Pipelines are created in a background thread and once they're created, command b
 == Additional resources
 
 * https://www.khronos.org/blog/reducing-draw-time-hitching-with-vk-ext-graphics-pipeline-library[Reducing Draw Time Hitching with VK_EXT_graphics_pipeline_library]
-* https://github.com/KhronosGroup/Vulkan-Docs/blob/main/proposals/VK_EXT_graphics_pipeline_library.adoc[Extension proposal]
+* https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_graphics_pipeline_library.html[Extension proposal]
 
 == Conclusion
 
