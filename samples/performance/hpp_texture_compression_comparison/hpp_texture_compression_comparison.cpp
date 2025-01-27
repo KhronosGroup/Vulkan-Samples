@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Holochip
+/* Copyright (c) 2021-2025, Holochip
  * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -84,10 +84,7 @@ HPPTextureCompressionComparison::HPPTextureCompressionComparison()
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc7SrgbBlock, KTX_TTF_BC7_RGBA, "KTX_TTF_BC7_RGBA", "BC7"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc3SrgbBlock, KTX_TTF_BC3_RGBA, "KTX_TTF_BC3_RGBA", "BC3"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionASTC_LDR, "", vk::Format::eAstc4x4SrgbBlock, KTX_TTF_ASTC_4x4_RGBA, "KTX_TTF_ASTC_4x4_RGBA", "ASTC 4x4"},
-	    {&vk::PhysicalDeviceFeatures::textureCompressionETC2, "", vk::Format::eEtc2R8G8B8A8SrgbBlock, KTX_TTF_ETC2_RGBA, "KTX_TTF_ETC2_RGBA", "ETC2"},
-	    {nullptr, VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, vk::Format::ePvrtc14BppSrgbBlockIMG, KTX_TTF_PVRTC1_4_RGBA, "KTX_TTF_PVRTC1_4_RGBA", "PVRTC1 4"}};
-
-	add_device_extension(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, true);
+	    {&vk::PhysicalDeviceFeatures::textureCompressionETC2, "", vk::Format::eEtc2R8G8B8A8SrgbBlock, KTX_TTF_ETC2_RGBA, "KTX_TTF_ETC2_RGBA", "ETC2"}};
 }
 
 void HPPTextureCompressionComparison::draw_gui()

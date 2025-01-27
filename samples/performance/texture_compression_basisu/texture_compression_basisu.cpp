@@ -26,8 +26,6 @@ TextureCompressionBasisu::TextureCompressionBasisu()
 	zoom     = -1.75f;
 	rotation = {0.0f, 0.0f, 0.0f};
 	title    = "Basis Universal texture loading";
-
-	add_device_extension(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, true /* optional */);
 }
 
 TextureCompressionBasisu::~TextureCompressionBasisu()
@@ -103,16 +101,6 @@ void TextureCompressionBasisu::get_available_target_formats()
 		{
 			available_target_formats.push_back(KTX_TTF_ETC2_RGBA);
 			available_target_formats_names.push_back("KTX_TTF_ETC2_RGBA");
-		}
-	}
-
-	// PowerVR texture compression support needs to be checked via an extension
-	if (get_device().is_extension_supported(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME))
-	{
-		if (format_supported(VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG))
-		{
-			available_target_formats.push_back(KTX_TTF_PVRTC1_4_RGBA);
-			available_target_formats_names.push_back("KTX_TTF_PVRTC1_4_RGBA");
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Holochip
+/* Copyright (c) 2021-2025, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -169,13 +169,7 @@ const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCom
 	                        VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK,
 	                        KTX_TTF_ETC2_RGBA,
 	                        "KTX_TTF_ETC2_RGBA",
-	                        "ETC2"},
-	    CompressedTexture_t{nullptr,
-	                        VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
-	                        VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
-	                        KTX_TTF_PVRTC1_4_RGBA,
-	                        "KTX_TTF_PVRTC1_4_RGBA",
-	                        "PVRTC1 4"}};
+	                        "ETC2"}};
 	return formats;
 }
 
