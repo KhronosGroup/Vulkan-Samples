@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,13 +32,17 @@ namespace core
 {
 class HPPDevice;
 
-/// Inherit this for any Vulkan object with a handle of type `HPPHandle`.
+/// Inherit this for any Vulkan object with a handle of type `Handle`.
 ///
-/// This allows the derived class to store a Vulkan handle, and also a pointer to the parent vkb::core::Device.
+/// This allows the derived class to store a Vulkan handle, and also a pointer to the parent vkb::Device.
 /// It also allows to set a debug name for any Vulkan object.
 template <vkb::BindingType bindingType, typename Handle>
 class VulkanResource
 {
+  public:
+	// we always want to store a vk::Handle as a resource, so we have to figure out that type, depending on the BindingType!
+	using ResourceType = typename vkb::VulkanTypeMapping<bindingType, Handle>::Type;
+
   public:
 	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 	using ObjectType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ObjectType, VkObjectType>::type;
@@ -53,22 +57,20 @@ class VulkanResource
 
 	virtual ~VulkanResource() = default;
 
-	const std::string &get_debug_name() const;
-	DeviceType        &get_device();
-	DeviceType const  &get_device() const;
-	Handle            &get_handle();
-	const Handle      &get_handle() const;
-	uint64_t           get_handle_u64() const;
-	ObjectType         get_object_type() const;
-	bool               has_device() const;
-	bool               has_handle() const;
-	void               set_debug_name(const std::string &name);
-	void               set_handle(Handle hdl);
+	const std::string  &get_debug_name() const;
+	DeviceType         &get_device();
+	DeviceType const   &get_device() const;
+	Handle             &get_handle();
+	const Handle       &get_handle() const;
+	uint64_t            get_handle_u64() const;
+	ObjectType          get_object_type() const;
+	ResourceType const &get_resource() const;
+	bool                has_device() const;
+	bool                has_handle() const;
+	void                set_debug_name(const std::string &name);
+	void                set_handle(Handle hdl);
 
   private:
-	// we always want to store a vk::Handle as a resource, so we have to figure out that type, depending on the BindingType!
-	using ResourceType = typename vkb::VulkanTypeMapping<bindingType, Handle>::Type;
-
 	std::string  debug_name;
 	HPPDevice   *device;
 	ResourceType handle;
@@ -186,6 +188,12 @@ inline typename VulkanResource<bindingType, Handle>::ObjectType VulkanResource<b
 	{
 		return static_cast<VkObjectType>(ResourceType::objectType);
 	}
+}
+
+template <vkb::BindingType bindingType, typename Handle>
+inline typename VulkanResource<bindingType, Handle>::ResourceType const &VulkanResource<bindingType, Handle>::get_resource() const
+{
+	return handle;
 }
 
 template <vkb::BindingType bindingType, typename Handle>

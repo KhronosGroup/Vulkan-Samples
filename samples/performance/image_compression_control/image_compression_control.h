@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,7 +46,7 @@ class ImageCompressionControlSample : public vkb::VulkanSampleC
 
 	virtual void update(float delta_time) override;
 
-	virtual void render(vkb::CommandBuffer &command_buffer) override;
+	virtual void render(vkb::core::CommandBufferC &command_buffer) override;
 
 	void draw_gui() override;
 

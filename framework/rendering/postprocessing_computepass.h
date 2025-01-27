@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,8 +44,8 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	PostProcessingComputePass(PostProcessingComputePass &&to_move)            = default;
 	PostProcessingComputePass &operator=(PostProcessingComputePass &&to_move) = default;
 
-	void prepare(CommandBuffer &command_buffer, RenderTarget &default_render_target) override;
-	void draw(CommandBuffer &command_buffer, RenderTarget &default_render_target) override;
+	void prepare(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target) override;
+	void draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target) override;
 
 	/**
 	 * @brief Sets the number of workgroups to be dispatched each draw().
@@ -163,7 +163,7 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	 * @brief Transitions sampled_images (to SHADER_READ_ONLY_OPTIMAL)
 	 *        and storage_images (to GENERAL) as appropriate.
 	 */
-	void transition_images(CommandBuffer &command_buffer, RenderTarget &default_render_target);
+	void transition_images(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target);
 
 	BarrierInfo get_src_barrier_info() const override;
 	BarrierInfo get_dst_barrier_info() const override;

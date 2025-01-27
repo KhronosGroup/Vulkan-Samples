@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,21 +17,21 @@
 
 #pragma once
 
-#include "core/vulkan_resource.h"
-#include <core/hpp_command_buffer.h>
-#include <core/hpp_command_pool.h>
-#include <core/hpp_debug.h>
-#include <core/hpp_physical_device.h>
-#include <core/hpp_queue.h>
-#include <hpp_fence_pool.h>
-#include <hpp_resource_cache.h>
-#include <vulkan/vulkan.hpp>
+#include "core/hpp_debug.h"
+#include "hpp_fence_pool.h"
+#include "hpp_resource_cache.h"
 
 namespace vkb
 {
 namespace core
 {
-class HPPBuffer;
+template <vkb::BindingType bindingType>
+class Buffer;
+using BufferCpp = Buffer<vkb::BindingType::Cpp>;
+
+class HPPCommandPool;
+class HPPPhysicalDevice;
+class HPPQueue;
 
 class HPPDevice : public vkb::core::VulkanResourceCpp<vk::Device>
 {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -128,7 +128,7 @@ VkImageLayout LayoutTransitions::pick_old_layout(VkImageLayout last_layout)
 	           last_layout;
 }
 
-void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
 {
 	// POI
 	//

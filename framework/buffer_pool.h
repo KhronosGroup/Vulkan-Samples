@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,9 @@
 
 #pragma once
 
+#include "common/helpers.h"
 #include "core/buffer.h"
-#include "core/device.h"
-#include "core/hpp_device.h"
+#include "core/hpp_physical_device.h"
 
 namespace vkb
 {

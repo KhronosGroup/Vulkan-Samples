@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,14 +17,17 @@
 
 #pragma once
 
-#include <common/glm_common.h>
+#include "common/vk_common.h"
+#include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
-class HPPCommandBuffer;
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
 
 /**
  * @brief An interface over platform-specific debug extensions.
@@ -136,7 +139,7 @@ class HPPScopedDebugLabel final
   public:
 	HPPScopedDebugLabel(const vkb::core::HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const color = {});
 
-	HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const color = {});
+	HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer, std::string const &name, glm::vec4 const color = {});
 
 	~HPPScopedDebugLabel();
 
