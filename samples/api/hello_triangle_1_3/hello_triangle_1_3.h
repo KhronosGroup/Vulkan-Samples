@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Huawei Technologies Co., Ltd.
+/* Copyright (c) 2024-2025, Huawei Technologies Co., Ltd.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -141,9 +141,6 @@ class HelloTriangleV13 : public vkb::Application
 
 	bool validate_extensions(const std::vector<const char *>          &required,
 	                         const std::vector<VkExtensionProperties> &available);
-
-	bool validate_layers(const std::vector<const char *>      &required,
-	                     const std::vector<VkLayerProperties> &available);
 
 	void init_instance();
 

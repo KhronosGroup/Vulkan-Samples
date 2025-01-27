@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -102,90 +102,71 @@ bool validate_layers(const std::vector<const char *>      &required,
 }
 }        // namespace
 
-std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers)
-{
-	std::vector<std::vector<const char *>> validation_layer_priority_list =
-	    {
-	        // The preferred validation layer is "VK_LAYER_KHRONOS_validation"
-	        {"VK_LAYER_KHRONOS_validation"},
-
-	        // Otherwise we fallback to using the LunarG meta layer
-	        {"VK_LAYER_LUNARG_standard_validation"},
-
-	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
-	        {
-	            "VK_LAYER_GOOGLE_threading",
-	            "VK_LAYER_LUNARG_parameter_validation",
-	            "VK_LAYER_LUNARG_object_tracker",
-	            "VK_LAYER_LUNARG_core_validation",
-	            "VK_LAYER_GOOGLE_unique_objects",
-	        },
-
-	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
-	        {"VK_LAYER_LUNARG_core_validation"}};
-
-	for (auto &validation_layers : validation_layer_priority_list)
-	{
-		if (validate_layers(validation_layers, supported_instance_layers))
-		{
-			return validation_layers;
-		}
-
-		LOGW("Couldn't enable validation layers (see log for error) - falling back");
-	}
-
-	// Else return nothing
-	return {};
-}
-
 Optional<uint32_t> Instance::selected_gpu_index;
 
 namespace
 {
-bool enable_extension(const char                               *required_ext_name,
-                      const std::vector<VkExtensionProperties> &available_exts,
+bool enable_extension(const char                               *requested_extension,
+                      const std::vector<VkExtensionProperties> &available_extensions,
                       std::vector<const char *>                &enabled_extensions)
 {
-	for (auto &avail_ext_it : available_exts)
+	bool is_available =
+	    std::any_of(available_extensions.begin(),
+	                available_extensions.end(),
+	                [&requested_extension](auto const &available_extension) { return strcmp(requested_extension, available_extension.extensionName) == 0; });
+	if (is_available)
 	{
-		if (strcmp(avail_ext_it.extensionName, required_ext_name) == 0)
+		bool is_already_enabled =
+		    std::any_of(enabled_extensions.begin(),
+		                enabled_extensions.end(),
+		                [&requested_extension](auto const &enabled_extension) { return strcmp(requested_extension, enabled_extension) == 0; });
+		if (!is_already_enabled)
 		{
-			auto it = std::find_if(enabled_extensions.begin(), enabled_extensions.end(),
-			                       [required_ext_name](const char *enabled_ext_name) {
-				                       return strcmp(enabled_ext_name, required_ext_name) == 0;
-			                       });
-			if (it != enabled_extensions.end())
-			{
-				// Extension is already enabled
-			}
-			else
-			{
-				LOGI("Extension {} found, enabling it", required_ext_name);
-				enabled_extensions.emplace_back(required_ext_name);
-			}
-			return true;
+			LOGI("Extension {} available, enabling it", requested_extension);
+			enabled_extensions.emplace_back(requested_extension);
 		}
 	}
+	else
+	{
+		LOGI("Extension {} not available", requested_extension);
+	}
 
-	LOGI("Extension {} not found", required_ext_name);
-	return false;
+	return is_available;
 }
 
-bool enable_all_extensions(const std::vector<const char *>           required_ext_names,
-                           const std::vector<VkExtensionProperties> &available_exts,
-                           std::vector<const char *>                &enabled_extensions)
+bool enable_layer(const char                           *requested_layer,
+                  const std::vector<VkLayerProperties> &available_layers,
+                  std::vector<const char *>            &enabled_layers)
 {
-	using std::placeholders::_1;
+	bool is_available =
+	    std::any_of(available_layers.begin(),
+	                available_layers.end(),
+	                [&requested_layer](auto const &available_layer) { return strcmp(requested_layer, available_layer.layerName) == 0; });
+	if (is_available)
+	{
+		bool is_already_enabled =
+		    std::any_of(enabled_layers.begin(),
+		                enabled_layers.end(),
+		                [&requested_layer](auto const &enabled_layer) { return strcmp(requested_layer, enabled_layer) == 0; });
+		if (!is_already_enabled)
+		{
+			LOGI("Layer {} available, enabling it", requested_layer);
+			enabled_layers.emplace_back(requested_layer);
+		}
+	}
+	else
+	{
+		LOGI("Layer {} not available", requested_layer);
+	}
 
-	return std::all_of(required_ext_names.begin(), required_ext_names.end(),
-	                   std::bind(enable_extension, _1, available_exts, enabled_extensions));
+	return is_available;
 }
 
 }        // namespace
 
 Instance::Instance(const std::string                            &application_name,
-                   const std::unordered_map<const char *, bool> &required_extensions,
-                   const std::vector<const char *>              &required_validation_layers,
+                   const std::unordered_map<const char *, bool> &requested_extensions,
+                   const std::unordered_map<const char *, bool> &requested_layers,
                    const std::vector<VkLayerSettingEXT>         &required_layer_settings,
                    uint32_t                                      api_version)
 {
@@ -197,18 +178,15 @@ Instance::Instance(const std::string                            &application_nam
 
 #ifdef USE_VALIDATION_LAYERS
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
-	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-	                                               available_instance_extensions, enabled_extensions);
+	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 	bool       has_debug_report = false;
 
 	if (!has_debug_utils)
 	{
-		has_debug_report = enable_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-		                                    available_instance_extensions, enabled_extensions);
+		has_debug_report = enable_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 		if (!has_debug_report)
 		{
-			LOGW("Neither of {} or {} are available; disabling debug reporting",
-			     VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			LOGW("Neither of {} or {} are available; disabling debug reporting", VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		}
 	}
 #endif
@@ -227,34 +205,24 @@ Instance::Instance(const std::string                            &application_nam
 		std::vector<VkExtensionProperties> available_layer_instance_extensions(layer_instance_extension_count);
 		VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, available_layer_instance_extensions.data()));
 
-		for (auto &available_extension : available_layer_instance_extensions)
-		{
-			if (strcmp(available_extension.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0)
-			{
-				validation_features = true;
-				LOGI("{} is available, enabling it", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
-				enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
-			}
-		}
+		enable_extension(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME, available_layer_instance_extensions, enabled_extensions);
 	}
 #endif
 
 	// Specific surface extensions are obtained from  Window::get_required_surface_extensions
-	// They are already added to required_extensions by VulkanSample::prepare
+	// They are already added to requested_extensions by VulkanSample::prepare
 
 	// Even for a headless surface a swapchain is still required
-	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+	enable_extension(VK_KHR_SURFACE_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
 	// which will be used for stats gathering where available.
-	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-	                 available_instance_extensions, enabled_extensions);
+	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 
-	auto extension_error = false;
-	for (auto extension : required_extensions)
+	for (auto requested_extension : requested_extensions)
 	{
-		auto extension_name        = extension.first;
-		auto extension_is_optional = extension.second;
+		auto const &extension_name        = requested_extension.first;
+		auto        extension_is_optional = requested_extension.second;
 		if (!enable_extension(extension_name, available_instance_extensions, enabled_extensions))
 		{
 			if (extension_is_optional)
@@ -264,43 +232,43 @@ Instance::Instance(const std::string                            &application_nam
 			else
 			{
 				LOGE("Required instance extension {} not available, cannot run", extension_name);
-				extension_error = true;
+				throw std::runtime_error("Required instance extensions are missing.");
 			}
-			extension_error = extension_error || !extension_is_optional;
 		}
-	}
-
-	if (extension_error)
-	{
-		throw std::runtime_error("Required instance extensions are missing.");
 	}
 
 	uint32_t instance_layer_count;
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
 
-	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
+	std::vector<VkLayerProperties> supported_layers(instance_layer_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_layers.data()));
 
-	std::vector<const char *> requested_validation_layers(required_validation_layers);
+	std::vector<const char *> enabled_layers;
 
-#ifdef USE_VALIDATION_LAYERS
-	// Determine the optimal validation layers to enable that are necessary for useful debugging
-	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
-	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
-#endif
-
-	if (validate_layers(requested_validation_layers, supported_validation_layers))
+	auto layer_error = false;
+	for (auto const &requested_layer : requested_layers)
 	{
-		LOGI("Enabled Validation Layers:")
-		for (const auto &layer : requested_validation_layers)
+		auto const &layer_name        = requested_layer.first;
+		auto        layer_is_optional = requested_layer.second;
+		if (!enable_layer(layer_name, supported_layers, enabled_layers))
 		{
-			LOGI("	\t{}", layer);
+			if (layer_is_optional)
+			{
+				LOGW("Optional layer {} not available, some features may be disabled", layer_name);
+			}
+			else
+			{
+				LOGE("Required layer {} not available, cannot run", layer_name);
+				throw std::runtime_error("Required layers are missing.");
+			}
 		}
 	}
-	else
-	{
-		throw std::runtime_error("Required validation layers are missing.");
-	}
+
+#ifdef USE_VALIDATION_LAYERS
+	// NOTE: It's important to have the validation layer as the last one here!!!!
+	//			 Otherwise, device creation fails !?!
+	enable_layer("VK_LAYER_KHRONOS_validation", supported_layers, enabled_layers);
+#endif
 
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 
@@ -317,8 +285,8 @@ Instance::Instance(const std::string                            &application_nam
 	instance_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
 	instance_info.ppEnabledExtensionNames = enabled_extensions.data();
 
-	instance_info.enabledLayerCount   = to_u32(requested_validation_layers.size());
-	instance_info.ppEnabledLayerNames = requested_validation_layers.data();
+	instance_info.enabledLayerCount   = to_u32(enabled_layers.size());
+	instance_info.ppEnabledLayerNames = enabled_layers.data();
 
 #ifdef USE_VALIDATION_LAYERS
 	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info  = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};

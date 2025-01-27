@@ -1,6 +1,6 @@
 /*
- * Copyright 2023-2024 Nintendo
- * Copyright 2023-2024, Sascha Willems
+ * Copyright 2023-2025 Nintendo
+ * Copyright 2023-2025, Sascha Willems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ ShaderObject::ShaderObject()
 
 	// Show that shader object is usable with Vulkan 1.1 + Dynamic Rendering
 	set_api_version(VK_API_VERSION_1_1);
+
+	add_instance_layer("VK_LAYER_KHRONOS_shader_object");
 
 	// Enable the Shader Object extension
 	add_device_extension(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
@@ -103,13 +105,6 @@ ShaderObject::~ShaderObject()
 
 		vkDestroyDescriptorPool(vkdevice, descriptor_pool, nullptr);
 	}
-}
-
-// Currently the sample calls through this function in order to get the list of any instance layers, not just validation layers.
-// This is not suitable for a real application implementation using the layer, the layer will need to be shipped with the application.
-const std::vector<const char *> ShaderObject::get_validation_layers()
-{
-	return {"VK_LAYER_KHRONOS_shader_object"};
 }
 
 bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)

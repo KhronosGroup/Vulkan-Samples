@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Nintendo
+ * Copyright 2023-2025 Nintendo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,8 +127,6 @@ class ShaderObject : public ApiVulkanSample
 
 	ShaderObject();
 	~ShaderObject() override;
-
-	const std::vector<const char *> get_validation_layers() override;
 
 	bool resize(const uint32_t width, const uint32_t height) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
