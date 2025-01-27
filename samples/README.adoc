@@ -44,3 +44,6 @@ include::./extensions/README.adoc[]
 
 [[tooling-samples]]
 include::./tooling/README.adoc[]
+
+[[complex-samples]]
+include::../complex/README.adoc[]
