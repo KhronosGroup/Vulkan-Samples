@@ -63,11 +63,13 @@ void Camera::set_perspective(float fov, float aspect, float znear, float zfar)
 	this->znear          = znear;
 	this->zfar           = zfar;
 	matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+	updated              = true;
 }
 
 void Camera::update_aspect_ratio(float aspect)
 {
 	matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+	updated              = true;
 }
 
 void Camera::set_position(const glm::vec3 &position)

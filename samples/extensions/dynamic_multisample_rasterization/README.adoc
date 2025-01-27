@@ -1,0 +1,44 @@
+////
+- Copyright (c) 2024, Mobica Limited
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+// Extended dynamic_state3: Rasterization samples
+
+
+== Overview
+
+This sample demonstrates one of the functionalities of VK_EXT_extended_dynamic_state3 related to rasterization samples.
+The extension can be used to dynamically change sampling without need to swap pipelines.
+image:./image/image.png[]
+
+== Enabling the extension
+
+To be able to use this extension in Vulkan API:
+`VK_EXT_extended_dynamic_state3` depends on `VK_KHR_get_physical_device_properties2`, which is promoted to Vulkan 1.1. That is, to use this extension, `VK_EXT_extended_dynamic_state3` and either `VK_KHR_get_physical_device_properties2` or Vulkan 1.1 are required.
+Additionally this sample uses `VK_KHR_dynamic_rendering` which required Vulkan 1.2.
+
+== Using the extension
+
+To use the extension:
+1) `VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT` must be added to `VkPipelineDynamicStateCreateInfo`.
+2) Method `void vkCmdSetRasterizationSamplesEXT(VkCommandBuffer commandBuffer, VkSampleCountFlagBits rasterizationSamples)` should be called with the active command buffer.
+
+== Resources
+
+https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_extended_dynamic_state3.html
+https://registry.khronos.org/vulkan/specs/latest/man/html/vkCmdSetRasterizationSamplesEXT.html
