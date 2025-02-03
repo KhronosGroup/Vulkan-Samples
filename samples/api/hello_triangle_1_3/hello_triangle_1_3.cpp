@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Huawei Technologies Co., Ltd.
+/* Copyright (c) 2024-2025, Huawei Technologies Co., Ltd.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
