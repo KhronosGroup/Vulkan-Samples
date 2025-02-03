@@ -165,6 +165,18 @@ void HelloTriangleV13::init_instance()
 	}
 #endif
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	required_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	bool portability_enumeration_available = false;
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		required_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		portability_enumeration_available = true;
+	}
+#endif
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	required_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
@@ -238,6 +250,13 @@ void HelloTriangleV13::init_instance()
 		debug_messenger_create_info.pfnUserCallback = debug_callback;
 
 		instance_info.pNext = &debug_messenger_create_info;
+	}
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	if (portability_enumeration_available)
+	{
+		instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	}
 #endif
 
@@ -1146,7 +1165,10 @@ void HelloTriangleV13::transition_image_layout(
 HelloTriangleV13::~HelloTriangleV13()
 {
 	// Don't release anything until the GPU is completely idle.
-	vkDeviceWaitIdle(context.device);
+	if (context.device != VK_NULL_HANDLE)
+	{
+		vkDeviceWaitIdle(context.device);
+	}
 
 	for (auto &per_frame : context.per_frame)
 	{
