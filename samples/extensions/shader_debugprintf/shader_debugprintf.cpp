@@ -1,5 +1,5 @@
 /* Copyright (c) 2024, Sascha Willems
- * Copyright (c) 2024, Arm Limited and Contributors
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
