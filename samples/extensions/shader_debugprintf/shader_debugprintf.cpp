@@ -71,15 +71,25 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 
 void ShaderDebugPrintf::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	auto const &supportedFeatures = gpu.get_features();
+	auto       &requestedFeatures = gpu.get_mutable_requested_features();
+
 	// debugPrintfEXT requires fragmentStoresAndAtomics, vertexPipelineStoresAndAtomics, and shaderInt64
-	gpu.get_mutable_requested_features().fragmentStoresAndAtomics       = VK_TRUE;
-	gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
-	gpu.get_mutable_requested_features().shaderInt64                    = VK_TRUE;
+	if (supportedFeatures.fragmentStoresAndAtomics && supportedFeatures.vertexPipelineStoresAndAtomics && supportedFeatures.shaderInt64)
+	{
+		requestedFeatures.fragmentStoresAndAtomics       = VK_TRUE;
+		requestedFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
+		requestedFeatures.shaderInt64                    = VK_TRUE;
+	}
+	else
+	{
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support features fragmentStoresAndAtomics, vertexPipelineStoresAndAtomics, and/or shaderInt64");
+	}
 
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (supportedFeatures.samplerAnisotropy)
 	{
-		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
+		requestedFeatures.samplerAnisotropy = VK_TRUE;
 	}
 }
 
