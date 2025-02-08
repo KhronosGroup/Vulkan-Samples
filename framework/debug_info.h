@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -191,7 +191,7 @@ class DebugInfo
 		{
 			if (field->label == label)
 			{
-				if (dynamic_cast<typename field::Static<T> *>(field.get()))
+				if (dynamic_cast<typename field::template Static<T> *>(field.get()))
 				{
 					field = std::make_unique<C<T>>(label, args...);
 				}
