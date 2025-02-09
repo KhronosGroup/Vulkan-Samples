@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2020-2024, Broadcom Inc.
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2020-2025, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,9 +20,9 @@
 
 namespace
 {
-const char *get_product_family_name(hwcpipe::device::product_id::gpu_family f)
+const char *get_product_family_name(hwcpipe::device::gpu_family f)
 {
-	using gpu_family = hwcpipe::device::product_id::gpu_family;
+	using gpu_family = hwcpipe::device::gpu_family;
 
 	switch (f)
 	{
@@ -46,12 +46,12 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 	// clang-format off
 	StatDataMap hwcpipe_stats = {
 	    {StatIndex::gpu_cycles,            {hwcpipe_counter::MaliGPUActiveCy}},
-	    {StatIndex::gpu_vertex_cycles,     {hwcpipe_counter::MaliNonFragQueueActiveCy, {MaliNonFragActiveCy, MaliBinningIterActiveCy} }},
+	    {StatIndex::gpu_vertex_cycles,     {hwcpipe_counter::MaliNonFragQueueActiveCy, {MaliNonFragActiveCy, MaliBinningQueueActiveCy} }},
 	    {StatIndex::gpu_load_store_cycles, {hwcpipe_counter::MaliLSIssueCy}},
 	    {StatIndex::gpu_tiles,             {hwcpipe_counter::MaliFragTile}},
 	    {StatIndex::gpu_killed_tiles,      {hwcpipe_counter::MaliFragTileKill}},
-	    {StatIndex::gpu_fragment_cycles,   {hwcpipe_counter::MaliFragQueueActiveCy, {MaliFragActiveCy, MaliMainIterActiveCy}}},
-	    {StatIndex::gpu_fragment_jobs,     {hwcpipe_counter::MaliFragQueueJob, {MaliFragIterJob, MaliMainIterJob}}},
+	    {StatIndex::gpu_fragment_cycles,   {hwcpipe_counter::MaliFragQueueActiveCy, {MaliFragActiveCy, MaliMainQueueActiveCy}}},
+	    {StatIndex::gpu_fragment_jobs,     {hwcpipe_counter::MaliFragQueueJob, {MaliMainQueueJob}}},
 	    {StatIndex::gpu_ext_reads,         {hwcpipe_counter::MaliExtBusRdBt}},
 	    {StatIndex::gpu_ext_writes,        {hwcpipe_counter::MaliExtBusWrBt}},
 	    {StatIndex::gpu_ext_read_stalls,   {hwcpipe_counter::MaliExtBusRdStallCy}},
@@ -67,7 +67,7 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 		LOGI("HWCPipe: ------------------------------------------------------------");
 		LOGI("HWCPipe:  GPU Device {}:", gpu.get_device_number());
 		LOGI("HWCPipe: ------------------------------------------------------------");
-		LOGI("HWCPipe:     Product Family:  {}", get_product_family_name(gpu.get_product_id().get_gpu_family()));
+		LOGI("HWCPipe:     Product Family:  {}", get_product_family_name(gpu.get_gpu_family()));
 		LOGI("HWCPipe:     Number of Cores: {}", gpu.num_shader_cores());
 		LOGI("HWCPipe:     Bus Width:       {}", gpu.bus_width());
 	}
