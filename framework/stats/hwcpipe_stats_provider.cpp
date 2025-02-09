@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2020-2024, Broadcom Inc.
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2020-2025, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
