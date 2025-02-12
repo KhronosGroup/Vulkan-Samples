@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,17 +19,18 @@
 #pragma once
 
 #include "platform/plugins/plugin_base.h"
+
 namespace plugins
 {
 using FpsLoggerTags = vkb::PluginBase<vkb::tags::Passive>;
 
 /**
  * @brief FPS Logger
- * 
+ *
  * Control when FPS should be logged. Declutters the log output by removing FPS logs when not enabled
- * 
+ *
  * Usage: vulkan_sample sample afbc --log-fps
- * 
+ *
  */
 class FpsLogger : public FpsLoggerTags
 {
@@ -37,19 +39,13 @@ class FpsLogger : public FpsLoggerTags
 
 	virtual ~FpsLogger() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &parser) override;
-
 	void on_update(float delta_time) override;
 
-	vkb::FlagCommand fps_flag = {vkb::FlagType::FlagOnly, "log-fps", "", "Log FPS"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 
   private:
+	size_t     frame_count      = 0;
+	size_t     last_frame_count = 0;
 	vkb::Timer timer;
-
-	size_t frame_count{0};
-
-	size_t last_frame_count{0};
 };
 }        // namespace plugins

@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2022, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,61 +28,84 @@ namespace plugins
 WindowOptions::WindowOptions() :
     WindowOptionsTags("Window Options",
                       "A collection of flags to configure window used when running the application. Implementation may differ between platforms",
-                      {}, {&window_options_group})
+                      {},
+                      {},
+                      {{"borderless", "Run in borderless mode"},
+                       {"fullscreen", "Run in fullscreen mode"},
+                       {"headless-surface", "Run in headless surface mode. A Surface and swap-chain is still created using VK_EXT_headless_surface."},
+                       {"height", "Initial window height"},
+                       {"stretch", "Stretch window to fullscreen (direct-to-display only)"},
+                       {"vsync", "Force vsync {ON | OFF}. If not set samples decide how vsync is set"},
+                       {"width", "Initial window width"}})
 {
 }
 
-bool WindowOptions::is_active(const vkb::CommandParser &parser)
+bool WindowOptions::handle_option(std::deque<std::string> &arguments)
 {
-	return true;
-}
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
 
-void WindowOptions::init(const vkb::CommandParser &parser)
-{
 	vkb::Window::OptionalProperties properties;
-
-	if (parser.contains(&width_flag))
+	if (option == "borderless")
 	{
-		auto width = parser.as<uint32_t>(&width_flag);
-		if (width < platform->MIN_WINDOW_WIDTH)
-		{
-			LOGD("[Window Options] {} is smaller than the minimum width {}, resorting to minimum width", width, platform->MIN_WINDOW_WIDTH);
-			width = platform->MIN_WINDOW_WIDTH;
-		}
-		properties.extent.width = width;
+		properties.mode = vkb::Window::Mode::FullscreenBorderless;
+		platform->set_window_properties(properties);
+
+		arguments.pop_front();
+		return true;
 	}
-
-	if (parser.contains(&height_flag))
+	else if (option == "fullscreen")
 	{
-		auto height = parser.as<uint32_t>(&height_flag);
+		properties.mode = vkb::Window::Mode::Fullscreen;
+		platform->set_window_properties(properties);
+
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "headless-surface")
+	{
+		properties.mode = vkb::Window::Mode::Headless;
+		platform->set_window_properties(properties);
+
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "height")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"height\" is missing the actual height!");
+			return false;
+		}
+		uint32_t height = static_cast<uint32_t>(std::stoul(arguments[1]));
 		if (height < platform->MIN_WINDOW_HEIGHT)
 		{
 			LOGD("[Window Options] {} is smaller than the minimum height {}, resorting to minimum height", height, platform->MIN_WINDOW_HEIGHT);
 			height = platform->MIN_WINDOW_HEIGHT;
 		}
 		properties.extent.height = height;
-	}
+		platform->set_window_properties(properties);
 
-	if (parser.contains(&headless_flag))
-	{
-		properties.mode = vkb::Window::Mode::Headless;
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
 	}
-	else if (parser.contains(&fullscreen_flag))
-	{
-		properties.mode = vkb::Window::Mode::Fullscreen;
-	}
-	else if (parser.contains(&borderless_flag))
-	{
-		properties.mode = vkb::Window::Mode::FullscreenBorderless;
-	}
-	else if (parser.contains(&stretch_flag))
+	else if (option == "stretch")
 	{
 		properties.mode = vkb::Window::Mode::FullscreenStretch;
-	}
+		platform->set_window_properties(properties);
 
-	if (parser.contains(&vsync_flag))
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "vsync")
 	{
-		std::string value = parser.as<std::string>(&vsync_flag);
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"vsync\" is missing the actual setting!");
+			return false;
+		}
+		std::string value = arguments[1];
 		std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 		if (value == "on")
 		{
@@ -91,8 +115,32 @@ void WindowOptions::init(const vkb::CommandParser &parser)
 		{
 			properties.vsync = vkb::Window::Vsync::OFF;
 		}
-	}
+		platform->set_window_properties(properties);
 
-	platform->set_window_properties(properties);
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "width")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"width\" is missing the actual width!");
+			return false;
+		}
+		uint32_t width = static_cast<uint32_t>(std::stoul(arguments[1]));
+		if (width < platform->MIN_WINDOW_WIDTH)
+		{
+			LOGD("[Window Options] {} is smaller than the minimum width {}, resorting to minimum width", width, platform->MIN_WINDOW_WIDTH);
+			width = platform->MIN_WINDOW_WIDTH;
+		}
+		properties.extent.width = width;
+		platform->set_window_properties(properties);
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 }        // namespace plugins

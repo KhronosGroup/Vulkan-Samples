@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,43 +46,25 @@ class BatchMode : public BatchModeTags
 
 	virtual ~BatchMode() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
+	void on_update(float delta_time) override;
+	void on_app_error(const std::string &app_id) override;
 
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	virtual void on_update(float delta_time) override;
-
-	virtual void on_app_error(const std::string &app_id) override;
-
-	// TODO: Could this be replaced by the stop after plugin?
-	vkb::FlagCommand duration_flag{vkb::FlagType::OneValue, "duration", "", "The duration which a configuration should run for in seconds"};
-
-	vkb::FlagCommand wrap_flag{vkb::FlagType::FlagOnly, "wrap-to-start", "", "Once all configurations have run wrap to the start"};
-
-	vkb::FlagCommand tags_flag{vkb::FlagType::ManyValues, "tag", "T", "Filter samples by tags"};
-
-	vkb::FlagCommand categories_flag{vkb::FlagType::ManyValues, "category", "C", "Filter samples by categories"};
-
-	vkb::FlagCommand skip_flag{vkb::FlagType::ManyValues, "skip", "", "Skip a sample by id"};
-
-	vkb::SubCommand batch_cmd{"batch", "Enable batch mode", {&duration_flag, &wrap_flag, &tags_flag, &categories_flag, &skip_flag}};
+	bool handle_command(std::deque<std::string> &arguments) const override;
+	bool handle_option(std::deque<std::string> &arguments) override;
+	void trigger_command() override;
 
   private:
-	/// The list of suitable samples to be run in conjunction with batch mode
-	std::vector<apps::AppInfo *> sample_list{};
-
-	/// An iterator to the current batch mode sample info object
-	std::vector<apps::AppInfo *>::const_iterator sample_iter;
-
-	/// The amount of time run per configuration for each sample
-	std::chrono::duration<float, vkb::Timer::Seconds> sample_run_time_per_configuration{3s};
-
-	float elapsed_time{0.0f};
-
-	bool wrap_to_start = false;
-
 	void request_app();
-
 	void load_next_app();
+
+  private:
+	std::vector<std::string>                          categories;
+	std::chrono::duration<float, vkb::Timer::Seconds> duration     = 3s;
+	float                                             elapsed_time = 0.0f;
+	std::set<std::string>                             skips;
+	std::vector<apps::AppInfo *>::const_iterator      sample_iter;        // An iterator to the current batch mode sample info object
+	std::vector<apps::AppInfo *>                      sample_list;        // The list of suitable samples to be run in conjunction with batch mode
+	std::vector<std::string>                          tags;
+	bool                                              wrap_to_start = false;
 };
 }        // namespace plugins

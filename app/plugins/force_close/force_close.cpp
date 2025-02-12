@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,16 +25,21 @@ namespace plugins
 ForceClose::ForceClose() :
     ForceCloseTags("Force Close",
                    "Force the application to close if it has been halted before exiting",
-                   {}, {&stop_cmd})
+                   {},
+                   {},
+                   {{"force-close", "Force the close of the application if halted before exiting"}})
 {
 }
 
-bool ForceClose::is_active(const vkb::CommandParser &parser)
+bool ForceClose::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&stop_cmd);
-}
-
-void ForceClose::init(const vkb::CommandParser &parser)
-{
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "force-close")
+	{
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 }        // namespace plugins

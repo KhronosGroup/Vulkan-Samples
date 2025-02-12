@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,18 +23,30 @@ namespace plugins
 StopAfter::StopAfter() :
     StopAfterTags("Stop After X",
                   "A collection of flags to stop the running application after a set period.",
-                  {vkb::Hook::OnUpdate}, {&stop_after_frame_flag})
+                  {vkb::Hook::OnUpdate},
+                  {},
+                  {{"stop-after-frame", "Stop the application after a certain number of frames"}})
 {
 }
 
-bool StopAfter::is_active(const vkb::CommandParser &parser)
+bool StopAfter::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&stop_after_frame_flag);
-}
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "stop-after-frame")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"stop-after-frame\" is missing the actual frame index to stop after!");
+			return false;
+		}
+		remaining_frames = static_cast<uint32_t>(std::stoul(arguments[1]));
 
-void StopAfter::init(const vkb::CommandParser &parser)
-{
-	remaining_frames = parser.as<uint32_t>(&stop_after_frame_flag);
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 
 void StopAfter::on_update(float delta_time)

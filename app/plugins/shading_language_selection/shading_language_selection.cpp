@@ -1,4 +1,5 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,21 +27,26 @@ namespace plugins
 ShadingLanguageSelection::ShadingLanguageSelection() :
     ShadingLanguageSelectionTags("Shading language selection",
                                  "A collection of flags to select shader from different shading languages (glsl, hlsl)",
-                                 {}, {&shading_language_selection_options_group})
+                                 {},
+                                 {},
+                                 {{"shading-language", "Shading language to use (glsl or hlsl)"}})
 {
 }
 
-bool ShadingLanguageSelection::is_active(const vkb::CommandParser &parser)
+bool ShadingLanguageSelection::handle_option(std::deque<std::string> &arguments)
 {
-	return true;
-}
-
-void ShadingLanguageSelection::init(const vkb::CommandParser &parser)
-{
-	if (parser.contains(&selected_shading_language))
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "shading-language")
 	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"shading-language\" is missing the actual shading language to use!");
+			return false;
+		}
+
 		// Make sure it's one of the supported shading languages
-		std::string shading_language = parser.as<std::string>(&selected_shading_language);
+		std::string shading_language = arguments[1];
 		std::transform(shading_language.begin(), shading_language.end(), shading_language.begin(), ::tolower);
 		if (shading_language == "glsl")
 		{
@@ -56,6 +62,11 @@ void ShadingLanguageSelection::init(const vkb::CommandParser &parser)
 		{
 			LOGE("Invalid shading language selection, defaulting to glsl");
 		}
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
 	}
+	return false;
 }
 }        // namespace plugins

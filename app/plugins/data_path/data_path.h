@@ -1,4 +1,5 @@
-/* Copyright (c) 2022, Arm Limited and Contributors
+/* Copyright (c) 2022-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +19,7 @@
 #pragma once
 
 #include "platform/plugins/plugin_base.h"
+
 namespace plugins
 {
 using DataPathTags = vkb::PluginBase<vkb::tags::Passive>;
@@ -37,10 +39,6 @@ class DataPath : public DataPathTags
 
 	virtual ~DataPath() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	vkb::FlagCommand data_path_flag = {vkb::FlagType::OneValue, "data-path", "", "Folder containing data files"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 };
 }        // namespace plugins

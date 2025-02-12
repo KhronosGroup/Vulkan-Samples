@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,26 +23,32 @@
 namespace plugins
 {
 StartTest::StartTest() :
-    StartTestTags("Tests",
-                  "A collection of flags to run tests.",
-                  {}, {&test_subcmd})
+    StartTestTags("Tests", "A collection of flags to run tests.", {}, {{"test", "Run a specific test"}})
 {
 }
 
-bool StartTest::is_active(const vkb::CommandParser &parser)
+bool StartTest::handle_command(std::deque<std::string> &arguments) const
 {
-	return parser.contains(&test_cmd);
-}
-
-void StartTest::init(const vkb::CommandParser &parser)
-{
-	if (parser.contains(&test_cmd))
+	assert(!arguments.empty());
+	if (arguments[0] == "test")
 	{
-		auto test = apps::get_app(parser.as<std::string>(&test_cmd));
-		if (test != nullptr)
+		if (arguments.size() < 2)
 		{
-			platform->request_application(test);
+			LOGE("Command \"test\" is missing the actual test_id to launch!");
+			return false;
 		}
+		auto *test = apps::get_app(arguments[1]);
+		if (!test)
+		{
+			LOGE("Command \"test\" is called with an unknown test_id \"{}\"!", arguments[1]);
+			return false;
+		}
+		platform->request_application(test);
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
 	}
+	return false;
 }
 }        // namespace plugins

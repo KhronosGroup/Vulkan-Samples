@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,12 +39,6 @@ class GpuSelection : public GpuSelectionTags
 
 	virtual ~GpuSelection() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &options) override;
-
-	vkb::FlagCommand selected_gpu_index = {vkb::FlagType::OneValue, "gpu", "", "Zero-based index of the GPU that the sample should use"};
-
-	vkb::CommandGroup gpu_selection_options_group = {"GPU selection Options", {&selected_gpu_index}};
+	bool handle_option(std::deque<std::string> &arguments) override;
 };
 }        // namespace plugins

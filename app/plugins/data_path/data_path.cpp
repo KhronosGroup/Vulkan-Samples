@@ -1,4 +1,5 @@
-/* Copyright (c) 2022-2024, Arm Limited and Contributors
+/* Copyright (c) 2022-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,22 +25,32 @@ namespace plugins
 DataPath::DataPath() :
     DataPathTags("Data Path Override",
                  "Specify the folder containing the sample data folders.",
-                 {vkb::Hook::OnAppStart}, {&data_path_flag})
+                 {vkb::Hook::OnAppStart},
+                 {},
+                 {{"data-path", "Folder containing data files"}})
 {
 }
 
-bool DataPath::is_active(const vkb::CommandParser &parser)
+bool DataPath::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&data_path_flag);
-}
-
-void DataPath::init(const vkb::CommandParser &parser)
-{
-	if (parser.contains(&data_path_flag))
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "data-path")
 	{
-		auto fs = vkb::filesystem::get();
-		fs->set_external_storage_directory(parser.as<std::string>(&data_path_flag) + "/");
-	}
-}
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"data-path\" is missing the actual data path!");
+			return false;
+		}
+		std::string data_path = arguments[1];
 
+		auto fs = vkb::filesystem::get();
+		fs->set_external_storage_directory(data_path + "/");
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	return false;
+}
 }        // namespace plugins

@@ -1,4 +1,5 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,12 +39,6 @@ class ShadingLanguageSelection : public ShadingLanguageSelectionTags
 
 	virtual ~ShadingLanguageSelection() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &options) override;
-
-	vkb::FlagCommand selected_shading_language = {vkb::FlagType::OneValue, "shading-language", "", "Shading language to use (glsl or hlsl)"};
-
-	vkb::CommandGroup shading_language_selection_options_group = {"Shading langauge selection Options", {&selected_shading_language}};
+	bool handle_option(std::deque<std::string> &arguments) override;
 };
 }        // namespace plugins

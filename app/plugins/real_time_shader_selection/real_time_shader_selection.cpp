@@ -1,4 +1,5 @@
-/* Copyright (c) 2024, Mobica Limited
+/* Copyright (c) 2024-2025, Mobica Limited
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,19 +26,23 @@ RealTimeShaderSelection::RealTimeShaderSelection() :
     RealTimeShaderSelectionTags("Real Time Shader Selection",
                                 "Enable dynamic shader selection for samples.",
                                 {vkb::Hook::OnAppStart, vkb::Hook::OnUpdateUi},
-                                {&realtimeshaderselection_flag}),
+                                {},
+                                {{"realtimeshaderselection", "Enable dynamic shader selection"}}),
     active_shader(0),
     min_size_for_shaders(2)
 {
 }
 
-bool RealTimeShaderSelection::is_active(const vkb::CommandParser &parser)
+bool RealTimeShaderSelection::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&realtimeshaderselection_flag);
-}
-
-void RealTimeShaderSelection::init(const vkb::CommandParser &parser)
-{
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "realtimeshaderselection")
+	{
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 
 void RealTimeShaderSelection::on_app_start(const std::string &app_info)

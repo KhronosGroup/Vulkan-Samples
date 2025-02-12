@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,18 +42,11 @@ class Screenshot : public ScreenshotTags
 
 	virtual ~Screenshot() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
+	void on_update(float delta_time) override;
+	void on_app_start(const std::string &app_info) override;
+	void on_post_draw(vkb::RenderContext &context) override;
 
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	virtual void on_update(float delta_time) override;
-
-	virtual void on_app_start(const std::string &app_info) override;
-
-	virtual void on_post_draw(vkb::RenderContext &context) override;
-
-	vkb::FlagCommand screenshot_flag        = {vkb::FlagType::OneValue, "screenshot", "", "Take a screenshot at a given frame"};
-	vkb::FlagCommand screenshot_output_flag = {vkb::FlagType::OneValue, "screenshot-output", "", "Declare an output name for the image"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 
   private:
 	uint32_t    current_frame = 0;

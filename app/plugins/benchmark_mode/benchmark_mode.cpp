@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,21 +26,26 @@ BenchmarkMode::BenchmarkMode() :
     BenchmarkModeTags("Benchmark Mode",
                       "Log frame averages after running an app.",
                       {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart, vkb::Hook::OnAppClose},
-                      {&benchmark_flag})
+                      {},
+                      {{"benchmark", "Enable benchmark mode"}})
 {
 }
 
-bool BenchmarkMode::is_active(const vkb::CommandParser &parser)
+bool BenchmarkMode::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&benchmark_flag);
-}
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "benchmark")
+	{
+		// Whilst in benchmark mode fix the fps so that separate runs are consistently simulated
+		// This will effect the graph outputs of framerate
+		platform->force_simulation_fps(60.0f);
+		platform->force_render(true);
 
-void BenchmarkMode::init(const vkb::CommandParser &parser)
-{
-	// Whilst in benchmark mode fix the fps so that separate runs are consistently simulated
-	// This will effect the graph outputs of framerate
-	platform->force_simulation_fps(60.0f);
-	platform->force_render(true);
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 
 void BenchmarkMode::on_update(float delta_time)

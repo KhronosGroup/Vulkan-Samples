@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,21 +28,24 @@ namespace plugins
 UserInterfaceOptions::UserInterfaceOptions() :
     UserInterfaceOptionsTags("User interface options",
                              "A collection of flags to configure the user interface",
-                             {}, {&user_interface_options_group})
+                             {},
+                             {},
+                             {{"hideui", "If flag is set, hides the user interface at startup"}})
 {
 }
 
-bool UserInterfaceOptions::is_active(const vkb::CommandParser &parser)
+bool UserInterfaceOptions::handle_option(std::deque<std::string> &arguments)
 {
-	return true;
-}
-
-void UserInterfaceOptions::init(const vkb::CommandParser &parser)
-{
-	if (parser.contains(&hide_ui_flag))
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "hideui")
 	{
 		vkb::Gui::visible    = false;
 		vkb::HPPGui::visible = false;
+
+		arguments.pop_front();
+		return true;
 	}
+	return false;
 }
 }        // namespace plugins
