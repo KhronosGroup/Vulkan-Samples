@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -202,13 +202,6 @@ class VulkanSample : public vkb::Application
 	virtual void draw_renderpass(CommandBufferType &command_buffer, RenderTargetType &render_target);
 
 	/**
-	 * @brief Get additional sample-specific instance layers.
-	 *
-	 * @return Vector of additional instance layers. Default is empty vector.
-	 */
-	virtual const std::vector<const char *> get_validation_layers();
-
-	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
 	 */
 	virtual void prepare_render_context();
@@ -252,6 +245,13 @@ class VulkanSample : public vkb::Application
 	 * @param optional (Optional) Whether the extension is optional
 	 */
 	void add_instance_extension(const char *extension, bool optional = false);
+
+	/**
+	 * @brief Add a sample-specific instance layer
+	 * @param layer The layer name
+	 * @param optional (Optional) Whether the extension is optional
+	 */
+	void add_instance_layer(const char *layer, bool optional = false);
 
 	/**
 	 * @brief Add a sample-specific layer setting
@@ -368,6 +368,13 @@ class VulkanSample : public vkb::Application
 	std::unordered_map<const char *, bool> const &get_instance_extensions() const;
 
 	/**
+	 * @brief Get sample-specific instance layers.
+	 *
+	 * @return Map of instance layers and whether or not they are optional. Default is empty map.
+	 */
+	std::unordered_map<const char *, bool> const &get_instance_layers() const;
+
+	/**
 	 * @brief Get sample-specific layer settings.
 	 *
 	 * @return Vector of layer settings. Default is empty vector.
@@ -431,6 +438,9 @@ class VulkanSample : public vkb::Application
 
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
+
+	/** @brief Set of instance layers to be enabled for this example and whether they are optional (must be set in the derived constructor) */
+	std::unordered_map<const char *, bool> instance_layers;
 
 	/** @brief Vector of layer settings to be enabled for this example (must be set in the derived constructor) */
 	std::vector<vk::LayerSettingEXT> layer_settings;
@@ -510,7 +520,7 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance()
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_instance_layers(), get_layer_settings(), api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -797,6 +807,18 @@ inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::
 }
 
 template <vkb::BindingType bindingType>
+inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::get_instance_layers() const
+{
+	return instance_layers;
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_instance_layer(const char *layer, bool optional)
+{
+	instance_layers[layer] = optional;
+}
+
+template <vkb::BindingType bindingType>
 inline std::vector<typename VulkanSample<bindingType>::LayerSettingType> const &VulkanSample<bindingType>::get_layer_settings() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -903,12 +925,6 @@ inline typename VulkanSample<bindingType>::SurfaceType VulkanSample<bindingType>
 	{
 		return static_cast<VkSurfaceKHR>(surface);
 	}
-}
-
-template <vkb::BindingType bindingType>
-inline const std::vector<const char *> VulkanSample<bindingType>::get_validation_layers()
-{
-	return {};
 }
 
 template <vkb::BindingType bindingType>
