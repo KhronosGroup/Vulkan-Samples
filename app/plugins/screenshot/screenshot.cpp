@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,27 +29,43 @@ Screenshot::Screenshot() :
     ScreenshotTags("Screenshot",
                    "Save a screenshot of a specific frame",
                    {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart, vkb::Hook::PostDraw},
-                   {&screenshot_flag, &screenshot_output_flag})
+                   {},
+                   {{"screenshot", "Take a screenshot at a given frame"}, {"screenshot-output", "Declare an output name for the image"}})
 {
 }
 
-bool Screenshot::is_active(const vkb::CommandParser &parser)
+bool Screenshot::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&screenshot_flag);
-}
-
-void Screenshot::init(const vkb::CommandParser &parser)
-{
-	if (parser.contains(&screenshot_flag))
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "screenshot")
 	{
-		frame_number = parser.as<uint32_t>(&screenshot_flag);
-
-		if (parser.contains(&screenshot_output_flag))
+		if (arguments.size() < 2)
 		{
-			output_path     = parser.as<std::string>(&screenshot_output_flag);
-			output_path_set = true;
+			LOGE("Option \"screenshot\" is missing the frame index to take a screenshot!");
+			return false;
 		}
+		frame_number = static_cast<uint32_t>(std::stoul(arguments[1]));
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
 	}
+	else if (option == "screenshot-output")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"screenshot-output\" is missing the filename to store the screenshot!");
+			return false;
+		}
+		output_path     = arguments[1];
+		output_path_set = true;
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 
 void Screenshot::on_update(float delta_time)
