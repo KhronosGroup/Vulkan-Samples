@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,22 +28,32 @@ namespace plugins
 GpuSelection::GpuSelection() :
     GpuSelectionTags("GPU selection",
                      "A collection of flags to select the GPU to run the samples on",
-                     {}, {&gpu_selection_options_group})
+                     {},
+                     {},
+                     {{"gpu", "Zero-based index of the GPU that the sample should use"}})
 {
 }
 
-bool GpuSelection::is_active(const vkb::CommandParser &parser)
+bool GpuSelection::handle_option(std::deque<std::string> &arguments)
 {
-	return true;
-}
-
-void GpuSelection::init(const vkb::CommandParser &parser)
-{
-	// @todo: required?
-	if (parser.contains(&selected_gpu_index))
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "gpu")
 	{
-		vkb::Instance::selected_gpu_index          = parser.as<uint32_t>(&selected_gpu_index);
-		vkb::core::HPPInstance::selected_gpu_index = parser.as<uint32_t>(&selected_gpu_index);
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"gpu\" is missing the actual gpu index!");
+			return false;
+		}
+		uint32_t gpu_index = static_cast<uint32_t>(std::stoul(arguments[1]));
+
+		vkb::Instance::selected_gpu_index          = gpu_index;
+		vkb::core::HPPInstance::selected_gpu_index = gpu_index;
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
 	}
+	return false;
 }
 }        // namespace plugins

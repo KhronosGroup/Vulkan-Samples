@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,11 +28,11 @@ using WindowOptionsTags = vkb::PluginBase<WindowOptions, vkb::tags::Passive>;
 
 /**
  * @brief Window Options
- * 
+ *
  * Configure the window used when running Vulkan Samples.
- * 
+ *
  * Usage: vulkan_samples sample instancing --width 500 --height 500 --vsync OFF
- * 
+ *
  */
 class WindowOptions : public WindowOptionsTags
 {
@@ -40,18 +41,6 @@ class WindowOptions : public WindowOptionsTags
 
 	virtual ~WindowOptions() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &options) override;
-
-	vkb::FlagCommand width_flag      = {vkb::FlagType::OneValue, "width", "", "Initial window width"};
-	vkb::FlagCommand height_flag     = {vkb::FlagType::OneValue, "height", "", "Initial window height"};
-	vkb::FlagCommand fullscreen_flag = {vkb::FlagType::FlagOnly, "fullscreen", "", "Run in fullscreen mode"};
-	vkb::FlagCommand headless_flag   = {vkb::FlagType::FlagOnly, "headless_surface", "", "Run in headless surface mode. A Surface and swap-chain is still created using VK_EXT_headless_surface."};
-	vkb::FlagCommand borderless_flag = {vkb::FlagType::FlagOnly, "borderless", "", "Run in borderless mode"};
-	vkb::FlagCommand stretch_flag    = {vkb::FlagType::FlagOnly, "stretch", "", "Stretch window to fullscreen (direct-to-display only)"};
-	vkb::FlagCommand vsync_flag      = {vkb::FlagType::OneValue, "vsync", "", "Force vsync {ON | OFF}. If not set samples decide how vsync is set"};
-
-	vkb::CommandGroup window_options_group = {"Window Options", {&width_flag, &height_flag, &vsync_flag, &fullscreen_flag, &borderless_flag, &stretch_flag, &headless_flag}};
+	bool handle_option(std::deque<std::string> &arguments) override;
 };
 }        // namespace plugins

@@ -1,4 +1,5 @@
-# Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -319,7 +320,6 @@ set(PLATFORM_FILES
     platform/window.h
     platform/input_events.h
     platform/configuration.h
-    platform/parser.h
     platform/headless_window.h
     platform/plugins/plugin.h
     platform/plugins/plugin_base.h
@@ -331,7 +331,6 @@ set(PLATFORM_FILES
     platform/window.cpp
     platform/input_events.cpp
     platform/configuration.cpp
-    platform/parser.cpp
     platform/plugins/plugin.cpp)
 
 set(GLFW_FILES
@@ -339,15 +338,6 @@ set(GLFW_FILES
     platform/glfw_window.h
     # Source Files
     platform/glfw_window.cpp
-)
-
-set(PARSER_FILES
-    # Header Files
-    platform/parsers/CLI11.h
-    platform/parsers/help_formatter.h
-    # Source Files
-    platform/parsers/CLI11.cpp
-    platform/parsers/help_formatter.cpp
 )
 
 set(ANDROID_FILES
@@ -392,7 +382,6 @@ source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("platform\\" FILES ${GLFW_FILES})
-source_group("platform\\parsers" FILES ${PARSER_FILES})
 source_group("platform\\windows" FILES ${WINDOWS_FILES})
 source_group("platform\\android" FILES ${ANDROID_FILES})
 source_group("platform\\ios" FILES ${IOS_FILES})
@@ -409,7 +398,6 @@ source_group("stats\\" FILES ${STATS_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
-    ${PARSER_FILES}
     ${COMMON_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
@@ -532,7 +520,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     glslang-default-resource-limits
     spdlog
     ctpl
-    CLI11::CLI11
     plugins)
 
 if(${NEED_LINK_ATOMIC})

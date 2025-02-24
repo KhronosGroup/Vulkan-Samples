@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,19 +21,20 @@
 namespace plugins
 {
 FpsLogger::FpsLogger() :
-    FpsLoggerTags("FPS Logger",
-                  "Enable FPS logging.",
-                  {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart}, {&fps_flag})
+    FpsLoggerTags("FPS Logger", "Enable FPS logging.", {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart}, {}, {{"log-fps", "Log FPS"}})
 {
 }
 
-bool FpsLogger::is_active(const vkb::CommandParser &parser)
+bool FpsLogger::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&fps_flag);
-}
-
-void FpsLogger::init(const vkb::CommandParser &parser)
-{
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "log-fps")
+	{
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 
 void FpsLogger::on_update(float delta_time)
