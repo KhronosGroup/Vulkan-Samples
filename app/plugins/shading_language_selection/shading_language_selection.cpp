@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,7 +49,7 @@ void ShadingLanguageSelection::init(const vkb::CommandParser &parser)
 		}
 		else if (shading_language == "hlsl")
 		{
-			LOGI("Shading langauge selection: HLSL")
+			LOGI("Shading language selection: HLSL")
 			vkb::Application::set_shading_language(vkb::ShadingLanguage::HLSL);
 		}
 		else
