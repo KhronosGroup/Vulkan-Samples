@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2024, Sascha Willems
+- Copyright (c) 2021-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -35,7 +35,7 @@ Version 2.0 added support for Basis Universal supercompressed textures.
 == Basis Universal
 
 https://github.com/BinomialLLC/basis_universal[Basis Universal] is a supercompressed GPU texture data interchange system that implements the UASTC and ETC1S compressed formats that serve as *transmission formats*.
-Both can be quickly transcoded to a wide variety of GPU native compressed and uncompressed formats like RGB/RGBA, PVRTC1, BCn, ETC1, ETC2, etc.
+Both can be quickly transcoded to a wide variety of GPU native compressed and uncompressed formats like RGB/RGBA, BCn, ETC1, ETC2, etc.
 This means that unlike a KTX 2.0 file storing a BC3 textures, the data needs to be transcoded at runtime.
 
 image::./images/2021-ktx-universal-gpu-compressed-textures.png[KTX and BasisU]
@@ -115,12 +115,6 @@ void TextureCompressionBasisu::get_available_target_formats()
 
 	// Ericsson texture compression
 	if (device_features.textureCompressionETC2)
-	{
-        ...
-    }
-
-	// PowerVR texture compression support needs to be checked via an extension
-	if (get_device().is_extension_supported(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME))
 	{
         ...
     }
