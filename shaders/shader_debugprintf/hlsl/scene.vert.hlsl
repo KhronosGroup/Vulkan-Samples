@@ -75,7 +75,7 @@ VSOutput main(VSInput input)
 
 	// Output the vertex position using debug printf
 	if (input.VertexIndex == 0) {
-        printf("Position = %v4f", output.Pos);
+        printf("Position = %v3f", output.Pos);
     }
 
 	return output;

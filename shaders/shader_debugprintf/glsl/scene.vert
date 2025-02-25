@@ -63,6 +63,6 @@ void main()
 
 	// Output the vertex position using debug printf
 	if (gl_VertexIndex == 0) {
-		debugPrintfEXT("Position = %v4f", outPos);
+		debugPrintfEXT("Position = %v3f", outPos);
 	}
 }

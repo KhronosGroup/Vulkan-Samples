@@ -34,7 +34,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
 	if (strcmp(pCallbackData->pMessageIdName, "VVL-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
 	{
 		// Validation messages are a bit verbose, but we only want the text from the shader, so we cut off everything before the first word from the shader message
-		// See scene.vert: debugPrintfEXT("Position = %v4f", outPos);
+		// See scene.vert: debugPrintfEXT("Position = %v3f", outPos);
 		std::string shader_message{pCallbackData->pMessage};
 		shader_message = shader_message.substr(shader_message.find("Position"));
 		debug_output.append(shader_message + "\n");
@@ -76,16 +76,15 @@ void ShaderDebugPrintf::request_gpu_features(vkb::PhysicalDevice &gpu)
 	auto const &supportedFeatures = gpu.get_features();
 	auto       &requestedFeatures = gpu.get_mutable_requested_features();
 
-	// debugPrintfEXT requires fragmentStoresAndAtomics, vertexPipelineStoresAndAtomics, and shaderInt64
-	if (supportedFeatures.fragmentStoresAndAtomics && supportedFeatures.vertexPipelineStoresAndAtomics && supportedFeatures.shaderInt64)
+	// debugPrintfEXT requires fragmentStoresAndAtomics and vertexPipelineStoresAndAtomics
+	if (supportedFeatures.fragmentStoresAndAtomics && supportedFeatures.vertexPipelineStoresAndAtomics)
 	{
 		requestedFeatures.fragmentStoresAndAtomics       = VK_TRUE;
 		requestedFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
-		requestedFeatures.shaderInt64                    = VK_TRUE;
 	}
 	else
 	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support features fragmentStoresAndAtomics, vertexPipelineStoresAndAtomics, and/or shaderInt64");
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support features fragmentStoresAndAtomics and/or vertexPipelineStoresAndAtomics");
 	}
 
 	// Enable anisotropic filtering if supported
