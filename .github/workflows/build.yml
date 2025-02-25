@@ -15,7 +15,7 @@ jobs:
     name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
     strategy:
       matrix:
-        platform: [windows, ubuntu, macos]
+        platform: [windows, ubuntu]
         build_type: [Debug, Release]
     env:
       PARALLEL: -j 2
@@ -51,6 +51,63 @@ jobs:
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
+        run: |
+          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DGLFW_BUILD_WAYLAND=OFF
+          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+
+  build_v2:
+    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+    strategy:
+      matrix:
+        platform: [windows, ubuntu]
+        build_type: [Release]
+    env:
+      PARALLEL: -j 2
+    runs-on: "${{ matrix.platform }}-latest"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - if: ${{ matrix.platform == 'ubuntu' }}
+        name: Install RandR headers
+        run: |
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
+
+      - name: Configure
+        run: cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DGLFW_BUILD_WAYLAND=OFF
+
+      - name: "Build Components ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: cmake --build "build/${{ matrix.platform }}" --target vkb__components --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+
+      - name: "Build Tests ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: cmake --build "build/${{ matrix.platform }}" --target vkb__tests --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+
+      - name: "Run Tests ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: ctest -C ${{ matrix.build_type }} --test-dir "build/${{ matrix.platform }}" --output-on-failure
+
+  build_macos:
+    needs: build
+    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+    strategy:
+      # masoc is 10x expensive to run on GitHub machines, so only build simplest variations
+      matrix:
+        platform: [macos]
+        # Release builds are about 3 times faster than debug builds
+        build_type: [Release]
+    env:
+      PARALLEL: -j 2
+    runs-on: "${{ matrix.platform }}-latest"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+      - name: Configure and build
         run: |
           cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
@@ -89,11 +146,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: set up JDK 11
-        uses: actions/setup-java@v3
+      - name: set up JDK
+        uses: actions/setup-java@v4
         with:
-          java-version: "11"
-          distribution: "temurin"
+          java-version: "21"
+          distribution: "zulu"
           cache: gradle
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
@@ -108,11 +165,13 @@ jobs:
         run: NDK_CCACHE=1 NDK_CCACHE_BIN=ccache ./gradlew app:assemble${{ matrix.build_type }} --info
 
   build_ios:
+    # iOS is 10x expensive to run on GitHub machines, so only run if we know something else fast/simple passed as well
+    needs: build
     name: "Build ios in ${{ matrix.build_type }}"
     runs-on: macos-latest
     strategy:
       matrix:
-        build_type: [Debug]
+        build_type: [Release]
 
     steps:
       - uses: actions/checkout@v4

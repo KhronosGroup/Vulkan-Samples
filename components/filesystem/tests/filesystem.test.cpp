@@ -21,6 +21,24 @@
 
 using namespace vkb::filesystem;
 
+Path create_test_directory(FileSystemPtr fs, const std::string &test_name)
+{
+	const auto test_dir = fs->temp_directory() / "vulkan_samples_tests" / test_name;
+
+	REQUIRE(fs->create_directory(test_dir));
+	REQUIRE(fs->exists(test_dir));
+	REQUIRE(fs->is_directory(test_dir));
+
+	return test_dir;
+}
+
+void delete_test_directory(FileSystemPtr fs, const Path &test_dir)
+{
+	REQUIRE(fs->exists(test_dir));
+	fs->remove(test_dir);
+	REQUIRE_FALSE(fs->exists(test_dir));
+}
+
 void create_test_file(FileSystemPtr fs, const Path &path, const std::string &data)
 {
 	REQUIRE(fs);
@@ -47,11 +65,13 @@ TEST_CASE("File read and write", "[filesystem]")
 
 	auto fs = vkb::filesystem::get();
 
-	const auto        test_file = fs->temp_directory() / "vulkan_samples" / "test.txt";
+	const auto        test_dir  = create_test_directory(fs, "file_test");
+	const auto        test_file = test_dir / "test.txt";
 	const std::string test_data = "Hello, World!";
 
 	create_test_file(fs, test_file, test_data);
 	delete_test_file(fs, test_file);
+	delete_test_directory(fs, test_dir);
 }
 
 TEST_CASE("Read file chunk", "[filesystem]")
@@ -60,7 +80,8 @@ TEST_CASE("Read file chunk", "[filesystem]")
 
 	auto fs = vkb::filesystem::get();
 
-	const auto        test_file = fs->temp_directory() / "vulkan_samples" / "chunk_test.txt";
+	const auto        test_dir  = create_test_directory(fs, "chunk_test");
+	const auto        test_file = test_dir / "chunk_test.txt";
 	const std::string test_data = "Hello, World!";
 
 	create_test_file(fs, test_file, test_data);
@@ -70,6 +91,7 @@ TEST_CASE("Read file chunk", "[filesystem]")
 	REQUIRE(chunk_str == "Hello");
 
 	delete_test_file(fs, test_file);
+	delete_test_directory(fs, test_dir);
 }
 
 TEST_CASE("Read file chunk out of bounds", "[filesystem]")
@@ -78,7 +100,8 @@ TEST_CASE("Read file chunk out of bounds", "[filesystem]")
 
 	auto fs = vkb::filesystem::get();
 
-	const auto        test_file = fs->temp_directory() / "vulkan_samples" / "chunk_oob_test.txt";
+	const auto        test_dir  = create_test_directory(fs, "chunk_oob");
+	const auto        test_file = test_dir / "chunk_oob_test.txt";
 	const std::string test_data = "Hello, World!";
 
 	create_test_file(fs, test_file, test_data);
@@ -87,6 +110,7 @@ TEST_CASE("Read file chunk out of bounds", "[filesystem]")
 	REQUIRE(chunk.empty());
 
 	delete_test_file(fs, test_file);
+	delete_test_directory(fs, test_dir);
 }
 
 TEST_CASE("Read file chunk with offset", "[filesystem]")
@@ -95,7 +119,8 @@ TEST_CASE("Read file chunk with offset", "[filesystem]")
 
 	auto fs = vkb::filesystem::get();
 
-	const auto        test_file = fs->temp_directory() / "vulkan_samples" / "chunk_offset_test.txt";
+	const auto        test_dir  = create_test_directory(fs, "chunk_offset");
+	const auto        test_file = test_dir / "chunk_offset_test.txt";
 	const std::string test_data = "Hello, World!";
 
 	create_test_file(fs, test_file, test_data);
@@ -105,6 +130,7 @@ TEST_CASE("Read file chunk with offset", "[filesystem]")
 	REQUIRE(chunk_str == "World");
 
 	delete_test_file(fs, test_file);
+	delete_test_directory(fs, test_dir);
 }
 
 TEST_CASE("Read binary file", "[filesystem]")
@@ -113,7 +139,8 @@ TEST_CASE("Read binary file", "[filesystem]")
 
 	auto fs = vkb::filesystem::get();
 
-	const auto        test_file = fs->temp_directory() / "vulkan_samples" / "binary_test.txt";
+	const auto        test_dir  = create_test_directory(fs, "binary_test");
+	const auto        test_file = test_dir / "binary_test.txt";
 	const std::string test_data = "Hello, World!";
 
 	create_test_file(fs, test_file, test_data);
@@ -123,4 +150,43 @@ TEST_CASE("Read binary file", "[filesystem]")
 	REQUIRE(binary_str == test_data);
 
 	delete_test_file(fs, test_file);
+	delete_test_directory(fs, test_dir);
+}
+
+TEST_CASE("Create Directory", "[filesystem]")
+{
+	vkb::filesystem::init();
+
+	auto fs = vkb::filesystem::get();
+
+	const auto test_dir     = create_test_directory(fs, "create_directory_test");
+	const auto test_sub_dir = test_dir / "test_dir";
+
+	REQUIRE(fs->create_directory(test_sub_dir));
+	REQUIRE(fs->exists(test_sub_dir));
+	REQUIRE(fs->is_directory(test_sub_dir));
+
+	std::vector<uint8_t> data = {0, 1, 2, 3, 4, 5};
+	for (uint8_t i : data)
+	{
+		// Create sub directories
+		const auto sub_dir = test_sub_dir / fmt::format("sub_dir_{}", i);
+		REQUIRE(fs->create_directory(sub_dir));
+	}
+
+	// Check in a separate pass to ensure create_directory called multiple times doesn't fail
+	for (uint8_t i : data)
+	{
+		// Check sub directories
+		const auto sub_dir = test_sub_dir / fmt::format("sub_dir_{}", i);
+		REQUIRE(fs->exists(sub_dir));
+		REQUIRE(fs->is_directory(sub_dir));
+	}
+
+	// Remove both the directory and its parent
+	fs->remove(test_sub_dir);
+
+	REQUIRE_FALSE(fs->exists(test_sub_dir));
+
+	delete_test_directory(fs, test_dir);
 }

@@ -103,90 +103,70 @@ bool validate_layers(const std::vector<const char *>        &required,
 
 namespace core
 {
-std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers)
-{
-	std::vector<std::vector<const char *>> validation_layer_priority_list =
-	    {
-	        // The preferred validation layer is "VK_LAYER_KHRONOS_validation"
-	        {"VK_LAYER_KHRONOS_validation"},
-
-	        // Otherwise we fallback to using the LunarG meta layer
-	        {"VK_LAYER_LUNARG_standard_validation"},
-
-	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
-	        {
-	            "VK_LAYER_GOOGLE_threading",
-	            "VK_LAYER_LUNARG_parameter_validation",
-	            "VK_LAYER_LUNARG_object_tracker",
-	            "VK_LAYER_LUNARG_core_validation",
-	            "VK_LAYER_GOOGLE_unique_objects",
-	        },
-
-	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
-	        {"VK_LAYER_LUNARG_core_validation"}};
-
-	for (auto &validation_layers : validation_layer_priority_list)
-	{
-		if (validate_layers(validation_layers, supported_instance_layers))
-		{
-			return validation_layers;
-		}
-
-		LOGW("Couldn't enable validation layers (see log for error) - falling back");
-	}
-
-	// Else return nothing
-	return {};
-}
-
 Optional<uint32_t> HPPInstance::selected_gpu_index;
 
 namespace
 {
-bool enable_extension(const char                                 *required_ext_name,
-                      const std::vector<vk::ExtensionProperties> &available_exts,
+bool enable_extension(const char                                 *requested_extension,
+                      const std::vector<vk::ExtensionProperties> &available_extensions,
                       std::vector<const char *>                  &enabled_extensions)
 {
-	for (auto &avail_ext_it : available_exts)
+	bool is_available =
+	    std::any_of(available_extensions.begin(),
+	                available_extensions.end(),
+	                [&requested_extension](auto const &available_extension) { return strcmp(requested_extension, available_extension.extensionName) == 0; });
+	if (is_available)
 	{
-		if (strcmp(avail_ext_it.extensionName, required_ext_name) == 0)
+		bool is_already_enabled =
+		    std::any_of(enabled_extensions.begin(),
+		                enabled_extensions.end(),
+		                [&requested_extension](auto const &enabled_extension) { return strcmp(requested_extension, enabled_extension) == 0; });
+		if (!is_already_enabled)
 		{
-			auto it = std::find_if(enabled_extensions.begin(), enabled_extensions.end(),
-			                       [required_ext_name](const char *enabled_ext_name) {
-				                       return strcmp(enabled_ext_name, required_ext_name) == 0;
-			                       });
-			if (it != enabled_extensions.end())
-			{
-				// Extension is already enabled
-			}
-			else
-			{
-				LOGI("Extension {} found, enabling it", required_ext_name);
-				enabled_extensions.emplace_back(required_ext_name);
-			}
-			return true;
+			LOGI("Extension {} available, enabling it", requested_extension);
+			enabled_extensions.emplace_back(requested_extension);
 		}
 	}
+	else
+	{
+		LOGI("Extension {} not available", requested_extension);
+	}
 
-	LOGI("Extension {} not found", required_ext_name);
-	return false;
+	return is_available;
 }
 
-bool enable_all_extensions(const std::vector<const char *>             required_ext_names,
-                           const std::vector<vk::ExtensionProperties> &available_exts,
-                           std::vector<const char *>                  &enabled_extensions)
+bool enable_layer(const char                             *requested_layer,
+                  const std::vector<vk::LayerProperties> &available_layers,
+                  std::vector<const char *>              &enabled_layers)
 {
-	using std::placeholders::_1;
+	bool is_available =
+	    std::any_of(available_layers.begin(),
+	                available_layers.end(),
+	                [&requested_layer](auto const &available_layer) { return strcmp(requested_layer, available_layer.layerName) == 0; });
+	if (is_available)
+	{
+		bool is_already_enabled =
+		    std::any_of(enabled_layers.begin(),
+		                enabled_layers.end(),
+		                [&requested_layer](auto const &enabled_layer) { return strcmp(requested_layer, enabled_layer) == 0; });
+		if (!is_already_enabled)
+		{
+			LOGI("Layer {} available, enabling it", requested_layer);
+			enabled_layers.emplace_back(requested_layer);
+		}
+	}
+	else
+	{
+		LOGI("Layer {} not available", requested_layer);
+	}
 
-	return std::all_of(required_ext_names.begin(), required_ext_names.end(),
-	                   std::bind(enable_extension, _1, available_exts, enabled_extensions));
+	return is_available;
 }
-
 }        // namespace
 
 HPPInstance::HPPInstance(const std::string                            &application_name,
-                         const std::unordered_map<const char *, bool> &required_extensions,
-                         const std::vector<const char *>              &required_validation_layers,
+                         const std::unordered_map<const char *, bool> &requested_extensions,
+                         const std::unordered_map<const char *, bool> &requested_layers,
                          const std::vector<vk::LayerSettingEXT>       &required_layer_settings,
                          uint32_t                                      api_version)
 {
@@ -194,18 +174,15 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 #ifdef USE_VALIDATION_LAYERS
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
-	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-	                                               available_instance_extensions, enabled_extensions);
+	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 	bool       has_debug_report = false;
 
 	if (!has_debug_utils)
 	{
-		has_debug_report = enable_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-		                                    available_instance_extensions, enabled_extensions);
+		has_debug_report = enable_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 		if (!has_debug_report)
 		{
-			LOGW("Neither of {} or {} are available; disabling debug reporting",
-			     VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			LOGW("Neither of {} or {} are available; disabling debug reporting", VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		}
 	}
 #endif
@@ -220,34 +197,24 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	{
 		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(std::string("VK_LAYER_KHRONOS_validation"));
 
-		for (auto &available_extension : available_layer_instance_extensions)
-		{
-			if (strcmp(available_extension.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0)
-			{
-				validation_features = true;
-				LOGI("{} is available, enabling it", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
-				enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
-			}
-		}
+		enable_extension(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME, available_layer_instance_extensions, enabled_extensions);
 	}
 #endif
 
 	// Specific surface extensions are obtained from  Window::get_required_surface_extensions
-	// They are already added to required_extensions by VulkanSample::prepare
+	// They are already added to requested_extensions by VulkanSample::prepare
 
-	// If using VK_EXT_headless_surface, we still create and use a surface
-	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+	// Even for a headless surface a swapchain is still required
+	enable_extension(VK_KHR_SURFACE_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
 	// which will be used for stats gathering where available.
-	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-	                 available_instance_extensions, enabled_extensions);
+	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 
-	auto extension_error = false;
-	for (auto extension : required_extensions)
+	for (auto requested_extension : requested_extensions)
 	{
-		auto extension_name        = extension.first;
-		auto extension_is_optional = extension.second;
+		auto const &extension_name        = requested_extension.first;
+		auto        extension_is_optional = requested_extension.second;
 		if (!enable_extension(extension_name, available_instance_extensions, enabled_extensions))
 		{
 			if (extension_is_optional)
@@ -257,43 +224,43 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 			else
 			{
 				LOGE("Required instance extension {} not available, cannot run", extension_name);
-				extension_error = true;
+				throw std::runtime_error("Required instance extensions are missing.");
 			}
-			extension_error = extension_error || !extension_is_optional;
 		}
 	}
 
-	if (extension_error)
+	std::vector<vk::LayerProperties> supported_layers = vk::enumerateInstanceLayerProperties();
+
+	std::vector<const char *> enabled_layers;
+
+	auto layer_error = false;
+	for (auto const &requested_layer : requested_layers)
 	{
-		throw std::runtime_error("Required instance extensions are missing.");
+		auto const &layer_name        = requested_layer.first;
+		auto        layer_is_optional = requested_layer.second;
+		if (!enable_layer(layer_name, supported_layers, enabled_layers))
+		{
+			if (layer_is_optional)
+			{
+				LOGW("Optional layer {} not available, some features may be disabled", layer_name);
+			}
+			else
+			{
+				LOGE("Required layer {} not available, cannot run", layer_name);
+				throw std::runtime_error("Required layers are missing.");
+			}
+		}
 	}
-
-	std::vector<vk::LayerProperties> supported_validation_layers = vk::enumerateInstanceLayerProperties();
-
-	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
 #ifdef USE_VALIDATION_LAYERS
-	// Determine the optimal validation layers to enable that are necessary for useful debugging
-	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
-	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
+	// NOTE: It's important to have the validation layer as the last one here!!!!
+	//			 Otherwise, device creation fails !?!
+	enable_layer("VK_LAYER_KHRONOS_validation", supported_layers, enabled_layers);
 #endif
-
-	if (validate_layers(requested_validation_layers, supported_validation_layers))
-	{
-		LOGI("Enabled Validation Layers:")
-		for (const auto &layer : requested_validation_layers)
-		{
-			LOGI("	\t{}", layer);
-		}
-	}
-	else
-	{
-		throw std::runtime_error("Required validation layers are missing.");
-	}
 
 	vk::ApplicationInfo app_info(application_name.c_str(), 0, "Vulkan Samples", 0, api_version);
 
-	vk::InstanceCreateInfo instance_info({}, &app_info, requested_validation_layers, enabled_extensions);
+	vk::InstanceCreateInfo instance_info({}, &app_info, enabled_layers, enabled_extensions);
 
 #ifdef USE_VALIDATION_LAYERS
 	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
@@ -450,7 +417,7 @@ vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surfa
 		}
 		return *gpus[selected_gpu_index.value()];
 	}
-	if ( headless_surface )
+	if (headless_surface)
 	{
 		LOGW("Using headless surface with multiple GPUs. Considered explicitly selecting the target GPU.")
 	}

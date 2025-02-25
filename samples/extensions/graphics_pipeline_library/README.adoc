@@ -1,5 +1,6 @@
 ////
-- Copyright (c) 2022-2023, Sascha Willems
+- Copyright (c) 2022-2025, Sascha Willems
+- Copyright (c) 2025, LunarG, Inc.
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -144,10 +145,31 @@ image::./images/sample.jpg[Sample]
 This sample demonstrates that functionality by creating the shared vertex input interface, pre-rasterization shader state and fragment output interface parts only once up-front, and then re-uses them to create pipelines with customized fragment shaders using random lighting models at runtime.
 Pipelines are created in a background thread and once they're created, command buffers are updated to display a mesh using the new pipeline.
 
+== Independent Descriptor Sets
+
+While this sample doesn't use it, this extension has a `VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT` flag that can be used.
+
+Imagine a situation where the vertex and fragment stage accesses two different descriptor sets:
+
+[source,glsl]
+----
+// Vertex Shader
+layout(set = 0) UBO_X;
+
+// Fragment Shader
+layout(set = 1) UBO_Y;
+----
+
+Normally when compiling a pipeline, both stages are together and internally a driver will reserve 2 separate descriptor slots for `UBO_X` and `UBO_Y`.
+When using graphics pipeline libraries, the driver will see the fragment shader only uses a single descriptor set.
+It might internally map it to `set 0`, but when linking the two libraries, there will be a collision.
+The `VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT` flag ensures the driver will be able to handle this case and not have any collisions.
+There are some extra constraints when using this flag, but the Validation Layers will detect them for you.
+
 == Additional resources
 
 * https://www.khronos.org/blog/reducing-draw-time-hitching-with-vk-ext-graphics-pipeline-library[Reducing Draw Time Hitching with VK_EXT_graphics_pipeline_library]
-* https://github.com/KhronosGroup/Vulkan-Docs/blob/main/proposals/VK_EXT_graphics_pipeline_library.adoc[Extension proposal]
+* https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_graphics_pipeline_library.html[Extension proposal]
 
 == Conclusion
 

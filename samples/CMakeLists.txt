@@ -50,6 +50,7 @@ endforeach ()
 set(ORDER_LIST
     #API Samples
     "hello_triangle"
+    "hello_triangle_1_3"
     "dynamic_uniform_buffers"
     "texture_loading"
     "hdr"
@@ -89,6 +90,7 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
+    "dynamic_multisample_rasterization"
     "sparse_image"
     "dynamic_primitive_clipping"
 

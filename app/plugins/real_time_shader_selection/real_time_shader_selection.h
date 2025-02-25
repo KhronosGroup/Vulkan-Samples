@@ -1,4 +1,5 @@
-/* Copyright (c) 2024, Mobica Limited
+/* Copyright (c) 2024-2025, Mobica Limited
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,15 +45,10 @@ class RealTimeShaderSelection : public RealTimeShaderSelectionTags
 
 	virtual ~RealTimeShaderSelection() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
+	void on_app_start(const std::string &app_info) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	virtual void on_app_start(const std::string &app_info) override;
-
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-
-	vkb::FlagCommand realtimeshaderselection_flag = {vkb::FlagType::FlagOnly, "realtimeshaderselection", "", "Enable dynamic shader selection"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 
   private:
 	std::vector<std::string> language_names;

@@ -223,9 +223,10 @@ class HPPGui
   private:
 	/**
 	 * @brief Updates Vulkan buffers
-	 * @param frame Frame to render into
+	 * @param command_buffer Command buffer to draw into
+	 * @return Vertex buffer allocation
 	 */
-	void update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const;
+	BufferAllocationCpp update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const;
 
   private:
 	/**

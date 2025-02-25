@@ -52,7 +52,7 @@ Instead of creating per-object descriptor sets, this example passes descriptors 
 
 === xref:./{extension_samplespath}hpp_push_descriptors/README.adoc[HPP Push Descriptors]
 
-A transcoded version of the Extensions sample <<push_descriptors,Push Descriptors>> that illustrates the usage of the C{pp} bindings of vulkan provided by Vulkan-Hpp.
+A transcoded version of the Extensions sample xref:./{extension_samplespath}push_descriptors/README.adoc[Push Descriptors] that illustrates the usage of the C{pp} bindings of vulkan provided by Vulkan-Hpp.
 
 === xref:./{extension_samplespath}debug_utils/README.adoc[Debug Utilities]
 
@@ -111,7 +111,7 @@ This replaces the vertex /  geometry shader standard pipeline.
 
 === xref:./{extension_samplespath}hpp_mesh_shading/README.adoc[HPP Mesh shading]
 
-A transcoded version of the Extensions sample <<mesh_shading,Mesh shading>> that illustrates the usage of the C{pp} bindings of vulkan provided by Vulkan-Hpp.
+A transcoded version of the Extensions sample xref:./{extension_samplespath}mesh_shading/README.adoc[Mesh shading] that illustrates the usage of the C{pp} bindings of vulkan provided by Vulkan-Hpp.
 
 === xref:./{extension_samplespath}open_gl_interop/README.adoc[OpenGL interoperability]
 
@@ -297,3 +297,8 @@ Rendering using primitive clipping and depth clipping configured by dynamic pipe
 
 Demonstrate the use of the host image extension to directly copy from a host buffer to an image on the device without going through a staging buffer.
 
+=== xref:./{extension_samplespath}dynamic_multisample_rasterization/README.adoc[Dynamic multisample rasterization]
+
+*Extensions:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_line_rasterization`], https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
+
+Demonstrate how to use dynamic multisample rasterization (MSAA)

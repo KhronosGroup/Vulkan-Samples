@@ -1,5 +1,6 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
- * Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2023-2025, Mobica Limited
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,13 +19,13 @@
 #pragma once
 
 #include <cassert>
+#include <deque>
 #include <string>
 #include <typeindex>
 #include <vector>
 
 #include "common/tags.h"
 #include "gui.h"
-#include "platform/parser.h"
 
 namespace vkb
 {
@@ -88,22 +89,13 @@ enum class Hook
 class Plugin
 {
   public:
-	Plugin(const std::string name, const std::string description) :
-	    name{name}, description{description} {};
+	Plugin(const std::string                                       name,
+	       const std::string                                       description,
+	       std::vector<std::pair<std::string, std::string>> const &commands = {},
+	       std::vector<std::pair<std::string, std::string>> const &options  = {}) :
+	    name{name}, description{description}, commands{commands}, options{options} {};
+
 	virtual ~Plugin() = default;
-
-	/**
-	 * @brief Conducts the process of activating and initializing an plugin
-	 *
-	 * @param platform The platform
-	 * @param parser The parser used to check if the plugins flags are present
-	 * @param force_activation Force a plugin to be activated, not advised unless the plugin works without inputs
-	 * @return true If the plugin is to be activated
-	 * @return false If the plugin is not active
-	 */
-	bool activate_plugin(Platform *platform, const CommandParser &parser, bool force_activation = false);
-
-	virtual const std::vector<Command *> &get_cli_commands() const = 0;
 
 	/**
 	 * @brief Return a list of hooks that an plugin wants to subscribe to
@@ -157,12 +149,8 @@ class Plugin
 	 */
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) = 0;
 
-	const std::string           &get_name() const;
-	const std::string           &get_description() const;
-	void                         excludes(Plugin *plugin);
-	const std::vector<Plugin *> &get_exclusions() const;
-	void                         includes(Plugin *plugin);
-	const std::vector<Plugin *> &get_inclusions() const;
+	const std::string &get_name() const;
+	const std::string &get_description() const;
 
 	/**
 	 * @brief Test whether the plugin contains a given tag
@@ -205,31 +193,45 @@ class Plugin
 	 */
 	virtual bool has_tag(TagID id) const = 0;
 
+	std::vector<std::pair<std::string, std::string>> const &get_commands() const
+	{
+		return commands;
+	}
+
+	std::vector<std::pair<std::string, std::string>> const &get_options() const
+	{
+		return options;
+	}
+
+	virtual bool handle_command(std::deque<std::string> &arguments) const
+	{
+		return false;
+	}
+
+	virtual bool handle_option(std::deque<std::string> &arguments)
+	{
+		return false;
+	}
+
+	virtual void trigger_command()
+	{}
+
+	void log_help(size_t width) const;
+
+	void set_platform(Platform *platform)
+	{
+		assert(!this->platform && platform);
+		this->platform = platform;
+	}
+
   protected:
-	/**
-	 * @brief An plugin will override this method so that it can check if it will be activated
-	 *
-	 * @param parser A parser that has parsed the command line arguments when the app starts
-	 * @return true If the plugin should be activated
-	 * @return false If the plugin should be ignored
-	 */
-	virtual bool is_active(const CommandParser &parser) = 0;
-
-	/**
-	 * @brief Sets up an plugin by using values from the parser
-	 *
-	 * @param parser The parser
-	 */
-	virtual void init(const CommandParser &parser) = 0;
-
 	Platform *platform = nullptr;
 
   private:
-	std::string name;
-	std::string description;
-
-	std::vector<Plugin *> exclusions;
-	std::vector<Plugin *> inclusions;
+	std::string                                      name;
+	std::string                                      description;
+	std::vector<std::pair<std::string, std::string>> commands;
+	std::vector<std::pair<std::string, std::string>> options;
 };
 
 /**
