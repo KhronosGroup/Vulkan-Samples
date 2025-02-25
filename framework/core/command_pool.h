@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,9 +29,11 @@ class RenderFrame;
 class CommandPool
 {
   public:
-	CommandPool(Device &device, uint32_t queue_family_index, RenderFrame *render_frame = nullptr,
-	            size_t                   thread_index = 0,
-	            CommandBuffer::ResetMode reset_mode   = CommandBuffer::ResetMode::ResetPool);
+	CommandPool(vkb::Device                &device,
+	            uint32_t                    queue_family_index,
+	            vkb::RenderFrame           *render_frame = nullptr,
+	            size_t                      thread_index = 0,
+	            vkb::CommandBufferResetMode reset_mode   = vkb::CommandBufferResetMode::ResetPool);
 
 	CommandPool(const CommandPool &) = delete;
 
@@ -55,9 +57,9 @@ class CommandPool
 
 	VkResult reset_pool();
 
-	CommandBuffer &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+	vkb::core::CommandBufferC &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-	const CommandBuffer::ResetMode get_reset_mode() const;
+	const vkb::CommandBufferResetMode get_reset_mode() const;
 
   private:
 	Device &device;
@@ -70,15 +72,15 @@ class CommandPool
 
 	uint32_t queue_family_index{0};
 
-	std::vector<std::unique_ptr<CommandBuffer>> primary_command_buffers;
+	std::vector<std::unique_ptr<vkb::core::CommandBufferC>> primary_command_buffers;
 
 	uint32_t active_primary_command_buffer_count{0};
 
-	std::vector<std::unique_ptr<CommandBuffer>> secondary_command_buffers;
+	std::vector<std::unique_ptr<vkb::core::CommandBufferC>> secondary_command_buffers;
 
 	uint32_t active_secondary_command_buffer_count{0};
 
-	CommandBuffer::ResetMode reset_mode{CommandBuffer::ResetMode::ResetPool};
+	vkb::CommandBufferResetMode reset_mode{vkb::CommandBufferResetMode::ResetPool};
 
 	VkResult reset_command_buffers();
 };

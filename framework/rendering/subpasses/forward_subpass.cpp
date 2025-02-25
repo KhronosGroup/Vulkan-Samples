@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,7 +57,7 @@ void ForwardSubpass::prepare()
 	}
 }
 
-void ForwardSubpass::draw(CommandBuffer &command_buffer)
+void ForwardSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	allocate_lights<ForwardLights>(scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);

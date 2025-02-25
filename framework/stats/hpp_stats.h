@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,14 +45,14 @@ class HPPStats : private vkb::Stats
 	    vkb::Stats(reinterpret_cast<vkb::RenderContext &>(render_context), buffer_size)
 	{}
 
-	void begin_sampling(vkb::core::HPPCommandBuffer &cb)
+	void begin_sampling(vkb::core::CommandBufferCpp &cb)
 	{
-		vkb::Stats::begin_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
+		vkb::Stats::begin_sampling(reinterpret_cast<vkb::core::CommandBufferC &>(cb));
 	}
 
-	void end_sampling(vkb::core::HPPCommandBuffer &cb)
+	void end_sampling(vkb::core::CommandBufferCpp &cb)
 	{
-		vkb::Stats::end_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
+		vkb::Stats::end_sampling(reinterpret_cast<vkb::core::CommandBufferC &>(cb));
 	}
 };
 

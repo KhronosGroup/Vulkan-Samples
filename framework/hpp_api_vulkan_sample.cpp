@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +16,8 @@
  * limitations under the License.
  */
 
-#include <hpp_api_vulkan_sample.h>
-
-#include <common/hpp_vk_common.h>
-#include <hpp_gltf_loader.h>
+#include "hpp_api_vulkan_sample.h"
+#include "core/hpp_queue.h"
 
 // Instantiate the default dispatcher
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE

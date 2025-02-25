@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -182,7 +182,7 @@ class Gui
 	 * @brief Draws the Gui
 	 * @param command_buffer Command buffer to register draw-commands
 	 */
-	void draw(CommandBuffer &command_buffer);
+	void draw(vkb::core::CommandBufferC &command_buffer);
 
 	/**
 	 * @brief Draws the Gui
@@ -272,7 +272,7 @@ class Gui
 	 * @param command_buffer Command buffer to draw into
 	 * @return Vertex buffer allocation
 	 */
-	BufferAllocationC update_buffers(CommandBuffer &command_buffer);
+	BufferAllocationC update_buffers(vkb::core::CommandBufferC &command_buffer);
 
 	static const double press_time_ms;
 

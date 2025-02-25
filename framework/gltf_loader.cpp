@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -285,7 +285,7 @@ inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uin
 	return result;
 }
 
-inline void upload_image_to_gpu(CommandBuffer &command_buffer, vkb::core::BufferC &staging_buffer, sg::Image &image)
+inline void upload_image_to_gpu(vkb::core::CommandBufferC &command_buffer, vkb::core::BufferC &staging_buffer, sg::Image &image)
 {
 	// Clean up the image data, as they are copied in the staging buffer
 	image.clear_data();
