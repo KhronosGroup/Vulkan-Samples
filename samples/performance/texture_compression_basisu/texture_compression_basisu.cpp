@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -101,16 +101,6 @@ void TextureCompressionBasisu::get_available_target_formats()
 		{
 			available_target_formats.push_back(KTX_TTF_ETC2_RGBA);
 			available_target_formats_names.push_back("KTX_TTF_ETC2_RGBA");
-		}
-	}
-
-	// PowerVR texture compression support needs to be checked via an extension
-	if (get_device().is_extension_supported(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME))
-	{
-		if (format_supported(VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG))
-		{
-			available_target_formats.push_back(KTX_TTF_PVRTC1_4_RGBA);
-			available_target_formats_names.push_back("KTX_TTF_PVRTC1_4_RGBA");
 		}
 	}
 

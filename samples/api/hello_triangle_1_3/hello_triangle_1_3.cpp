@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Huawei Technologies Co., Ltd.
+/* Copyright (c) 2024-2025, Huawei Technologies Co., Ltd.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -91,41 +91,6 @@ bool HelloTriangleV13::validate_extensions(const std::vector<const char *>      
 }
 
 /**
- * @brief Validates a list of required layers, comparing it with the available ones.
- *
- * @param required A vector containing required layer names.
- * @param available A VkLayerProperties object containing available layers.
- * @return true if all required extensions are available
- * @return false otherwise
- */
-bool HelloTriangleV13::validate_layers(const std::vector<const char *>      &required,
-                                       const std::vector<VkLayerProperties> &available)
-{
-	bool all_found = true;
-
-	for (const auto *layer_name : required)
-	{
-		bool found = false;
-		for (const auto &available_layer : available)
-		{
-			if (strcmp(available_layer.layerName, layer_name) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			LOGE("Error: Required layer not found: {}", layer_name);
-			all_found = false;
-		}
-	}
-
-	return all_found;
-}
-
-/**
  * @brief Initializes the Vulkan instance.
  */
 void HelloTriangleV13::init_instance()
@@ -165,6 +130,18 @@ void HelloTriangleV13::init_instance()
 	}
 #endif
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	required_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	bool portability_enumeration_available = false;
+	if (std::any_of(available_instance_extensions.begin(),
+	                available_instance_extensions.end(),
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	{
+		required_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		portability_enumeration_available = true;
+	}
+#endif
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	required_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
@@ -188,32 +165,27 @@ void HelloTriangleV13::init_instance()
 		throw std::runtime_error("Required instance extensions are missing.");
 	}
 
+	std::vector<const char *> requested_instance_layers{};
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	char const *validationLayer = "VK_LAYER_KHRONOS_validation";
+
 	uint32_t instance_layer_count;
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
 
-	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
+	std::vector<VkLayerProperties> supported_instance_layers(instance_layer_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_instance_layers.data()));
 
-	std::vector<const char *> requested_validation_layers{};
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	// Determine the optimal validation layers to enable that are necessary for useful debugging
-	std::vector<const char *> optimal_validation_layers = vkb::get_optimal_validation_layers(supported_validation_layers);
-	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
-#endif
-
-	if (validate_layers(requested_validation_layers, supported_validation_layers))
+	if (std::any_of(supported_instance_layers.begin(), supported_instance_layers.end(), [&validationLayer](auto const &lp) { return strcmp(lp.layerName, validationLayer) == 0; }))
 	{
-		LOGI("Enabled Validation Layers:");
-		for (const auto &layer : requested_validation_layers)
-		{
-			LOGI("	\t{}", layer);
-		}
+		requested_instance_layers.push_back(validationLayer);
+		LOGI("Enabled Validation Layer {}", validationLayer);
 	}
 	else
 	{
-		throw std::runtime_error("Required validation layers are missing.");
+		LOGW("Validation Layer {} is not available", validationLayer);
 	}
+#endif
 
 	VkApplicationInfo app{
 	    .sType            = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -224,8 +196,8 @@ void HelloTriangleV13::init_instance()
 	VkInstanceCreateInfo instance_info{
 	    .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 	    .pApplicationInfo        = &app,
-	    .enabledLayerCount       = vkb::to_u32(requested_validation_layers.size()),
-	    .ppEnabledLayerNames     = requested_validation_layers.data(),
+	    .enabledLayerCount       = vkb::to_u32(requested_instance_layers.size()),
+	    .ppEnabledLayerNames     = requested_instance_layers.data(),
 	    .enabledExtensionCount   = vkb::to_u32(required_instance_extensions.size()),
 	    .ppEnabledExtensionNames = required_instance_extensions.data()};
 
@@ -238,6 +210,13 @@ void HelloTriangleV13::init_instance()
 		debug_messenger_create_info.pfnUserCallback = debug_callback;
 
 		instance_info.pNext = &debug_messenger_create_info;
+	}
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	if (portability_enumeration_available)
+	{
+		instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	}
 #endif
 
@@ -1146,7 +1125,10 @@ void HelloTriangleV13::transition_image_layout(
 HelloTriangleV13::~HelloTriangleV13()
 {
 	// Don't release anything until the GPU is completely idle.
-	vkDeviceWaitIdle(context.device);
+	if (context.device != VK_NULL_HANDLE)
+	{
+		vkDeviceWaitIdle(context.device);
+	}
 
 	for (auto &per_frame : context.per_frame)
 	{

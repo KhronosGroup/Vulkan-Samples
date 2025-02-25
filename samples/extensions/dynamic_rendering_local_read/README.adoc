@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2024, Sascha Willems
+- Copyright (c) 2024-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -117,5 +117,5 @@ With the addition of `VK_KHR_dynamic_rendering_local_read` it's now finally poss
 
 == Additional information
 
-* https://docs.vulkan.org/spec/latest/proposals/proposals/VK_KHR_dynamic_rendering_local_read.html[Extension proposal]
+* https://docs.vulkan.org/features/latest/features/proposals/VK_KHR_dynamic_rendering_local_read.html[Extension proposal]
 * https://www.khronos.org/blog/streamlining-subpasses[Extension blog post]

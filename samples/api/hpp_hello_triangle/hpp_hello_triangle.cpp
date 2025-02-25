@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,63 +69,6 @@ bool validate_extensions(const std::vector<const char *>            &required,
 			                                        return strcmp(ep.extensionName, extension) == 0;
 		                                        }) == available.end();
 	                    }) == required.end();
-}
-
-bool validate_layers(const std::vector<const char *>        &required,
-                     const std::vector<vk::LayerProperties> &available)
-{
-	// inner find_if returns true if the layer was not found
-	// outer find_if returns iterator to the not found layer, if any
-	auto requiredButNotFoundIt = std::find_if(required.begin(),
-	                                          required.end(),
-	                                          [&available](auto layer) {
-		                                          return std::find_if(available.begin(),
-		                                                              available.end(),
-		                                                              [&layer](auto const &lp) {
-			                                                              return strcmp(lp.layerName, layer) == 0;
-		                                                              }) == available.end();
-	                                          });
-	if (requiredButNotFoundIt != required.end())
-	{
-		LOGE("Validation Layer {} not found", *requiredButNotFoundIt);
-	}
-	return (requiredButNotFoundIt == required.end());
-}
-
-std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers)
-{
-	std::vector<std::vector<const char *>> validation_layer_priority_list =
-	    {
-	        // The preferred validation layer is "VK_LAYER_KHRONOS_validation"
-	        {"VK_LAYER_KHRONOS_validation"},
-
-	        // Otherwise we fallback to using the LunarG meta layer
-	        {"VK_LAYER_LUNARG_standard_validation"},
-
-	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
-	        {
-	            "VK_LAYER_GOOGLE_threading",
-	            "VK_LAYER_LUNARG_parameter_validation",
-	            "VK_LAYER_LUNARG_object_tracker",
-	            "VK_LAYER_LUNARG_core_validation",
-	            "VK_LAYER_GOOGLE_unique_objects",
-	        },
-
-	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
-	        {"VK_LAYER_LUNARG_core_validation"}};
-
-	for (auto &validation_layers : validation_layer_priority_list)
-	{
-		if (validate_layers(validation_layers, supported_instance_layers))
-		{
-			return validation_layers;
-		}
-
-		LOGW("Couldn't enable validation layers (see log for error) - falling back");
-	}
-
-	// Else return nothing
-	return {};
 }
 
 HPPHelloTriangle::HPPHelloTriangle()
@@ -477,32 +420,27 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 		throw std::runtime_error("Required instance extensions are missing.");
 	}
 
-	std::vector<vk::LayerProperties> supported_validation_layers = vk::enumerateInstanceLayerProperties();
+	std::vector<const char *> requested_instance_layers(required_validation_layers);
 
-	std::vector<const char *> requested_validation_layers(required_validation_layers);
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	char const *validationLayer = "VK_LAYER_KHRONOS_validation";
 
-#ifdef VKB_VALIDATION_LAYERS
-	// Determine the optimal validation layers to enable that are necessary for useful debugging
-	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
-	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
-#endif
+	std::vector<vk::LayerProperties> supported_instance_layers = vk::enumerateInstanceLayerProperties();
 
-	if (validate_layers(requested_validation_layers, supported_validation_layers))
+	if (std::any_of(supported_instance_layers.begin(), supported_instance_layers.end(), [&validationLayer](auto const &lp) { return strcmp(lp.layerName, validationLayer) == 0; }))
 	{
-		LOGI("Enabled Validation Layers:")
-		for (const auto &layer : requested_validation_layers)
-		{
-			LOGI("	\t{}", layer);
-		}
+		requested_instance_layers.push_back(validationLayer);
+		LOGI("Enabled Validation Layer {}", validationLayer);
 	}
 	else
 	{
-		throw std::runtime_error("Required validation layers are missing.");
+		LOGW("Validation Layer {} is not available", validationLayer);
 	}
+#endif
 
 	vk::ApplicationInfo app("HPP Hello Triangle", {}, "Vulkan Samples", {}, VK_MAKE_VERSION(1, 0, 0));
 
-	vk::InstanceCreateInfo instance_info({}, &app, requested_validation_layers, active_instance_extensions);
+	vk::InstanceCreateInfo instance_info({}, &app, requested_instance_layers, active_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	debug_utils_create_info =

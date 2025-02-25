@@ -1,5 +1,5 @@
 ////
-- Copyright 2023 Nintendo
+- Copyright 2023-2025 Nintendo
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -435,15 +435,11 @@ The layer can be shipped with your application, and it will disable itself if a 
 
 The emulation layer can be enabled by adding `VK_LAYER_KHRONOS_shader_object` to `ppEnabledLayerNames` in `VkDeviceCreateInfo`.
 
-The sample framework already has an existing abstraction normally used for enabling the validation layer.
-This sample repurposes this mechanism to instead load the emulation layer.
+Similar to enabling extensions, enabling layers is done through a common abstraction with the other samples.
 
 [,CPP]
 ----
-const std::vector<const char *> ShaderObject::get_validation_layers()
-{
-    return {"VK_LAYER_KHRONOS_shader_object"};
-}
+	add_instance_layer("VK_LAYER_KHRONOS_shader_object");
 ----
 
 Because you can't rely on the Vulkan SDK to be installed on a user's system, this sample's method of loading the layer is not suitable for a real application.
@@ -458,7 +454,7 @@ Because of this the layer's files will always need to be somewhere accessible to
 == Additional Resources
 
 * https://www.khronos.org/blog/you-can-use-vulkan-without-pipelines-today[You Can Use Vulkan Without Pipelines Today]
-* https://github.com/KhronosGroup/Vulkan-Docs/blob/main/proposals/VK_EXT_shader_object.adoc[Extension Proposal]
+* https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_shader_object.html[Extension Proposal]
 * https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-objects[Specification]
 * https://github.com/KhronosGroup/Vulkan-ExtensionLayer/blob/main/docs/shader_object_layer.md[Emulation Layer]
 
