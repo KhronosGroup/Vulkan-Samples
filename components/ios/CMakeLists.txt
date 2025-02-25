@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Thomas Atkinson
+# Copyright (c) 2023-2025, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -39,4 +39,3 @@ vkb__register_tests(
 
 # attach to core
 target_link_libraries(vkb__core INTERFACE vkb__ios_platform)
-target_compile_features(vkb__core PUBLIC cxx_std_17)
