@@ -272,7 +272,7 @@ class Gui
 	 * @param command_buffer Command buffer to draw into
 	 * @return Vertex buffer allocation
 	 */
-	BufferAllocationC update_buffers(CommandBuffer &command_buffer);
+	BufferAllocationC update_buffers(vkb::core::CommandBufferC &command_buffer);
 
 	static const double press_time_ms;
 

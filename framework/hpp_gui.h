@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "buffer_pool.h"
 #include "common/vk_common.h"
 #include "drawer.h"
 #include "filesystem/legacy.h"
@@ -251,7 +252,7 @@ class HPPGui
 	 * @param command_buffer Command buffer to draw into
 	 * @return Vertex buffer allocation
 	 */
-	BufferAllocationCpp update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const;
+	BufferAllocationCpp update_buffers(vkb::core::CommandBufferCpp &command_buffer) const;
 
   private:
 	/**

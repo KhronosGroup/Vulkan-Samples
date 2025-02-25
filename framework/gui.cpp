@@ -440,13 +440,13 @@ bool Gui::update_buffers()
 	return updated;
 }
 
-BufferAllocationC Gui::update_buffers(CommandBuffer &command_buffer)
+vkb::BufferAllocationC Gui::update_buffers(vkb::core::CommandBufferC &command_buffer)
 {
 	ImDrawData *draw_data = ImGui::GetDrawData();
 
 	if (!draw_data)
 	{
-		return BufferAllocationC{};
+		return vkb::BufferAllocationC{};
 	}
 
 	size_t vertex_buffer_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
@@ -454,7 +454,7 @@ BufferAllocationC Gui::update_buffers(CommandBuffer &command_buffer)
 
 	if ((vertex_buffer_size == 0) || (index_buffer_size == 0))
 	{
-		return BufferAllocationC{};
+		return vkb::BufferAllocationC{};
 	}
 
 	std::vector<uint8_t> vertex_data(vertex_buffer_size);
