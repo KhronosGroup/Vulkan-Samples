@@ -1,0 +1,230 @@
+////
+- Copyright (c) 2024, Holochip Inc
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= VK_Video
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/video[Khronos Vulkan samples github repository].
+endif::[]
+
+== Overview
+
+This sample demonstrates how to use the `VK_Video` extension, which allows for the GPU to handle video codec operations.
+Currently, H.264, H.265, and VP1 are supported codecs.
+
+Some of the advantages for using VK_Video:
+
+* All resources stay on GPU
+* All the heavy processing is performed on the GPU’s video unit.
+* Fully utilize Vulkan synchronization.
++
+--
+The video unit is a separate part of the GPU, thus we can run video tasks asynchronously to the main rendering.
+--
+*  No interop with other libraries.
++
+--
+Standard Vulkan Objects:
+
+** buffers for providing compressed data
+** textures for uncompressed video frames.
+*** We can easily reuse the decoded video as regular textures on your objects.
+
+Aside from demuxing no 3rd party library or preprocessing is required.
+--
+* Compute shaders can work on each frame natively as it is produced by the video queue.
+** this raises the possibility to handle stitching in the GPU and other computationally complex tasks.
+
+However, due to the complex nature of Video, we must allow for 3rd party libraries to preprocess the media assets. The preprocessing phase of the assets in this sample are handled by FFMPEG.  Thus, this sample depends upon and thus requires that the developer's machine have FFMPEG development libraries installed; and findable by the provided FindFFMPEG.cmake.
+
+The preprocessing that FFMPEG handles is to demux the video from the file.  To Demux a file, we need to separate the combined streams that might exist in the video asset file such that we can work with the encoded video only.  The audio and other streams require solutions beyond the scope of this Sample, but the audio synch only works by adhering to the presentation time that the codec returns per frame.  The audio rendering engine from elsewhere must also handle presentation time correctly to achieve correct AV synchronization.
+
+As each codec has its' own standard way of working with video assets, it's important to remember that there's a large amount of extra code required to work with those files.  This is where a library like FFMPEG comes in.  FFMPEG has support for preprocessing the assets into compressed video stream chunks that are compatible with the Vulkan Video hardware to decode from the codec.
+
+However, if we were solely concerned with a single standard, other 3rd party libraries exist that are lighter weight than FFMPEG and could replace FFMPEG in Vulkan Video applications.  H.264 for example could be handled by a header only implementation https://github.com/lieff/minimp4[minimp4] is an example of such a solution.
+
+A full description of how to do demuxing is beyond the scope of Vulkan Video, but the general rule for H.264 is you want to find the Network Abstraction Layer (NAL) units and find the following units:
+
+* Picture Parameter Set (PPS)
++
+--
+Contains data common to the entire picture.
+--
+* Sequence Parameter Set (SPS)
++
+--
+Contians data common to all the pictures in a Sequence of Pictures (SOP)
+--
+* Slice
++
+--
+One or more (in the case of interlaced) video frame
+--
+
+== General steps
+Once a video has been demuxed and we're working only with the video stream, we need to put the compressed video into a Vulkan Buffer.  Depending upon the needs of the application, this could be all frames of the video being placed into a Vulkan Buffer, or upload frames on demand.  If we select to upload multiple frames on each buffer, then we *must* align the slices at the correct alignment.  To get the alignment requirements query: `VkVideoCapabilitiesKHR::minBitstreamBufferOffsetAlignment`  `vkGetPhysicalDeviceVideoCapabilitiesKHR()` will return the `VkVideoCapabilitiesKHR` structure.
+
+The bitstream buffer needs: `VK_BUFFER_USAGE_VIDEO_DECODE_SRC_BIT_KHR` set and the buffer creation's pNext requires `VkVideoProfileListInfoKHR` to be used with the buffer at creation.
+
+When populating the buffer, it is important to include the whole of the compressed information including the header.  In the case of H.264, you would need to include the PPS, SPS, and all slices from the NAL header in addition to the binary actual slice data that is referenced.
+
+The buffers should also be Host Mapped buffers.
+
+Other than the bitstream buffers, We are reuired to fill description structures i.e. for H.264:
+
+From the PPS, we fill the `StdVideoH264PictureParameterSet` and `StdVideoH264ScalingLists` structures.
+From the SPS, we fill the `StdVideoH264SequenceParameterSet`, `StdVideoH264SequenceParameterSetVui` and `StdVideoH264HrdParameters` structures.
+
+These structures are then passed to `VkVideoDecodeH264SessionParametersAddInfoKHR`, which is passed to `VkVideoDecodeH264SessionParametersCreateInfoKHR` when creating the video session.
+
+If we don't have those structures filled at session creation time, we can provide them or update them with: `VkVideoSessionParametersUpdateInfoKHR` and `vkUpdateVideoSessionParametersKHR`.
+
+== Video Session
+This is the main Vulkan Video object.   We first query memory requirements with `vkGetVideoSessionMemoryRequirementsKHR` and then allocate and bind memory with `vkBindVideoSessionMemoryKHR`.
+
+Then we use codec specific queries like: `VkVideoDecodeH264SessionParametersCreateInfoKHR` and `VkVideoSessionParametersCreateInfoKHR` structures when calling `vkCreateVideoSessionParametersKHR`.
+
+The video session is used for internal memory allocations for video coding. When decoding video, we will always use:
+
+* vkCmdBeginVideoCodingKHR
++
+--
+Begins a video stream.
+--
+* vkCmdDecodeVideoKHR
++
+--
+Decodes the video slice.  It must be called between the `vkCmdBeginVideoCodingKHR` and `vkCmdEndVideoCodingKHR` commands.
+
+NB: to provide control over the video, we use `vkCmdControlVideoCodingKHR` which, for example can take the `VK_VIDEO_CODING_CONTROL_RESET_BIT_KHR` flag to reset the stream.  This should happen at least once to position the playback at the desired location within the stream.
+--
+* vkCmdEndVideoCodingKHR
++
+--
+Ends the video stream.
+--
+
+== Output
+As this is a fairly large topic due to the various types of codecs available, I'll concentrate on providing H.264 output in this tutorial and refer to the sample code for the other codecs which are similar in how to work with.
+
+=== H264
+The H264 video codec is based on the concept of Intra and Predictive frames (and variations on them). Intra frames are full video frames that can be decompressed by themselves, for example the first frame of the video will most likely be an Intra (I) frame. Predictive (P) frames can only be decompressed by referencing other frames, because their data only contains differences to other frames (this means their compressed data is also much smaller). Note, that P-frames can reference not only one, but many other frames. Also, reference frames are not necessarily I-frames.
+
+P-frames requires maintaining a buffer of history frames. The SPS structure’s num_ref_frames tells us how many reference frames need to be kept. However, the currently decoded frame can not be used as reference, so we must have a buffer of num_ref_frames + 1 elements. NB: H.264 specifies the maximum number of reference frames as 16, so the num_ref_frames can never be larger than this.
+
+We can use this knowledge to allocate simple temporary arrays on a stack for example, since there can be never more than 17 DPB slots (16 reference frames + 1 current frame). The frames are textures, so we can use a texture array for example with array_size = num_ref_frames + 1. The texture will need to be a YUV420 texture, and Vulkan provides us with the `VK_FORMAT_G8_B8R8_2PLANE_420_UNORM` for this purpose.
+
+The array texture is called the Decoded Picture Buffer (DPB). The following flags are used when creating it:
+
+* VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR
+* VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR
+* VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR
+
+It is possible also to not use a texture array, but individual textures, based on video capabilities and that way we perhaps wouldn’t need to use all the flags on all of them. Some hardware will have requirements for using a Texture array, `VK_VIDEO_DECODE_CAPABILITY_DPB_AND_OUTPUT_COINCIDE_BIT_KHR` flag tells us this in the `VkVideoDecodeCapabilitiesKHR`.
+
+Vulkan must get updates to a DPB state with information about which slice we use as current decoded result/destination and which slices will be used as reference images. Managing the DPB state is up to the application, and telling Vulkan is done through the following chained structures:
+
+* VkVideoReferenceSlotInfoKHR
+* VkVideoPictureResourceInfoKHR
+* VkVideoDecodeH264DpbSlotInfoKHR
+* StdVideoDecodeH264ReferenceInfo
+
+All these structures basically tell is the VkImageView of the DPB texture, the array slice, offsets/width/height and some H264 parameters. The StdVideoDecodeH264ReferenceInfo contains the H264 parameters for the DPB slots, most importantly:
+
+*  flags.bottom_field_flag and flags.top_field_flag, both should be set to 0 for progressive (non-interlaced) video frames.
+* FrameNum: this is coming from the slice header’s frame_num value
+* PicOrderCnt: this is an array of two integers, for progressive frame you must set both to the same value.
+* PicOrderCnt or Picture Order Count is telling us the frame display ordering, because in H264, the frame data order in memory is in the order of decoding, not the displaying.
+
+To learn more: https://www.vcodex.com/h264avc-picture-management/[H264 picture management].
+
+We need the PicOrderCnt to provide the data to Vulkan, but also use it to determine the correct display order of frames. We sort the frames by increasing value of PicOrderCnt, however, this could wrap around and reset to zero. We handle that by grouping the frames by PicOrderCnt wrapping cycle.
+
+When the PicOrderCnt wraps, assign an increased Group Of Pictures (GOP) value to every frame besides the PicOrderCnt value. Then, create a priority value for every frame from the GOP and PicOrderCnt values, by putting the GOP value to high 32bits of a 64-bit integer, and PicOrderCnt value to the low 32 bits. For example:
+
+[literal]
+--
+frame 1: PicOrderCnt 0, GOP 0 <== initialize GOP to 0
+frame 2: PicOrderCnt 3, GOP 0
+frame 3: PicOrderCnt 1, GOP 0
+frame 4: PicOrderCnt 2, GOP 0
+frame 5: PicOrderCnt 0, GOP 1 <== PicOrderCnt wrapped to 0, increase GOP
+frame 6: PicOrderCnt 2, GOP 1
+frame 7: PicOrderCnt 1, GOP 1
+frame 8: PicOrderCnt 0, GOP 2 <== POC wrapped to 0, increase GOP
+frame 9: PicOrderCnt 1, GOP 2
+--
+
+Then sorting can be done like this:
+
+[source,c++]
+--
+std::vector<size_t> frame_display_order(video->frames_infos.size());
+int i = 1;
+for (frame_display : frame_display_order)
+{
+    frame_display = i++;
+}
+
+std::sort(frame_display_order.begin(), frame_display_order.end(),
+    [&](size_t a, size_t b) {
+        const Video::FrameInfo& frameA = video->frames_infos[a];
+        const Video::FrameInfo& frameB = video->frames_infos[b];
+        int64_t prioA = (int64_t(frameA.gop) << 32ll) | int64_t(frameA.poc);
+        int64_t prioB = (int64_t(frameB.gop) << 32ll) | int64_t(frameB.poc);
+        return prioA < prioB;
+    });
+--
+
+After this, the frame_display_order array is sorted by display order priority, and each element contains an index into the original video frames array (video->frame_infos). The display order for the above sequence looks like this:
+
+[literal]
+--
+frame 1
+frame 3
+frame 4
+frame 2
+frame 5
+frame 7
+frame 6
+frame 8
+frame 9
+--
+
+Next we need to decode the frames in original decoding order, yet only display a new frame when the next required display order value is reached, which is always increasing by one when a new frame is displayed. For this, lets copy the display order values to the original video frame infos:
+
+[source,c++]
+--
+for (auto i = 0; i < frame_display_order.size(); ++i)
+{
+    video->frames_infos[frame_display_order[i]].display_order = static_cast<int>(i);
+}
+--
+
+Next the DPB (Decoded Picture Buffer) state management can be decoupled from the display ordering to simplify it.
+
+Each time a new frame is decoded, it is available for processing in other pipelines.  The decoded frame will be in YUV format and is a good candidate for `VK_KHR_sampler_ycbcr_conversion` to transfer it to RGB format for display. However, it's important to remember that if synchronization with other streams like audio is desired, the presentation time for the final product *must* synch with the presentation time of the other streams.  The good thing is that the DPB slot can be reused after it is transferred to any other queue process immediately for the next decodable frame (or kept around if it’s needed as a reference).
+
+
+== Using the library
+Despite the lengthy documentation for how to do video decoding without aide from pre-existing libraries found above, which only describes work with H.264, this sample strives to balance the requirements for managing a video stream of any format with a pre-exisitng code base which will handle the details of the actual video decoding or encoding tasking while interfacing with it using normal Vulkan objects and extracting only what's needed.  This balance is achieved by starting from the https://github.com/nvpro-samples/vk_video_samples[NVIDIA Vulkan Video sample] and turning it into a library.  Care is given to try to make this extendable while removing deep integrations.  For further reading on how Vulkan Video works see the following resources:
+
+* https://www.khronos.org/blog/an-introduction-to-vulkan-video
+* https://developer.nvidia.com/vulkan/video/get-started
+* https://www.khronos.org/blog/khronos-finalizes-vulkan-video-extensions-for-accelerated-h.264-and-h.265-decode
+* https://www.youtube.com/watch?v=RABV11Nr-gE
