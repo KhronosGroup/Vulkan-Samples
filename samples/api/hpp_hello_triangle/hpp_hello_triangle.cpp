@@ -307,10 +307,22 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 		throw std::runtime_error("Required device extensions are missing, will try without.");
 	}
 
+	std::vector<const char *> active_device_extensions(required_device_extensions);
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	if (std::any_of(device_extensions.begin(),
+	                device_extensions.end(),
+	                [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
+	{
+		active_device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+	}
+#endif
+
 	// Create a device with one queue
 	float                     queue_priority = 1.0f;
 	vk::DeviceQueueCreateInfo queue_info({}, graphics_queue_index, 1, &queue_priority);
-	vk::DeviceCreateInfo      device_info({}, queue_info, {}, required_device_extensions);
+	vk::DeviceCreateInfo      device_info({}, queue_info, {}, active_device_extensions);
 	vk::Device                device = gpu.createDevice(device_info);
 
 	// initialize function pointers for device
