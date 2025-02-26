@@ -310,6 +310,16 @@ void HelloTriangleV13::init_device()
 		throw std::runtime_error("Required device extensions are missing");
 	}
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	if (std::any_of(device_extensions.begin(),
+	                device_extensions.end(),
+	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
+	{
+		required_device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+	}
+#endif
+
 	// Query for Vulkan 1.3 features
 	VkPhysicalDeviceFeatures2                       query_device_features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
 	VkPhysicalDeviceVulkan13Features                query_vulkan13_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
