@@ -272,7 +272,7 @@ void Platform::update()
 			delta_time = simulation_frame_time;
 		}
 
-		active_app->update_overlay(delta_time, [=]() {
+		active_app->update_overlay(delta_time, [=, this]() {
 			on_update_ui_overlay(*active_app->get_drawer());
 		});
 		active_app->update(delta_time);
