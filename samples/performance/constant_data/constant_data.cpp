@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,7 +131,7 @@ void ConstantData::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void ConstantData::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
 {
 	auto &extent = render_target.get_extent();
 
@@ -311,12 +311,15 @@ void ConstantData::ConstantDataSubpass::prepare()
 	}
 }
 
-void ConstantData::PushConstantSubpass::update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index)
+void ConstantData::PushConstantSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
+                                                       vkb::sg::Node             &node,
+                                                       size_t                     thread_index)
 {
 	mvp_uniform = fill_mvp(node, camera);
 }
 
-vkb::PipelineLayout &ConstantData::PushConstantSubpass::prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules)
+vkb::PipelineLayout &ConstantData::PushConstantSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+                                                                                const std::vector<vkb::ShaderModule *> &shader_modules)
 {
 	/**
 	 * POI
@@ -325,7 +328,7 @@ vkb::PipelineLayout &ConstantData::PushConstantSubpass::prepare_pipeline_layout(
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout(shader_modules);
 }
 
-void ConstantData::PushConstantSubpass::prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh)
+void ConstantData::PushConstantSubpass::prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh)
 {
 	/**
 	 * POI
@@ -345,7 +348,9 @@ void ConstantData::PushConstantSubpass::prepare_push_constants(vkb::CommandBuffe
 	}
 }
 
-void ConstantData::DescriptorSetSubpass::update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index)
+void ConstantData::DescriptorSetSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
+                                                        vkb::sg::Node             &node,
+                                                        size_t                     thread_index)
 {
 	MVPUniform mvp;
 
@@ -365,7 +370,8 @@ void ConstantData::DescriptorSetSubpass::update_uniform(vkb::CommandBuffer &comm
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-vkb::PipelineLayout &ConstantData::DescriptorSetSubpass::prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules)
+vkb::PipelineLayout &ConstantData::DescriptorSetSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+                                                                                 const std::vector<vkb::ShaderModule *> &shader_modules)
 {
 	/**
 	 * POI
@@ -391,7 +397,7 @@ vkb::PipelineLayout &ConstantData::DescriptorSetSubpass::prepare_pipeline_layout
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout(shader_modules);
 }
 
-void ConstantData::DescriptorSetSubpass::prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh)
+void ConstantData::DescriptorSetSubpass::prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh)
 {
 	/**
 	 * POI
@@ -400,7 +406,7 @@ void ConstantData::DescriptorSetSubpass::prepare_push_constants(vkb::CommandBuff
 	return;
 }
 
-void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
+void ConstantData::BufferArraySubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	auto &render_frame = get_render_context().get_active_frame();
 
@@ -450,7 +456,9 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 	GeometrySubpass::draw(command_buffer);
 }
 
-void ConstantData::BufferArraySubpass::update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index)
+void ConstantData::BufferArraySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
+                                                      vkb::sg::Node             &node,
+                                                      size_t                     thread_index)
 {
 	/**
 	 * POI
@@ -459,7 +467,8 @@ void ConstantData::BufferArraySubpass::update_uniform(vkb::CommandBuffer &comman
 	return;
 }
 
-vkb::PipelineLayout &ConstantData::BufferArraySubpass::prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules)
+vkb::PipelineLayout &ConstantData::BufferArraySubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+                                                                               const std::vector<vkb::ShaderModule *> &shader_modules)
 {
 	/**
 	 * POI
@@ -468,7 +477,7 @@ vkb::PipelineLayout &ConstantData::BufferArraySubpass::prepare_pipeline_layout(v
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout(shader_modules);
 }
 
-void ConstantData::BufferArraySubpass::prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh)
+void ConstantData::BufferArraySubpass::prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh)
 {
 	/**
 	 * POI
@@ -477,7 +486,7 @@ void ConstantData::BufferArraySubpass::prepare_push_constants(vkb::CommandBuffer
 	return;
 }
 
-void ConstantData::BufferArraySubpass::draw_submesh_command(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh)
+void ConstantData::BufferArraySubpass::draw_submesh_command(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh)
 {
 	/**
 	 * POI

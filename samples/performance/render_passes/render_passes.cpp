@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -128,7 +128,7 @@ bool RenderPassesSample::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderPassesSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
 {
 	std::vector<vkb::LoadStoreInfo> load_store{2};
 

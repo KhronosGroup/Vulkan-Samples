@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,7 @@
  */
 
 #include "hpp_timestamp_queries.h"
+#include "core/hpp_queue.h"
 
 HPPTimestampQueries::HPPTimestampQueries()
 {

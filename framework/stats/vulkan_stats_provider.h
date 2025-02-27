@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2025, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -114,13 +114,13 @@ class VulkanStatsProvider : public StatsProvider
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
 	 */
-	void begin_sampling(CommandBuffer &cb) override;
+	void begin_sampling(vkb::core::CommandBufferC &cb) override;
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
 	 */
-	void end_sampling(CommandBuffer &cb) override;
+	void end_sampling(vkb::core::CommandBufferC &cb) override;
 
   private:
 	bool is_supported(const CounterSamplingConfig &sampling_config) const;
