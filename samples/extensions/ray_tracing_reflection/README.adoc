@@ -27,7 +27,7 @@ image::./img1.png[]
 
 == Overview
 
-This sample is a extended version of the link:../raytracing_basic[ray tracing basic] with the addition of multiple geometries, instances and materials.
+This sample is a extended version of the link:../ray_tracing_basic[ray tracing basic] with the addition of multiple geometries, instances and materials.
 
 In addition, this sample is showing how to cast shadow rays and reflections.
 
