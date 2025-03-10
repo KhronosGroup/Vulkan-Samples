@@ -394,7 +394,7 @@ if(NOT ANDROID AND NOT IOS)
         option(GLFW_INSTALL OFF)
         option(BUILD_SHARED_LIBS ON)
         if (VKB_WSI_SELECTION STREQUAL WAYLAND)
-            set(GLFW_USE_WAYLAND ON)
+            set(GLFW_BUILD_WAYLAND ON)
         endif()
 
         add_subdirectory(glfw)
