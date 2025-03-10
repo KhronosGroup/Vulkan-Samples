@@ -185,7 +185,7 @@ jobs:
 
       - name: Load VulkanSDK from cache
         id: VulkanSDK
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: VulkanSDK
           key: vulkan
