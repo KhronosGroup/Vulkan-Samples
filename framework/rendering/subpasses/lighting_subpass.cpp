@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,7 +42,7 @@ void LightingSubpass::prepare()
 	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), lighting_variant);
 }
 
-void LightingSubpass::draw(CommandBuffer &command_buffer)
+void LightingSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	allocate_lights<DeferredLights>(scene.get_components<sg::Light>(), MAX_DEFERRED_LIGHT_COUNT);
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);

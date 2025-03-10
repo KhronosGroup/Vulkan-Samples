@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -82,7 +82,7 @@ VkResult Queue::submit(const std::vector<VkSubmitInfo> &submit_infos, VkFence fe
 	return vkQueueSubmit(handle, to_u32(submit_infos.size()), submit_infos.data(), fence);
 }
 
-VkResult Queue::submit(const CommandBuffer &command_buffer, VkFence fence) const
+VkResult Queue::submit(const vkb::core::CommandBufferC &command_buffer, VkFence fence) const
 {
 	VkSubmitInfo submit_info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
 	submit_info.commandBufferCount = 1;

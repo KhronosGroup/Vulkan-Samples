@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2025, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,12 +15,8 @@
  * limitations under the License.
  */
 
-#include "core/device.h"
-
-#include "core/command_buffer.h"
+#include "stats/vulkan_stats_provider.h"
 #include "rendering/render_context.h"
-#include "vulkan_stats_provider.h"
-
 #include <regex>
 
 namespace vkb
@@ -335,7 +331,7 @@ const StatGraphData &VulkanStatsProvider::get_graph_data(StatIndex index) const
 	return default_graph_map[index];
 }
 
-void VulkanStatsProvider::begin_sampling(CommandBuffer &cb)
+void VulkanStatsProvider::begin_sampling(vkb::core::CommandBufferC &cb)
 {
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 	if (timestamp_pool)
@@ -355,7 +351,7 @@ void VulkanStatsProvider::begin_sampling(CommandBuffer &cb)
 	}
 }
 
-void VulkanStatsProvider::end_sampling(CommandBuffer &cb)
+void VulkanStatsProvider::end_sampling(vkb::core::CommandBufferC &cb)
 {
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 

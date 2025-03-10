@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -440,13 +440,13 @@ bool Gui::update_buffers()
 	return updated;
 }
 
-BufferAllocationC Gui::update_buffers(CommandBuffer &command_buffer)
+vkb::BufferAllocationC Gui::update_buffers(vkb::core::CommandBufferC &command_buffer)
 {
 	ImDrawData *draw_data = ImGui::GetDrawData();
 
 	if (!draw_data)
 	{
-		return BufferAllocationC{};
+		return vkb::BufferAllocationC{};
 	}
 
 	size_t vertex_buffer_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
@@ -454,7 +454,7 @@ BufferAllocationC Gui::update_buffers(CommandBuffer &command_buffer)
 
 	if ((vertex_buffer_size == 0) || (index_buffer_size == 0))
 	{
-		return BufferAllocationC{};
+		return vkb::BufferAllocationC{};
 	}
 
 	std::vector<uint8_t> vertex_data(vertex_buffer_size);
@@ -489,7 +489,7 @@ void Gui::resize(const uint32_t width, const uint32_t height) const
 	io.DisplaySize.y = static_cast<float>(height);
 }
 
-void Gui::draw(CommandBuffer &command_buffer)
+void Gui::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	if (!visible)
 	{

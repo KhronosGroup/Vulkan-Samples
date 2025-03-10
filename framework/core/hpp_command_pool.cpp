@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-#include <core/hpp_command_pool.h>
-#include <core/hpp_device.h>
+#include "core/hpp_command_pool.h"
+#include "core/command_buffer.h"
+#include "core/hpp_device.h"
 
 namespace vkb
 {
@@ -26,17 +27,17 @@ HPPCommandPool::HPPCommandPool(HPPDevice                      &d,
                                uint32_t                        queue_family_index,
                                vkb::rendering::HPPRenderFrame *render_frame,
                                size_t                          thread_index,
-                               HPPCommandBuffer::ResetMode     reset_mode) :
+                               vkb::CommandBufferResetMode     reset_mode) :
     device{d}, render_frame{render_frame}, thread_index{thread_index}, reset_mode{reset_mode}
 {
 	vk::CommandPoolCreateFlags flags;
 	switch (reset_mode)
 	{
-		case HPPCommandBuffer::ResetMode::ResetIndividually:
-		case HPPCommandBuffer::ResetMode::AlwaysAllocate:
+		case vkb::CommandBufferResetMode::ResetIndividually:
+		case vkb::CommandBufferResetMode::AlwaysAllocate:
 			flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
 			break;
-		case HPPCommandBuffer::ResetMode::ResetPool:
+		case vkb::CommandBufferResetMode::ResetPool:
 		default:
 			flags = vk::CommandPoolCreateFlagBits::eTransient;
 			break;
@@ -103,16 +104,16 @@ void HPPCommandPool::reset_pool()
 {
 	switch (reset_mode)
 	{
-		case HPPCommandBuffer::ResetMode::ResetIndividually:
+		case vkb::CommandBufferResetMode::ResetIndividually:
 			reset_command_buffers();
 			break;
 
-		case HPPCommandBuffer::ResetMode::ResetPool:
+		case vkb::CommandBufferResetMode::ResetPool:
 			device.get_handle().resetCommandPool(handle);
 			reset_command_buffers();
 			break;
 
-		case HPPCommandBuffer::ResetMode::AlwaysAllocate:
+		case vkb::CommandBufferResetMode::AlwaysAllocate:
 			primary_command_buffers.clear();
 			active_primary_command_buffer_count = 0;
 			secondary_command_buffers.clear();
@@ -124,7 +125,7 @@ void HPPCommandPool::reset_pool()
 	}
 }
 
-HPPCommandBuffer &HPPCommandPool::request_command_buffer(vk::CommandBufferLevel level)
+vkb::core::CommandBufferCpp &HPPCommandPool::request_command_buffer(vk::CommandBufferLevel level)
 {
 	if (level == vk::CommandBufferLevel::ePrimary)
 	{
@@ -133,7 +134,7 @@ HPPCommandBuffer &HPPCommandPool::request_command_buffer(vk::CommandBufferLevel 
 			return *primary_command_buffers[active_primary_command_buffer_count++];
 		}
 
-		primary_command_buffers.emplace_back(std::make_unique<HPPCommandBuffer>(*this, level));
+		primary_command_buffers.emplace_back(std::make_unique<vkb::core::CommandBufferCpp>(*this, level));
 
 		active_primary_command_buffer_count++;
 
@@ -146,7 +147,7 @@ HPPCommandBuffer &HPPCommandPool::request_command_buffer(vk::CommandBufferLevel 
 			return *secondary_command_buffers[active_secondary_command_buffer_count++];
 		}
 
-		secondary_command_buffers.emplace_back(std::make_unique<HPPCommandBuffer>(*this, level));
+		secondary_command_buffers.emplace_back(std::make_unique<vkb::core::CommandBufferCpp>(*this, level));
 
 		active_secondary_command_buffer_count++;
 
@@ -154,7 +155,7 @@ HPPCommandBuffer &HPPCommandPool::request_command_buffer(vk::CommandBufferLevel 
 	}
 }
 
-HPPCommandBuffer::ResetMode HPPCommandPool::get_reset_mode() const
+vkb::CommandBufferResetMode HPPCommandPool::get_reset_mode() const
 {
 	return reset_mode;
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -200,7 +200,7 @@ KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::Render
 	set_output_attachments({0});
 }
 
-void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::CommandBuffer &command_buffer)
+void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	command_buffer.bind_pipeline_layout(*layout);
 
@@ -247,7 +247,7 @@ void KHR16BitArithmeticSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, storagePushConstant16);
 }
 
-void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (khr_16bit_arith_enabled)
 	{

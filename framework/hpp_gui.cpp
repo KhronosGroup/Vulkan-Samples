@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,11 +16,9 @@
  */
 
 #include "hpp_gui.h"
+#include "core/hpp_queue.h"
 #include "vulkan_sample.h"
-#include <common/hpp_utils.h>
-#include <core/hpp_command_pool.h>
 #include <imgui_internal.h>
-
 #include <numeric>
 
 namespace vkb
@@ -407,14 +405,14 @@ bool HPPGui::update_buffers()
 	return updated;
 }
 
-BufferAllocationCpp HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
+vkb::BufferAllocationCpp HPPGui::update_buffers(vkb::core::CommandBufferCpp &command_buffer) const
 {
 	ImDrawData                     *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
 
 	if (!draw_data || (draw_data->TotalVtxCount == 0) || (draw_data->TotalIdxCount == 0))
 	{
-		return BufferAllocationCpp{};
+		return vkb::BufferAllocationCpp{};
 	}
 
 	size_t vertex_buffer_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
@@ -455,7 +453,7 @@ void HPPGui::new_frame() const
 	ImGui::NewFrame();
 }
 
-void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
+void HPPGui::draw(vkb::core::CommandBufferCpp &command_buffer)
 {
 	if (!visible)
 	{
