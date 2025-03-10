@@ -30,16 +30,17 @@
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
-                                                              const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                              void                                       *user_data)
+VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
+                                                                vk::DebugUtilsMessageTypeFlagsEXT             message_type,
+                                                                const vk::DebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                                void                                         *user_data)
 {
 	// Log debug message
-	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
 	{
 		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
-	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
 	{
 		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
