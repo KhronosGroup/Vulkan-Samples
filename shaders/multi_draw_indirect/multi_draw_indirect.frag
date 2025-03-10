@@ -1,6 +1,6 @@
 #version 460
 
-/* Copyright (c) 2021 Holochip Corporation
+/* Copyright (c) 2021-2025 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,6 @@ layout(binding = 1, set = 0) uniform sampler2D textures[225];
 
 void main(void)
 {
-	o_color = vec4(texture(textures[uint(round(in_texture_index))], in_uv));
+	o_color = vec4(texture(textures[in_texture_index], in_uv));
 	o_color.rgb *= 1.5;
 }
