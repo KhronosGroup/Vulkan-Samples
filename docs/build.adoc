@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2024, Arm Limited and Contributors
+- Copyright (c) 2019-2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -221,7 +221,7 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 === Dependencies
 
 * CMake v3.12+
-* C{pp}17 Compiler
+* C{pp}20 Compiler
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
 
