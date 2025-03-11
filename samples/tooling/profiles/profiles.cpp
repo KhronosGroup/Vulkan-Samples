@@ -1,5 +1,5 @@
-/* Copyright (c) 2022-2024, Sascha Willems
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2022-2025, Sascha Willems
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -298,7 +298,7 @@ void Profiles::generate_textures()
 
 		vkb::image_layout_transition(cmd.get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-		VK_CHECK(cmd.end());
+		cmd.end();
 
 		get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
 		get_device().get_suitable_graphics_queue().wait_idle();

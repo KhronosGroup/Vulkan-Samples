@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,17 +129,18 @@ class ConstantData : public vkb::VulkanSampleC
 		/**
 		 * @brief Updates the MVP uniform member variable to then be pushed into the shader
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
+		virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any dynamic shader module updates
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to push a custom data structure to the shader
 		 */
-		virtual void prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		// The MVP uniform data structure
 		MVPUniform mvp_uniform;
@@ -161,17 +162,18 @@ class ConstantData : public vkb::VulkanSampleC
 		/**
 		 * @brief Creates a buffer filled with the mvp data and binds it
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
+		virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
 
 		/**
 		 * @brief Dynamically retrieves the correct pipeline layout depending on the method of UBO
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any push constants
 		 */
-		virtual void prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		// The method by which the UBO subpass will operate
 		Method method;
@@ -190,27 +192,28 @@ class ConstantData : public vkb::VulkanSampleC
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 
 		/**
 		 * @brief No-op, uniform data is sent upfront before the draw call
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
+		virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
 
 		/**
 		 * @brief Returns a default pipeline layout
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any push constants
 		 */
-		virtual void prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		/**
 		 * @brief Overridden to send an index
 		 */
-		virtual void draw_submesh_command(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void draw_submesh_command(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		uint32_t instance_index{0};
 	};
@@ -240,7 +243,7 @@ class ConstantData : public vkb::VulkanSampleC
   private:
 	virtual void draw_gui() override;
 
-	virtual void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	virtual void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
 
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 

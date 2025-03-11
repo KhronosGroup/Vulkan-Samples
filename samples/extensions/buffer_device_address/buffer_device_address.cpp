@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -209,7 +209,7 @@ std::unique_ptr<vkb::core::BufferC> BufferDeviceAddress::create_index_buffer()
 	memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
 	cmd.buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
-	VK_CHECK(cmd.end());
+	cmd.end();
 
 	// Not very optimal, but it's the simplest solution.
 	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);

@@ -311,8 +311,8 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 	vk::LayerSettingsCreateInfoEXT layerSettingsCreateInfo;
 
-	// If layer settings extension enabled by sample, then activate layer settings during instance creation
-	if (std::find(enabled_extensions.begin(), enabled_extensions.end(), VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) != enabled_extensions.end())
+	// If layer settings are defined, then activate the sample's required layer settings during instance creation
+	if (required_layer_settings.size() > 0)
 	{
 		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(required_layer_settings.size());
 		layerSettingsCreateInfo.pSettings    = required_layer_settings.data();

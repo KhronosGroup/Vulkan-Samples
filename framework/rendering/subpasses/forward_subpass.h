@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -64,7 +64,7 @@ class ForwardSubpass : public GeometrySubpass
 	/**
 	 * @brief Record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) override;
+	virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 };
 
 }        // namespace vkb

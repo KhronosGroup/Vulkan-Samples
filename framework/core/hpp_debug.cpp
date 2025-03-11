@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-#include "hpp_debug.h"
-#include "core/hpp_command_buffer.h"
-#include "core/hpp_device.h"
+#include "core/hpp_debug.h"
+#include "core/command_buffer.h"
 
 namespace vkb
 {
@@ -98,7 +97,9 @@ HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
 	}
 }
 
-HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const color) :
+HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer,
+                                         std::string const                 &name,
+                                         glm::vec4 const                    color) :
     HPPScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
 {
 }
