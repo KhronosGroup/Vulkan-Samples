@@ -46,7 +46,8 @@ class HWCPipeStatsProvider : public StatsProvider
 		StatScaling                  scaling;
 		hwcpipe_counter              divisor;
 
-		StatData() = default;
+        StatData(hwcpipe_counter _counter = {}, std::vector<hwcpipe_counter> _fb_list = {}, StatScaling _sc = {}, hwcpipe_counter div = {})
+            : counter(_counter), fallback_list(std::move(_fb_list)), scaling(_sc), divisor(div) {}
 	};
 
 	using StatDataMap = std::unordered_map<StatIndex, StatData, StatIndexHash>;
