@@ -308,8 +308,13 @@ if (NOT (DEFINED ASTC_ARCH))
     # `ld: object file .../libastcdec-avx2-static.a was built for different x86_64 sub-type (8) than link command line (3)`
     # so we fallback to native. If we're on an ARM based mac, there's no need for any SIMD extension, because they support
     # ASTC_LDR natively, so this library won't even be used.
+    # Always build for ARM when compiling or cross-compiling to iOS physical devices, otherwise fall back to native as above
     if (APPLE)
-        set(ASTC_ARCH NATIVE)
+		if(IOS AND ${CMAKE_OSX_SYSROOT} STREQUAL "iphoneos")
+			set(ASTC_ARCH NEON)
+		else()
+			set(ASTC_ARCH NATIVE)
+		endif()
     else()
         include( FindAVX2 )
         include( FindSSE2 )
