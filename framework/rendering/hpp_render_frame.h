@@ -137,7 +137,7 @@ class HPPRenderFrame
 	 *        may trigger a pool re-creation to set necessary flags
 	 * @return The frame's command pool(s)
 	 */
-	std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &get_command_pools(const vkb::core::HPPQueue  &queue,
+	std::vector<std::unique_ptr<vkb::core::CommandPoolCpp>> &get_command_pools(const vkb::core::HPPQueue  &queue,
 	                                                                           vkb::CommandBufferResetMode reset_mode);
 
 	static std::vector<uint32_t> collect_bindings_to_update(const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
@@ -155,7 +155,7 @@ class HPPRenderFrame
 	vkb::core::HPPDevice &device;
 
 	/// Commands pools associated to the frame
-	std::map<uint32_t, std::vector<std::unique_ptr<vkb::core::HPPCommandPool>>> command_pools;
+	std::map<uint32_t, std::vector<std::unique_ptr<vkb::core::CommandPoolCpp>>> command_pools;
 
 	/// Descriptor pools for the frame
 	std::vector<std::unique_ptr<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>>> descriptor_pools;

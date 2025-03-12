@@ -29,7 +29,10 @@ template <vkb::BindingType bindingType>
 class Buffer;
 using BufferCpp = Buffer<vkb::BindingType::Cpp>;
 
-class HPPCommandPool;
+template <vkb::BindingType bindingType>
+class CommandPool;
+using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
+
 class HPPPhysicalDevice;
 class HPPQueue;
 
@@ -83,7 +86,7 @@ class HPPDevice : public vkb::core::VulkanResourceCpp<vk::Device>
 
 	uint32_t get_queue_family_index(vk::QueueFlagBits queue_flag) const;
 
-	vkb::core::HPPCommandPool &get_command_pool();
+	vkb::core::CommandPoolCpp &get_command_pool();
 
 	/**
 	 * @brief Creates a vulkan image and associated device memory
@@ -138,7 +141,7 @@ class HPPDevice : public vkb::core::VulkanResourceCpp<vk::Device>
 	std::vector<std::vector<vkb::core::HPPQueue>> queues;
 
 	/// A command pool associated to the primary queue
-	std::unique_ptr<vkb::core::HPPCommandPool> command_pool;
+	std::unique_ptr<vkb::core::CommandPoolCpp> command_pool;
 
 	/// A fence pool associated to the primary queue
 	std::unique_ptr<vkb::HPPFencePool> fence_pool;
