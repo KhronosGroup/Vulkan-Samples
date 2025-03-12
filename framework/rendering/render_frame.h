@@ -166,10 +166,10 @@ class RenderFrame
 	 *        may trigger a pool re-creation to set necessary flags
 	 * @return The frame's command pool(s)
 	 */
-	std::vector<std::unique_ptr<CommandPool>> &get_command_pools(const Queue &queue, vkb::CommandBufferResetMode reset_mode);
+	std::vector<std::unique_ptr<vkb::core::CommandPoolC>> &get_command_pools(const Queue &queue, vkb::CommandBufferResetMode reset_mode);
 
 	/// Commands pools associated to the frame
-	std::map<uint32_t, std::vector<std::unique_ptr<CommandPool>>> command_pools;
+	std::map<uint32_t, std::vector<std::unique_ptr<vkb::core::CommandPoolC>>> command_pools;
 
 	/// Descriptor pools for the frame
 	std::vector<std::unique_ptr<std::unordered_map<std::size_t, DescriptorPool>>> descriptor_pools;

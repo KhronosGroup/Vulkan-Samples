@@ -19,9 +19,10 @@
 #pragma once
 
 #include "common/hpp_vk_common.h"
-#include "core/hpp_command_pool.h"
+#include "core/command_pool.h"
 #include "core/hpp_descriptor_set_layout.h"
 #include "core/hpp_device.h"
+#include "core/hpp_framebuffer.h"
 #include "core/hpp_physical_device.h"
 #include "core/physical_device.h"
 #include "hpp_resource_binding_state.h"
@@ -32,13 +33,12 @@
 
 namespace vkb
 {
-class CommandPool;
 class QueryPool;
 
 namespace core
 {
 class HPPQueryPool;
-}
+}        // namespace core
 
 namespace rendering
 {
@@ -90,7 +90,6 @@ class CommandBuffer
 	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPBufferMemoryBarrier, vkb::BufferMemoryBarrier>::type;
 	using ColorBlendStateType =
 	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPColorBlendState, vkb::ColorBlendState>::type;
-	using CommandPoolType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPCommandPool, vkb::CommandPool>::type;
 	using DepthStencilStateType =
 	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
 	using FramebufferType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPFramebuffer, vkb::Framebuffer>::type;
@@ -115,7 +114,7 @@ class CommandBuffer
 	using ViewportStateType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPViewportState, vkb::ViewportState>::type;
 
   public:
-	CommandBuffer(CommandPoolType &command_pool, CommandBufferLevelType level);
+	CommandBuffer(vkb::core::CommandPool<bindingType> &command_pool, CommandBufferLevelType level);
 	~CommandBuffer();
 	CommandBuffer(CommandBuffer<bindingType> &&other)            = default;
 	CommandBuffer &operator=(CommandBuffer<bindingType> &&)      = default;
@@ -275,7 +274,7 @@ class CommandBuffer
 	vk::Result                reset_impl(vkb::CommandBufferResetMode reset_mode);
 
   private:
-	vkb::core::HPPCommandPool                                              &command_pool;
+	vkb::core::CommandPoolCpp                                              &command_pool;
 	vkb::core::HPPFramebuffer const                                        *current_framebuffer = nullptr;
 	vkb::core::HPPRenderPass const                                         *current_render_pass = nullptr;
 	std::unordered_map<uint32_t, vkb::core::HPPDescriptorSetLayout const *> descriptor_set_layout_binding_state;
@@ -296,8 +295,8 @@ using CommandBufferC   = CommandBuffer<vkb::BindingType::C>;
 using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandBuffer<bindingType>::CommandBuffer(CommandPoolType &command_pool_, CommandBufferLevelType level_) :
-    vkb::core::VulkanResource<bindingType, CommandBufferType>(nullptr, &command_pool_.get_device()), level(static_cast<vk::CommandBufferLevel>(level_)), command_pool(reinterpret_cast<vkb::core::HPPCommandPool &>(command_pool_)), max_push_constants_size(command_pool_.get_device().get_gpu().get_properties().limits.maxPushConstantsSize)
+inline vkb::core::CommandBuffer<bindingType>::CommandBuffer(vkb::core::CommandPool<bindingType> &command_pool_, CommandBufferLevelType level_) :
+    vkb::core::VulkanResource<bindingType, CommandBufferType>(nullptr, &command_pool_.get_device()), level(static_cast<vk::CommandBufferLevel>(level_)), command_pool(reinterpret_cast<vkb::core::CommandPoolCpp &>(command_pool_)), max_push_constants_size(command_pool_.get_device().get_gpu().get_properties().limits.maxPushConstantsSize)
 {
 	vk::CommandBufferAllocateInfo allocate_info(command_pool.get_handle(), level, 1);
 

@@ -18,12 +18,28 @@
 #pragma once
 
 #include "buffer_pool.h"
-#include <core/hpp_device.h>
-#include <hpp_semaphore_pool.h>
-#include <vulkan/vulkan_hash.hpp>
+#include "core/hpp_descriptor_pool.h"
+#include "core/hpp_descriptor_set.h"
+#include "core/hpp_device.h"
+#include "core/hpp_queue.h"
+#include "hpp_fence_pool.h"
+#include "hpp_semaphore_pool.h"
+#include "rendering/hpp_render_target.h"
+#include "vulkan/vulkan_hash.hpp"
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
+
+template <vkb::BindingType bindingType>
+class CommandPool;
+using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
+}        // namespace core
+
 namespace rendering
 {
 enum class BufferAllocationStrategy
@@ -137,7 +153,7 @@ class HPPRenderFrame
 	 *        may trigger a pool re-creation to set necessary flags
 	 * @return The frame's command pool(s)
 	 */
-	std::vector<std::unique_ptr<vkb::core::HPPCommandPool>> &get_command_pools(const vkb::core::HPPQueue  &queue,
+	std::vector<std::unique_ptr<vkb::core::CommandPoolCpp>> &get_command_pools(const vkb::core::HPPQueue  &queue,
 	                                                                           vkb::CommandBufferResetMode reset_mode);
 
 	static std::vector<uint32_t> collect_bindings_to_update(const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
@@ -155,7 +171,7 @@ class HPPRenderFrame
 	vkb::core::HPPDevice &device;
 
 	/// Commands pools associated to the frame
-	std::map<uint32_t, std::vector<std::unique_ptr<vkb::core::HPPCommandPool>>> command_pools;
+	std::map<uint32_t, std::vector<std::unique_ptr<vkb::core::CommandPoolCpp>>> command_pools;
 
 	/// Descriptor pools for the frame
 	std::vector<std::unique_ptr<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>>> descriptor_pools;
