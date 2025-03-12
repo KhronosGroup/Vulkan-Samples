@@ -236,7 +236,7 @@ endif()
             if(NOT "${TARGET_DXC_ADDITIONAL_ARGUMENTS}" STREQUAL "")
                 string(REPLACE " " ";" TARGET_DXC_ADDITIONAL_ARGUMENTS "${TARGET_DXC_ADDITIONAL_ARGUMENTS}")
             endif ()
-            add_custom_command( PRE_BUILD
+            add_custom_command(
                     OUTPUT ${OUTPUT_FILE}
                     COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${SHADER_FILE_HLSL} -Fo ${OUTPUT_FILE}
                     COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
