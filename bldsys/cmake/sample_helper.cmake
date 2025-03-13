@@ -107,30 +107,6 @@ function(add_sample_with_tags)
 
 endfunction()
 
-function(vkb_add_test)
-    set(options)
-    set(oneValueArgs ID)
-    set(multiValueArgs)
-
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    set(SRC_FILES
-        ${TARGET_ID}.h
-        ${TARGET_ID}.cpp
-    )
-
-    add_project(
-        TYPE "Test"
-        ID ${TARGET_ID}
-        CATEGORY "Tests"
-        AUTHOR " "
-        NAME ${TARGET_ID}
-        DESCRIPTION " "
-        TAGS " "
-        FILES ${SRC_FILES}
-        LIBS test_framework)
-endfunction()
-
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
