@@ -1,5 +1,5 @@
-/* Copyright (c) 2024, Sascha Willems
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2024-2025, Sascha Willems
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,8 @@
 
 #include "scene_graph/components/sub_mesh.h"
 
+#define validation_layer_name "VK_LAYER_KHRONOS_validation"
+
 std::string ShaderDebugPrintf::debug_output{};
 
 VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
@@ -28,11 +30,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
     void                                       *pUserData)
 {
-	// Look for Validation Layer message id names: WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed UNASSIGNED with older Vulkan SDKs)
-	if (strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
+	// Look for Validation Layer message id names: VVL-DEBUG-PRINTF or WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed WARNING and UNASSIGNED with older Vulkan SDKs)
+	if (strcmp(pCallbackData->pMessageIdName, "VVL-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
 	{
 		// Validation messages are a bit verbose, but we only want the text from the shader, so we cut off everything before the first word from the shader message
-		// See scene.vert: debugPrintfEXT("Position = %v4f", outPos);
+		// See scene.vert: debugPrintfEXT("Position = %v3f", outPos);
 		std::string shader_message{pCallbackData->pMessage};
 		shader_message = shader_message.substr(shader_message.find("Position"));
 		debug_output.append(shader_message + "\n");
@@ -46,20 +48,7 @@ ShaderDebugPrintf::ShaderDebugPrintf()
 
 	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 
-	// If layer settings available, use it to configure validation layer for debugPrintfEXT
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
-
-	VkLayerSettingEXT layerSetting;
-	layerSetting.pLayerName   = "VK_LAYER_KHRONOS_validation";
-	layerSetting.pSettingName = "enables";
-	layerSetting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
-	layerSetting.valueCount   = 1;
-
-	// Make this static so layer setting reference remains valid after leaving constructor scope
-	static const char *layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
-	layerSetting.pValues            = &layerEnables;
-
-	add_layer_setting(layerSetting);
+	add_instance_layer(validation_layer_name);
 }
 
 ShaderDebugPrintf::~ShaderDebugPrintf()
@@ -84,10 +73,24 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 
 void ShaderDebugPrintf::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	auto const &supportedFeatures = gpu.get_features();
+	auto       &requestedFeatures = gpu.get_mutable_requested_features();
+
+	// debugPrintfEXT requires fragmentStoresAndAtomics and vertexPipelineStoresAndAtomics
+	if (supportedFeatures.fragmentStoresAndAtomics && supportedFeatures.vertexPipelineStoresAndAtomics)
 	{
-		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
+		requestedFeatures.fragmentStoresAndAtomics       = VK_TRUE;
+		requestedFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
+	}
+	else
+	{
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support features fragmentStoresAndAtomics and/or vertexPipelineStoresAndAtomics");
+	}
+
+	// Enable anisotropic filtering if supported
+	if (supportedFeatures.samplerAnisotropy)
+	{
+		requestedFeatures.samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -417,46 +420,67 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-// This sample overrides the per-sample layer framework to force activation of the validation layer
-const std::vector<const char *> ShaderDebugPrintf::get_validation_layers()
-{
-	// Validation layer is already enabled for debug builds, so initialize override list to default (empty)
-	std::vector<const char *> validation_layers = ApiVulkanSample::get_validation_layers();
-
-#if !defined(VKB_DEBUG) && !defined(VKB_VALIDATION_LAYERS)
-	// Force activation of validation layer on release builds for access to debugPrintfEXT feature
-	validation_layers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
-
-	return validation_layers;
-}
-
 // This sample overrides the instance creation part of the framework to chain in additional structures
 std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 {
-	uint32_t instanceApiVersion;
-	VK_CHECK(vkEnumerateInstanceVersion(&instanceApiVersion));
+	auto debugprintf_api_version = VK_API_VERSION_1_1;
 
-	uint32_t instance_extension_count;
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
-	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+	// Enumerate all instance layer properties so we can find and use the validation layer (VVL) version in subsequent steps
+	// The VVL version is needed to work around validation layer performance issues when running with Vulkan SDKs <= 1.3.290
+	uint32_t layer_property_count;
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, nullptr));
+	std::vector<VkLayerProperties> layer_properties(layer_property_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, layer_properties.data()));
 
-	// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
-	// For backwards compatibility with SDKs < 1.3.272 without VK_EXT_layer_settings, the remainder of this custom override is required
-	if (std::any_of(available_instance_extensions.begin(),
-	                available_instance_extensions.end(),
-	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+	const auto vvl_properties = std::find_if(layer_properties.begin(),
+	                                         layer_properties.end(),
+	                                         [](VkLayerProperties const &properties) { return strcmp(properties.layerName, validation_layer_name) == 0; });
+
+	// Make sure we have found the validation layer before checking the VVL version and enumerating VVL instance extensions for VK_EXT_layer_settings
+	if (vvl_properties != layer_properties.end())
 	{
-		// debugPrintfEXT layer feature requires Vulkan API 1.1, but use API 1.2 until VVL performance fix is available in SDKs > 1.3.290
-		// See VVL issue https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7562 for defect and fix information
-		set_api_version(instanceApiVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1);
+		// debugPrintfEXT layer feature requires Vulkan API 1.1, but override with API 1.2 for Vulkan SDKs <= 1.3.290 to work around VVL performance defect
+		// See VVL issue https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7562 for defect and fix information (fix available in SDK 1.3.296)
+		// Note: An additional, unrelated VVL performance issue affecting nVidia GPUs was found in SDK 1.3.296 following release - for nVidia GPUs please
+		//       use SDK 1.3.290 until a fix is made available in a later SDK (see https://github.com/KhronosGroup/Vulkan-ValidationLayers/pull/8766).
+		if (vvl_properties->specVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290))
+		{
+			debugprintf_api_version = VK_API_VERSION_1_2;
+		}
 
-		// Run standard create_instance() from framework (with set_api_version and layer settings support) and return
-		return VulkanSample::create_instance();
+		// Enumerate all instance extensions for the validation layer to determine if VK_EXT_layer_settings is supported by the layer
+		uint32_t vvl_extension_count;
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &vvl_extension_count, nullptr));
+		std::vector<VkExtensionProperties> vvl_instance_extensions(vvl_extension_count);
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &vvl_extension_count, vvl_instance_extensions.data()));
+
+		// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
+		// For this case set Vulkan API version and return via base class, otherwise the remainder of this custom override is required
+		if (std::any_of(vvl_instance_extensions.begin(),
+		                vvl_instance_extensions.end(),
+		                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+		{
+			set_api_version(debugprintf_api_version);
+
+			// Since layer settings extension is available, use it to configure validation layer for debugPrintfEXT
+			VkLayerSettingEXT layerSetting;
+			layerSetting.pLayerName   = validation_layer_name;
+			layerSetting.pSettingName = "enables";
+			layerSetting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
+			layerSetting.valueCount   = 1;
+
+			// Make this static so layer setting reference remains valid after leaving the current scope
+			static const char *layerEnables = "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
+			layerSetting.pValues            = &layerEnables;
+
+			add_layer_setting(layerSetting);
+
+			// Run standard create_instance() from framework with set_api_version() and add_layer_setting() support
+			return VulkanSample::create_instance();
+		}
 	}
 
-	// Run remainder of this custom create_instance() (without layer settings support) and return
+	// As a fallack, run remainder of this custom create_instance() override (without layer settings support) and return
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -467,7 +491,15 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 
 	enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
 #if (defined(VKB_ENABLE_PORTABILITY))
+	// Enumerate all instance extensions for the loader + driver to determine if VK_KHR_portability_enumeration is available
+	uint32_t available_extension_count;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &available_extension_count, nullptr));
+	std::vector<VkExtensionProperties> available_instance_extensions(available_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &available_extension_count, available_instance_extensions.data()));
+
+	// If VK_KHR_portability_enumeration is available in the portability implementation, then we must enable the extension
 	bool portability_enumeration_available = false;
 	if (std::any_of(available_instance_extensions.begin(),
 	                available_instance_extensions.end(),
@@ -481,7 +513,10 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader debugprintf";
 	app_info.pEngineName      = "Vulkan Samples";
-	app_info.apiVersion       = instanceApiVersion <= VK_MAKE_API_VERSION(0, 1, 3, 290) ? VK_API_VERSION_1_2 : VK_API_VERSION_1_1;
+	app_info.apiVersion       = debugprintf_api_version;
+
+	// Enable VK_EXT_validation_features extension for configuring validation layer features using VkValidationFeaturesEXT
+	enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 
 	// Shader printf is a feature of the validation layers that needs to be enabled
 	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
@@ -490,7 +525,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 	validation_features.enabledValidationFeatureCount = static_cast<uint32_t>(validation_feature_enables.size());
 	validation_features.pEnabledValidationFeatures    = validation_feature_enables.data();
 
-	std::vector<const char *> validation_layers = {"VK_LAYER_KHRONOS_validation"};
+	std::vector<const char *> validation_layers = {validation_layer_name};
 
 	VkInstanceCreateInfo instance_create_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 	instance_create_info.ppEnabledExtensionNames = enabled_extensions.data();

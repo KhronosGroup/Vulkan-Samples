@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -440,7 +440,7 @@ VkImageCompressionFixedRateFlagBitsEXT ImageCompressionControlSample::select_fix
 	return VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT;
 }
 
-void ImageCompressionControlSample::render(vkb::CommandBuffer &command_buffer)
+void ImageCompressionControlSample::render(vkb::core::CommandBufferC &command_buffer)
 {
 	// Scene (forward rendering) pass
 	VulkanSample::render(command_buffer);

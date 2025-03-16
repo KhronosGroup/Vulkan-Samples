@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,22 +17,48 @@
 
 #pragma once
 
-#include <imgui.h>
-
-#include "core/hpp_command_buffer.h"
-#include "core/hpp_image_view.h"
-#include "core/hpp_pipeline_layout.h"
-#include "debug_info.h"
+#include "buffer_pool.h"
+#include "common/vk_common.h"
 #include "drawer.h"
 #include "filesystem/legacy.h"
-#include "platform/input_events.h"
-#include "stats/hpp_stats.h"
+#include "stats/stats_common.h"
+#include "timer.h"
+#include <functional>
+#include <glm/glm.hpp>
+#include <memory>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
+class DebugInfo;
+class InputEvent;
+
 template <vkb::BindingType bindingType>
 class VulkanSample;
 using VulkanSampleCpp = VulkanSample<vkb::BindingType::Cpp>;
+
+class Window;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
+class Buffer;
+using BufferCpp = Buffer<vkb::BindingType::Cpp>;
+
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
+
+class HPPImage;
+class HPPImageView;
+class HPPPipelineLayout;
+class HPPSampler;
+}        // namespace core
+
+namespace stats
+{
+class HPPStats;
+}
 
 /**
  * @brief Helper structure for fonts loaded from TTF
@@ -156,7 +182,7 @@ class HPPGui
 	 * @brief Draws the HPPGui
 	 * @param command_buffer Command buffer to register draw-commands
 	 */
-	void draw(vkb::core::HPPCommandBuffer &command_buffer);
+	void draw(vkb::core::CommandBufferCpp &command_buffer);
 
 	/**
 	 * @brief Draws the HPPGui
@@ -223,9 +249,10 @@ class HPPGui
   private:
 	/**
 	 * @brief Updates Vulkan buffers
-	 * @param frame Frame to render into
+	 * @param command_buffer Command buffer to draw into
+	 * @return Vertex buffer allocation
 	 */
-	void update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const;
+	BufferAllocationCpp update_buffers(vkb::core::CommandBufferCpp &command_buffer) const;
 
   private:
 	/**

@@ -1,4 +1,5 @@
-# Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -393,7 +394,7 @@ if(NOT ANDROID AND NOT IOS)
         option(GLFW_INSTALL OFF)
         option(BUILD_SHARED_LIBS ON)
         if (VKB_WSI_SELECTION STREQUAL WAYLAND)
-            set(GLFW_USE_WAYLAND ON)
+            set(GLFW_BUILD_WAYLAND ON)
         endif()
 
         add_subdirectory(glfw)
@@ -419,22 +420,6 @@ add_library(ctpl INTERFACE)
 set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
 target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
 target_include_directories(ctpl SYSTEM INTERFACE ${CTPL_DIR})
-
-# cli11
-set(CLI11_SANITIZERS OFF)
-set(CLI11_BUILD_DOCS OFF)
-set(CLI11_BUILD_TESTS OFF)
-set(CLI11_BUILD_EXAMPLES OFF)
-set(CLI11_BUILD_EXAMPLES_JSON OFF)
-set(CLI11_SINGLE_FILE_TESTS OFF)
-set(CLI11_INSTALL OFF)
-set(CLI11_FORCE_LIBCXX OFF)
-set(CLI11_CUDA_TESTS OFF)
-set(CLI11_CLANG_TIDY OFF)
-add_subdirectory(cli11)
-if (TARGET CLI11 AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-    set_property(TARGET CLI11 PROPERTY FOLDER "ThirdParty")
-endif()
 
 # OpenCL
 add_library(opencl INTERFACE)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -262,7 +262,7 @@ bool RenderContext::handle_surface_changes(bool force_update)
 	return false;
 }
 
-CommandBuffer &RenderContext::begin(CommandBuffer::ResetMode reset_mode)
+vkb::core::CommandBufferC &RenderContext::begin(vkb::CommandBufferResetMode reset_mode)
 {
 	assert(prepared && "RenderContext not prepared for rendering, call prepare()");
 
@@ -280,12 +280,12 @@ CommandBuffer &RenderContext::begin(CommandBuffer::ResetMode reset_mode)
 	return get_active_frame().request_command_buffer(queue, reset_mode);
 }
 
-void RenderContext::submit(CommandBuffer &command_buffer)
+void RenderContext::submit(vkb::core::CommandBufferC &command_buffer)
 {
 	submit({&command_buffer});
 }
 
-void RenderContext::submit(const std::vector<CommandBuffer *> &command_buffers)
+void RenderContext::submit(const std::vector<vkb::core::CommandBufferC *> &command_buffers)
 {
 	assert(frame_active && "RenderContext is inactive, cannot submit command buffer. Please call begin()");
 
@@ -358,10 +358,16 @@ void RenderContext::begin_frame()
 	wait_frame();
 }
 
-VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage)
+VkSemaphore RenderContext::submit(const Queue                                    &queue,
+                                  const std::vector<vkb::core::CommandBufferC *> &command_buffers,
+                                  VkSemaphore                                     wait_semaphore,
+                                  VkPipelineStageFlags                            wait_pipeline_stage)
 {
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const CommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(),
+	               command_buffers.end(),
+	               cmd_buf_handles.begin(),
+	               [](const vkb::core::CommandBufferC *cmd_buf) { return cmd_buf->get_handle(); });
 
 	RenderFrame &frame = get_active_frame();
 
@@ -389,10 +395,13 @@ VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandB
 	return signal_semaphore;
 }
 
-void RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers)
+void RenderContext::submit(const Queue &queue, const std::vector<vkb::core::CommandBufferC *> &command_buffers)
 {
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const CommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(),
+	               command_buffers.end(),
+	               cmd_buf_handles.begin(),
+	               [](const vkb::core::CommandBufferC *cmd_buf) { return cmd_buf->get_handle(); });
 
 	RenderFrame &frame = get_active_frame();
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-#include "core/hpp_image.h"
-
 #include "core/hpp_device.h"
+#include "core/hpp_image.h"
+#include "core/hpp_image_view.h"
 
 namespace vkb
 {
@@ -79,7 +79,7 @@ HPPImage::HPPImage(HPPDevice              &device,
 {}
 
 HPPImage::HPPImage(HPPDevice &device, HPPImageBuilder const &builder) :
-    HPPAllocated{builder.get_allocation_create_info(), nullptr, &device}, create_info{builder.get_create_info()}
+    vkb::allocated::AllocatedCpp<vk::Image>{builder.get_allocation_create_info(), nullptr, &device}, create_info{builder.get_create_info()}
 {
 	get_handle()           = create_image(create_info.operator const VkImageCreateInfo &());
 	subresource.arrayLayer = create_info.arrayLayers;
@@ -96,7 +96,7 @@ HPPImage::HPPImage(HPPDevice              &device,
                    vk::Format              format,
                    vk::ImageUsageFlags     image_usage,
                    vk::SampleCountFlagBits sample_count) :
-    HPPAllocated{handle, &device}
+    vkb::allocated::AllocatedCpp<vk::Image>{handle, &device}
 {
 	create_info.samples     = sample_count;
 	create_info.format      = format;
@@ -109,7 +109,7 @@ HPPImage::HPPImage(HPPDevice              &device,
 }
 
 HPPImage::HPPImage(HPPImage &&other) noexcept :
-    HPPAllocated{std::move(other)},
+    vkb::allocated::AllocatedCpp<vk::Image>{std::move(other)},
     create_info(std::exchange(other.create_info, {})),
     subresource(std::exchange(other.subresource, {})),
     views(std::exchange(other.views, {}))
@@ -132,7 +132,7 @@ uint8_t *HPPImage::map()
 	{
 		LOGW("Mapping image memory that is not linear");
 	}
-	return Allocated::map();
+	return vkb::allocated::AllocatedCpp<vk::Image>::map();
 }
 
 vk::ImageType HPPImage::get_type() const

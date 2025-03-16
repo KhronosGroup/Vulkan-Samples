@@ -1,0 +1,45 @@
+////
+- Copyright (c) 2019-2024, Arm Limited and Contributors
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Vulkan Samples third-party dependencies
+// omit in toc
+:pp: {plus}{plus}
+
+This project has multiple third-party dependencies, each of which may have independent licensing:
+
+* https://github.com/ARM-software/astc-encoder[astc-encoder]: ASTC Evaluation Codec
+* https://github.com/catchorg/Catch2[Catch2]: Modern C++ test framework
+* https://github.com/CLIUtils/CLI11[CLI11] Command line parser for C++11 and beyond
+* https://github.com/vit-vit/CTPL[CTPL]: Thread Pool Library
+* https://github.com/fmtlib/fmt[fmt]: A modern formating library
+* https://github.com/glfw/glfw[glfw]: A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
+* https://github.com/g-truc/glm[glm]: OpenGL Mathematics
+* https://github.com/KhronosGroup/glslang[glslang]: Shader front end and validator
+* https://github.com/ARM-software/HWCPipe[HWCPipe]: Interface to mobile Hardware Counters
+* https://github.com/ocornut/imgui[dear imgui]: Immediate Mode Graphical User Interface
+* https://github.com/KhronosGroup/KTX-Software[KTX-Software]: Khronos Texture Library and Tools
+* https://github.com/KhronosGroup/OpenCL-Headers[OpenCL]: Khronos OpenCL-Headers
+* https://github.com/gabime/spdlog[spdlog]: Fast C{pp} logging library
+* https://github.com/KhronosGroup/SPIRV-Cross[SPIRV-Cross]: Parses and converts SPIR-V to other shader languages
+* https://github.com/nothings/stb[stb]: Single-file public domain (or MIT licensed) libraries
+* https://github.com/syoyo/tinygltf[tinygltf]: Header only C{pp}11 glTF 2.0 file parser
+* https://github.com/wolfpld/tracy[tracy]: Frame profiler
+* https://github.com/nlohmann/json[nlohmann json]: C{pp} JSON Library (included by https://github.com/syoyo/tinygltf[tinygltf])
+* https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator[vma]: Vulkan Memory Allocator
+* https://github.com/zeux/volk[volk]: Meta loader for Vulkan API
+* https://github.com/KhronosGroup/Vulkan-Docs[Vulkan]: Sources for the formal documentation of the Vulkan API

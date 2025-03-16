@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -156,14 +156,18 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 		vkb::ShaderVariant variant;
 		if (supports_push_constant16)
 		{
-			variant.add_define("PUSH_CONSTANT_16");
+			auto &module_fp16 =
+			    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
+			                                                      vkb::ShaderSource{"16bit_arithmetic/compute_buffer_fp16.comp"}, variant);
+			compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
 		}
-
-		const char *shader = "16bit_arithmetic/compute_buffer_fp16.comp";
-		auto       &module_fp16 =
-		    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-		                                                      vkb::ShaderSource{shader}, variant);
-		compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
+		else
+		{
+			auto &module_fp16 =
+			    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
+			                                                      vkb::ShaderSource{"16bit_arithmetic/compute_buffer_fp16_fallback.comp"}, variant);
+			compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
+		}
 	}
 	else
 	{
@@ -196,7 +200,7 @@ KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::Render
 	set_output_attachments({0});
 }
 
-void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::CommandBuffer &command_buffer)
+void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	command_buffer.bind_pipeline_layout(*layout);
 
@@ -243,7 +247,7 @@ void KHR16BitArithmeticSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, storagePushConstant16);
 }
 
-void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (khr_16bit_arith_enabled)
 	{

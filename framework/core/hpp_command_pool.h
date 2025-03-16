@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include <core/hpp_command_buffer.h>
-#include <cstdint>
+#include "common/vk_common.h"
+#include <memory>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
@@ -29,6 +30,10 @@ class HPPRenderFrame;
 
 namespace core
 {
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
+
 class HPPDevice;
 
 class HPPCommandPool
@@ -38,7 +43,7 @@ class HPPCommandPool
 	               uint32_t                        queue_family_index,
 	               vkb::rendering::HPPRenderFrame *render_frame = nullptr,
 	               size_t                          thread_index = 0,
-	               HPPCommandBuffer::ResetMode     reset_mode   = HPPCommandBuffer::ResetMode::ResetPool);
+	               vkb::CommandBufferResetMode     reset_mode   = vkb::CommandBufferResetMode::ResetPool);
 	HPPCommandPool(const HPPCommandPool &) = delete;
 	HPPCommandPool(HPPCommandPool &&other);
 	~HPPCommandPool();
@@ -50,25 +55,25 @@ class HPPCommandPool
 	vk::CommandPool                 get_handle() const;
 	uint32_t                        get_queue_family_index() const;
 	vkb::rendering::HPPRenderFrame *get_render_frame();
-	HPPCommandBuffer::ResetMode     get_reset_mode() const;
+	vkb::CommandBufferResetMode     get_reset_mode() const;
 	size_t                          get_thread_index() const;
-	HPPCommandBuffer               &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
+	vkb::core::CommandBufferCpp    &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 	void                            reset_pool();
 
   private:
 	void reset_command_buffers();
 
   private:
-	HPPDevice                                     &device;
-	vk::CommandPool                                handle             = nullptr;
-	vkb::rendering::HPPRenderFrame                *render_frame       = nullptr;
-	size_t                                         thread_index       = 0;
-	uint32_t                                       queue_family_index = 0;
-	std::vector<std::unique_ptr<HPPCommandBuffer>> primary_command_buffers;
-	uint32_t                                       active_primary_command_buffer_count = 0;
-	std::vector<std::unique_ptr<HPPCommandBuffer>> secondary_command_buffers;
-	uint32_t                                       active_secondary_command_buffer_count = 0;
-	HPPCommandBuffer::ResetMode                    reset_mode                            = HPPCommandBuffer::ResetMode::ResetPool;
+	HPPDevice                                                &device;
+	vk::CommandPool                                           handle             = nullptr;
+	vkb::rendering::HPPRenderFrame                           *render_frame       = nullptr;
+	size_t                                                    thread_index       = 0;
+	uint32_t                                                  queue_family_index = 0;
+	std::vector<std::unique_ptr<vkb::core::CommandBufferCpp>> primary_command_buffers;
+	uint32_t                                                  active_primary_command_buffer_count = 0;
+	std::vector<std::unique_ptr<vkb::core::CommandBufferCpp>> secondary_command_buffers;
+	uint32_t                                                  active_secondary_command_buffer_count = 0;
+	vkb::CommandBufferResetMode                               reset_mode                            = vkb::CommandBufferResetMode::ResetPool;
 };
 }        // namespace core
 }        // namespace vkb

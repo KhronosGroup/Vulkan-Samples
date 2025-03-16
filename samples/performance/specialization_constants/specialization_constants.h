@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -58,7 +58,7 @@ class SpecializationConstants : public vkb::VulkanSampleC
 
 		virtual void prepare() override;
 
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 
 		/**
 		 * @brief Create a buffer allocation from scene graph lights for the specialization constants sample
@@ -71,7 +71,7 @@ class SpecializationConstants : public vkb::VulkanSampleC
 		 * @return BufferAllocation A buffer allocation created for use in shaders
 		 */
 		template <typename T>
-		vkb::BufferAllocationC allocate_custom_lights(vkb::CommandBuffer &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
+		vkb::BufferAllocationC allocate_custom_lights(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
 		{
 			T light_info;
 			light_info.count = vkb::to_u32(light_count);
@@ -93,7 +93,7 @@ class SpecializationConstants : public vkb::VulkanSampleC
 				}
 			}
 
-			std::copy(lights.begin(), lights.end(), light_info.lights);
+			std::copy_n(lights.begin(), light_count, light_info.lights);
 
 			auto                  &render_frame = get_render_context().get_active_frame();
 			vkb::BufferAllocationC light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
@@ -108,7 +108,7 @@ class SpecializationConstants : public vkb::VulkanSampleC
 
 	virtual void draw_gui() override;
 
-	virtual void render(vkb::CommandBuffer &command_buffer) override;
+	virtual void render(vkb::core::CommandBufferC &command_buffer) override;
 
 	std::unique_ptr<vkb::RenderPipeline> create_specialization_renderpass();
 

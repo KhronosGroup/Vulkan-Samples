@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,6 +27,13 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
+}        // namespace core
+
 namespace sg
 {
 class Camera;
@@ -62,7 +69,7 @@ class LightingSubpass : public vkb::rendering::SubpassC
 
 	virtual void prepare() override;
 
-	void draw(CommandBuffer &command_buffer) override;
+	void draw(vkb::core::CommandBufferC &command_buffer) override;
 
   private:
 	sg::Camera &camera;

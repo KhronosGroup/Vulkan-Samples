@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2025, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -714,7 +714,7 @@ void MobileNerfRayQuery::create_static_object_buffers(int models_entry)
 	staging_index_buffer->update(model.indices);
 
 	// Copy over the data for each of the models
-	with_vkb_command_buffer([&](vkb::CommandBuffer &cmd) {
+	with_vkb_command_buffer([&](vkb::core::CommandBufferC &cmd) {
 		cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
 		cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
 	});

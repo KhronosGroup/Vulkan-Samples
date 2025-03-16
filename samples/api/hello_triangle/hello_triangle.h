@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -124,9 +124,6 @@ class HelloTriangle : public vkb::Application
 
 	bool validate_extensions(const std::vector<const char *>          &required,
 	                         const std::vector<VkExtensionProperties> &available);
-
-	bool validate_layers(const std::vector<const char *>      &required,
-	                     const std::vector<VkLayerProperties> &available);
 
 	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
 

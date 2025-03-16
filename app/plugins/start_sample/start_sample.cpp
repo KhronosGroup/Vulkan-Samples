@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,61 +23,77 @@
 namespace plugins
 {
 StartSample::StartSample() :
-    StartSampleTags("Apps",
+    StartSampleTags("StartSample",
                     "A collection of flags to samples and apps.",
-                    {}, {&sample_subcmd, &samples_subcmd, &samples_oneline_subcmd})
+                    {},
+                    {{"sample", "Run a specific sample"},
+                     {"samples", "List available samples with descriptions"},
+                     {"samples-oneline", "List available samples, one per line"}})
 {
 }
 
-bool StartSample::is_active(const vkb::CommandParser &parser)
+void StartSample::launch_sample(apps::SampleInfo const *sample) const
 {
-	return parser.contains(&sample_cmd) ||
-	       parser.contains(&samples_subcmd) ||
-	       parser.contains(&samples_oneline_subcmd);
+	vkb::Window::OptionalProperties properties;
+	properties.title = "Vulkan Samples: " + sample->name;
+	platform->set_window_properties(properties);
+	platform->request_application(sample);
 }
 
-void StartSample::init(const vkb::CommandParser &parser)
+void StartSample::list_samples(bool one_per_line) const
 {
-	if (parser.contains(&sample_cmd))
+	auto samples = apps::get_samples();
+
+	LOGI("");
+	LOGI("Available Samples");
+	LOGI("");
+
+	for (auto *app : samples)
 	{
-		// Launch Sample
-		auto *sample = apps::get_sample(parser.as<std::string>(&sample_cmd));
-		if (sample != nullptr)
+		auto sample = reinterpret_cast<apps::SampleInfo *>(app);
+		if (one_per_line)
 		{
-			vkb::Window::OptionalProperties properties;
-			std::string                     title = "Vulkan Samples: " + sample->name;
-			properties.title                      = title;
-			platform->set_window_properties(properties);
-			platform->request_application(sample);
+			LOGI("{}", sample->id.c_str());
+		}
+		else
+		{
+			LOGI("{}", sample->name.c_str());
+			LOGI("\tid: {}", sample->id.c_str());
+			LOGI("\tdescription: {}", sample->description.c_str());
+			LOGI("");
 		}
 	}
-	else if (parser.contains(&samples_subcmd) || parser.contains(&samples_oneline_subcmd))
+
+	platform->close();
+}
+
+bool StartSample::handle_command(std::deque<std::string> &arguments) const
+{
+	assert(!arguments.empty());
+	if (arguments[0] == "sample")
 	{
-		// List samples
-
-		auto samples = apps::get_samples();
-
-		LOGI("");
-		LOGI("Available Samples");
-		LOGI("");
-
-		for (auto *app : samples)
+		if (arguments.size() < 2)
 		{
-			auto sample = reinterpret_cast<apps::SampleInfo *>(app);
-			if (parser.contains(&samples_subcmd))
-			{
-				LOGI("{}", sample->name.c_str());
-				LOGI("\tid: {}", sample->id.c_str());
-				LOGI("\tdescription: {}", sample->description.c_str());
-				LOGI("");
-			}
-			else
-			{
-				LOGI("{}", sample->id.c_str());
-			}
+			LOGE("Command \"sample\" is missing the actual sample_id to launch!");
+			return false;
 		}
-
-		platform->close();
+		auto *sample = apps::get_sample(arguments[1]);
+		if (!sample)
+		{
+			LOGE("Command \"sample\" is called with an unknown sample_id \"{}\"!", arguments[1]);
+			return false;
+		}
+		launch_sample(sample);
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
 	}
+	if ((arguments[0] == "samples") || (arguments[0] == "samples-oneline"))
+	{
+		list_samples(arguments[0] == "samples-oneline");
+		arguments.pop_front();
+		return true;
+	}
+	return false;
 }
 }        // namespace plugins

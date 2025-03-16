@@ -1,5 +1,6 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
- * Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2021-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,10 +40,6 @@ class FileLogger : public FileLoggerTags
 
 	virtual ~FileLogger() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	vkb::FlagCommand log_file_flag = {vkb::FlagType::OneValue, "log-file", "", "Write log messages to the given file name"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 };
 }        // namespace plugins

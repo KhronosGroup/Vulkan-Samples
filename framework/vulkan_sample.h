@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,10 +22,9 @@
 #include "hpp_gltf_loader.h"
 #include "hpp_gui.h"
 #include "platform/application.h"
+#include "platform/window.h"
 #include "rendering/hpp_render_pipeline.h"
-#include "scene_graph/components/camera.h"
-#include "scene_graph/hpp_scene.h"
-#include "scene_graph/scripts/animation.h"
+#include "stats/hpp_stats.h"
 
 #if defined(PLATFORM__MACOS)
 #	include <TargetConditionals.h>
@@ -103,11 +102,10 @@ namespace vkb
 
 class Gui;
 class RenderPipeline;
+class Stats;
 
 namespace core
 {
-class HPPCommandBuffer;
-class HPPDebugUtils;
 class HPPDevice;
 class HPPInstance;
 class HPPPhysicalDevice;
@@ -136,7 +134,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using CommandBufferType  = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPCommandBuffer, vkb::CommandBuffer>::type;
 	using DeviceType         = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 	using GuiType            = typename std::conditional<bindingType == BindingType::Cpp, vkb::HPPGui, vkb::Gui>::type;
 	using InstanceType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPInstance, vkb::Instance>::type;
@@ -187,7 +184,7 @@ class VulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw(CommandBufferType &command_buffer, RenderTargetType &render_target);
+	virtual void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target);
 
 	/**
 	 * @brief Samples should override this function to draw their interface
@@ -199,14 +196,7 @@ class VulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw_renderpass(CommandBufferType &command_buffer, RenderTargetType &render_target);
-
-	/**
-	 * @brief Get additional sample-specific instance layers.
-	 *
-	 * @return Vector of additional instance layers. Default is empty vector.
-	 */
-	virtual const std::vector<const char *> get_validation_layers();
+	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target);
 
 	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -217,7 +207,7 @@ class VulkanSample : public vkb::Application
 	 * @brief Triggers the render pipeline, it can be overridden by samples to specialize their rendering logic
 	 * @param command_buffer The command buffer to record the commands to
 	 */
-	virtual void render(CommandBufferType &command_buffer);
+	virtual void render(vkb::core::CommandBuffer<bindingType> &command_buffer);
 
 	/**
 	 * @brief Request features from the gpu based on what is supported
@@ -252,6 +242,13 @@ class VulkanSample : public vkb::Application
 	 * @param optional (Optional) Whether the extension is optional
 	 */
 	void add_instance_extension(const char *extension, bool optional = false);
+
+	/**
+	 * @brief Add a sample-specific instance layer
+	 * @param layer The layer name
+	 * @param optional (Optional) Whether the extension is optional
+	 */
+	void add_instance_layer(const char *layer, bool optional = false);
 
 	/**
 	 * @brief Add a sample-specific layer setting
@@ -341,17 +338,17 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Set viewport and scissor state in command buffer for a given extent
 	 */
-	static void set_viewport_and_scissor(CommandBufferType const &command_buffer, Extent2DType const &extent);
+	static void set_viewport_and_scissor(vkb::core::CommandBuffer<bindingType> const &command_buffer, Extent2DType const &extent);
 
 	/// <summary>
 	/// PRIVATE INTERFACE
 	/// </summary>
   private:
 	void        create_render_context_impl(const std::vector<vk::SurfaceFormatKHR> &surface_priority_list);
-	void        draw_impl(vkb::core::HPPCommandBuffer &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
-	void        draw_renderpass_impl(vkb::core::HPPCommandBuffer &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
-	void        render_impl(vkb::core::HPPCommandBuffer &command_buffer);
-	static void set_viewport_and_scissor_impl(vkb::core::HPPCommandBuffer const &command_buffer, vk::Extent2D const &extent);
+	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
+	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
+	void        render_impl(vkb::core::CommandBufferCpp &command_buffer);
+	static void set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer, vk::Extent2D const &extent);
 
 	/**
 	 * @brief Get sample-specific device extensions.
@@ -366,6 +363,13 @@ class VulkanSample : public vkb::Application
 	 * @return Map of instance extensions and whether or not they are optional. Default is empty map.
 	 */
 	std::unordered_map<const char *, bool> const &get_instance_extensions() const;
+
+	/**
+	 * @brief Get sample-specific instance layers.
+	 *
+	 * @return Map of instance layers and whether or not they are optional. Default is empty map.
+	 */
+	std::unordered_map<const char *, bool> const &get_instance_layers() const;
 
 	/**
 	 * @brief Get sample-specific layer settings.
@@ -431,6 +435,9 @@ class VulkanSample : public vkb::Application
 
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
+
+	/** @brief Set of instance layers to be enabled for this example and whether they are optional (must be set in the derived constructor) */
+	std::unordered_map<const char *, bool> instance_layers;
 
 	/** @brief Vector of layer settings to be enabled for this example (must be set in the derived constructor) */
 	std::vector<vk::LayerSettingEXT> layer_settings;
@@ -510,7 +517,7 @@ inline std::unique_ptr<typename VulkanSample<bindingType>::DeviceType> VulkanSam
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename VulkanSample<bindingType>::InstanceType> VulkanSample<bindingType>::create_instance()
 {
-	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_validation_layers(), get_layer_settings(), api_version);
+	return std::make_unique<InstanceType>(get_name(), get_instance_extensions(), get_instance_layers(), get_layer_settings(), api_version);
 }
 
 template <vkb::BindingType bindingType>
@@ -548,7 +555,7 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw(CommandBufferType &command_buffer, RenderTargetType &render_target)
+inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -556,12 +563,14 @@ inline void VulkanSample<bindingType>::draw(CommandBufferType &command_buffer, R
 	}
 	else
 	{
-		draw_impl(reinterpret_cast<vkb::core::HPPCommandBuffer &>(command_buffer), reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
+		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
+		          reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &command_buffer, vkb::rendering::HPPRenderTarget &render_target)
+inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
+                                                 vkb::rendering::HPPRenderTarget &render_target)
 {
 	auto &views = render_target.get_views();
 
@@ -599,13 +608,14 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::HPPCommandBuffer &co
 		render_target.set_layout(1, memory_barrier.new_layout);
 	}
 
+	// draw_renderpass is a virtual function, thus we have to call that, instead of directly calling draw_renderpass_impl!
 	if constexpr (bindingType == BindingType::Cpp)
 	{
 		draw_renderpass(command_buffer, render_target);
 	}
 	else
 	{
-		draw_renderpass(reinterpret_cast<vkb::CommandBuffer &>(command_buffer), reinterpret_cast<vkb::RenderTarget &>(render_target));
+		draw_renderpass(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), reinterpret_cast<vkb::RenderTarget &>(render_target));
 	}
 
 	{
@@ -627,7 +637,7 @@ inline void VulkanSample<bindingType>::draw_gui()
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw_renderpass(CommandBufferType &command_buffer, RenderTargetType &render_target)
+inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -635,24 +645,25 @@ inline void VulkanSample<bindingType>::draw_renderpass(CommandBufferType &comman
 	}
 	else
 	{
-		draw_renderpass_impl(reinterpret_cast<vkb::core::HPPCommandBuffer &>(command_buffer),
+		draw_renderpass_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
 		                     reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw_renderpass_impl(vkb::core::HPPCommandBuffer &command_buffer, vkb::rendering::HPPRenderTarget &render_target)
+inline void VulkanSample<bindingType>::draw_renderpass_impl(vkb::core::CommandBufferCpp     &command_buffer,
+                                                            vkb::rendering::HPPRenderTarget &render_target)
 {
+	set_viewport_and_scissor_impl(command_buffer, render_target.get_extent());
+
+	// render is a virtual function, thus we have to call that, instead of directly calling render_impl!
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		set_viewport_and_scissor(command_buffer, render_target.get_extent());
 		render(command_buffer);
 	}
 	else
 	{
-		set_viewport_and_scissor(reinterpret_cast<vkb::CommandBuffer const &>(command_buffer),
-		                         reinterpret_cast<VkExtent2D const &>(render_target.get_extent()));
-		render(reinterpret_cast<vkb::CommandBuffer &>(command_buffer));
+		render(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer));
 	}
 
 	if (gui)
@@ -797,6 +808,18 @@ inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::
 }
 
 template <vkb::BindingType bindingType>
+inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::get_instance_layers() const
+{
+	return instance_layers;
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_instance_layer(const char *layer, bool optional)
+{
+	instance_layers[layer] = optional;
+}
+
+template <vkb::BindingType bindingType>
 inline std::vector<typename VulkanSample<bindingType>::LayerSettingType> const &VulkanSample<bindingType>::get_layer_settings() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -903,12 +926,6 @@ inline typename VulkanSample<bindingType>::SurfaceType VulkanSample<bindingType>
 	{
 		return static_cast<VkSurfaceKHR>(surface);
 	}
-}
-
-template <vkb::BindingType bindingType>
-inline const std::vector<const char *> VulkanSample<bindingType>::get_validation_layers()
-{
-	return {};
 }
 
 template <vkb::BindingType bindingType>
@@ -1173,7 +1190,7 @@ inline void VulkanSample<bindingType>::prepare_render_context()
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::render(CommandBufferType &command_buffer)
+inline void VulkanSample<bindingType>::render(vkb::core::CommandBuffer<bindingType> &command_buffer)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1181,12 +1198,12 @@ inline void VulkanSample<bindingType>::render(CommandBufferType &command_buffer)
 	}
 	else
 	{
-		render_impl(reinterpret_cast<vkb::core::HPPCommandBuffer &>(command_buffer));
+		render_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::render_impl(vkb::core::HPPCommandBuffer &command_buffer)
+inline void VulkanSample<bindingType>::render_impl(vkb::core::CommandBufferCpp &command_buffer)
 {
 	if (render_pipeline)
 	{
@@ -1274,7 +1291,7 @@ inline void VulkanSample<bindingType>::set_render_pipeline(std::unique_ptr<Rende
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::set_viewport_and_scissor(CommandBufferType const &command_buffer, Extent2DType const &extent)
+inline void VulkanSample<bindingType>::set_viewport_and_scissor(vkb::core::CommandBuffer<bindingType> const &command_buffer, Extent2DType const &extent)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1282,12 +1299,14 @@ inline void VulkanSample<bindingType>::set_viewport_and_scissor(CommandBufferTyp
 	}
 	else
 	{
-		set_viewport_and_scissor_impl(reinterpret_cast<vkb::core::HPPCommandBuffer const &>(command_buffer), reinterpret_cast<vk::Extent2D const &>(extent));
+		set_viewport_and_scissor_impl(reinterpret_cast<vkb::core::CommandBufferCpp const &>(command_buffer),
+		                              reinterpret_cast<vk::Extent2D const &>(extent));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::HPPCommandBuffer const &command_buffer, vk::Extent2D const &extent)
+inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer,
+                                                                     vk::Extent2D const                &extent)
 {
 	command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
 	command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));
@@ -1316,7 +1335,7 @@ inline void VulkanSample<bindingType>::update(float delta_time)
 	}
 	else
 	{
-		draw(reinterpret_cast<vkb::CommandBuffer &>(command_buffer),
+		draw(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer),
 		     reinterpret_cast<vkb::RenderTarget &>(render_context->get_active_frame().get_render_target()));
 	}
 

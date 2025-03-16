@@ -65,6 +65,8 @@ class IosWindow : public Window
 
 	float get_dpi_factor() const override;
 
+	float get_content_scale_factor() const override;
+
 	std::vector<const char *> get_required_surface_extensions() const override;
     
     VulkanView * get_vulkan_view() {return view;}

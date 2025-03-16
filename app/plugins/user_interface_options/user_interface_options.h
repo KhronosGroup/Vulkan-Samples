@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Sascha Willems
+/* Copyright (c) 2023-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,12 +39,6 @@ class UserInterfaceOptions : public UserInterfaceOptionsTags
 
 	virtual ~UserInterfaceOptions() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &options) override;
-
-	vkb::FlagCommand hide_ui_flag = {vkb::FlagType::FlagOnly, "hideui", "", "If flag is set, hides the user interface at startup"};
-
-	vkb::CommandGroup user_interface_options_group = {"User interface Options", {&hide_ui_flag}};
+	bool handle_option(std::deque<std::string> &arguments) override;
 };
 }        // namespace plugins

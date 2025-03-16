@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,13 +29,13 @@ using ForceCloseTags = vkb::PluginBase<ForceClose, vkb::tags::Passive>;
 
 /**
  * @brief Force Close
- * 
+ *
  * Force the close of the application if halted before exiting
- * 
+ *
  * The plugin is used as a boolean with platform->using_plugin<ForceClose>();
- * 
+ *
  * Usage: vulkan_sample sample afbc --force-close
- * 
+ *
  */
 class ForceClose : public ForceCloseTags
 {
@@ -43,10 +44,6 @@ class ForceClose : public ForceCloseTags
 
 	virtual ~ForceClose() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	vkb::FlagCommand stop_cmd = {vkb::FlagType::FlagOnly, "force-close", "", "Force the close of the application if halted before exiting"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 };
 }        // namespace plugins

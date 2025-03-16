@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,13 @@
 namespace vkb
 {
 class Device;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
 class CommandBuffer;
+using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
+}        // namespace core
 
 class Queue
 {
@@ -53,7 +59,7 @@ class Queue
 
 	VkResult submit(const std::vector<VkSubmitInfo> &submit_infos, VkFence fence) const;
 
-	VkResult submit(const CommandBuffer &command_buffer, VkFence fence) const;
+	VkResult submit(const vkb::core::CommandBufferC &command_buffer, VkFence fence) const;
 
 	VkResult present(const VkPresentInfoKHR &present_infos) const;
 

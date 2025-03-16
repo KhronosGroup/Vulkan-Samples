@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -257,7 +257,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	 * @brief Synchronously execute a block code within a command buffer vkb wrapper, then submit the command buffer and wait for completion.
 	 * @param f a block of code which is passed a command buffer which is already in the begin state.
 	 */
-	void with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f);
+	void with_vkb_command_buffer(const std::function<void(vkb::core::CommandBufferC &command_buffer)> &f);
 
   public:
 	/**
@@ -439,11 +439,11 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	std::string title = "Vulkan Example";
 	std::string name  = "vulkanExample";
 
-	struct
+	struct ImageData
 	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
+		VkImage        image{VK_NULL_HANDLE};
+		VkDeviceMemory mem{VK_NULL_HANDLE};
+		VkImageView    view{VK_NULL_HANDLE};
 	} depth_stencil;
 
 	struct

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2020-2024, Broadcom Inc.
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2020-2025, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -430,7 +430,7 @@ void Stats::profile_counters() const
 #endif
 }
 
-void Stats::begin_sampling(CommandBuffer &cb)
+void Stats::begin_sampling(vkb::core::CommandBufferC &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
@@ -439,7 +439,7 @@ void Stats::begin_sampling(CommandBuffer &cb)
 	}
 }
 
-void Stats::end_sampling(CommandBuffer &cb)
+void Stats::end_sampling(vkb::core::CommandBufferC &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)

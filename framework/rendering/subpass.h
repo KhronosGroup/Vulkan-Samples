@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,7 @@
 
 #include "buffer_pool.h"
 #include "rendering/hpp_pipeline_state.h"
+#include "rendering/hpp_render_frame.h"
 #include "rendering/hpp_render_target.h"
 #include "rendering/pipeline_state.h"
 #include "scene_graph/components/light.h"
@@ -27,14 +28,14 @@
 
 namespace vkb
 {
-class CommandBuffer;
 class RenderContext;
 class RenderTarget;
 class ShaderSource;
 
 namespace core
 {
-class HPPCommandBuffer;
+template <vkb::BindingType bindingType>
+class CommandBuffer;
 }
 
 namespace rendering
@@ -84,7 +85,6 @@ class Subpass
 	using ResolveModeFlagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ResolveModeFlagBits, VkResolveModeFlagBits>::type;
 	using SampleCountflagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SampleCountFlagBits, VkSampleCountFlagBits>::type;
 
-	using CommandBufferType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPCommandBuffer, vkb::CommandBuffer>::type;
 	using DepthStencilStateType =
 	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
 	using RenderContextType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
@@ -103,7 +103,7 @@ class Subpass
 	 * @brief Draw virtual function
 	 * @param command_buffer Command buffer to use to record draw commands
 	 */
-	virtual void draw(CommandBufferType &command_buffer) = 0;
+	virtual void draw(vkb::core::CommandBuffer<bindingType> &command_buffer) = 0;
 
 	/**
 	 * @brief Prepares the shaders and shader variants for a subpass

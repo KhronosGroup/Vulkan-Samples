@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,11 +28,11 @@ using BenchmarkModeTags = vkb::PluginBase<BenchmarkMode, vkb::tags::Passive>;
 
 /**
  * @brief Benchmark Mode
- * 
+ *
  * When enabled frame time statistics of a samples run will be printed to the console when an application closes. The simulation frame time (delta time) is also locked to 60FPS so that statistics can be compared more accurately across different devices.
- * 
+ *
  * Usage: vulkan_samples sample afbc --benchmark
- * 
+ *
  */
 class BenchmarkMode : public BenchmarkModeTags
 {
@@ -40,21 +41,14 @@ class BenchmarkMode : public BenchmarkModeTags
 
 	virtual ~BenchmarkMode() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &parser) override;
-
 	virtual void on_update(float delta_time) override;
-
 	virtual void on_app_start(const std::string &app_info) override;
-
 	virtual void on_app_close(const std::string &app_info) override;
 
-	vkb::FlagCommand benchmark_flag = {vkb::FlagType::FlagOnly, "benchmark", "", "Enable benchmark mode"};
+	bool handle_option(std::deque<std::string> &arguments) override;
 
   private:
-	uint32_t total_frames{0};
-
-	float elapsed_time{0.0f};
+	float    elapsed_time = 0.0f;
+	uint32_t total_frames = 0;
 };
 }        // namespace plugins

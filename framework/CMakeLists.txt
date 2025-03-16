@@ -1,4 +1,5 @@
-# Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -251,8 +252,6 @@ set(CORE_FILES
     core/render_pass.h
     core/query_pool.h
     core/acceleration_structure.h
-    core/hpp_allocated.h
-    core/hpp_command_buffer.h
     core/hpp_command_pool.h
     core/hpp_debug.h
     core/hpp_descriptor_pool.h
@@ -288,7 +287,6 @@ set(CORE_FILES
     core/queue.cpp
     core/command_pool.cpp
     core/swapchain.cpp
-    core/command_buffer.cpp
     core/allocated.cpp
     core/image_core.cpp
     core/image_view.cpp
@@ -299,7 +297,6 @@ set(CORE_FILES
     core/render_pass.cpp
     core/query_pool.cpp
     core/acceleration_structure.cpp
-    core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp
     core/hpp_debug.cpp
     core/hpp_device.cpp
@@ -320,7 +317,6 @@ set(PLATFORM_FILES
     platform/window.h
     platform/input_events.h
     platform/configuration.h
-    platform/parser.h
     platform/headless_window.h
     platform/plugins/plugin.h
     platform/plugins/plugin_base.h
@@ -332,7 +328,6 @@ set(PLATFORM_FILES
     platform/window.cpp
     platform/input_events.cpp
     platform/configuration.cpp
-    platform/parser.cpp
     platform/plugins/plugin.cpp)
 
 set(GLFW_FILES
@@ -340,15 +335,6 @@ set(GLFW_FILES
     platform/glfw_window.h
     # Source Files
     platform/glfw_window.cpp
-)
-
-set(PARSER_FILES
-    # Header Files
-    platform/parsers/CLI11.h
-    platform/parsers/help_formatter.h
-    # Source Files
-    platform/parsers/CLI11.cpp
-    platform/parsers/help_formatter.cpp
 )
 
 set(ANDROID_FILES
@@ -393,7 +379,6 @@ source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("platform\\" FILES ${GLFW_FILES})
-source_group("platform\\parsers" FILES ${PARSER_FILES})
 source_group("platform\\windows" FILES ${WINDOWS_FILES})
 source_group("platform\\android" FILES ${ANDROID_FILES})
 source_group("platform\\ios" FILES ${IOS_FILES})
@@ -410,7 +395,6 @@ source_group("stats\\" FILES ${STATS_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
-    ${PARSER_FILES}
     ${COMMON_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
@@ -533,7 +517,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     glslang-default-resource-limits
     spdlog
     ctpl
-    CLI11::CLI11
     plugins)
 
 if(${NEED_LINK_ATOMIC})
