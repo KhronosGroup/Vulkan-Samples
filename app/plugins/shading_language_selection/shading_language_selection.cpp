@@ -26,10 +26,10 @@ namespace plugins
 {
 ShadingLanguageSelection::ShadingLanguageSelection() :
     ShadingLanguageSelectionTags("Shading language selection",
-                                 "A collection of flags to select shader from different shading languages (glsl, hlsl)",
+                                 "A collection of flags to select shader from different shading languages (glsl, hlsl or slang)",
                                  {},
                                  {},
-                                 {{"shading-language", "Shading language to use (glsl or hlsl)"}})
+                                 {{"shading-language", "Shading language to use (glsl, hlsl or slang)"}})
 {
 }
 
