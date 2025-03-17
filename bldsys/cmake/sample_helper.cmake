@@ -164,7 +164,6 @@ function(add_project)
         set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
     if (TARGET_SHADERS_SLANG)
-        message(STATUS ${TARGET_SHADERS_SLANG})
         source_group("\\Shaders\\slang" FILES ${TARGET_SHADERS_SLANG})
     endif()    
 
