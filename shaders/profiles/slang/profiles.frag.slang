@@ -16,9 +16,7 @@
  */
 
 [[vk::binding(1, 0)]]
-Texture2D textures[] : register(t1, space0);
-[[vk::binding(1, 0)]]
-SamplerState samplers[] : register(s1, space0);
+Sampler2D textures[] : register(t1, space0);
 
 struct VSOutput
 {
@@ -30,5 +28,5 @@ struct VSOutput
 [shader("fragment")]
 float4 main(VSOutput input) : SV_TARGET
 {
-    return textures[NonUniformResourceIndex(input.TexIndex)].Sample(samplers[NonUniformResourceIndex(input.TexIndex)], input.UV);
+    return textures[NonUniformResourceIndex(input.TexIndex)].Sample(input.UV);
 }
