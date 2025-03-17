@@ -266,4 +266,38 @@ endif()
             set_property(TARGET ${bare_name}-${extension} PROPERTY FOLDER "HLSL_Shaders")
         endforeach()
     endif()
+
+    # Slang shader compilation
+    if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_SLANG)
+        foreach(SHADER_FILE_SLANG ${TARGET_SHADERS_SLANG})
+            get_filename_component(SLANG_SPV_FILE ${SHADER_FILE_SLANG} NAME_WLE)
+            get_filename_component(bare_name ${SLANG_SPV_FILE} NAME_WLE)
+            get_filename_component(extension ${SLANG_SPV_FILE} LAST_EXT)
+            get_filename_component(directory ${SHADER_FILE_SLANG} DIRECTORY)
+            string(REGEX REPLACE "[.]+" "" extension ${extension})
+            set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-slang-spv")
+            set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}.${extension}.spv)
+            file(MAKE_DIRECTORY ${OUTPUT_DIR})
+
+            set(SLANG_PROFILE "glsl_460")
+            set(SLANG_ENTRY_POINT "main")
+            add_custom_command( PRE_BUILD
+                    OUTPUT ${OUTPUT_FILE}
+                    COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
+                    COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                    MAIN_DEPENDENCY ${SHADER_FILE_SLANG}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+            set(SLANG_SHADER_TARGET_NAME ${bare_name}-${extension}-slang)
+            if(NOT TARGET ${SLANG_SHADER_TARGET_NAME})
+                add_custom_target(${SLANG_SHADER_TARGET_NAME} DEPENDS ${OUTPUT_FILE})
+            endif()
+            add_dependencies(${PROJECT_NAME} ${SLANG_SHADER_TARGET_NAME})
+            set_source_files_properties(${OUTPUT_FILE} PROPERTIES
+                    MACOSX_PACKAGE_LOCATION Resources
+            )
+            set_property(TARGET ${SLANG_SHADER_TARGET_NAME} PROPERTY FOLDER "SLANG_Shaders")
+        endforeach()
+    endif()
+
 endfunction()
