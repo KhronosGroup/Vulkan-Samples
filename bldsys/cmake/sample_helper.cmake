@@ -268,7 +268,7 @@ endif()
     endif()
 
     # Slang shader compilation
-    if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_SLANG)
+    if(Vulkan_slang_EXECUTABLE AND DEFINED SHADERS_SLANG)
         foreach(SHADER_FILE_SLANG ${TARGET_SHADERS_SLANG})
             get_filename_component(SLANG_SPV_FILE ${SHADER_FILE_SLANG} NAME_WLE)
             get_filename_component(bare_name ${SLANG_SPV_FILE} NAME_WLE)
