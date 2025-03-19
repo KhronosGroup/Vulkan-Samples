@@ -279,7 +279,7 @@ endif()
             set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}.${extension}.spv)
             file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
-            set(SLANG_PROFILE "glsl_460")
+            set(SLANG_PROFILE "spirv_1_4")
             set(SLANG_ENTRY_POINT "main")
             add_custom_command( PRE_BUILD
                     OUTPUT ${OUTPUT_FILE}
