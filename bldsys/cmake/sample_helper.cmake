@@ -1,7 +1,7 @@
 #[[
- Copyright (c) 2019-2024, Arm Limited and Contributors
- Copyright (c) 2024, Mobica Limited
- Copyright (c) 2024, Sascha Willems
+ Copyright (c) 2019-2025, Arm Limited and Contributors
+ Copyright (c) 2024-2025, Mobica Limited
+ Copyright (c) 2024-2025, Sascha Willems
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -24,7 +24,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 function(add_sample)
     set(options)  
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
-    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
+    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -45,13 +45,15 @@ function(add_sample)
             ${TARGET_SHADER_FILES_GLSL}
         SHADER_FILES_HLSL
             ${TARGET_SHADER_FILES_HLSL}
+        SHADER_FILES_SLANG
+            ${TARGET_SHADER_FILES_SLANG}
         DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
-    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -77,6 +79,11 @@ function(add_sample_with_tags)
         list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
     endforeach()
 
+    # Add slang shader files for this sample
+    foreach(SHADER_FILE_SLANG ${TARGET_SHADER_FILES_SLANG})
+        list(APPEND SHADERS_SLANG "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_SLANG}")
+    endforeach()   
+
     add_project(
         TYPE "Sample"
         ID ${TARGET_ID}
@@ -94,6 +101,8 @@ function(add_sample_with_tags)
             ${SHADERS_GLSL}
         SHADERS_HLSL
             ${SHADERS_HLSL}
+        SHADERS_SLANG
+            ${SHADERS_SLANG}            
         DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
 
 endfunction()
@@ -125,7 +134,7 @@ endfunction()
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
-    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL SHADERS_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -154,11 +163,14 @@ function(add_project)
         # Disable automatic compilation of HLSL shaders for MSVC
         set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
     endif()
+    if (TARGET_SHADERS_SLANG)
+        source_group("\\Shaders\\slang" FILES ${TARGET_SHADERS_SLANG})
+    endif()    
 
 if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG})
 elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL})
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG})
 endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -196,7 +208,8 @@ endif()
     if(VKB_DO_CLANG_TIDY)
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
-
+   
+    # HLSL compilation via DXC
     if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
         foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
             get_filename_component(HLSL_SPV_FILE ${SHADER_FILE_HLSL} NAME_WLE)
@@ -253,4 +266,38 @@ endif()
             set_property(TARGET ${bare_name}-${extension} PROPERTY FOLDER "HLSL_Shaders")
         endforeach()
     endif()
+
+    # Slang shader compilation
+    if(Vulkan_slang_EXECUTABLE AND DEFINED SHADERS_SLANG)
+        foreach(SHADER_FILE_SLANG ${TARGET_SHADERS_SLANG})
+            get_filename_component(SLANG_SPV_FILE ${SHADER_FILE_SLANG} NAME_WLE)
+            get_filename_component(bare_name ${SLANG_SPV_FILE} NAME_WLE)
+            get_filename_component(extension ${SLANG_SPV_FILE} LAST_EXT)
+            get_filename_component(directory ${SHADER_FILE_SLANG} DIRECTORY)
+            string(REGEX REPLACE "[.]+" "" extension ${extension})
+            set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-slang-spv")
+            set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}.${extension}.spv)
+            file(MAKE_DIRECTORY ${OUTPUT_DIR})
+
+            set(SLANG_PROFILE "spirv_1_4")
+            set(SLANG_ENTRY_POINT "main")
+            add_custom_command( PRE_BUILD
+                    OUTPUT ${OUTPUT_FILE}
+                    COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
+                    COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                    MAIN_DEPENDENCY ${SHADER_FILE_SLANG}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+            set(SLANG_SHADER_TARGET_NAME ${bare_name}-${extension}-slang)
+            if(NOT TARGET ${SLANG_SHADER_TARGET_NAME})
+                add_custom_target(${SLANG_SHADER_TARGET_NAME} DEPENDS ${OUTPUT_FILE})
+            endif()
+            add_dependencies(${PROJECT_NAME} ${SLANG_SHADER_TARGET_NAME})
+            set_source_files_properties(${OUTPUT_FILE} PROPERTIES
+                    MACOSX_PACKAGE_LOCATION Resources
+            )
+            set_property(TARGET ${SLANG_SHADER_TARGET_NAME} PROPERTY FOLDER "SLANG_Shaders")
+        endforeach()
+    endif()
+
 endfunction()
