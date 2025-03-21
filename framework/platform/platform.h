@@ -170,12 +170,13 @@ class Platform
 	bool               focused{true};                  /* App is currently in focus at an operating system level */
 	bool               close_requested{false};         /* Close requested */
 
+  protected:
+	std::vector<Plugin *> plugins;
+
   private:
 	Timer timer;
 
 	const apps::AppInfo *requested_app{nullptr};
-
-	std::vector<Plugin *> plugins;
 
 	std::vector<std::string> arguments;
 

@@ -224,6 +224,11 @@ class Plugin
 		this->platform = platform;
 	}
 
+	void clear_platform()
+	{
+		platform = nullptr;
+	}
+
   protected:
 	Platform *platform = nullptr;
 
