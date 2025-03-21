@@ -93,8 +93,8 @@ void RenderFrame::reset()
 	}
 }
 
-std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const Queue                &queue,
-                                                                          vkb::CommandBufferResetMode reset_mode)
+std::vector<std::unique_ptr<vkb::core::CommandPoolC>> &RenderFrame::get_command_pools(const Queue                &queue,
+                                                                                      vkb::CommandBufferResetMode reset_mode)
 {
 	auto command_pool_it = command_pools.find(queue.get_family_index());
 
@@ -114,10 +114,10 @@ std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const 
 		}
 	}
 
-	std::vector<std::unique_ptr<CommandPool>> queue_command_pools;
+	std::vector<std::unique_ptr<vkb::core::CommandPoolC>> queue_command_pools;
 	for (size_t i = 0; i < thread_count; i++)
 	{
-		queue_command_pools.push_back(std::make_unique<CommandPool>(device, queue.get_family_index(), this, i, reset_mode));
+		queue_command_pools.push_back(std::make_unique<vkb::core::CommandPoolC>(device, queue.get_family_index(), this, i, reset_mode));
 	}
 
 	auto res_ins_it = command_pools.emplace(queue.get_family_index(), std::move(queue_command_pools));
@@ -203,7 +203,10 @@ vkb::core::CommandBufferC &RenderFrame::request_command_buffer(const Queue      
 
 	auto &command_pools = get_command_pools(queue, reset_mode);
 
-	auto command_pool_it = std::find_if(command_pools.begin(), command_pools.end(), [&thread_index](std::unique_ptr<CommandPool> &cmd_pool) { return cmd_pool->get_thread_index() == thread_index; });
+	auto command_pool_it =
+	    std::find_if(command_pools.begin(),
+	                 command_pools.end(),
+	                 [&thread_index](std::unique_ptr<vkb::core::CommandPoolC> &cmd_pool) { return cmd_pool->get_thread_index() == thread_index; });
 
 	return (*command_pool_it)->request_command_buffer(level);
 }

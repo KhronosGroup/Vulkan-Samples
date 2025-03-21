@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +20,8 @@
  */
 
 #include "hpp_compute_nbody.h"
-#include <benchmark_mode/benchmark_mode.h>
-#include <core/hpp_command_pool.h>
+#include "benchmark_mode/benchmark_mode.h"
+#include "core/command_pool.h"
 #include <random>
 
 HPPComputeNBody::HPPComputeNBody()
