@@ -171,7 +171,7 @@ class Platform
 	bool               close_requested{false};         /* Close requested */
 
   protected:
-    std::vector<Plugin *> plugins;
+	std::vector<Plugin *> plugins;
 
   private:
 	Timer timer;

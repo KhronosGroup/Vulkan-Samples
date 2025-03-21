@@ -344,9 +344,10 @@ AndroidPlatform::AndroidPlatform(const PlatformContext &context) :
 
 ExitCode AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 {
-    for(auto plugin : plugins) {
-        plugin->clear_platform();
-    }
+	for (auto plugin : plugins)
+	{
+		plugin->clear_platform();
+	}
 	android_app_set_key_event_filter(app, key_event_filter);
 	android_app_set_motion_event_filter(app, motion_event_filter);
 
@@ -464,8 +465,8 @@ void AndroidPlatform::terminate(ExitCode code)
 		// Process events until app->destroyRequested is set
 	}
 
-    plugins.clear();
-    Platform::terminate(code);
+	plugins.clear();
+	Platform::terminate(code);
 }
 
 void AndroidPlatform::send_notification(const std::string &message)
