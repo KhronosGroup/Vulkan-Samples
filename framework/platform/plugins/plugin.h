@@ -220,9 +220,13 @@ class Plugin
 
 	void set_platform(Platform *platform)
 	{
-		// assert(!this->platform && platform); this->platform = platform; }
+		assert(!this->platform && platform);
 		this->platform = platform;
 	}
+
+    void clear_platform() {
+        platform = nullptr;
+    }
 
   protected:
 	Platform *platform = nullptr;
