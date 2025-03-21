@@ -51,7 +51,7 @@ target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
 if(VKB_ENABLE_PORTABILITY)
-	# When portability is enabled, must enable Vulkan beta extensions for access to VK_KHR_portability_subset
+    # When portability is enabled, must enable Vulkan beta extensions for access to VK_KHR_portability_subset
     target_compile_definitions(vulkan INTERFACE VK_ENABLE_BETA_EXTENSIONS)
 endif()
 
@@ -60,7 +60,7 @@ if(ANDROID)
 elseif(WIN32)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 elseif(APPLE)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
 elseif(UNIX)
     # Choose WSI based on VKB_WSI_SELECTION
     if (VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)
@@ -305,32 +305,32 @@ target_include_directories(stb SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb
 # other than the host architecture (i.e. x86 on an x64 CPU)
 if (NOT (DEFINED ASTC_ARCH))
     if (APPLE)
-		# Always use NEON when host is arm64 or cross-compiling to iOS physical devices,
-		# otherwise look for supported vector instructions based on x86_64 host processor.
-		# Don't use AVX2 since it builds for x86_64h which does not match x86_64 project,
-		# and lastly fall back to NATIVE if no matches found.
-		if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "arm64" OR ${CMAKE_OSX_SYSROOT} STREQUAL "iphoneos")
-			set(ASTC_ARCH NEON)
-		else()
-			include( FindSSE41 )
-			include( FindSSE2 )
-			if (${SSE41_FOUND})
-				set(ASTC_ARCH SSE41)
-			elseif(${SSE2_FOUND})
-				set(ASTC_ARCH SSE2)
-			else()
-				set(ASTC_ARCH NATIVE)
-			endif()
-		endif()
+        # Always use NEON when host is arm64 or cross-compiling to iOS physical devices,
+        # otherwise look for supported vector instructions based on x86_64 host processor.
+        # Don't use AVX2 since it builds for x86_64h which does not match x86_64 project,
+        # and lastly fall back to NATIVE if no matches found.
+        if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "arm64" OR ${CMAKE_OSX_SYSROOT} STREQUAL "iphoneos")
+            set(ASTC_ARCH NEON)
+        else()
+            include( FindSSE41 )
+            include( FindSSE2 )
+            if (${SSE41_FOUND})
+                set(ASTC_ARCH SSE41)
+            elseif(${SSE2_FOUND})
+                set(ASTC_ARCH SSE2)
+            else()
+                set(ASTC_ARCH NATIVE)
+            endif()
+        endif()
     else()
         include( FindAVX2 )
-		include( FindSSE41 )
+        include( FindSSE41 )
         include( FindSSE2 )
         include( FindNEON )
         if (${AVX2_FOUND})
             set(ASTC_ARCH AVX2)
-		elseif(${SSE41_FOUND})
-			set(ASTC_ARCH SSE41)
+        elseif(${SSE41_FOUND})
+            set(ASTC_ARCH SSE41)
         elseif(${SSE2_FOUND})
             set(ASTC_ARCH SSE2)
         elseif(${NEON_FOUND})
@@ -345,7 +345,7 @@ string(TOUPPER ${ASTC_ARCH} ASTC_ARCH)
 string(TOLOWER ${ASTC_ARCH} ASTC_ARCH_LOWER)
 # This is seemingly inconsistent, but the target library for SSE41 has a "." in its name
 if(${ASTC_ARCH_LOWER} STREQUAL "sse41")
-	set(ASTC_ARCH_LOWER "sse4.1")
+    set(ASTC_ARCH_LOWER "sse4.1")
 endif()
 
 set(ASTCENC_ISA_${ASTC_ARCH} ON)
