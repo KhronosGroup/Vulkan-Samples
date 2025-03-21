@@ -53,8 +53,8 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
 }
 
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT flags, vk::DebugReportObjectTypeEXT /*type*/,
-                                                     uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
-                                                     const char *layer_prefix, const char *message, void * /*user_data*/)
+                                                       uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
+                                                       const char *layer_prefix, const char *message, void * /*user_data*/)
 {
 	if (flags & vk::DebugReportFlagBitsEXT::eError)
 	{
@@ -278,8 +278,8 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	}
 	else if (has_debug_report)
 	{
-		 debug_report_create_info = vk::DebugReportCallbackCreateInfoEXT(
-		     vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning, debug_callback);
+		debug_report_create_info = vk::DebugReportCallbackCreateInfoEXT(
+		    vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning, debug_callback);
 
 		instance_info.pNext = &debug_report_create_info;
 	}
