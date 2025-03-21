@@ -382,9 +382,9 @@ vk::ImageView HPPHelloTriangle::create_image_view(vk::Image image)
 vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &required_instance_extensions, std::vector<const char *> const &required_validation_layers)
 {
 #if defined(_HPP_VULKAN_LIBRARY)
-	static vk::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
+	static vk::detail::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
 #else
-	static vk::DynamicLoader dl;
+	static vk::detail::DynamicLoader dl;
 #endif
 	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
