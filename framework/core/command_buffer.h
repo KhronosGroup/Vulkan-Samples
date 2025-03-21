@@ -945,12 +945,13 @@ inline void CommandBuffer<bindingType>::image_memory_barrier_impl(vkb::core::HPP
 		subresource_range.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 	}
 
+	// actively ignore queue family indices provided by memory_barrier !!
 	vk::ImageMemoryBarrier image_memory_barrier(memory_barrier.src_access_mask,
 	                                            memory_barrier.dst_access_mask,
 	                                            memory_barrier.old_layout,
 	                                            memory_barrier.new_layout,
-	                                            memory_barrier.old_queue_family,
-	                                            memory_barrier.new_queue_family,
+	                                            vk::QueueFamilyIgnored,
+	                                            vk::QueueFamilyIgnored,
 	                                            image_view.get_image().get_handle(),
 	                                            subresource_range);
 
