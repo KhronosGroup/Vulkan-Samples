@@ -64,7 +64,7 @@ vkb::BufferAllocationCpp HPPRenderFrame::allocate_buffer(const vk::BufferUsageFl
 	auto buffer_pool_it = buffer_pools.find(usage);
 	if (buffer_pool_it == buffer_pools.end())
 	{
-		LOGE("No buffer pool for buffer usage " + vk::to_string(usage));
+		LOGE("No buffer pool for buffer usage{} ", vk::to_string(usage));
 		return vkb::BufferAllocationCpp{};
 	}
 
