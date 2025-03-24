@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Sascha Willems
+/* Copyright (c) 2023-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -857,8 +857,8 @@ void OpenCLInterop::prepare_opencl_resources()
 
 	if ((selected_platform_id == nullptr) || (selected_device_id == nullptr))
 	{
-		const std::string message{"Could not find an OpenCL platform + device that matches the required extensions and also matches the Vulkan device UUID "};
-		LOGE(message);
+		const std::string message{"Could not find an OpenCL platform + device that matches the required extensions and also matches the Vulkan device UUID"};
+		LOGE("{}", message);
 		throw std::runtime_error(message);
 	}
 
