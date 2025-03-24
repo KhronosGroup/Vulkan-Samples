@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, Sascha Willems
+# Copyright (c) 2022-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -31,4 +31,7 @@ add_sample_with_tags(
     SHADER_FILES_HLSL
         "profiles/hlsl/profiles.vert.hlsl"
         "profiles/hlsl/profiles.frag.hlsl"
-    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing")
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing"
+    SHADER_FILES_SLANG
+        "profiles/slang/profiles.vert.slang"
+        "profiles/slang/profiles.frag.slang")
