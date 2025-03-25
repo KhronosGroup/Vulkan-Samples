@@ -1026,9 +1026,9 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	// initialize C++-Bindings default dispatcher, first step
 #if defined(_HPP_VULKAN_LIBRARY)
-	static vk::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
+	static vk::detail::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
 #else
-	static vk::DynamicLoader        dl;
+	static vk::detail::DynamicLoader dl;
 #endif
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 
