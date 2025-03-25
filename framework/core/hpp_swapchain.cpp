@@ -60,14 +60,13 @@ vk::PresentModeKHR choose_present_mode(vk::PresentModeKHR                     re
                                        const std::vector<vk::PresentModeKHR> &present_mode_priority_list)
 {
 	// Try to find the requested present mode in the available present modes
-	auto const present_mode_it = std::find(available_present_modes.begin(), available_present_modes.end(), request_present_mode);
+	auto const present_mode_it = std::ranges::find(available_present_modes, request_present_mode);
 	if (present_mode_it == available_present_modes.end())
 	{
 		// If the requested present mode isn't found, then try to find a mode from the priority list
 		auto const chosen_present_mode_it =
-		    std::find_if(present_mode_priority_list.begin(),
-		                 present_mode_priority_list.end(),
-		                 [&available_present_modes](vk::PresentModeKHR present_mode) { return std::find(available_present_modes.begin(), available_present_modes.end(), present_mode) != available_present_modes.end(); });
+		    std::ranges::find_if(present_mode_priority_list,
+		                         [&available_present_modes](vk::PresentModeKHR present_mode) { return std::ranges::find(available_present_modes, present_mode) != available_present_modes.end(); });
 
 		// If nothing found, always default to FIFO
 		vk::PresentModeKHR const chosen_present_mode = (chosen_present_mode_it != present_mode_priority_list.end()) ? *chosen_present_mode_it : vk::PresentModeKHR::eFifo;
@@ -87,15 +86,14 @@ vk::SurfaceFormatKHR choose_surface_format(const vk::SurfaceFormatKHR           
                                            const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list)
 {
 	// Try to find the requested surface format in the available surface formats
-	auto const surface_format_it = std::find(available_surface_formats.begin(), available_surface_formats.end(), requested_surface_format);
+	auto const surface_format_it = std::ranges::find(available_surface_formats, requested_surface_format);
 
 	// If the requested surface format isn't found, then try to request a format from the priority list
 	if (surface_format_it == available_surface_formats.end())
 	{
 		auto const chosen_surface_format_it =
-		    std::find_if(surface_format_priority_list.begin(),
-		                 surface_format_priority_list.end(),
-		                 [&available_surface_formats](vk::SurfaceFormatKHR surface_format) { return std::find(available_surface_formats.begin(), available_surface_formats.end(), surface_format) != available_surface_formats.end(); });
+		    std::ranges::find_if(surface_format_priority_list,
+		                         [&available_surface_formats](vk::SurfaceFormatKHR surface_format) { return std::ranges::find(available_surface_formats, surface_format) != available_surface_formats.end(); });
 
 		// If nothing found, default to the first available format
 		vk::SurfaceFormatKHR const &chosen_surface_format = (chosen_surface_format_it != surface_format_priority_list.end()) ? *chosen_surface_format_it : available_surface_formats[0];
@@ -183,9 +181,8 @@ std::set<vk::ImageUsageFlagBits> choose_image_usage(const std::set<vk::ImageUsag
 		    vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eStorage, vk::ImageUsageFlagBits::eSampled, vk::ImageUsageFlagBits::eTransferDst};
 
 		auto const priority_list_it =
-		    std::find_if(image_usage_priority_list.begin(),
-		                 image_usage_priority_list.end(),
-		                 [&supported_image_usage, &supported_features](auto const image_usage) { return ((image_usage & supported_image_usage) && validate_format_feature(image_usage, supported_features)); });
+		    std::ranges::find_if(image_usage_priority_list,
+		                         [&supported_image_usage, &supported_features](auto const image_usage) { return ((image_usage & supported_image_usage) && validate_format_feature(image_usage, supported_features)); });
 		if (priority_list_it != image_usage_priority_list.end())
 		{
 			validated_image_usage_flags.insert(*priority_list_it);

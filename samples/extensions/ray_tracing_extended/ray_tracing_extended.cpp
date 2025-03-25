@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024 Holochip Corporation
+/* Copyright (c) 2021-2025 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -632,7 +632,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	{
 		// find the flame particle object, then add the particles as instances
 		auto &model_buffers = raytracing_scene->model_buffers;
-		auto  iter          = std::find_if(model_buffers.begin(), model_buffers.end(), [](const ModelBuffer &model_buffer) {
+		auto  iter          = std::ranges::find_if(model_buffers, [](const ModelBuffer &model_buffer) {
             return model_buffer.object_type == ObjectType::OBJECT_FLAME;
         });
 		ASSERT_LOG(iter != model_buffers.cend(), "Can't find flame object.")

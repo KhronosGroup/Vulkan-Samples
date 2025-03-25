@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -83,9 +83,8 @@ void *HPPPhysicalDevice::get_extension_feature_chain() const
 
 bool HPPPhysicalDevice::is_extension_supported(const std::string &requested_extension) const
 {
-	return std::find_if(device_extensions.begin(),
-	                    device_extensions.end(),
-	                    [requested_extension](auto &device_extension) { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
+	return std::ranges::find_if(device_extensions,
+	                            [requested_extension](auto &device_extension) { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
 }
 
 const vk::PhysicalDeviceFeatures &HPPPhysicalDevice::get_features() const

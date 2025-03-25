@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Google
+/* Copyright (c) 2023-2025, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -101,13 +101,13 @@ void SwapchainRecreation::adjust_desired_present_mode()
 
 	// When switching to MAILBOX, fallback to IMMEDIATE if not available and back to FIFO if
 	// neither are available.
-	if (desired_present_mode == VK_PRESENT_MODE_MAILBOX_KHR && std::find(present_modes.begin(), present_modes.end(), desired_present_mode) != present_modes.end())
+	if (desired_present_mode == VK_PRESENT_MODE_MAILBOX_KHR && std::ranges::find(present_modes, desired_present_mode) != present_modes.end())
 	{
 		return;
 	}
 
 	desired_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-	if (std::find(present_modes.begin(), present_modes.end(), desired_present_mode) == present_modes.end())
+	if (std::ranges::find(present_modes, desired_present_mode) == present_modes.end())
 	{
 		LOGW("Neither MAILBOX nor IMMEDIATE are supported, falling back to FIFO");
 		desired_present_mode = VK_PRESENT_MODE_FIFO_KHR;
@@ -164,7 +164,7 @@ bool SwapchainRecreation::are_present_modes_compatible()
 	// While this functionality was introduced by VK_EXT_surface_maintenance1, compatible_modes
 	// is always set up such that every present mode is assumed to be compatible only with
 	// itself; there is no need for an extension check here.
-	return std::find(compatible_modes.begin(), compatible_modes.end(), desired_present_mode) != compatible_modes.end();
+	return std::ranges::find(compatible_modes, desired_present_mode) != compatible_modes.end();
 }
 
 /**
@@ -684,7 +684,7 @@ void SwapchainRecreation::cleanup_present_history()
 		// Move clean up data to the next (now first) present operation, if any.  Note that
 		// there cannot be any clean up data on the rest of the present operations, because
 		// the first present already gathers every old swapchain to clean up.
-		assert(std::all_of(present_history.begin(), present_history.end(), [](const PresentOperationInfo &op) {
+		assert(std::ranges::all_of(present_history, [](const PresentOperationInfo &op) {
 			return op.old_swapchains.empty();
 		}));
 		present_history.front().old_swapchains = std::move(present_info.old_swapchains);

@@ -199,9 +199,8 @@ bool HPPDevice::is_extension_supported(std::string const &requested_extension) c
 
 bool HPPDevice::is_enabled(std::string const &extension) const
 {
-	return std::find_if(enabled_extensions.begin(),
-	                    enabled_extensions.end(),
-	                    [extension](const char *enabled_extension) { return extension == enabled_extension; }) != enabled_extensions.end();
+	return std::ranges::find_if(enabled_extensions,
+	                            [extension](const char *enabled_extension) { return extension == enabled_extension; }) != enabled_extensions.end();
 }
 
 vkb::core::HPPPhysicalDevice const &HPPDevice::get_gpu() const

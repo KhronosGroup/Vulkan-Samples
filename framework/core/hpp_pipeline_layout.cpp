@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -127,9 +127,8 @@ HPPPipelineLayout::~HPPPipelineLayout()
 
 vkb::core::HPPDescriptorSetLayout const &HPPPipelineLayout::get_descriptor_set_layout(const uint32_t set_index) const
 {
-	auto it = std::find_if(descriptor_set_layouts.begin(),
-	                       descriptor_set_layouts.end(),
-	                       [&set_index](auto const *descriptor_set_layout) { return descriptor_set_layout->get_index() == set_index; });
+	auto it = std::ranges::find_if(descriptor_set_layouts,
+	                               [&set_index](auto const *descriptor_set_layout) { return descriptor_set_layout->get_index() == set_index; });
 	if (it == descriptor_set_layouts.end())
 	{
 		throw std::runtime_error("Couldn't find descriptor set layout at set index " + to_string(set_index));

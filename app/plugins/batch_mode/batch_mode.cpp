@@ -60,7 +60,7 @@ bool BatchMode::handle_option(std::deque<std::string> &arguments)
 			return false;
 		}
 		std::string category = arguments[1];
-		if (std::any_of(categories.begin(), categories.end(), [&category](auto const &c) { return c == category; }))
+		if (std::ranges::any_of(categories, [&category](auto const &c) { return c == category; }))
 		{
 			LOGW("Option \"category\" lists category \"{}\" multiple times!", category)
 		}
@@ -111,7 +111,7 @@ bool BatchMode::handle_option(std::deque<std::string> &arguments)
 			return false;
 		}
 		std::string tag = arguments[1];
-		if (std::any_of(tags.begin(), tags.end(), [&tag](auto const &t) { return t == tag; }))
+		if (std::ranges::any_of(tags, [&tag](auto const &t) { return t == tag; }))
 		{
 			LOGW("Option \"tag\" lists tag \"{}\" multiple times!", tag)
 		}

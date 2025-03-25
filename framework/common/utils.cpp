@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -92,7 +92,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	// Check if framebuffer images are in a BGR format
 	auto bgr_formats = {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM};
-	bool swizzle     = std::find(bgr_formats.begin(), bgr_formats.end(), src_image_view.get_format()) != bgr_formats.end();
+	bool swizzle     = std::ranges::find(bgr_formats, src_image_view.get_format()) != bgr_formats.end();
 
 	// Copy framebuffer image memory
 	VkBufferImageCopy image_copy_region{};

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -171,7 +171,7 @@ const std::vector<uint32_t> &ShaderModule::get_binary() const
 
 void ShaderModule::set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode)
 {
-	auto it = std::find_if(resources.begin(), resources.end(), [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
+	auto it = std::ranges::find_if(resources, [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
 
 	if (it != resources.end())
 	{

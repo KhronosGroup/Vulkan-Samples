@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -160,13 +160,11 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice            
 	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
 	assert(!supported_surface_formats.empty());
 
-	auto it = std::find_if(supported_surface_formats.begin(),
-	                       supported_surface_formats.end(),
-	                       [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
-		                       return std::any_of(preferred_formats.begin(),
-		                                          preferred_formats.end(),
-		                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
-	                       });
+	auto it = std::ranges::find_if(supported_surface_formats,
+	                               [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
+		                               return std::ranges::any_of(preferred_formats,
+		                                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
+	                               });
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];

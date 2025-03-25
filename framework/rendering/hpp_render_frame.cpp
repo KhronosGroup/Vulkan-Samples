@@ -197,9 +197,8 @@ vkb::core::CommandBufferCpp &HPPRenderFrame::request_command_buffer(const vkb::c
 	auto &command_pools = get_command_pools(queue, reset_mode);
 
 	auto command_pool_it =
-	    std::find_if(command_pools.begin(),
-	                 command_pools.end(),
-	                 [&thread_index](std::unique_ptr<vkb::core::CommandPoolCpp> &cmd_pool) { return cmd_pool->get_thread_index() == thread_index; });
+	    std::ranges::find_if(command_pools,
+	                         [&thread_index](std::unique_ptr<vkb::core::CommandPoolCpp> &cmd_pool) { return cmd_pool->get_thread_index() == thread_index; });
 	assert(command_pool_it != command_pools.end());
 
 	return (*command_pool_it)->request_command_buffer(level);
