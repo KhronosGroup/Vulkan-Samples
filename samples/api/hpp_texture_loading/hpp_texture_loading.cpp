@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +20,8 @@
  */
 
 #include "hpp_texture_loading.h"
-#include <common/ktx_common.h>
-#include <core/hpp_command_pool.h>
+#include "common/ktx_common.h"
+#include "core/command_pool.h"
 
 HPPTextureLoading::HPPTextureLoading()
 {
