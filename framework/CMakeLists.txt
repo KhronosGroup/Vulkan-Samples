@@ -252,7 +252,6 @@ set(CORE_FILES
     core/render_pass.h
     core/query_pool.h
     core/acceleration_structure.h
-    core/hpp_command_pool.h
     core/hpp_debug.h
     core/hpp_descriptor_pool.h
     core/hpp_descriptor_set.h
@@ -285,7 +284,6 @@ set(CORE_FILES
     core/descriptor_pool.cpp
     core/descriptor_set.cpp
     core/queue.cpp
-    core/command_pool.cpp
     core/swapchain.cpp
     core/allocated.cpp
     core/image_core.cpp
@@ -297,7 +295,6 @@ set(CORE_FILES
     core/render_pass.cpp
     core/query_pool.cpp
     core/acceleration_structure.cpp
-    core/hpp_command_pool.cpp
     core/hpp_debug.cpp
     core/hpp_device.cpp
     core/hpp_image_core.cpp

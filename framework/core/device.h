@@ -134,7 +134,7 @@ class Device : public vkb::core::VulkanResourceC<VkDevice>
 
 	uint32_t get_num_queues_for_queue_family(uint32_t queue_family_index);
 
-	CommandPool &get_command_pool() const;
+	vkb::core::CommandPoolC &get_command_pool() const;
 
 	/**
 	 * @brief Checks that a given memory type is supported by the GPU
@@ -224,7 +224,7 @@ class Device : public vkb::core::VulkanResourceC<VkDevice>
 	std::vector<std::vector<Queue>> queues;
 
 	/// A command pool associated to the primary queue
-	std::unique_ptr<CommandPool> command_pool;
+	std::unique_ptr<vkb::core::CommandPoolC> command_pool;
 
 	/// A fence pool associated to the primary queue
 	std::unique_ptr<FencePool> fence_pool;
