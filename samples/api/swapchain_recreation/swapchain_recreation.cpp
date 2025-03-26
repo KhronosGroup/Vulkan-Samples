@@ -900,6 +900,7 @@ SwapchainRecreation::SwapchainRecreation()
 		add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME, true);
 		add_instance_extension(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME, true);
 		add_device_extension(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME, true);
+		has_maintenance1 = true;
 	}
 	else
 	{
@@ -970,6 +971,17 @@ SwapchainRecreation::~SwapchainRecreation()
 	if (render_pass != VK_NULL_HANDLE)
 	{
 		vkDestroyRenderPass(get_device_handle(), render_pass, nullptr);
+	}
+}
+
+void SwapchainRecreation::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+	if (has_maintenance1)
+	{
+		REQUEST_REQUIRED_FEATURE(gpu,
+		                         VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
+		                         swapchainMaintenance1);
 	}
 }
 
