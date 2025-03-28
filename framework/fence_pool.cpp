@@ -66,7 +66,7 @@ VkFence FencePool::request_fence()
 	return fences.back();
 }
 
-VkResult FencePool::wait(uint32_t timeout) const
+VkResult FencePool::wait(uint64_t timeout) const
 {
 	if (active_fence_count < 1 || fences.empty())
 	{
