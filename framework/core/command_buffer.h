@@ -25,7 +25,6 @@
 #include "core/physical_device.h"
 #include "hpp_resource_binding_state.h"
 #include "rendering/hpp_pipeline_state.h"
-#include "rendering/hpp_render_frame.h"
 #include "rendering/hpp_render_target.h"
 #include "rendering/subpass.h"
 
@@ -296,6 +295,8 @@ using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
 }        // namespace vkb
 
 #include "core/command_pool.h"
+#include "core/device.h"
+#include "rendering/render_frame.h"
 
 namespace vkb
 {
