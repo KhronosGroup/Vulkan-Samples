@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -130,7 +130,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	cmd_buf.end();
 
-	queue.submit(cmd_buf, frame.request_fence());
+	queue.submit(cmd_buf, frame.get_fence_pool().request_fence());
 
 	queue.wait_idle();
 
