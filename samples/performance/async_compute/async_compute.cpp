@@ -510,7 +510,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 	info.commandBufferCount   = 1;
 	info.pCommandBuffers      = &command_buffer->get_handle();
 
-	queue.submit({info}, get_render_context().get_active_frame().request_fence());
+	queue.submit({info}, get_render_context().get_active_frame().get_fence_pool().request_fence());
 	get_render_context().release_owned_semaphore(wait_semaphores[1]);
 	return signal_semaphores[0];
 }
