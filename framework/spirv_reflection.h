@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,10 @@
 
 #include "common/error.h"
 
+#pragma warning(push)
+#pragma warning(disable : 4065)
 #include <spirv_glsl.hpp>
+#pragma warning(pop)
 
 #include "common/vk_common.h"
 #include "core/shader_module.h"
