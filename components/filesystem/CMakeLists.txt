@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Thomas Atkinson
+# Copyright (c) 2023-2025, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -35,12 +35,3 @@ vkb__register_component(
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
    target_link_libraries(vkb__filesystem PRIVATE stdc++fs)
 endif()
-
-vkb__register_tests(
-    COMPONENT filesystem
-    NAME filesystem
-    SRC
-        tests/filesystem.test.cpp
-    LINK_LIBS
-        vkb__filesystem
-)

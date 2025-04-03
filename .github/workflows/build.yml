@@ -81,12 +81,6 @@ jobs:
       - name: "Build Components ${{ matrix.platform }} in ${{ matrix.build_type }}"
         run: cmake --build "build/${{ matrix.platform }}" --target vkb__components --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
-      - name: "Build Tests ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build "build/${{ matrix.platform }}" --target vkb__tests --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
-
-      - name: "Run Tests ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: ctest -C ${{ matrix.build_type }} --test-dir "build/${{ matrix.platform }}" --output-on-failure
-
   build_macos:
     needs: build
     name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"

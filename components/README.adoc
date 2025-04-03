@@ -1,6 +1,6 @@
 ////
-- Copyright (c) 2023-2024, Thomas Atkinson
-- Copyright (c) 2024, The Khronos Group
+- Copyright (c) 2023-2025, Thomas Atkinson
+- Copyright (c) 2024-2025, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -63,22 +63,6 @@ vkb__register_component(
         src/<some_source>.cpp
     LINK_LIBS
         <some_link_lib>
-)
-----
-
-=== Add a Test
-
-Registering a test adds the `tests__<test_name>` compile target.
-This target is also linked as a dependency to `vkb__tests`.
-
-[,cmake]
-----
-vkb__register_tests(
-    NAME <test_name>
-    SRC
-        tests/<some_test>.test.cpp
-    LINK_LIBS
-        <some_link_libs>
 )
 ----
 
