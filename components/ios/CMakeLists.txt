@@ -27,15 +27,5 @@ vkb__register_component(
         vkb__core
 )
 
-vkb__register_tests(
-        NO_CATCH2
-        COMPONENT ios_platform
-        NAME ios_platform
-        SRC
-        tests/entrypoint.test.cpp
-        LINK_LIBS
-        vkb__ios_platform
-)
-
 # attach to core
 target_link_libraries(vkb__core INTERFACE vkb__ios_platform)

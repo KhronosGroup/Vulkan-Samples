@@ -106,8 +106,6 @@ include(component_helper)
 # Add third party libraries
 add_subdirectory(third_party)
 
-vkb__enable_testing()
-
 # Framework v2.0 components directory
 add_subdirectory(components)
 

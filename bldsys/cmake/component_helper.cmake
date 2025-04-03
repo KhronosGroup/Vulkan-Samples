@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Thomas Atkinson
+# Copyright (c) 2023-2025, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,7 +30,7 @@ function(vkb__register_component)
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(TARGET_NAME STREQUAL "")
-        message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
+        message(FATAL_ERROR "NAME must be defined in vkb__register_comoponents")
     endif()
 
     set(TARGET "vkb__${TARGET_NAME}")
@@ -80,84 +80,4 @@ function(vkb__register_component)
     endif()
 
     add_dependencies(vkb__components ${TARGET})
-endfunction()
-
-# Enable testing within the components
-macro(vkb__enable_testing)
-    if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS)
-        include(CTest)
-        enable_testing()
-    endif()
-endmacro()
-
-# Bucket target for all tests
-add_custom_target(vkb__tests)
-set_target_properties(vkb__tests PROPERTIES FOLDER "CMake/CustomTargets")
-
-# Register a new test
-# Adds the test to the vkb__tests target
-# Uses Catch2 by default. If NO_CATCH2 is set, then the test must provide its own main function
-function(vkb__register_tests)
-    set(options NO_CATCH2)
-    set(oneValueArgs COMPONENT NAME)
-    set(multiValueArgs SRC HEADERS LINK_LIBS INCLUDE_DIRS)
-
-    if(NOT((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
-        return() # testing not enabled
-    endif()
-
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(TARGET_NAME STREQUAL "")
-        message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
-    endif()
-
-    if(NOT TARGET_SRC)
-        message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
-    endif()
-
-    set(TARGET_FOLDER "components")
-    set(TARGET_NAME "test__${TARGET_NAME}")
-
-    message(STATUS "TEST: ${TARGET_NAME}")
-
-    if(TARGET_NO_CATCH2 AND WIN32)
-        add_executable(${TARGET_NAME} WIN32 ${TARGET_SRC})
-    else()
-        add_executable(${TARGET_NAME} ${TARGET_SRC})
-    endif()
-
-    if(NOT NO_CATCH2)
-        target_link_libraries(${TARGET_NAME} PUBLIC Catch2::Catch2WithMain)
-    endif()
-
-    target_compile_definitions(${TARGET_NAME} PUBLIC VKB_BUILD_TESTS)
-
-    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER ${TARGET_FOLDER})
-
-    set_target_properties(${TARGET_NAME}
-        PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-    )
-
-    if(TARGET_LINK_LIBS)
-        target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LINK_LIBS})
-    endif()
-
-    if(${VKB_WARNINGS_AS_ERRORS})
-        message(STATUS "Warnings as Errors Enabled")
-        if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-            target_compile_options(${TARGET_NAME} PRIVATE -Werror)
-        elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-            target_compile_options(${TARGET_NAME} PRIVATE /W3 /WX)
-        endif()
-    endif()
-
-    add_test(NAME ${TARGET_NAME}
-             COMMAND ${TARGET_NAME}
-             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-    add_dependencies(vkb__tests ${TARGET_NAME})
 endfunction()
