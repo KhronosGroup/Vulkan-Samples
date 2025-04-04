@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,7 +72,7 @@ inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type, b
 
 inline bool validate_binding(const VkDescriptorSetLayoutBinding &binding, const std::vector<VkDescriptorType> &blacklist)
 {
-	return !(std::find_if(blacklist.begin(), blacklist.end(), [binding](const VkDescriptorType &type) { return type == binding.descriptorType; }) != blacklist.end());
+	return !(std::ranges::find_if(blacklist, [binding](const VkDescriptorType &type) { return type == binding.descriptorType; }) != blacklist.end());
 }
 
 inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescriptorSetLayoutBinding> &bindings, const std::vector<VkDescriptorBindingFlagsEXT> &flags)
@@ -94,7 +94,7 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device &                           device,
+DescriptorSetLayout::DescriptorSetLayout(Device                            &device,
                                          const uint32_t                     set_index,
                                          const std::vector<ShaderModule *> &shader_modules,
                                          const std::vector<ShaderResource> &resource_set) :
@@ -157,12 +157,12 @@ DescriptorSetLayout::DescriptorSetLayout(Device &                           devi
 
 	// Handle update-after-bind extensions
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
-	if (std::find_if(resource_set.begin(), resource_set.end(),
-	                 [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::UpdateAfterBind; }) != resource_set.end())
+	if (std::ranges::find_if(resource_set,
+	                         [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::UpdateAfterBind; }) != resource_set.end())
 	{
 		// Spec states you can't have ANY dynamic resources if you have one of the bindings set to update-after-bind
-		if (std::find_if(resource_set.begin(), resource_set.end(),
-		                 [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::Dynamic; }) != resource_set.end())
+		if (std::ranges::find_if(resource_set,
+		                         [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::Dynamic; }) != resource_set.end())
 		{
 			throw std::runtime_error("Cannot create descriptor set layout, dynamic resources are not allowed if at least one resource is update-after-bind.");
 		}
@@ -176,7 +176,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &                           devi
 		binding_flags_create_info.pBindingFlags = binding_flags.data();
 
 		create_info.pNext = &binding_flags_create_info;
-		create_info.flags |= std::find(binding_flags.begin(), binding_flags.end(), VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT) != binding_flags.end() ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT : 0;
+		create_info.flags |= std::ranges::find(binding_flags, VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT) != binding_flags.end() ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT : 0;
 	}
 
 	// Create the Vulkan descriptor set layout handle

@@ -118,15 +118,13 @@ bool enable_extension(const char                                 *requested_exte
                       std::vector<const char *>                  &enabled_extensions)
 {
 	bool is_available =
-	    std::any_of(available_extensions.begin(),
-	                available_extensions.end(),
-	                [&requested_extension](auto const &available_extension) { return strcmp(requested_extension, available_extension.extensionName) == 0; });
+	    std::ranges::any_of(available_extensions,
+	                        [&requested_extension](auto const &available_extension) { return strcmp(requested_extension, available_extension.extensionName) == 0; });
 	if (is_available)
 	{
 		bool is_already_enabled =
-		    std::any_of(enabled_extensions.begin(),
-		                enabled_extensions.end(),
-		                [&requested_extension](auto const &enabled_extension) { return strcmp(requested_extension, enabled_extension) == 0; });
+		    std::ranges::any_of(enabled_extensions,
+		                        [&requested_extension](auto const &enabled_extension) { return strcmp(requested_extension, enabled_extension) == 0; });
 		if (!is_already_enabled)
 		{
 			LOGI("Extension {} available, enabling it", requested_extension);
@@ -146,15 +144,13 @@ bool enable_layer(const char                             *requested_layer,
                   std::vector<const char *>              &enabled_layers)
 {
 	bool is_available =
-	    std::any_of(available_layers.begin(),
-	                available_layers.end(),
-	                [&requested_layer](auto const &available_layer) { return strcmp(requested_layer, available_layer.layerName) == 0; });
+	    std::ranges::any_of(available_layers,
+	                        [&requested_layer](auto const &available_layer) { return strcmp(requested_layer, available_layer.layerName) == 0; });
 	if (is_available)
 	{
 		bool is_already_enabled =
-		    std::any_of(enabled_layers.begin(),
-		                enabled_layers.end(),
-		                [&requested_layer](auto const &enabled_layer) { return strcmp(requested_layer, enabled_layer) == 0; });
+		    std::ranges::any_of(enabled_layers,
+		                        [&requested_layer](auto const &enabled_layer) { return strcmp(requested_layer, enabled_layer) == 0; });
 		if (!is_already_enabled)
 		{
 			LOGI("Layer {} available, enabling it", requested_layer);
@@ -452,9 +448,8 @@ vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surfa
 
 bool HPPInstance::is_enabled(const char *extension) const
 {
-	return std::find_if(enabled_extensions.begin(),
-	                    enabled_extensions.end(),
-	                    [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
+	return std::ranges::find_if(enabled_extensions,
+	                            [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
 void HPPInstance::query_gpus()

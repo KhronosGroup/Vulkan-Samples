@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Corporation
+/* Copyright (c) 2023-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -826,7 +826,7 @@ void CalibratedTimestamps::get_device_time_domain()
 
 	if (is_time_domain_init && (time_domains.size() > 1))
 	{
-		auto iterator_device = std::find(time_domains.begin(), time_domains.end(), VK_TIME_DOMAIN_DEVICE_EXT);
+		auto iterator_device = std::ranges::find(time_domains, VK_TIME_DOMAIN_DEVICE_EXT);
 
 		int device_index = static_cast<int>(iterator_device - time_domains.begin());
 

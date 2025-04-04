@@ -512,7 +512,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 		if (it == supported_extensions.end())
 		{
 			// If extension is required then we shouldn't allow the scene to be loaded
-			if (std::find(model.extensionsRequired.begin(), model.extensionsRequired.end(), used_extension) != model.extensionsRequired.end())
+			if (std::ranges::find(model.extensionsRequired, used_extension) != model.extensionsRequired.end())
 			{
 				throw std::runtime_error("Cannot load glTF file. Contains a required unsupported extension: " + used_extension);
 			}

@@ -1051,9 +1051,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 		auto                                 debugExtensionIt =
-		    std::find_if(available_instance_extensions.begin(),
-		                 available_instance_extensions.end(),
-		                 [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+		    std::ranges::find_if(available_instance_extensions,
+		                         [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_instance_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -1123,9 +1122,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	{
 		std::vector<vk::ExtensionProperties> available_device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
 		auto                                 debugExtensionIt =
-		    std::find_if(available_device_extensions.begin(),
-		                 available_device_extensions.end(),
-		                 [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+		    std::ranges::find_if(available_device_extensions,
+		                         [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_device_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);

@@ -432,9 +432,8 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 	std::vector<VkLayerProperties> layer_properties(layer_property_count);
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, layer_properties.data()));
 
-	const auto vvl_properties = std::find_if(layer_properties.begin(),
-	                                         layer_properties.end(),
-	                                         [](VkLayerProperties const &properties) { return strcmp(properties.layerName, validation_layer_name) == 0; });
+	const auto vvl_properties = std::ranges::find_if(layer_properties,
+	                                                 [](VkLayerProperties const &properties) { return strcmp(properties.layerName, validation_layer_name) == 0; });
 
 	// Make sure we have found the validation layer before checking the VVL version and enumerating VVL instance extensions for VK_EXT_layer_settings
 	if (vvl_properties != layer_properties.end())
@@ -456,9 +455,8 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 
 		// When VK_EXT_layer_settings is available at runtime, the debugPrintfEXT layer feature is enabled using the standard framework
 		// For this case set Vulkan API version and return via base class, otherwise the remainder of this custom override is required
-		if (std::any_of(vvl_instance_extensions.begin(),
-		                vvl_instance_extensions.end(),
-		                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+		if (std::ranges::any_of(vvl_instance_extensions,
+		                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 		{
 			set_api_version(debugprintf_api_version);
 
@@ -501,9 +499,8 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 
 	// If VK_KHR_portability_enumeration is available in the portability implementation, then we must enable the extension
 	bool portability_enumeration_available = false;
-	if (std::any_of(available_instance_extensions.begin(),
-	                available_instance_extensions.end(),
-	                [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	if (std::ranges::any_of(available_instance_extensions,
+	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		portability_enumeration_available = true;

@@ -224,7 +224,7 @@ bool Device::is_extension_supported(const std::string &requested_extension) cons
 
 bool Device::is_enabled(const char *extension) const
 {
-	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
+	return std::ranges::find_if(enabled_extensions, [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
 const PhysicalDevice &Device::get_gpu() const

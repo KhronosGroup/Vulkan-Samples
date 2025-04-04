@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -81,7 +81,7 @@ inline VkPresentModeKHR choose_present_mode(
     const std::vector<VkPresentModeKHR> &available_present_modes,
     const std::vector<VkPresentModeKHR> &present_mode_priority_list)
 {
-	auto present_mode_it = std::find(available_present_modes.begin(), available_present_modes.end(), request_present_mode);
+	auto present_mode_it = std::ranges::find(available_present_modes, request_present_mode);
 
 	if (present_mode_it == available_present_modes.end())
 	{
@@ -90,7 +90,7 @@ inline VkPresentModeKHR choose_present_mode(
 
 		for (auto &present_mode : present_mode_priority_list)
 		{
-			if (std::find(available_present_modes.begin(), available_present_modes.end(), present_mode) != available_present_modes.end())
+			if (std::ranges::find(available_present_modes, present_mode) != available_present_modes.end())
 			{
 				chosen_present_mode = present_mode;
 				break;
@@ -113,9 +113,8 @@ inline VkSurfaceFormatKHR choose_surface_format(
     const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list)
 {
 	// Try to find the requested surface format in the supported surface formats
-	auto surface_format_it = std::find_if(
-	    available_surface_formats.begin(),
-	    available_surface_formats.end(),
+	auto surface_format_it = std::ranges::find_if(
+	    available_surface_formats,
 	    [&requested_surface_format](const VkSurfaceFormatKHR &surface) {
 		    if (surface.format == requested_surface_format.format &&
 		        surface.colorSpace == requested_surface_format.colorSpace)
@@ -131,9 +130,8 @@ inline VkSurfaceFormatKHR choose_surface_format(
 	{
 		for (auto &surface_format : surface_format_priority_list)
 		{
-			surface_format_it = std::find_if(
-			    available_surface_formats.begin(),
-			    available_surface_formats.end(),
+			surface_format_it = std::ranges::find_if(
+			    available_surface_formats,
 			    [&surface_format](const VkSurfaceFormatKHR &surface) {
 				    if (surface.format == surface_format.format &&
 				        surface.colorSpace == surface_format.colorSpace)

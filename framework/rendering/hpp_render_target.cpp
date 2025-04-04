@@ -47,7 +47,7 @@ HPPRenderTarget::HPPRenderTarget(std::vector<core::HPPImage> &&images_) :
 	assert(!images.empty() && "Should specify at least 1 image");
 
 	// check that every image is 2D
-	auto it = std::find_if(images.begin(), images.end(), [](core::HPPImage const &image) { return image.get_type() != vk::ImageType::e2D; });
+	auto it = std::ranges::find_if(images, [](core::HPPImage const &image) { return image.get_type() != vk::ImageType::e2D; });
 	if (it != images.end())
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Image type is not 2D"};

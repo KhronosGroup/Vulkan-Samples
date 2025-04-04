@@ -250,14 +250,14 @@ void PostProcessingRenderPass::update_load_stores(
 	for (uint32_t j = 0; j < static_cast<uint32_t>(render_target.get_attachments().size()); j++)
 	{
 		const bool is_input   = input_attachments.find(j) != input_attachments.end();
-		const bool is_sampled = std::find_if(sampled_attachments.begin(), sampled_attachments.end(),
-		                                     [&render_target, j](auto &pair) {
-			                                     // NOTE: if RT not set, default is the currently-active one
-			                                     auto *sampled_rt = pair.first ? pair.first : &render_target;
-			                                     // unpack attachment
-			                                     uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
-			                                     return attachment == j && sampled_rt == &render_target;
-		                                     }) != sampled_attachments.end();
+		const bool is_sampled = std::ranges::find_if(sampled_attachments,
+		                                             [&render_target, j](auto &pair) {
+			                                             // NOTE: if RT not set, default is the currently-active one
+			                                             auto *sampled_rt = pair.first ? pair.first : &render_target;
+			                                             // unpack attachment
+			                                             uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
+			                                             return attachment == j && sampled_rt == &render_target;
+		                                             }) != sampled_attachments.end();
 		const bool is_output  = output_attachments.find(j) != output_attachments.end();
 
 		VkAttachmentLoadOp load;

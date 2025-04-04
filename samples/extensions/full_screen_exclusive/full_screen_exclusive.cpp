@@ -149,7 +149,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	std::vector<VkLayerProperties> supported_instance_layers(instance_layer_count);
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_instance_layers.data()));
 
-	if (std::any_of(supported_instance_layers.begin(), supported_instance_layers.end(), [&validationLayer](auto const &lp) { return strcmp(lp.layerName, validationLayer) == 0; }))
+	if (std::ranges::any_of(supported_instance_layers, [&validationLayer](auto const &lp) { return strcmp(lp.layerName, validationLayer) == 0; }))
 	{
 		requested_instance_layers.push_back(validationLayer);
 		LOGI("Enabled Validation Layer {}", validationLayer);

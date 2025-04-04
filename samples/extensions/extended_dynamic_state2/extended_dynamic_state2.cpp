@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -170,18 +170,12 @@ void ExtendedDynamicState2::render(float delta_time)
  */
 void ExtendedDynamicState2::prepare_uniform_buffers()
 {
-	uniform_buffers.common      = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                                  sizeof(ubo_common),
-                                                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.baseline    = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                                    sizeof(ubo_baseline),
-                                                                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.tesselation = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                   sizeof(ubo_tess),
-	                                                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.common =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_common), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.baseline =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_baseline), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.tesselation =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_tess), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -1079,12 +1073,9 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 	constexpr float move_step  = 0.0005f;
 	static float    time_pass  = 0.0f;
 	time_pass += delta_time;
-	static auto &transform = std::find_if(scene_elements_baseline.begin(),
-	                                      scene_elements_baseline.end(),
-	                                      [](SceneNode const &scene_node) {
-		                                      return scene_node.node->get_name() == "Cube_1";
-	                                      })
-	                             ->node->get_transform();
+	static auto &transform =
+	    std::ranges::find_if(scene_elements_baseline, [](SceneNode const &scene_node) { return scene_node.node->get_name() == "Cube_1"; })
+	        ->node->get_transform();
 	static auto  translation = transform.get_translation();
 	static float difference  = 0.0f;
 	static bool  rising      = true;

@@ -157,9 +157,9 @@ void ImageCompressionControlSample::create_render_context()
 		std::vector<VkSurfaceFormatKHR> new_surface_priority_list;
 		for (auto const &surface_priority : get_surface_priority_list())
 		{
-			auto it = std::find_if(surface_formats_that_support_compression.begin(), surface_formats_that_support_compression.end(),
-			                       [&](VkSurfaceFormatKHR &sf) { return surface_priority.format == sf.format &&
-				                                                        surface_priority.colorSpace == sf.colorSpace; });
+			auto it = std::ranges::find_if(surface_formats_that_support_compression,
+			                               [&](VkSurfaceFormatKHR &sf) { return surface_priority.format == sf.format &&
+				                                                                surface_priority.colorSpace == sf.colorSpace; });
 			if (it != surface_formats_that_support_compression.end())
 			{
 				new_surface_priority_list.push_back(*it);
@@ -484,7 +484,7 @@ inline T generate_combo(T current_value, const char *combo_label, const std::uno
 	{
 		for (const auto &it : enum_to_string)
 		{
-			if (skip_values && std::find(skip_values->begin(), skip_values->end(), it.first) != skip_values->end())
+			if (skip_values && std::ranges::find(*skip_values, it.first) != skip_values->end())
 			{
 				continue;
 			}

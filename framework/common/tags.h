@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,7 +52,7 @@ class Tag
 
 	static bool has_tag(TagID id)
 	{
-		return std::find(tags.begin(), tags.end(), id) != tags.end();
+		return std::ranges::find(tags, id) != tags.end();
 	}
 
 	template <typename C>

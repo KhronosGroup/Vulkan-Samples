@@ -142,7 +142,7 @@ std::vector<uint32_t> RenderFrame::collect_bindings_to_update(const DescriptorSe
 		{
 			uint32_t binding_index = pair.first;
 			if (!(descriptor_set_layout.get_layout_binding_flag(binding_index) & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT) &&
-			    std::find(bindings_to_update.begin(), bindings_to_update.end(), binding_index) == bindings_to_update.end())
+			    std::ranges::find(bindings_to_update, binding_index) == bindings_to_update.end())
 			{
 				bindings_to_update.push_back(binding_index);
 			}
@@ -203,10 +203,7 @@ vkb::core::CommandBufferC &RenderFrame::request_command_buffer(const Queue      
 
 	auto &command_pools = get_command_pools(queue, reset_mode);
 
-	auto command_pool_it =
-	    std::find_if(command_pools.begin(),
-	                 command_pools.end(),
-	                 [&thread_index](std::unique_ptr<vkb::core::CommandPoolC> &cmd_pool) { return cmd_pool->get_thread_index() == thread_index; });
+	auto command_pool_it = std::ranges::find_if(command_pools, [&thread_index](std::unique_ptr<vkb::core::CommandPoolC> &cmd_pool) { return cmd_pool->get_thread_index() == thread_index; });
 
 	return (*command_pool_it)->request_command_buffer(level);
 }
