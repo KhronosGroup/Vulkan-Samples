@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -165,8 +165,8 @@ Astc::Astc(const Image &image) :
 	init();
 
 	// Locate mip #0 in the KTX. This is the first one in the data array for KTX1s, but the last one in KTX2s!
-	auto mip_it = std::find_if(image.get_mipmaps().begin(), image.get_mipmaps().end(),
-	                           [](auto &mip) { return mip.level == 0; });
+	auto mip_it = std::ranges::find_if(image.get_mipmaps(),
+	                                   [](auto &mip) { return mip.level == 0; });
 	assert(mip_it != image.get_mipmaps().end() && "Mip #0 not found");
 
 	// When decoding ASTC on CPU (as it is the case in here), we don't decode all mips in the mip chain.

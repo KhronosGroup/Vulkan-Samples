@@ -773,7 +773,7 @@ Font &Gui::get_font(const std::string &font_name)
 {
 	assert(!fonts.empty() && "No fonts exist");
 
-	auto it = std::find_if(fonts.begin(), fonts.end(), [&font_name](Font &font) { return font.name == font_name; });
+	auto it = std::ranges::find_if(fonts, [&font_name](Font &font) { return font.name == font_name; });
 
 	if (it != fonts.end())
 	{

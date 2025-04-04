@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,10 +69,10 @@ VkBool32 PhysicalDevice::is_present_supported(VkSurfaceKHR surface, uint32_t que
 
 bool PhysicalDevice::is_extension_supported(const std::string &requested_extension) const
 {
-	return std::find_if(device_extensions.begin(), device_extensions.end(),
-	                    [requested_extension](auto &device_extension) {
-		                    return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0;
-	                    }) != device_extensions.end();
+	return std::ranges::find_if(device_extensions,
+	                            [requested_extension](auto &device_extension) {
+		                            return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0;
+	                            }) != device_extensions.end();
 }
 
 const VkFormatProperties PhysicalDevice::get_format_properties(VkFormat format) const
@@ -120,8 +120,8 @@ uint32_t PhysicalDevice::get_queue_family_performance_query_passes(
 
 void PhysicalDevice::enumerate_queue_family_performance_query_counters(
     uint32_t                            queue_family_index,
-    uint32_t *                          count,
-    VkPerformanceCounterKHR *           counters,
+    uint32_t                           *count,
+    VkPerformanceCounterKHR            *counters,
     VkPerformanceCounterDescriptionKHR *descriptions) const
 {
 	VK_CHECK(vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(

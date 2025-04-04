@@ -799,7 +799,7 @@ void OpenCLInterop::prepare_opencl_resources()
 		while (std::getline(extension_stream, extension, ' '))
 		{
 			// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
-			extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
+			extension.erase(std::ranges::find(extension, '\0'), extension.end());
 			available_extensions.push_back(extension);
 		}
 
@@ -807,7 +807,7 @@ void OpenCLInterop::prepare_opencl_resources()
 
 		for (auto &extension : required_extensions)
 		{
-			if (std::find(available_extensions.begin(), available_extensions.end(), extension) == available_extensions.end())
+			if (std::ranges::find(available_extensions, extension) == available_extensions.end())
 			{
 				extensions_present = false;
 				break;
