@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Google
+/* Copyright (c) 2023-2025, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -168,6 +168,8 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	// User toggles.
 	bool recreate_swapchain_on_present_mode_change = false;
 
+	// from vkb::VulkanSample
+	void                         request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	std::unique_ptr<vkb::Device> create_device(vkb::PhysicalDevice &gpu) override;
 
 	void get_queue();
