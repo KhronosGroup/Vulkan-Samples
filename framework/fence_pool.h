@@ -40,7 +40,7 @@ class FencePool
 
 	VkFence request_fence();
 
-	VkResult wait(uint32_t timeout = std::numeric_limits<uint32_t>::max()) const;
+	VkResult wait(uint64_t timeout = std::numeric_limits<uint64_t>::max()) const;
 
 	VkResult reset();
 
