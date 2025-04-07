@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,7 +40,7 @@ class FencePool
 
 	VkFence request_fence();
 
-	VkResult wait(uint32_t timeout = std::numeric_limits<uint32_t>::max()) const;
+	VkResult wait(uint64_t timeout = std::numeric_limits<uint64_t>::max()) const;
 
 	VkResult reset();
 
