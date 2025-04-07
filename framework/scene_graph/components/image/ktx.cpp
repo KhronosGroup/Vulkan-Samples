@@ -103,6 +103,7 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType 
 	set_height(texture->baseHeight);
 	set_depth(texture->baseDepth);
 	set_layers(texture->numLayers);
+	update_hash();
 
 	bool cubemap = false;
 

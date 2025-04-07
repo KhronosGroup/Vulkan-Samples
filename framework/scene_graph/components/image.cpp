@@ -152,6 +152,7 @@ Image::Image(const std::string &name, std::vector<uint8_t> &&d, std::vector<Mipm
     format{VK_FORMAT_R8G8B8A8_UNORM},
     mipmaps{std::move(m)}
 {
+	update_hash();
 }
 
 std::type_index Image::get_type()
@@ -164,10 +165,16 @@ const std::vector<uint8_t> &Image::get_data() const
 	return data;
 }
 
+size_t Image::get_data_hash() const
+{
+	return data_hash;
+}
+
 void Image::clear_data()
 {
 	data.clear();
 	data.shrink_to_fit();
+	// preserve last known hash
 }
 
 VkFormat Image::get_format() const
@@ -312,10 +319,25 @@ std::vector<uint8_t> &Image::get_mut_data()
 	return data;
 }
 
+void Image::update_hash()
+{
+	data_hash = 0;
+	for (size_t i = 0; i < data.size(); ++i)
+	{
+		glm::detail::hash_combine(data_hash, data[i]);
+	}
+}
+
+void Image::update_hash(size_t hash)
+{
+	data_hash = hash;
+}
+
 void Image::set_data(const uint8_t *raw_data, size_t size)
 {
 	assert(data.empty() && "Image data already set");
 	data = {raw_data, raw_data + size};
+	update_hash();
 }
 
 void Image::set_format(const VkFormat f)

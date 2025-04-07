@@ -80,6 +80,8 @@ class Image : public Component
 
 	const std::vector<uint8_t> &get_data() const;
 
+	size_t get_data_hash() const;
+
 	void clear_data();
 
 	VkFormat get_format() const;
@@ -123,8 +125,14 @@ class Image : public Component
 
 	std::vector<Mipmap> &get_mut_mipmaps();
 
+	void update_hash();
+
+	void update_hash(size_t data_hash);
+
   private:
 	std::vector<uint8_t> data;
+
+	size_t data_hash{0};
 
 	VkFormat format{VK_FORMAT_UNDEFINED};
 
