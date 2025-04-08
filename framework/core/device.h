@@ -20,6 +20,7 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/buffer.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"
 #include "core/debug.h"

@@ -20,9 +20,9 @@
 
 #include "buffer_pool.h"
 #include "rendering/hpp_pipeline_state.h"
-#include "rendering/hpp_render_frame.h"
 #include "rendering/hpp_render_target.h"
 #include "rendering/pipeline_state.h"
+#include "rendering/render_frame.h"
 #include "scene_graph/components/light.h"
 #include "scene_graph/node.h"
 
