@@ -25,7 +25,7 @@
  * @brief A sample that implements best practices in handling present resources and swapchain
  * recreation, for example due to window resizing or present mode changes.
  */
-class SwapchainRecreation : public vkb::VulkanSampleC
+class SwapchainRecreationMaintenance1 : public vkb::VulkanSampleC
 {
 	struct SwapchainObjects
 	{
@@ -94,9 +94,9 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	};
 
   public:
-	SwapchainRecreation();
+	SwapchainRecreationMaintenance1();
 
-	virtual ~SwapchainRecreation() override;
+	virtual ~SwapchainRecreationMaintenance1() override;
 
 	void create_render_context() override;
 
@@ -165,6 +165,7 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	bool recreate_swapchain_on_present_mode_change = false;
 
 	// from vkb::VulkanSample
+	void                         request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	std::unique_ptr<vkb::Device> create_device(vkb::PhysicalDevice &gpu) override;
 
 	void get_queue();
@@ -204,4 +205,4 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	VkDevice         get_device_handle();
 };
 
-std::unique_ptr<vkb::Application> create_swapchain_recreation();
+std::unique_ptr<vkb::Application> create_swapchain_recreation_maintenance1();
