@@ -177,7 +177,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 
 	const auto vk_format = static_cast<vk::Format>(ktx_texture->vkFormat);
 
-	vk::Extent3D extent(ktx_texture->baseWidth, ktx_texture->baseHeight, 1);
+	vk::Extent3D extent{ktx_texture->baseWidth, ktx_texture->baseHeight, 1};
 
 	std::vector<vk::BufferImageCopy>                        buffer_copies;
 	std::unique_ptr<vkb::scene_graph::components::HPPImage> image_out;
@@ -185,7 +185,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 		std::vector<vkb::scene_graph::components::HPPMipmap> mip_maps;
 		for (uint32_t mip_level = 0; mip_level < ktx_texture->numLevels; ++mip_level)
 		{
-			vk::Extent3D mip_extent(extent.width >> mip_level, extent.height >> mip_level, 1);
+			vk::Extent3D mip_extent{extent.width >> mip_level, extent.height >> mip_level, 1};
 			if (!mip_extent.width || !mip_extent.height)
 			{
 				break;
@@ -194,7 +194,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 			ktx_size_t offset{0};
 			KTX_CHECK(ktxTexture_GetImageOffset((ktxTexture *) ktx_texture, mip_level, 0, 0, &offset));
 			vk::BufferImageCopy buffer_image_copy = {};
-			buffer_image_copy.imageSubresource    = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, mip_level, 0, 1);
+			buffer_image_copy.imageSubresource    = vk::ImageSubresourceLayers{vk::ImageAspectFlagBits::eColor, mip_level, 0, 1};
 			buffer_image_copy.imageExtent         = mip_extent;
 			buffer_image_copy.bufferOffset        = static_cast<uint32_t>(offset);
 			buffer_copies.push_back(buffer_image_copy);
@@ -211,7 +211,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 	auto &vkb_image = image_out->get_vk_image();
 	auto  image     = vkb_image.get_handle();
 
-	vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, static_cast<uint32_t>(buffer_copies.size()), 0, 1);
+	vk::ImageSubresourceRange subresource_range{vk::ImageAspectFlagBits::eColor, 0, static_cast<uint32_t>(buffer_copies.size()), 0, 1};
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 

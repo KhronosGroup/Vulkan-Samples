@@ -321,21 +321,17 @@ HPPSwapchain::HPPSwapchain(HPPDevice                               &device,
 	properties.composite_alpha = choose_composite_alpha(vk::CompositeAlphaFlagBitsKHR::eInherit, surface_capabilities.supportedCompositeAlpha);
 	properties.present_mode    = choose_present_mode(present_mode, present_modes, present_mode_priority_list);
 
-	vk::SwapchainCreateInfoKHR const create_info({},
-	                                             surface,
-	                                             properties.image_count,
-	                                             properties.surface_format.format,
-	                                             properties.surface_format.colorSpace,
-	                                             properties.extent,
-	                                             properties.array_layers,
-	                                             properties.image_usage,
-	                                             {},
-	                                             {},
-	                                             properties.pre_transform,
-	                                             properties.composite_alpha,
-	                                             properties.present_mode,
-	                                             {},
-	                                             properties.old_swapchain);
+	vk::SwapchainCreateInfoKHR const create_info{.surface          = surface,
+	                                             .minImageCount    = properties.image_count,
+	                                             .imageFormat      = properties.surface_format.format,
+	                                             .imageColorSpace  = properties.surface_format.colorSpace,
+	                                             .imageExtent      = properties.extent,
+	                                             .imageArrayLayers = properties.array_layers,
+	                                             .imageUsage       = properties.image_usage,
+	                                             .preTransform     = properties.pre_transform,
+	                                             .compositeAlpha   = properties.composite_alpha,
+	                                             .presentMode      = properties.present_mode,
+	                                             .oldSwapchain     = properties.old_swapchain};
 
 	handle = device.get_handle().createSwapchainKHR(create_info);
 

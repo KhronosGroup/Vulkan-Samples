@@ -75,6 +75,9 @@ endif()
 # globally add VKB_DEBUG for the debug build
 add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)
 
+#globally define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS to have designated initializers for the vk-structs
+add_compile_definitions(VULKAN_HPP_NO_STRUCT_CONSTRUCTORS)
+
 # globally set -fno-strict-aliasing, needed due to using reinterpret_cast
 if (NOT MSVC)
   add_compile_options(-fno-strict-aliasing)

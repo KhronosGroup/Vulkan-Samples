@@ -99,7 +99,10 @@ HPPPipelineLayout::HPPPipelineLayout(vkb::core::HPPDevice &device, const std::ve
 		push_constant_ranges.push_back({push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
 	}
 
-	vk::PipelineLayoutCreateInfo create_info({}, descriptor_set_layout_handles, push_constant_ranges);
+	vk::PipelineLayoutCreateInfo create_info{.setLayoutCount         = static_cast<uint32_t>(descriptor_set_layout_handles.size()),
+	                                         .pSetLayouts            = descriptor_set_layout_handles.data(),
+	                                         .pushConstantRangeCount = static_cast<uint32_t>(push_constant_ranges.size()),
+	                                         .pPushConstantRanges    = push_constant_ranges.data()};
 
 	// Create the Vulkan pipeline layout handle
 	handle = device.get_handle().createPipelineLayout(create_info);

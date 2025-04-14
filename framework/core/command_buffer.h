@@ -305,7 +305,7 @@ template <vkb::BindingType bindingType>
 inline vkb::core::CommandBuffer<bindingType>::CommandBuffer(vkb::core::CommandPool<bindingType> &command_pool_, CommandBufferLevelType level_) :
     vkb::core::VulkanResource<bindingType, CommandBufferType>(nullptr, &command_pool_.get_device()), level(static_cast<vk::CommandBufferLevel>(level_)), command_pool(reinterpret_cast<vkb::core::CommandPoolCpp &>(command_pool_)), max_push_constants_size(command_pool_.get_device().get_gpu().get_properties().limits.maxPushConstantsSize)
 {
-	vk::CommandBufferAllocateInfo allocate_info(command_pool.get_handle(), level, 1);
+	vk::CommandBufferAllocateInfo allocate_info{.commandPool = command_pool.get_handle(), .level = level, .commandBufferCount = 1};
 
 	this->set_handle(this->get_device().get_resource().allocateCommandBuffers(allocate_info).front());
 }
@@ -380,7 +380,7 @@ inline void CommandBuffer<bindingType>::begin_impl(vk::CommandBufferUsageFlags  
 	descriptor_set_layout_binding_state.clear();
 	stored_push_constants.clear();
 
-	vk::CommandBufferBeginInfo       begin_info(flags);
+	vk::CommandBufferBeginInfo       begin_info{.flags = flags};
 	vk::CommandBufferInheritanceInfo inheritance;
 
 	if (level == vk::CommandBufferLevel::eSecondary)
@@ -463,7 +463,11 @@ inline void CommandBuffer<bindingType>::begin_render_pass_impl(vkb::rendering::H
 	current_framebuffer = &framebuffer;
 
 	// Begin render pass
-	vk::RenderPassBeginInfo begin_info(current_render_pass->get_handle(), current_framebuffer->get_handle(), {{}, render_target.get_extent()}, clear_values);
+	vk::RenderPassBeginInfo begin_info{.renderPass      = current_render_pass->get_handle(),
+	                                   .framebuffer     = current_framebuffer->get_handle(),
+	                                   .renderArea      = {.extent = render_target.get_extent()},
+	                                   .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                   .pClearValues    = clear_values.data()};
 
 	const auto &framebuffer_extent = current_framebuffer->get_extent();
 
@@ -658,7 +662,11 @@ inline void CommandBuffer<bindingType>::buffer_memory_barrier_impl(vkb::core::Bu
                                                                    vk::DeviceSize                             size,
                                                                    vkb::common::HPPBufferMemoryBarrier const &memory_barrier)
 {
-	vk::BufferMemoryBarrier buffer_memory_barrier(memory_barrier.src_access_mask, memory_barrier.dst_access_mask, {}, {}, buffer.get_handle(), offset, size);
+	vk::BufferMemoryBarrier buffer_memory_barrier{.srcAccessMask = memory_barrier.src_access_mask,
+	                                              .dstAccessMask = memory_barrier.dst_access_mask,
+	                                              .buffer        = buffer.get_handle(),
+	                                              .offset        = offset,
+	                                              .size          = size};
 
 	this->get_resource().pipelineBarrier(memory_barrier.src_stage_mask, memory_barrier.dst_stage_mask, {}, {}, buffer_memory_barrier, {});
 }
@@ -697,7 +705,7 @@ template <vkb::BindingType bindingType>
 inline void
     CommandBuffer<bindingType>::copy_buffer_impl(vkb::core::BufferCpp const &src_buffer, vkb::core::BufferCpp const &dst_buffer, vk::DeviceSize size)
 {
-	vk::BufferCopy copy_region({}, {}, size);
+	vk::BufferCopy copy_region{.size = size};
 	this->get_resource().copyBuffer(src_buffer.get_handle(), dst_buffer.get_handle(), copy_region);
 }
 
@@ -952,14 +960,14 @@ inline void CommandBuffer<bindingType>::image_memory_barrier_impl(vkb::core::HPP
 	}
 
 	// actively ignore queue family indices provided by memory_barrier !!
-	vk::ImageMemoryBarrier image_memory_barrier(memory_barrier.src_access_mask,
-	                                            memory_barrier.dst_access_mask,
-	                                            memory_barrier.old_layout,
-	                                            memory_barrier.new_layout,
-	                                            vk::QueueFamilyIgnored,
-	                                            vk::QueueFamilyIgnored,
-	                                            image_view.get_image().get_handle(),
-	                                            subresource_range);
+	vk::ImageMemoryBarrier image_memory_barrier{.srcAccessMask       = memory_barrier.src_access_mask,
+	                                            .dstAccessMask       = memory_barrier.dst_access_mask,
+	                                            .oldLayout           = memory_barrier.old_layout,
+	                                            .newLayout           = memory_barrier.new_layout,
+	                                            .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+	                                            .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+	                                            .image               = image_view.get_image().get_handle(),
+	                                            .subresourceRange    = subresource_range};
 
 	vk::PipelineStageFlags src_stage_mask = memory_barrier.src_stage_mask;
 	vk::PipelineStageFlags dst_stage_mask = memory_barrier.dst_stage_mask;
@@ -1389,7 +1397,7 @@ inline void CommandBuffer<bindingType>::flush_descriptor_state_impl(vk::Pipeline
 						// Get buffer info
 						if (buffer != nullptr && vkb::common::is_buffer_descriptor_type(binding_info->descriptorType))
 						{
-							vk::DescriptorBufferInfo buffer_info(resource_info.buffer->get_handle(), resource_info.offset, resource_info.range);
+							vk::DescriptorBufferInfo buffer_info{resource_info.buffer->get_handle(), resource_info.offset, resource_info.range};
 
 							if (vkb::common::is_dynamic_buffer_descriptor_type(binding_info->descriptorType))
 							{
@@ -1404,7 +1412,7 @@ inline void CommandBuffer<bindingType>::flush_descriptor_state_impl(vk::Pipeline
 						else if (image_view != nullptr || sampler != nullptr)
 						{
 							// Can be null for input attachments
-							vk::DescriptorImageInfo image_info(sampler ? sampler->get_handle() : nullptr, image_view->get_handle());
+							vk::DescriptorImageInfo image_info{sampler ? sampler->get_handle() : nullptr, image_view->get_handle()};
 
 							if (image_view != nullptr)
 							{

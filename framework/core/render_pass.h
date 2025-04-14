@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -63,7 +63,7 @@ class RenderPass : public vkb::core::VulkanResourceC<VkRenderPass>
 
 	const uint32_t get_color_output_count(uint32_t subpass_index) const;
 
-	const VkExtent2D get_render_area_granularity() const;
+	VkExtent2D get_render_area_granularity() const;
 
   private:
 	size_t subpass_count;

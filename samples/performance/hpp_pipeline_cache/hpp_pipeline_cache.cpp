@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,12 +65,8 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	/* Add initial pipeline cache data from the cached file */
-	/* Note: unfortunately, no compiler can detect the correct data type from the "natural" constructor here:                   */
-	/*	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, pipeline_data);                                              */
-	/* This is due to the templatized second argument. You could help the compiler by a cast                                    */
-	/*	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, vk::ArrayProxyNoTemporaries<const uint8_t>(pipeline_data));  */
-	/* But, obviously, this looks a bit awkward. Instead, you can use the simple two-argument approach with size and pointer:   */
-	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, pipeline_data.size(), pipeline_data.data());
+	vk::PipelineCacheCreateInfo pipeline_cache_create_info{.initialDataSize = static_cast<uint32_t>(pipeline_data.size()),
+	                                                       .pInitialData    = pipeline_data.data()};
 
 	/* Create Vulkan pipeline cache */
 	pipeline_cache = get_device().get_handle().createPipelineCache(pipeline_cache_create_info);

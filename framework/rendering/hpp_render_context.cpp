@@ -343,16 +343,16 @@ vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                
                                        vk::PipelineStageFlags                            wait_pipeline_stage)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(),
-	               command_buffers.end(),
-	               cmd_buf_handles.begin(),
-	               [](const vkb::core::CommandBufferCpp *cmd_buf) { return cmd_buf->get_handle(); });
+	std::ranges::transform(command_buffers, cmd_buf_handles.begin(), [](const vkb::core::CommandBufferCpp *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 
 	vk::Semaphore signal_semaphore = frame.request_semaphore();
 
-	vk::SubmitInfo submit_info(nullptr, nullptr, cmd_buf_handles, signal_semaphore);
+	vk::SubmitInfo submit_info{.commandBufferCount   = static_cast<uint32_t>(cmd_buf_handles.size()),
+	                           .pCommandBuffers      = cmd_buf_handles.data(),
+	                           .signalSemaphoreCount = 1,
+	                           .pSignalSemaphores    = &signal_semaphore};
 	if (wait_semaphore)
 	{
 		submit_info.setWaitSemaphores(wait_semaphore);
@@ -369,14 +369,11 @@ vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                
 void HPPRenderContext::submit(const vkb::core::HPPQueue &queue, const std::vector<vkb::core::CommandBufferCpp *> &command_buffers)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(),
-	               command_buffers.end(),
-	               cmd_buf_handles.begin(),
-	               [](const vkb::core::CommandBufferCpp *cmd_buf) { return cmd_buf->get_handle(); });
+	std::ranges::transform(command_buffers, cmd_buf_handles.begin(), [](const vkb::core::CommandBufferCpp *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 
-	vk::SubmitInfo submit_info(nullptr, nullptr, cmd_buf_handles);
+	vk::SubmitInfo submit_info{.commandBufferCount = static_cast<uint32_t>(cmd_buf_handles.size()), .pCommandBuffers = cmd_buf_handles.data()};
 
 	vk::Fence fence = frame.request_fence();
 
@@ -395,7 +392,8 @@ void HPPRenderContext::end_frame(vk::Semaphore semaphore)
 	if (swapchain)
 	{
 		vk::SwapchainKHR   vk_swapchain = swapchain->get_handle();
-		vk::PresentInfoKHR present_info(semaphore, vk_swapchain, active_frame_index);
+		vk::PresentInfoKHR present_info{
+		    .waitSemaphoreCount = 1, .pWaitSemaphores = &semaphore, .swapchainCount = 1, .pSwapchains = &vk_swapchain, .pImageIndices = &active_frame_index};
 
 		vk::DisplayPresentInfoKHR disp_present_info;
 		if (device.is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&

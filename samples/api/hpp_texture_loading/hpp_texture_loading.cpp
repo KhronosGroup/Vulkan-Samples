@@ -60,7 +60,7 @@ bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
 		generate_quad();
 		prepare_uniform_buffers();
 		descriptor_set_layout = create_descriptor_set_layout();
-		pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, descriptor_set_layout});
+		pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &descriptor_set_layout});
 		pipeline              = create_pipeline();
 		descriptor_pool       = create_descriptor_pool();
 		descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {descriptor_set_layout});
@@ -89,7 +89,7 @@ void HPPTextureLoading::build_command_buffers()
 
 	vk::ClearValue clear_values[2];
 	clear_values[0].color        = default_clear_color;
-	clear_values[1].depthStencil = vk::ClearDepthStencilValue(0.0f, 0);
+	clear_values[1].depthStencil = vk::ClearDepthStencilValue{0.0f, 0};
 
 	vk::RenderPassBeginInfo render_pass_begin_info;
 	render_pass_begin_info.renderPass          = render_pass;
@@ -110,10 +110,10 @@ void HPPTextureLoading::build_command_buffers()
 
 		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
+		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
 		command_buffer.setViewport(0, viewport);
 
-		vk::Rect2D scissor({0, 0}, extent);
+		vk::Rect2D scissor{{0, 0}, extent};
 		command_buffer.setScissor(0, scissor);
 
 		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_set, {});
@@ -162,7 +162,8 @@ vk::DescriptorPool HPPTextureLoading::create_descriptor_pool()
 	// Example uses one ubo and one image sampler
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eCombinedImageSampler, 1}}};
 
-	return get_device().get_handle().createDescriptorPool({{}, 2, pool_sizes});
+	return get_device().get_handle().createDescriptorPool(
+	    {.maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
 }
 
 vk::DescriptorSetLayout HPPTextureLoading::create_descriptor_set_layout()
@@ -171,7 +172,8 @@ vk::DescriptorSetLayout HPPTextureLoading::create_descriptor_set_layout()
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	return get_device().get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
+	return get_device().get_handle().createDescriptorSetLayout(
+	    {.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()), .pBindings = set_layout_bindings.data()});
 }
 
 vk::Pipeline HPPTextureLoading::create_pipeline()
@@ -181,16 +183,18 @@ vk::Pipeline HPPTextureLoading::create_pipeline()
 	                                                                 load_shader("texture_loading", "texture.frag", vk::ShaderStageFlagBits::eFragment)}};
 
 	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(Vertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {
 	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos)},             // Location 0 : Position
 	     {1, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, uv)},                 // Location 1: Texture Coordinates
 	     {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, normal)}}};        // Location 2 : Normal
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -281,7 +285,7 @@ void HPPTextureLoading::load_texture()
 
 	ktxTexture *ktx_texture = vkb::ktx::load_texture(filename);
 
-	texture.extent     = vk::Extent2D(ktx_texture->baseWidth, ktx_texture->baseHeight);
+	texture.extent     = vk::Extent2D{ktx_texture->baseWidth, ktx_texture->baseHeight};
 	texture.mip_levels = ktx_texture->numLevels;
 
 	// We prefer using staging to copy the texture data to a device local optimal image
@@ -307,7 +311,9 @@ void HPPTextureLoading::load_texture()
 		// Create a host-visible staging buffer that contains the raw image data
 		// This buffer will be the data source for copying texture data to the optimal tiled image on the device
 		// This buffer is used as a transfer source for the buffer copy
-		vk::BufferCreateInfo buffer_create_info({}, ktx_texture->dataSize, vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, {});
+		vk::BufferCreateInfo buffer_create_info{.size        = ktx_texture->dataSize,
+		                                        .usage       = vk::BufferUsageFlagBits::eTransferSrc,
+		                                        .sharingMode = vk::SharingMode::eExclusive};
 		vk::Buffer           staging_buffer = device.createBuffer(buffer_create_info);
 
 		// Get memory requirements for the staging buffer (alignment, memory type bits)
@@ -317,7 +323,7 @@ void HPPTextureLoading::load_texture()
 		uint32_t memory_type = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
 		                                                              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-		vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size, memory_type);
+		vk::MemoryAllocateInfo memory_allocate_info{.allocationSize = memory_requirements.size, .memoryTypeIndex = memory_type};
 		vk::DeviceMemory       staging_memory = device.allocateMemory(memory_allocate_info);
 		device.bindBufferMemory(staging_buffer, staging_memory, 0);
 
@@ -344,22 +350,23 @@ void HPPTextureLoading::load_texture()
 		}
 
 		// Create optimal tiled target image on the device
-		vk::ImageCreateInfo image_create_info;
-		image_create_info.imageType     = vk::ImageType::e2D;
-		image_create_info.format        = format;
-		image_create_info.mipLevels     = texture.mip_levels;
-		image_create_info.arrayLayers   = 1;
-		image_create_info.samples       = vk::SampleCountFlagBits::e1;
-		image_create_info.tiling        = vk::ImageTiling::eOptimal;
-		image_create_info.sharingMode   = vk::SharingMode::eExclusive;
-		image_create_info.initialLayout = vk::ImageLayout::eUndefined;        // Set initial layout of the image to undefined
-		image_create_info.extent        = vk::Extent3D(texture.extent, 1);
-		image_create_info.usage         = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
-		texture.image                   = device.createImage(image_create_info);
+		vk::ImageCreateInfo image_create_info{
+		    .imageType     = vk::ImageType::e2D,
+		    .format        = format,
+		    .extent        = {texture.extent.width, texture.extent.height, 1},
+		    .mipLevels     = texture.mip_levels,
+		    .arrayLayers   = 1,
+		    .samples       = vk::SampleCountFlagBits::e1,
+		    .tiling        = vk::ImageTiling::eOptimal,
+		    .usage         = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+		    .sharingMode   = vk::SharingMode::eExclusive,
+		    .initialLayout = vk::ImageLayout::eUndefined        // Set initial layout of the image to undefined
+		};
+		texture.image = device.createImage(image_create_info);
 
 		memory_requirements   = device.getImageMemoryRequirements(texture.image);
 		memory_type           = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		memory_allocate_info  = {memory_requirements.size, memory_type};
+		memory_allocate_info  = vk::MemoryAllocateInfo{.allocationSize = memory_requirements.size, .memoryTypeIndex = memory_type};
 		texture.device_memory = device.allocateMemory(memory_allocate_info);
 		device.bindImageMemory(texture.image, texture.device_memory, 0);
 
@@ -369,11 +376,12 @@ void HPPTextureLoading::load_texture()
 		// Image memory barriers for the texture image
 
 		// The sub resource range describes the regions of the image that will be transitioned using the memory barriers below
-		vk::ImageSubresourceRange subresource_range;
-		subresource_range.aspectMask   = vk::ImageAspectFlagBits::eColor;        // Image contains only color data
-		subresource_range.baseMipLevel = 0;                                      // Start at first mip level
-		subresource_range.levelCount   = texture.mip_levels;                     // We will transition on all mip levels
-		subresource_range.layerCount   = 1;                                      // The 2D texture only has one layer
+		vk::ImageSubresourceRange subresource_range{
+		    .aspectMask   = vk::ImageAspectFlagBits::eColor,        // Image contains only color data
+		    .baseMipLevel = 0,                                      // Start at first mip level
+		    .levelCount   = texture.mip_levels,                     // We will transition on all mip levels
+		    .layerCount   = 1                                       // The 2D texture only has one layer
+		};
 
 		// Transition the texture image layout to transfer target, so we can safely copy our buffer data to it.
 		vk::ImageMemoryBarrier image_memory_barrier;
@@ -419,18 +427,17 @@ void HPPTextureLoading::load_texture()
 		// Copy data to a linear tiled image
 
 		// Load mip map level 0 to linear tiling image
-		vk::ImageCreateInfo image_create_info;
-		image_create_info.imageType     = vk::ImageType::e2D;
-		image_create_info.format        = format;
-		image_create_info.mipLevels     = 1;
-		image_create_info.arrayLayers   = 1;
-		image_create_info.samples       = vk::SampleCountFlagBits::e1;
-		image_create_info.tiling        = vk::ImageTiling::eLinear;
-		image_create_info.usage         = vk::ImageUsageFlagBits::eSampled;
-		image_create_info.sharingMode   = vk::SharingMode::eExclusive;
-		image_create_info.initialLayout = vk::ImageLayout::ePreinitialized;
-		image_create_info.extent        = vk::Extent3D(texture.extent, 1);
-		vk::Image mappable_image        = device.createImage(image_create_info);
+		vk::ImageCreateInfo image_create_info{.imageType     = vk::ImageType::e2D,
+		                                      .format        = format,
+		                                      .extent        = {texture.extent.width, texture.extent.height, 1},
+		                                      .mipLevels     = 1,
+		                                      .arrayLayers   = 1,
+		                                      .samples       = vk::SampleCountFlagBits::e1,
+		                                      .tiling        = vk::ImageTiling::eLinear,
+		                                      .usage         = vk::ImageUsageFlagBits::eSampled,
+		                                      .sharingMode   = vk::SharingMode::eExclusive,
+		                                      .initialLayout = vk::ImageLayout::ePreinitialized};
+		vk::Image           mappable_image = device.createImage(image_create_info);
 
 		// Get memory requirements for this image like size and alignment
 		vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(mappable_image);
@@ -440,7 +447,7 @@ void HPPTextureLoading::load_texture()
 		                                                              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
 		// Set memory allocation size to required memory size
-		vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size, memory_type);
+		vk::MemoryAllocateInfo memory_allocate_info{.allocationSize = memory_requirements.size, .memoryTypeIndex = memory_type};
 		vk::DeviceMemory       mappable_memory = device.allocateMemory(memory_allocate_info);
 		device.bindImageMemory(mappable_image, mappable_memory, 0);
 
@@ -460,7 +467,7 @@ void HPPTextureLoading::load_texture()
 		copy_command.begin(vk::CommandBufferBeginInfo());
 
 		// The sub resource range describes the regions of the image we will be transition
-		vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+		vk::ImageSubresourceRange subresource_range{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
 
 		// Transition the texture image layout to shader read, so it can be sampled from
 		vk::ImageMemoryBarrier image_memory_barrier;
@@ -536,20 +543,28 @@ void HPPTextureLoading::prepare_uniform_buffers()
 
 void HPPTextureLoading::update_descriptor_set()
 {
-	vk::DescriptorBufferInfo buffer_descriptor(vertex_shader_data_buffer->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo buffer_descriptor{vertex_shader_data_buffer->get_handle(), 0, vk::WholeSize};
 
 	// Setup a descriptor image info for the current texture to be used as a combined image sampler
-	vk::DescriptorImageInfo image_descriptor;
-	image_descriptor.imageView   = texture.image_view;          // The image's view (images are never directly accessed by the shader, but rather through views defining subresources)
-	image_descriptor.sampler     = texture.sampler;             // The sampler (Telling the pipeline how to sample the texture, including repeat, border, etc.)
-	image_descriptor.imageLayout = texture.image_layout;        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
+	vk::DescriptorImageInfo image_descriptor{
+	    texture.sampler,            // The sampler (the sampler describes how to sample the image, including repeat, border, etc.)
+	    texture.image_view,         // The image view (the image view describes the image and the subresources that can be accessed)
+	    texture.image_layout        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
+	};
 
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-	    {// Binding 0 : Vertex shader uniform buffer
-	     {descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},
-	     // Binding 1 : Fragment shader texture sampler
-	     //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
-	     {descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{// Binding 0 : Vertex shader uniform buffer
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &buffer_descriptor},
+	                                                                // Binding 1 : Fragment shader texture sampler
+	                                                                //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &image_descriptor}}};
 
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }

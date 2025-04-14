@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024, Bradley Austin Davis. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2025, Bradley Austin Davis. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -117,8 +117,8 @@ template <typename BuilderType, typename CreateInfoType>
 using BuilderBaseCpp = BuilderBase<vkb::BindingType::Cpp, BuilderType, CreateInfoType>;
 
 template <vkb::BindingType bindingType, typename BuilderType, typename CreateInfoType>
-inline BuilderBase<bindingType, BuilderType, CreateInfoType>::BuilderBase(const CreateInfoType &create_info) :
-    create_info(create_info)
+inline BuilderBase<bindingType, BuilderType, CreateInfoType>::BuilderBase(const CreateInfoType &create_info_) :
+    create_info{reinterpret_cast<HPPCreateInfoType const &>(create_info_)}
 {
 	alloc_create_info.usage = VMA_MEMORY_USAGE_AUTO;
 };

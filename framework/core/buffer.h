@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -63,7 +63,7 @@ using BufferBuilderCpp = BufferBuilder<vkb::BindingType::Cpp>;
 
 template <>
 inline BufferBuilder<vkb::BindingType::Cpp>::BufferBuilder(vk::DeviceSize size) :
-    ParentType(BufferCreateInfoType{{}, size})
+    ParentType(BufferCreateInfoType{.size = size})
 {
 }
 
@@ -250,11 +250,11 @@ inline uint64_t Buffer<bindingType>::get_device_address() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return this->get_device().get_handle().getBufferAddressKHR({this->get_handle()});
+		return this->get_device().get_handle().getBufferAddressKHR({.buffer = this->get_handle()});
 	}
 	else
 	{
-		return static_cast<vk::Device>(this->get_device().get_handle()).getBufferAddressKHR({static_cast<vk::Buffer>(this->get_handle())});
+		return static_cast<vk::Device>(this->get_device().get_handle()).getBufferAddressKHR({.buffer = static_cast<vk::Buffer>(this->get_handle())});
 	}
 }
 

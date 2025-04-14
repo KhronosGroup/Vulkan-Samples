@@ -149,7 +149,11 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 		}
 	}
 
-	vk::DeviceCreateInfo create_info({}, queue_create_infos, {}, enabled_extensions, &gpu.get_mutable_requested_features());
+	vk::DeviceCreateInfo create_info{.queueCreateInfoCount    = static_cast<uint32_t>(queue_create_infos.size()),
+	                                 .pQueueCreateInfos       = queue_create_infos.data(),
+	                                 .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size()),
+	                                 .ppEnabledExtensionNames = enabled_extensions.data(),
+	                                 .pEnabledFeatures        = &gpu.get_mutable_requested_features()};
 
 	// Latest requested feature will have the pNext's all set up for device creation.
 	create_info.pNext = gpu.get_extension_feature_chain();
@@ -321,12 +325,20 @@ std::pair<vk::Image, vk::DeviceMemory> HPPDevice::create_image(vk::Format format
 {
 	vk::Device device = get_handle();
 
-	vk::ImageCreateInfo image_create_info({}, vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mip_levels, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, usage);
+	vk::ImageCreateInfo image_create_info{.imageType   = vk::ImageType::e2D,
+	                                      .format      = format,
+	                                      .extent      = {extent.width, extent.height, 1},
+	                                      .mipLevels   = mip_levels,
+	                                      .arrayLayers = 1,
+	                                      .samples     = vk::SampleCountFlagBits::e1,
+	                                      .tiling      = vk::ImageTiling::eOptimal,
+	                                      .usage       = usage};
 	vk::Image           image = device.createImage(image_create_info);
 
 	vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(image);
 
-	vk::MemoryAllocateInfo memory_allocation(memory_requirements.size, get_gpu().get_memory_type(memory_requirements.memoryTypeBits, properties));
+	vk::MemoryAllocateInfo memory_allocation{.allocationSize  = memory_requirements.size,
+	                                         .memoryTypeIndex = get_gpu().get_memory_type(memory_requirements.memoryTypeBits, properties)};
 	vk::DeviceMemory       memory = device.allocateMemory(memory_allocation);
 	device.bindImageMemory(image, memory, 0);
 
@@ -340,7 +352,7 @@ void HPPDevice::copy_buffer(vkb::core::BufferCpp &src, vkb::core::BufferCpp &dst
 
 	vk::CommandBuffer command_buffer = create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vk::BufferCopy buffer_copy{};
+	vk::BufferCopy buffer_copy;
 	if (copy_region)
 	{
 		buffer_copy = *copy_region;
@@ -359,7 +371,8 @@ vk::CommandBuffer HPPDevice::create_command_buffer(vk::CommandBufferLevel level,
 {
 	assert(command_pool && "No command pool exists in the device");
 
-	vk::CommandBuffer command_buffer = get_handle().allocateCommandBuffers({command_pool->get_handle(), level, 1}).front();
+	vk::CommandBuffer command_buffer =
+	    get_handle().allocateCommandBuffers({.commandPool = command_pool->get_handle(), .level = level, .commandBufferCount = 1}).front();
 
 	// If requested, also start recording for the new command buffer
 	if (begin)
@@ -379,7 +392,7 @@ void HPPDevice::flush_command_buffer(vk::CommandBuffer command_buffer, vk::Queue
 
 	command_buffer.end();
 
-	vk::SubmitInfo submit_info({}, {}, command_buffer);
+	vk::SubmitInfo submit_info{.commandBufferCount = 1, .pCommandBuffers = &command_buffer};
 	if (signalSemaphore)
 	{
 		submit_info.setSignalSemaphores(signalSemaphore);
