@@ -24,20 +24,20 @@ namespace core
 {
 void HPPDebugUtilsExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const
 {
-	vk::DebugUtilsObjectNameInfoEXT name_info(object_type, object_handle, name);
+	vk::DebugUtilsObjectNameInfoEXT name_info{.objectType = object_type, .objectHandle = object_handle, .pObjectName = name};
 	device.setDebugUtilsObjectNameEXT(name_info);
 }
 
 void HPPDebugUtilsExtDebugUtils::set_debug_tag(
     vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
-	vk::DebugUtilsObjectTagInfoEXT tag_info(object_type, object_handle, tag_name, tag_data_size, tag_data);
+	vk::DebugUtilsObjectTagInfoEXT tag_info{.objectType = object_type, .objectHandle = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
 	device.setDebugUtilsObjectTagEXT(tag_info);
 }
 
 void HPPDebugUtilsExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	vk::DebugUtilsLabelEXT label_info{.pLabelName = name, .color = reinterpret_cast<std::array<float, 4> const &>(*&color[0])};
 	command_buffer.beginDebugUtilsLabelEXT(label_info);
 }
 
@@ -48,26 +48,27 @@ void HPPDebugUtilsExtDebugUtils::cmd_end_label(vk::CommandBuffer command_buffer)
 
 void HPPDebugUtilsExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	vk::DebugUtilsLabelEXT label_info{.pLabelName = name, .color = reinterpret_cast<std::array<float, 4> const &>(*&color[0])};
 	command_buffer.insertDebugUtilsLabelEXT(label_info);
 }
 
 void HPPDebugMarkerExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const
 {
-	vk::DebugMarkerObjectNameInfoEXT name_info(vk::debugReportObjectType(object_type), object_handle, name);
+	vk::DebugMarkerObjectNameInfoEXT name_info{.objectType = vk::debugReportObjectType(object_type), .object = object_handle, .pObjectName = name};
 	device.debugMarkerSetObjectNameEXT(name_info);
 }
 
 void HPPDebugMarkerExtDebugUtils::set_debug_tag(
     vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
-	vk::DebugMarkerObjectTagInfoEXT tag_info(vk::debugReportObjectType(object_type), object_handle, tag_name, tag_data_size, tag_data);
+	vk::DebugMarkerObjectTagInfoEXT tag_info{
+	    .objectType = vk::debugReportObjectType(object_type), .object = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
 	device.debugMarkerSetObjectTagEXT(tag_info);
 }
 
 void HPPDebugMarkerExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	vk::DebugMarkerMarkerInfoEXT marker_info{.pMarkerName = name, .color = reinterpret_cast<std::array<float, 4> const &>(*&color[0])};
 	command_buffer.debugMarkerBeginEXT(marker_info);
 }
 
@@ -78,7 +79,7 @@ void HPPDebugMarkerExtDebugUtils::cmd_end_label(vk::CommandBuffer command_buffer
 
 void HPPDebugMarkerExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
+	vk::DebugMarkerMarkerInfoEXT marker_info{.pMarkerName = name, .color = reinterpret_cast<std::array<float, 4> const &>(*&color[0])};
 	command_buffer.debugMarkerInsertEXT(marker_info);
 }
 

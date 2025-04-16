@@ -260,27 +260,31 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	enable_layer("VK_LAYER_KHRONOS_validation", supported_layers, enabled_layers);
 #endif
 
-	vk::ApplicationInfo app_info(application_name.c_str(), 0, "Vulkan Samples", 0, api_version);
+	vk::ApplicationInfo app_info{.pApplicationName = application_name.c_str(), .pEngineName = "Vulkan Samples", .apiVersion = api_version};
 
-	vk::InstanceCreateInfo instance_info({}, &app_info, enabled_layers, enabled_extensions);
+	vk::InstanceCreateInfo instance_info{.pApplicationInfo        = &app_info,
+	                                     .enabledLayerCount       = static_cast<uint32_t>(enabled_layers.size()),
+	                                     .ppEnabledLayerNames     = enabled_layers.data(),
+	                                     .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size()),
+	                                     .ppEnabledExtensionNames = enabled_extensions.data()};
 
 #ifdef USE_VALIDATION_LAYERS
 	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
 	vk::DebugReportCallbackCreateInfoEXT debug_report_create_info;
 	if (has_debug_utils)
 	{
-		debug_utils_create_info =
-		    vk::DebugUtilsMessengerCreateInfoEXT({},
-		                                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-		                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-		                                         debug_utils_messenger_callback);
+		debug_utils_create_info = vk::DebugUtilsMessengerCreateInfoEXT{
+		    .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+		    .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+		    .pfnUserCallback = debug_utils_messenger_callback};
 
 		instance_info.pNext = &debug_utils_create_info;
 	}
 	else if (has_debug_report)
 	{
-		debug_report_create_info = vk::DebugReportCallbackCreateInfoEXT(
-		    vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning, debug_callback);
+		debug_report_create_info = {.flags =
+		                                vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+		                            .pfnCallback = debug_callback};
 
 		instance_info.pNext = &debug_report_create_info;
 	}

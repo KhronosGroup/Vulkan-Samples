@@ -64,7 +64,7 @@ bool HPPTextureMipMapGeneration::prepare(const vkb::ApplicationOptions &options)
 		load_assets();
 		prepare_uniform_buffers();
 		descriptor_set_layout = create_descriptor_set_layout();
-		pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, descriptor_set_layout});
+		pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &descriptor_set_layout});
 		pipeline              = create_pipeline();
 		descriptor_pool       = create_descriptor_pool();
 		descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, descriptor_set_layout);
@@ -91,9 +91,12 @@ void HPPTextureMipMapGeneration::build_command_buffers()
 {
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
-	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue(1.0f, 0)}};
+	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue{1.0f, 0}}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -105,10 +108,10 @@ void HPPTextureMipMapGeneration::build_command_buffers()
 
 		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
+		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
 		command_buffer.setViewport(0, viewport);
 
-		vk::Rect2D scissor({0, 0}, extent);
+		vk::Rect2D scissor{{0, 0}, extent};
 		command_buffer.setScissor(0, scissor);
 
 		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_set, {});
@@ -178,7 +181,9 @@ vk::DescriptorPool HPPTextureMipMapGeneration::create_descriptor_pool()
 	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
 	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eSampledImage, 1}, {vk::DescriptorType::eSampler, 3}}};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets       = 2,
+	                                                         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
+	                                                         .pPoolSizes    = pool_sizes.data()};
 
 	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
@@ -190,7 +195,8 @@ vk::DescriptorSetLayout HPPTextureMipMapGeneration::create_descriptor_set_layout
 	     {1, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment},                                            // Binding 1 : Fragment shader image sampler
 	     {2, vk::DescriptorType::eSampler, 3, vk::ShaderStageFlagBits::eFragment}}};                                               // Binding 2 : Sampler array (3 descriptors)
 
-	vk::DescriptorSetLayoutCreateInfo descriptor_layout({}, set_layout_bindings);
+	vk::DescriptorSetLayoutCreateInfo descriptor_layout{.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()),
+	                                                    .pBindings    = set_layout_bindings.data()};
 
 	return get_device().get_handle().createDescriptorSetLayout(descriptor_layout);
 }
@@ -203,16 +209,18 @@ vk::Pipeline HPPTextureMipMapGeneration::create_pipeline()
 	    load_shader("texture_mipmap_generation", "texture.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{
 	    {0, 0, vk::Format::eR32G32B32Sfloat, 0},                     // Position
 	    {1, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6},        // UV
 	}};
-	vk::PipelineVertexInputStateCreateInfo             vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo             vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                                      .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                                      .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                                      .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eLessOrEqual;
@@ -256,7 +264,7 @@ void HPPTextureMipMapGeneration::load_assets()
 	// Load the base texture containing only the first mip level and generate the whole mip-chain at runtime
 	ktxTexture *ktx_texture = vkb::ktx::load_texture(vkb::fs::path::get(vkb::fs::path::Assets, "textures/checkerboard_rgba.ktx"));
 
-	texture.extent = vk::Extent2D(ktx_texture->baseWidth, ktx_texture->baseHeight);
+	texture.extent = vk::Extent2D{ktx_texture->baseWidth, ktx_texture->baseHeight};
 
 	// Calculate number of mip levels as per Vulkan specs:
 	// numLevels = 1 + floor(log2(max(w, h, d)))
@@ -287,7 +295,8 @@ void HPPTextureMipMapGeneration::load_assets()
 	vkb::common::image_layout_transition(copy_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
 	// Copy the first mip of the chain, remaining mips will be generated
-	vk::BufferImageCopy buffer_copy_region({}, {}, {}, {vk::ImageAspectFlagBits::eColor, 0, 0, 1}, {}, vk::Extent3D(texture.extent, 1));
+	vk::BufferImageCopy buffer_copy_region{.imageSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
+	                                       .imageExtent      = {texture.extent.width, texture.extent.height, 1}};
 	copy_command.copyBufferToImage(staging_buffer.get_handle(), texture.image, vk::ImageLayout::eTransferDstOptimal, buffer_copy_region);
 
 	// Transition first mip level to transfer source so we can blit(read) from it
@@ -305,13 +314,17 @@ void HPPTextureMipMapGeneration::load_assets()
 	// Copy down mips from n-1 to n
 	for (uint32_t i = 1; i < texture.mip_levels; i++)
 	{
-		vk::ImageBlit image_blit({vk::ImageAspectFlagBits::eColor, i - 1, 0, 1},
-		                         {{{}, {static_cast<int32_t>(texture.extent.width >> (i - 1)), static_cast<int32_t>(texture.extent.height >> (i - 1)), static_cast<int32_t>(1)}}},
-		                         {vk::ImageAspectFlagBits::eColor, i, 0, 1},
-		                         {{{}, {static_cast<int32_t>(texture.extent.width >> i), static_cast<int32_t>(texture.extent.height >> i), static_cast<int32_t>(1)}}});
+		vk::ImageBlit image_blit{
+		    {vk::ImageAspectFlagBits::eColor, i - 1, 0, 1},
+		    {{{{},
+		       {static_cast<int32_t>(texture.extent.width >> (i - 1)),
+		        static_cast<int32_t>(texture.extent.height >> (i - 1)),
+		        static_cast<int32_t>(1)}}}},
+		    {vk::ImageAspectFlagBits::eColor, i, 0, 1},
+		    {{{{}, {static_cast<int32_t>(texture.extent.width >> i), static_cast<int32_t>(texture.extent.height >> i), static_cast<int32_t>(1)}}}}};
 
 		// Prepare current mip level as image blit destination
-		vk::ImageSubresourceRange image_subresource_range(vk::ImageAspectFlagBits::eColor, i, 1, 0, 1);
+		vk::ImageSubresourceRange image_subresource_range{vk::ImageAspectFlagBits::eColor, i, 1, 0, 1};
 		vkb::common::image_layout_transition(
 		    blit_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, image_subresource_range);
 
@@ -379,19 +392,30 @@ void HPPTextureMipMapGeneration::prepare_uniform_buffers()
 
 void HPPTextureMipMapGeneration::update_descriptor_set()
 {
-	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffer->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo buffer_descriptor{uniform_buffer->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo image_descriptor(nullptr, texture.view, vk::ImageLayout::eShaderReadOnlyOptimal);
+	vk::DescriptorImageInfo image_descriptor{nullptr, texture.view, vk::ImageLayout::eShaderReadOnlyOptimal};
 
 	std::array<vk::DescriptorImageInfo, 3> sampler_descriptors = {{{samplers[0], nullptr, vk::ImageLayout::eShaderReadOnlyOptimal},
 	                                                               {samplers[1], nullptr, vk::ImageLayout::eShaderReadOnlyOptimal},
 	                                                               {samplers[2], nullptr, vk::ImageLayout::eShaderReadOnlyOptimal}}};
 	assert(samplers.size() == sampler_descriptors.size());
 
-	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
-	    {{descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
-	     {descriptor_set, 1, {}, vk::DescriptorType::eSampledImage, image_descriptor},              // Binding 1 : Fragment shader texture sampler
-	     {descriptor_set, 2, {}, vk::DescriptorType::eSampler, sampler_descriptors}}};              // Binding 2: Sampler array
+	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {{{.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eSampledImage,
+	                                                                 .pImageInfo      = &image_descriptor},        // Binding 1 : Fragment shader texture sampler
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 2,
+	                                                                 .descriptorCount = static_cast<uint32_t>(sampler_descriptors.size()),
+	                                                                 .descriptorType  = vk::DescriptorType::eSampler,
+	                                                                 .pImageInfo      = sampler_descriptors.data()}}};        // Binding 2: Sampler array
 
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }

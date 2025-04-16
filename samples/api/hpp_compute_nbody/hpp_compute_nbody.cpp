@@ -79,9 +79,12 @@ void HPPComputeNBody::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 void HPPComputeNBody::build_command_buffers()
 {
 	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 1.0f}})),
-	                                               vk::ClearDepthStencilValue(0.0f, 0)}};
+	                                               vk::ClearDepthStencilValue{0.0f, 0}}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -94,13 +97,11 @@ void HPPComputeNBody::build_command_buffers()
 		// Acquire
 		if (graphics.queue_family_index != compute.queue_family_index)
 		{
-			vk::BufferMemoryBarrier buffer_barrier({},
-			                                       vk::AccessFlagBits::eVertexAttributeRead,
-			                                       compute.queue_family_index,
-			                                       graphics.queue_family_index,
-			                                       compute.storage_buffer->get_handle(),
-			                                       0,
-			                                       compute.storage_buffer->get_size());
+			vk::BufferMemoryBarrier buffer_barrier{.dstAccessMask       = vk::AccessFlagBits::eVertexAttributeRead,
+			                                       .srcQueueFamilyIndex = compute.queue_family_index,
+			                                       .dstQueueFamilyIndex = graphics.queue_family_index,
+			                                       .buffer              = compute.storage_buffer->get_handle(),
+			                                       .size                = compute.storage_buffer->get_size()};
 
 			command_buffer.pipelineBarrier(
 			    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eVertexInput, {}, nullptr, buffer_barrier, nullptr);
@@ -120,13 +121,11 @@ void HPPComputeNBody::build_command_buffers()
 		// Release barrier
 		if (graphics.queue_family_index != compute.queue_family_index)
 		{
-			vk::BufferMemoryBarrier buffer_barrier(vk::AccessFlagBits::eVertexAttributeRead,
-			                                       {},
-			                                       graphics.queue_family_index,
-			                                       compute.queue_family_index,
-			                                       compute.storage_buffer->get_handle(),
-			                                       0,
-			                                       compute.storage_buffer->get_size());
+			vk::BufferMemoryBarrier buffer_barrier{.srcAccessMask       = vk::AccessFlagBits::eVertexAttributeRead,
+			                                       .srcQueueFamilyIndex = graphics.queue_family_index,
+			                                       .dstQueueFamilyIndex = compute.queue_family_index,
+			                                       .buffer              = compute.storage_buffer->get_handle(),
+			                                       .size                = compute.storage_buffer->get_size()};
 
 			command_buffer.pipelineBarrier(
 			    vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
@@ -156,13 +155,11 @@ void HPPComputeNBody::build_compute_command_buffer()
 	// Acquire
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
-		vk::BufferMemoryBarrier buffer_barrier({},
-		                                       vk::AccessFlagBits::eShaderWrite,
-		                                       graphics.queue_family_index,
-		                                       compute.queue_family_index,
-		                                       compute.storage_buffer->get_handle(),
-		                                       0,
-		                                       compute.storage_buffer->get_size());
+		vk::BufferMemoryBarrier buffer_barrier{.dstAccessMask       = vk::AccessFlagBits::eShaderWrite,
+		                                       .srcQueueFamilyIndex = graphics.queue_family_index,
+		                                       .dstQueueFamilyIndex = compute.queue_family_index,
+		                                       .buffer              = compute.storage_buffer->get_handle(),
+		                                       .size                = compute.storage_buffer->get_size()};
 
 		compute.command_buffer.pipelineBarrier(
 		    vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
@@ -175,13 +172,12 @@ void HPPComputeNBody::build_compute_command_buffer()
 	compute.command_buffer.dispatch(compute.ubo.particle_count / compute.work_group_size, 1, 1);
 
 	// Add memory barrier to ensure that the computer shader has finished writing to the buffer
-	vk::BufferMemoryBarrier memory_barrier(vk::AccessFlagBits::eShaderWrite,
-	                                       vk::AccessFlagBits::eShaderRead,
-	                                       VK_QUEUE_FAMILY_IGNORED,
-	                                       VK_QUEUE_FAMILY_IGNORED,
-	                                       compute.storage_buffer->get_handle(),
-	                                       0,
-	                                       compute.storage_buffer->get_size());
+	vk::BufferMemoryBarrier memory_barrier{.srcAccessMask       = vk::AccessFlagBits::eShaderWrite,
+	                                       .dstAccessMask       = vk::AccessFlagBits::eShaderRead,
+	                                       .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+	                                       .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+	                                       .buffer              = compute.storage_buffer->get_handle(),
+	                                       .size                = compute.storage_buffer->get_size()};
 
 	compute.command_buffer.pipelineBarrier(
 	    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, memory_barrier, nullptr);
@@ -194,13 +190,11 @@ void HPPComputeNBody::build_compute_command_buffer()
 	// Release
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
-		vk::BufferMemoryBarrier buffer_barrier(vk::AccessFlagBits::eShaderWrite,
-		                                       {},
-		                                       compute.queue_family_index,
-		                                       graphics.queue_family_index,
-		                                       compute.storage_buffer->get_handle(),
-		                                       0,
-		                                       compute.storage_buffer->get_size());
+		vk::BufferMemoryBarrier buffer_barrier{.srcAccessMask       = vk::AccessFlagBits::eShaderWrite,
+		                                       .srcQueueFamilyIndex = compute.queue_family_index,
+		                                       .dstQueueFamilyIndex = graphics.queue_family_index,
+		                                       .buffer              = compute.storage_buffer->get_handle(),
+		                                       .size                = compute.storage_buffer->get_size()};
 
 		compute.command_buffer.pipelineBarrier(
 		    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, buffer_barrier, nullptr);
@@ -213,23 +207,19 @@ void HPPComputeNBody::build_compute_transfer_command_buffer(vk::CommandBuffer co
 {
 	command_buffer.begin(vk::CommandBufferBeginInfo());
 
-	vk::BufferMemoryBarrier acquire_buffer_barrier({},
-	                                               vk::AccessFlagBits::eShaderWrite,
-	                                               graphics.queue_family_index,
-	                                               compute.queue_family_index,
-	                                               compute.storage_buffer->get_handle(),
-	                                               0,
-	                                               compute.storage_buffer->get_size());
+	vk::BufferMemoryBarrier acquire_buffer_barrier{.dstAccessMask       = vk::AccessFlagBits::eShaderWrite,
+	                                               .srcQueueFamilyIndex = graphics.queue_family_index,
+	                                               .dstQueueFamilyIndex = compute.queue_family_index,
+	                                               .buffer              = compute.storage_buffer->get_handle(),
+	                                               .size                = compute.storage_buffer->get_size()};
 	command_buffer.pipelineBarrier(
 	    vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, acquire_buffer_barrier, nullptr);
 
-	vk::BufferMemoryBarrier release_buffer_barrier(vk::AccessFlagBits::eShaderWrite,
-	                                               {},
-	                                               compute.queue_family_index,
-	                                               graphics.queue_family_index,
-	                                               compute.storage_buffer->get_handle(),
-	                                               0,
-	                                               compute.storage_buffer->get_size());
+	vk::BufferMemoryBarrier release_buffer_barrier{.srcAccessMask       = vk::AccessFlagBits::eShaderWrite,
+	                                               .srcQueueFamilyIndex = compute.queue_family_index,
+	                                               .dstQueueFamilyIndex = graphics.queue_family_index,
+	                                               .buffer              = compute.storage_buffer->get_handle(),
+	                                               .size                = compute.storage_buffer->get_size()};
 	command_buffer.pipelineBarrier(
 	    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, release_buffer_barrier, nullptr);
 
@@ -245,13 +235,11 @@ void HPPComputeNBody::build_copy_command_buffer(vk::CommandBuffer command_buffer
 	// Execute a transfer to the compute queue, if necessary
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
-		vk::BufferMemoryBarrier buffer_barrier(vk::AccessFlagBits::eVertexAttributeRead,
-		                                       {},
-		                                       graphics.queue_family_index,
-		                                       compute.queue_family_index,
-		                                       compute.storage_buffer->get_handle(),
-		                                       0,
-		                                       compute.storage_buffer->get_size());
+		vk::BufferMemoryBarrier buffer_barrier{.srcAccessMask       = vk::AccessFlagBits::eVertexAttributeRead,
+		                                       .srcQueueFamilyIndex = graphics.queue_family_index,
+		                                       .dstQueueFamilyIndex = compute.queue_family_index,
+		                                       .buffer              = compute.storage_buffer->get_handle(),
+		                                       .size                = compute.storage_buffer->get_size()};
 
 		command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
 	}
@@ -263,12 +251,12 @@ vk::DescriptorSetLayout HPPComputeNBody::create_compute_descriptor_set_layout()
 	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute},
 	                                                           {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute}}};
 
-	return get_device().get_handle().createDescriptorSetLayout({{}, bindings});
+	return get_device().get_handle().createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(bindings.size()), .pBindings = bindings.data()});
 }
 
 vk::Pipeline HPPComputeNBody::create_compute_pipeline(vk::PipelineShaderStageCreateInfo const &stage)
 {
-	vk::ComputePipelineCreateInfo compute_pipeline_create_info({}, stage, compute.pipeline_layout);
+	vk::ComputePipelineCreateInfo compute_pipeline_create_info{.stage = stage, .layout = compute.pipeline_layout};
 
 	vk::Result   result;
 	vk::Pipeline pipeline;
@@ -284,7 +272,8 @@ vk::DescriptorPool HPPComputeNBody::create_descriptor_pool()
 	                                                     {vk::DescriptorType::eStorageBuffer, 1},
 	                                                     {vk::DescriptorType::eCombinedImageSampler, 2}}};
 
-	return get_device().get_handle().createDescriptorPool({{}, 2, pool_sizes});
+	return get_device().get_handle().createDescriptorPool(
+	    {.maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
 }
 
 vk::DescriptorSetLayout HPPComputeNBody::create_graphics_descriptor_set_layout()
@@ -293,7 +282,7 @@ vk::DescriptorSetLayout HPPComputeNBody::create_graphics_descriptor_set_layout()
 	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}}};
 
-	return get_device().get_handle().createDescriptorSetLayout({{}, bindings});
+	return get_device().get_handle().createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(bindings.size()), .pBindings = bindings.data()});
 }
 
 vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
@@ -303,23 +292,25 @@ vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 	                                                                load_shader("compute_nbody", "particle.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_bindings(0, sizeof(Particle), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  vertex_input_bindings{0, sizeof(Particle), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
 	    {{0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Particle, pos)},          // Location 0 : Position
 	     {1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Particle, vel)}}};        // Location 1 : Velocity
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_bindings,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
 	// Additive blending
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.blendEnable         = true;
-	blend_attachment_state.colorBlendOp        = vk::BlendOp::eAdd;
-	blend_attachment_state.srcColorBlendFactor = vk::BlendFactor::eOne;
-	blend_attachment_state.dstColorBlendFactor = vk::BlendFactor::eOne;
-	blend_attachment_state.alphaBlendOp        = vk::BlendOp::eAdd;
-	blend_attachment_state.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
-	blend_attachment_state.dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.blendEnable         = true,
+	                                                             .srcColorBlendFactor = vk::BlendFactor::eOne,
+	                                                             .dstColorBlendFactor = vk::BlendFactor::eOne,
+	                                                             .colorBlendOp        = vk::BlendOp::eAdd,
+	                                                             .srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha,
+	                                                             .dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha,
+	                                                             .alphaBlendOp        = vk::BlendOp::eAdd,
+	                                                             .colorWriteMask      = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthTestEnable  = false;
@@ -362,7 +353,13 @@ void HPPComputeNBody::draw()
 
 	// Submit compute commands, waiting for rendering finished
 	vk::PipelineStageFlags wait_stage_mask = vk::PipelineStageFlagBits::eComputeShader;
-	vk::SubmitInfo         compute_submit_info(graphics.semaphore, wait_stage_mask, compute.command_buffer, compute.semaphore);
+	vk::SubmitInfo         compute_submit_info{.waitSemaphoreCount   = 1,
+	                                           .pWaitSemaphores      = &graphics.semaphore,
+	                                           .pWaitDstStageMask    = &wait_stage_mask,
+	                                           .commandBufferCount   = 1,
+	                                           .pCommandBuffers      = &compute.command_buffer,
+	                                           .signalSemaphoreCount = 1,
+	                                           .pSignalSemaphores    = &compute.semaphore};
 	compute.queue.submit(compute_submit_info);
 }
 
@@ -410,7 +407,7 @@ void HPPComputeNBody::prepare_compute()
 
 	compute.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, compute.descriptor_set_layout);
 	update_compute_descriptor_set();
-	compute.pipeline_layout = device.createPipelineLayout({{}, compute.descriptor_set_layout});
+	compute.pipeline_layout = device.createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &compute.descriptor_set_layout});
 
 	// create the compute pipelines
 	// 1st pass - Particle movement calculations
@@ -436,10 +433,10 @@ void HPPComputeNBody::prepare_compute()
 
 		MovementSpecializationData movement_specialization_data{compute.work_group_size, compute.shared_data_size, 0.002f, 0.75f, 0.05f};
 
-		vk::SpecializationInfo specialization_info(static_cast<uint32_t>(movement_specialization_map_entries.size()),
+		vk::SpecializationInfo specialization_info{static_cast<uint32_t>(movement_specialization_map_entries.size()),
 		                                           movement_specialization_map_entries.data(),
 		                                           sizeof(movement_specialization_data),
-		                                           &movement_specialization_data);
+		                                           &movement_specialization_data};
 
 		stage.pSpecializationInfo = &specialization_info;
 
@@ -450,15 +447,15 @@ void HPPComputeNBody::prepare_compute()
 	{
 		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody", "particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
 
-		vk::SpecializationMapEntry integration_specialization_entry(0, 0, sizeof(compute.work_group_size));
-		vk::SpecializationInfo     specialization_info(1, &integration_specialization_entry, sizeof(compute.work_group_size), &compute.work_group_size);
+		vk::SpecializationMapEntry integration_specialization_entry{0, 0, sizeof(compute.work_group_size)};
+		vk::SpecializationInfo     specialization_info{1, &integration_specialization_entry, sizeof(compute.work_group_size), &compute.work_group_size};
 		stage.pSpecializationInfo = &specialization_info;
 
 		compute.pipeline_integrate = create_compute_pipeline(stage);
 	}
 
 	// Separate command pool as queue family for compute may be different than graphics
-	compute.command_pool = device.createCommandPool({{}, compute.queue_family_index});
+	compute.command_pool = device.createCommandPool({.queueFamilyIndex = compute.queue_family_index});
 
 	// Create a command buffer for compute operations
 	compute.command_buffer = vkb::common::allocate_command_buffer(device, compute.command_pool);
@@ -589,7 +586,7 @@ void HPPComputeNBody::prepare_graphics()
 	graphics.descriptor_set_layout = create_graphics_descriptor_set_layout();
 	graphics.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, graphics.descriptor_set_layout);
 	update_graphics_descriptor_set();
-	graphics.pipeline_layout = device.createPipelineLayout({{}, graphics.descriptor_set_layout});
+	graphics.pipeline_layout = device.createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &graphics.descriptor_set_layout});
 
 	graphics.pipeline = create_graphics_pipeline();
 
@@ -599,13 +596,20 @@ void HPPComputeNBody::prepare_graphics()
 
 void HPPComputeNBody::update_compute_descriptor_set()
 {
-	vk::DescriptorBufferInfo              storage_buffer_descriptor(compute.storage_buffer->get_handle(), 0, VK_WHOLE_SIZE);
-	vk::DescriptorBufferInfo              uniform_buffer_descriptor(compute.uniform_buffer->get_handle(), 0, VK_WHOLE_SIZE);
-	std::array<vk::WriteDescriptorSet, 2> compute_write_descriptor_sets = {
-	    {// Binding 0 : Particle position storage buffer
-	     {compute.descriptor_set, 0, {}, vk::DescriptorType::eStorageBuffer, {}, storage_buffer_descriptor},
-	     // Binding 1 : Uniform buffer
-	     {compute.descriptor_set, 1, {}, vk::DescriptorType::eUniformBuffer, {}, uniform_buffer_descriptor}}};
+	vk::DescriptorBufferInfo              storage_buffer_descriptor{compute.storage_buffer->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorBufferInfo              uniform_buffer_descriptor{compute.uniform_buffer->get_handle(), 0, vk::WholeSize};
+	std::array<vk::WriteDescriptorSet, 2> compute_write_descriptor_sets = {{// Binding 0 : Particle position storage buffer
+	                                                                        {.dstSet          = compute.descriptor_set,
+	                                                                         .dstBinding      = 0,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eStorageBuffer,
+	                                                                         .pBufferInfo     = &storage_buffer_descriptor},
+	                                                                        // Binding 1 : Uniform buffer
+	                                                                        {.dstSet          = compute.descriptor_set,
+	                                                                         .dstBinding      = 1,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                         .pBufferInfo     = &uniform_buffer_descriptor}}};
 
 	get_device().get_handle().updateDescriptorSets(compute_write_descriptor_sets, nullptr);
 }
@@ -618,21 +622,32 @@ void HPPComputeNBody::update_compute_uniform_buffers(float delta_time)
 
 void HPPComputeNBody::update_graphics_descriptor_set()
 {
-	vk::DescriptorBufferInfo buffer_descriptor(graphics.uniform_buffer->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo buffer_descriptor{graphics.uniform_buffer->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo particle_image_descriptor(
-	    textures.particle.sampler,
-	    textures.particle.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.particle.image->get_vk_image_view().get_format()));
-	vk::DescriptorImageInfo gradient_image_descriptor(
-	    textures.gradient.sampler,
-	    textures.gradient.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.gradient.image->get_vk_image_view().get_format()));
+	vk::DescriptorImageInfo particle_image_descriptor{textures.particle.sampler,
+	                                                  textures.particle.image->get_vk_image_view().get_handle(),
+	                                                  descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                  textures.particle.image->get_vk_image_view().get_format())};
+	vk::DescriptorImageInfo gradient_image_descriptor{textures.gradient.sampler,
+	                                                  textures.gradient.image->get_vk_image_view().get_handle(),
+	                                                  descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                  textures.gradient.image->get_vk_image_view().get_format())};
 
-	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
-	    {{graphics.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, particle_image_descriptor},
-	     {graphics.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, gradient_image_descriptor},
-	     {graphics.descriptor_set, 2, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {{{.dstSet          = graphics.descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &particle_image_descriptor},
+	                                                                {.dstSet          = graphics.descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &gradient_image_descriptor},
+	                                                                {.dstSet          = graphics.descriptor_set,
+	                                                                 .dstBinding      = 2,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &buffer_descriptor}}};
 
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, nullptr);
 }

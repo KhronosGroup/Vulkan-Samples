@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -244,7 +244,7 @@ void HPPImage::generate_mipmaps()
 		vkb::scene_graph::components::HPPMipmap next_mipmap{};
 		next_mipmap.level  = prev_mipmap.level + 1;
 		next_mipmap.offset = old_size;
-		next_mipmap.extent = vk::Extent3D(next_width, next_height, 1u);
+		next_mipmap.extent = vk::Extent3D{next_width, next_height, 1u};
 
 		// Fill next mipmap memory
 		stbir_resize_uint8(data.data() + prev_mipmap.offset, prev_mipmap.extent.width, prev_mipmap.extent.height, 0,

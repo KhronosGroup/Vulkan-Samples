@@ -81,7 +81,7 @@ HPPImage::HPPImage(HPPDevice              &device,
 HPPImage::HPPImage(HPPDevice &device, HPPImageBuilder const &builder) :
     vkb::allocated::AllocatedCpp<vk::Image>{builder.get_allocation_create_info(), nullptr, &device}, create_info{builder.get_create_info()}
 {
-	get_handle()           = create_image(create_info.operator const VkImageCreateInfo &());
+	get_handle()           = create_image(create_info);
 	subresource.arrayLayer = create_info.arrayLayers;
 	subresource.mipLevel   = create_info.mipLevels;
 	if (!builder.get_debug_name().empty())

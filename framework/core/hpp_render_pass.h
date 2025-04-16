@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,9 +72,10 @@ class HPPRenderPass : private vkb::RenderPass
 		return static_cast<vk::RenderPass>(vkb::RenderPass::get_handle());
 	}
 
-	const vk::Extent2D get_render_area_granularity() const
+	vk::Extent2D get_render_area_granularity() const
 	{
-		return static_cast<vk::Extent2D>(vkb::RenderPass::get_render_area_granularity());
+		VkExtent2D extent = vkb::RenderPass::get_render_area_granularity();
+		return *reinterpret_cast<vk::Extent2D *>(&extent);
 	}
 };
 }        // namespace core

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -169,7 +169,12 @@ void HPPResourceCache::update_descriptor_sets(const std::vector<vkb::core::HPPIm
 						// Save struct for writing the update later
 						if (auto binding_info = descriptor_set.get_layout().get_layout_binding(binding))
 						{
-							vk::WriteDescriptorSet write_descriptor_set(descriptor_set.get_handle(), binding, array_element, binding_info->descriptorType, image_info);
+							vk::WriteDescriptorSet write_descriptor_set{.dstSet          = descriptor_set.get_handle(),
+							                                            .dstBinding      = binding,
+							                                            .dstArrayElement = array_element,
+							                                            .descriptorCount = 1,
+							                                            .descriptorType  = binding_info->descriptorType,
+							                                            .pImageInfo      = &image_info};
 							set_updates.push_back(write_descriptor_set);
 						}
 						else

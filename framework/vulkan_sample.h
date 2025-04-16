@@ -494,7 +494,7 @@ inline void VulkanSample<bindingType>::add_layer_setting(LayerSettingType const 
 	}
 	else
 	{
-		layer_settings.push_back(reinterpret_cast<VkLayerSettingEXT const &>(layerSetting));
+		layer_settings.push_back(reinterpret_cast<vk::LayerSettingEXT const &>(layerSetting));
 	}
 }
 
@@ -1307,7 +1307,7 @@ inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::
                                                                      vk::Extent2D const                &extent)
 {
 	command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
-	command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));
+	command_buffer.get_handle().setScissor(0, vk::Rect2D{{}, extent});
 }
 
 template <vkb::BindingType bindingType>

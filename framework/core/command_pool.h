@@ -131,7 +131,7 @@ inline vkb::core::CommandPool<bindingType>::CommandPool(
 			break;
 	}
 
-	vk::CommandPoolCreateInfo command_pool_create_info(flags, queue_family_index);
+	vk::CommandPoolCreateInfo command_pool_create_info{.flags = flags, .queueFamilyIndex = queue_family_index};
 
 	handle = device.get_handle().createCommandPool(command_pool_create_info);
 }

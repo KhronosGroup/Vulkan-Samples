@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,9 +37,8 @@ struct HPPImageBuilder : public vkb::allocated::BuilderBaseCpp<HPPImageBuilder, 
 	using Parent = vkb::allocated::BuilderBaseCpp<HPPImageBuilder, vk::ImageCreateInfo>;
 
   public:
-	HPPImageBuilder(vk::Extent3D const &extent) :
-	    // Better reasonable defaults than vk::ImageCreateInfo default ctor
-	    Parent(vk::ImageCreateInfo{{}, vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm, extent, 1, 1})
+	HPPImageBuilder(vk::Extent3D const &extent) :        // Better reasonable defaults than vk::ImageCreateInfo default ctor
+	    Parent(vk::ImageCreateInfo{.imageType = vk::ImageType::e2D, .format = vk::Format::eR8G8B8A8Unorm, .extent = extent, .mipLevels = 1, .arrayLayers = 1})
 	{
 	}
 

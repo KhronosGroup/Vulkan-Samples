@@ -253,78 +253,85 @@ void HPPGui::prepare(vk::PipelineCache pipeline_cache, vk::RenderPass render_pas
 	vk::Device device = sample.get_render_context().get_device().get_handle();
 
 	// Descriptor pool
-	vk::DescriptorPoolSize       pool_size(vk::DescriptorType::eCombinedImageSampler, 1);
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_size);
+	vk::DescriptorPoolSize       pool_size{.type = vk::DescriptorType::eCombinedImageSampler, .descriptorCount = 1};
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets = 2, .poolSizeCount = 1, .pPoolSizes = &pool_size};
 	descriptor_pool = device.createDescriptorPool(descriptor_pool_create_info);
 
 	// Descriptor set layout
-	vk::DescriptorSetLayoutBinding    layout_binding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment);
-	vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info({}, layout_binding);
+	vk::DescriptorSetLayoutBinding layout_binding{
+	    .binding = 0, .descriptorType = vk::DescriptorType::eCombinedImageSampler, .descriptorCount = 1, .stageFlags = vk::ShaderStageFlagBits::eFragment};
+	vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info{.bindingCount = 1, .pBindings = &layout_binding};
 	descriptor_set_layout = device.createDescriptorSetLayout(descriptor_set_layout_create_info);
 
 	// Descriptor set
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, 1, &descriptor_set_layout);
-#else
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, descriptor_set_layout);
-#endif
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info{.descriptorPool     = descriptor_pool,
+	                                                           .descriptorSetCount = 1,
+	                                                           .pSetLayouts        = &descriptor_set_layout};
 	descriptor_set = device.allocateDescriptorSets(descriptor_set_allocate_info).front();
 
-	vk::DescriptorImageInfo font_descriptor(sampler->get_handle(), font_image_view->get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal);
-	vk::WriteDescriptorSet  write_descriptor_set(descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, font_descriptor);
+	vk::DescriptorImageInfo font_descriptor{sampler->get_handle(), font_image_view->get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal};
+	vk::WriteDescriptorSet  write_descriptor_set{.dstSet          = descriptor_set,
+	                                             .descriptorCount = 1,
+	                                             .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                             .pImageInfo      = &font_descriptor};
 	device.updateDescriptorSets(write_descriptor_set, {});
 
 	// Setup graphics pipeline for UI rendering
 
 	// Vertex bindings an attributes based on ImGui vertex definition
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(ImDrawVert), vk::VertexInputRate::eVertex);
-	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32Sfloat, offsetof(ImDrawVert, pos)},           // Location 0: Position
-	                                                                               {1, 0, vk::Format::eR32G32Sfloat, offsetof(ImDrawVert, uv)},            // Location 1 : UV
-	                                                                               {2, 0, vk::Format::eR8G8B8A8Unorm, offsetof(ImDrawVert, col)}}};        // Location 2: Color
-	vk::PipelineVertexInputStateCreateInfo             vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+	vk::VertexInputBindingDescription                  vertex_input_binding{.binding = 0, .stride = sizeof(ImDrawVert), .inputRate = vk::VertexInputRate::eVertex};
+	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {
+	    {{.location = 0, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(ImDrawVert, pos)},           // Location 0: Position
+	     {.location = 1, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(ImDrawVert, uv)},            // Location 1 : UV
+	     {.location = 2, .binding = 0, .format = vk::Format::eR8G8B8A8Unorm, .offset = offsetof(ImDrawVert, col)}}};        // Location 2: Color
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, vk::PrimitiveTopology::eTriangleList, false);
+	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state{.topology = vk::PrimitiveTopology::eTriangleList};
 
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
+	vk::PipelineViewportStateCreateInfo viewport_state{.viewportCount = 1, .scissorCount = 1};
 
-	vk::PipelineRasterizationStateCreateInfo rasterization_state(
-	    {}, false, {}, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, {}, {}, {}, {}, 1.0f);
+	vk::PipelineRasterizationStateCreateInfo rasterization_state{.polygonMode = vk::PolygonMode::eFill,
+	                                                             .cullMode    = vk::CullModeFlagBits::eNone,
+	                                                             .frontFace   = vk::FrontFace::eCounterClockwise,
+	                                                             .lineWidth   = 1.0f};
 
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
+	vk::PipelineMultisampleStateCreateInfo multisample_state{.rasterizationSamples = vk::SampleCountFlagBits::e1};
 
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, false, false, vk::CompareOp::eAlways, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{
+	    .depthTestEnable = false, .depthWriteEnable = false, .depthCompareOp = vk::CompareOp::eAlways, .back = {.compareOp = vk::CompareOp::eAlways}};
 
 	// Enable blending
-	vk::PipelineColorBlendAttachmentState blend_attachment_state(true,
-	                                                             vk::BlendFactor::eSrcAlpha,
-	                                                             vk::BlendFactor::eOneMinusSrcAlpha,
-	                                                             vk::BlendOp::eAdd,
-	                                                             vk::BlendFactor::eOneMinusSrcAlpha,
-	                                                             vk::BlendFactor::eZero,
-	                                                             vk::BlendOp::eAdd,
-	                                                             vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-	                                                                 vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, {}, {}, blend_attachment_state);
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.blendEnable         = true,
+	                                                             .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
+	                                                             .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+	                                                             .colorBlendOp        = vk::BlendOp::eAdd,
+	                                                             .srcAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+	                                                             .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+	                                                             .alphaBlendOp        = vk::BlendOp::eAdd,
+	                                                             .colorWriteMask      = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
+	vk::PipelineColorBlendStateCreateInfo color_blend_state{.attachmentCount = 1, .pAttachments = &blend_attachment_state};
 
 	std::array<vk::DynamicState, 2>    dynamic_state_enables = {{vk::DynamicState::eViewport, vk::DynamicState::eScissor}};
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
+	vk::PipelineDynamicStateCreateInfo dynamic_state{.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size()),
+	                                                 .pDynamicStates    = dynamic_state_enables.data()};
 
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &vertex_input_state,
-	                                                    &input_assembly_state,
-	                                                    nullptr,
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layout->get_handle(),
-	                                                    render_pass,
-	                                                    0,
-	                                                    nullptr,
-	                                                    -1);
+	vk::GraphicsPipelineCreateInfo pipeline_create_info{.stageCount          = static_cast<uint32_t>(shader_stages.size()),
+	                                                    .pStages             = shader_stages.data(),
+	                                                    .pVertexInputState   = &vertex_input_state,
+	                                                    .pInputAssemblyState = &input_assembly_state,
+	                                                    .pViewportState      = &viewport_state,
+	                                                    .pRasterizationState = &rasterization_state,
+	                                                    .pMultisampleState   = &multisample_state,
+	                                                    .pDepthStencilState  = &depth_stencil_state,
+	                                                    .pColorBlendState    = &color_blend_state,
+	                                                    .pDynamicState       = &dynamic_state,
+	                                                    .layout              = pipeline_layout->get_handle(),
+	                                                    .renderPass          = render_pass,
+	                                                    .basePipelineIndex   = -1};
 
 	pipeline = device.createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
 }
@@ -463,16 +470,16 @@ void HPPGui::draw(vkb::core::CommandBufferCpp &command_buffer)
 	vkb::core::HPPScopedDebugLabel debug_label(command_buffer, "GUI");
 
 	// Vertex input state
-	vk::VertexInputBindingDescription vertex_input_binding({}, to_u32(sizeof(ImDrawVert)));
+	vk::VertexInputBindingDescription vertex_input_binding{{}, to_u32(sizeof(ImDrawVert))};
 
 	// Location 0: Position
-	vk::VertexInputAttributeDescription pos_attr(0, 0, vk::Format::eR32G32Sfloat, to_u32(offsetof(ImDrawVert, pos)));
+	vk::VertexInputAttributeDescription pos_attr{0, 0, vk::Format::eR32G32Sfloat, to_u32(offsetof(ImDrawVert, pos))};
 
 	// Location 1: UV
-	vk::VertexInputAttributeDescription uv_attr(1, 0, vk::Format::eR32G32Sfloat, to_u32(offsetof(ImDrawVert, uv)));
+	vk::VertexInputAttributeDescription uv_attr{1, 0, vk::Format::eR32G32Sfloat, to_u32(offsetof(ImDrawVert, uv))};
 
 	// Location 2: Color
-	vk::VertexInputAttributeDescription col_attr(2, 0, vk::Format::eR8G8B8A8Unorm, to_u32(offsetof(ImDrawVert, col)));
+	vk::VertexInputAttributeDescription col_attr{2, 0, vk::Format::eR8G8B8A8Unorm, to_u32(offsetof(ImDrawVert, col))};
 
 	vkb::rendering::HPPVertexInputState vertex_input_state;
 	vertex_input_state.bindings   = {vertex_input_binding};
