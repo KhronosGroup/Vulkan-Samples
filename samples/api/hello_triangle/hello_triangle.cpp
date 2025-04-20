@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +21,6 @@
 #include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -624,30 +624,15 @@ void HelloTriangle::init_render_pass()
 }
 
 /**
- * @brief Helper function to load a shader module.
+ * @brief Helper function to load a shader module from an offline-compiled SPIR-V file
  * @param path The path for the shader (relative to the assets directory).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
 VkShaderModule HelloTriangle::load_shader_module(const char *path)
 {
-	vkb::GLSLCompiler glsl_compiler;
-
-	auto buffer = vkb::fs::read_shader_binary(path);
-
-	std::string file_ext = path;
-
-	// Extract extension name from the glsl shader file
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-	std::vector<uint32_t> spirv;
-	std::string           info_log;
-
-	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
-	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-		return VK_NULL_HANDLE;
-	}
+	auto                  buffer = vkb::fs::read_shader_binary(path);
+	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
+                                                        reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 
 	VkShaderModuleCreateInfo module_info{
 	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -725,14 +710,14 @@ void HelloTriangle::init_pipeline()
 	shader_stages[0] = {
 	    .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	    .stage  = VK_SHADER_STAGE_VERTEX_BIT,
-	    .module = load_shader_module("triangle.vert"),
+	    .module = load_shader_module("hello_triangle/glsl/triangle.vert.spv"),
 	    .pName  = "main"};
 
 	// Fragment stage of the pipeline
 	shader_stages[1] = {
 	    .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	    .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
-	    .module = load_shader_module("triangle.frag"),
+	    .module = load_shader_module("hello_triangle/glsl/triangle.frag.spv"),
 	    .pName  = "main"};
 
 	VkGraphicsPipelineCreateInfo pipe{

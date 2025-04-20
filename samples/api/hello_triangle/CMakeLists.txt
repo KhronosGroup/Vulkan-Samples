@@ -1,4 +1,5 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +27,5 @@ add_sample(
     NAME "Hello Triangle"
     DESCRIPTION "An introduction into Vulkan and its respective objects."
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+        "hello_triangle/glsl/triangle.vert"
+        "hello_triangle/glsl/triangle.frag")
