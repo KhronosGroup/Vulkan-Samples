@@ -114,7 +114,7 @@ class HelloTriangle : public vkb::Application
 		VmaAllocator vma_allocator = VK_NULL_HANDLE;
 	};
 
-	// Properties of the vertices used in this sample.
+	/// Properties of the vertices used in this sample.
 	struct Vertex
 	{
 		glm::vec3 position;

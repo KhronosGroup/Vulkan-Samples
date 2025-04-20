@@ -359,10 +359,9 @@ void HelloTriangle::init_device()
 	vkGetDeviceQueue(context.device, context.graphics_queue_index, 0, &context.queue);
 
 	// This sample uses the Vulkan Memory Alloctor (VMA), which needs to be set up
-	VmaVulkanFunctions vma_vulkan_func {
-		.vkGetInstanceProcAddr = vkGetInstanceProcAddr,
-		.vkGetDeviceProcAddr   = vkGetDeviceProcAddr
-	};
+	VmaVulkanFunctions vma_vulkan_func{
+	    .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+	    .vkGetDeviceProcAddr   = vkGetDeviceProcAddr};
 
 	VmaAllocatorCreateInfo allocator_info{
 	    .physicalDevice   = static_cast<VkPhysicalDevice>(context.gpu),
