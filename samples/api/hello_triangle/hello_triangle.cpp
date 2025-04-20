@@ -215,22 +215,24 @@ void HelloTriangle::init_instance()
 	}
 #endif
 
-	VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
-	app.pApplicationName = "Hello Triangle";
-	app.pEngineName      = "Vulkan Samples";
-	app.apiVersion       = VK_MAKE_VERSION(1, 0, 0);
+	VkApplicationInfo app{
+	    .sType            = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+	    .pApplicationName = "Hello Triangle",
+	    .pEngineName      = "Vulkan Samples",
+	    .apiVersion       = VK_MAKE_VERSION(1, 0, 0)};
 
-	VkInstanceCreateInfo instance_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
-	instance_info.pApplicationInfo        = &app;
-	instance_info.enabledExtensionCount   = vkb::to_u32(required_instance_extensions.size());
-	instance_info.ppEnabledExtensionNames = required_instance_extensions.data();
-	instance_info.enabledLayerCount       = vkb::to_u32(requested_instance_layers.size());
-	instance_info.ppEnabledLayerNames     = requested_instance_layers.data();
+	VkInstanceCreateInfo instance_info{
+	    .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+	    .pApplicationInfo        = &app,
+	    .enabledLayerCount       = vkb::to_u32(requested_instance_layers.size()),
+	    .ppEnabledLayerNames     = requested_instance_layers.data(),
+	    .enabledExtensionCount   = vkb::to_u32(required_instance_extensions.size()),
+	    .ppEnabledExtensionNames = required_instance_extensions.data()};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Validation layers help finding wrong api usage, we enable them when explicitly requested or in debug builds
 	// For this we use the debug utils extension if it is supported
-	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
 	if (has_debug_utils)
 	{
 		debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
@@ -338,16 +340,18 @@ void HelloTriangle::init_device()
 	// The sample uses a single graphics queue
 	const float queue_priority = 1.0f;
 
-	VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
-	queue_info.queueFamilyIndex = context.graphics_queue_index;
-	queue_info.queueCount       = 1;
-	queue_info.pQueuePriorities = &queue_priority;
+	VkDeviceQueueCreateInfo queue_info{
+	    .sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+	    .queueFamilyIndex = static_cast<uint32_t>(context.graphics_queue_index),
+	    .queueCount       = 1,
+	    .pQueuePriorities = &queue_priority};
 
-	VkDeviceCreateInfo device_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-	device_info.queueCreateInfoCount    = 1;
-	device_info.pQueueCreateInfos       = &queue_info;
-	device_info.enabledExtensionCount   = vkb::to_u32(required_device_extensions.size());
-	device_info.ppEnabledExtensionNames = required_device_extensions.data();
+	VkDeviceCreateInfo device_info{
+	    .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+	    .queueCreateInfoCount    = 1,
+	    .pQueueCreateInfos       = &queue_info,
+	    .enabledExtensionCount   = vkb::to_u32(required_device_extensions.size()),
+	    .ppEnabledExtensionNames = required_device_extensions.data()};
 
 	VK_CHECK(vkCreateDevice(context.gpu, &device_info, nullptr, &context.device));
 	volkLoadDevice(context.device);
@@ -361,19 +365,22 @@ void HelloTriangle::init_device()
  */
 void HelloTriangle::init_per_frame(PerFrame &per_frame)
 {
-	VkFenceCreateInfo info{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-	info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+	VkFenceCreateInfo info{
+	    .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+	    .flags = VK_FENCE_CREATE_SIGNALED_BIT};
 	VK_CHECK(vkCreateFence(context.device, &info, nullptr, &per_frame.queue_submit_fence));
 
-	VkCommandPoolCreateInfo cmd_pool_info{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-	cmd_pool_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-	cmd_pool_info.queueFamilyIndex = context.graphics_queue_index;
+	VkCommandPoolCreateInfo cmd_pool_info{
+	    .sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+	    .flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+	    .queueFamilyIndex = static_cast<uint32_t>(context.graphics_queue_index)};
 	VK_CHECK(vkCreateCommandPool(context.device, &cmd_pool_info, nullptr, &per_frame.primary_command_pool));
 
-	VkCommandBufferAllocateInfo cmd_buf_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-	cmd_buf_info.commandPool        = per_frame.primary_command_pool;
-	cmd_buf_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	cmd_buf_info.commandBufferCount = 1;
+	VkCommandBufferAllocateInfo cmd_buf_info{
+	    .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+	    .commandPool        = per_frame.primary_command_pool,
+	    .level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	    .commandBufferCount = 1};
 	VK_CHECK(vkAllocateCommandBuffers(context.device, &cmd_buf_info, &per_frame.primary_command_buffer));
 }
 
@@ -485,21 +492,21 @@ void HelloTriangle::init_swapchain()
 		composite = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
 	}
 
-	VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
-	info.surface            = context.surface;
-	info.minImageCount      = desired_swapchain_images;
-	info.imageFormat        = format.format;
-	info.imageColorSpace    = format.colorSpace;
-	info.imageExtent.width  = swapchain_size.width;
-	info.imageExtent.height = swapchain_size.height;
-	info.imageArrayLayers   = 1;
-	info.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	info.imageSharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-	info.preTransform       = pre_transform;
-	info.compositeAlpha     = composite;
-	info.presentMode        = swapchain_present_mode;
-	info.clipped            = true;
-	info.oldSwapchain       = old_swapchain;
+	VkSwapchainCreateInfoKHR info{
+	    .sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+	    .surface          = context.surface,
+	    .minImageCount    = desired_swapchain_images,
+	    .imageFormat      = format.format,
+	    .imageColorSpace  = format.colorSpace,
+	    .imageExtent      = swapchain_size,
+	    .imageArrayLayers = 1,
+	    .imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+	    .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+	    .preTransform     = pre_transform,
+	    .compositeAlpha   = composite,
+	    .presentMode      = swapchain_present_mode,
+	    .clipped          = true,
+	    .oldSwapchain     = old_swapchain};
 
 	VK_CHECK(vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain));
 
@@ -543,17 +550,12 @@ void HelloTriangle::init_swapchain()
 	for (size_t i = 0; i < image_count; i++)
 	{
 		// Create an image view which we can render into.
-		VkImageViewCreateInfo view_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-		view_info.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
-		view_info.format                      = context.swapchain_dimensions.format;
-		view_info.image                       = swapchain_images[i];
-		view_info.subresourceRange.levelCount = 1;
-		view_info.subresourceRange.layerCount = 1;
-		view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		view_info.components.r                = VK_COMPONENT_SWIZZLE_R;
-		view_info.components.g                = VK_COMPONENT_SWIZZLE_G;
-		view_info.components.b                = VK_COMPONENT_SWIZZLE_B;
-		view_info.components.a                = VK_COMPONENT_SWIZZLE_A;
+		VkImageViewCreateInfo view_info{
+		    .sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		    .image            = swapchain_images[i],
+		    .viewType         = VK_IMAGE_VIEW_TYPE_2D,
+		    .format           = context.swapchain_dimensions.format,
+		    .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1}};
 
 		VkImageView image_view;
 		VK_CHECK(vkCreateImageView(context.device, &view_info, nullptr, &image_view));
@@ -567,23 +569,16 @@ void HelloTriangle::init_swapchain()
  */
 void HelloTriangle::init_render_pass()
 {
-	VkAttachmentDescription attachment = {0};
-	// Backbuffer format.
-	attachment.format = context.swapchain_dimensions.format;
-	// Not multisampled.
-	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	// When starting the frame, we want tiles to be cleared.
-	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	// When ending the frame, we want tiles to be written out.
-	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	// Don't care about stencil since we're not using it.
-	attachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// The image layout will be undefined when the render pass begins.
-	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	// After the render pass is complete, we will transition to PRESENT_SRC_KHR layout.
-	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	VkAttachmentDescription attachment{
+	    .format         = context.swapchain_dimensions.format,        // Backbuffer format.
+	    .samples        = VK_SAMPLE_COUNT_1_BIT,                      // Not multisampled.
+	    .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,                // When starting the frame, we want tiles to be cleared.
+	    .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,               // When ending the frame, we want tiles to be written out.
+	    .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,            // Don't care about stencil since we're not using it.
+	    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,           // Don't care about stencil since we're not using it.
+	    .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,                  // The image layout will be undefined when the render pass begins.
+	    .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR             // After the render pass is complete, we will transition to PRESENT_SRC_KHR layout.
+	};
 
 	// We have one subpass. This subpass has one color attachment.
 	// While executing this subpass, the attachment will be in attachment optimal layout.
@@ -594,20 +589,21 @@ void HelloTriangle::init_render_pass()
 	// UNDEFINED is transitioned into COLOR_ATTACHMENT_OPTIMAL.
 	// The final layout in the render pass attachment states PRESENT_SRC_KHR, so we
 	// will get a final transition from COLOR_ATTACHMENT_OPTIMAL to PRESENT_SRC_KHR.
-	VkSubpassDescription subpass = {0};
-	subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments    = &color_ref;
+	VkSubpassDescription subpass{
+	    .pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS,
+	    .colorAttachmentCount = 1,
+	    .pColorAttachments    = &color_ref,
+	};
 
 	// Create a dependency to external events.
 	// We need to wait for the WSI semaphore to signal.
 	// Only pipeline stages which depend on COLOR_ATTACHMENT_OUTPUT_BIT will
 	// actually wait for the semaphore, so we must also wait for that pipeline stage.
-	VkSubpassDependency dependency = {0};
-	dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass          = 0;
-	dependency.srcStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	VkSubpassDependency dependency{
+	    .srcSubpass   = VK_SUBPASS_EXTERNAL,
+	    .dstSubpass   = 0,
+	    .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	    .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
 	// Since we changed the image layout, we need to make the memory visible to
 	// color attachment to modify.
@@ -615,13 +611,14 @@ void HelloTriangle::init_render_pass()
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 	// Finally, create the renderpass.
-	VkRenderPassCreateInfo rp_info = {VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
-	rp_info.attachmentCount        = 1;
-	rp_info.pAttachments           = &attachment;
-	rp_info.subpassCount           = 1;
-	rp_info.pSubpasses             = &subpass;
-	rp_info.dependencyCount        = 1;
-	rp_info.pDependencies          = &dependency;
+	VkRenderPassCreateInfo rp_info{
+	    .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+	    .attachmentCount = 1,
+	    .pAttachments    = &attachment,
+	    .subpassCount    = 1,
+	    .pSubpasses      = &subpass,
+	    .dependencyCount = 1,
+	    .pDependencies   = &dependency};
 
 	VK_CHECK(vkCreateRenderPass(context.device, &rp_info, nullptr, &context.render_pass));
 }
@@ -652,9 +649,10 @@ VkShaderModule HelloTriangle::load_shader_module(const char *path)
 		return VK_NULL_HANDLE;
 	}
 
-	VkShaderModuleCreateInfo module_info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-	module_info.codeSize = spirv.size() * sizeof(uint32_t);
-	module_info.pCode    = spirv.data();
+	VkShaderModuleCreateInfo module_info{
+	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+	    .codeSize = spirv.size() * sizeof(uint32_t),
+	    .pCode    = spirv.data()};
 
 	VkShaderModule shader_module;
 	VK_CHECK(vkCreateShaderModule(context.device, &module_info, nullptr, &shader_module));
@@ -669,78 +667,89 @@ void HelloTriangle::init_pipeline()
 {
 	// Create a blank pipeline layout.
 	// We are not binding any resources to the pipeline in this first sample.
-	VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+	VkPipelineLayoutCreateInfo layout_info{
+	    .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 	VK_CHECK(vkCreatePipelineLayout(context.device, &layout_info, nullptr, &context.pipeline_layout));
 
-	VkPipelineVertexInputStateCreateInfo vertex_input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+	VkPipelineVertexInputStateCreateInfo vertex_input{
+	    .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
 
 	// Specify we will use triangle lists to draw geometry.
-	VkPipelineInputAssemblyStateCreateInfo input_assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
-	input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	VkPipelineInputAssemblyStateCreateInfo input_assembly{
+	    .sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+	    .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST};
 
 	// Specify rasterization state.
-	VkPipelineRasterizationStateCreateInfo raster{VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
-	raster.cullMode  = VK_CULL_MODE_BACK_BIT;
-	raster.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	raster.lineWidth = 1.0f;
+	VkPipelineRasterizationStateCreateInfo raster{
+	    .sType     = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+	    .cullMode  = VK_CULL_MODE_BACK_BIT,
+	    .frontFace = VK_FRONT_FACE_CLOCKWISE,
+	    .lineWidth = 1.0f};
 
 	// Our attachment will write to all color channels, but no blending is enabled.
-	VkPipelineColorBlendAttachmentState blend_attachment{};
-	blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	VkPipelineColorBlendAttachmentState blend_attachment{
+	    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT};
 
-	VkPipelineColorBlendStateCreateInfo blend{VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
-	blend.attachmentCount = 1;
-	blend.pAttachments    = &blend_attachment;
+	VkPipelineColorBlendStateCreateInfo blend{
+	    .sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+	    .attachmentCount = 1,
+	    .pAttachments    = &blend_attachment};
 
 	// We will have one viewport and scissor box.
-	VkPipelineViewportStateCreateInfo viewport{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
-	viewport.viewportCount = 1;
-	viewport.scissorCount  = 1;
+	VkPipelineViewportStateCreateInfo viewport{
+	    .sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+	    .viewportCount = 1,
+	    .scissorCount  = 1};
 
 	// Disable all depth testing.
-	VkPipelineDepthStencilStateCreateInfo depth_stencil{VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
+	VkPipelineDepthStencilStateCreateInfo depth_stencil{
+	    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
 
 	// No multisampling.
-	VkPipelineMultisampleStateCreateInfo multisample{VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
-	multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	VkPipelineMultisampleStateCreateInfo multisample{
+	    .sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+	    .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT};
 
 	// Specify that these states will be dynamic, i.e. not part of pipeline state object.
 	std::array<VkDynamicState, 2> dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-	VkPipelineDynamicStateCreateInfo dynamic{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
-	dynamic.pDynamicStates    = dynamics.data();
-	dynamic.dynamicStateCount = vkb::to_u32(dynamics.size());
+	VkPipelineDynamicStateCreateInfo dynamic{
+	    .sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+	    .dynamicStateCount = vkb::to_u32(dynamics.size()),
+	    .pDynamicStates    = dynamics.data()};
 
 	// Load our SPIR-V shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	// Vertex stage of the pipeline
-	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module("triangle.vert");
-	shader_stages[0].pName  = "main";
+	shader_stages[0] = {
+	    .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+	    .stage  = VK_SHADER_STAGE_VERTEX_BIT,
+	    .module = load_shader_module("triangle.vert"),
+	    .pName  = "main"};
 
 	// Fragment stage of the pipeline
-	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module("triangle.frag");
-	shader_stages[1].pName  = "main";
+	shader_stages[1] = {
+	    .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+	    .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
+	    .module = load_shader_module("triangle.frag"),
+	    .pName  = "main"};
 
-	VkGraphicsPipelineCreateInfo pipe{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-	pipe.stageCount          = vkb::to_u32(shader_stages.size());
-	pipe.pStages             = shader_stages.data();
-	pipe.pVertexInputState   = &vertex_input;
-	pipe.pInputAssemblyState = &input_assembly;
-	pipe.pRasterizationState = &raster;
-	pipe.pColorBlendState    = &blend;
-	pipe.pMultisampleState   = &multisample;
-	pipe.pViewportState      = &viewport;
-	pipe.pDepthStencilState  = &depth_stencil;
-	pipe.pDynamicState       = &dynamic;
-
-	// We need to specify the pipeline layout and the render pass description up front as well.
-	pipe.renderPass = context.render_pass;
-	pipe.layout     = context.pipeline_layout;
+	VkGraphicsPipelineCreateInfo pipe{
+	    .sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+	    .stageCount          = vkb::to_u32(shader_stages.size()),
+	    .pStages             = shader_stages.data(),
+	    .pVertexInputState   = &vertex_input,
+	    .pInputAssemblyState = &input_assembly,
+	    .pViewportState      = &viewport,
+	    .pRasterizationState = &raster,
+	    .pMultisampleState   = &multisample,
+	    .pDepthStencilState  = &depth_stencil,
+	    .pColorBlendState    = &blend,
+	    .pDynamicState       = &dynamic,
+	    .layout              = context.pipeline_layout,        // We need to specify the pipeline layout up front
+	    .renderPass          = context.render_pass             // We need to specify the render pass up front
+	};
 
 	VK_CHECK(vkCreateGraphicsPipelines(context.device, VK_NULL_HANDLE, 1, &pipe, nullptr, &context.pipeline));
 
@@ -759,7 +768,8 @@ VkResult HelloTriangle::acquire_next_image(uint32_t *image)
 	VkSemaphore acquire_semaphore;
 	if (context.recycled_semaphores.empty())
 	{
-		VkSemaphoreCreateInfo info = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+		VkSemaphoreCreateInfo info = {
+		    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
 		VK_CHECK(vkCreateSemaphore(context.device, &info, nullptr, &acquire_semaphore));
 	}
 	else
@@ -821,40 +831,40 @@ void HelloTriangle::render_triangle(uint32_t swapchain_index)
 	VkCommandBuffer cmd = context.per_frame[swapchain_index].primary_command_buffer;
 
 	// We will only submit this once before it's recycled.
-	VkCommandBufferBeginInfo begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	VkCommandBufferBeginInfo begin_info{
+	    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+	    .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
 	// Begin command recording
 	vkBeginCommandBuffer(cmd, &begin_info);
 
 	// Set clear color values.
-	VkClearValue clear_value{};
-	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
+	VkClearValue clear_value{
+	    .color = {{0.01f, 0.01f, 0.033f, 1.0f}}};
 
 	// Begin the render pass.
-	VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
-	rp_begin.renderPass               = context.render_pass;
-	rp_begin.framebuffer              = framebuffer;
-	rp_begin.renderArea.extent.width  = context.swapchain_dimensions.width;
-	rp_begin.renderArea.extent.height = context.swapchain_dimensions.height;
-	rp_begin.clearValueCount          = 1;
-	rp_begin.pClearValues             = &clear_value;
+	VkRenderPassBeginInfo rp_begin{
+	    .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+	    .renderPass      = context.render_pass,
+	    .framebuffer     = framebuffer,
+	    .renderArea      = {.extent = {.width = context.swapchain_dimensions.width, .height = context.swapchain_dimensions.height}},
+	    .clearValueCount = 1,
+	    .pClearValues    = &clear_value};
 	// We will add draw commands in the same command buffer.
 	vkCmdBeginRenderPass(cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
 
 	// Bind the graphics pipeline.
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipeline);
 
-	VkViewport vp{};
-	vp.width    = static_cast<float>(context.swapchain_dimensions.width);
-	vp.height   = static_cast<float>(context.swapchain_dimensions.height);
-	vp.minDepth = 0.0f;
-	vp.maxDepth = 1.0f;
+	VkViewport vp{
+	    .width    = static_cast<float>(context.swapchain_dimensions.width),
+	    .height   = static_cast<float>(context.swapchain_dimensions.height),
+	    .minDepth = 0.0f,
+	    .maxDepth = 1.0f};
 	// Set viewport dynamically
 	vkCmdSetViewport(cmd, 0, 1, &vp);
 
-	VkRect2D scissor{};
-	scissor.extent.width  = context.swapchain_dimensions.width;
-	scissor.extent.height = context.swapchain_dimensions.height;
+	VkRect2D scissor{
+	    .extent = {.width = context.swapchain_dimensions.width, .height = context.swapchain_dimensions.height}};
 	// Set scissor dynamically
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
@@ -870,21 +880,22 @@ void HelloTriangle::render_triangle(uint32_t swapchain_index)
 	// Submit it to the queue with a release semaphore.
 	if (context.per_frame[swapchain_index].swapchain_release_semaphore == VK_NULL_HANDLE)
 	{
-		VkSemaphoreCreateInfo semaphore_info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-		VK_CHECK(vkCreateSemaphore(context.device, &semaphore_info, nullptr,
-		                           &context.per_frame[swapchain_index].swapchain_release_semaphore));
+		VkSemaphoreCreateInfo semaphore_info{
+		    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+		VK_CHECK(vkCreateSemaphore(context.device, &semaphore_info, nullptr, &context.per_frame[swapchain_index].swapchain_release_semaphore));
 	}
 
 	VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-	VkSubmitInfo info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-	info.commandBufferCount   = 1;
-	info.pCommandBuffers      = &cmd;
-	info.waitSemaphoreCount   = 1;
-	info.pWaitSemaphores      = &context.per_frame[swapchain_index].swapchain_acquire_semaphore;
-	info.pWaitDstStageMask    = &wait_stage;
-	info.signalSemaphoreCount = 1;
-	info.pSignalSemaphores    = &context.per_frame[swapchain_index].swapchain_release_semaphore;
+	VkSubmitInfo info{
+	    .sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+	    .waitSemaphoreCount   = 1,
+	    .pWaitSemaphores      = &context.per_frame[swapchain_index].swapchain_acquire_semaphore,
+	    .pWaitDstStageMask    = &wait_stage,
+	    .commandBufferCount   = 1,
+	    .pCommandBuffers      = &cmd,
+	    .signalSemaphoreCount = 1,
+	    .pSignalSemaphores    = &context.per_frame[swapchain_index].swapchain_release_semaphore};
 	// Submit command buffer to graphics queue
 	VK_CHECK(vkQueueSubmit(context.queue, 1, &info, context.per_frame[swapchain_index].queue_submit_fence));
 }
@@ -896,12 +907,13 @@ void HelloTriangle::render_triangle(uint32_t swapchain_index)
  */
 VkResult HelloTriangle::present_image(uint32_t index)
 {
-	VkPresentInfoKHR present{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
-	present.swapchainCount     = 1;
-	present.pSwapchains        = &context.swapchain;
-	present.pImageIndices      = &index;
-	present.waitSemaphoreCount = 1;
-	present.pWaitSemaphores    = &context.per_frame[index].swapchain_release_semaphore;
+	VkPresentInfoKHR present{
+	    .sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+	    .waitSemaphoreCount = 1,
+	    .swapchainCount     = 1,
+	    .pSwapchains        = &context.swapchain,
+	    .pImageIndices      = &index};
+	present.pWaitSemaphores = &context.per_frame[index].swapchain_release_semaphore;
 	// Present swapchain image
 	return vkQueuePresentKHR(context.queue, &present);
 }
@@ -917,13 +929,14 @@ void HelloTriangle::init_framebuffers()
 	for (auto &image_view : context.swapchain_image_views)
 	{
 		// Build the framebuffer.
-		VkFramebufferCreateInfo fb_info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-		fb_info.renderPass      = context.render_pass;
-		fb_info.attachmentCount = 1;
-		fb_info.pAttachments    = &image_view;
-		fb_info.width           = context.swapchain_dimensions.width;
-		fb_info.height          = context.swapchain_dimensions.height;
-		fb_info.layers          = 1;
+		VkFramebufferCreateInfo fb_info{
+		    .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+		    .renderPass      = context.render_pass,
+		    .attachmentCount = 1,
+		    .pAttachments    = &image_view,
+		    .width           = context.swapchain_dimensions.width,
+		    .height          = context.swapchain_dimensions.height,
+		    .layers          = 1};
 
 		VkFramebuffer framebuffer;
 		VK_CHECK(vkCreateFramebuffer(context.device, &fb_info, nullptr, &framebuffer));
