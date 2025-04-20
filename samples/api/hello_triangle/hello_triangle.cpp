@@ -357,6 +357,64 @@ void HelloTriangle::init_device()
 	volkLoadDevice(context.device);
 
 	vkGetDeviceQueue(context.device, context.graphics_queue_index, 0, &context.queue);
+
+	// This sample uses the Vulkan Memory Alloctor (VMA), which needs to be set up
+	VmaVulkanFunctions vma_vulkan_func {
+		.vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+		.vkGetDeviceProcAddr   = vkGetDeviceProcAddr
+	};
+
+	VmaAllocatorCreateInfo allocator_info{
+	    .physicalDevice   = static_cast<VkPhysicalDevice>(context.gpu),
+	    .device           = static_cast<VkDevice>(context.device),
+	    .pVulkanFunctions = &vma_vulkan_func,
+	    .instance         = static_cast<VkInstance>(context.instance)};
+
+	VkResult result = vmaCreateAllocator(&allocator_info, &context.vma_allocator);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Could not create allocator for VMA allocator");
+	}
+}
+
+/**
+ * @brief Initializes the vertex buffer by creating it, allocating memory, binding the memory, and uploading vertex data.
+ * @note This function must be called after the Vulkan device has been initialized.
+ * @throws std::runtime_error if any Vulkan operation fails.
+ */
+void HelloTriangle::init_vertex_buffer()
+{
+	// Vertex data for a single colored triangle
+	const std::vector<Vertex> vertices = {
+	    {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
+	    {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	    {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+
+	const VkDeviceSize buffer_size = sizeof(vertices[0]) * vertices.size();
+
+	// Copy Vertex data to a buffer accessible by the device
+
+	VkBufferCreateInfo buffer_info{
+	    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+	    .size  = buffer_size,
+	    .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT};
+
+	// We use the Vulkan Memory Allocator to find a memory type that can be written and mapped from the host
+	// On most setups this will return a memory type that resides in VRAM and is accessible from the host
+	VmaAllocationCreateInfo buffer_alloc_ci{
+	    .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	    .usage = VMA_MEMORY_USAGE_AUTO};
+
+	VmaAllocationInfo buffer_alloc_info{};
+	vmaCreateBuffer(context.vma_allocator, &buffer_info, &buffer_alloc_ci, reinterpret_cast<VkBuffer *>(&vertex_buffer), &vertex_buffer_allocation, &buffer_alloc_info);
+	if (buffer_alloc_info.pMappedData)
+	{
+		memcpy(buffer_alloc_info.pMappedData, vertices.data(), buffer_size);
+	}
+	else
+	{
+		throw std::runtime_error("Could not map vertex buffer.");
+	}
 }
 
 /**
@@ -656,13 +714,31 @@ void HelloTriangle::init_pipeline()
 	    .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 	VK_CHECK(vkCreatePipelineLayout(context.device, &layout_info, nullptr, &context.pipeline_layout));
 
-	VkPipelineVertexInputStateCreateInfo vertex_input{
-	    .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+	// The Vertex input properties define the interface between the vertex buffer and the vertex shader.
 
 	// Specify we will use triangle lists to draw geometry.
 	VkPipelineInputAssemblyStateCreateInfo input_assembly{
 	    .sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 	    .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST};
+
+	// Define the vertex input binding.
+	VkVertexInputBindingDescription binding_description{
+	    .binding   = 0,
+	    .stride    = sizeof(Vertex),
+	    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX};
+
+	// Define the vertex input attribute.
+	std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions{
+	    {{.location = 0, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, position)},
+	     {.location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, color)}}};
+
+	// Define the pipeline vertex input.
+	VkPipelineVertexInputStateCreateInfo vertex_input{
+	    .sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+	    .vertexBindingDescriptionCount   = 1,
+	    .pVertexBindingDescriptions      = &binding_description,
+	    .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
+	    .pVertexAttributeDescriptions    = attribute_descriptions.data()};
 
 	// Specify rasterization state.
 	VkPipelineRasterizationStateCreateInfo raster{
@@ -853,7 +929,11 @@ void HelloTriangle::render_triangle(uint32_t swapchain_index)
 	// Set scissor dynamically
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-	// Draw three vertices with one instance.
+	// Bind the vertex buffer to source the draw calls from.
+	VkDeviceSize offset = {0};
+	vkCmdBindVertexBuffers(cmd, 0, 1, &vertex_buffer, &offset);
+
+	// Draw three vertices with one instance from the currently bound vertex bound.
 	vkCmdDraw(cmd, 3, 1, 0, 0);
 
 	// Complete render pass.
@@ -987,6 +1067,16 @@ HelloTriangle::~HelloTriangle()
 		vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
 	}
 
+	if (vertex_buffer_allocation != VK_NULL_HANDLE)
+	{
+		vmaDestroyBuffer(context.vma_allocator, vertex_buffer, vertex_buffer_allocation);
+	}
+
+	if (context.vma_allocator != VK_NULL_HANDLE)
+	{
+		vmaDestroyAllocator(context.vma_allocator);
+	}
+
 	if (context.device != VK_NULL_HANDLE)
 	{
 		vkDestroyDevice(context.device, nullptr);
@@ -1021,6 +1111,8 @@ bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	init_device();
+
+	init_vertex_buffer();
 
 	init_swapchain();
 
