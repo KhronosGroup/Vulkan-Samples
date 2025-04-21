@@ -28,4 +28,10 @@ add_sample(
     DESCRIPTION "An introduction into Vulkan and its respective objects."
     SHADER_FILES_GLSL
         "hello_triangle/glsl/triangle.vert"
-        "hello_triangle/glsl/triangle.frag")
+        "hello_triangle/glsl/triangle.frag"
+    SHADER_FILES_HLSL
+        "hello_triangle/hlsl/triangle.vert.hlsl"
+        "hello_triangle/hlsl/triangle.frag.hlsl"
+    SHADER_FILES_SLANG
+        "hello_triangle/slang/triangle.vert.slang"
+        "hello_triangle/slang/triangle.frag.slang")

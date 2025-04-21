@@ -685,7 +685,7 @@ void HelloTriangle::init_render_pass()
  * @param path The path for the shader (relative to the assets directory).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
-VkShaderModule HelloTriangle::load_shader_module(const char *path)
+VkShaderModule HelloTriangle::load_shader_module(const std::string path)
 {
 	auto                  buffer = vkb::fs::read_shader_binary(path);
 	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
@@ -779,20 +779,36 @@ void HelloTriangle::init_pipeline()
 	    .pDynamicStates    = dynamics.data()};
 
 	// Load our SPIR-V shaders.
+
+	// Samples support different shading languages, all of which are offline compiled to SPIR-V, the shader format that Vulkan uses.
+	// The shading language to load for can be selected via command line
+	std::string shader_folder{""};
+	switch (get_shading_language())
+	{
+		case vkb::ShadingLanguage::HLSL:
+			shader_folder = "hlsl";
+			break;
+		case vkb::ShadingLanguage::SLANG:
+			shader_folder = "slang";
+			break;
+		default:
+			shader_folder = "glsl";
+	}
+
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	// Vertex stage of the pipeline
 	shader_stages[0] = {
 	    .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	    .stage  = VK_SHADER_STAGE_VERTEX_BIT,
-	    .module = load_shader_module("hello_triangle/glsl/triangle.vert.spv"),
+	    .module = load_shader_module("hello_triangle/" + shader_folder + "/triangle.vert.spv"),
 	    .pName  = "main"};
 
 	// Fragment stage of the pipeline
 	shader_stages[1] = {
 	    .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	    .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
-	    .module = load_shader_module("hello_triangle/glsl/triangle.frag.spv"),
+	    .module = load_shader_module("hello_triangle/" + shader_folder + "/triangle.frag.spv"),
 	    .pName  = "main"};
 
 	VkGraphicsPipelineCreateInfo pipe{
