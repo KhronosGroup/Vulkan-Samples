@@ -160,7 +160,7 @@ class HelloTriangle : public vkb::Application
 
 	void init_render_pass();
 
-	VkShaderModule load_shader_module(const std::string path);
+	VkShaderModule load_shader_module(const std::string &path);
 
 	void init_pipeline();
 

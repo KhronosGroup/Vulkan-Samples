@@ -685,7 +685,7 @@ void HelloTriangle::init_render_pass()
  * @param path The path for the shader (relative to the assets directory).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
-VkShaderModule HelloTriangle::load_shader_module(const std::string path)
+VkShaderModule HelloTriangle::load_shader_module(const std::string &path)
 {
 	auto                  buffer = vkb::fs::read_shader_binary(path);
 	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
