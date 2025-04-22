@@ -987,14 +987,13 @@ void HelloTriangle::render_triangle(uint32_t swapchain_index)
  */
 VkResult HelloTriangle::present_image(uint32_t index)
 {
-	VkPresentInfoKHR present
-	{
-		.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-		.waitSemaphoreCount = 1,
-		.pWaitSemaphores    = &context.per_frame[index].swapchain_release_semaphore,
-		.swapchainCount     = 1,
-		.pSwapchains        = &context.swapchain,
-		.pImageIndices      = &index,
+	VkPresentInfoKHR present{
+	    .sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+	    .waitSemaphoreCount = 1,
+	    .pWaitSemaphores    = &context.per_frame[index].swapchain_release_semaphore,
+	    .swapchainCount     = 1,
+	    .pSwapchains        = &context.swapchain,
+	    .pImageIndices      = &index,
 	};
 	// Present swapchain image
 	return vkQueuePresentKHR(context.queue, &present);
