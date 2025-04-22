@@ -364,10 +364,10 @@ void HelloTriangle::init_device()
 	    .vkGetDeviceProcAddr   = vkGetDeviceProcAddr};
 
 	VmaAllocatorCreateInfo allocator_info{
-	    .physicalDevice   = static_cast<VkPhysicalDevice>(context.gpu),
-	    .device           = static_cast<VkDevice>(context.device),
+	    .physicalDevice   = context.gpu,
+	    .device           = context.device,
 	    .pVulkanFunctions = &vma_vulkan_func,
-	    .instance         = static_cast<VkInstance>(context.instance)};
+	    .instance         = context.instance};
 
 	VkResult result = vmaCreateAllocator(&allocator_info, &context.vma_allocator);
 	if (result != VK_SUCCESS)
@@ -405,7 +405,7 @@ void HelloTriangle::init_vertex_buffer()
 	    .usage = VMA_MEMORY_USAGE_AUTO};
 
 	VmaAllocationInfo buffer_alloc_info{};
-	vmaCreateBuffer(context.vma_allocator, &buffer_info, &buffer_alloc_ci, reinterpret_cast<VkBuffer *>(&vertex_buffer), &vertex_buffer_allocation, &buffer_alloc_info);
+	vmaCreateBuffer(context.vma_allocator, &buffer_info, &buffer_alloc_ci, &vertex_buffer, &vertex_buffer_allocation, &buffer_alloc_info);
 	if (buffer_alloc_info.pMappedData)
 	{
 		memcpy(buffer_alloc_info.pMappedData, vertices.data(), buffer_size);
@@ -987,13 +987,15 @@ void HelloTriangle::render_triangle(uint32_t swapchain_index)
  */
 VkResult HelloTriangle::present_image(uint32_t index)
 {
-	VkPresentInfoKHR present{
-	    .sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-	    .waitSemaphoreCount = 1,
-	    .swapchainCount     = 1,
-	    .pSwapchains        = &context.swapchain,
-	    .pImageIndices      = &index};
-	present.pWaitSemaphores = &context.per_frame[index].swapchain_release_semaphore;
+	VkPresentInfoKHR present
+	{
+		.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores    = &context.per_frame[index].swapchain_release_semaphore,
+		.swapchainCount     = 1,
+		.pSwapchains        = &context.swapchain,
+		.pImageIndices      = &index,
+	};
 	// Present swapchain image
 	return vkQueuePresentKHR(context.queue, &present);
 }
