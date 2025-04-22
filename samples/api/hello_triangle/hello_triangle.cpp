@@ -224,9 +224,9 @@ void HelloTriangle::init_instance()
 	VkInstanceCreateInfo instance_info{
 	    .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 	    .pApplicationInfo        = &app,
-	    .enabledLayerCount       = vkb::to_u32(requested_instance_layers.size()),
+	    .enabledLayerCount       = static_cast<uint32_t>(requested_instance_layers.size()),
 	    .ppEnabledLayerNames     = requested_instance_layers.data(),
-	    .enabledExtensionCount   = vkb::to_u32(required_instance_extensions.size()),
+	    .enabledExtensionCount   = static_cast<uint32_t>(required_instance_extensions.size()),
 	    .ppEnabledExtensionNames = required_instance_extensions.data()};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -350,7 +350,7 @@ void HelloTriangle::init_device()
 	    .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 	    .queueCreateInfoCount    = 1,
 	    .pQueueCreateInfos       = &queue_info,
-	    .enabledExtensionCount   = vkb::to_u32(required_device_extensions.size()),
+	    .enabledExtensionCount   = static_cast<uint32_t>(required_device_extensions.size()),
 	    .ppEnabledExtensionNames = required_device_extensions.data()};
 
 	VK_CHECK(vkCreateDevice(context.gpu, &device_info, nullptr, &context.device));
@@ -775,7 +775,7 @@ void HelloTriangle::init_pipeline()
 
 	VkPipelineDynamicStateCreateInfo dynamic{
 	    .sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-	    .dynamicStateCount = vkb::to_u32(dynamics.size()),
+	    .dynamicStateCount = static_cast<uint32_t>(dynamics.size()),
 	    .pDynamicStates    = dynamics.data()};
 
 	// Load our SPIR-V shaders.
@@ -813,7 +813,7 @@ void HelloTriangle::init_pipeline()
 
 	VkGraphicsPipelineCreateInfo pipe{
 	    .sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-	    .stageCount          = vkb::to_u32(shader_stages.size()),
+	    .stageCount          = static_cast<uint32_t>(shader_stages.size()),
 	    .pStages             = shader_stages.data(),
 	    .pVertexInputState   = &vertex_input,
 	    .pInputAssemblyState = &input_assembly,
