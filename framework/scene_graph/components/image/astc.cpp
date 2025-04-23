@@ -35,7 +35,7 @@
 #define ASTC_CACHE_DIRECTORY "cache"
 
 constexpr uint32_t ASTC_CACHE_HEADER_SIZE = 64;
-constexpr uint32_t ASTC_CACHE_SEED = 1619;
+constexpr uint32_t ASTC_CACHE_SEED        = 1619;
 
 namespace vkb
 {
@@ -232,8 +232,7 @@ Astc::Astc(const Image &image) :
 		{
 			size_t offset = 0;
 
-			auto copy_from_file = [fs, path](void* dst, size_t *offset, size_t content_size)
-			{
+			auto copy_from_file = [fs, path](void *dst, size_t *offset, size_t content_size) {
 				const auto bin_content = fs->read_chunk(path, *offset, content_size);
 				std::memcpy(dst, &bin_content[0], content_size);
 				*offset += content_size;
@@ -293,16 +292,15 @@ Astc::Astc(const Image &image) :
 			std::vector<uint8_t> astc_file_content;
 			astc_file_content.reserve(sizeof(file_cache_header) + (3 * sizeof(std::uint32_t)) + image_size);
 
-			auto append_to_file = [](std::vector<uint8_t> &dst_file, const std::uint8_t *content, size_t content_size)
-			{
-				dst_file.insert(dst_file.end(), content, content + content_size); 
+			auto append_to_file = [](std::vector<uint8_t> &dst_file, const std::uint8_t *content, size_t content_size) {
+				dst_file.insert(dst_file.end(), content, content + content_size);
 			};
 
-			append_to_file(astc_file_content, (uint8_t*) &file_cache_header, sizeof(file_cache_header));
-			append_to_file(astc_file_content, (uint8_t*) &width, sizeof(uint32_t));
-			append_to_file(astc_file_content, (uint8_t*) &height, sizeof(uint32_t));
-			append_to_file(astc_file_content, (uint8_t*) &depth, sizeof(uint32_t));
-			append_to_file(astc_file_content, (uint8_t*) dst_data, image_size);
+			append_to_file(astc_file_content, (uint8_t *) &file_cache_header, sizeof(file_cache_header));
+			append_to_file(astc_file_content, (uint8_t *) &width, sizeof(uint32_t));
+			append_to_file(astc_file_content, (uint8_t *) &height, sizeof(uint32_t));
+			append_to_file(astc_file_content, (uint8_t *) &depth, sizeof(uint32_t));
+			append_to_file(astc_file_content, (uint8_t *) dst_data, image_size);
 
 			fs->write_file(path, astc_file_content);
 		}
