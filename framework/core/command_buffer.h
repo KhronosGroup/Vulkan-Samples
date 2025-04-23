@@ -185,6 +185,7 @@ class CommandBuffer
 	                                       std::vector<LoadStoreInfoType> const                                     &load_store_infos,
 	                                       std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses);
 	void                   image_memory_barrier(ImageViewType const &image_view, ImageMemoryBarrierType const &memory_barrier) const;
+	void                   image_memory_barrier(RenderTargetType &render_target, uint32_t view_index, ImageMemoryBarrierType const &memory_barrier) const;
 	void                   next_subpass();
 
 	/**
@@ -919,6 +920,24 @@ inline vkb::core::HPPRenderPass &
 	}
 
 	return device.get_resource_cache().request_render_pass(render_target.get_attachments(), load_store_infos, subpass_infos);
+}
+
+template <vkb::BindingType bindingType>
+inline void CommandBuffer<bindingType>::image_memory_barrier(RenderTargetType &render_target, uint32_t view_index, ImageMemoryBarrierType const &memory_barrier) const
+{
+	auto const &image_view = render_target.get_views()[view_index];
+
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		image_memory_barrier_impl(image_view, memory_barrier);
+	}
+	else
+	{
+		image_memory_barrier_impl(reinterpret_cast<vkb::core::HPPImageView const &>(image_view),
+		                          reinterpret_cast<vkb::common::HPPImageMemoryBarrier const &>(memory_barrier));
+	}
+
+	render_target.set_layout(view_index, memory_barrier.new_layout);
 }
 
 template <vkb::BindingType bindingType>
