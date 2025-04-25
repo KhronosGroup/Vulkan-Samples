@@ -256,7 +256,7 @@ bool is_depth_a_dependency(std::vector<T_SubpassDescription> &subpass_descriptio
 		if (subpass.pDepthStencilAttachment)
 		{
 			times_used++;
-			if (times_used > 1) 
+			if (times_used > 1)
 			{
 				return true;
 			}
