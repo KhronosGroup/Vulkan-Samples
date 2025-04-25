@@ -32,7 +32,7 @@
 #include <filesystem/filesystem.hpp>
 
 #define MAGIC_FILE_CONSTANT 0x5CA1AB13
-#define ASTC_CACHE_DIRECTORY "cache"
+#define ASTC_CACHE_DIRECTORY "cache/astc_to_bin/"
 
 constexpr uint32_t ASTC_CACHE_HEADER_SIZE = 64;
 constexpr uint32_t ASTC_CACHE_SEED        = 1619;
@@ -363,6 +363,8 @@ Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
 	    /* depth  = */ static_cast<uint32_t>(header.zsize[0] + 256 * header.zsize[1] + 65536 * header.zsize[2])};
 
 	decode(blockdim, extent, data.data() + sizeof(AstcHeader), to_u32(data.size() - sizeof(AstcHeader)));
+
+	update_hash(get_data_hash());
 }
 
 }        // namespace sg
