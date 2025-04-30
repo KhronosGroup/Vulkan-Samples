@@ -18,6 +18,7 @@
 #include "render_pass.h"
 
 #include <numeric>
+#include <span>
 
 #include "device.h"
 #include "rendering/render_target.h"
@@ -250,38 +251,31 @@ void set_attachment_layouts(std::vector<T_SubpassDescription> &subpass_descripti
 template <typename T_SubpassDescription, typename T_AttachmentDescription>
 bool is_depth_a_dependency(std::vector<T_SubpassDescription> &subpass_descriptions, std::vector<T_AttachmentDescription> &attachment_descriptions)
 {
-	uint32_t times_used{0};
-	for (auto &subpass : subpass_descriptions)
+	// More than 1 subpass uses depth
+	if (std::ranges::count_if(subpass_descriptions,
+	                          [](auto const &subpass) {
+		                          return subpass.pDepthStencilAttachment != nullptr;
+	                          }) > 1)
 	{
-		if (subpass.pDepthStencilAttachment)
-		{
-			times_used++;
-			if (times_used > 1)
-			{
-				return true;
-			}
-		}
+		return true;
 	}
 
-	for (auto &subpass : subpass_descriptions)
-	{
-		for (size_t k = 0U; k < subpass.inputAttachmentCount; ++k)
-		{
-			const auto &reference = subpass.pInputAttachments[k];
-
-			if (vkb::is_depth_format(attachment_descriptions[reference.attachment].format))
-			{
-				// Depth used as input
-				return true;
-			}
-		}
-	}
+	// Otherwise check if any uses depth as an input
+	return std::ranges::any_of(
+	    subpass_descriptions,
+	    [&attachment_descriptions](auto const &subpass) {
+		    return std::ranges::any_of(
+		        std::span{subpass.pInputAttachments, subpass.inputAttachmentCount},
+		        [&attachment_descriptions](auto const &reference) {
+			        return vkb::is_depth_format(attachment_descriptions[reference.attachment].format);
+		        });
+	    });
 
 	return false;
 }
 
 template <typename T>
-std::vector<T> get_subpass_dependencies(const size_t subpass_count, bool depth_stencil_dependency = false)
+std::vector<T> get_subpass_dependencies(const size_t subpass_count, bool depth_stencil_dependency)
 {
 	std::vector<T> dependencies{};
 
@@ -333,6 +327,11 @@ template <typename T_SubpassDescription, typename T_AttachmentDescription, typen
 void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
 	auto attachment_descriptions = get_attachment_descriptions<T_AttachmentDescription>(attachments, load_store_infos);
+
+	if (attachments.size() != load_store_infos.size())
+	{
+		LOGW("Render Pass creation: size of attachment list and load/store info list does not match: {} vs {}", attachments.size(), load_store_infos.size());
+	}
 
 	// Store attachments for every subpass
 	std::vector<std::vector<T_AttachmentReference>> input_attachments{subpass_count};
@@ -399,11 +398,6 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 				}
 			}
 		}
-	}
-
-	if (attachments.size() != load_store_infos.size())
-	{
-		LOGW("Render Pass creation: size of attachment list and load/store info list does not match: {} vs {}", attachments.size(), load_store_infos.size());
 	}
 
 	std::vector<T_SubpassDescription> subpass_descriptions;
@@ -492,7 +486,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 		color_output_count.push_back(to_u32(color_attachments[i].size()));
 	}
 
-	const auto &subpass_dependencies = get_subpass_dependencies<T_SubpassDependency>(subpass_count, is_depth_a_dependency<T_SubpassDescription, T_AttachmentDescription>(subpass_descriptions, attachment_descriptions));
+	const auto &subpass_dependencies = get_subpass_dependencies<T_SubpassDependency>(subpass_count, is_depth_a_dependency(subpass_descriptions, attachment_descriptions));
 
 	T_RenderPassCreateInfo create_info{};
 	set_structure_type(create_info);
