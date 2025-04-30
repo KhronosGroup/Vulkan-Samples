@@ -32,7 +32,7 @@
 #include <filesystem/filesystem.hpp>
 
 #define MAGIC_FILE_CONSTANT 0x5CA1AB13
-#define ASTC_CACHE_DIRECTORY "cache/astc_to_bin/"
+#define ASTC_CACHE_DIRECTORY "cache/astc_to_bin"
 
 constexpr uint32_t ASTC_CACHE_HEADER_SIZE = 64;
 constexpr uint32_t ASTC_CACHE_SEED        = 1619;
@@ -270,9 +270,9 @@ Astc::Astc(const Image &image) :
 
 			return true;
 		}
-		catch (const std::runtime_error &)
+		catch (const std::runtime_error &e)
 		{
-			LOGE("ERROR loading from cache")
+			LOGE("ERROR loading file {} from cache. Error: <{}>", path.string(), e.what())
 			// file is truncated
 			return false;
 		}
@@ -304,9 +304,9 @@ Astc::Astc(const Image &image) :
 
 			fs->write_file(path, astc_file_content);
 		}
-		catch (const std::runtime_error &)
+		catch (const std::runtime_error &e)
 		{
-			LOGE("ERROR: saving to file: {}", path.string())
+			LOGE("ERROR: saving to file: {}\nError<{}>", path.string(), e.what())
 		}
 	};
 

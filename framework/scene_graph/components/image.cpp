@@ -17,6 +17,7 @@
 
 #include "image.h"
 
+#include <cstddef>
 #include <mutex>
 
 #include "common/error.h"
@@ -174,7 +175,6 @@ void Image::clear_data()
 {
 	data.clear();
 	data.shrink_to_fit();
-	// preserve last known hash
 }
 
 VkFormat Image::get_format() const
@@ -321,10 +321,26 @@ std::vector<uint8_t> &Image::get_mut_data()
 
 void Image::update_hash()
 {
-	data_hash = 0;
-	for (size_t i = 0; i < data.size(); ++i)
+	static_assert(sizeof(data[0]) == 1);
+	constexpr size_t chunk_size = sizeof(size_t) / sizeof(data[0]);
+	data_hash                   = 0;
+	size_t i                    = 0;
+	if (data.size() >= chunk_size)
 	{
-		glm::detail::hash_combine(data_hash, data[i]);
+		for (; i <= (data.size() - chunk_size); i += chunk_size)
+		{
+			size_t it = 0;
+			std::memcpy(&it, &data[i], chunk_size);
+			glm::detail::hash_combine(data_hash, it);
+		}
+
+		// Handle elements smaller than sizeof(size_t) with zero padding
+		if (i < data.size())
+		{
+			size_t it = 0;
+			std::memcpy(&it, &data[i], data.size() - i);
+			glm::detail::hash_combine(data_hash, it);
+		}
 	}
 }
 
