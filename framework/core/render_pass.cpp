@@ -326,12 +326,12 @@ T get_attachment_reference(const uint32_t attachment, const VkImageLayout layout
 template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
 void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
-	auto attachment_descriptions = get_attachment_descriptions<T_AttachmentDescription>(attachments, load_store_infos);
-
 	if (attachments.size() != load_store_infos.size())
 	{
 		LOGW("Render Pass creation: size of attachment list and load/store info list does not match: {} vs {}", attachments.size(), load_store_infos.size());
 	}
+
+	auto attachment_descriptions = get_attachment_descriptions<T_AttachmentDescription>(attachments, load_store_infos);
 
 	// Store attachments for every subpass
 	std::vector<std::vector<T_AttachmentReference>> input_attachments{subpass_count};
