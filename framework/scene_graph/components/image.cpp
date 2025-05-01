@@ -325,19 +325,17 @@ void Image::update_hash()
 	constexpr size_t chunk_size = sizeof(size_t) / sizeof(data[0]);
 	data_hash                   = 0;
 	size_t offset               = 0;
-	if (data.size() >= chunk_size)
-	{
-		for (; offset + chunk_size < data.size(); offset += chunk_size)
-		{
-			glm::detail::hash_combine(data_hash, *reinterpret_cast<size_t const *>(&data[offset]));
-		}
 
-		if (offset < data.size())
-		{
-			size_t it = 0;
-			std::memcpy(&it, &data[offset], data.size() - offset);
-			glm::detail::hash_combine(data_hash, it);
-		}
+	for (; offset + chunk_size < data.size(); offset += chunk_size)
+	{
+		glm::detail::hash_combine(data_hash, *reinterpret_cast<size_t const *>(&data[offset]));
+	}
+
+	if (offset < data.size())
+	{
+		size_t it = 0;
+		std::memcpy(&it, &data[offset], data.size() - offset);
+		glm::detail::hash_combine(data_hash, it);
 	}
 }
 
