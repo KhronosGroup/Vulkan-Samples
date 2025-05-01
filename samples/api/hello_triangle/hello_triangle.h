@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -109,7 +110,25 @@ class HelloTriangle : public vkb::Application
 
 		/// A set of per-frame data.
 		std::vector<PerFrame> per_frame;
+
+		VmaAllocator vma_allocator = VK_NULL_HANDLE;
 	};
+
+	/// Properties of the vertices used in this sample.
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec3 color;
+	};
+
+	/// The Vulkan buffer object that holds the vertex data for the triangle.
+	VkBuffer vertex_buffer = VK_NULL_HANDLE;
+
+	/// The device memory allocated for the vertex buffer.
+	VkDeviceMemory vertex_buffer_memory = VK_NULL_HANDLE;
+
+	/// Vulkan Memory Allocator (VMA) allocation info for the vertex buffer.
+	VmaAllocation vertex_buffer_allocation = VK_NULL_HANDLE;
 
   public:
 	HelloTriangle();
@@ -131,6 +150,8 @@ class HelloTriangle : public vkb::Application
 
 	void init_device();
 
+	void init_vertex_buffer();
+
 	void init_per_frame(PerFrame &per_frame);
 
 	void teardown_per_frame(PerFrame &per_frame);
@@ -139,7 +160,7 @@ class HelloTriangle : public vkb::Application
 
 	void init_render_pass();
 
-	VkShaderModule load_shader_module(const char *path);
+	VkShaderModule load_shader_module(const std::string &path);
 
 	void init_pipeline();
 
