@@ -292,6 +292,3 @@ Once the sample application is running, press F12 do capture the current frame, 
 Once loaded you should be able to see a trace of a whole frame from that sample application along with labels and named Vulkan objects:
 
 image:./images/renderdoc_final.jpg[]
-s and named Vulkan objects:
-
-image:./images/renderdoc_final.jpg[]
