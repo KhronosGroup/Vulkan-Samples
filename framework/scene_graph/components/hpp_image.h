@@ -101,6 +101,7 @@ class HPPImage : public vkb::sg::Component
 
   private:
 	std::vector<uint8_t>                                 data;
+	size_t                                               data_hash{0};
 	vk::Format                                           format = vk::Format::eUndefined;
 	uint32_t                                             layers = 1;
 	std::vector<vkb::scene_graph::components::HPPMipmap> mipmaps{{}};

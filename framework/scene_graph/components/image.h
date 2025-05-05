@@ -132,6 +132,8 @@ class Image : public Component
   private:
 	std::vector<uint8_t> data;
 
+	size_t data_hash{0};
+
 	VkFormat format{VK_FORMAT_UNDEFINED};
 
 	uint32_t layers{1};
@@ -144,8 +146,6 @@ class Image : public Component
 	std::unique_ptr<core::Image> vk_image;
 
 	std::unique_ptr<core::ImageView> vk_image_view;
-
-	size_t data_hash{0};
 };
 
 }        // namespace sg
