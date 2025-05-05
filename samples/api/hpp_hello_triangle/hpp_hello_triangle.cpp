@@ -200,7 +200,11 @@ void HPPHelloTriangle::update(float delta_time)
 	render_triangle(index);
 
 	// Present swapchain image
-	vk::PresentInfoKHR present_info(per_frame_data[index].swapchain_release_semaphore, swapchain_data.swapchain, index);
+	vk::PresentInfoKHR present_info{.waitSemaphoreCount = 1,
+	                                .pWaitSemaphores    = &per_frame_data[index].swapchain_release_semaphore,
+	                                .swapchainCount     = 1,
+	                                .pSwapchains        = &swapchain_data.swapchain,
+	                                .pImageIndices      = &index};
 	res = queue.presentKHR(present_info);
 
 	// Handle Outdated error in present.
@@ -319,8 +323,11 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 
 	// Create a device with one queue
 	float                     queue_priority = 1.0f;
-	vk::DeviceQueueCreateInfo queue_info({}, graphics_queue_index, 1, &queue_priority);
-	vk::DeviceCreateInfo      device_info({}, queue_info, {}, active_device_extensions);
+	vk::DeviceQueueCreateInfo queue_info{.queueFamilyIndex = graphics_queue_index, .queueCount = 1, .pQueuePriorities = &queue_priority};
+	vk::DeviceCreateInfo      device_info{.queueCreateInfoCount    = 1,
+	                                      .pQueueCreateInfos       = &queue_info,
+	                                      .enabledExtensionCount   = static_cast<uint32_t>(active_device_extensions.size()),
+	                                      .ppEnabledExtensionNames = active_device_extensions.data()};
 	vk::Device                device = gpu.createDevice(device_info);
 
 	// initialize function pointers for device
@@ -333,14 +340,14 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 {
 	// Load our SPIR-V shaders.
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
-	    vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eVertex, create_shader_module("triangle.vert"), "main"),
-	    vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eFragment, create_shader_module("triangle.frag"), "main")};
+	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert"), .pName = "main"},
+	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag"), .pName = "main"}};
 
 	vk::PipelineVertexInputStateCreateInfo vertex_input;
 
 	// Our attachment will write to all color channels, but no blending is enabled.
-	vk::PipelineColorBlendAttachmentState blend_attachment;
-	blend_attachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Disable all depth testing.
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil;
@@ -368,12 +375,12 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 
 vk::ImageView HPPHelloTriangle::create_image_view(vk::Image image)
 {
-	vk::ImageViewCreateInfo image_view_create_info({},
-	                                               image,
-	                                               vk::ImageViewType::e2D,
-	                                               swapchain_data.format,
-	                                               {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
-	                                               {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+	vk::ImageViewCreateInfo image_view_create_info{
+	    .image            = image,
+	    .viewType         = vk::ImageViewType::e2D,
+	    .format           = swapchain_data.format,
+	    .components       = {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
+	    .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
 	return device.createImageView(image_view_create_info);
 }
 
@@ -447,16 +454,20 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 	}
 #endif
 
-	vk::ApplicationInfo app("HPP Hello Triangle", {}, "Vulkan Samples", {}, VK_MAKE_VERSION(1, 0, 0));
+	vk::ApplicationInfo app{.pApplicationName = "HPP Hello Triangle", .pEngineName = "Vulkan Samples", .apiVersion = VK_MAKE_VERSION(1, 0, 0)};
 
-	vk::InstanceCreateInfo instance_info({}, &app, requested_instance_layers, active_instance_extensions);
+	vk::InstanceCreateInfo instance_info{.pApplicationInfo        = &app,
+	                                     .enabledLayerCount       = static_cast<uint32_t>(requested_instance_layers.size()),
+	                                     .ppEnabledLayerNames     = requested_instance_layers.data(),
+	                                     .enabledExtensionCount   = static_cast<uint32_t>(active_instance_extensions.size()),
+	                                     .ppEnabledExtensionNames = active_instance_extensions.data()};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	debug_utils_create_info =
-	    vk::DebugUtilsMessengerCreateInfoEXT({},
-	                                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-	                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-	                                         debug_utils_messenger_callback);
+	    vk::DebugUtilsMessengerCreateInfoEXT{.messageSeverity =
+	                                             vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	                                         .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	                                         .pfnUserCallback = debug_utils_messenger_callback};
 
 	instance_info.pNext = &debug_utils_create_info;
 #endif
@@ -488,7 +499,7 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 
 vk::RenderPass HPPHelloTriangle::create_render_pass()
 {
-	vk::AttachmentDescription attachment({},
+	vk::AttachmentDescription attachment{{},
 	                                     swapchain_data.format,                  // Backbuffer format
 	                                     vk::SampleCountFlagBits::e1,            // Not multisampled
 	                                     vk::AttachmentLoadOp::eClear,           // When starting the frame, we want tiles to be cleared
@@ -496,34 +507,34 @@ vk::RenderPass HPPHelloTriangle::create_render_pass()
 	                                     vk::AttachmentLoadOp::eDontCare,        // Don't care about stencil since we're not using it
 	                                     vk::AttachmentStoreOp::eDontCare,
 	                                     vk::ImageLayout::eUndefined,             // The image layout will be undefined when the render pass begins
-	                                     vk::ImageLayout::ePresentSrcKHR);        // After the render pass is complete, we will transition to ePresentSrcKHR layout
+	                                     vk::ImageLayout::ePresentSrcKHR};        // After the render pass is complete, we will transition to ePresentSrcKHR layout
 
 	// We have one subpass. This subpass has one color attachment.
 	// While executing this subpass, the attachment will be in attachment optimal layout.
-	vk::AttachmentReference color_ref(0, vk::ImageLayout::eColorAttachmentOptimal);
+	vk::AttachmentReference color_ref{0, vk::ImageLayout::eColorAttachmentOptimal};
 
 	// We will end up with two transitions.
 	// The first one happens right before we start subpass #0, where
 	// eUndefined is transitioned into eColorAttachmentOptimal.
 	// The final layout in the render pass attachment states ePresentSrcKHR, so we
 	// will get a final transition from eColorAttachmentOptimal to ePresetSrcKHR.
-	vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_ref);
+	vk::SubpassDescription subpass{.pipelineBindPoint = vk::PipelineBindPoint::eGraphics, .colorAttachmentCount = 1, .pColorAttachments = &color_ref};
 
 	// Create a dependency to external events.
 	// We need to wait for the WSI semaphore to signal.
 	// Only pipeline stages which depend on eColorAttachmentOutput will
 	// actually wait for the semaphore, so we must also wait for that pipeline stage.
-	vk::SubpassDependency dependency(/*srcSubpass   */ VK_SUBPASS_EXTERNAL,
-	                                 /*dstSubpass   */ 0,
-	                                 /*srcStageMask */ vk::PipelineStageFlagBits::eColorAttachmentOutput,
-	                                 /*dstStageMask */ vk::PipelineStageFlagBits::eColorAttachmentOutput,
-	                                 // Since we changed the image layout, we need to make the memory visible to
-	                                 // color attachment to modify.
-	                                 /*srcAccessMask*/ {},
-	                                 /*dstAccessMask*/ vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+	vk::SubpassDependency dependency{.srcSubpass   = vk::SubpassExternal,
+	                                 .dstSubpass   = 0,
+	                                 .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+	                                 .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+	                                 // Since we changed the image layout, we need to make the memory visible to color attachment to modify.
+	                                 .srcAccessMask = {},
+	                                 .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite};
 
 	// Finally, create the renderpass.
-	vk::RenderPassCreateInfo rp_info({}, attachment, subpass, dependency);
+	vk::RenderPassCreateInfo rp_info{
+	    .attachmentCount = 1, .pAttachments = &attachment, .subpassCount = 1, .pSubpasses = &subpass, .dependencyCount = 1, .pDependencies = &dependency};
 	return device.createRenderPass(rp_info);
 }
 
@@ -564,7 +575,7 @@ vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
 		return nullptr;
 	}
 
-	return device.createShaderModule({{}, spirvCode});
+	return device.createShaderModule({.codeSize = static_cast<uint32_t>(spirvCode.size() * sizeof(uint32_t)), .pCode = spirvCode.data()});
 }
 
 vk::SwapchainKHR
@@ -692,8 +703,8 @@ void HPPHelloTriangle::init_swapchain()
 	for (size_t frame = 0; frame < image_count; frame++)
 	{
 		auto &pfd                  = per_frame_data[frame];
-		pfd.queue_submit_fence     = device.createFence({vk::FenceCreateFlagBits::eSignaled});
-		pfd.primary_command_pool   = device.createCommandPool({vk::CommandPoolCreateFlagBits::eTransient, graphics_queue_index});
+		pfd.queue_submit_fence     = device.createFence({.flags = vk::FenceCreateFlagBits::eSignaled});
+		pfd.primary_command_pool   = device.createCommandPool({.flags = vk::CommandPoolCreateFlagBits::eTransient, .queueFamilyIndex = graphics_queue_index});
 		pfd.primary_command_buffer = vkb::common::allocate_command_buffer(device, pfd.primary_command_pool);
 	}
 
@@ -717,7 +728,7 @@ void HPPHelloTriangle::render_triangle(uint32_t swapchain_index)
 	vk::CommandBuffer cmd = per_frame_data[swapchain_index].primary_command_buffer;
 
 	// We will only submit this once before it's recycled.
-	vk::CommandBufferBeginInfo begin_info(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+	vk::CommandBufferBeginInfo begin_info{.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
 	// Begin command recording
 	cmd.begin(begin_info);
 
@@ -726,19 +737,22 @@ void HPPHelloTriangle::render_triangle(uint32_t swapchain_index)
 	clear_value.color = vk::ClearColorValue(std::array<float, 4>({{0.01f, 0.01f, 0.033f, 1.0f}}));
 
 	// Begin the render pass.
-	vk::RenderPassBeginInfo rp_begin(render_pass, framebuffer, {{0, 0}, {swapchain_data.extent.width, swapchain_data.extent.height}},
-	                                 clear_value);
+	vk::RenderPassBeginInfo rp_begin{.renderPass      = render_pass,
+	                                 .framebuffer     = framebuffer,
+	                                 .renderArea      = {{0, 0}, {swapchain_data.extent.width, swapchain_data.extent.height}},
+	                                 .clearValueCount = 1,
+	                                 .pClearValues    = &clear_value};
 	// We will add draw commands in the same command buffer.
 	cmd.beginRenderPass(rp_begin, vk::SubpassContents::eInline);
 
 	// Bind the graphics pipeline.
 	cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
-	vk::Viewport vp(0.0f, 0.0f, static_cast<float>(swapchain_data.extent.width), static_cast<float>(swapchain_data.extent.height), 0.0f, 1.0f);
+	vk::Viewport vp{0.0f, 0.0f, static_cast<float>(swapchain_data.extent.width), static_cast<float>(swapchain_data.extent.height), 0.0f, 1.0f};
 	// Set viewport dynamically
 	cmd.setViewport(0, vp);
 
-	vk::Rect2D scissor({0, 0}, {swapchain_data.extent.width, swapchain_data.extent.height});
+	vk::Rect2D scissor{{0, 0}, {swapchain_data.extent.width, swapchain_data.extent.height}};
 	// Set scissor dynamically
 	cmd.setScissor(0, scissor);
 
@@ -759,8 +773,13 @@ void HPPHelloTriangle::render_triangle(uint32_t swapchain_index)
 
 	vk::PipelineStageFlags wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-	vk::SubmitInfo info(per_frame_data[swapchain_index].swapchain_acquire_semaphore, wait_stage, cmd,
-	                    per_frame_data[swapchain_index].swapchain_release_semaphore);
+	vk::SubmitInfo info{.waitSemaphoreCount   = 1,
+	                    .pWaitSemaphores      = &per_frame_data[swapchain_index].swapchain_acquire_semaphore,
+	                    .pWaitDstStageMask    = &wait_stage,
+	                    .commandBufferCount   = 1,
+	                    .pCommandBuffers      = &cmd,
+	                    .signalSemaphoreCount = 1,
+	                    .pSignalSemaphores    = &per_frame_data[swapchain_index].swapchain_release_semaphore};
 	// Submit command buffer to graphics queue
 	queue.submit(info, per_frame_data[swapchain_index].queue_submit_fence);
 }

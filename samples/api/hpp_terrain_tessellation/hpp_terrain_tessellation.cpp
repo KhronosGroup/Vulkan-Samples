@@ -95,9 +95,12 @@ void HPPTerrainTessellation::request_gpu_features(vkb::core::HPPPhysicalDevice &
 void HPPTerrainTessellation::build_command_buffers()
 {
 	vk::CommandBufferBeginInfo    command_buffer_begin_info;
-	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue(0.0f, 0)}};
+	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue{0.0f, 0}}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -112,10 +115,10 @@ void HPPTerrainTessellation::build_command_buffers()
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
+		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
 		command_buffer.setViewport(0, viewport);
 
-		vk::Rect2D scissor({0, 0}, extent);
+		vk::Rect2D scissor{{0, 0}, extent};
 		command_buffer.setScissor(0, scissor);
 
 		vk::DeviceSize offset = 0;
@@ -199,7 +202,9 @@ void HPPTerrainTessellation::view_changed()
 vk::DescriptorPool HPPTerrainTessellation::create_descriptor_pool()
 {
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 3}, {vk::DescriptorType::eCombinedImageSampler, 3}}};
-	return get_device().get_handle().createDescriptorPool({{}, 2, pool_sizes});
+
+	return get_device().get_handle().createDescriptorPool(
+	    {.maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
 }
 
 vk::DescriptorSetLayout HPPTerrainTessellation::create_sky_sphere_descriptor_set_layout()
@@ -207,8 +212,9 @@ vk::DescriptorSetLayout HPPTerrainTessellation::create_sky_sphere_descriptor_set
 	std::array<vk::DescriptorSetLayoutBinding, 2> layout_bindings = {
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+	vk::DescriptorSetLayoutCreateInfo skysphere_descriptor_layout{.bindingCount = static_cast<uint32_t>(layout_bindings.size()),
+	                                                              .pBindings    = layout_bindings.data()};
 
-	vk::DescriptorSetLayoutCreateInfo skysphere_descriptor_layout({}, layout_bindings);
 	return get_device().get_handle().createDescriptorSetLayout(skysphere_descriptor_layout);
 }
 
@@ -220,18 +226,20 @@ vk::Pipeline HPPTerrainTessellation::create_sky_sphere_pipeline()
 
 	// Vertex bindings an attributes
 	// Binding description
-	std::array<vk::VertexInputBindingDescription, 1> vertex_input_bindings = {{{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex}}};
+	vk::VertexInputBindingDescription vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 
 	// Attribute descriptions
 	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Position
 	                                                                               {1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3},        // Normal
 	                                                                               {2, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6}}};         // UV
 
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -268,7 +276,8 @@ vk::DescriptorSetLayout HPPTerrainTessellation::create_terrain_descriptor_set_la
 	      vk::ShaderStageFlagBits::eTessellationControl | vk::ShaderStageFlagBits::eTessellationEvaluation | vk::ShaderStageFlagBits::eFragment},
 	     {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	vk::DescriptorSetLayoutCreateInfo terrain_descriptor_layout({}, layout_bindings);
+	vk::DescriptorSetLayoutCreateInfo terrain_descriptor_layout{.bindingCount = static_cast<uint32_t>(layout_bindings.size()),
+	                                                            .pBindings    = layout_bindings.data()};
 	return get_device().get_handle().createDescriptorSetLayout(terrain_descriptor_layout);
 }
 
@@ -276,19 +285,20 @@ vk::Pipeline HPPTerrainTessellation::create_terrain_pipeline(vk::PolygonMode pol
 {
 	// Vertex bindings an attributes
 	// Binding description
-	std::array<vk::VertexInputBindingDescription, 1> vertex_input_bindings = {
-	    {{0, sizeof(HPPTerrainTessellation::Vertex), vk::VertexInputRate::eVertex}}};
+	vk::VertexInputBindingDescription vertex_input_binding{0, sizeof(HPPTerrainTessellation::Vertex), vk::VertexInputRate::eVertex};
 
 	// Attribute descriptions
 	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Position
 	                                                                               {1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3},        // Normal
 	                                                                               {2, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6}}};         // UV
 
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -457,7 +467,7 @@ void HPPTerrainTessellation::prepare_camera()
 void HPPTerrainTessellation::prepare_sky_sphere()
 {
 	sky_sphere.descriptor_set_layout = create_sky_sphere_descriptor_set_layout();
-	sky_sphere.pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, sky_sphere.descriptor_set_layout});
+	sky_sphere.pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &sky_sphere.descriptor_set_layout});
 	sky_sphere.pipeline              = create_sky_sphere_pipeline();
 	sky_sphere.descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {sky_sphere.descriptor_set_layout});
 	update_sky_sphere_descriptor_set();
@@ -484,7 +494,7 @@ void HPPTerrainTessellation::prepare_terrain()
 	                         load_shader("terrain_tessellation", "terrain.tese", vk::ShaderStageFlagBits::eTessellationEvaluation)};
 
 	terrain.descriptor_set_layout = create_terrain_descriptor_set_layout();
-	terrain.pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, terrain.descriptor_set_layout});
+	terrain.pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &terrain.descriptor_set_layout});
 	terrain.pipeline              = create_terrain_pipeline(vk::PolygonMode::eFill);
 	terrain.descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {terrain.descriptor_set_layout});
 	update_terrain_descriptor_set();
@@ -545,38 +555,56 @@ void HPPTerrainTessellation::update_uniform_buffers()
 
 void HPPTerrainTessellation::update_sky_sphere_descriptor_set()
 {
-	vk::DescriptorBufferInfo skysphere_buffer_descriptor(sky_sphere.transform_buffer->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo skysphere_buffer_descriptor{sky_sphere.transform_buffer->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo skysphere_image_descriptor(
-	    sky_sphere.texture.sampler,
-	    sky_sphere.texture.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, sky_sphere.texture.image->get_vk_image_view().get_format()));
+	vk::DescriptorImageInfo skysphere_image_descriptor{sky_sphere.texture.sampler,
+	                                                   sky_sphere.texture.image->get_vk_image_view().get_handle(),
+	                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                   sky_sphere.texture.image->get_vk_image_view().get_format())};
 
-	std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {
-	    {{sky_sphere.descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, skysphere_buffer_descriptor},
-	     {sky_sphere.descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, skysphere_image_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {{{.dstSet          = sky_sphere.descriptor_set,
+	                                                                           .dstBinding      = 0,
+	                                                                           .descriptorCount = 1,
+	                                                                           .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                           .pBufferInfo     = &skysphere_buffer_descriptor},
+	                                                                          {.dstSet          = sky_sphere.descriptor_set,
+	                                                                           .dstBinding      = 1,
+	                                                                           .descriptorCount = 1,
+	                                                                           .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                           .pImageInfo      = &skysphere_image_descriptor}}};
 
 	get_device().get_handle().updateDescriptorSets(skysphere_write_descriptor_sets, {});
 }
 
 void HPPTerrainTessellation::update_terrain_descriptor_set()
 {
-	vk::DescriptorBufferInfo terrain_buffer_descriptor(terrain.tessellation_buffer->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo terrain_buffer_descriptor{terrain.tessellation_buffer->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo heightmap_image_descriptor(
-	    terrain.height_map.sampler,
-	    terrain.height_map.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, terrain.height_map.image->get_vk_image_view().get_format()));
+	vk::DescriptorImageInfo heightmap_image_descriptor{terrain.height_map.sampler,
+	                                                   terrain.height_map.image->get_vk_image_view().get_handle(),
+	                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                   terrain.height_map.image->get_vk_image_view().get_format())};
 
-	vk::DescriptorImageInfo terrainmap_image_descriptor(
-	    terrain.terrain_array.sampler,
-	    terrain.terrain_array.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, terrain.terrain_array.image->get_vk_image_view().get_format()));
+	vk::DescriptorImageInfo terrainmap_image_descriptor{terrain.terrain_array.sampler,
+	                                                    terrain.terrain_array.image->get_vk_image_view().get_handle(),
+	                                                    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                    terrain.terrain_array.image->get_vk_image_view().get_format())};
 
-	std::array<vk::WriteDescriptorSet, 3> terrain_write_descriptor_sets = {
-	    {{terrain.descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, terrain_buffer_descriptor},
-	     {terrain.descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, heightmap_image_descriptor},
-	     {terrain.descriptor_set, 2, {}, vk::DescriptorType::eCombinedImageSampler, terrainmap_image_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 3> terrain_write_descriptor_sets = {{{.dstSet          = terrain.descriptor_set,
+	                                                                         .dstBinding      = 0,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                         .pBufferInfo     = &terrain_buffer_descriptor},
+	                                                                        {.dstSet          = terrain.descriptor_set,
+	                                                                         .dstBinding      = 1,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                         .pImageInfo      = &heightmap_image_descriptor},
+	                                                                        {.dstSet          = terrain.descriptor_set,
+	                                                                         .dstBinding      = 2,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                         .pImageInfo      = &terrainmap_image_descriptor}}};
 
 	get_device().get_handle().updateDescriptorSets(terrain_write_descriptor_sets, {});
 }

@@ -184,25 +184,30 @@ inline vk::Format choose_blendable_format(vk::PhysicalDevice gpu, const std::vec
 }
 
 // helper functions not backed by vk_common.h
-inline vk::CommandBuffer allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
+inline vk::CommandBuffer
+    allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
 {
-	vk::CommandBufferAllocateInfo command_buffer_allocate_info(command_pool, level, 1);
+	vk::CommandBufferAllocateInfo command_buffer_allocate_info{.commandPool = command_pool, .level = level, .commandBufferCount = 1};
 	return device.allocateCommandBuffers(command_buffer_allocate_info).front();
 }
 
 inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::DescriptorPool descriptor_pool, vk::DescriptorSetLayout descriptor_set_layout)
 {
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, 1, &descriptor_set_layout);
-#else
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, descriptor_set_layout);
-#endif
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info{.descriptorPool     = descriptor_pool,
+	                                                           .descriptorSetCount = 1,
+	                                                           .pSetLayouts        = &descriptor_set_layout};
 	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
 }
 
-inline vk::Framebuffer create_framebuffer(vk::Device device, vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
+inline vk::Framebuffer
+    create_framebuffer(vk::Device device, vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
 {
-	vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass, attachments, extent.width, extent.height, 1);
+	vk::FramebufferCreateInfo framebuffer_create_info{.renderPass      = render_pass,
+	                                                  .attachmentCount = static_cast<uint32_t>(attachments.size()),
+	                                                  .pAttachments    = attachments.data(),
+	                                                  .width           = extent.width,
+	                                                  .height          = extent.height,
+	                                                  .layers          = 1};
 	return device.createFramebuffer(framebuffer_create_info);
 }
 
@@ -220,42 +225,39 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
                                              vk::PipelineLayout                                        pipeline_layout,
                                              vk::RenderPass                                            render_pass)
 {
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, primitive_topology, false);
+	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state{.topology = primitive_topology};
 
-	vk::PipelineTessellationStateCreateInfo tessellation_state({}, patch_control_points);
+	vk::PipelineTessellationStateCreateInfo tessellation_state{.patchControlPoints = patch_control_points};
 
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
+	vk::PipelineViewportStateCreateInfo viewport_state{.viewportCount = 1, .scissorCount = 1};
 
-	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = polygon_mode;
-	rasterization_state.cullMode    = cull_mode;
-	rasterization_state.frontFace   = front_face;
-	rasterization_state.lineWidth   = 1.0f;
+	vk::PipelineRasterizationStateCreateInfo rasterization_state{
+	    .polygonMode = polygon_mode, .cullMode = cull_mode, .frontFace = front_face, .lineWidth = 1.0f};
 
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
+	vk::PipelineMultisampleStateCreateInfo multisample_state{.rasterizationSamples = vk::SampleCountFlagBits::e1};
 
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, false, {}, blend_attachment_states);
+	vk::PipelineColorBlendStateCreateInfo color_blend_state{.attachmentCount = static_cast<uint32_t>(blend_attachment_states.size()),
+	                                                        .pAttachments    = blend_attachment_states.data()};
 
 	std::array<vk::DynamicState, 2>    dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
+	vk::PipelineDynamicStateCreateInfo dynamic_state{.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size()),
+	                                                 .pDynamicStates    = dynamic_state_enables.data()};
 
 	// Final fullscreen composition pass pipeline
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &vertex_input_state,
-	                                                    &input_assembly_state,
-	                                                    &tessellation_state,
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layout,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
+	vk::GraphicsPipelineCreateInfo pipeline_create_info{.stageCount          = static_cast<uint32_t>(shader_stages.size()),
+	                                                    .pStages             = shader_stages.data(),
+	                                                    .pVertexInputState   = &vertex_input_state,
+	                                                    .pInputAssemblyState = &input_assembly_state,
+	                                                    .pTessellationState  = &tessellation_state,
+	                                                    .pViewportState      = &viewport_state,
+	                                                    .pRasterizationState = &rasterization_state,
+	                                                    .pMultisampleState   = &multisample_state,
+	                                                    .pDepthStencilState  = &depth_stencil_state,
+	                                                    .pColorBlendState    = &color_blend_state,
+	                                                    .pDynamicState       = &dynamic_state,
+	                                                    .layout              = pipeline_layout,
+	                                                    .renderPass          = render_pass,
+	                                                    .basePipelineIndex   = -1};
 
 	vk::Result   result;
 	vk::Pipeline pipeline;
@@ -274,24 +276,20 @@ inline vk::ImageView create_image_view(vk::Device           device,
                                        uint32_t             base_array_layer = 0,
                                        uint32_t             layer_count      = 1)
 {
-	vk::ImageViewCreateInfo image_view_create_info;
-	image_view_create_info.image                           = image;
-	image_view_create_info.viewType                        = view_type;
-	image_view_create_info.format                          = format;
-	image_view_create_info.subresourceRange.aspectMask     = aspect_mask;
-	image_view_create_info.subresourceRange.baseMipLevel   = base_mip_level;
-	image_view_create_info.subresourceRange.levelCount     = level_count;
-	image_view_create_info.subresourceRange.baseArrayLayer = base_array_layer;
-	image_view_create_info.subresourceRange.layerCount     = layer_count;
+	vk::ImageViewCreateInfo image_view_create_info{.image            = image,
+	                                               .viewType         = view_type,
+	                                               .format           = format,
+	                                               .subresourceRange = {.aspectMask     = aspect_mask,
+	                                                                    .baseMipLevel   = base_mip_level,
+	                                                                    .levelCount     = level_count,
+	                                                                    .baseArrayLayer = base_array_layer,
+	                                                                    .layerCount     = layer_count}};
 	return device.createImageView(image_view_create_info);
 }
 
 inline vk::QueryPool create_query_pool(vk::Device device, vk::QueryType query_type, uint32_t query_count, vk::QueryPipelineStatisticFlags pipeline_statistics = {})
 {
-	vk::QueryPoolCreateInfo query_pool_create_info;
-	query_pool_create_info.queryType          = query_type;
-	query_pool_create_info.queryCount         = query_count;
-	query_pool_create_info.pipelineStatistics = pipeline_statistics;
+	vk::QueryPoolCreateInfo query_pool_create_info{.queryType = query_type, .queryCount = query_count, .pipelineStatistics = pipeline_statistics};
 	return device.createQueryPool(query_pool_create_info);
 }
 
@@ -303,21 +301,18 @@ inline vk::Sampler create_sampler(vk::Device             device,
                                   float                  max_anisotropy,
                                   float                  max_LOD)
 {
-	vk::SamplerCreateInfo sampler_create_info({},
-	                                          mag_filter,
-	                                          min_filter,
-	                                          mipmap_mode,
-	                                          sampler_address_mode,
-	                                          sampler_address_mode,
-	                                          sampler_address_mode,
-	                                          0.0f,
-	                                          (1.0f < max_anisotropy),
-	                                          max_anisotropy,
-	                                          false,
-	                                          vk::CompareOp::eNever,
-	                                          0.0f,
-	                                          max_LOD,
-	                                          vk::BorderColor::eFloatOpaqueWhite);
+	vk::SamplerCreateInfo sampler_create_info{.magFilter        = mag_filter,
+	                                          .minFilter        = min_filter,
+	                                          .mipmapMode       = mipmap_mode,
+	                                          .addressModeU     = sampler_address_mode,
+	                                          .addressModeV     = sampler_address_mode,
+	                                          .addressModeW     = sampler_address_mode,
+	                                          .anisotropyEnable = (1.0f < max_anisotropy),
+	                                          .maxAnisotropy    = max_anisotropy,
+	                                          .compareOp        = vk::CompareOp::eNever,
+	                                          .minLod           = 0.0f,
+	                                          .maxLod           = max_LOD,
+	                                          .borderColor      = vk::BorderColor::eFloatOpaqueWhite};
 	return device.createSampler(sampler_create_info);
 }
 
@@ -371,7 +366,10 @@ inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage,
 inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::CommandBuffer> command_buffers, std::vector<vk::Semaphore> semaphores = {})
 {
 	// Submit command_buffer
-	vk::SubmitInfo submit_info(nullptr, {}, command_buffers, semaphores);
+	vk::SubmitInfo submit_info{.commandBufferCount   = static_cast<uint32_t>(command_buffers.size()),
+	                           .pCommandBuffers      = command_buffers.data(),
+	                           .signalSemaphoreCount = static_cast<uint32_t>(semaphores.size()),
+	                           .pSignalSemaphores    = semaphores.data()};
 
 	// Create fence to ensure that command_buffer has finished executing
 	vk::Fence fence = device.createFence({});
