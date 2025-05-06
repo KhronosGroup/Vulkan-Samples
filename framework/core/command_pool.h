@@ -95,24 +95,7 @@ inline vkb::core::CommandPool<bindingType>::CommandPool(DeviceType              
                                                         size_t                                    thread_index,
                                                         vkb::CommandBufferResetMode               reset_mode) :
     CommandPoolBase(reinterpret_cast<vkb::core::HPPDevice &>(device), queue_family_index, reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame), thread_index, reset_mode)
-{
-	vk::CommandPoolCreateFlags flags;
-	switch (reset_mode)
-	{
-		case vkb::CommandBufferResetMode::ResetIndividually:
-		case vkb::CommandBufferResetMode::AlwaysAllocate:
-			flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-			break;
-		case vkb::CommandBufferResetMode::ResetPool:
-		default:
-			flags = vk::CommandPoolCreateFlagBits::eTransient;
-			break;
-	}
-
-	vk::CommandPoolCreateInfo command_pool_create_info{.flags = flags, .queueFamilyIndex = queue_family_index};
-
-	handle = device.get_handle().createCommandPool(command_pool_create_info);
-}
+{}
 
 template <vkb::BindingType bindingType>
 inline typename vkb::core::CommandPool<bindingType>::DeviceType &CommandPool<bindingType>::get_device()
