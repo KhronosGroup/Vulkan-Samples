@@ -403,13 +403,15 @@ void Subpasses::draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb
 
 		vkb::ImageMemoryBarrier barrier;
 
-		if (i == 1)
+		if (vkb::is_depth_format(view.get_format()))
 		{
 			barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			barrier.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
 			barrier.src_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 			barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 		}
 		else
 		{
@@ -417,13 +419,12 @@ void Subpasses::draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb
 			barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 		}
 
-		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		barrier.dst_access_mask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-
-		command_buffer.image_memory_barrier(view, barrier);
+		command_buffer.image_memory_barrier(render_target, i, barrier);
 	}
 
 	// Second render pass
