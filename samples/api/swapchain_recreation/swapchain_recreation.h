@@ -112,8 +112,12 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	/// Submission and present queue.
 	const vkb::Queue *queue = nullptr;
 
+	/// Allow enabling VK_EXT_surface_maintenance1 and VK_EXT_swapchain_maintenance1.
+	///
+	/// Can be set to false by `USE_MAINTENANCE1=no`
+	bool allow_maintenance1 = true;
 	/// Whether the VK_EXT_surface_maintenance1 and VK_EXT_swapchain_maintenance1 extensions are
-	/// to be used.
+	/// enabled.
 	bool has_maintenance1 = false;
 
 	/// Surface data.
