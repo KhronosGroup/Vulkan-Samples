@@ -503,7 +503,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     vma
     spirv-cross-glsl
     spdlog
-    ctpl
     plugins)
 
 if(${NEED_LINK_ATOMIC})

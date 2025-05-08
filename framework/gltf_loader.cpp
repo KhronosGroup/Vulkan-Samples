@@ -19,6 +19,7 @@
 #define TINYGLTF_IMPLEMENTATION
 #include "gltf_loader.h"
 
+#include <future>
 #include <limits>
 #include <queue>
 
@@ -50,8 +51,6 @@
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/animation.h"
-
-#include <ctpl_stl.h>
 
 namespace vkb
 {
@@ -551,25 +550,19 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	timer.start();
 
 	// Load images
-	auto thread_count = std::thread::hardware_concurrency();
-	thread_count      = thread_count == 0 ? 1 : thread_count;
-	ctpl::thread_pool thread_pool(thread_count);
-
 	auto image_count = to_u32(model.images.size());
 
 	std::vector<std::future<std::unique_ptr<sg::Image>>> image_component_futures;
 	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
-		auto fut = thread_pool.push(
-		    [this, image_index](size_t) {
+		image_component_futures.push_back(std::async(
+		    [this, image_index]() {
 			    auto image = parse_image(model.images[image_index]);
 
 			    LOGI("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
 
 			    return image;
-		    });
-
-		image_component_futures.push_back(std::move(fut));
+		    }));
 	}
 
 	std::vector<std::unique_ptr<sg::Image>> image_components;
@@ -626,6 +619,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 	auto elapsed_time = timer.stop();
 
+	auto thread_count = std::thread::hardware_concurrency();
+	thread_count      = thread_count == 0 ? 1 : thread_count;
 	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count);
 
 	// Load textures
