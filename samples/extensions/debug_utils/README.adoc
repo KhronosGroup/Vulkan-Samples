@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Sascha Willems
+- Copyright (c) 2021-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -290,8 +290,5 @@ After setting these up press (4) to start the application from within RenderDoc.
 Once the sample application is running, press F12 do capture the current frame, close the application and then select the capture in RenderDoc.
 
 Once loaded you should be able to see a trace of a whole frame from that sample application along with labels and named Vulkan objects:
-
-image:./images/renderdoc_final.jpg[]
-s and named Vulkan objects:
 
 image:./images/renderdoc_final.jpg[]
