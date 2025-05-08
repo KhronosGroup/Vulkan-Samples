@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -78,7 +78,7 @@ void WaitIdle::CustomRenderContext::wait_frame()
 	//
 	// If wait idle is enabled, wait using vkDeviceWaitIdle
 
-	vkb::RenderFrame &frame = get_active_frame();
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
 
 	if (wait_idle_enabled)
 	{

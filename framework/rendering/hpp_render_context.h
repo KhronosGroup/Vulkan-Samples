@@ -21,6 +21,7 @@
 #include "common/vk_common.h"
 #include "core/hpp_swapchain.h"
 #include "rendering/hpp_render_target.h"
+#include "rendering/render_frame.h"
 
 namespace vkb
 {
@@ -37,8 +38,6 @@ class HPPQueue;
 
 namespace rendering
 {
-class HPPRenderFrame;
-
 /**
  * @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
  *
@@ -171,7 +170,7 @@ class HPPRenderContext
 	 *        A frame is active after @ref begin_frame has been called.
 	 * @return The current active frame
 	 */
-	HPPRenderFrame &get_active_frame();
+	vkb::rendering::RenderFrameCpp &get_active_frame();
 
 	/**
 	 * @brief An error should be raised if the frame is not active.
@@ -185,7 +184,7 @@ class HPPRenderContext
 	 *        A frame is active after @ref begin_frame has been called.
 	 * @return The previous frame
 	 */
-	HPPRenderFrame &get_last_rendered_frame();
+	vkb::rendering::RenderFrameCpp &get_last_rendered_frame();
 
 	vk::Semaphore request_semaphore();
 	vk::Semaphore request_semaphore_with_ownership();
@@ -204,7 +203,7 @@ class HPPRenderContext
 
 	uint32_t get_active_frame_index() const;
 
-	std::vector<std::unique_ptr<HPPRenderFrame>> &get_render_frames();
+	std::vector<std::unique_ptr<vkb::rendering::RenderFrameCpp>> &get_render_frames();
 
 	/**
 	 * @brief Handles surface changes, only applicable if the render_context makes use of a swapchain
@@ -232,7 +231,7 @@ class HPPRenderContext
 
 	vkb::core::HPPSwapchainProperties swapchain_properties;
 
-	std::vector<std::unique_ptr<HPPRenderFrame>> frames;
+	std::vector<std::unique_ptr<vkb::rendering::RenderFrameCpp>> frames;
 
 	vk::Semaphore acquired_semaphore;
 

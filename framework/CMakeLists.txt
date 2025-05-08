@@ -117,7 +117,6 @@ set(RENDERING_FILES
     rendering/subpass.h
     rendering/hpp_pipeline_state.h
     rendering/hpp_render_context.h
-    rendering/hpp_render_frame.h
     rendering/hpp_render_pipeline.h
     rendering/hpp_render_target.h
     # Source files
@@ -127,11 +126,9 @@ set(RENDERING_FILES
     rendering/postprocessing_renderpass.cpp
     rendering/postprocessing_computepass.cpp
     rendering/render_context.cpp
-    rendering/render_frame.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
     rendering/hpp_render_context.cpp
-    rendering/hpp_render_frame.cpp
     rendering/hpp_render_target.cpp)
 
 set(RENDERING_SUBPASSES_FILES
@@ -239,6 +236,7 @@ set(CORE_FILES
     core/descriptor_set.h
     core/queue.h
     core/command_pool.h
+    core/command_pool_base.h
     core/swapchain.h
     core/command_buffer.h
     core/allocated.h
@@ -272,6 +270,7 @@ set(CORE_FILES
     core/hpp_swapchain.h
     core/vulkan_resource.h
     # Source Files
+    core/command_pool_base.cpp
     core/instance.cpp
     core/physical_device.cpp
     core/device.cpp
