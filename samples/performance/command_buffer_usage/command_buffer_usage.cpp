@@ -37,15 +37,15 @@ CommandBufferUsage::CommandBufferUsage()
 	config.insert<vkb::BoolSetting>(0, gui_multi_threading, false);
 	config.insert<vkb::IntSetting>(0, gui_command_buffer_reset_mode, 0);
 
-	config.insert<vkb::IntSetting>(1, gui_secondary_cmd_buf_count, 2);
+	config.insert<vkb::IntSetting>(1, gui_secondary_cmd_buf_count, 8);
 	config.insert<vkb::BoolSetting>(1, gui_multi_threading, true);
 	config.insert<vkb::IntSetting>(1, gui_command_buffer_reset_mode, 0);
 
-	config.insert<vkb::IntSetting>(2, gui_secondary_cmd_buf_count, 2);
+	config.insert<vkb::IntSetting>(2, gui_secondary_cmd_buf_count, 16);
 	config.insert<vkb::BoolSetting>(2, gui_multi_threading, true);
 	config.insert<vkb::IntSetting>(2, gui_command_buffer_reset_mode, 1);
 
-	config.insert<vkb::IntSetting>(3, gui_secondary_cmd_buf_count, 2);
+	config.insert<vkb::IntSetting>(3, gui_secondary_cmd_buf_count, 32);
 	config.insert<vkb::BoolSetting>(3, gui_multi_threading, true);
 	config.insert<vkb::IntSetting>(3, gui_command_buffer_reset_mode, 2);
 }
@@ -126,17 +126,17 @@ void CommandBufferUsage::update(float delta_time)
 
 	update_gui(delta_time);
 
-	auto &primary_command_buffer = render_context.begin(subpass_state.command_buffer_reset_mode);
+	auto primary_command_buffer = render_context.begin(subpass_state.command_buffer_reset_mode);
 
 	update_stats(delta_time);
 
-	primary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	get_stats().begin_sampling(primary_command_buffer);
+	primary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	get_stats().begin_sampling(*primary_command_buffer);
 
-	draw(primary_command_buffer, render_context.get_active_frame().get_render_target());
+	draw(*primary_command_buffer, render_context.get_active_frame().get_render_target());
 
-	get_stats().end_sampling(primary_command_buffer);
-	primary_command_buffer.end();
+	get_stats().end_sampling(*primary_command_buffer);
+	primary_command_buffer->end();
 
 	render_context.submit(primary_command_buffer);
 }
@@ -226,19 +226,19 @@ void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_comm
 		{
 			const auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-			auto &secondary_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue, subpass->get_state().command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
+			auto secondary_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue, subpass->get_state().command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
-			secondary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
+			secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 
-			secondary_command_buffer.set_viewport(0, {viewport});
+			secondary_command_buffer->set_viewport(0, {viewport});
 
-			secondary_command_buffer.set_scissor(0, {scissor});
+			secondary_command_buffer->set_scissor(0, {scissor});
 
-			get_gui().draw(secondary_command_buffer);
+			get_gui().draw(*secondary_command_buffer);
 
-			secondary_command_buffer.end();
+			secondary_command_buffer->end();
 
-			primary_command_buffer.execute_commands(secondary_command_buffer);
+			primary_command_buffer.execute_commands(*secondary_command_buffer);
 		}
 		else
 		{
@@ -276,7 +276,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::Command
 	}
 }
 
-vkb::core::CommandBufferC *
+std::shared_ptr<vkb::core::CommandBufferC>
     CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::core::CommandBufferC                                         &primary_command_buffer,
                                                                        const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
                                                                        uint32_t                                                           mesh_start,
@@ -285,20 +285,20 @@ vkb::core::CommandBufferC *
 {
 	const auto &queue = get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto &secondary_command_buffer =
+	auto secondary_command_buffer =
 	    get_render_context().get_active_frame().request_command_buffer(queue, state.command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY, thread_index);
 
-	secondary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
+	secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 
-	secondary_command_buffer.set_viewport(0, {viewport});
+	secondary_command_buffer->set_viewport(0, {viewport});
 
-	secondary_command_buffer.set_scissor(0, {scissor});
+	secondary_command_buffer->set_scissor(0, {scissor});
 
-	record_draw(secondary_command_buffer, nodes, mesh_start, mesh_end, thread_index);
+	record_draw(*secondary_command_buffer, nodes, mesh_start, mesh_end, thread_index);
 
-	secondary_command_buffer.end();
+	secondary_command_buffer->end();
 
-	return &secondary_command_buffer;
+	return secondary_command_buffer;
 }
 
 void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC &primary_command_buffer)
@@ -334,8 +334,8 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 
 	// Draw opaque objects. Depending on the subpass state, use one or multiple
 	// command buffers, and one or multiple threads
-	const bool                               use_secondary_command_buffers = state.secondary_cmd_buf_count > 0;
-	std::vector<vkb::core::CommandBufferC *> secondary_command_buffers;
+	const bool                                              use_secondary_command_buffers = state.secondary_cmd_buf_count > 0;
+	std::vector<std::shared_ptr<vkb::core::CommandBufferC>> secondary_command_buffers;
 	avg_draws_per_buffer = (state.secondary_cmd_buf_count > 0) ? static_cast<float>(opaque_submeshes) / state.secondary_cmd_buf_count : 0;
 
 	if (state.thread_count != thread_pool.size())
@@ -345,7 +345,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 
 	if (use_secondary_command_buffers)
 	{
-		std::vector<std::future<vkb::core::CommandBufferC *>> secondary_cmd_buf_futures;
+		std::vector<std::future<std::shared_ptr<vkb::core::CommandBufferC>>> secondary_cmd_buf_futures;
 
 		// Save the number of draws left over, these will be distributed among the first buffers
 		uint32_t draws_per_buffer = vkb::to_u32(std::floor(avg_draws_per_buffer));

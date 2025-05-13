@@ -199,20 +199,20 @@ std::unique_ptr<vkb::core::BufferC> BufferDeviceAddress::create_index_buffer()
 	staging_buffer.flush();
 	staging_buffer.unmap();
 
-	auto &cmd = get_device().request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	cmd.copy_buffer(staging_buffer, *index_buffer, size);
+	auto cmd = get_device().request_command_buffer();
+	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	cmd->copy_buffer(staging_buffer, *index_buffer, size);
 
 	vkb::BufferMemoryBarrier memory_barrier;
 	memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	memory_barrier.dst_access_mask = VK_ACCESS_INDEX_READ_BIT;
 	memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-	cmd.buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
-	cmd.end();
+	cmd->buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
+	cmd->end();
 
 	// Not very optimal, but it's the simplest solution.
-	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
+	get_device().get_suitable_graphics_queue().submit(*cmd, VK_NULL_HANDLE);
 	get_device().get_suitable_graphics_queue().wait_idle();
 	return index_buffer;
 }

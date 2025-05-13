@@ -262,7 +262,7 @@ bool RenderContext::handle_surface_changes(bool force_update)
 	return false;
 }
 
-vkb::core::CommandBufferC &RenderContext::begin(vkb::CommandBufferResetMode reset_mode)
+std::shared_ptr<vkb::core::CommandBufferC> RenderContext::begin(vkb::CommandBufferResetMode reset_mode)
 {
 	assert(prepared && "RenderContext not prepared for rendering, call prepare()");
 
@@ -280,12 +280,13 @@ vkb::core::CommandBufferC &RenderContext::begin(vkb::CommandBufferResetMode rese
 	return get_active_frame().request_command_buffer(queue, reset_mode);
 }
 
-void RenderContext::submit(vkb::core::CommandBufferC &command_buffer)
+void RenderContext::submit(std::shared_ptr<vkb::core::CommandBufferC> command_buffer)
 {
-	submit({&command_buffer});
+	std::vector<std::shared_ptr<vkb::core::CommandBufferC>> command_buffers(1, command_buffer);
+	submit(command_buffers);
 }
 
-void RenderContext::submit(const std::vector<vkb::core::CommandBufferC *> &command_buffers)
+void RenderContext::submit(const std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers)
 {
 	assert(frame_active && "RenderContext is inactive, cannot submit command buffer. Please call begin()");
 
@@ -358,16 +359,13 @@ void RenderContext::begin_frame()
 	wait_frame();
 }
 
-VkSemaphore RenderContext::submit(const Queue                                    &queue,
-                                  const std::vector<vkb::core::CommandBufferC *> &command_buffers,
-                                  VkSemaphore                                     wait_semaphore,
-                                  VkPipelineStageFlags                            wait_pipeline_stage)
+VkSemaphore RenderContext::submit(const Queue                                                   &queue,
+                                  const std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers,
+                                  VkSemaphore                                                    wait_semaphore,
+                                  VkPipelineStageFlags                                           wait_pipeline_stage)
 {
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
-	std::transform(command_buffers.begin(),
-	               command_buffers.end(),
-	               cmd_buf_handles.begin(),
-	               [](const vkb::core::CommandBufferC *cmd_buf) { return cmd_buf->get_handle(); });
+	std::ranges::transform(command_buffers, cmd_buf_handles.begin(), [](auto const &cmd_buf) { return cmd_buf->get_handle(); });
 
 	RenderFrame &frame = get_active_frame();
 
@@ -395,13 +393,10 @@ VkSemaphore RenderContext::submit(const Queue                                   
 	return signal_semaphore;
 }
 
-void RenderContext::submit(const Queue &queue, const std::vector<vkb::core::CommandBufferC *> &command_buffers)
+void RenderContext::submit(const Queue &queue, const std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers)
 {
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
-	std::transform(command_buffers.begin(),
-	               command_buffers.end(),
-	               cmd_buf_handles.begin(),
-	               [](const vkb::core::CommandBufferC *cmd_buf) { return cmd_buf->get_handle(); });
+	std::ranges::transform(command_buffers, cmd_buf_handles.begin(), [](auto const &cmd_buf) { return cmd_buf->get_handle(); });
 
 	RenderFrame &frame = get_active_frame();
 

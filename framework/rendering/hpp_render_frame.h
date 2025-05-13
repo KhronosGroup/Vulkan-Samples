@@ -101,10 +101,10 @@ class HPPRenderFrame
 	 * @param thread_index Selects the thread's command pool used to manage the buffer
 	 * @return A command buffer related to the current active frame
 	 */
-	vkb::core::CommandBufferCpp &request_command_buffer(const vkb::core::HPPQueue  &queue,
-	                                                    vkb::CommandBufferResetMode reset_mode   = vkb::CommandBufferResetMode::ResetPool,
-	                                                    vk::CommandBufferLevel      level        = vk::CommandBufferLevel::ePrimary,
-	                                                    size_t                      thread_index = 0);
+	std::shared_ptr<vkb::core::CommandBufferCpp> request_command_buffer(const vkb::core::HPPQueue  &queue,
+	                                                                    vkb::CommandBufferResetMode reset_mode   = vkb::CommandBufferResetMode::ResetPool,
+	                                                                    vk::CommandBufferLevel      level        = vk::CommandBufferLevel::ePrimary,
+	                                                                    size_t                      thread_index = 0);
 
 	/**
 	 * @brief Sets a new buffer allocation strategy

@@ -106,20 +106,20 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
                                                        VMA_MEMORY_USAGE_GPU_ONLY);
 	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(device, initial_data_fp16);
 
-	auto &cmd = device.request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	cmd.copy_buffer(staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
+	auto cmd = device.request_command_buffer();
+	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	cmd->copy_buffer(staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
 
 	vkb::BufferMemoryBarrier barrier;
 	barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-	cmd.buffer_memory_barrier(*blob_buffer, 0, VK_WHOLE_SIZE, barrier);
-	cmd.end();
+	cmd->buffer_memory_barrier(*blob_buffer, 0, VK_WHOLE_SIZE, barrier);
+	cmd->end();
 
 	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(cmd, device.request_fence());
+	queue.submit(*cmd, device.request_fence());
 	device.get_fence_pool().wait();
 
 	// Create the target image we render into in the main compute shader.

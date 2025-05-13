@@ -106,11 +106,11 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 		 * @param thread_index Identifies the resources allocated for this thread
 		 * @return a pointer to the recorded secondary command buffer
 		 */
-		vkb::core::CommandBufferC *record_draw_secondary(vkb::core::CommandBufferC                                         &primary_command_buffer,
-		                                                 const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-		                                                 uint32_t                                                           mesh_start,
-		                                                 uint32_t                                                           mesh_end,
-		                                                 size_t                                                             thread_index = 0);
+		std::shared_ptr<vkb::core::CommandBufferC> record_draw_secondary(vkb::core::CommandBufferC                                         &primary_command_buffer,
+		                                                                 const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
+		                                                                 uint32_t                                                           mesh_start,
+		                                                                 uint32_t                                                           mesh_end,
+		                                                                 size_t                                                             thread_index = 0);
 
 		VkViewport viewport{};
 

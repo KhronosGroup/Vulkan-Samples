@@ -64,9 +64,9 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto &cmd_buf = render_context.get_device().request_command_buffer();
+	auto cmd_buf = render_context.get_device().request_command_buffer();
 
-	cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	cmd_buf->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	// Enable destination buffer to be written to
 	{
@@ -76,7 +76,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		cmd_buf.buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
+		cmd_buf->buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Enable framebuffer image view to be read from
@@ -87,7 +87,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		cmd_buf.image_memory_barrier(src_image_view, memory_barrier);
+		cmd_buf->image_memory_barrier(src_image_view, memory_barrier);
 	}
 
 	// Check if framebuffer images are in a BGR format
@@ -104,7 +104,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	image_copy_region.imageExtent.height          = height;
 	image_copy_region.imageExtent.depth           = 1;
 
-	cmd_buf.copy_image_to_buffer(src_image_view.get_image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_buffer, {image_copy_region});
+	cmd_buf->copy_image_to_buffer(src_image_view.get_image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_buffer, {image_copy_region});
 
 	// Enable destination buffer to map memory
 	{
@@ -114,7 +114,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
 
-		cmd_buf.buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
+		cmd_buf->buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Revert back the framebuffer image view from transfer to present
@@ -125,12 +125,12 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		cmd_buf.image_memory_barrier(src_image_view, memory_barrier);
+		cmd_buf->image_memory_barrier(src_image_view, memory_barrier);
 	}
 
-	cmd_buf.end();
+	cmd_buf->end();
 
-	queue.submit(cmd_buf, frame.request_fence());
+	queue.submit(*cmd_buf, frame.request_fence());
 
 	queue.wait_idle();
 

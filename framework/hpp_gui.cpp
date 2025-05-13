@@ -144,12 +144,12 @@ HPPGui::HPPGui(VulkanSampleCpp &sample_, const vkb::Window &window, const vkb::s
 	{
 		vkb::core::BufferCpp stage_buffer = vkb::core::BufferCpp::create_staging_buffer(device, upload_size, font_data);
 
-		auto &command_buffer = device.get_command_pool().request_command_buffer();
+		auto command_buffer = device.get_command_pool().request_command_buffer();
 
 		vkb::HPPFencePool fence_pool(device);
 
 		// Begin recording
-		command_buffer.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+		command_buffer->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
 		{
 			// Prepare for transfer
@@ -161,7 +161,7 @@ HPPGui::HPPGui(VulkanSampleCpp &sample_, const vkb::Window &window, const vkb::s
 			memory_barrier.src_stage_mask  = vk::PipelineStageFlagBits::eHost;
 			memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eTransfer;
 
-			command_buffer.image_memory_barrier(*font_image_view, memory_barrier);
+			command_buffer->image_memory_barrier(*font_image_view, memory_barrier);
 		}
 
 		// Copy
@@ -170,7 +170,7 @@ HPPGui::HPPGui(VulkanSampleCpp &sample_, const vkb::Window &window, const vkb::s
 		buffer_copy_region.imageSubresource.aspectMask = font_image_view->get_subresource_range().aspectMask;
 		buffer_copy_region.imageExtent                 = font_image->get_extent();
 
-		command_buffer.copy_buffer_to_image(stage_buffer, *font_image, {buffer_copy_region});
+		command_buffer->copy_buffer_to_image(stage_buffer, *font_image, {buffer_copy_region});
 
 		{
 			// Prepare for fragmen shader
@@ -182,15 +182,15 @@ HPPGui::HPPGui(VulkanSampleCpp &sample_, const vkb::Window &window, const vkb::s
 			memory_barrier.src_stage_mask  = vk::PipelineStageFlagBits::eTransfer;
 			memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eFragmentShader;
 
-			command_buffer.image_memory_barrier(*font_image_view, memory_barrier);
+			command_buffer->image_memory_barrier(*font_image_view, memory_barrier);
 		}
 
 		// End recording
-		command_buffer.end();
+		command_buffer->end();
 
 		auto &queue = device.get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
 
-		queue.submit(command_buffer, device.get_fence_pool().request_fence());
+		queue.submit(*command_buffer, device.get_fence_pool().request_fence());
 
 		// Wait for the command buffer to finish its work before destroying the staging buffer
 		device.get_fence_pool().wait();
