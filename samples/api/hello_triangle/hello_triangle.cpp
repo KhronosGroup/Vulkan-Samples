@@ -402,7 +402,7 @@ void HelloTriangle::init_vertex_buffer()
 	// On most setups this will return a memory type that resides in VRAM and is accessible from the host
 	VmaAllocationCreateInfo buffer_alloc_ci{
 	    .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
-	    .usage = VMA_MEMORY_USAGE_AUTO};
+	    .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST};
 
 	VmaAllocationInfo buffer_alloc_info{};
 	vmaCreateBuffer(context.vma_allocator, &buffer_info, &buffer_alloc_ci, &vertex_buffer, &vertex_buffer_allocation, &buffer_alloc_info);
