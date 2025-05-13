@@ -582,9 +582,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	{
 		std::vector<vkb::core::BufferC> transient_buffers;
 
-		auto &command_buffer = device.request_command_buffer();
+		auto command_buffer = device.request_command_buffer();
 
-		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
+		command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 		size_t batch_size = 0;
 
@@ -600,18 +600,18 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 			batch_size += image->get_data().size();
 
-			upload_image_to_gpu(command_buffer, stage_buffer, *image);
+			upload_image_to_gpu(*command_buffer, stage_buffer, *image);
 
 			transient_buffers.push_back(std::move(stage_buffer));
 
 			image_index++;
 		}
 
-		command_buffer.end();
+		command_buffer->end();
 
 		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-		queue.submit(command_buffer, device.request_fence());
+		queue.submit(*command_buffer, device.request_fence());
 
 		device.get_fence_pool().wait();
 		device.get_fence_pool().reset();
@@ -1109,9 +1109,9 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto &command_buffer = device.request_command_buffer();
+	auto command_buffer = device.request_command_buffer();
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	assert(index < model.meshes.size());
 	auto &gltf_mesh = model.meshes[index];
@@ -1195,7 +1195,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		                          VMA_MEMORY_USAGE_GPU_ONLY};
 
-		command_buffer.copy_buffer(stage_buffer, buffer, aligned_vertex_data.size() * sizeof(AlignedVertex));
+		command_buffer->copy_buffer(stage_buffer, buffer, aligned_vertex_data.size() * sizeof(AlignedVertex));
 
 		auto pair = std::make_pair("vertex_buffer", std::move(buffer));
 		submesh->vertex_buffers.insert(std::move(pair));
@@ -1238,7 +1238,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		                          VMA_MEMORY_USAGE_GPU_ONLY};
 
-		command_buffer.copy_buffer(stage_buffer, buffer, vertex_data.size() * sizeof(Vertex));
+		command_buffer->copy_buffer(stage_buffer, buffer, vertex_data.size() * sizeof(Vertex));
 
 		auto pair = std::make_pair("vertex_buffer", std::move(buffer));
 		submesh->vertex_buffers.insert(std::move(pair));
@@ -1295,7 +1295,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			                                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 			                                                             VMA_MEMORY_USAGE_GPU_ONLY);
 
-			command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, meshlets.size() * sizeof(Meshlet));
+			command_buffer->copy_buffer(stage_buffer, *submesh->index_buffer, meshlets.size() * sizeof(Meshlet));
 
 			transient_buffers.push_back(std::move(stage_buffer));
 		}
@@ -1308,15 +1308,15 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			                                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 			                                                             VMA_MEMORY_USAGE_GPU_ONLY);
 
-			command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, index_data.size());
+			command_buffer->copy_buffer(stage_buffer, *submesh->index_buffer, index_data.size());
 
 			transient_buffers.push_back(std::move(stage_buffer));
 		}
 	}
 
-	command_buffer.end();
+	command_buffer->end();
 
-	queue.submit(command_buffer, device.request_fence());
+	queue.submit(*command_buffer, device.request_fence());
 
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();

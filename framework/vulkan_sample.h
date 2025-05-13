@@ -1319,28 +1319,28 @@ inline void VulkanSample<bindingType>::update(float delta_time)
 
 	update_gui(delta_time);
 
-	auto &command_buffer = render_context->begin();
+	auto command_buffer = render_context->begin();
 
 	// Collect the performance data for the sample graphs
 	update_stats(delta_time);
 
-	command_buffer.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-	stats->begin_sampling(command_buffer);
+	command_buffer->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+	stats->begin_sampling(*command_buffer);
 
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		draw(command_buffer, render_context->get_active_frame().get_render_target());
+		draw(*command_buffer, render_context->get_active_frame().get_render_target());
 	}
 	else
 	{
-		draw(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer),
+		draw(reinterpret_cast<vkb::core::CommandBufferC &>(*command_buffer),
 		     reinterpret_cast<vkb::RenderTarget &>(render_context->get_active_frame().get_render_target()));
 	}
 
-	stats->end_sampling(command_buffer);
-	command_buffer.end();
+	stats->end_sampling(*command_buffer);
+	command_buffer->end();
 
-	render_context->submit(command_buffer);
+	render_context->submit(*command_buffer);
 }
 
 template <vkb::BindingType bindingType>

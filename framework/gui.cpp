@@ -176,12 +176,12 @@ Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const
 	{
 		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, upload_size, font_data);
 
-		auto &command_buffer = device.request_command_buffer();
+		auto command_buffer = device.request_command_buffer();
 
 		FencePool fence_pool{device};
 
 		// Begin recording
-		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
+		command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 		{
 			// Prepare for transfer
@@ -193,7 +193,7 @@ Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const
 			memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
 			memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-			command_buffer.image_memory_barrier(*font_image_view, memory_barrier);
+			command_buffer->image_memory_barrier(*font_image_view, memory_barrier);
 		}
 
 		// Copy
@@ -202,7 +202,7 @@ Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const
 		buffer_copy_region.imageSubresource.aspectMask = font_image_view->get_subresource_range().aspectMask;
 		buffer_copy_region.imageExtent                 = font_image->get_extent();
 
-		command_buffer.copy_buffer_to_image(stage_buffer, *font_image, {buffer_copy_region});
+		command_buffer->copy_buffer_to_image(stage_buffer, *font_image, {buffer_copy_region});
 
 		{
 			// Prepare for fragmen shader
@@ -214,15 +214,15 @@ Gui::Gui(VulkanSampleC &sample_, const Window &window, const Stats *stats, const
 			memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-			command_buffer.image_memory_barrier(*font_image_view, memory_barrier);
+			command_buffer->image_memory_barrier(*font_image_view, memory_barrier);
 		}
 
 		// End recording
-		command_buffer.end();
+		command_buffer->end();
 
 		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-		queue.submit(command_buffer, device.request_fence());
+		queue.submit(*command_buffer, device.request_fence());
 
 		// Wait for the command buffer to finish its work before destroying the staging buffer
 		device.get_fence_pool().wait();

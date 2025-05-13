@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,7 +75,7 @@ void DescriptorManagement::update(float delta_time)
 
 	auto &render_context = get_render_context();
 
-	auto &command_buffer = render_context.begin();
+	auto command_buffer = render_context.begin();
 
 	update_stats(delta_time);
 
@@ -92,13 +92,13 @@ void DescriptorManagement::update(float delta_time)
 
 	render_context.get_active_frame().set_descriptor_management_strategy(descriptor_management_strategy);
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	get_stats().begin_sampling(command_buffer);
+	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	get_stats().begin_sampling(*command_buffer);
 
-	draw(command_buffer, render_context.get_active_frame().get_render_target());
+	draw(*command_buffer, render_context.get_active_frame().get_render_target());
 
-	get_stats().end_sampling(command_buffer);
-	command_buffer.end();
+	get_stats().end_sampling(*command_buffer);
+	command_buffer->end();
 
 	render_context.submit(command_buffer);
 }

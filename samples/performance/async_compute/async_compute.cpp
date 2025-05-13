@@ -267,16 +267,13 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource vert_shader("async_compute/forward.vert");
 	vkb::ShaderSource frag_shader("async_compute/forward.frag");
-	auto              scene_subpass = std::make_unique<ShadowMapForwardSubpass>(get_render_context(),
-                                                                   std::move(vert_shader), std::move(frag_shader),
-                                                                   get_scene(), *camera,
-                                                                   *shadow_camera);
+	auto              scene_subpass =
+	    std::make_unique<ShadowMapForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera, *shadow_camera);
 
 	vkb::ShaderSource shadow_vert_shader("async_compute/shadow.vert");
 	vkb::ShaderSource shadow_frag_shader("async_compute/shadow.frag");
-	auto              shadow_scene_subpass = std::make_unique<DepthMapSubpass>(get_render_context(),
-                                                                  std::move(shadow_vert_shader), std::move(shadow_frag_shader),
-                                                                  get_scene(), *shadow_camera);
+	auto              shadow_scene_subpass =
+	    std::make_unique<DepthMapSubpass>(get_render_context(), std::move(shadow_vert_shader), std::move(shadow_frag_shader), get_scene(), *shadow_camera);
 	shadow_render_pipeline.add_subpass(std::move(shadow_scene_subpass));
 
 	vkb::ShaderSource composite_vert_shader("async_compute/composite.vert");
@@ -328,9 +325,9 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 void AsyncComputeSample::render_shadow_pass()
 {
 	auto &queue          = *early_graphics_queue;
-	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
-	command_buffer.set_debug_name("shadow_pass");
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer->set_debug_name("shadow_pass");
+	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	auto &views = shadow_render_target->get_views();
 	assert(!views.empty());
@@ -344,12 +341,12 @@ void AsyncComputeSample::render_shadow_pass()
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
 
-	set_viewport_and_scissor(command_buffer, shadow_render_target->get_extent());
-	shadow_render_pipeline.draw(command_buffer, *shadow_render_target, VK_SUBPASS_CONTENTS_INLINE);
-	command_buffer.end_render_pass();
+	set_viewport_and_scissor(*command_buffer, shadow_render_target->get_extent());
+	shadow_render_pipeline.draw(*command_buffer, *shadow_render_target, VK_SUBPASS_CONTENTS_INLINE);
+	command_buffer->end_render_pass();
 
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
@@ -359,12 +356,12 @@ void AsyncComputeSample::render_shadow_pass()
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
 
-	command_buffer.end();
+	command_buffer->end();
 
-	get_render_context().submit(queue, {&command_buffer});
+	get_render_context().submit(queue, {command_buffer});
 }
 
 vkb::RenderTarget &AsyncComputeSample::get_current_forward_render_target()
@@ -375,10 +372,10 @@ vkb::RenderTarget &AsyncComputeSample::get_current_forward_render_target()
 VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wait_semaphore)
 {
 	auto &queue          = *early_graphics_queue;
-	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
-	command_buffer.set_debug_name("forward_offscreen_pass");
+	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer->set_debug_name("forward_offscreen_pass");
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	auto &views = get_current_forward_render_target().get_views();
 	assert(1 < views.size());
@@ -392,7 +389,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
 
 	{
@@ -404,12 +401,12 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		command_buffer.image_memory_barrier(views[1], memory_barrier);
+		command_buffer->image_memory_barrier(views[1], memory_barrier);
 	}
 
-	set_viewport_and_scissor(command_buffer, get_current_forward_render_target().get_extent());
-	forward_render_pipeline.draw(command_buffer, get_current_forward_render_target(), VK_SUBPASS_CONTENTS_INLINE);
-	command_buffer.end_render_pass();
+	set_viewport_and_scissor(*command_buffer, get_current_forward_render_target().get_extent());
+	forward_render_pipeline.draw(*command_buffer, get_current_forward_render_target(), VK_SUBPASS_CONTENTS_INLINE);
+	command_buffer->end_render_pass();
 
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
@@ -432,14 +429,14 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 			memory_barrier.new_queue_family = post_compute_queue->get_family_index();
 		}
 
-		command_buffer.image_memory_barrier(views[0], memory_barrier);
+		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
 
-	command_buffer.end();
+	command_buffer->end();
 
 	// Conditionally waits on hdr_wait_semaphore.
 	// This resolves the write-after-read hazard where previous frame tonemap read from HDR buffer.
-	auto signal_semaphore = get_render_context().submit(queue, {&command_buffer},
+	auto signal_semaphore = get_render_context().submit(queue, {command_buffer},
 	                                                    hdr_wait_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 	if (hdr_wait_semaphore)
@@ -453,10 +450,10 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 {
 	auto &queue          = *present_graphics_queue;
-	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
-	command_buffer.set_debug_name("swapchain");
+	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer->set_debug_name("swapchain");
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	if (post_compute_queue->get_family_index() != present_graphics_queue->get_family_index())
 	{
@@ -471,12 +468,12 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 		memory_barrier.old_queue_family = post_compute_queue->get_family_index();
 		memory_barrier.new_queue_family = present_graphics_queue->get_family_index();
 
-		command_buffer.image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
+		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
 
-	draw(command_buffer, get_render_context().get_active_frame().get_render_target());
+	draw(*command_buffer, get_render_context().get_active_frame().get_render_target());
 
-	command_buffer.end();
+	command_buffer->end();
 
 	// We're going to wait on this semaphore in different frame,
 	// so we need to hold ownership of the semaphore until we complete the wait.
@@ -511,7 +508,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 	info.waitSemaphoreCount   = 2;
 	info.pWaitDstStageMask    = wait_stages;
 	info.commandBufferCount   = 1;
-	info.pCommandBuffers      = &command_buffer.get_handle();
+	info.pCommandBuffers      = &command_buffer->get_handle();
 
 	queue.submit({info}, get_render_context().get_active_frame().request_fence());
 	get_render_context().release_owned_semaphore(wait_semaphores[1]);
@@ -521,10 +518,10 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_semaphore, VkSemaphore wait_present_semaphore)
 {
 	auto &queue          = *post_compute_queue;
-	auto &command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
-	command_buffer.set_debug_name("compute_post");
+	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	command_buffer->set_debug_name("compute_post");
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	// Acquire barrier if we're going to read HDR texture in compute queue
 	// of a different queue family index. We'll have to duplicate this barrier
@@ -542,7 +539,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		memory_barrier.old_queue_family = early_graphics_queue->get_family_index();
 		memory_barrier.new_queue_family = post_compute_queue->get_family_index();
 
-		command_buffer.image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
+		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
 
 	const auto discard_blur_view = [&](const vkb::core::ImageView &view) {
@@ -555,7 +552,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(view, memory_barrier);
+		command_buffer->image_memory_barrier(view, memory_barrier);
 	};
 
 	const auto read_only_blur_view = [&](const vkb::core::ImageView &view, bool final) {
@@ -568,7 +565,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		memory_barrier.dst_stage_mask  = final ? VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT : VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(view, memory_barrier);
+		command_buffer->image_memory_barrier(view, memory_barrier);
 	};
 
 	struct Push
@@ -592,10 +589,10 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		push.inv_input_width  = 1.0f / static_cast<float>(src_extent.width);
 		push.inv_input_height = 1.0f / static_cast<float>(src_extent.height);
 
-		command_buffer.push_constants(push);
-		command_buffer.bind_image(src, *linear_sampler, 0, 0, 0);
-		command_buffer.bind_image(dst, 0, 1, 0);
-		command_buffer.dispatch((push.width + 7) / 8, (push.height + 7) / 8, 1);
+		command_buffer->push_constants(push);
+		command_buffer->bind_image(src, *linear_sampler, 0, 0, 0);
+		command_buffer->bind_image(dst, 0, 1, 0);
+		command_buffer->dispatch((push.width + 7) / 8, (push.height + 7) / 8, 1);
 
 		read_only_blur_view(dst, final);
 	};
@@ -605,16 +602,16 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	// - Threshold pass
 	// - Blur down
 	// - Blur up
-	command_buffer.bind_pipeline_layout(*threshold_pipeline);
+	command_buffer->bind_pipeline_layout(*threshold_pipeline);
 	dispatch_pass(*blur_chain_views[0], get_current_forward_render_target().get_views()[0]);
 
-	command_buffer.bind_pipeline_layout(*blur_down_pipeline);
+	command_buffer->bind_pipeline_layout(*blur_down_pipeline);
 	for (uint32_t index = 1; index < blur_chain_views.size(); index++)
 	{
 		dispatch_pass(*blur_chain_views[index], *blur_chain_views[index - 1]);
 	}
 
-	command_buffer.bind_pipeline_layout(*blur_up_pipeline);
+	command_buffer->bind_pipeline_layout(*blur_up_pipeline);
 	for (uint32_t index = static_cast<uint32_t>(blur_chain_views.size() - 2); index >= 1; index--)
 	{
 		dispatch_pass(*blur_chain_views[index], *blur_chain_views[index + 1], index == 1);
@@ -634,10 +631,10 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		memory_barrier.old_queue_family = post_compute_queue->get_family_index();
 		memory_barrier.new_queue_family = present_graphics_queue->get_family_index();
 
-		command_buffer.image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
+		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
 
-	command_buffer.end();
+	command_buffer->end();
 
 	VkPipelineStageFlags wait_stages[]     = {VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
 	VkSemaphore          wait_semaphores[] = {wait_graphics_semaphore, wait_present_semaphore};
@@ -650,7 +647,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	info.waitSemaphoreCount   = wait_present_semaphore != VK_NULL_HANDLE ? 2 : 1;
 	info.pWaitDstStageMask    = wait_stages;
 	info.commandBufferCount   = 1;
-	info.pCommandBuffers      = &command_buffer.get_handle();
+	info.pCommandBuffers      = &command_buffer->get_handle();
 
 	if (wait_present_semaphore != VK_NULL_HANDLE)
 	{

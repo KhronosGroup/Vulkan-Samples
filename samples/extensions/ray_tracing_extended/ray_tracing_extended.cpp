@@ -306,26 +306,26 @@ void RaytracingExtended::create_static_object_buffers()
 	// now transfer over to the end buffer
 	if (scene_options.use_vertex_staging_buffer)
 	{
-		auto &cmd = get_device().request_command_buffer();
-		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+		auto cmd = get_device().request_command_buffer();
+		cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 		auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-			cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
+			cmd->copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
 			vkb::BufferMemoryBarrier barrier;
 			barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 			barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-			cmd.buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
+			cmd->buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
 			return output_buffer;
 		};
 		vertex_buffer = copy(*staging_vertex_buffer);
 		index_buffer  = copy(*staging_index_buffer);
 
-		cmd.end();
+		cmd->end();
 		auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-		queue.submit(cmd, get_device().request_fence());
+		queue.submit(*cmd, get_device().request_fence());
 		get_device().get_fence_pool().wait();
 	}
 	else
