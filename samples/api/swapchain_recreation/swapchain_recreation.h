@@ -114,7 +114,7 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 
 	/// Allow enabling VK_EXT_surface_maintenance1 and VK_EXT_swapchain_maintenance1.
 	///
-	/// Can be set to false by `USE_MAINTENANCE1=no`
+	/// Can be set to false by setting environment variable `USE_MAINTENANCE1=no`
 	bool allow_maintenance1 = true;
 	/// Whether the VK_EXT_surface_maintenance1 and VK_EXT_swapchain_maintenance1 extensions are
 	/// enabled.
