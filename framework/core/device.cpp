@@ -420,7 +420,7 @@ const Queue &Device::get_suitable_graphics_queue() const
 
 void Device::copy_buffer(vkb::core::BufferC &src, vkb::core::BufferC &dst, VkQueue queue, VkBufferCopy *copy_region)
 {
-	assert(dst.get_size() <= src.get_size());
+	assert(dst.get_size() >= src.get_size());
 	assert(src.get_handle());
 
 	VkCommandBuffer command_buffer = create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
