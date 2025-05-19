@@ -36,9 +36,9 @@ class BufferAllocation
 
   public:
 	BufferAllocation()                                    = default;
-	BufferAllocation(const BufferAllocation &)            = delete;
+	BufferAllocation(const BufferAllocation &)            = default;
 	BufferAllocation(BufferAllocation &&)                 = default;
-	BufferAllocation &operator=(const BufferAllocation &) = delete;
+	BufferAllocation &operator=(const BufferAllocation &) = default;
 	BufferAllocation &operator=(BufferAllocation &&)      = default;
 
 	BufferAllocation(vkb::core::Buffer<bindingType> &buffer, DeviceSizeType size, DeviceSizeType offset);
