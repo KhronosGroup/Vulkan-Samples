@@ -1,6 +1,6 @@
 ////
-- Copyright (c) 2023-2024, Holochip Inc
-- Copyright (c) 2023-2024, Sascha Willems
+- Copyright (c) 2023-2025, Holochip Inc
+- Copyright (c) 2023-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -30,8 +30,9 @@
 ** xref:samples/api/hdr/README.adoc[HDR]
 *** xref:samples/api/hpp_hdr/README.adoc[HDR (Vulkan-Hpp)]
 ** xref:samples/api/hello_triangle/README.adoc[Hello Triangle]
-** xref:samples/api/hello_triangle_1_3/README.adoc[Hello Triangle 1.3]
 *** xref:samples/api/hpp_hello_triangle/README.adoc[Hello Triangle (Vulkan-Hpp)]
+** xref:samples/api/hello_triangle_1_3/README.adoc[Hello Triangle 1.3]
+*** xref:samples/api/hpp_hello_triangle_1_3/README.adoc[Hello Triangle 1.3(Vulkan-Hpp)]
 ** xref:samples/api/hlsl_shaders/README.adoc[HLSL Shaders]
 *** xref:samples/api/hpp_hlsl_shaders/README.adoc[HLSL Shaders (Vulkan-Hpp)]
 ** xref:samples/api/instancing/README.adoc[Instancing]
