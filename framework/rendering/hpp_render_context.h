@@ -130,7 +130,7 @@ class HPPRenderContext
 	 * @returns A valid command buffer to record commands to be submitted
 	 * Also ensures that there is an active frame if there is no existing active frame already
 	 */
-	vkb::core::CommandBufferCpp &begin(vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool);
+	std::shared_ptr<vkb::core::CommandBufferCpp> begin(vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool);
 
 	/**
 	 * @brief Submits the command buffer to the right queue

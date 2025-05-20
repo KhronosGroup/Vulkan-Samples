@@ -194,10 +194,10 @@ const RenderTarget &RenderFrame::get_render_target_const() const
 	return *swapchain_render_target;
 }
 
-vkb::core::CommandBufferC &RenderFrame::request_command_buffer(const Queue                &queue,
-                                                               vkb::CommandBufferResetMode reset_mode,
-                                                               VkCommandBufferLevel        level,
-                                                               size_t                      thread_index)
+std::shared_ptr<vkb::core::CommandBufferC> RenderFrame::request_command_buffer(const Queue                &queue,
+                                                                               vkb::CommandBufferResetMode reset_mode,
+                                                                               VkCommandBufferLevel        level,
+                                                                               size_t                      thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 

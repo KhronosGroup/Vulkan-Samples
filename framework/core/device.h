@@ -183,7 +183,7 @@ class Device : public vkb::core::VulkanResourceC<VkDevice>
 	 * @brief Requests a command buffer from the general command_pool
 	 * @return A new command buffer
 	 */
-	vkb::core::CommandBufferC &request_command_buffer() const;
+	std::shared_ptr<vkb::core::CommandBufferC> request_command_buffer() const;
 
 	FencePool &get_fence_pool() const;
 

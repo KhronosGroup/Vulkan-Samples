@@ -187,10 +187,10 @@ void HPPRenderFrame::release_owned_semaphore(vk::Semaphore semaphore)
 	semaphore_pool.release_owned_semaphore(semaphore);
 }
 
-vkb::core::CommandBufferCpp &HPPRenderFrame::request_command_buffer(const vkb::core::HPPQueue  &queue,
-                                                                    vkb::CommandBufferResetMode reset_mode,
-                                                                    vk::CommandBufferLevel      level,
-                                                                    size_t                      thread_index)
+std::shared_ptr<vkb::core::CommandBufferCpp> HPPRenderFrame::request_command_buffer(const vkb::core::HPPQueue  &queue,
+                                                                                    vkb::CommandBufferResetMode reset_mode,
+                                                                                    vk::CommandBufferLevel      level,
+                                                                                    size_t                      thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 

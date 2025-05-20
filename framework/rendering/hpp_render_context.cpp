@@ -234,7 +234,7 @@ bool HPPRenderContext::handle_surface_changes(bool force_update)
 	return false;
 }
 
-vkb::core::CommandBufferCpp &HPPRenderContext::begin(vkb::CommandBufferResetMode reset_mode)
+std::shared_ptr<vkb::core::CommandBufferCpp> HPPRenderContext::begin(vkb::CommandBufferResetMode reset_mode)
 {
 	assert(prepared && "HPPRenderContext not prepared for rendering, call prepare()");
 

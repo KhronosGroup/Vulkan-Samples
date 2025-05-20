@@ -1354,11 +1354,11 @@ void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuff
 
 void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::core::CommandBufferC &command_buffer)> &f)
 {
-	auto &cmd = get_device().request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	f(cmd);
-	cmd.end();
+	auto cmd = get_device().request_command_buffer();
+	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	f(*cmd);
+	cmd->end();
 	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(cmd, get_device().request_fence());
+	queue.submit(*cmd, get_device().request_fence());
 	get_device().get_fence_pool().wait();
 }
