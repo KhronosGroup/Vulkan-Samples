@@ -163,7 +163,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app.pApplicationName = "Full Screen Exclusive";
 	app.pEngineName      = "Vulkan Samples";
-	app.apiVersion       = VK_MAKE_VERSION(1, 0, 0);
+	app.apiVersion       = VK_API_VERSION_1_1;
 
 	VkInstanceCreateInfo instance_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 	instance_info.pApplicationInfo        = &app;
