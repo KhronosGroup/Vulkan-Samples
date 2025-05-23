@@ -36,7 +36,7 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 
 === xref:./{api_samplespath}hello_triangle/README.adoc[Hello Triangle]
 
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle using unextended Vulkan 1.0.
+A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle using unextended Vulkan 1.1.
 
 === xref:./{api_samplespath}hello_triangle_1_3/README.adoc[Hello Triangle 1.3]
 
