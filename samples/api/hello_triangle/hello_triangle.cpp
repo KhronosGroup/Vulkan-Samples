@@ -401,8 +401,9 @@ void HelloTriangle::init_vertex_buffer()
 	// We use the Vulkan Memory Allocator to find a memory type that can be written and mapped from the host
 	// On most setups this will return a memory type that resides in VRAM and is accessible from the host
 	VmaAllocationCreateInfo buffer_alloc_ci{
-	    .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
-	    .usage = VMA_MEMORY_USAGE_AUTO};
+	    .flags         = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	    .usage         = VMA_MEMORY_USAGE_AUTO,
+	    .requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
 
 	VmaAllocationInfo buffer_alloc_info{};
 	vmaCreateBuffer(context.vma_allocator, &buffer_info, &buffer_alloc_ci, &vertex_buffer, &vertex_buffer_allocation, &buffer_alloc_info);
