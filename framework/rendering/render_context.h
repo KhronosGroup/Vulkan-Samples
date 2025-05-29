@@ -148,34 +148,34 @@ class RenderContext
 	 * @returns A valid command buffer to record commands to be submitted
 	 * Also ensures that there is an active frame if there is no existing active frame already
 	 */
-	vkb::core::CommandBufferC &begin(vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool);
+	std::shared_ptr<vkb::core::CommandBufferC> begin(vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool);
 
 	/**
 	 * @brief Submits the command buffer to the right queue
 	 * @param command_buffer A command buffer containing recorded commands
 	 */
-	void submit(vkb::core::CommandBufferC &command_buffer);
+	void submit(std::shared_ptr<vkb::core::CommandBufferC> command_buffer);
 
 	/**
 	 * @brief Submits multiple command buffers to the right queue
 	 * @param command_buffers Command buffers containing recorded commands
 	 */
-	void submit(const std::vector<vkb::core::CommandBufferC *> &command_buffers);
+	void submit(const std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers);
 
 	/**
 	 * @brief begin_frame
 	 */
 	void begin_frame();
 
-	VkSemaphore submit(const Queue                                    &queue,
-	                   const std::vector<vkb::core::CommandBufferC *> &command_buffers,
-	                   VkSemaphore                                     wait_semaphore,
-	                   VkPipelineStageFlags                            wait_pipeline_stage);
+	VkSemaphore submit(const Queue                                                   &queue,
+	                   const std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers,
+	                   VkSemaphore                                                    wait_semaphore,
+	                   VkPipelineStageFlags                                           wait_pipeline_stage);
 
 	/**
 	 * @brief Submits a command buffer related to a frame to a queue
 	 */
-	void submit(const Queue &queue, const std::vector<vkb::core::CommandBufferC *> &command_buffers);
+	void submit(const Queue &queue, const std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers);
 
 	/**
 	 * @brief Waits a frame to finish its rendering

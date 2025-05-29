@@ -179,7 +179,7 @@ class CommandBuffer
 	void                   end_query(QueryPoolType const &query_pool, uint32_t query);
 	void                   end_render_pass();
 	void                   execute_commands(vkb::core::CommandBuffer<bindingType> &secondary_command_buffer);
-	void                   execute_commands(std::vector<vkb::core::CommandBuffer<bindingType> *> &secondary_command_buffers);
+	void                   execute_commands(std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &secondary_command_buffers);
 	CommandBufferLevelType get_level() const;
 	RenderPassType        &get_render_pass(RenderTargetType const                                                   &render_target,
 	                                       std::vector<LoadStoreInfoType> const                                     &load_store_infos,
@@ -261,7 +261,7 @@ class CommandBuffer
 	                                                     vk::DeviceSize                             size,
 	                                                     vkb::common::HPPBufferMemoryBarrier const &memory_barrier);
 	void                      copy_buffer_impl(vkb::core::BufferCpp const &src_buffer, vkb::core::BufferCpp const &dst_buffer, vk::DeviceSize size);
-	void                      execute_commands_impl(std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &secondary_command_buffers);
+	void                      execute_commands_impl(std::vector<std::shared_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> &secondary_command_buffers);
 	void                      flush_impl(vkb::core::HPPDevice &device, vk::PipelineBindPoint pipeline_bind_point);
 	void                      flush_descriptor_state_impl(vk::PipelineBindPoint pipeline_bind_point);
 	void                      flush_pipeline_state_impl(vkb::core::HPPDevice &device, vk::PipelineBindPoint pipeline_bind_point);
@@ -859,7 +859,7 @@ inline void CommandBuffer<bindingType>::execute_commands(vkb::core::CommandBuffe
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::execute_commands(std::vector<vkb::core::CommandBuffer<bindingType> *> &secondary_command_buffers)
+inline void CommandBuffer<bindingType>::execute_commands(std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &secondary_command_buffers)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -867,18 +867,18 @@ inline void CommandBuffer<bindingType>::execute_commands(std::vector<vkb::core::
 	}
 	else
 	{
-		execute_commands_impl(reinterpret_cast<std::vector<vkb::core::CommandBufferCpp *> &>(secondary_command_buffers));
+		execute_commands_impl(reinterpret_cast<std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> &>(secondary_command_buffers));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::execute_commands_impl(std::vector<vkb::core::CommandBuffer<vkb::BindingType::Cpp> *> &secondary_command_buffers)
+inline void CommandBuffer<bindingType>::execute_commands_impl(std::vector<std::shared_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> &secondary_command_buffers)
 {
 	std::vector<vk::CommandBuffer> sec_cmd_buf_handles(secondary_command_buffers.size(), nullptr);
 	std::transform(secondary_command_buffers.begin(),
 	               secondary_command_buffers.end(),
 	               sec_cmd_buf_handles.begin(),
-	               [](const vkb::core::CommandBuffer<vkb::BindingType::Cpp> *sec_cmd_buf) { return sec_cmd_buf->get_handle(); });
+	               [](auto const &sec_cmd_buf) { return sec_cmd_buf->get_handle(); });
 	this->get_resource().executeCommands(sec_cmd_buf_handles);
 }
 

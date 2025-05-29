@@ -165,13 +165,13 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	 * @param main_command_buffer Already allocated command buffer for the main pass
 	 * @return Single or multiple recorded command buffers
 	 */
-	std::vector<vkb::core::CommandBufferC *> record_command_buffers(vkb::core::CommandBufferC &main_command_buffer);
+	std::vector<std::shared_ptr<vkb::core::CommandBufferC>> record_command_buffers(std::shared_ptr<vkb::core::CommandBufferC> main_command_buffer);
 
-	void record_separate_primary_command_buffers(std::vector<vkb::core::CommandBufferC *> &command_buffers,
-	                                             vkb::core::CommandBufferC                &main_command_buffer);
+	void record_separate_primary_command_buffers(std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers,
+	                                             std::shared_ptr<vkb::core::CommandBufferC>               main_command_buffer);
 
-	void record_separate_secondary_command_buffers(std::vector<vkb::core::CommandBufferC *> &command_buffers,
-	                                               vkb::core::CommandBufferC                &main_command_buffer);
+	void record_separate_secondary_command_buffers(std::vector<std::shared_ptr<vkb::core::CommandBufferC>> &command_buffers,
+	                                               std::shared_ptr<vkb::core::CommandBufferC>               main_command_buffer);
 
 	void record_main_pass_image_memory_barriers(vkb::core::CommandBufferC &command_buffer);
 
