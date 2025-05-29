@@ -347,7 +347,7 @@ std::pair<vk::Image, vk::DeviceMemory> HPPDevice::create_image(vk::Format format
 
 void HPPDevice::copy_buffer(vkb::core::BufferCpp &src, vkb::core::BufferCpp &dst, vk::Queue queue, vk::BufferCopy *copy_region) const
 {
-	assert(dst.get_size() <= src.get_size());
+	assert(dst.get_size() >= src.get_size());
 	assert(src.get_handle());
 
 	vk::CommandBuffer command_buffer = create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
