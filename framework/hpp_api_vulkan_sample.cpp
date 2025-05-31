@@ -376,7 +376,7 @@ bool HPPApiVulkanSample::check_command_buffers()
 {
 	for (auto &command_buffer : draw_cmd_buffers)
 	{
-		if (command_buffer)
+		if (!command_buffer)
 		{
 			return false;
 		}
