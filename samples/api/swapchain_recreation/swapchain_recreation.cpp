@@ -904,6 +904,7 @@ SwapchainRecreation::SwapchainRecreation()
 	else
 	{
 		LOGI("Disabling usage of VK_EXT_surface_maintenance1 due to USE_MAINTENANCE1=no");
+		allow_maintenance1 = false;
 	}
 }
 
@@ -970,6 +971,17 @@ SwapchainRecreation::~SwapchainRecreation()
 	if (render_pass != VK_NULL_HANDLE)
 	{
 		vkDestroyRenderPass(get_device_handle(), render_pass, nullptr);
+	}
+}
+
+void SwapchainRecreation::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+	if (allow_maintenance1)
+	{
+		REQUEST_OPTIONAL_FEATURE(gpu,
+		                         VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT,
+		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
+		                         swapchainMaintenance1);
 	}
 }
 
