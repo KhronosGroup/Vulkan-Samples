@@ -155,6 +155,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/vkformat_enum.h
     ${KTX_DIR}/lib/vkformat_str.c
     ${KTX_DIR}/lib/vkformat_typesize.c
+    ${KTX_DIR}/lib/vkformat_check_variant.c
     ${KTX_DIR}/lib/vk_funcs.c
     ${KTX_DIR}/lib/vk_funcs.h
     ${KTX_DIR}/lib/vkloader.c
