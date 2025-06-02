@@ -190,7 +190,7 @@ void HelloTriangleV13::init_instance()
 	    .sType            = VK_STRUCTURE_TYPE_APPLICATION_INFO,
 	    .pApplicationName = "Hello Triangle V1.3",
 	    .pEngineName      = "Vulkan Samples",
-	    .apiVersion       = VK_MAKE_VERSION(1, 3, 0)};
+	    .apiVersion       = VK_API_VERSION_1_3};
 
 	VkInstanceCreateInfo instance_info{
 	    .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,

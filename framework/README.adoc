@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, Sascha Willems
+- Copyright (c) 2023-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -75,7 +75,7 @@ There is no need to manually get extension pointer functions.
 
 === Changing the Vulkan api version
 
-By default all samples create a Vulkan 1.0 instance.
+By default all samples create a Vulkan 1.1 instance.
 Higher versions can be requested in the constructor of a sample:
 
 [,cpp]
