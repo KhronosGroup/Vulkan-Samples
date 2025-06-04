@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,7 @@
 
 precision highp float;
 
-#ifdef HAS_BASE_COLOR_TEXTURE
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
-#endif
 
 layout(location = 0) in vec4 in_pos;
 layout(location = 1) in vec2 in_uv;
@@ -76,12 +74,8 @@ void main(void)
 
     vec4 base_color = vec4(1.0, 0.0, 0.0, 1.0);
 
-    #ifdef HAS_BASE_COLOR_TEXTURE
     base_color = texture(base_color_texture, in_uv);
-    #else
-    base_color = pbr_material_uniform.base_color_factor;
-    #endif
-
+    
     vec3 ambient_color = vec3(0.25) * base_color.xyz;
 
     o_color = vec4(ambient_color + light_contribution * base_color.xyz, base_color.w);
