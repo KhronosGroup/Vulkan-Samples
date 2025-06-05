@@ -77,43 +77,60 @@ inline std::vector<uint8_t> convert_to_bytes(std::vector<std::string> &lines)
 	return bytes;
 }
 
-ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
+ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &shader_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
     device{device},
     stage{stage},
     entry_point{entry_point}
 {
-	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]",
-	                         glsl_source.get_filename(), shader_variant.get_id(), entry_point);
+	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", shader_source.get_filename(), shader_variant.get_id(), entry_point);
 
-	// Compiling from GLSL source requires the entry point
-	if (entry_point.empty())
+	// Note: this can be reworked once offline compilation for GLSL shaders is added
+
+	bool binary_shader = shader_source.get_filename().find(".spv") != std::string::npos;
+
+	if (binary_shader)
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		// Shaders in binary SPIR-V format can be loaded cirectly
+
+		auto buffer = vkb::fs::read_shader_binary(shader_source.get_filename());
+		spirv       = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
+		                                    reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	}
+	else
+	{
+		// GLSL shaders need to be compiled at runtime
+
+		// Compiling from GLSL source requires the entry point
+		if (entry_point.empty())
+		{
+			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		}
+
+		auto &source = shader_source.get_source();
+
+		// Check if application is passing in GLSL source code to compile to SPIR-V
+		if (source.empty())
+		{
+			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		}
+
+		// Precompile source into the final spirv bytecode
+		auto glsl_final_source = precompile_shader(source);
+
+		// Compile the GLSL source
+		GLSLCompiler glsl_compiler;
+
+		if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
+		{
+			LOGE("Shader compilation failed for shader \"{}\"", shader_source.get_filename());
+			LOGE("{}", info_log);
+			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		}
 	}
 
-	auto &source = glsl_source.get_source();
-
-	// Check if application is passing in GLSL source code to compile to SPIR-V
-	if (source.empty())
-	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
-
-	// Precompile source into the final spirv bytecode
-	auto glsl_final_source = precompile_shader(source);
-
-	// Compile the GLSL source
-	GLSLCompiler glsl_compiler;
-
-	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
-	{
-		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
-		LOGE("{}", info_log);
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
+	// Reflection is used to dynamically create descriptor bindings
 
 	SPIRVReflection spirv_reflection;
-
 	// Reflect all shader resources
 	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{

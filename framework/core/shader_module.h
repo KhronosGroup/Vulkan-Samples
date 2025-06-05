@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -197,7 +197,7 @@ class ShaderModule
   public:
 	ShaderModule(Device &              device,
 	             VkShaderStageFlagBits stage,
-	             const ShaderSource &  glsl_source,
+	             const ShaderSource &  shader_source,
 	             const std::string &   entry_point,
 	             const ShaderVariant & shader_variant);
 
