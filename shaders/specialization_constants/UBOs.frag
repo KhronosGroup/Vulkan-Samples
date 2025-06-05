@@ -18,6 +18,8 @@
 
 precision highp float;
 
+#define MAX_LIGHT_COUNT 1
+
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
 
 layout(location = 0) in vec4 in_pos;

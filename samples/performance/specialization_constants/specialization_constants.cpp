@@ -105,8 +105,8 @@ void SpecializationConstants::render(vkb::core::CommandBufferC &command_buffer)
 std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specialization_renderpass()
 {
 	// Scene subpass
-	vkb::ShaderSource vert_shader{"base.vert"};
-	vkb::ShaderSource frag_shader{"specialization_constants/specialization_constants.frag"};
+	vkb::ShaderSource vert_shader{"base.vert.spv"};
+	vkb::ShaderSource frag_shader{"specialization_constants/specialization_constants.frag.spv"};
 	auto              scene_subpass =
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
@@ -122,8 +122,8 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specializat
 std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_renderpass()
 {
 	// Scene subpass
-	vkb::ShaderSource vert_shader{"base.vert"};
-	vkb::ShaderSource frag_shader{"specialization_constants/UBOs.frag"};
+	vkb::ShaderSource vert_shader{"base.vert.spv"};
+	vkb::ShaderSource frag_shader{"specialization_constants/UBOs.frag.spv"};
 	auto              scene_subpass =
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
