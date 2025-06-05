@@ -526,26 +526,14 @@ void FullScreenExclusive::init_render_pass()
 
 VkShaderModule FullScreenExclusive::load_shader_module(const char *path) const
 {
-	vkb::GLSLCompiler glsl_compiler;
+	auto                  buffer = vkb::fs::read_shader_binary(path);
+	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
+	                                                     reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 
-	auto buffer = vkb::fs::read_shader_binary(path);
-
-	std::string file_ext = path;
-
-	file_ext = file_ext.substr(file_ext.find_last_of('.') + 1);
-
-	std::vector<uint32_t> spirv;
-	std::string           info_log;
-
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
-	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str())
-		return VK_NULL_HANDLE;
-	}
-
-	VkShaderModuleCreateInfo module_info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-	module_info.codeSize = spirv.size() * sizeof(uint32_t);
-	module_info.pCode    = spirv.data();
+	VkShaderModuleCreateInfo module_info{
+	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+	    .codeSize = spirv.size() * sizeof(uint32_t),
+	    .pCode    = spirv.data()};
 
 	VkShaderModule shader_module;
 	VK_CHECK(vkCreateShaderModule(context.device, &module_info, nullptr, &shader_module));
@@ -594,12 +582,12 @@ void FullScreenExclusive::init_pipeline()
 
 	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module("triangle.vert");
+	shader_stages[0].module = load_shader_module("triangle.vert.spv");
 	shader_stages[0].pName  = "main";
 
 	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module("triangle.frag");
+	shader_stages[1].module = load_shader_module("triangle.frag.spv");
 	shader_stages[1].pName  = "main";
 
 	VkGraphicsPipelineCreateInfo pipe{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
