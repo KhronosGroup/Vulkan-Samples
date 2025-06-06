@@ -91,10 +91,8 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	if (binary_shader)
 	{
 		// Shaders in binary SPIR-V format can be loaded cirectly
-
 		auto buffer = vkb::fs::read_shader_binary(shader_source.get_filename());
-		spirv       = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
-		                                    reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+		spirv       = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 	}
 	else
 	{
