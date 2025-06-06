@@ -287,4 +287,25 @@ sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExte
 	return *camera_node;
 }
 
+size_t calculate_hash(const std::vector<uint8_t> &data)
+{
+	static_assert(sizeof(data[0]) == 1);
+	constexpr size_t chunk_size = sizeof(size_t) / sizeof(data[0]);
+	size_t           data_hash  = 0;
+	size_t           offset     = 0;
+
+	for (; offset + chunk_size < data.size(); offset += chunk_size)
+	{
+		glm::detail::hash_combine(data_hash, *reinterpret_cast<size_t const *>(&data[offset]));
+	}
+
+	if (offset < data.size())
+	{
+		size_t it = 0;
+		std::memcpy(&it, &data[offset], data.size() - offset);
+		glm::detail::hash_combine(data_hash, it);
+	}
+	return data_hash;
+}
+
 }        // namespace vkb

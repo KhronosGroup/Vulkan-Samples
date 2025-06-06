@@ -42,7 +42,9 @@ HPPImage::HPPImage(const std::string &name, std::vector<uint8_t> &&d, std::vecto
     data{std::move(d)},
     format{vk::Format::eR8G8B8A8Unorm},
     mipmaps{std::move(m)}
-{}
+{
+	update_hash();
+}
 
 std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPImage::load(const std::string &name, const std::string &uri,
                                                                        ContentType content_type)
@@ -264,6 +266,15 @@ void HPPImage::generate_mipmaps()
 	}
 }
 
+void HPPImage::update_hash()
+{
+	data_hash = vkb::calculate_hash(data);
+}
+
+void HPPImage::update_hash(size_t hash)
+{
+	data_hash = hash;
+}
 const std::vector<uint8_t> &HPPImage::get_data() const
 {
 	return data;
@@ -327,6 +338,7 @@ void HPPImage::set_data(const uint8_t *raw_data, size_t size)
 {
 	assert(data.empty() && "HPPImage data already set");
 	data = {raw_data, raw_data + size};
+	update_hash();
 }
 
 void HPPImage::set_depth(const uint32_t depth)

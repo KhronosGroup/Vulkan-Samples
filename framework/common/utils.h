@@ -36,6 +36,12 @@ namespace vkb
  * @return The extension
  */
 std::string get_extension(const std::string &uri);
+/**
+ * @brief Generates a hash from an array
+ * @param data
+ * @return data_hash hash of the data
+ */
+size_t calculate_hash(const std::vector<uint8_t> &data);
 
 /**
  * @param name String to convert to snake case

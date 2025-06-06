@@ -17,6 +17,7 @@
 
 #include "scene_graph/components/image/astc.h"
 
+#include <filesystem>
 #include <mutex>
 
 #include "common/error.h"
@@ -230,6 +231,11 @@ Astc::Astc(const Image &image) :
 		}
 		try
 		{
+			if (!fs->exists(path))
+			{
+				LOGW("ASTC cache file {} does not exist. ASTC image will be decoded", path.string())
+				return false;
+			}
 			size_t offset = 0;
 
 			auto copy_from_file = [fs, path](void *dst, size_t *offset, size_t content_size) {
