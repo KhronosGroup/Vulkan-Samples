@@ -192,31 +192,16 @@ void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handl
 
 /*
  * This sample uses a modified version of the shader loading function that adds a tag to the shader
- * The tag includes the source GLSL that can then be displayed by a debugging application
  */
 VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string &file, VkShaderStageFlagBits stage)
 {
-	// Note: this can be reworked once offline compilation for GLSL shaders is added
 
-	// Default to GLSL
-	std::string               shader_folder{"glsl"};
-	std::string               shader_extension{""};
-	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
-
-	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
-	{
-		shader_folder = "hlsl";
-		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
-		src_language     = vkb::ShaderSourceLanguage::SPV;
-		shader_extension = ".spv";
-	}
-
-	std::string shader_file_name = "debug_utils/" + shader_folder + "/" + file;
+	std::string shader_file_name = "debug_utils/" + get_shader_folder() + "/" + file;
 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader((shader_file_name + shader_extension).c_str(), get_device().get_handle(), stage, src_language);
+	shader_stage.module                          = vkb::load_shader((shader_file_name + ".spv").c_str(), get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);

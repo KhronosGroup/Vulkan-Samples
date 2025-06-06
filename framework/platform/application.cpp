@@ -84,19 +84,4 @@ DebugInfo &Application::get_debug_info()
 	return debug_info;
 }
 
-void Application::change_shader(const vkb::ShaderSourceLanguage &shader_language)
-{
-	LOGE("Not implemented by sample");
-}
-
-const std::map<ShaderSourceLanguage, std::vector<std::pair<VkShaderStageFlagBits, std::string>>> &Application::get_available_shaders() const
-{
-	return available_shaders;
-}
-
-void Application::store_shaders(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<VkShaderStageFlagBits, std::string>> &list_of_shaders)
-{
-	available_shaders.insert({shader_language, list_of_shaders});
-}
-
 }        // namespace vkb
