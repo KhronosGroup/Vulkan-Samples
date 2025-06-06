@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -57,7 +57,6 @@ set(ORDER_LIST
     "instancing"
     "compute_nbody"
     "terrain_tessellation"
-    "hlsl"
     "oit_linked_lists"
     "oit_depth_peeling"
 
@@ -124,7 +123,6 @@ set(ORDER_LIST
 	"hpp_dynamic_uniform_buffers"
 	"hpp_hdr"
     "hpp_hello_triangle"
-	"hpp_hlsl_shaders"
 	"hpp_instancing"
 	"hpp_oit_depth_peeling"
 	"hpp_oit_linked_lists"
