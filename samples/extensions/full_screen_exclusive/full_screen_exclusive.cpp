@@ -527,8 +527,7 @@ void FullScreenExclusive::init_render_pass()
 VkShaderModule FullScreenExclusive::load_shader_module(const char *path) const
 {
 	auto                  buffer = vkb::fs::read_shader_binary(path);
-	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
-	                                                     reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 
 	VkShaderModuleCreateInfo module_info{
 	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
