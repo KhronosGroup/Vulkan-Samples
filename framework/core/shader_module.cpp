@@ -200,7 +200,7 @@ void ShaderVariant::update_id()
 
 ShaderSource::ShaderSource(const std::string &filename) :
     filename{filename},
-    source{fs::read_shader(filename)}
+    source{fs::read_text_file(filename)}
 {
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});

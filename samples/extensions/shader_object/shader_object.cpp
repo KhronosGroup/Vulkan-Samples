@@ -541,7 +541,7 @@ void ShaderObject::create_shaders()
 {
 	using json = nlohmann::json;
 
-	std::string shaders     = vkb::fs::read_shader("shader_object/shaders.json");
+	std::string shaders     = vkb::fs::read_text_file("shader_object/shaders.json");
 	json        shader_data = json::parse(shaders);
 	VkDevice    device      = get_device().get_handle();
 

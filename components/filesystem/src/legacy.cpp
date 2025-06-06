@@ -109,7 +109,7 @@ std::vector<uint8_t> read_asset(const std::string &filename)
 	return vkb::filesystem::get()->read_file_binary(path::get(path::Type::Assets) + filename);
 }
 
-std::string read_shader(const std::string &filename)
+std::string read_text_file(const std::string &filename)
 {
 	return vkb::filesystem::get()->read_file_string(path::get(path::Type::Shaders) + filename);
 }
