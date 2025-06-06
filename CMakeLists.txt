@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2025, Arm Limited and Contributors
 # Copyright (c) 2024-2025, Mobica Limited
+# Copyright (c) 2024-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -70,6 +71,21 @@ if(Vulkan_FOUND)
     else()
         message(STATUS "Couldn't find slang Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_slang_EXECUTABLE cmake variable. Slang shaders won't be compiled.")
     endif()
+    # glsl compiler
+    if(NOT Vulkan_glslang_exe_FOUND)
+        find_program(Vulkan_glslc_EXECUTABLE
+                    NAMES glslc
+                    HINTS
+                    "$ENV{VULKAN_SDK}/Bin"
+                    "$ENV{VULKAN_SDK}/bin"
+                    )
+    endif()
+    if(Vulkan_glslc_EXECUTABLE)
+        message(STATUS "Found glslc Shader Compiler under ${Vulkan_glslc_EXECUTABLE}")
+    else()
+        message(STATUS "Couldn't find glslc Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_glslc_EXECUTABLE cmake variable. GLSL shaders won't be compiled.")
+    endif()
+    # glsl compiler
 endif()
 
 # globally add VKB_DEBUG for the debug build
