@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,9 +23,6 @@
 #pragma once
 
 #include <hpp_api_vulkan_sample.h>
-
-// #include "api_vulkan_sample.h"
-// #include "glsl_compiler.h"
 
 class HPPMeshShading : public HPPApiVulkanSample
 {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2025, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
 
 #include <json.hpp>
