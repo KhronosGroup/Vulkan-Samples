@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -110,6 +110,14 @@ std::string read_shader(const std::string &filename);
  * @return A vector filled with data read from the file
  */
 std::vector<uint8_t> read_shader_binary(const std::string &filename);
+
+/**
+ * @brief Helper to read a shader file into an unsigned 32 bits byte-array
+ *
+ * @param filename The path to the file (relative to the assets directory)
+ * @return A vector filled with data read from the file
+ */
+std::vector<uint32_t> read_shader_binary_u32(const std::string &filename);
 
 /**
  * @brief Helper to read a temporary file into a byte-array
