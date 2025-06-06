@@ -195,11 +195,11 @@ class ShaderSource
 class ShaderModule
 {
   public:
-	ShaderModule(Device &              device,
+	ShaderModule(Device               &device,
 	             VkShaderStageFlagBits stage,
-	             const ShaderSource &  shader_source,
-	             const std::string &   entry_point,
-	             const ShaderVariant & shader_variant);
+	             const ShaderSource   &shader_source,
+	             const std::string    &entry_point,
+	             const ShaderVariant  &shader_variant);
 
 	ShaderModule(const ShaderModule &) = delete;
 
