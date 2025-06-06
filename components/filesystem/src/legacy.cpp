@@ -122,7 +122,7 @@ std::vector<uint8_t> read_shader_binary(const std::string &filename)
 std::vector<uint32_t> read_shader_binary_u32(const std::string &filename)
 {
 	auto buffer = vkb::filesystem::get()->read_file_binary(path::get(path::Type::Shaders) + filename);
-	auto spirv = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	auto spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 	return spirv;
 }
 
