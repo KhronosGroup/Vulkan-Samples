@@ -119,7 +119,6 @@ class Application
 	static std::string get_shader_folder();
 
   protected:
-
 	float fps{0.0f};
 
 	float frame_time{0.0f};        // In ms

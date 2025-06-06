@@ -195,7 +195,6 @@ void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handl
  */
 VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string &file, VkShaderStageFlagBits stage)
 {
-
 	std::string shader_file_name = "debug_utils/" + get_shader_folder() + "/" + file;
 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
