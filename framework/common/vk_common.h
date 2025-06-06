@@ -141,8 +141,7 @@ enum class ShadingLanguage
  * @param filename The shader location
  * @param device The logical device
  * @param stage The shader stage
- * @param src_language The shader language
- * @return The string to return.
+ * @return The shader module containing the loaded shader
  */
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage);
 
