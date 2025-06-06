@@ -114,11 +114,6 @@ std::string read_shader(const std::string &filename)
 	return vkb::filesystem::get()->read_file_string(path::get(path::Type::Shaders) + filename);
 }
 
-std::vector<uint8_t> read_shader_binary(const std::string &filename)
-{
-	return vkb::filesystem::get()->read_file_binary(path::get(path::Type::Shaders) + filename);
-}
-
 std::vector<uint32_t> read_shader_binary_u32(const std::string &filename)
 {
 	auto buffer = vkb::filesystem::get()->read_file_binary(path::get(path::Type::Shaders) + filename);

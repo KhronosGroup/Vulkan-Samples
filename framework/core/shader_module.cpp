@@ -24,58 +24,6 @@
 
 namespace vkb
 {
-/**
- * @brief Pre-compiles project shader files to include header code
- * @param source The shader file
- * @returns A byte array of the final shader
- */
-inline std::vector<std::string> precompile_shader(const std::string &source)
-{
-	std::vector<std::string> final_file;
-
-	auto lines = split(source, '\n');
-
-	for (auto &line : lines)
-	{
-		if (line.find("#include \"") == 0)
-		{
-			// Include paths are relative to the base shader directory
-			std::string include_path = line.substr(10);
-			size_t      last_quote   = include_path.find("\"");
-			if (!include_path.empty() && last_quote != std::string::npos)
-			{
-				include_path = include_path.substr(0, last_quote);
-			}
-
-			auto include_file = precompile_shader(fs::read_shader(include_path));
-			for (auto &include_file_line : include_file)
-			{
-				final_file.push_back(include_file_line);
-			}
-		}
-		else
-		{
-			final_file.push_back(line);
-		}
-	}
-
-	return final_file;
-}
-
-inline std::vector<uint8_t> convert_to_bytes(std::vector<std::string> &lines)
-{
-	std::vector<uint8_t> bytes;
-
-	for (auto &line : lines)
-	{
-		line += "\n";
-		std::vector<uint8_t> line_bytes(line.begin(), line.end());
-		bytes.insert(bytes.end(), line_bytes.begin(), line_bytes.end());
-	}
-
-	return bytes;
-}
-
 ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &shader_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
     device{device},
     stage{stage},
@@ -108,8 +56,7 @@ ShaderModule::ShaderModule(ShaderModule &&other) :
     entry_point{other.entry_point},
     debug_name{other.debug_name},
     spirv{other.spirv},
-    resources{other.resources},
-    info_log{other.info_log}
+    resources{other.resources}
 {
 	other.stage = {};
 }
@@ -132,11 +79,6 @@ const std::string &ShaderModule::get_entry_point() const
 const std::vector<ShaderResource> &ShaderModule::get_resources() const
 {
 	return resources;
-}
-
-const std::string &ShaderModule::get_info_log() const
-{
-	return info_log;
 }
 
 const std::vector<uint32_t> &ShaderModule::get_binary() const
@@ -206,15 +148,6 @@ void ShaderVariant::add_define(const std::string &def)
 	}
 
 	preamble.append("#define " + tmp_def + "\n");
-
-	update_id();
-}
-
-void ShaderVariant::add_undefine(const std::string &undef)
-{
-	processes.push_back("U" + undef);
-
-	preamble.append("#undef " + undef + "\n");
 
 	update_id();
 }

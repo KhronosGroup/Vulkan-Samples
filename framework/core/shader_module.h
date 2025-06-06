@@ -125,12 +125,6 @@ class ShaderVariant
 	void add_define(const std::string &def);
 
 	/**
-	 * @brief Adds an undef macro to the shader
-	 * @param undef String which should go to the right of an undef directive
-	 */
-	void add_undefine(const std::string &undef);
-
-	/**
 	 * @brief Specifies the size of a named runtime array for automatic reflection. If already specified, overrides the size.
 	 * @param runtime_array_name String under which the runtime array is named in the shader
 	 * @param size Integer specifying the wanted size of the runtime array (in number of elements, not size in bytes), used for automatic allocation of buffers.
@@ -217,8 +211,6 @@ class ShaderModule
 
 	const std::vector<ShaderResource> &get_resources() const;
 
-	const std::string &get_info_log() const;
-
 	const std::vector<uint32_t> &get_binary() const;
 
 	inline const std::string &get_debug_name() const
@@ -257,7 +249,5 @@ class ShaderModule
 	std::vector<uint32_t> spirv;
 
 	std::vector<ShaderResource> resources;
-
-	std::string info_log;
 };
 }        // namespace vkb

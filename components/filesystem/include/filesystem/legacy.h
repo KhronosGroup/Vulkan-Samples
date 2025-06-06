@@ -104,15 +104,7 @@ std::vector<uint8_t> read_asset(const std::string &filename);
 std::string read_shader(const std::string &filename);
 
 /**
- * @brief Helper to read a shader file into a byte-array
- *
- * @param filename The path to the file (relative to the assets directory)
- * @return A vector filled with data read from the file
- */
-std::vector<uint8_t> read_shader_binary(const std::string &filename);
-
-/**
- * @brief Helper to read a shader file into an unsigned 32 bits byte-array
+ * @brief Helper to read a shader file into an array of unsigned 32 bit integers
  *
  * @param filename The path to the file (relative to the assets directory)
  * @return A vector filled with data read from the file

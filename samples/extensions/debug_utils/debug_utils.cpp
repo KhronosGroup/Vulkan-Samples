@@ -216,14 +216,14 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 			shader_file_name = shader_file_name + ".hlsl";
 		}
 
-		std::vector<uint8_t> buffer = vkb::fs::read_shader_binary(shader_file_name);
+		auto buffer = vkb::fs::read_shader_binary_u32(shader_file_name);
 
 		// Pass the source GLSL shader code via an object tag
 		VkDebugUtilsObjectTagInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT};
 		info.objectType                   = VK_OBJECT_TYPE_SHADER_MODULE;
 		info.objectHandle                 = (uint64_t) shader_stage.module;
 		info.tagName                      = 1;
-		info.tagSize                      = buffer.size() * sizeof(uint8_t);
+		info.tagSize                      = buffer.size() * sizeof(uint32_t);
 		info.pTag                         = buffer.data();
 		vkSetDebugUtilsObjectTagEXT(get_device().get_handle(), &info);
 	}

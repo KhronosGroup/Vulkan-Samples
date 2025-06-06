@@ -398,8 +398,7 @@ int32_t get_bits_per_pixel(VkFormat format)
 
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage)
 {
-	auto buffer = vkb::fs::read_shader_binary(filename);
-	auto spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	auto spirv = vkb::fs::read_shader_binary_u32(filename);
 
 	VkShaderModule           shader_module;
 	VkShaderModuleCreateInfo module_create_info{};

@@ -544,8 +544,7 @@ vk::RenderPass HPPHelloTriangle::create_render_pass()
  */
 vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path, vk::ShaderStageFlagBits stage)
 {
-	auto                  buffer = vkb::fs::read_shader_binary(path);
-	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	auto spirv = vkb::fs::read_shader_binary_u32(path);
 
 	VkShaderModuleCreateInfo module_info{
 	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
