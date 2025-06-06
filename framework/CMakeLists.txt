@@ -504,11 +504,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     imgui
     tinygltf
     glm
-    glslang
-    SPIRV
     vma
     spirv-cross-glsl
-    glslang-default-resource-limits
     spdlog
     ctpl
     plugins)

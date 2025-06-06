@@ -230,55 +230,6 @@ target_include_directories(imgui SYSTEM PUBLIC ${IMGUI_DIR})
 
 set_target_properties(imgui PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
-# glslang
-option(ENABLE_SPVREMAPPER OFF)
-option(ENABLE_GLSLANG_BINARIES OFF)
-set(ENABLE_HLSL ON)
-option(ENABLE_OPT OFF)
-option(BUILD_TESTING OFF)
-option(BUILD_EXTERNAL OFF)
-if(IOS)
-    option(ENABLE_PCH OFF)
-endif ()
-
-add_subdirectory(glslang)
-
-if (TARGET GenericCodeGen)
-    set_target_properties(GenericCodeGen PROPERTIES FOLDER "ThirdParty")
-endif()
-if (TARGET MachineIndependent)
-    set_target_properties(MachineIndependent PROPERTIES FOLDER "ThirdParty")
-endif()
-if (TARGET HLSL)
-    set_target_properties(HLSL PROPERTIES FOLDER "ThirdParty")
-endif()
-
-
-if (NOT TARGET glslang-default-resource-limits)
-    add_library(glslang-default-resource-limits
-                glslang/StandAlone/ResourceLimits.cpp)
-
-    set_target_properties(glslang-default-resource-limits PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-
-    target_include_directories(glslang-default-resource-limits
-        SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
-endif()
-
-if(NOT MSVC)
-    target_compile_options(glslang PRIVATE
-        "-Wno-logical-op-parentheses"
-        "-Wno-unused-parameter")
-
-    target_compile_options(SPIRV PRIVATE
-        "-Wno-logical-op-parentheses"
-        "-Wno-unused-parameter")
-endif()
-
-set_target_properties(glslang PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(OGLCompiler PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(OSDependent PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(SPIRV PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-
 # spirv-cross
 add_subdirectory(spirv-cross)
 
