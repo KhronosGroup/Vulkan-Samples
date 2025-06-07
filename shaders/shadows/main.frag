@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#define MAX_LIGHT_COUNT 48 
+
 precision highp float;
 precision highp sampler2DShadow;
 

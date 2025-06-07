@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#define MAX_LIGHT_COUNT 8
+
 precision highp float;
 
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;

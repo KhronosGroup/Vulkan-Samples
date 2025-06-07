@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#define MAX_SCENE_MESH_COUNT 2048
+
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;
@@ -33,7 +35,7 @@ struct MVPUniform
 
 layout(set = 0, binding = 1) buffer MVPUniformArray
 {
-	MVPUniform uniform_data[SCENE_MESH_COUNT];
+	MVPUniform uniform_data[MAX_SCENE_MESH_COUNT];
 } mvp_array;
 
 layout (location = 0) out vec4 o_pos;

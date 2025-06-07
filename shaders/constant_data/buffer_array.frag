@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#define MAX_LIGHT_COUNT 8
+
 precision highp float;
 
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
@@ -36,11 +38,6 @@ struct MVPUniform
 	mat4 padding;
 #endif
 };
-
-layout(set = 0, binding = 1) buffer MVPUniformArray
-{
-	MVPUniform uniform_data[SCENE_MESH_COUNT];
-} mvp_array;
 
 #include "lighting.h"
 
