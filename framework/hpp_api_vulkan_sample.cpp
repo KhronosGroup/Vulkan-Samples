@@ -71,8 +71,8 @@ void HPPApiVulkanSample::prepare_gui()
 	create_gui(*window, nullptr, 15.0f, true);
 	get_gui().prepare(pipeline_cache,
 	                  render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex),
-	                   load_shader("uioverlay/uioverlay.frag", vk::ShaderStageFlagBits::eFragment)});
+	                  {load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                   load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)});
 }
 
 void HPPApiVulkanSample::update(float delta_time)
