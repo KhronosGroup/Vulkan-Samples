@@ -23,7 +23,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_sample)
     set(options)  
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -47,12 +47,13 @@ function(add_sample)
             ${TARGET_SHADER_FILES_HLSL}
         SHADER_FILES_SLANG
             ${TARGET_SHADER_FILES_SLANG}
-        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
+        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}
+        GLSLC_ADDITIONAL_ARGUMENTS ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -103,13 +104,13 @@ function(add_sample_with_tags)
             ${SHADERS_HLSL}
         SHADERS_SLANG
             ${SHADERS_SLANG}            
-        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
-
+        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}
+        GLSLC_ADDITIONAL_ARGUMENTS ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS})
 endfunction()
 
 function(add_project)
     set(options)  
-    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
+    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL SHADERS_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -273,6 +274,35 @@ endif()
                     MACOSX_PACKAGE_LOCATION Resources
             )
             set_property(TARGET ${SLANG_SHADER_TARGET_NAME} PROPERTY FOLDER "SLANG_Shaders")
+        endforeach()
+    endif()
+
+    # GLSL shader compilation
+    if(Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)
+        foreach(SHADER_FILE_GLSL ${TARGET_SHADERS_GLSL})
+            get_filename_component(GLSL_SPV_FILE ${SHADER_FILE_GLSL} NAME_WLE)
+            get_filename_component(bare_name ${GLSL_SPV_FILE} NAME_WLE)
+            get_filename_component(extension ${SHADER_FILE_GLSL} LAST_EXT)
+            get_filename_component(directory ${SHADER_FILE_GLSL} DIRECTORY)
+            set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-glsl-spv")
+            set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}${extension}.spv)
+            file(MAKE_DIRECTORY ${OUTPUT_DIR})
+            add_custom_command(
+                    OUTPUT ${OUTPUT_FILE}
+                    COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS}
+                    COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                    MAIN_DEPENDENCY ${SHADER_FILE_GLSL}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+            set(GLSL_SHADER_TARGET_NAME ${bare_name}-${extension}-GLSL)
+            if(NOT TARGET ${GLSL_SHADER_TARGET_NAME})
+                add_custom_target(${GLSL_SHADER_TARGET_NAME} DEPENDS ${OUTPUT_FILE})
+            endif()
+            add_dependencies(${PROJECT_NAME} ${GLSL_SHADER_TARGET_NAME})
+            set_source_files_properties(${OUTPUT_FILE} PROPERTIES
+                    MACOSX_PACKAGE_LOCATION Resources
+            )
+            set_property(TARGET ${GLSL_SHADER_TARGET_NAME} PROPERTY FOLDER "GLSL_Shaders")
         endforeach()
     endif()
 
