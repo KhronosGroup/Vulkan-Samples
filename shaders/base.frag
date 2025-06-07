@@ -48,9 +48,9 @@ pbr_material_uniform;
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
-	Light directional_lights[MAX_LIGHT_COUNT];
-	Light point_lights[MAX_LIGHT_COUNT];
-	Light spot_lights[MAX_LIGHT_COUNT];
+	Light directional_lights[48];
+	Light point_lights[48];
+	Light spot_lights[48];
 }
 lights_info;
 

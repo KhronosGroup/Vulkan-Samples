@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,13 +31,13 @@ layout(set = 0, binding = 3) uniform GlobalUniform
 }
 global_uniform;
 
-#include "lighting.h"
+#include "../lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
-	Light directional_lights[MAX_LIGHT_COUNT];
-	Light point_lights[MAX_LIGHT_COUNT];
-	Light spot_lights[MAX_LIGHT_COUNT];
+	Light directional_lights[48];
+	Light point_lights[48];
+	Light spot_lights[48];
 }
 lights_info;
 
