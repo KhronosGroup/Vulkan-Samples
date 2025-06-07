@@ -108,9 +108,9 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	// Create the render pipelines
-	push_constant_render_pipeline  = create_render_pipeline<PushConstantSubpass>("constant_data/push_constant.vert", "constant_data/push_constant.frag");
-	descriptor_set_render_pipeline = create_render_pipeline<DescriptorSetSubpass>("constant_data/ubo.vert", "constant_data/ubo.frag");
-	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert", "constant_data/buffer_array.frag");
+	push_constant_render_pipeline  = create_render_pipeline<PushConstantSubpass>("constant_data/push_constant.vert.spv", "constant_data/push_constant.frag.spv");
+	descriptor_set_render_pipeline = create_render_pipeline<DescriptorSetSubpass>("constant_data/ubo.vert.spv", "constant_data/ubo.frag.spv");
+	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert.spv", "constant_data/buffer_array.frag.spv");
 
 	// Add a GUI with the stats you want to monitor
 	get_stats().request_stats(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::gpu_load_store_cycles});

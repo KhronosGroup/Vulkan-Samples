@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Sascha Willems
+/* Copyright (c) 2020-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -192,31 +192,15 @@ void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handl
 
 /*
  * This sample uses a modified version of the shader loading function that adds a tag to the shader
- * The tag includes the source GLSL that can then be displayed by a debugging application
  */
 VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string &file, VkShaderStageFlagBits stage)
 {
-	// Note: this can be reworked once offline compilation for GLSL shaders is added
-
-	// Default to GLSL
-	std::string               shader_folder{"glsl"};
-	std::string               shader_extension{""};
-	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
-
-	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
-	{
-		shader_folder = "hlsl";
-		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
-		src_language     = vkb::ShaderSourceLanguage::SPV;
-		shader_extension = ".spv";
-	}
-
-	std::string shader_file_name = "debug_utils/" + shader_folder + "/" + file;
+	std::string shader_file_name = "debug_utils/" + get_shader_folder() + "/" + file;
 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader((shader_file_name + shader_extension).c_str(), get_device().get_handle(), stage, src_language);
+	shader_stage.module                          = vkb::load_shader((shader_file_name + ".spv").c_str(), get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
@@ -232,14 +216,14 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 			shader_file_name = shader_file_name + ".hlsl";
 		}
 
-		std::vector<uint8_t> buffer = vkb::fs::read_shader_binary(shader_file_name);
+		auto buffer = vkb::fs::read_shader_binary_u32(shader_file_name);
 
 		// Pass the source GLSL shader code via an object tag
 		VkDebugUtilsObjectTagInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT};
 		info.objectType                   = VK_OBJECT_TYPE_SHADER_MODULE;
 		info.objectHandle                 = (uint64_t) shader_stage.module;
 		info.tagName                      = 1;
-		info.tagSize                      = buffer.size() * sizeof(uint8_t);
+		info.tagSize                      = buffer.size() * sizeof(uint32_t);
 		info.pTag                         = buffer.data();
 		vkSetDebugUtilsObjectTagEXT(get_device().get_handle(), &info);
 	}

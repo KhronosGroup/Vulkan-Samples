@@ -1,6 +1,6 @@
 #version 460
 /*
- * Copyright 2023 Nintendo
+ * Copyright 2023-2025 Nintendo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,23 +51,21 @@ layout (location = 0) out VertexData
 	flat uint texture_index;
 } vertex_out;
 
-
 void main() 
 {	
-	float amplitude = 0.2f;
-	float phase = 5.f;
+	//A,B,C -> B - A cross C - A
+	//B - A
+	vec3 AB = vertex_in[1].object_pos - vertex_in[0].object_pos;
+	//C - A
+	vec3 AC = vertex_in[2].object_pos - vertex_in[0].object_pos;
+	vec3 normal = mat3(inverse(transpose(push.model))) * cross(AB, AC);
 
 	for(int i = 0; i < gl_in.length(); ++i)
 	{
-		float sin_inside = abs(vertex_in[i].world_pos.x * vertex_in[i].world_pos.y * 2) + push.elapsed_time * phase;
-		vec3 sin_offset = amplitude * vec3(sin(sin_inside), cos(sin_inside), 0);
-
-		vec4 position = vec4(vertex_in[i].world_pos + sin_offset, 1.f);
-		gl_Position = ubo.proj_view * position;
-		
+		gl_Position = gl_in[i].gl_Position;
 		vertex_out.uv = vertex_in[i].uv;
-		vertex_out.normal = vertex_in[i].normal;
-		vertex_out.world_pos = vertex_in[i].world_pos + sin_offset;
+		vertex_out.normal = normal;
+		vertex_out.world_pos = vertex_in[i].world_pos;
 		vertex_out.object_pos = vertex_in[i].object_pos;
 		vertex_out.texture_index = vertex_in[i].texture_index;
 		EmitVertex();

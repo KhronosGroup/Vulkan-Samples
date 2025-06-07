@@ -71,8 +71,6 @@ void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 		{
 			auto &variant = sub_mesh->get_mut_shader_variant();
 
-			// Same as Geometry except adds lighting definitions to sub mesh variants.
-			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(LIGHT_COUNT)});
 			variant.add_definitions(vkb::rendering::light_type_definitions);
 
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
@@ -105,8 +103,8 @@ void SpecializationConstants::render(vkb::core::CommandBufferC &command_buffer)
 std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specialization_renderpass()
 {
 	// Scene subpass
-	vkb::ShaderSource vert_shader{"base.vert"};
-	vkb::ShaderSource frag_shader{"specialization_constants/specialization_constants.frag"};
+	vkb::ShaderSource vert_shader{"base.vert.spv"};
+	vkb::ShaderSource frag_shader{"specialization_constants/specialization_constants.frag.spv"};
 	auto              scene_subpass =
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
@@ -122,8 +120,8 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specializat
 std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_renderpass()
 {
 	// Scene subpass
-	vkb::ShaderSource vert_shader{"base.vert"};
-	vkb::ShaderSource frag_shader{"specialization_constants/UBOs.frag"};
+	vkb::ShaderSource vert_shader{"base.vert.spv"};
+	vkb::ShaderSource frag_shader{"specialization_constants/UBOs.frag.spv"};
 	auto              scene_subpass =
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 

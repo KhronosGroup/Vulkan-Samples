@@ -356,27 +356,27 @@ void MobileNerf::load_shaders()
 	if (use_deferred)
 	{
 		// Loading first pass shaders
-		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_first_pass[1] = load_shader(
 		    combo_mode ?
-		        (using_original_nerf_models[0] ? "mobile_nerf/raster_combo.frag" : "mobile_nerf/raster_morpheus_combo.frag") :
-		        (using_original_nerf_models[0] ? "mobile_nerf/raster.frag" : "mobile_nerf/raster_morpheus.frag"),
+		        (using_original_nerf_models[0] ? "mobile_nerf/raster_combo.frag.spv" : "mobile_nerf/raster_morpheus_combo.frag.spv") :
+		        (using_original_nerf_models[0] ? "mobile_nerf/raster.frag.spv" : "mobile_nerf/raster_morpheus.frag.spv"),
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Loading second pass shaders
 		shader_stages_second_pass[0] = load_shader("mobile_nerf/quad.vert", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_second_pass[1] = load_shader(
 		    combo_mode ?
-		        (using_original_nerf_models[0] ? "mobile_nerf/mlp_combo.frag" : "mobile_nerf/mlp_morpheus_combo.frag") :
-		        (using_original_nerf_models[0] ? "mobile_nerf/mlp.frag" : "mobile_nerf/mlp_morpheus.frag"),
+		        (using_original_nerf_models[0] ? "mobile_nerf/mlp_combo.frag.spv" : "mobile_nerf/mlp_morpheus_combo.frag.spv") :
+		        (using_original_nerf_models[0] ? "mobile_nerf/mlp.frag.spv" : "mobile_nerf/mlp_morpheus.frag.spv"),
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 	else
 	{
 		// Loading one pass shaders
-		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_first_pass[1] = load_shader(
-		    using_original_nerf_models[0] ? "mobile_nerf/merged.frag" : "mobile_nerf/merged_morpheus.frag",
+		    using_original_nerf_models[0] ? "mobile_nerf/merged.frag.spv" : "mobile_nerf/merged_morpheus.frag.spv",
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 }

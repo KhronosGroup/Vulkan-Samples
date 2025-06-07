@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024 Holochip Corporation
+/* Copyright (c) 2021-2025 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,6 @@
 #define USE_FRAMEWORK_ACCELERATION_STRUCTURE
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
 
 class RaytracingExtended : public ApiVulkanSample

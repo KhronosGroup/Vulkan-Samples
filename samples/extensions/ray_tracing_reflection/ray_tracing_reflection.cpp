@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2025, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,9 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * SPDX-FileCopyrightText: Copyright (c) 2014-2024 NVIDIA CORPORATION
- * SPDX-License-Identifier: Apache-2.0
  */
 
 /*
@@ -706,9 +703,6 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 	pipeline_layout_create_info.pSetLayouts    = &descriptor_set_layout;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
-
-	// Ray tracing shaders + buffer reference require SPIR-V 1.5, so we need to set the appropriate target environment for the glslang compiler
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 
 	/*
 	    Setup ray tracing shader groups

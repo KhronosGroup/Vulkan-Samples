@@ -20,7 +20,6 @@
 #include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
 
 static constexpr uint32_t INVALID_IMAGE_INDEX = std::numeric_limits<uint32_t>::max();
 

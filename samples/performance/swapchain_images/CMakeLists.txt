@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -27,4 +27,7 @@ add_sample(
     DESCRIPTION "Using triple buffering over double buffering."
     SHADER_FILES_GLSL
         "base.vert"
-        "base.frag")
+        "base.frag"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "-I .."
+    )

@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : require
+
+#define MAX_LIGHT_COUNT 48
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;

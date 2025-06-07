@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define MAX_SCENE_MESH_COUNT 2048
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
@@ -33,7 +35,7 @@ struct MVPUniform
 
 layout(set = 0, binding = 1) buffer MVPUniformArray
 {
-	MVPUniform uniform_data[SCENE_MESH_COUNT];
+	MVPUniform uniform_data[MAX_SCENE_MESH_COUNT];
 } mvp_array;
 
 layout (location = 0) out vec4 o_pos;
