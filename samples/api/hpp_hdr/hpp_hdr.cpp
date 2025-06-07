@@ -263,8 +263,8 @@ vk::DescriptorPool HPPHDR::create_descriptor_pool()
 
 vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "bloom.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr", "bloom.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "bloom.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "bloom.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry{0, 0, sizeof(uint32_t)};
@@ -306,8 +306,8 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 
 vk::Pipeline HPPHDR::create_composition_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "composition.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr", "composition.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "composition.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "composition.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
 	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
@@ -368,8 +368,8 @@ vk::Image HPPHDR::create_image(vk::Format format, vk::ImageUsageFlagBits usage)
 
 vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr", "gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "gbuffer.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "gbuffer.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry{0, 0, sizeof(uint32_t)};

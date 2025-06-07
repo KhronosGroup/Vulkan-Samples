@@ -339,8 +339,8 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 {
 	// Load our SPIR-V shaders.
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
-	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert", vk::ShaderStageFlagBits::eVertex), .pName = "main"},
-	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag", vk::ShaderStageFlagBits::eFragment), .pName = "main"}};
+	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert.spv", vk::ShaderStageFlagBits::eVertex), .pName = "main"},
+	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag.spv", vk::ShaderStageFlagBits::eFragment), .pName = "main"}};
 
 	vk::PipelineVertexInputStateCreateInfo vertex_input;
 
