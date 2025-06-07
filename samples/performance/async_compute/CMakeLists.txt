@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Arm Limited and Contributors
+# Copyright (c) 2021-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,12 @@ add_sample_with_tags(
     NAME "Async compute"
     DESCRIPTION "Using multiple queues to achieve more parallelism on the GPU."
     SHADER_FILES_GLSL
+        "async_compute/blur_down.comp"
+        "async_compute/blur_up.comp"
         "async_compute/forward.vert"
         "async_compute/forward.frag"
         "async_compute/shadow.vert"
         "async_compute/shadow.frag"
         "async_compute/composite.vert"
-        "async_compute/composite.frag")
+        "async_compute/composite.frag"
+        "async_compute/threshold.comp")

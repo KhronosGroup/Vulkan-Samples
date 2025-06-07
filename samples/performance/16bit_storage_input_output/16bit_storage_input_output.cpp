@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -148,13 +148,13 @@ void KHR16BitStorageInputOutputSample::update_pipeline()
 	const std::string base_path = "16bit_storage_input_output/";
 	if (khr_16bit_storage_input_output_enabled && supports_16bit_storage)
 	{
-		vertex_path   = "16bit_storage_input_output_enabled.vert";
-		fragment_path = "16bit_storage_input_output_enabled.frag";
+		vertex_path   = "16bit_storage_input_output_enabled.vert.spv";
+		fragment_path = "16bit_storage_input_output_enabled.frag.spv";
 	}
 	else
 	{
-		vertex_path   = "16bit_storage_input_output_disabled.vert";
-		fragment_path = "16bit_storage_input_output_disabled.frag";
+		vertex_path   = "16bit_storage_input_output_disabled.vert.spv";
+		fragment_path = "16bit_storage_input_output_disabled.frag.spv";
 	}
 
 	vkb::ShaderSource vert_shader(base_path + vertex_path);
