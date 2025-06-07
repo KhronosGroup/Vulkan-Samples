@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -617,7 +617,7 @@ void OpenCLInteropArm::prepare_open_cl_resources()
 
 	cl_data->command_queue = clCreateCommandQueue(cl_data->context, cl_data->device_id, 0, &result);
 
-	std::string kernel_source      = vkb::fs::read_shader("open_cl_interop_arm/procedural_texture.cl");
+	std::string kernel_source      = vkb::fs::read_text_file("open_cl_interop_arm/procedural_texture.cl");
 	auto        kernel_source_data = kernel_source.c_str();
 	size_t      kernel_source_size = kernel_source.size();
 
