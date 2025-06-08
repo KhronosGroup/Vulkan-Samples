@@ -759,7 +759,7 @@ void FragmentShadingRateDynamic::create_compute_pipeline()
 	// Pipeline
 	VkComputePipelineCreateInfo pipeline_create_info = vkb::initializers::compute_pipeline_create_info(
 	    compute.pipeline_layout);
-	pipeline_create_info.stage = load_shader("fragment_shading_rate_dynamic/generate_shading_rate.comp",
+	pipeline_create_info.stage = load_shader("fragment_shading_rate_dynamic/generate_shading_rate.comp.spv",
 	                                         VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, VK_NULL_HANDLE,
 	                                  &compute.pipeline));
@@ -1008,8 +1008,8 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	pipeline_create_info.subpass           = 0;
 
 	// Sky-sphere
-	shader_stages[0] = load_shader("fragment_shading_rate_dynamic/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("fragment_shading_rate_dynamic/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("fragment_shading_rate_dynamic/scene.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("fragment_shading_rate_dynamic/scene.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr,
 	                                   &pipelines.skysphere));

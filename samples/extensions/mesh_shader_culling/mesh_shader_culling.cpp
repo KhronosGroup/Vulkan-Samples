@@ -225,9 +225,9 @@ void MeshShaderCulling::prepare_pipelines()
 	// Shader state
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};
 
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task", VK_SHADER_STAGE_TASK_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task.spv", VK_SHADER_STAGE_TASK_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh.spv", VK_SHADER_STAGE_MESH_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT));
 
 	pipeline_create_info.pVertexInputState   = nullptr;
 	pipeline_create_info.pInputAssemblyState = nullptr;
