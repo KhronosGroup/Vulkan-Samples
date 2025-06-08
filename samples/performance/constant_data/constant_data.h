@@ -264,6 +264,8 @@ class ConstantData : public vkb::VulkanSampleC
 	// The render pipeline designed for using a large shader storage buffer object that is instanced into to get the relevant MVP data
 	std::unique_ptr<vkb::RenderPipeline> buffer_array_render_pipeline{nullptr};
 
+	uint32_t max_push_constant_size{128};
+
 	// The samples constant data methods and their properties
 	std::unordered_map<Method, MethodProperties> methods = {
 	    {Method::PushConstants, {"Push Constants"}},
