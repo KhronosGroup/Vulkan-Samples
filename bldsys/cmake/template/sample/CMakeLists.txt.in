@@ -25,6 +25,9 @@ add_sample(
     AUTHOR "Khronos"
     NAME "@SAMPLE_NAME@"
     DESCRIPTION "Sample description"
+    # Important note: Shaders are compiled offline via CMake, so all shaders
+    # used by this sample need to be put here
+    # The framework also supports HLSL (SHADER_FILES_HLSL) and Slang (SHADER_FILES_SLANG)
     SHADER_FILES_GLSL
         "triangle.vert"
         "triangle.frag")    
