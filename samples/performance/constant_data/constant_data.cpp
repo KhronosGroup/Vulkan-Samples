@@ -112,7 +112,7 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	// Shader data passing depends on max. push constant size of the implementation
 	auto push_constant_limit = get_device().get_gpu().get_properties().limits.maxPushConstantsSize;
 
-	push_constant_render_pipeline  = create_render_pipeline<PushConstantSubpass>(push_constant_limit  >= 256 ? "constant_data/push_constant_large.vert.spv" : "constant_data/push_constant_small.vert.spv", "constant_data/push_constant.frag.spv");
+	push_constant_render_pipeline  = create_render_pipeline<PushConstantSubpass>(push_constant_limit >= 256 ? "constant_data/push_constant_large.vert.spv" : "constant_data/push_constant_small.vert.spv", "constant_data/push_constant.frag.spv");
 	descriptor_set_render_pipeline = create_render_pipeline<DescriptorSetSubpass>("constant_data/ubo.vert.spv", "constant_data/ubo.frag.spv");
 	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert.spv", "constant_data/buffer_array.frag.spv");
 
@@ -426,10 +426,10 @@ void ConstantData::BufferArraySubpass::draw(vkb::core::CommandBufferC &command_b
 	for (size_t i = 0; i < uniforms.size(); ++i)
 	{
 		// Push 128 bytes of data
-		allocation.update(uniforms[i].model, offset + 0);                   // Update bytes 0 - 63
-		allocation.update(uniforms[i].camera_view_proj, offset + 64);		// Update bytes 64 - 127
-		allocation.update(uniforms[i].scale, offset + 128);					// Update bytes 128 - 191
-		allocation.update(uniforms[i].padding, offset + 192);				// Update bytes 192 - 255
+		allocation.update(uniforms[i].model, offset + 0);                    // Update bytes 0 - 63
+		allocation.update(uniforms[i].camera_view_proj, offset + 64);        // Update bytes 64 - 127
+		allocation.update(uniforms[i].scale, offset + 128);                  // Update bytes 128 - 191
+		allocation.update(uniforms[i].padding, offset + 192);                // Update bytes 192 - 255
 		offset += 256;
 	}
 
