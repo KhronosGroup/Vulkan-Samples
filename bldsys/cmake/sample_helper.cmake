@@ -278,7 +278,8 @@ endif()
     endif()
 
     # GLSL shader compilation
-    if(Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)
+    if(Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)        
+        set(GLSL_TARGET_NAME ${PROJECT_NAME}-GLSL)
         foreach(SHADER_FILE_GLSL ${TARGET_SHADERS_GLSL})
             get_filename_component(GLSL_SPV_FILE ${SHADER_FILE_GLSL} NAME_WLE)
             get_filename_component(bare_name ${GLSL_SPV_FILE} NAME_WLE)
@@ -292,22 +293,20 @@ endif()
             set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}${extension}.spv)
             file(MAKE_DIRECTORY ${OUTPUT_DIR})
             add_custom_command(
-                    OUTPUT ${OUTPUT_FILE}
-                    COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS}
-                    COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
-                    MAIN_DEPENDENCY ${SHADER_FILE_GLSL}
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                OUTPUT ${OUTPUT_FILE}
+                COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS}
+                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                MAIN_DEPENDENCY ${SHADER_FILE_GLSL}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             )
-            set(GLSL_SHADER_TARGET_NAME ${bare_name}-${extension}-GLSL)
-            if(NOT TARGET ${GLSL_SHADER_TARGET_NAME})
-                add_custom_target(${GLSL_SHADER_TARGET_NAME} DEPENDS ${OUTPUT_FILE})
-            endif()
-            add_dependencies(${PROJECT_NAME} ${GLSL_SHADER_TARGET_NAME})
+            list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
-                    MACOSX_PACKAGE_LOCATION Resources
+                MACOSX_PACKAGE_LOCATION Resources
             )
-            set_property(TARGET ${GLSL_SHADER_TARGET_NAME} PROPERTY FOLDER "GLSL_Shaders")
         endforeach()
+        add_custom_target(${GLSL_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+        set_property(TARGET ${GLSL_TARGET_NAME} PROPERTY FOLDER "GLSL_Shaders")
+        add_dependencies(${PROJECT_NAME} ${GLSL_TARGET_NAME})
     endif()
 
 endfunction()
