@@ -25,6 +25,6 @@ add_sample(
     AUTHOR "Arm"
     NAME "Image Compression Control"
     DESCRIPTION "Save memory footprint and bandwidth with visually lossless compression"
-    SHADERS_GLSL
+    SHADER_FILES_GLSL
         "postprocessing/postprocessing.vert"
         "postprocessing/chromatic_aberration.frag")
