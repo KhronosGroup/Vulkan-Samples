@@ -126,32 +126,6 @@ size_t ShaderVariant::get_id() const
 	return id;
 }
 
-void ShaderVariant::add_definitions(const std::vector<std::string> &definitions)
-{
-	for (auto &definition : definitions)
-	{
-		add_define(definition);
-	}
-}
-
-void ShaderVariant::add_define(const std::string &def)
-{
-	processes.push_back("D" + def);
-
-	std::string tmp_def = def;
-
-	// The "=" needs to turn into a space
-	size_t pos_equal = tmp_def.find_first_of("=");
-	if (pos_equal != std::string::npos)
-	{
-		tmp_def[pos_equal] = ' ';
-	}
-
-	preamble.append("#define " + tmp_def + "\n");
-
-	update_id();
-}
-
 void ShaderVariant::add_runtime_array_size(const std::string &runtime_array_name, size_t size)
 {
 	if (runtime_array_sizes.find(runtime_array_name) == runtime_array_sizes.end())

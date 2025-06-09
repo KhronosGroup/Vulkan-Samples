@@ -113,18 +113,6 @@ class ShaderVariant
 	size_t get_id() const;
 
 	/**
-	 * @brief Add definitions to shader variant
-	 * @param definitions Vector of definitions to add to the variant
-	 */
-	void add_definitions(const std::vector<std::string> &definitions);
-
-	/**
-	 * @brief Adds a define macro to the shader
-	 * @param def String which should go to the right of a define directive
-	 */
-	void add_define(const std::string &def);
-
-	/**
 	 * @brief Specifies the size of a named runtime array for automatic reflection. If already specified, overrides the size.
 	 * @param runtime_array_name String under which the runtime array is named in the shader
 	 * @param size Integer specifying the wanted size of the runtime array (in number of elements, not size in bytes), used for automatic allocation of buffers.

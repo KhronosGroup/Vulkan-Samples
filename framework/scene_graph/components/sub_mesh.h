@@ -82,8 +82,6 @@ class SubMesh : public Component
 	const Material *material{nullptr};
 
 	ShaderVariant shader_variant;
-
-	void compute_shader_variant();
 };
 }        // namespace sg
 }        // namespace vkb
