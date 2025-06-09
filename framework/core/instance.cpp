@@ -192,16 +192,22 @@ Instance::Instance(const std::string                            &application_nam
 	bool portability_enumeration_available = enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
+#ifdef USE_VALIDATION_LAYERS
+	const char *validation_layer_name = "VK_LAYER_KHRONOS_validation";
+#endif
+
 #ifdef USE_VALIDATION_LAYER_FEATURES
 	bool validation_features = false;
 	{
 		uint32_t layer_instance_extension_count;
-		VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, nullptr));
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &layer_instance_extension_count, nullptr));
+		if (layer_instance_extension_count > 0)
+		{
+			std::vector<VkExtensionProperties> available_layer_instance_extensions(layer_instance_extension_count);
+			VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &layer_instance_extension_count, available_layer_instance_extensions.data()));
 
-		std::vector<VkExtensionProperties> available_layer_instance_extensions(layer_instance_extension_count);
-		VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, available_layer_instance_extensions.data()));
-
-		enable_extension(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME, available_layer_instance_extensions, enabled_extensions);
+			validation_features = enable_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, available_layer_instance_extensions, enabled_extensions);
+		}
 	}
 #endif
 
@@ -263,7 +269,7 @@ Instance::Instance(const std::string                            &application_nam
 #ifdef USE_VALIDATION_LAYERS
 	// NOTE: It's important to have the validation layer as the last one here!!!!
 	//			 Otherwise, device creation fails !?!
-	enable_layer("VK_LAYER_KHRONOS_validation", supported_layers, enabled_layers);
+	enable_layer(validation_layer_name, supported_layers, enabled_layers);
 #endif
 
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
@@ -311,36 +317,69 @@ Instance::Instance(const std::string                            &application_nam
 	}
 #endif
 
+	std::vector<VkLayerSettingEXT> enabled_layer_settings;
+
+	for (const VkLayerSettingEXT &layer_setting : required_layer_settings)
+	{
+		bool is_available =
+		    std::ranges::any_of(enabled_layers,
+		                        [&layer_setting](auto const &available_layer) { return strcmp(available_layer, layer_setting.pLayerName) == 0; });
+		if (is_available)
+		{
+			enabled_layer_settings.push_back(layer_setting);
+		}
+		else
+		{
+			LOGE("Ignoring LayerSetting {}: Layer: {} not found.", layer_setting.pSettingName, layer_setting.pLayerName);
+		}
+	}
+
 	// Some of the specialized layers need to be enabled explicitly
+	// The validation layer does not need to be enabled in code and it can also be configured using the vulkan configurator.
 #ifdef USE_VALIDATION_LAYER_FEATURES
-	VkValidationFeaturesEXT                   validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
-	std::vector<VkValidationFeatureEnableEXT> enable_features{};
+
+#	if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+	const VkBool32 setting_validate_gpuav = VK_TRUE;
 	if (validation_features)
 	{
-#	if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
-		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
-		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
-#	endif
-#	if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
-		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT);
-#	endif
-#	if defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
-		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
-#	endif
-		validation_features_info.enabledValidationFeatureCount = static_cast<uint32_t>(enable_features.size());
-		validation_features_info.pEnabledValidationFeatures    = enable_features.data();
-		validation_features_info.pNext                         = instance_info.pNext;
-		instance_info.pNext                                    = &validation_features_info;
+		enabled_layer_settings.emplace_back(validation_layer_name, "gpuav_enable", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_gpuav);
 	}
+#	endif
+
+#	if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
+	const VkBool32 setting_validate_best_practices        = VK_TRUE;
+	const VkBool32 setting_validate_best_practices_arm    = VK_TRUE;
+	const VkBool32 setting_validate_best_practices_amd    = VK_TRUE;
+	const VkBool32 setting_validate_best_practices_img    = VK_TRUE;
+	const VkBool32 setting_validate_best_practices_nvidia = VK_TRUE;
+	if (validation_features)
+	{
+		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices);
+		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_arm", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_arm);
+		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_amd", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_amd);
+		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_img", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_img);
+		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_nvidia", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_nvidia);
+	}
+#	endif
+
+#	if defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
+	const VkBool32 setting_validate_sync            = VK_TRUE;
+	const VkBool32 setting_validate_sync_heuristics = VK_TRUE;
+	if (validation_features)
+	{
+		enabled_layer_settings.emplace_back(validation_layer_name, "validate_sync", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_sync);
+		enabled_layer_settings.emplace_back(validation_layer_name, "syncval_shader_accesses_heuristic", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_sync_heuristics);
+	}
+#	endif
 #endif
 
 	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT};
 
 	// If layer settings are defined, then activate the sample's required layer settings during instance creation
-	if (required_layer_settings.size() > 0)
+	if (enabled_layer_settings.size() > 0)
 	{
-		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(required_layer_settings.size());
-		layerSettingsCreateInfo.pSettings    = required_layer_settings.data();
+		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(enabled_layer_settings.size());
+		layerSettingsCreateInfo.pSettings    = enabled_layer_settings.data();
 		layerSettingsCreateInfo.pNext        = instance_info.pNext;
 		instance_info.pNext                  = &layerSettingsCreateInfo;
 	}
