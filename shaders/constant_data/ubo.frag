@@ -32,11 +32,8 @@ layout(set = 0, binding = 1) uniform MVPUniform
 {
 	mat4 model;
 	mat4 view_proj;
-
-#ifdef PUSH_CONSTANT_LIMIT_256
 	mat4 scale;
 	mat4 padding;
-#endif
 } mvp_uniform;
 
 #include "lighting.h"

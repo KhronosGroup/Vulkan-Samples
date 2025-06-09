@@ -29,7 +29,8 @@ add_sample(
         "constant_data/push_constant_small.vert"
         "constant_data/push_constant_large.vert"
         "constant_data/push_constant.frag"
-        "constant_data/ubo.vert"
+        "constant_data/ubo_small.vert"
+        "constant_data/ubo_large.vert"
         "constant_data/ubo.frag"
         "constant_data/buffer_array.vert"
         "constant_data/buffer_array.frag")

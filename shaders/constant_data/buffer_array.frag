@@ -28,17 +28,6 @@ layout(location = 2) in vec3 in_normal;
 
 layout(location = 0) out vec4 o_color;
 
-struct MVPUniform
-{
-	mat4 model;
-	mat4 view_proj;
-
-#ifdef PUSH_CONSTANT_LIMIT_256
-	mat4 scale;
-	mat4 padding;
-#endif
-};
-
 #include "lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo

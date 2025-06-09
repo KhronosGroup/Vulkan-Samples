@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,11 +24,6 @@ layout(set = 0, binding = 1) uniform MVPUniform
 {
 	mat4 model;
 	mat4 view_proj;
-
-#ifdef PUSH_CONSTANT_LIMIT_256
-	mat4 scale;
-	mat4 padding;
-#endif
 } mvp_uniform;
 
 layout (location = 0) out vec4 o_pos;
@@ -37,15 +32,8 @@ layout (location = 2) out vec3 o_normal;
 
 void main(void)
 {
-#ifdef PUSH_CONSTANT_LIMIT_256
-    o_pos = mvp_uniform.model * mvp_uniform.scale * vec4(position, 1.0);
-#else
     o_pos = mvp_uniform.model * vec4(position, 1.0);
-#endif
-
     o_uv = texcoord_0;
-
     o_normal = mat3(mvp_uniform.model) * normal;
-
     gl_Position = mvp_uniform.view_proj * o_pos;
 }
