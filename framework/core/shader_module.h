@@ -108,8 +108,6 @@ class ShaderVariant
   public:
 	ShaderVariant() = default;
 
-	ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes);
-
 	size_t get_id() const;
 
 	/**
@@ -122,10 +120,6 @@ class ShaderVariant
 
 	void set_runtime_array_sizes(const std::unordered_map<std::string, size_t> &sizes);
 
-	const std::string &get_preamble() const;
-
-	const std::vector<std::string> &get_processes() const;
-
 	const std::unordered_map<std::string, size_t> &get_runtime_array_sizes() const;
 
 	void clear();
@@ -133,13 +127,7 @@ class ShaderVariant
   private:
 	size_t id;
 
-	std::string preamble;
-
-	std::vector<std::string> processes;
-
 	std::unordered_map<std::string, size_t> runtime_array_sizes;
-
-	void update_id();
 };
 
 class ShaderSource

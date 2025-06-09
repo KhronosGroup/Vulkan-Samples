@@ -114,13 +114,6 @@ void ShaderModule::set_resource_mode(const std::string &resource_name, const Sha
 	}
 }
 
-ShaderVariant::ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes) :
-    preamble{std::move(preamble)},
-    processes{std::move(processes)}
-{
-	update_id();
-}
-
 size_t ShaderVariant::get_id() const
 {
 	return id;
@@ -143,16 +136,6 @@ void ShaderVariant::set_runtime_array_sizes(const std::unordered_map<std::string
 	this->runtime_array_sizes = sizes;
 }
 
-const std::string &ShaderVariant::get_preamble() const
-{
-	return preamble;
-}
-
-const std::vector<std::string> &ShaderVariant::get_processes() const
-{
-	return processes;
-}
-
 const std::unordered_map<std::string, size_t> &ShaderVariant::get_runtime_array_sizes() const
 {
 	return runtime_array_sizes;
@@ -160,16 +143,8 @@ const std::unordered_map<std::string, size_t> &ShaderVariant::get_runtime_array_
 
 void ShaderVariant::clear()
 {
-	preamble.clear();
-	processes.clear();
 	runtime_array_sizes.clear();
-	update_id();
-}
-
-void ShaderVariant::update_id()
-{
-	std::hash<std::string> hasher{};
-	id = hasher(preamble);
+	id = 0;
 }
 
 ShaderSource::ShaderSource(const std::string &filename) :
