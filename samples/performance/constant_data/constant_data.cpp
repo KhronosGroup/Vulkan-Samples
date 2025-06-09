@@ -296,11 +296,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
-			auto &variant = sub_mesh->get_mut_shader_variant();
-
-			// Copied from vkb::ForwardSubpass
-			variant.add_definitions(vkb::rendering::light_type_definitions);
-
+			auto &variant     = sub_mesh->get_mut_shader_variant();
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
 			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
 		}
