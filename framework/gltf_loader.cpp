@@ -1462,6 +1462,11 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 {
 	std::unique_ptr<sg::Image> image{nullptr};
 
+	if (gltf_image.name.empty())
+	{
+		gltf_image.name = gltf_image.uri;
+	}
+
 	if (!gltf_image.image.empty())
 	{
 		// Image embedded in gltf file
