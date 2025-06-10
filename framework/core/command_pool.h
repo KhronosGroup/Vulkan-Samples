@@ -157,31 +157,15 @@ inline size_t CommandPool<bindingType>::get_thread_index() const
 template <vkb::BindingType bindingType>
 std::shared_ptr<vkb::core::CommandBuffer<bindingType>> CommandPool<bindingType>::request_command_buffer(CommandBufferLevelType level)
 {
-	if (static_cast<vk::CommandBufferLevel>(level) == vk::CommandBufferLevel::ePrimary)
+	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		if (active_primary_command_buffer_count < primary_command_buffers.size())
-		{
-			return primary_command_buffers[active_primary_command_buffer_count++];
-		}
-
-		primary_command_buffers.emplace_back(std::make_shared<vkb::core::CommandBuffer<bindingType>>(*this, level));
-
-		active_primary_command_buffer_count++;
-
-		return primary_command_buffers.back();
+		return CommandPoolBase::request_command_buffer(*this, level);
 	}
 	else
 	{
-		if (active_secondary_command_buffer_count < secondary_command_buffers.size())
-		{
-			return secondary_command_buffers[active_secondary_command_buffer_count++];
-		}
-
-		secondary_command_buffers.emplace_back(std::make_shared<vkb::core::CommandBuffer<bindingType>>(*this, level));
-
-		active_secondary_command_buffer_count++;
-
-		return secondary_command_buffers.back();
+		std::shared_ptr<vkb::core::CommandBufferCpp> command_buffer =
+		    CommandPoolBase::request_command_buffer(reinterpret_cast<vkb::core::CommandPoolCpp &>(*this), static_cast<vk::CommandBufferLevel>(level));
+		return *reinterpret_cast<std::shared_ptr<CommandBufferC> *>(&command_buffer);
 	}
 }
 

@@ -105,16 +105,16 @@ size_t CommandPoolBase::get_thread_index() const
 	return thread_index;
 }
 
-vkb::core::CommandBufferCpp &CommandPoolBase::request_command_buffer(vkb::core::CommandPoolCpp &commandPool, vk::CommandBufferLevel level)
+std::shared_ptr<vkb::core::CommandBufferCpp> CommandPoolBase::request_command_buffer(vkb::core::CommandPoolCpp &commandPool, vk::CommandBufferLevel level)
 {
-	if (level == vk::CommandBufferLevel::ePrimary)
+	if (static_cast<vk::CommandBufferLevel>(level) == vk::CommandBufferLevel::ePrimary)
 	{
 		if (active_primary_command_buffer_count < primary_command_buffers.size())
 		{
 			return primary_command_buffers[active_primary_command_buffer_count++];
 		}
 
-		primary_command_buffers.emplace_back(commandPool, level);
+		primary_command_buffers.emplace_back(std::make_shared<vkb::core::CommandBufferCpp>(commandPool, level));
 
 		active_primary_command_buffer_count++;
 
@@ -127,7 +127,7 @@ vkb::core::CommandBufferCpp &CommandPoolBase::request_command_buffer(vkb::core::
 			return secondary_command_buffers[active_secondary_command_buffer_count++];
 		}
 
-		secondary_command_buffers.emplace_back(commandPool, level);
+		secondary_command_buffers.emplace_back(std::make_shared<vkb::core::CommandBufferCpp>(commandPool, level));
 
 		active_secondary_command_buffer_count++;
 
@@ -142,13 +142,13 @@ void CommandPoolBase::reset_pool()
 		case vkb::CommandBufferResetMode::ResetIndividually:
 			for (auto &cmd_buf : primary_command_buffers)
 			{
-				cmd_buf.reset(reset_mode);
+				cmd_buf->reset(reset_mode);
 			}
 			active_primary_command_buffer_count = 0;
 
 			for (auto &cmd_buf : secondary_command_buffers)
 			{
-				cmd_buf.reset(reset_mode);
+				cmd_buf->reset(reset_mode);
 			}
 			active_secondary_command_buffer_count = 0;
 			break;

@@ -230,10 +230,8 @@ void MultithreadingRenderPasses::record_separate_primary_command_buffers(std::ve
 	const auto &queue      = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
 	// Shadow pass will be recorded in thread with id 1
-	auto shadow_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue,
-	                                                                                            reset_mode,
-	                                                                                            VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	                                                                                            1);
+	auto shadow_command_buffer =
+	    get_render_context().get_active_frame().get_command_pool(queue, reset_mode, 1).request_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 	// Recording shadow command buffer
 	auto shadow_buffer_future = thread_pool.push(
@@ -262,16 +260,12 @@ void MultithreadingRenderPasses::record_separate_secondary_command_buffers(std::
 	const auto &queue      = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
 	// Main pass will be recorded in thread with id 0
-	auto scene_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue,
-	                                                                                           reset_mode,
-	                                                                                           VK_COMMAND_BUFFER_LEVEL_SECONDARY,
-	                                                                                           0);
+	auto scene_command_buffer =
+	    get_render_context().get_active_frame().get_command_pool(queue, reset_mode, 0).request_command_buffer(VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 	// Shadow pass will be recorded in thread with id 1
-	auto shadow_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue,
-	                                                                                            reset_mode,
-	                                                                                            VK_COMMAND_BUFFER_LEVEL_SECONDARY,
-	                                                                                            1);
+	auto shadow_command_buffer =
+	    get_render_context().get_active_frame().get_command_pool(queue, reset_mode, 1).request_command_buffer(VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 	// Same framebuffer and render pass should be specified in the inheritance info for secondary command buffers
 	// and vkCmdBeginRenderPass for primary command buffers
