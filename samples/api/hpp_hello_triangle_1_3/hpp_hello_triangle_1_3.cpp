@@ -125,15 +125,15 @@ bool HPPHelloTriangleV13::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance();
 
-	context.surface                     = options.window->create_surface(static_cast<VkInstance>(context.instance), static_cast<VkPhysicalDevice>(context.gpu));
-	auto &extent                        = options.window->get_extent();
-	context.swapchain_dimensions.width  = extent.width;
-	context.swapchain_dimensions.height = extent.height;
-
+	context.surface = options.window->create_surface(static_cast<VkInstance>(context.instance), static_cast<VkPhysicalDevice>(context.gpu));
 	if (!context.surface)
 	{
 		throw std::runtime_error("Failed to create window surface.");
 	}
+
+	auto &extent                        = options.window->get_extent();
+	context.swapchain_dimensions.width  = extent.width;
+	context.swapchain_dimensions.height = extent.height;
 
 	init_device();
 
