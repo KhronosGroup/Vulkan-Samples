@@ -445,7 +445,7 @@ void HPPComputeNBody::prepare_compute()
 
 	// 2nd pass - Particle integration
 	{
-		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody", "particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
+		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody", "particle_integrate.comp.spv", vk::ShaderStageFlagBits::eCompute);
 
 		vk::SpecializationMapEntry integration_specialization_entry{0, 0, sizeof(compute.work_group_size)};
 		vk::SpecializationInfo     specialization_info{1, &integration_specialization_entry, sizeof(compute.work_group_size), &compute.work_group_size};

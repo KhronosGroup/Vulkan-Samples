@@ -414,7 +414,7 @@ void HPPOITDepthPeeling::create_gather_pass_pipelines()
 	                                                                  gatherPass.pipeline_layout,
 	                                                                  gatherPass.render_pass);
 
-	shader_stages[1] = load_shader("oit_depth_peeling/gather.frag", vk::ShaderStageFlagBits::eFragment);
+	shader_stages[1] = load_shader("oit_depth_peeling/gather.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 	gatherPass.pipeline = vkb::common::create_graphics_pipeline(device,
 	                                                            pipeline_cache,
