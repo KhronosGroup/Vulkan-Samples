@@ -453,7 +453,7 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 	}
 #endif
 
-	vk::ApplicationInfo app{.pApplicationName = "HPP Hello Triangle", .pEngineName = "Vulkan Samples", .apiVersion = VK_MAKE_VERSION(1, 0, 0)};
+	vk::ApplicationInfo app{.pApplicationName = "HPP Hello Triangle", .pEngineName = "Vulkan Samples", .apiVersion = VK_API_VERSION_1_1};
 
 	vk::InstanceCreateInfo instance_info{.pApplicationInfo        = &app,
 	                                     .enabledLayerCount       = static_cast<uint32_t>(requested_instance_layers.size()),

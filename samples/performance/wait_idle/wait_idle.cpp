@@ -78,7 +78,7 @@ void WaitIdle::CustomRenderContext::wait_frame()
 	//
 	// If wait idle is enabled, wait using vkDeviceWaitIdle
 
-	vkb::RenderFrame &frame = get_active_frame();
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
 
 	if (wait_idle_enabled)
 	{

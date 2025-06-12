@@ -226,7 +226,10 @@ void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_comm
 		{
 			const auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-			auto secondary_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue, subpass->get_state().command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
+			auto secondary_command_buffer = get_render_context()
+			                                    .get_active_frame()
+			                                    .get_command_pool(queue, subpass->get_state().command_buffer_reset_mode)
+			                                    .request_command_buffer(VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 			secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 
@@ -285,8 +288,10 @@ std::shared_ptr<vkb::core::CommandBufferC>
 {
 	const auto &queue = get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto secondary_command_buffer =
-	    get_render_context().get_active_frame().request_command_buffer(queue, state.command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY, thread_index);
+	auto secondary_command_buffer = get_render_context()
+	                                    .get_active_frame()
+	                                    .get_command_pool(queue, state.command_buffer_reset_mode, thread_index)
+	                                    .request_command_buffer(VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 	secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 

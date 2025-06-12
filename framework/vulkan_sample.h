@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/hpp_utils.h"
+#include "core/debug.h"
 #include "hpp_gltf_loader.h"
 #include "hpp_gui.h"
 #include "platform/application.h"
@@ -443,7 +444,7 @@ class VulkanSample : public vkb::Application
 	std::vector<vk::LayerSettingEXT> layer_settings;
 
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
-	uint32_t api_version = VK_API_VERSION_1_0;
+	uint32_t api_version = VK_API_VERSION_1_1;
 
 	/** @brief Whether or not we want a high priority graphics queue. */
 	bool high_priority_graphics_queue{false};
