@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/hpp_utils.h"
+#include "core/debug.h"
 #include "hpp_gltf_loader.h"
 #include "hpp_gui.h"
 #include "platform/application.h"

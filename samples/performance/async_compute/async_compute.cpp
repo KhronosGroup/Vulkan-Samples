@@ -325,7 +325,7 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 void AsyncComputeSample::render_shadow_pass()
 {
 	auto &queue          = *early_graphics_queue;
-	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	auto  command_buffer = get_render_context().get_active_frame().get_command_pool(queue).request_command_buffer();
 	command_buffer->set_debug_name("shadow_pass");
 	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -372,7 +372,7 @@ vkb::RenderTarget &AsyncComputeSample::get_current_forward_render_target()
 VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wait_semaphore)
 {
 	auto &queue          = *early_graphics_queue;
-	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	auto  command_buffer = get_render_context().get_active_frame().get_command_pool(queue).request_command_buffer();
 	command_buffer->set_debug_name("forward_offscreen_pass");
 
 	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -450,7 +450,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 {
 	auto &queue          = *present_graphics_queue;
-	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	auto  command_buffer = get_render_context().get_active_frame().get_command_pool(queue).request_command_buffer();
 	command_buffer->set_debug_name("swapchain");
 
 	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -510,7 +510,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 	info.commandBufferCount   = 1;
 	info.pCommandBuffers      = &command_buffer->get_handle();
 
-	queue.submit({info}, get_render_context().get_active_frame().request_fence());
+	queue.submit({info}, get_render_context().get_active_frame().get_fence_pool().request_fence());
 	get_render_context().release_owned_semaphore(wait_semaphores[1]);
 	return signal_semaphores[0];
 }
@@ -518,7 +518,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_semaphore, VkSemaphore wait_present_semaphore)
 {
 	auto &queue          = *post_compute_queue;
-	auto  command_buffer = get_render_context().get_active_frame().request_command_buffer(queue);
+	auto  command_buffer = get_render_context().get_active_frame().get_command_pool(queue).request_command_buffer();
 	command_buffer->set_debug_name("compute_post");
 
 	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);

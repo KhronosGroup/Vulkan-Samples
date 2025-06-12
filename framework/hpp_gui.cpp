@@ -415,7 +415,7 @@ bool HPPGui::update_buffers()
 vkb::BufferAllocationCpp HPPGui::update_buffers(vkb::core::CommandBufferCpp &command_buffer) const
 {
 	ImDrawData                     *draw_data    = ImGui::GetDrawData();
-	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
+	vkb::rendering::RenderFrameCpp &render_frame = sample.get_render_context().get_active_frame();
 
 	if (!draw_data || (draw_data->TotalVtxCount == 0) || (draw_data->TotalIdxCount == 0))
 	{

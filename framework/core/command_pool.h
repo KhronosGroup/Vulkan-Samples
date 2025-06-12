@@ -18,23 +18,24 @@
 
 #pragma once
 
-#include "core/hpp_device.h"
-#include <vulkan/vulkan.hpp>
+#include "core/command_pool_base.h"
 
 namespace vkb
 {
-class Device;
-class RenderFrame;
-
 namespace rendering
 {
-class HPPRenderFrame;
-}
+template <vkb::BindingType bindingType>
+class RenderFrame;
+using RenderFrameC   = RenderFrame<vkb::BindingType::C>;
+using RenderFrameCpp = RenderFrame<vkb::BindingType::Cpp>;
+}        // namespace rendering
 
 namespace core
 {
 template <vkb::BindingType bindingType>
 class CommandBuffer;
+using CommandBufferC   = CommandBuffer<vkb::BindingType::C>;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
 
 namespace
 {
@@ -54,108 +55,58 @@ struct DefaultCommandBufferLevelValue<VkCommandBufferLevel>
 }        // namespace
 
 template <vkb::BindingType bindingType>
-class CommandPool
+class CommandPool : private vkb::core::CommandPoolBase
 {
   public:
 	using CommandBufferLevelType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBufferLevel, VkCommandBufferLevel>::type;
 	using CommandPoolType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
 
-	using DeviceType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
-	using RenderFrameType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderFrame, vkb::RenderFrame>::type;
+	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 
   public:
-	CommandPool(DeviceType                 &device,
-	            uint32_t                    queue_family_index,
-	            RenderFrameType            *render_frame = nullptr,
-	            size_t                      thread_index = 0,
-	            vkb::CommandBufferResetMode reset_mode   = vkb::CommandBufferResetMode::ResetPool);
-	CommandPool(CommandPool<bindingType> const &) = delete;
-	CommandPool(CommandPool<bindingType> &&other) = default;
-	~CommandPool();
-
+	CommandPool(DeviceType                               &device,
+	            uint32_t                                  queue_family_index,
+	            vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
+	            size_t                                    thread_index = 0,
+	            vkb::CommandBufferResetMode               reset_mode   = vkb::CommandBufferResetMode::ResetPool);
+	CommandPool(CommandPool<bindingType> const &)            = delete;
+	CommandPool(CommandPool<bindingType> &&other)            = default;
 	CommandPool &operator=(CommandPool<bindingType> const &) = delete;
-	CommandPool &operator=(CommandPool<bindingType> &&)      = default;
+	CommandPool &operator=(CommandPool<bindingType> &&other) = default;
+	~CommandPool()                                           = default;
 
 	DeviceType                                            &get_device();
 	CommandPoolType                                        get_handle() const;
 	uint32_t                                               get_queue_family_index() const;
-	RenderFrameType                                       *get_render_frame();
+	vkb::rendering::RenderFrame<bindingType>              *get_render_frame();
 	vkb::CommandBufferResetMode                            get_reset_mode() const;
 	size_t                                                 get_thread_index() const;
 	std::shared_ptr<vkb::core::CommandBuffer<bindingType>> request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
 	void                                                   reset_pool();
-
-  private:
-	vkb::core::HPPDevice                                               &device;
-	vk::CommandPool                                                     handle             = nullptr;
-	vkb::rendering::HPPRenderFrame                                     *render_frame       = nullptr;
-	size_t                                                              thread_index       = 0;
-	uint32_t                                                            queue_family_index = 0;
-	std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> primary_command_buffers;
-	uint32_t                                                            active_primary_command_buffer_count = 0;
-	std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> secondary_command_buffers;
-	uint32_t                                                            active_secondary_command_buffer_count = 0;
-	vkb::CommandBufferResetMode                                         reset_mode                            = vkb::CommandBufferResetMode::ResetPool;
 };
 
 using CommandPoolC   = CommandPool<vkb::BindingType::C>;
 using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
-}        // namespace core
-}        // namespace vkb
-
-#include "core/command_buffer.h"
-
-namespace vkb
-{
-namespace core
-{
-template <vkb::BindingType bindingType>
-inline vkb::core::CommandPool<bindingType>::CommandPool(
-    DeviceType &device_, uint32_t queue_family_index, RenderFrameType *render_frame_, size_t thread_index, vkb::CommandBufferResetMode reset_mode) :
-    device{reinterpret_cast<vkb::core::HPPDevice &>(device_)}, render_frame{reinterpret_cast<vkb::rendering::HPPRenderFrame *>(render_frame_)}, thread_index{thread_index}, reset_mode{reset_mode}
-{
-	vk::CommandPoolCreateFlags flags;
-	switch (reset_mode)
-	{
-		case vkb::CommandBufferResetMode::ResetIndividually:
-		case vkb::CommandBufferResetMode::AlwaysAllocate:
-			flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-			break;
-		case vkb::CommandBufferResetMode::ResetPool:
-		default:
-			flags = vk::CommandPoolCreateFlagBits::eTransient;
-			break;
-	}
-
-	vk::CommandPoolCreateInfo command_pool_create_info{.flags = flags, .queueFamilyIndex = queue_family_index};
-
-	handle = device.get_handle().createCommandPool(command_pool_create_info);
-}
 
 template <vkb::BindingType bindingType>
-inline CommandPool<bindingType>::~CommandPool()
-{
-	// clear command buffers before destroying the command pool
-	primary_command_buffers.clear();
-	secondary_command_buffers.clear();
-
-	// Destroy command pool
-	if (handle)
-	{
-		device.get_handle().destroyCommandPool(handle);
-	}
-}
+inline vkb::core::CommandPool<bindingType>::CommandPool(DeviceType                               &device,
+                                                        uint32_t                                  queue_family_index,
+                                                        vkb::rendering::RenderFrame<bindingType> *render_frame,
+                                                        size_t                                    thread_index,
+                                                        vkb::CommandBufferResetMode               reset_mode) :
+    CommandPoolBase(reinterpret_cast<vkb::core::HPPDevice &>(device), queue_family_index, reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame), thread_index, reset_mode)
+{}
 
 template <vkb::BindingType bindingType>
 inline typename vkb::core::CommandPool<bindingType>::DeviceType &CommandPool<bindingType>::get_device()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return device;
+		return CommandPoolBase::get_device();
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Device &>(device);
+		return reinterpret_cast<vkb::Device &>(CommandPoolBase::get_device());
 	}
 }
 
@@ -164,111 +115,64 @@ inline typename vkb::core::CommandPool<bindingType>::CommandPoolType CommandPool
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return handle;
+		return CommandPoolBase::get_handle();
 	}
 	else
 	{
-		return static_cast<VkCommandPool>(handle);
+		return static_cast<VkCommandPool>(CommandPoolBase::get_handle());
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline uint32_t CommandPool<bindingType>::get_queue_family_index() const
 {
-	return queue_family_index;
+	return CommandPoolBase::get_queue_family_index();
 }
 
 template <vkb::BindingType bindingType>
-inline typename vkb::core::CommandPool<bindingType>::RenderFrameType *CommandPool<bindingType>::get_render_frame()
+inline vkb::rendering::RenderFrame<bindingType> *CommandPool<bindingType>::get_render_frame()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return render_frame;
+		return CommandPoolBase::get_render_frame();
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderFrame *>(render_frame);
+		return reinterpret_cast<vkb::rendering::RenderFrameC *>(CommandPoolBase::get_render_frame());
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline vkb::CommandBufferResetMode CommandPool<bindingType>::get_reset_mode() const
 {
-	return reset_mode;
+	return CommandPoolBase::get_reset_mode();
 }
 
 template <vkb::BindingType bindingType>
 inline size_t CommandPool<bindingType>::get_thread_index() const
 {
-	return thread_index;
+	return CommandPoolBase::get_thread_index();
 }
 
 template <vkb::BindingType bindingType>
 std::shared_ptr<vkb::core::CommandBuffer<bindingType>> CommandPool<bindingType>::request_command_buffer(CommandBufferLevelType level)
 {
-	if (static_cast<vk::CommandBufferLevel>(level) == vk::CommandBufferLevel::ePrimary)
+	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		if (active_primary_command_buffer_count < primary_command_buffers.size())
-		{
-			return primary_command_buffers[active_primary_command_buffer_count++];
-		}
-
-		primary_command_buffers.emplace_back(std::make_shared<vkb::core::CommandBuffer<bindingType>>(*this, level));
-
-		active_primary_command_buffer_count++;
-
-		return primary_command_buffers.back();
+		return CommandPoolBase::request_command_buffer(*this, level);
 	}
 	else
 	{
-		if (active_secondary_command_buffer_count < secondary_command_buffers.size())
-		{
-			return secondary_command_buffers[active_secondary_command_buffer_count++];
-		}
-
-		secondary_command_buffers.emplace_back(std::make_shared<vkb::core::CommandBuffer<bindingType>>(*this, level));
-
-		active_secondary_command_buffer_count++;
-
-		return secondary_command_buffers.back();
+		std::shared_ptr<vkb::core::CommandBufferCpp> command_buffer =
+		    CommandPoolBase::request_command_buffer(reinterpret_cast<vkb::core::CommandPoolCpp &>(*this), static_cast<vk::CommandBufferLevel>(level));
+		return *reinterpret_cast<std::shared_ptr<CommandBufferC> *>(&command_buffer);
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void CommandPool<bindingType>::reset_pool()
 {
-	switch (reset_mode)
-	{
-		case vkb::CommandBufferResetMode::ResetIndividually:
-			for (auto &cmd_buf : primary_command_buffers)
-			{
-				cmd_buf->reset(reset_mode);
-			}
-			active_primary_command_buffer_count = 0;
-
-			for (auto &cmd_buf : secondary_command_buffers)
-			{
-				cmd_buf->reset(reset_mode);
-			}
-			active_secondary_command_buffer_count = 0;
-			break;
-
-		case vkb::CommandBufferResetMode::ResetPool:
-			device.get_handle().resetCommandPool(handle);
-			active_primary_command_buffer_count   = 0;
-			active_secondary_command_buffer_count = 0;
-			break;
-
-		case vkb::CommandBufferResetMode::AlwaysAllocate:
-			primary_command_buffers.clear();
-			active_primary_command_buffer_count = 0;
-			secondary_command_buffers.clear();
-			active_secondary_command_buffer_count = 0;
-			break;
-
-		default:
-			throw std::runtime_error("Unknown reset mode for command pools");
-	}
+	CommandPoolBase::reset_pool();
 }
 
 }        // namespace core

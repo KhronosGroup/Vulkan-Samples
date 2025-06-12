@@ -67,7 +67,7 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 			    swapchain->get_format(),
 			    swapchain->get_usage()};
 			auto render_target = create_render_target_func(std::move(swapchain_image));
-			frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
+			frames.emplace_back(std::make_unique<vkb::rendering::RenderFrameC>(device, std::move(render_target), thread_count));
 		}
 	}
 	else
@@ -82,7 +82,7 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 		                               VMA_MEMORY_USAGE_GPU_ONLY};
 
 		auto render_target = create_render_target_func(std::move(color_image));
-		frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
+		frames.emplace_back(std::make_unique<vkb::rendering::RenderFrameC>(device, std::move(render_target), thread_count));
 	}
 
 	this->create_render_target_func = create_render_target_func;
@@ -215,7 +215,7 @@ void RenderContext::recreate()
 		else
 		{
 			// Create a new frame if the new swapchain has more images than current frames
-			frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
+			frames.emplace_back(std::make_unique<vkb::rendering::RenderFrameC>(device, std::move(render_target), thread_count));
 		}
 
 		++frame_it;
@@ -277,7 +277,7 @@ std::shared_ptr<vkb::core::CommandBufferC> RenderContext::begin(vkb::CommandBuff
 	}
 
 	const auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	return get_active_frame().request_command_buffer(queue, reset_mode);
+	return get_active_frame().get_command_pool(queue, reset_mode).request_command_buffer();
 }
 
 void RenderContext::submit(std::shared_ptr<vkb::core::CommandBufferC> command_buffer)
@@ -320,7 +320,7 @@ void RenderContext::begin_frame()
 
 	// We will use the acquired semaphore in a different frame context,
 	// so we need to hold ownership.
-	acquired_semaphore = prev_frame.request_semaphore_with_ownership();
+	acquired_semaphore = prev_frame.get_semaphore_pool().request_semaphore_with_ownership();
 
 	if (swapchain)
 	{
@@ -340,7 +340,7 @@ void RenderContext::begin_frame()
 			{
 				// Need to destroy and reallocate acquired_semaphore since it may have already been signaled
 				vkDestroySemaphore(device.get_handle(), acquired_semaphore, nullptr);
-				acquired_semaphore = prev_frame.request_semaphore_with_ownership();
+				acquired_semaphore = prev_frame.get_semaphore_pool().request_semaphore_with_ownership();
 				result             = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
 			}
 		}
@@ -367,9 +367,9 @@ VkSemaphore RenderContext::submit(const Queue                                   
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
 	std::ranges::transform(command_buffers, cmd_buf_handles.begin(), [](auto const &cmd_buf) { return cmd_buf->get_handle(); });
 
-	RenderFrame &frame = get_active_frame();
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
 
-	VkSemaphore signal_semaphore = frame.request_semaphore();
+	VkSemaphore signal_semaphore = frame.get_semaphore_pool().request_semaphore();
 
 	VkSubmitInfo submit_info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
@@ -386,7 +386,7 @@ VkSemaphore RenderContext::submit(const Queue                                   
 	submit_info.signalSemaphoreCount = 1;
 	submit_info.pSignalSemaphores    = &signal_semaphore;
 
-	VkFence fence = frame.request_fence();
+	VkFence fence = frame.get_fence_pool().request_fence();
 
 	VK_CHECK(queue.submit({submit_info}, fence));
 
@@ -398,21 +398,21 @@ void RenderContext::submit(const Queue &queue, const std::vector<std::shared_ptr
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
 	std::ranges::transform(command_buffers, cmd_buf_handles.begin(), [](auto const &cmd_buf) { return cmd_buf->get_handle(); });
 
-	RenderFrame &frame = get_active_frame();
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
 
 	VkSubmitInfo submit_info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
 	submit_info.commandBufferCount = to_u32(cmd_buf_handles.size());
 	submit_info.pCommandBuffers    = cmd_buf_handles.data();
 
-	VkFence fence = frame.request_fence();
+	VkFence fence = frame.get_fence_pool().request_fence();
 
 	VK_CHECK(queue.submit({submit_info}, fence));
 }
 
 void RenderContext::wait_frame()
 {
-	RenderFrame &frame = get_active_frame();
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
 	frame.reset();
 }
 
@@ -465,7 +465,7 @@ VkSemaphore RenderContext::consume_acquired_semaphore()
 	return sem;
 }
 
-RenderFrame &RenderContext::get_active_frame()
+vkb::rendering::RenderFrameC &RenderContext::get_active_frame()
 {
 	assert(frame_active && "Frame is not active, please call begin_frame");
 	assert(active_frame_index < frames.size());
@@ -478,7 +478,7 @@ uint32_t RenderContext::get_active_frame_index()
 	return active_frame_index;
 }
 
-RenderFrame &RenderContext::get_last_rendered_frame()
+vkb::rendering::RenderFrameC &RenderContext::get_last_rendered_frame()
 {
 	assert(!frame_active && "Frame is still active, please call end_frame");
 	assert(active_frame_index < frames.size());
@@ -487,20 +487,20 @@ RenderFrame &RenderContext::get_last_rendered_frame()
 
 VkSemaphore RenderContext::request_semaphore()
 {
-	RenderFrame &frame = get_active_frame();
-	return frame.request_semaphore();
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
+	return frame.get_semaphore_pool().request_semaphore();
 }
 
 VkSemaphore RenderContext::request_semaphore_with_ownership()
 {
-	RenderFrame &frame = get_active_frame();
-	return frame.request_semaphore_with_ownership();
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
+	return frame.get_semaphore_pool().request_semaphore_with_ownership();
 }
 
 void RenderContext::release_owned_semaphore(VkSemaphore semaphore)
 {
-	RenderFrame &frame = get_active_frame();
-	frame.release_owned_semaphore(semaphore);
+	vkb::rendering::RenderFrameC &frame = get_active_frame();
+	frame.get_semaphore_pool().release_owned_semaphore(semaphore);
 }
 
 Device &RenderContext::get_device()
@@ -553,7 +553,7 @@ uint32_t RenderContext::get_active_frame_index() const
 	return active_frame_index;
 }
 
-std::vector<std::unique_ptr<RenderFrame>> &RenderContext::get_render_frames()
+std::vector<std::unique_ptr<vkb::rendering::RenderFrameC>> &RenderContext::get_render_frames()
 {
 	return frames;
 }
