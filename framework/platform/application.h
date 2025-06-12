@@ -114,7 +114,7 @@ class Application
 	static vkb::ShadingLanguage get_shading_language();
 
 	/**
-	 * @brief Returns the defaultfolder for the currentl set shading language
+	 * @brief Returns the default folder for the currently selected shading language
 	 */
 	static std::string get_shader_folder();
 
