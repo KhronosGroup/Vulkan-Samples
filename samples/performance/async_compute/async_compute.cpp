@@ -563,15 +563,14 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		command_buffer->image_memory_barrier(view, memory_barrier);
 	};
 
-	const auto read_only_blur_view = [&](const vkb::core::ImageView &view, bool final) {
 		vkb::ImageMemoryBarrier memory_barrier{};
 
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_GENERAL;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		memory_barrier.src_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
-		memory_barrier.dst_access_mask = final ? 0 : VK_ACCESS_SHADER_READ_BIT;
+		memory_barrier.dst_access_mask = is_final ? 0 : VK_ACCESS_SHADER_READ_BIT;
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		memory_barrier.dst_stage_mask  = final ? VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT : VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		memory_barrier.dst_stage_mask  = is_final ? VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT : VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
 		command_buffer->image_memory_barrier(view, memory_barrier);
 	};
@@ -583,7 +582,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		float    inv_input_width, inv_input_height;
 	};
 
-	const auto dispatch_pass = [&](const vkb::core::ImageView &dst, const vkb::core::ImageView &src, bool final = false) {
+	const auto dispatch_pass = [&](const vkb::core::ImageView &dst, const vkb::core::ImageView &src, bool is_final = false) {
 		discard_blur_view(dst);
 
 		auto dst_extent = downsample_extent(dst.get_image().get_extent(), dst.get_subresource_range().baseMipLevel);
@@ -602,7 +601,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		command_buffer->bind_image(dst, 0, 1, 0);
 		command_buffer->dispatch((push.width + 7) / 8, (push.height + 7) / 8, 1);
 
-		read_only_blur_view(dst, final);
+		read_only_blur_view(dst, is_final);
 	};
 
 	// A very basic and dumb HDR Bloom pipeline. Don't consider this a particularly good or efficient implementation.
