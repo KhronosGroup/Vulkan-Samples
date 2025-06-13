@@ -438,8 +438,12 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 
 	// Conditionally waits on hdr_wait_semaphore.
 	// This resolves the write-after-read hazard where previous frame tonemap read from HDR buffer.
-	auto signal_semaphore = get_render_context().submit(queue, {command_buffer},
-	                                                    hdr_wait_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+	// We are not using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+	// so VK_PIPELINE_STAGE_ALL_COMMANDS_BIT is the only valid stage to wait for queue transfer operations.
+	const VkPipelineStageFlags wait_stage = queue_family_transfer ? VK_PIPELINE_STAGE_ALL_COMMANDS_BIT : VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+	auto signal_semaphore = get_render_context().submit(queue, {command_buffer}, hdr_wait_semaphore, wait_stage);
 
 	if (hdr_wait_semaphore)
 	{
