@@ -979,13 +979,13 @@ inline void CommandBuffer<bindingType>::image_memory_barrier_impl(vkb::core::HPP
 		subresource_range.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 	}
 
-	// actively ignore queue family indices provided by memory_barrier !!
+	// This can cause a queue family ownership transfer. Check the async_compute sample.
 	vk::ImageMemoryBarrier image_memory_barrier{.srcAccessMask       = memory_barrier.src_access_mask,
 	                                            .dstAccessMask       = memory_barrier.dst_access_mask,
 	                                            .oldLayout           = memory_barrier.old_layout,
 	                                            .newLayout           = memory_barrier.new_layout,
-	                                            .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
-	                                            .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+	                                            .srcQueueFamilyIndex = memory_barrier.src_queue_family,
+	                                            .dstQueueFamilyIndex = memory_barrier.dst_queue_family,
 	                                            .image               = image_view.get_image().get_handle(),
 	                                            .subresourceRange    = subresource_range};
 

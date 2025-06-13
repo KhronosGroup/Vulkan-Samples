@@ -47,8 +47,8 @@ struct HPPImageMemoryBarrier
 	vk::AccessFlags        dst_access_mask;
 	vk::ImageLayout        old_layout       = vk::ImageLayout::eUndefined;
 	vk::ImageLayout        new_layout       = vk::ImageLayout::eUndefined;
-	uint32_t               old_queue_family = VK_QUEUE_FAMILY_IGNORED;
-	uint32_t               new_queue_family = VK_QUEUE_FAMILY_IGNORED;
+	uint32_t               src_queue_family = VK_QUEUE_FAMILY_IGNORED;
+	uint32_t               dst_queue_family = VK_QUEUE_FAMILY_IGNORED;
 };
 
 struct HPPLoadStoreInfo
