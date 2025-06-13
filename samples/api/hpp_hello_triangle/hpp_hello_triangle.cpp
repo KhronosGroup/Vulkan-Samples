@@ -339,8 +339,8 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 {
 	// Load our SPIR-V shaders.
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
-	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert.spv", vk::ShaderStageFlagBits::eVertex), .pName = "main"},
-	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag.spv", vk::ShaderStageFlagBits::eFragment), .pName = "main"}};
+	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert.spv"), .pName = "main"},
+	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag.spv"), .pName = "main"}};
 
 	vk::PipelineVertexInputStateCreateInfo vertex_input;
 
@@ -542,7 +542,7 @@ vk::RenderPass HPPHelloTriangle::create_render_pass()
  * @param path The path for the shader (relative to the assets directory).
  * @returns A vk::ShaderModule handle. Aborts execution if shader creation fails.
  */
-vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path, vk::ShaderStageFlagBits stage)
+vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
 {
 	auto spirv = vkb::fs::read_shader_binary_u32(path);
 

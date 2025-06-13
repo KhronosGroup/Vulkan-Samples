@@ -748,7 +748,7 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 
 	// Ray closest hit group
 	{
-		shader_stages.push_back(load_shader("ray_tracing_reflection/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+		shader_stages.push_back(load_shader("ray_tracing_reflection/closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR};
 		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
 		closes_hit_group_ci.generalShader      = VK_SHADER_UNUSED_KHR;

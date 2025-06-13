@@ -67,7 +67,7 @@ class HPPHelloTriangle : public vkb::Application
 	vk::ImageView                   create_image_view(vk::Image image);
 	vk::Instance                    create_instance(std::vector<const char *> const &required_instance_extensions, std::vector<const char *> const &required_validation_layers);
 	vk::RenderPass                  create_render_pass();
-	vk::ShaderModule                create_shader_module(const char *path, vk::ShaderStageFlagBits stage);
+	vk::ShaderModule                create_shader_module(const char *path);
 	vk::SwapchainKHR                create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain);
 	void                            init_framebuffers();
 	void                            init_swapchain();

@@ -32,6 +32,6 @@ add_sample_with_tags(
         "ray_tracing_reflection/missShadow.rmiss"
         "ray_tracing_reflection/closesthit.rchit"
     GLSLC_ADDITIONAL_ARGUMENTS
-        "--target-spv=spv1.4"
+        "--target-spv=spv1.5"
     )
 
