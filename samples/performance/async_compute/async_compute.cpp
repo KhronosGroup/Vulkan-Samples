@@ -409,26 +409,27 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 	forward_render_pipeline.draw(*command_buffer, get_current_forward_render_target(), VK_SUBPASS_CONTENTS_INLINE);
 	command_buffer->end_render_pass();
 
+	const bool queue_family_transfer = early_graphics_queue->get_family_index() != post_compute_queue->get_family_index();
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = 0;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		// When doing async compute this barrier is used to do a queue family ownership transfer
 
-		// In a release barrier, dst_stage_mask/access_mask should be BOTTOM_OF_PIPE/0.
-		// We cannot access the resource anymore after all. Semaphore takes care of things from here.
-
-		// Release barrier if we're going to read HDR texture in compute queue
-		// of a different queue family index. We'll have to duplicate this barrier
-		// on compute queue's end.
-		if (early_graphics_queue->get_family_index() != post_compute_queue->get_family_index())
-		{
-			memory_barrier.src_queue_family = early_graphics_queue->get_family_index();
-			memory_barrier.dst_queue_family = post_compute_queue->get_family_index();
-		}
+		// release_barrier_0: Releasing color_target[0] from early_graphics to post_compute
+		//     This release barrier is replicated by the corresponding acquire_barrier_0 in the post_compute queue
+		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
+		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
+		vkb::ImageMemoryBarrier memory_barrier{
+		    .src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		    .dst_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,        // Ignored for the release barrier.
+		                                                                   // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .src_access_mask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		    .dst_access_mask  = 0,                                               // dst_access_mask is ignored for release barriers, without affecting its validity
+		    .old_layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,        // We want a layout transition, so the old_layout and new_layout values need to be replicated in the acquire barrier
+		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		    .src_queue_family = queue_family_transfer ?
+		                            early_graphics_queue->get_family_index() :
+		                            VK_QUEUE_FAMILY_IGNORED,        // Release barriers are executed from a queue of the source queue family
+		    .dst_queue_family = queue_family_transfer ? post_compute_queue->get_family_index() : VK_QUEUE_FAMILY_IGNORED,
+		};
 
 		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
@@ -458,16 +459,21 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 
 	if (post_compute_queue->get_family_index() != present_graphics_queue->get_family_index())
 	{
-		// Purely ownership transfer here. No layout change required.
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask  = 0;
-		memory_barrier.dst_access_mask  = 0;
-		memory_barrier.src_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		memory_barrier.dst_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		memory_barrier.src_queue_family = post_compute_queue->get_family_index();
-		memory_barrier.dst_queue_family = present_graphics_queue->get_family_index();
+		// acquire_barrier_1: Acquiring color_target[0] from  post_compute to present_graphics
+		//     This acquire barrier is replicated by the corresponding release_barrier_1 in the post_compute queue
+		//     The application must ensure the acquire operation happens after the release operation. This sample uses semaphores for that.
+		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
+		vkb::ImageMemoryBarrier memory_barrier{
+		    .src_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,        // Ignored for the acquire barrier.
+		                                                                    // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .dst_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		    .src_access_mask  = 0,        // src_access_mask is ignored for acquire barriers, without affecting its validity
+		    .dst_access_mask  = VK_ACCESS_SHADER_READ_BIT,
+		    .old_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,        // Purely ownership transfer. We do not need a layout transition.
+		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		    .src_queue_family = post_compute_queue->get_family_index(),
+		    .dst_queue_family = present_graphics_queue->get_family_index(),        // Acquire barriers are executed from a queue of the destination queue family
+		};
 
 		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
@@ -524,22 +530,23 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 
 	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	// Acquire barrier if we're going to read HDR texture in compute queue
-	// of a different queue family index. We'll have to duplicate this barrier
-	// on compute queue's end.
 	if (early_graphics_queue->get_family_index() != post_compute_queue->get_family_index())
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
-		// Match pWaitDstStages for src stage here.
-		memory_barrier.src_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		memory_barrier.dst_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		memory_barrier.src_queue_family = early_graphics_queue->get_family_index();
-		memory_barrier.dst_queue_family = post_compute_queue->get_family_index();
-
+		// acquire_barrier_0: Acquiring color_target[0] from early_graphics to post_compute
+		//     This acquire barrier is replicated by the corresponding release_barrier_0 in the early_graphics queue
+		//     The application must ensure the acquire operation happens after the release operation. This sample uses semaphores for that.
+		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
+		vkb::ImageMemoryBarrier memory_barrier{
+		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,        // Ignored for the acquire barrier.
+		                                                                   // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .dst_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		    .src_access_mask  = 0,        // src_access_mask is ignored for acquire barriers, without affecting its validity
+		    .dst_access_mask  = VK_ACCESS_SHADER_READ_BIT,
+		    .old_layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,        // We want a layout transition, so the old_layout and new_layout values need to be replicated in the release barrier
+		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		    .src_queue_family = early_graphics_queue->get_family_index(),
+		    .dst_queue_family = post_compute_queue->get_family_index(),        // Acquire barriers are executed from a queue of the destination queue family
+		};
 		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
 
@@ -618,19 +625,23 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		dispatch_pass(*blur_chain_views[index], *blur_chain_views[index + 1], index == 1);
 	}
 
-	// We're going to read the HDR texture again in the present queue.
-	// Need to release ownership back to that queue.
 	if (post_compute_queue->get_family_index() != present_graphics_queue->get_family_index())
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask  = 0;
-		memory_barrier.dst_access_mask  = 0;
-		memory_barrier.src_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		memory_barrier.dst_stage_mask   = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		memory_barrier.src_queue_family = post_compute_queue->get_family_index();
-		memory_barrier.dst_queue_family = present_graphics_queue->get_family_index();
+		// release_barrier_1: Releasing color_target[0] from post_compute to present_graphics
+		//     This release barrier is replicated by the corresponding acquire_barrier_1 in the present_graphics queue
+		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
+		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
+		vkb::ImageMemoryBarrier memory_barrier{
+		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		    .dst_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,        // Ignored for the release barrier.
+		                                                                   // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .src_access_mask  = VK_ACCESS_SHADER_READ_BIT,
+		    .dst_access_mask  = 0,                                               // dst_access_mask is ignored for release barriers, without affecting its validity
+		    .old_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,        // Purely ownership transfer. We do not need a layout transition.
+		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		    .src_queue_family = post_compute_queue->get_family_index(),        // Release barriers are executed from a queue of the source queue family
+		    .dst_queue_family = present_graphics_queue->get_family_index(),
+		};
 
 		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
