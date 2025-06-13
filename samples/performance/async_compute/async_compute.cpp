@@ -252,9 +252,9 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 
 			// Hardcoded to fit to the scene.
 			auto ortho_camera = std::make_unique<vkb::sg::OrthographicCamera>("shadow_camera",
-			                                                                  -2000, 3000,
-			                                                                  -2500, 1500,
-			                                                                  -2000, 2000);
+			                                                                  -2000.0f, 3000.0f,
+			                                                                  -2500.0f, 1500.0f,
+			                                                                  -2000.0f, 2000.0f);
 
 			ortho_camera->set_node(*node);
 			get_scene().add_component(std::move(ortho_camera), *node);
