@@ -425,8 +425,8 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		// on compute queue's end.
 		if (early_graphics_queue->get_family_index() != post_compute_queue->get_family_index())
 		{
-			memory_barrier.old_queue_family = early_graphics_queue->get_family_index();
-			memory_barrier.new_queue_family = post_compute_queue->get_family_index();
+			memory_barrier.src_queue_family = early_graphics_queue->get_family_index();
+			memory_barrier.dst_queue_family = post_compute_queue->get_family_index();
 		}
 
 		command_buffer->image_memory_barrier(views[0], memory_barrier);
@@ -465,8 +465,8 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 		memory_barrier.dst_access_mask  = 0;
 		memory_barrier.src_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		memory_barrier.dst_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		memory_barrier.old_queue_family = post_compute_queue->get_family_index();
-		memory_barrier.new_queue_family = present_graphics_queue->get_family_index();
+		memory_barrier.src_queue_family = post_compute_queue->get_family_index();
+		memory_barrier.dst_queue_family = present_graphics_queue->get_family_index();
 
 		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
@@ -536,8 +536,8 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		// Match pWaitDstStages for src stage here.
 		memory_barrier.src_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		memory_barrier.dst_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		memory_barrier.old_queue_family = early_graphics_queue->get_family_index();
-		memory_barrier.new_queue_family = post_compute_queue->get_family_index();
+		memory_barrier.src_queue_family = early_graphics_queue->get_family_index();
+		memory_barrier.dst_queue_family = post_compute_queue->get_family_index();
 
 		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
@@ -628,8 +628,8 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		memory_barrier.dst_access_mask  = 0;
 		memory_barrier.src_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		memory_barrier.dst_stage_mask   = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		memory_barrier.old_queue_family = post_compute_queue->get_family_index();
-		memory_barrier.new_queue_family = present_graphics_queue->get_family_index();
+		memory_barrier.src_queue_family = post_compute_queue->get_family_index();
+		memory_barrier.dst_queue_family = present_graphics_queue->get_family_index();
 
 		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
