@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#define MAX_SCENE_MESH_COUNT 2048
+
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;
@@ -24,16 +26,13 @@ struct MVPUniform
 {
 	mat4 model;
 	mat4 view_proj;
-
-#ifdef PUSH_CONSTANT_LIMIT_256
 	mat4 scale;
 	mat4 padding;
-#endif
 };
 
 layout(set = 0, binding = 1) buffer MVPUniformArray
 {
-	MVPUniform uniform_data[SCENE_MESH_COUNT];
+	MVPUniform uniform_data[MAX_SCENE_MESH_COUNT];
 } mvp_array;
 
 layout (location = 0) out vec4 o_pos;
@@ -42,15 +41,8 @@ layout (location = 2) out vec3 o_normal;
 
 void main(void)
 {
-#ifdef PUSH_CONSTANT_LIMIT_256
     o_pos = mvp_array.uniform_data[gl_InstanceIndex].model * mvp_array.uniform_data[gl_InstanceIndex].scale * vec4(position, 1.0);
-#else
-    o_pos = mvp_array.uniform_data[gl_InstanceIndex].model * vec4(position, 1.0);
-#endif
-
     o_uv = texcoord_0;
-
     o_normal = mat3(mvp_array.uniform_data[gl_InstanceIndex].model) * normal;
-
     gl_Position = mvp_array.uniform_data[gl_InstanceIndex].view_proj * o_pos;
 }

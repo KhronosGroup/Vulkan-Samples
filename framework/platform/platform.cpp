@@ -32,7 +32,6 @@
 
 #include "core/util/logging.hpp"
 #include "force_close/force_close.h"
-#include "glsl_compiler.h"
 #include "platform/plugins/plugin.h"
 #include "vulkan_sample.h"
 
@@ -467,9 +466,6 @@ bool Platform::start_app()
 
 		active_app->finish();
 	}
-
-	// Reset target environment to default prior to each sample to properly support batch mode
-	vkb::GLSLCompiler::reset_target_environment();
 
 	active_app = requested_app_info->create();
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -389,8 +389,8 @@ void HostImageCopy::prepare_pipelines()
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("texture_loading", "texture.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("texture_loading", "texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("texture_loading", "texture.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("texture_loading", "texture.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {

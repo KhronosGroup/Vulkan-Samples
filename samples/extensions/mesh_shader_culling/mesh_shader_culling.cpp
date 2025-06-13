@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Corporation
+/* Copyright (c) 2023-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,8 +31,6 @@ MeshShaderCulling::MeshShaderCulling()
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-	// Targeting SPIR-V version
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 
 MeshShaderCulling::~MeshShaderCulling()
@@ -227,9 +225,9 @@ void MeshShaderCulling::prepare_pipelines()
 	// Shader state
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};
 
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task", VK_SHADER_STAGE_TASK_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task.spv", VK_SHADER_STAGE_TASK_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh.spv", VK_SHADER_STAGE_MESH_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT));
 
 	pipeline_create_info.pVertexInputState   = nullptr;
 	pipeline_create_info.pInputAssemblyState = nullptr;

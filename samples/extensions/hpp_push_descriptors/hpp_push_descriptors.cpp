@@ -203,8 +203,8 @@ void HPPPushDescriptors::create_descriptor_set_layout()
 
 void HPPPushDescriptors::create_pipeline()
 {
-	const std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("push_descriptors", "cube.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                      load_shader("push_descriptors", "cube.frag", vk::ShaderStageFlagBits::eFragment)};
+	const std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("push_descriptors", "cube.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                      load_shader("push_descriptors", "cube.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};

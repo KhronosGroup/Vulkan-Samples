@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Mobica Limited
+/* Copyright (c) 2024-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,6 @@ GshaderToMshader::GshaderToMshader()
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 
 GshaderToMshader::~GshaderToMshader()
@@ -148,18 +147,18 @@ void GshaderToMshader::update_uniform_buffers()
 void GshaderToMshader::prepare_pipelines()
 {
 	std::array<VkPipelineShaderStageCreateInfo, 2> model_stages;
-	model_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	model_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	model_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	model_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	std::array<VkPipelineShaderStageCreateInfo, 3> geometry_stages;
-	geometry_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader_base.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	geometry_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader_base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	geometry_stages[2] = load_shader("gshader_to_mshader/gshader_to_mshader.geom", VK_SHADER_STAGE_GEOMETRY_BIT);
+	geometry_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader_base.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	geometry_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader_base.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	geometry_stages[2] = load_shader("gshader_to_mshader/gshader_to_mshader.geom.spv", VK_SHADER_STAGE_GEOMETRY_BIT);
 
 	// task shader is not used, the amount of spawned mesh shaders is determined by amount of meshlets stored in the storage_buffer_object->vertex_indices
 	std::array<VkPipelineShaderStageCreateInfo, 2> mesh_stages;
-	mesh_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
-	mesh_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	mesh_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader.mesh.spv", VK_SHADER_STAGE_MESH_BIT_EXT);
+	mesh_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader_mesh.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Dynamic State
 	std::vector<VkDynamicState> dynamic_state_enables = {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -96,20 +96,20 @@ void create_path(const std::string &root, const std::string &path);
 std::vector<uint8_t> read_asset(const std::string &filename);
 
 /**
- * @brief Helper to read a shader file into a single string
+ * @brief Helper to read a text file into a single string
  *
  * @param filename The path to the file (relative to the assets directory)
- * @return A string of the text in the shader file
+ * @return A string of the text the file
  */
-std::string read_shader(const std::string &filename);
+std::string read_text_file(const std::string &filename);
 
 /**
- * @brief Helper to read a shader file into a byte-array
+ * @brief Helper to read a shader file into an array of unsigned 32 bit integers
  *
  * @param filename The path to the file (relative to the assets directory)
  * @return A vector filled with data read from the file
  */
-std::vector<uint8_t> read_shader_binary(const std::string &filename);
+std::vector<uint32_t> read_shader_binary_u32(const std::string &filename);
 
 /**
  * @brief Helper to read a temporary file into a byte-array

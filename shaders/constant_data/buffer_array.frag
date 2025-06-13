@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,33 +16,17 @@
  * limitations under the License.
  */
 
+#define MAX_LIGHT_COUNT 8
+
 precision highp float;
 
-#ifdef HAS_BASE_COLOR_TEXTURE
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
-#endif
 
 layout(location = 0) in vec4 in_pos;
 layout(location = 1) in vec2 in_uv;
 layout(location = 2) in vec3 in_normal;
 
 layout(location = 0) out vec4 o_color;
-
-struct MVPUniform
-{
-	mat4 model;
-	mat4 view_proj;
-
-#ifdef PUSH_CONSTANT_LIMIT_256
-	mat4 scale;
-	mat4 padding;
-#endif
-};
-
-layout(set = 0, binding = 1) buffer MVPUniformArray
-{
-	MVPUniform uniform_data[SCENE_MESH_COUNT];
-} mvp_array;
 
 #include "lighting.h"
 
@@ -81,11 +65,7 @@ void main(void)
 
 	vec4 base_color = vec4(1.0, 0.0, 0.0, 1.0);
 
-#ifdef HAS_BASE_COLOR_TEXTURE
 	base_color = texture(base_color_texture, in_uv);
-#else
-	base_color = vec4(1.0, 1.0, 1.0, 1.0);
-#endif
 
 	vec3 ambient_color = vec3(0.2) * base_color.xyz;
 

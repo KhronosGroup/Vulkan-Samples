@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Mobica Limited
+# Copyright (c) 2023-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -32,4 +32,7 @@ add_sample(
         "gshader_to_mshader/gshader_to_mshader.mesh"
         "gshader_to_mshader/gshader_to_mshader_base.frag"
         "gshader_to_mshader/gshader_to_mshader_base.vert"
-        "gshader_to_mshader/gshader_to_mshader_mesh.frag")
+        "gshader_to_mshader/gshader_to_mshader_mesh.frag"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.4"
+        )
