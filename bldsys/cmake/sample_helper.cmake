@@ -295,7 +295,7 @@ endif()
             file(MAKE_DIRECTORY ${OUTPUT_DIR})
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
-                COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS}
+                COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} -I "${CMAKE_SOURCE_DIR}\\shaders\\includes\\glsl" ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS}
                 COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
                 MAIN_DEPENDENCY ${SHADER_FILE_GLSL}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

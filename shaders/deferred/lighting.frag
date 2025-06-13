@@ -31,7 +31,7 @@ layout(set = 0, binding = 3) uniform GlobalUniform
 }
 global_uniform;
 
-#include "../lighting.h"
+#include "lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
