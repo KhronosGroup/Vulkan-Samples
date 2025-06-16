@@ -69,36 +69,6 @@ bool FullScreenExclusive::validate_extensions(const std::vector<const char *> &r
 	return true;
 }
 
-VkShaderStageFlagBits FullScreenExclusive::find_shader_stage(const std::string &ext)
-{
-	if (ext == "vert")
-	{
-		return VK_SHADER_STAGE_VERTEX_BIT;
-	}
-	else if (ext == "frag")
-	{
-		return VK_SHADER_STAGE_FRAGMENT_BIT;
-	}
-	else if (ext == "comp")
-	{
-		return VK_SHADER_STAGE_COMPUTE_BIT;
-	}
-	else if (ext == "geom")
-	{
-		return VK_SHADER_STAGE_GEOMETRY_BIT;
-	}
-	else if (ext == "tesc")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-	}
-	else if (ext == "tese")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-	}
-
-	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
-}
-
 void FullScreenExclusive::init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
 {
 	LOGI("Initializing vulkan instance.")
