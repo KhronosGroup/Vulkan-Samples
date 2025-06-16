@@ -19,6 +19,7 @@
 
 #include "core/hpp_instance.h"
 #include "platform/application.h"
+#include "platform/window.h"
 
 #include <vulkan/vulkan.hpp>
 
@@ -151,6 +152,7 @@ class HPPHelloTriangleV13 : public vkb::Application
 	vk::ShaderModule load_shader_module(const char *path, vk::ShaderStageFlagBits shader_stage);
 	vk::Result       present_image(uint32_t index);
 	void             render_triangle(uint32_t swapchain_index);
+	void             select_physical_device_and_surface(vkb::Window *window);
 	void             teardown_per_frame(PerFrame &per_frame);
 	void             transition_image_layout(vk::CommandBuffer       cmd,
 	                                         vk::Image               image,

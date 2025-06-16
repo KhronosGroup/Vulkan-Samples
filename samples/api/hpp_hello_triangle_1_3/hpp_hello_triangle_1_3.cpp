@@ -125,11 +125,7 @@ bool HPPHelloTriangleV13::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance();
 
-	context.surface = options.window->create_surface(static_cast<VkInstance>(context.instance), static_cast<VkPhysicalDevice>(context.gpu));
-	if (!context.surface)
-	{
-		throw std::runtime_error("Failed to create window surface.");
-	}
+	select_physical_device_and_surface(options.window);
 
 	auto &extent                        = options.window->get_extent();
 	context.swapchain_dimensions.width  = extent.width;
@@ -166,6 +162,56 @@ bool HPPHelloTriangleV13::resize(const uint32_t, const uint32_t)
 		init_swapchain();
 	}
 	return dimensions_changed;
+}
+
+/**
+ * @brief Select a physical device.
+ */
+void HPPHelloTriangleV13::select_physical_device_and_surface(vkb::Window *window)
+{
+	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
+
+	for (const auto &physical_device : gpus)
+	{
+		// Check if the device supports Vulkan 1.3
+		vk::PhysicalDeviceProperties device_properties = physical_device.getProperties();
+		if (device_properties.apiVersion < vk::ApiVersion13)
+		{
+			LOGW("Physical device '{}' does not support Vulkan 1.3, skipping.", device_properties.deviceName.data());
+			continue;
+		}
+
+		if (context.surface)
+		{
+			context.instance.destroySurfaceKHR(context.surface);
+		}
+
+		context.surface = static_cast<vk::SurfaceKHR>(window->create_surface(static_cast<VkInstance>(context.instance), static_cast<VkPhysicalDevice>(physical_device)));
+		if (!context.surface)
+		{
+			throw std::runtime_error("Failed to create window surface.");
+		}
+
+		// Find a queue family that supports graphics and presentation
+		std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
+
+		auto qfpIt = std::ranges::find_if(queue_family_properties,
+		                                  [&physical_device, surface = context.surface](vk::QueueFamilyProperties const &qfp) {
+			                                  static uint32_t index = 0;
+			                                  return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) && physical_device.getSurfaceSupportKHR(index++, surface);
+		                                  });
+		if (qfpIt != queue_family_properties.end())
+		{
+			context.graphics_queue_index = std::distance(queue_family_properties.begin(), qfpIt);
+			context.gpu                  = physical_device;
+			break;
+		}
+	}
+
+	if (context.graphics_queue_index < 0)
+	{
+		throw std::runtime_error("Failed to find a suitable GPU with Vulkan 1.3 support.");
+	}
 }
 
 void HPPHelloTriangleV13::update(float delta_time)
@@ -323,43 +369,6 @@ uint32_t HPPHelloTriangleV13::find_memory_type(vk::PhysicalDevice physical_devic
 void HPPHelloTriangleV13::init_device()
 {
 	LOGI("Initializing Vulkan device.");
-
-	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
-	if (gpus.empty())
-	{
-		throw std::runtime_error("No physical device found.");
-	}
-
-	for (const auto &physical_device : gpus)
-	{
-		// Check if the device supports Vulkan 1.3
-		vk::PhysicalDeviceProperties device_properties = physical_device.getProperties();
-		if (device_properties.apiVersion < vk::ApiVersion13)
-		{
-			LOGW("Physical device '{}' does not support Vulkan 1.3, skipping.", device_properties.deviceName.data());
-			continue;
-		}
-
-		// Find a queue family that supports graphics and presentation
-		std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
-
-		auto qfpIt = std::ranges::find_if(queue_family_properties,
-		                                  [&physical_device, surface = context.surface](vk::QueueFamilyProperties const &qfp) {
-			                                  static uint32_t index = 0;
-			                                  return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) && physical_device.getSurfaceSupportKHR(index++, surface);
-		                                  });
-		if (qfpIt != queue_family_properties.end())
-		{
-			context.graphics_queue_index = std::distance(queue_family_properties.begin(), qfpIt);
-			context.gpu                  = physical_device;
-			break;
-		}
-	}
-
-	if (context.graphics_queue_index < 0)
-	{
-		throw std::runtime_error("Failed to find a suitable GPU with Vulkan 1.3 support.");
-	}
 
 	std::vector<vk::ExtensionProperties> device_extensions = context.gpu.enumerateDeviceExtensionProperties();
 
