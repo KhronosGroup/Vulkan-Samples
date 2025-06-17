@@ -121,26 +121,32 @@ HPPHelloTriangleV13::~HPPHelloTriangleV13()
 
 bool HPPHelloTriangleV13::prepare(const vkb::ApplicationOptions &options)
 {
+	// Headless is not supported to keep this sample as simple as possible
 	assert(options.window != nullptr);
+	assert(options.window->get_window_mode() != vkb::Window::Mode::Headless);
 
-	init_instance();
+	bool prepared = Application::prepare(options);
+	if (prepared)
+	{
+		init_instance();
 
-	select_physical_device_and_surface(options.window);
+		select_physical_device_and_surface(options.window);
 
-	auto &extent                        = options.window->get_extent();
-	context.swapchain_dimensions.width  = extent.width;
-	context.swapchain_dimensions.height = extent.height;
+		auto &extent                        = options.window->get_extent();
+		context.swapchain_dimensions.width  = extent.width;
+		context.swapchain_dimensions.height = extent.height;
 
-	init_device();
+		init_device();
 
-	init_vertex_buffer();
+		init_vertex_buffer();
 
-	init_swapchain();
+		init_swapchain();
 
-	// Create the necessary objects for rendering.
-	init_pipeline();
+		// Create the necessary objects for rendering.
+		init_pipeline();
+	}
 
-	return true;
+	return prepared;
 }
 
 bool HPPHelloTriangleV13::resize(const uint32_t, const uint32_t)
@@ -540,7 +546,7 @@ void HPPHelloTriangleV13::init_instance()
 	}
 #endif
 
-#if (defined(VKB_ENABLE_PORTABILITY))
+#if defined(VKB_ENABLE_PORTABILITY)
 	if (portability_enumeration_available)
 	{
 		instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
@@ -558,6 +564,15 @@ void HPPHelloTriangleV13::init_instance()
 	{
 		context.debug_callback = context.instance.createDebugUtilsMessengerEXT(debug_messenger_create_info);
 	}
+#endif
+
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR) || defined(VK_USE_PLATFORM_ANDROID_KHR) || defined(VK_USE_PLATFORM_METAL_EXT)
+	// we need some additional initializing for this platform!
+	if (volkInitialize())
+	{
+		throw std::runtime_error("Failed to initialize volk.");
+	}
+	volkLoadInstance(instance);
 #endif
 }
 
