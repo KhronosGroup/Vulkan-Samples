@@ -572,7 +572,7 @@ void HPPHelloTriangleV13::init_instance()
 	{
 		throw std::runtime_error("Failed to initialize volk.");
 	}
-	volkLoadInstance(instance);
+	volkLoadInstance(context.instance);
 #endif
 }
 
