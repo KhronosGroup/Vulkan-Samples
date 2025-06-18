@@ -19,7 +19,6 @@
 
 #include "common/hpp_vk_common.h"
 #include "filesystem/legacy.h"
-#include "hpp_glsl_compiler.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -649,10 +648,10 @@ void HPPHelloTriangleV13::init_pipeline()
 	// Load our SPIR-V shaders.
 	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{
 	    {.stage  = vk::ShaderStageFlagBits::eVertex,
-	     .module = load_shader_module("hello_triangle_1_3/triangle.vert", vk::ShaderStageFlagBits::eVertex),
+	     .module = load_shader_module("hello_triangle_1_3/triangle.vert.spv", vk::ShaderStageFlagBits::eVertex),
 	     .pName  = "main"},        // Vertex shader stage
 	    {.stage  = vk::ShaderStageFlagBits::eFragment,
-	     .module = load_shader_module("hello_triangle_1_3/triangle.frag", vk::ShaderStageFlagBits::eFragment),
+	     .module = load_shader_module("hello_triangle_1_3/triangle.frag.spv", vk::ShaderStageFlagBits::eFragment),
 	     .pName  = "main"}        // Fragment shader stage
 	}};
 
@@ -858,28 +857,11 @@ void HPPHelloTriangleV13::init_vertex_buffer()
  */
 vk::ShaderModule HPPHelloTriangleV13::load_shader_module(const char *path, vk::ShaderStageFlagBits shader_stage)
 {
-	vkb::HPPGLSLCompiler glsl_compiler;
-
-	auto buffer = vkb::fs::read_shader_binary(path);
-
-	std::string file_ext = path;
-
-	// Extract extension name from the glsl shader file
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-	// Compile the GLSL source
-	std::vector<uint32_t> spirv;
-	std::string           info_log;
-	if (!glsl_compiler.compile_to_spirv(shader_stage, buffer, "main", {}, spirv, info_log))
-	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-		return VK_NULL_HANDLE;
-	}
+	auto spirv = vkb::fs::read_shader_binary_u32(path);
 
 	vk::ShaderModuleCreateInfo module_info{.codeSize = spirv.size() * sizeof(uint32_t), .pCode = spirv.data()};
 
 	return context.device.createShaderModule(module_info);
-	;
 }
 
 /**
