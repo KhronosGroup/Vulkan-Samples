@@ -271,7 +271,7 @@ source /PATH/TO/VULKAN/SDK/setup-env.sh
 `Step 1.` The following command will generate the project
 
 ----
-cmake -G Xcode -Bbuild/mac-xcode -DCMAKE_BUILD_TYPE=Release
+cmake -G Xcode -Bbuild/mac-xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx
 ----
 
 Open the *vulkan_samples* Xcode project inside build/mac-xcode and build with command-B.  To run Vulkan Samples, use Xcode's edit-scheme selection and set the arguments to --help. Click the "Play" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
@@ -279,7 +279,7 @@ Open the *vulkan_samples* Xcode project inside build/mac-xcode and build with co
 Alternatively, for command line builds use the steps below:
 
 ----
-cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
+cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx
 ----
 
 `Step 2.` Build the project
