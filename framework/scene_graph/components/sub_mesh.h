@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -82,8 +82,6 @@ class SubMesh : public Component
 	const Material *material{nullptr};
 
 	ShaderVariant shader_variant;
-
-	void compute_shader_variant();
 };
 }        // namespace sg
 }        // namespace vkb

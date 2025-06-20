@@ -98,26 +98,25 @@ class FullScreenExclusive : public vkb::Application
   public:
 	FullScreenExclusive() = default;
 	~FullScreenExclusive() override;
-	void                         initialize_windows();
-	bool                         prepare(const vkb::ApplicationOptions &options) override;        // This syncs all required extensions and booleans is a Windows platform is detected
-	void                         update(float delta_time) override;
-	bool                         resize(uint32_t width, uint32_t height) override;
-	static bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
-	static VkShaderStageFlagBits find_shader_stage(const std::string &ext);
-	void                         init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
-	void                         init_device(const std::vector<const char *> &required_device_extensions);
-	void                         init_per_frame(PerFrame &per_frame) const;
-	void                         teardown_per_frame(PerFrame &per_frame) const;
-	void                         init_swapchain();
-	void                         init_render_pass();
-	VkShaderModule               load_shader_module(const char *path) const;
-	void                         init_pipeline();
-	VkResult                     acquire_next_image(uint32_t *image);
-	void                         render_triangle(uint32_t swapchain_index);
-	VkResult                     present_image(uint32_t index);
-	void                         init_framebuffers();
-	void                         teardown_framebuffers();
-	void                         teardown();
+	void           initialize_windows();
+	bool           prepare(const vkb::ApplicationOptions &options) override;        // This syncs all required extensions and booleans is a Windows platform is detected
+	void           update(float delta_time) override;
+	bool           resize(uint32_t width, uint32_t height) override;
+	static bool    validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
+	void           init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
+	void           init_device(const std::vector<const char *> &required_device_extensions);
+	void           init_per_frame(PerFrame &per_frame) const;
+	void           teardown_per_frame(PerFrame &per_frame) const;
+	void           init_swapchain();
+	void           init_render_pass();
+	VkShaderModule load_shader_module(const char *path) const;
+	void           init_pipeline();
+	VkResult       acquire_next_image(uint32_t *image);
+	void           render_triangle(uint32_t swapchain_index);
+	VkResult       present_image(uint32_t index);
+	void           init_framebuffers();
+	void           teardown_framebuffers();
+	void           teardown();
 };
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive();

@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2021-2025, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# SPDX-FileCopyrightText: Copyright (c) 2014-2021 NVIDIA CORPORATION
-# SPDX-License-Identifier: Apache-2.0
-
 
 get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
@@ -33,5 +30,8 @@ add_sample_with_tags(
         "ray_tracing_reflection/raygen.rgen"
         "ray_tracing_reflection/miss.rmiss"
         "ray_tracing_reflection/missShadow.rmiss"
-        "ray_tracing_reflection/closesthit.rchit")
+        "ray_tracing_reflection/closesthit.rchit"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.5"
+    )
 

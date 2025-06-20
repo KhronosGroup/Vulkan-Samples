@@ -24,7 +24,6 @@ set(FRAMEWORK_FILES
     # Header Files
     gui.h
     drawer.h
-    glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
     buffer_pool.h
@@ -44,7 +43,6 @@ set(FRAMEWORK_FILES
     vulkan_type_mapping.h
     hpp_api_vulkan_sample.h
     hpp_fence_pool.h
-    hpp_glsl_compiler.h
     hpp_gltf_loader.h
     hpp_gui.h
     hpp_resource_binding_state.h
@@ -55,7 +53,6 @@ set(FRAMEWORK_FILES
     # Source Files
     gui.cpp
     drawer.cpp
-    glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
@@ -506,11 +503,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     imgui
     tinygltf
     glm
-    glslang
-    SPIRV
     vma
     spirv-cross-glsl
-    glslang-default-resource-limits
     spdlog
     ctpl
     plugins)

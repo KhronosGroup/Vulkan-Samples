@@ -642,8 +642,8 @@ void MultiDrawIndirect::create_pipeline()
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("multi_draw_indirect/multi_draw_indirect.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("multi_draw_indirect/multi_draw_indirect.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("multi_draw_indirect/multi_draw_indirect.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("multi_draw_indirect/multi_draw_indirect.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
@@ -660,11 +660,11 @@ void MultiDrawIndirect::create_compute_pipeline()
 		VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_create_info, nullptr, &_pipeline));
 	};
 
-	create(gpu_cull_pipeline_layout, gpu_cull_pipeline, "multi_draw_indirect/cull.comp");
+	create(gpu_cull_pipeline_layout, gpu_cull_pipeline, "multi_draw_indirect/cull.comp.spv");
 
 	if (m_supports_buffer_device)
 	{
-		create(device_address_pipeline_layout, device_address_pipeline, "multi_draw_indirect/cull_address.comp");
+		create(device_address_pipeline_layout, device_address_pipeline, "multi_draw_indirect/cull_address.comp.spv");
 	}
 }
 

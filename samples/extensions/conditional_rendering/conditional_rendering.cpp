@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, Sascha Willems
+/* Copyright (c) 2022-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -287,8 +287,8 @@ void ConditionalRendering::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	shader_stages[0] = load_shader("conditional_rendering", "model.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("conditional_rendering", "model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("conditional_rendering", "model.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("conditional_rendering", "model.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 

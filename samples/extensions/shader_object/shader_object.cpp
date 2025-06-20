@@ -16,7 +16,6 @@
  */
 
 #include "shader_object.h"
-#include <glsl_compiler.h>
 #include <heightmap.h>
 #include <unordered_map>
 
@@ -542,11 +541,9 @@ void ShaderObject::create_shaders()
 {
 	using json = nlohmann::json;
 
-	// Initialize a GLSL compiler and load shaders from the shader json file
-	vkb::GLSLCompiler glsl_compiler;
-	std::string       shaders     = vkb::fs::read_shader("shader_object/shaders.json");
-	json              shader_data = json::parse(shaders);
-	VkDevice          device      = get_device().get_handle();
+	std::string shaders     = vkb::fs::read_text_file("shader_object/shaders.json");
+	json        shader_data = json::parse(shaders);
+	VkDevice    device      = get_device().get_handle();
 
 	// Pre calc string lengths
 	const int unlinked_post_process_prefix_size = strlen("post_process_");
@@ -560,11 +557,11 @@ void ShaderObject::create_shaders()
 		LOGI("Compiling skybox Shader");
 		auto &shader = shader_data["skybox"];
 
-		std::string          vert_shader_name = shader["vert"].get<std::string>();
-		std::vector<uint8_t> vert_shader_data = vkb::fs::read_shader_binary("shader_object/" + vert_shader_name);
+		std::string           vert_shader_name = shader["vert"].get<std::string>();
+		std::vector<uint32_t> vert_shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + vert_shader_name);
 
-		std::string          frag_shader_name = shader["frag"].get<std::string>();
-		std::vector<uint8_t> frag_shader_data = vkb::fs::read_shader_binary("shader_object/" + frag_shader_name);
+		std::string           frag_shader_name = shader["frag"].get<std::string>();
+		std::vector<uint32_t> frag_shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + frag_shader_name);
 
 		// Create shaders with current and next stage bits and set the shaders GLSL shader data, descriptor sets, and push constants
 		skybox_vert_shader = new Shader(VK_SHADER_STAGE_VERTEX_BIT,
@@ -593,8 +590,8 @@ void ShaderObject::create_shaders()
 		LOGI("Compiling FSQ Shader");
 		auto &shader = shader_data["post_process"];
 
-		std::string          vert_shader_name = shader["vert"].get<std::string>();
-		std::vector<uint8_t> vert_shader_data = vkb::fs::read_shader_binary("shader_object/" + vert_shader_name);
+		std::string           vert_shader_name = shader["vert"].get<std::string>();
+		std::vector<uint32_t> vert_shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + vert_shader_name);
 
 		// Create shader with current and next stage bits and set the GLSL shader data, descriptor sets, and push constants
 		post_process_vert_shader = new Shader(VK_SHADER_STAGE_VERTEX_BIT,
@@ -616,11 +613,11 @@ void ShaderObject::create_shaders()
 		LOGI("Compiling Terrain Shader");
 		auto &shader = shader_data["terrain"];
 
-		std::string          vert_shader_name = shader["vert"].get<std::string>();
-		std::vector<uint8_t> vert_shader_data = vkb::fs::read_shader_binary("shader_object/" + vert_shader_name);
+		std::string           vert_shader_name = shader["vert"].get<std::string>();
+		std::vector<uint32_t> vert_shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + vert_shader_name);
 
-		std::string          frag_shader_name = shader["frag"].get<std::string>();
-		std::vector<uint8_t> frag_shader_data = vkb::fs::read_shader_binary("shader_object/" + frag_shader_name);
+		std::string           frag_shader_name = shader["frag"].get<std::string>();
+		std::vector<uint32_t> frag_shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + frag_shader_name);
 
 		// Create shaders with current and next stage bits and set the shaders GLSL shader data, descriptor sets, and push constants
 		terrain_vert_shader = new Shader(VK_SHADER_STAGE_VERTEX_BIT,
@@ -649,11 +646,11 @@ void ShaderObject::create_shaders()
 	{
 		std::string shader_name = shader.key();
 
-		std::string          vert_shader_name = shader.value()["vert"].get<std::string>();
-		std::vector<uint8_t> vert_shader_data = vkb::fs::read_shader_binary("shader_object/" + vert_shader_name);
+		std::string           vert_shader_name = shader.value()["vert"].get<std::string>();
+		std::vector<uint32_t> vert_shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + vert_shader_name);
 
-		std::string          frag_shader_name = shader.value()["frag"].get<std::string>();
-		std::vector<uint8_t> frag_shader_data = vkb::fs::read_shader_binary("shader_object/" + frag_shader_name);
+		std::string           frag_shader_name = shader.value()["frag"].get<std::string>();
+		std::vector<uint32_t> frag_shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + frag_shader_name);
 
 		LOGI("Compiling Shader Set {}", shader_name.c_str());
 
@@ -684,8 +681,8 @@ void ShaderObject::create_shaders()
 	// Load unlinked post_process frag shaders
 	for (auto &shader : shader_data["post_process"]["frag"].items())
 	{
-		std::string          shader_name = shader.value().get<std::string>();
-		std::vector<uint8_t> shader_data = vkb::fs::read_shader_binary("shader_object/" + shader_name);
+		std::string           shader_name = shader.value().get<std::string>();
+		std::vector<uint32_t> shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + shader_name);
 
 		LOGI("Compiling Shader {}", shader_name.c_str());
 
@@ -708,8 +705,8 @@ void ShaderObject::create_shaders()
 	// Load unlinked material vert shaders
 	for (auto &shader : shader_data["material"]["vert"].items())
 	{
-		std::string          shader_name = shader.value().get<std::string>();
-		std::vector<uint8_t> shader_data = vkb::fs::read_shader_binary("shader_object/" + shader_name);
+		std::string           shader_name = shader.value().get<std::string>();
+		std::vector<uint32_t> shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + shader_name);
 
 		LOGI("Compiling Shader {}", shader_name.c_str());
 
@@ -732,8 +729,8 @@ void ShaderObject::create_shaders()
 	// Load unlinked material geo shaders
 	for (auto &shader : shader_data["material"]["geo"].items())
 	{
-		std::string          shader_name = shader.value().get<std::string>();
-		std::vector<uint8_t> shader_data = vkb::fs::read_shader_binary("shader_object/" + shader_name);
+		std::string           shader_name = shader.value().get<std::string>();
+		std::vector<uint32_t> shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + shader_name);
 
 		LOGI("Compiling Shader {}", shader_name.c_str());
 
@@ -756,8 +753,8 @@ void ShaderObject::create_shaders()
 	// Load unlinked material frag shaders
 	for (auto &shader : shader_data["material"]["frag"].items())
 	{
-		std::string          shader_name = shader.value().get<std::string>();
-		std::vector<uint8_t> shader_data = vkb::fs::read_shader_binary("shader_object/" + shader_name);
+		std::string           shader_name = shader.value().get<std::string>();
+		std::vector<uint32_t> shader_data = vkb::fs::read_shader_binary_u32("shader_object/" + shader_name);
 
 		LOGI("Compiling Shader {}", shader_name.c_str());
 
@@ -1976,7 +1973,7 @@ void ShaderObject::bind_shader(VkCommandBuffer cmd_buffer, ShaderObject::Shader 
 ShaderObject::Shader::Shader(VkShaderStageFlagBits        stage_,
                              VkShaderStageFlags           next_stage_,
                              std::string                  shader_name_,
-                             const std::vector<uint8_t>  &vert_glsl_source,
+                             const std::vector<uint32_t> &vert_shader_source,
                              const VkDescriptorSetLayout *pSetLayouts,
                              const VkPushConstantRange   *pPushConstantRange)
 {
@@ -1984,14 +1981,7 @@ ShaderObject::Shader::Shader(VkShaderStageFlagBits        stage_,
 	shader_name = shader_name_;
 	next_stage  = next_stage_;
 
-	vkb::GLSLCompiler glsl_compiler;
-	std::string       info_log;
-
-	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(stage, vert_glsl_source, "main", {}, spirv, info_log))
-	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-	}
+	spirv = vert_shader_source;
 
 	// Fill out the shader create info struct
 	vk_shader_create_info.sType                  = VK_STRUCTURE_TYPE_SHADER_CREATE_INFO_EXT;

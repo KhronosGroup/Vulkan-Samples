@@ -144,8 +144,6 @@ class HelloTriangle : public vkb::Application
 	bool validate_extensions(const std::vector<const char *>          &required,
 	                         const std::vector<VkExtensionProperties> &available);
 
-	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
-
 	void init_instance();
 
 	void init_device();

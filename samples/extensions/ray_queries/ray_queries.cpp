@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, Holochip Corporation
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Holochip Corporation
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -459,8 +459,8 @@ void RayQueries::prepare_pipelines()
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("ray_queries", "ray_shadow.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("ray_queries", "ray_shadow.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("ray_queries", "ray_shadow.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("ray_queries", "ray_shadow.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();

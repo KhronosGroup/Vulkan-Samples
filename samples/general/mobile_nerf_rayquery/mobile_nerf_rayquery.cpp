@@ -556,11 +556,11 @@ void MobileNerfRayQuery::initialize_mlp_uniform_buffers(int model_index)
 
 void MobileNerfRayQuery::load_shaders()
 {
-	shader_stages[0] = load_shader("mobile_nerf_rayquery/quad.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[0] = load_shader("mobile_nerf_rayquery/quad.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader(
 	    combo_mode ?
-	        "mobile_nerf_rayquery/rayquery_morpheus_combo.frag" :
-	        "mobile_nerf_rayquery/rayquery_morpheus.frag",
+	        "mobile_nerf_rayquery/rayquery_morpheus_combo.frag.spv" :
+	        "mobile_nerf_rayquery/rayquery_morpheus.frag.spv",
 	    VK_SHADER_STAGE_FRAGMENT_BIT);
 }
 

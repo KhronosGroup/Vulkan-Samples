@@ -296,8 +296,8 @@ void ExtendedDynamicState2::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages{};
-	shader_stages[0] = load_shader("extended_dynamic_state2/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("extended_dynamic_state2/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("extended_dynamic_state2/baseline.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("extended_dynamic_state2/baseline.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Use the pNext to point to the rendering create struct */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -360,8 +360,8 @@ void ExtendedDynamicState2::create_pipelines()
 
 	rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-	shader_stages[0] = load_shader("extended_dynamic_state2/background.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("extended_dynamic_state2/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("extended_dynamic_state2/background.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("extended_dynamic_state2/background.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
 	                                   pipeline_cache,
@@ -390,13 +390,13 @@ void ExtendedDynamicState2::create_pipelines()
 		rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
 	}
 
-	shader_stages[0]           = load_shader("extended_dynamic_state2/tess.vert",
+	shader_stages[0]           = load_shader("extended_dynamic_state2/tess.vert.spv",
 	                                         VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]           = load_shader("extended_dynamic_state2/tess.frag",
+	shader_stages[1]           = load_shader("extended_dynamic_state2/tess.frag.spv",
 	                                         VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[2]           = load_shader("extended_dynamic_state2/tess.tesc",
+	shader_stages[2]           = load_shader("extended_dynamic_state2/tess.tesc.spv",
 	                                         VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-	shader_stages[3]           = load_shader("extended_dynamic_state2/tess.tese",
+	shader_stages[3]           = load_shader("extended_dynamic_state2/tess.tese.spv",
 	                                         VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 	graphics_create.stageCount = static_cast<uint32_t>(shader_stages.size());
 	graphics_create.pStages    = shader_stages.data();

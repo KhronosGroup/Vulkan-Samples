@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define MAX_LIGHT_COUNT 48
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -272,8 +272,8 @@ void DescriptorBufferBasic::prepare_pipelines()
 	pipeline_create_info.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("descriptor_buffer_basic", "cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("descriptor_buffer_basic", "cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("descriptor_buffer_basic", "cube.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("descriptor_buffer_basic", "cube.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
