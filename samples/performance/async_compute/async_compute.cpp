@@ -382,6 +382,13 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 	assert(1 < views.size());
 
 	{
+		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the resource.
+		// Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use.
+		// The application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue family.
+		// A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but the content will be undefined.
+		// We do not need to acquire color_targets[0] from present_graphics to early_graphics
+		// A queue transfer barrier is not necessary for the resource first access.
+		// Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer barrier.
 		vkb::ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -413,7 +420,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 	{
 		// When doing async compute this barrier is used to do a queue family ownership transfer
 
-		// release_barrier_0: Releasing color_target[0] from early_graphics to post_compute
+		// release_barrier_0: Releasing color_targets[0] from early_graphics to post_compute
 		//     This release barrier is replicated by the corresponding acquire_barrier_0 in the post_compute queue
 		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
@@ -463,7 +470,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 
 	if (post_compute_queue->get_family_index() != present_graphics_queue->get_family_index())
 	{
-		// acquire_barrier_1: Acquiring color_target[0] from  post_compute to present_graphics
+		// acquire_barrier_1: Acquiring color_targets[0] from  post_compute to present_graphics
 		//     This acquire barrier is replicated by the corresponding release_barrier_1 in the post_compute queue
 		//     The application must ensure the acquire operation happens after the release operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
@@ -501,6 +508,14 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 	}
 
 	draw(*command_buffer, get_render_context().get_active_frame().get_render_target());
+
+	// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the resource.
+	// Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use.
+	// The application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue family.
+	// A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but the content will be undefined.
+	// We do not need to release blur_chain_views[1] and color_targets[0] from present_graphics
+	// A queue transfer barrier is not necessary for the resource first access.
+	// Moreover, in our sample we do not care about the content after presenting so we can skip the queue transfer barrier.
 
 	command_buffer->end();
 
@@ -554,7 +569,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 
 	if (early_graphics_queue->get_family_index() != post_compute_queue->get_family_index())
 	{
-		// acquire_barrier_0: Acquiring color_target[0] from early_graphics to post_compute
+		// acquire_barrier_0: Acquiring color_targets[0] from early_graphics to post_compute
 		//     This acquire barrier is replicated by the corresponding release_barrier_0 in the early_graphics queue
 		//     The application must ensure the acquire operation happens after the release operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
@@ -573,6 +588,14 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	}
 
 	const auto discard_blur_view = [&](const vkb::core::ImageView &view) {
+
+		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the resource.
+		// Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use.
+		// The application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue family.
+		// A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but the content will be undefined.
+		// We do not need to acquire blur_chain_views[1] from present_graphics to post_compute
+		// A queue transfer barrier is not necessary for the resource first access.
+		// Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer barrier.
 		vkb::ImageMemoryBarrier memory_barrier{};
 
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -588,7 +611,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	const auto read_only_blur_view = [&](const vkb::core::ImageView &view, bool is_final) {
 		const bool queue_family_transfer = is_final && post_compute_queue->get_family_index() != present_graphics_queue->get_family_index();
 
-		// release_barrier_2: Acquiring blur_chain_views[1] from  post_compute to present_graphics
+		// release_barrier_2: Releasing blur_chain_views[1] from  post_compute to present_graphics
 		//     This release barrier is replicated by the corresponding acquire_barrier_2 in the present_graphics queue
 		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
@@ -658,7 +681,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 
 	if (post_compute_queue->get_family_index() != present_graphics_queue->get_family_index())
 	{
-		// release_barrier_1: Releasing color_target[0] from post_compute to present_graphics
+		// release_barrier_1: Releasing color_targets[0] from post_compute to present_graphics
 		//     This release barrier is replicated by the corresponding acquire_barrier_1 in the present_graphics queue
 		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
