@@ -588,7 +588,6 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	}
 
 	const auto discard_blur_view = [&](const vkb::core::ImageView &view) {
-
 		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the resource.
 		// Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use.
 		// The application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue family.
