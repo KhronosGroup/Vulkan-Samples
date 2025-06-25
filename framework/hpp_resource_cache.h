@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,6 +29,10 @@ namespace vkb
 {
 namespace core
 {
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+
 class HPPDescriptorPool;
 class HPPDescriptorSetLayout;
 class HPPImageView;
@@ -64,7 +68,7 @@ struct HPPResourceCacheState
 class HPPResourceCache
 {
   public:
-	HPPResourceCache(vkb::core::HPPDevice &device);
+	HPPResourceCache(vkb::core::DeviceCpp &device);
 
 	HPPResourceCache(const HPPResourceCache &)            = delete;
 	HPPResourceCache(HPPResourceCache &&)                 = delete;
@@ -101,7 +105,7 @@ class HPPResourceCache
 	void warmup(const std::vector<uint8_t> &data);
 
   private:
-	vkb::core::HPPDevice  &device;
+	vkb::core::DeviceCpp  &device;
 	vkb::HPPResourceRecord recorder                    = {};
 	vkb::HPPResourceReplay replayer                    = {};
 	vk::PipelineCache      pipeline_cache              = nullptr;

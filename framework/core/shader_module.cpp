@@ -77,13 +77,14 @@ inline std::vector<uint8_t> convert_to_bytes(std::vector<std::string> &lines)
 	return bytes;
 }
 
-ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
-    device{device},
-    stage{stage},
-    entry_point{entry_point}
+ShaderModule::ShaderModule(vkb::core::DeviceC   &device,
+                           VkShaderStageFlagBits stage,
+                           const ShaderSource   &glsl_source,
+                           const std::string    &entry_point,
+                           const ShaderVariant  &shader_variant) :
+    device{device}, stage{stage}, entry_point{entry_point}
 {
-	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]",
-	                         glsl_source.get_filename(), shader_variant.get_id(), entry_point);
+	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", glsl_source.get_filename(), shader_variant.get_id(), entry_point);
 
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())

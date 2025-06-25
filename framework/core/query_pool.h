@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2025, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,12 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 /**
  * @brief Represents a Vulkan Query Pool
@@ -35,7 +40,7 @@ class QueryPool
 	 * @param d The device to use
 	 * @param info Creation details
 	 */
-	QueryPool(Device &d, const VkQueryPoolCreateInfo &info);
+	QueryPool(vkb::core::DeviceC &d, const VkQueryPoolCreateInfo &info);
 
 	QueryPool(const QueryPool &) = delete;
 
@@ -73,7 +78,7 @@ class QueryPool
 	                     VkQueryResultFlags flags);
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	VkQueryPool handle{VK_NULL_HANDLE};
 };

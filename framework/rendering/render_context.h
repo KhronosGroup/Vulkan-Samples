@@ -69,7 +69,7 @@ class RenderContext
 	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode
 	 * @param surface_format_priority_list The order in which the swapchain prioritizes selecting its surface format
 	 */
-	RenderContext(Device                                &device,
+	RenderContext(vkb::core::DeviceC                    &device,
 	              VkSurfaceKHR                           surface,
 	              const Window                          &window,
 	              VkPresentModeKHR                       present_mode                 = VK_PRESENT_MODE_FIFO_KHR,
@@ -209,7 +209,7 @@ class RenderContext
 	VkSemaphore request_semaphore_with_ownership();
 	void        release_owned_semaphore(VkSemaphore semaphore);
 
-	Device &get_device();
+	vkb::core::DeviceC &get_device();
 
 	/**
 	 * @brief Returns the format that the RenderTargets are created with within the RenderContext
@@ -239,7 +239,7 @@ class RenderContext
 	VkExtent2D surface_extent;
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	const Window &window;
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2025, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +21,7 @@
 
 namespace vkb
 {
-QueryPool::QueryPool(Device &d, const VkQueryPoolCreateInfo &info) :
+QueryPool::QueryPool(vkb::core::DeviceC &d, const VkQueryPoolCreateInfo &info) :
     device{d}
 {
 	VK_CHECK(vkCreateQueryPool(device.get_handle(), &info, nullptr, &handle));
@@ -50,7 +50,7 @@ VkQueryPool QueryPool::get_handle() const
 
 void QueryPool::host_reset(uint32_t first_query, uint32_t query_count)
 {
-	assert(device.is_enabled("VK_EXT_host_query_reset") &&
+	assert(device.is_extension_enabled("VK_EXT_host_query_reset") &&
 	       "VK_EXT_host_query_reset needs to be enabled to call QueryPool::host_reset");
 
 	vkResetQueryPoolEXT(device.get_handle(), get_handle(), first_query, query_count);

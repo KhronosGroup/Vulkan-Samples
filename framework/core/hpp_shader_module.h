@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,11 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice;
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+using DeviceC   = Device<vkb::BindingType::C>;
+
 /**
  * @brief facade class around vkb::ShaderModule, providing a vulkan.hpp-based interface
  *
@@ -94,12 +98,12 @@ class HPPShaderModule : private vkb::ShaderModule
 	using vkb::ShaderModule::get_id;
 
   public:
-	HPPShaderModule(vkb::core::HPPDevice              &device,
+	HPPShaderModule(vkb::core::DeviceCpp              &device,
 	                vk::ShaderStageFlagBits            stage,
 	                const vkb::core::HPPShaderSource  &glsl_source,
 	                const std::string                 &entry_point,
 	                const vkb::core::HPPShaderVariant &shader_variant) :
-	    vkb::ShaderModule(reinterpret_cast<vkb::Device &>(device),
+	    vkb::ShaderModule(reinterpret_cast<vkb::core::DeviceC &>(device),
 	                      static_cast<VkShaderStageFlagBits>(stage),
 	                      reinterpret_cast<vkb::ShaderSource const &>(glsl_source),
 	                      entry_point,
