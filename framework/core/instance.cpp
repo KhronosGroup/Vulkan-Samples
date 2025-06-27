@@ -132,6 +132,36 @@ bool enable_extension(const char                               *requested_extens
 	return is_available;
 }
 
+bool enable_layer_setting(const VkLayerSettingEXT         &requested_layer_setting,
+                          const std::vector<const char *> &enabled_layers,
+                          std::vector<VkLayerSettingEXT>  &enabled_layer_settings)
+{
+	// We are checking if the layer is available.
+	// Vulkan does not provide a reflection API for layer settings. Layer settings are described in each layer JSON manifest.
+	bool is_available =
+	    std::ranges::any_of(enabled_layers,
+	                        [&requested_layer_setting](auto const &available_layer) { return strcmp(available_layer, requested_layer_setting.pLayerName) == 0; });
+	if (!is_available)
+	{
+		LOGW("Layer: {} not found. Disabling layer setting: {}", requested_layer_setting.pLayerName, requested_layer_setting.pSettingName);
+		return false;
+	}
+
+	bool is_already_enabled =
+	    std::ranges::any_of(enabled_layer_settings,
+	                        [&requested_layer_setting](VkLayerSettingEXT const &enabled_layer_setting) { return (strcmp(requested_layer_setting.pLayerName, enabled_layer_setting.pLayerName) == 0) && (strcmp(requested_layer_setting.pSettingName, enabled_layer_setting.pSettingName) == 0); });
+
+	if (is_already_enabled)
+	{
+		LOGW("Ignoring duplicated layer setting {} in layer {}.", requested_layer_setting.pSettingName, requested_layer_setting.pLayerName);
+		return false;
+	}
+
+	LOGI("Enabling layer setting {} in layer {}.", requested_layer_setting.pSettingName, requested_layer_setting.pLayerName);
+	enabled_layer_settings.push_back(requested_layer_setting);
+	return true;
+}
+
 bool enable_layer(const char                           *requested_layer,
                   const std::vector<VkLayerProperties> &available_layers,
                   std::vector<const char *>            &enabled_layers)
@@ -163,7 +193,7 @@ bool enable_layer(const char                           *requested_layer,
 Instance::Instance(const std::string                            &application_name,
                    const std::unordered_map<const char *, bool> &requested_extensions,
                    const std::unordered_map<const char *, bool> &requested_layers,
-                   const std::vector<VkLayerSettingEXT>         &required_layer_settings,
+                   const std::vector<VkLayerSettingEXT>         &requested_layer_settings,
                    uint32_t                                      api_version)
 {
 	uint32_t instance_extension_count;
@@ -194,22 +224,19 @@ Instance::Instance(const std::string                            &application_nam
 
 #ifdef USE_VALIDATION_LAYERS
 	const char *validation_layer_name = "VK_LAYER_KHRONOS_validation";
-#endif
 
-#ifdef USE_VALIDATION_LAYER_FEATURES
+#	ifdef USE_VALIDATION_LAYER_FEATURES
 	bool validation_features = false;
 	{
 		uint32_t layer_instance_extension_count;
 		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &layer_instance_extension_count, nullptr));
-		if (layer_instance_extension_count > 0)
-		{
-			std::vector<VkExtensionProperties> available_layer_instance_extensions(layer_instance_extension_count);
-			VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &layer_instance_extension_count, available_layer_instance_extensions.data()));
+		std::vector<VkExtensionProperties> available_layer_instance_extensions(layer_instance_extension_count);
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &layer_instance_extension_count, available_layer_instance_extensions.data()));
 
-			validation_features = enable_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, available_layer_instance_extensions, enabled_extensions);
-		}
+		validation_features = enable_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, available_layer_instance_extensions, enabled_extensions);
 	}
-#endif
+#	endif        // USE_VALIDATION_LAYER_FEATURES
+#endif            // USE_VALIDATION_LAYERS
 
 	// Specific surface extensions are obtained from  Window::get_required_surface_extensions
 	// They are already added to requested_extensions by VulkanSample::prepare
@@ -319,19 +346,9 @@ Instance::Instance(const std::string                            &application_nam
 
 	std::vector<VkLayerSettingEXT> enabled_layer_settings;
 
-	for (const VkLayerSettingEXT &layer_setting : required_layer_settings)
+	for (const VkLayerSettingEXT &layer_setting : requested_layer_settings)
 	{
-		bool is_available =
-		    std::ranges::any_of(enabled_layers,
-		                        [&layer_setting](auto const &available_layer) { return strcmp(available_layer, layer_setting.pLayerName) == 0; });
-		if (is_available)
-		{
-			enabled_layer_settings.push_back(layer_setting);
-		}
-		else
-		{
-			LOGE("Ignoring LayerSetting {}: Layer: {} not found.", layer_setting.pSettingName, layer_setting.pLayerName);
-		}
+		enable_layer_setting(layer_setting, enabled_layers, enabled_layer_settings);
 	}
 
 	// Some of the specialized layers need to be enabled explicitly
@@ -342,7 +359,7 @@ Instance::Instance(const std::string                            &application_nam
 	const VkBool32 setting_validate_gpuav = VK_TRUE;
 	if (validation_features)
 	{
-		enabled_layer_settings.emplace_back(validation_layer_name, "gpuav_enable", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_gpuav);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "gpuav_enable", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_gpuav), enabled_layers, enabled_layer_settings);
 	}
 #	endif
 
@@ -354,11 +371,11 @@ Instance::Instance(const std::string                            &application_nam
 	const VkBool32 setting_validate_best_practices_nvidia = VK_TRUE;
 	if (validation_features)
 	{
-		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices);
-		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_arm", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_arm);
-		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_amd", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_amd);
-		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_img", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_img);
-		enabled_layer_settings.emplace_back(validation_layer_name, "validate_best_practices_nvidia", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_nvidia);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "validate_best_practices", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices), enabled_layers, enabled_layer_settings);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "validate_best_practices_arm", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_arm), enabled_layers, enabled_layer_settings);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "validate_best_practices_amd", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_amd), enabled_layers, enabled_layer_settings);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "validate_best_practices_img", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_img), enabled_layers, enabled_layer_settings);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "validate_best_practices_nvidia", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_best_practices_nvidia), enabled_layers, enabled_layer_settings);
 	}
 #	endif
 
@@ -367,8 +384,8 @@ Instance::Instance(const std::string                            &application_nam
 	const VkBool32 setting_validate_sync_heuristics = VK_TRUE;
 	if (validation_features)
 	{
-		enabled_layer_settings.emplace_back(validation_layer_name, "validate_sync", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_sync);
-		enabled_layer_settings.emplace_back(validation_layer_name, "syncval_shader_accesses_heuristic", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_sync_heuristics);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "validate_sync", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_sync), enabled_layers, enabled_layer_settings);
+		enable_layer_setting(VkLayerSettingEXT(validation_layer_name, "syncval_shader_accesses_heuristic", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &setting_validate_sync_heuristics), enabled_layers, enabled_layer_settings);
 	}
 #	endif
 #endif
