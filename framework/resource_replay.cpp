@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,16 +38,6 @@ inline void read_subpass_info(std::istringstream &is, std::vector<SubpassInfo> &
 	}
 }
 
-inline void read_processes(std::istringstream &is, std::vector<std::string> &value)
-{
-	std::size_t size;
-	read(is, size);
-	value.resize(size);
-	for (std::string &item : value)
-	{
-		read(is, item);
-	}
-}
 }        // namespace
 
 ResourceReplay::ResourceReplay()
@@ -94,20 +84,15 @@ void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::is
 	VkShaderStageFlagBits    stage{};
 	std::string              glsl_source;
 	std::string              entry_point;
-	std::string              preamble;
-	std::vector<std::string> processes;
 
 	read(stream,
 	     stage,
 	     glsl_source,
-	     entry_point,
-	     preamble);
-
-	read_processes(stream, processes);
+	     entry_point);
 
 	ShaderSource shader_source{};
 	shader_source.set_source(std::move(glsl_source));
-	ShaderVariant shader_variant(std::move(preamble), std::move(processes));
+	ShaderVariant shader_variant;
 
 	auto &shader_module = resource_cache.request_shader_module(stage, shader_source, shader_variant);
 

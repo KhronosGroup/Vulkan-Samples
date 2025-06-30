@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 
 // Holds data for a scratch buffer used as a temporary storage during acceleration structure builds
 struct ScratchBuffer

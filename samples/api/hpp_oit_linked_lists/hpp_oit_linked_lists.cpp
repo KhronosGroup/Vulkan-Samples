@@ -309,8 +309,8 @@ void HPPOITLinkedLists::create_pipelines()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	std::vector<vk::PipelineShaderStageCreateInfo> gather_shader_stages = {load_shader("oit_linked_lists/gather.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                       load_shader("oit_linked_lists/gather.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> gather_shader_stages = {load_shader("oit_linked_lists/gather.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                       load_shader("oit_linked_lists/gather.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::VertexInputBindingDescription      gather_vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	vk::VertexInputAttributeDescription    gather_vertex_input_attribute{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)};
@@ -333,8 +333,8 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                        pipeline_layout,
 	                                                        gather_render_pass);
 
-	std::vector<vk::PipelineShaderStageCreateInfo> background_shader_stages = {load_shader("oit_linked_lists/fullscreen.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                           load_shader("oit_linked_lists/background.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> background_shader_stages = {load_shader("oit_linked_lists/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                           load_shader("oit_linked_lists/background.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 	vk::PipelineVertexInputStateCreateInfo         vertex_input_state;
 
 	background_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
@@ -351,8 +351,8 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                            pipeline_layout,
 	                                                            render_pass);
 
-	std::vector<vk::PipelineShaderStageCreateInfo> combine_shader_stages = {load_shader("oit_linked_lists/combine.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                        load_shader("oit_linked_lists/combine.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> combine_shader_stages = {load_shader("oit_linked_lists/combine.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                        load_shader("oit_linked_lists/combine.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::PipelineColorBlendAttachmentState combine_blend_attachment_state{true,
 	                                                                     vk::BlendFactor::eSrcAlpha,

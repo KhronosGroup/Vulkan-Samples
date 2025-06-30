@@ -20,7 +20,6 @@
 #include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -685,24 +684,7 @@ void HelloTriangleV13::init_swapchain()
  */
 VkShaderModule HelloTriangleV13::load_shader_module(const char *path, VkShaderStageFlagBits shader_stage)
 {
-	vkb::GLSLCompiler glsl_compiler;
-
-	auto buffer = vkb::fs::read_shader_binary(path);
-
-	std::string file_ext = path;
-
-	// Extract extension name from the glsl shader file
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-	std::vector<uint32_t> spirv;
-	std::string           info_log;
-
-	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(shader_stage, buffer, "main", {}, spirv, info_log))
-	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-		return VK_NULL_HANDLE;
-	}
+	auto spirv = vkb::fs::read_shader_binary_u32(path);
 
 	VkShaderModuleCreateInfo module_info{
 	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -801,12 +783,12 @@ void HelloTriangleV13::init_pipeline()
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {{
 	    {.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	     .stage  = VK_SHADER_STAGE_VERTEX_BIT,
-	     .module = load_shader_module("hello_triangle_1_3/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	     .module = load_shader_module("hello_triangle_1_3/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
 	     .pName  = "main"},        // Vertex shader stage
 	    {
 	        .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	        .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
-	        .module = load_shader_module("hello_triangle_1_3/triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT),
+	        .module = load_shader_module("hello_triangle_1_3/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 	        .pName  = "main"}        // Fragment shader stage
 	}};
 

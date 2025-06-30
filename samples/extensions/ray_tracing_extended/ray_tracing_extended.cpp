@@ -1133,9 +1133,6 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
-	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the GLSLang compiler
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
-
 	/*
 	    Setup ray tracing shader groups
 	    Each shader group points at the corresponding shader in the pipeline
@@ -1144,7 +1141,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Ray generation group
 	{
-		shader_stages.push_back(load_shader("ray_tracing_extended", "raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+		shader_stages.push_back(load_shader("ray_tracing_extended", "raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
 		shader_stages.back().pSpecializationInfo = &specializationInfo;
 		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
@@ -1158,7 +1155,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Ray miss group
 	{
-		shader_stages.push_back(load_shader("ray_tracing_extended", "miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+		shader_stages.push_back(load_shader("ray_tracing_extended", "miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 		miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -1171,7 +1168,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Ray closest hit group
 	{
-		shader_stages.push_back(load_shader("ray_tracing_extended", "closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+		shader_stages.push_back(load_shader("ray_tracing_extended", "closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
 		shader_stages.back().pSpecializationInfo = &specializationInfo;
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;

@@ -22,7 +22,6 @@
 #include <common/hpp_vk_common.h>
 #include <core/util/logging.hpp>
 #include <filesystem/legacy.h>
-#include <hpp_glsl_compiler.h>
 #include <platform/window.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
@@ -340,8 +339,8 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 {
 	// Load our SPIR-V shaders.
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
-	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert"), .pName = "main"},
-	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag"), .pName = "main"}};
+	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert.spv"), .pName = "main"},
+	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag.spv"), .pName = "main"}};
 
 	vk::PipelineVertexInputStateCreateInfo vertex_input;
 
@@ -545,37 +544,14 @@ vk::RenderPass HPPHelloTriangle::create_render_pass()
  */
 vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
 {
-	static const std::map<std::string, vk::ShaderStageFlagBits> shader_stage_map = {{"comp", vk::ShaderStageFlagBits::eCompute},
-	                                                                                {"frag", vk::ShaderStageFlagBits::eFragment},
-	                                                                                {"geom", vk::ShaderStageFlagBits::eGeometry},
-	                                                                                {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
-	                                                                                {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation},
-	                                                                                {"vert", vk::ShaderStageFlagBits::eVertex}};
-	vkb::HPPGLSLCompiler                                        glsl_compiler;
+	auto spirv = vkb::fs::read_shader_binary_u32(path);
 
-	auto buffer = vkb::fs::read_shader_binary(path);
+	VkShaderModuleCreateInfo module_info{
+	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+	    .codeSize = spirv.size() * sizeof(uint32_t),
+	    .pCode    = spirv.data()};
 
-	std::string file_ext = path;
-
-	// Extract extension name from the glsl shader file
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-	std::vector<uint32_t> spirvCode;
-	std::string           info_log;
-
-	// Compile the GLSL source
-	auto stageIt = shader_stage_map.find(file_ext);
-	if (stageIt == shader_stage_map.end())
-	{
-		throw std::runtime_error("File extension `" + file_ext + "` does not have a vulkan shader stage.");
-	}
-	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
-	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-		return nullptr;
-	}
-
-	return device.createShaderModule({.codeSize = static_cast<uint32_t>(spirvCode.size() * sizeof(uint32_t)), .pCode = spirvCode.data()});
+	return device.createShaderModule({.codeSize = static_cast<uint32_t>(spirv.size() * sizeof(uint32_t)), .pCode = spirv.data()});
 }
 
 vk::SwapchainKHR

@@ -71,8 +71,8 @@ void HPPApiVulkanSample::prepare_gui()
 	create_gui(*window, nullptr, 15.0f, true);
 	get_gui().prepare(pipeline_cache,
 	                  render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex),
-	                   load_shader("uioverlay/uioverlay.frag", vk::ShaderStageFlagBits::eFragment)});
+	                  {load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                   load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)});
 }
 
 void HPPApiVulkanSample::update(float delta_time)
@@ -404,40 +404,18 @@ void HPPApiVulkanSample::create_pipeline_cache()
 	pipeline_cache = get_device().get_handle().createPipelineCache({});
 }
 
-vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
+vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage)
 {
-	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device().get_handle(), stage, src_language));
+	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device().get_handle(), stage));
 	assert(shader_modules.back());
 	return vk::PipelineShaderStageCreateInfo{.stage = stage, .module = shader_modules.back(), .pName = "main"};
 }
 
 vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage)
 {
-	// Note: this can be reworked once offline compilation for GLSL shaders is added
+	std::string full_file_name = sample_folder_name + "/" + get_shader_folder() + "/" + shader_filename;
 
-	// Default to GLSL
-	std::string               shader_folder{"glsl"};
-	std::string               shader_extension{""};
-	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
-
-	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
-	{
-		shader_folder = "hlsl";
-		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
-		src_language     = vkb::ShaderSourceLanguage::SPV;
-		shader_extension = ".spv";
-	}
-	else if (get_shading_language() == vkb::ShadingLanguage::SLANG)
-	{
-		shader_folder = "slang";
-		// slang shaders are offline compiled to SPIR-V, so source is SPV
-		src_language     = vkb::ShaderSourceLanguage::SPV;
-		shader_extension = ".spv";
-	}
-
-	std::string full_file_name = sample_folder_name + "/" + shader_folder + "/" + shader_filename + shader_extension;
-
-	shader_modules.push_back(vkb::common::load_shader(full_file_name, get_device().get_handle(), stage, src_language));
+	shader_modules.push_back(vkb::common::load_shader(full_file_name, get_device().get_handle(), stage));
 	assert(shader_modules.back());
 	return vk::PipelineShaderStageCreateInfo{.stage = stage, .module = shader_modules.back(), .pName = "main"};
 }

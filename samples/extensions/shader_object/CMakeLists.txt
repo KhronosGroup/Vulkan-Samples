@@ -1,4 +1,4 @@
-# Copyright 2023 Nintendo
+# Copyright 2023-2025 Nintendo
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ add_sample(
         "shader_object/skybox.vert"
         "shader_object/terrain.frag"
         "shader_object/terrain.vert"
-        "shader_object/material_gen_normals.geo"
+        "shader_object/material_gen_normals.geom"
         "shader_object/material_normals.frag"
         "shader_object/material_n_dot_l.frag"
-        "shader_object/material_pass_sin_offset.geo"
-        "shader_object/material_pass_through.geo"
+        "shader_object/material_pass_sin_offset.geom"
+        "shader_object/material_pass_through.geom"
         "shader_object/material_reflective.frag"
         "shader_object/material_rotates.vert"
         "shader_object/material_scene.frag"

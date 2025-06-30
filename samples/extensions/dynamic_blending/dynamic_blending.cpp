@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica
+/* Copyright (c) 2023-2025, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -347,8 +347,8 @@ void DynamicBlending::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_blending", "blending.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_blending", "blending.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_blending", "blending.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_blending", "blending.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	graphics_create.pNext               = VK_NULL_HANDLE;

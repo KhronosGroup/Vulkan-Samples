@@ -23,7 +23,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_sample)
     set(options)  
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -47,12 +47,13 @@ function(add_sample)
             ${TARGET_SHADER_FILES_HLSL}
         SHADER_FILES_SLANG
             ${TARGET_SHADER_FILES_SLANG}
-        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
+        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}
+        GLSLC_ADDITIONAL_ARGUMENTS ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
+    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -103,13 +104,13 @@ function(add_sample_with_tags)
             ${SHADERS_HLSL}
         SHADERS_SLANG
             ${SHADERS_SLANG}            
-        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS})
-
+        DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}
+        GLSLC_ADDITIONAL_ARGUMENTS ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS})
 endfunction()
 
 function(add_project)
     set(options)  
-    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS)
+    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL SHADERS_SLANG)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -187,7 +188,9 @@ endif()
    
     # HLSL compilation via DXC
     if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
-        foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
+        set(OUTPUT_FILES "")
+        set(HLSL_TARGET_NAME ${PROJECT_NAME}-HLSL)
+        foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})        
             get_filename_component(HLSL_SPV_FILE ${SHADER_FILE_HLSL} NAME_WLE)
             get_filename_component(bare_name ${HLSL_SPV_FILE} NAME_WLE)
             get_filename_component(extension ${HLSL_SPV_FILE} LAST_EXT)
@@ -226,25 +229,26 @@ endif()
                 string(REPLACE " " ";" TARGET_DXC_ADDITIONAL_ARGUMENTS "${TARGET_DXC_ADDITIONAL_ARGUMENTS}")
             endif ()
             add_custom_command(
-                    OUTPUT ${OUTPUT_FILE}
-                    COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${SHADER_FILE_HLSL} -Fo ${OUTPUT_FILE}
-                    COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
-                    MAIN_DEPENDENCY ${SHADER_FILE_HLSL}
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                OUTPUT ${OUTPUT_FILE}
+                COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${SHADER_FILE_HLSL} -Fo ${OUTPUT_FILE}
+                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                MAIN_DEPENDENCY ${SHADER_FILE_HLSL}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             )
-            if(NOT TARGET ${bare_name}-${extension})
-                add_custom_target(${bare_name}-${extension} DEPENDS ${OUTPUT_FILE})
-            endif()
-            add_dependencies(${PROJECT_NAME} ${bare_name}-${extension})
+            list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
-                    MACOSX_PACKAGE_LOCATION Resources
+                MACOSX_PACKAGE_LOCATION Resources
             )
-            set_property(TARGET ${bare_name}-${extension} PROPERTY FOLDER "HLSL_Shaders")
         endforeach()
+        add_custom_target(${HLSL_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+        set_property(TARGET ${HLSL_TARGET_NAME} PROPERTY FOLDER "Shaders-HLSL")
+        add_dependencies(${PROJECT_NAME} ${HLSL_TARGET_NAME})           
     endif()
 
     # Slang shader compilation
     if(Vulkan_slang_EXECUTABLE AND DEFINED SHADERS_SLANG)
+        set(OUTPUT_FILES "")
+        set(SLANG_TARGET_NAME ${PROJECT_NAME}-SLANG)
         foreach(SHADER_FILE_SLANG ${TARGET_SHADERS_SLANG})
             get_filename_component(SLANG_SPV_FILE ${SHADER_FILE_SLANG} NAME_WLE)
             get_filename_component(bare_name ${SLANG_SPV_FILE} NAME_WLE)
@@ -254,26 +258,56 @@ endif()
             set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-slang-spv")
             set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}.${extension}.spv)
             file(MAKE_DIRECTORY ${OUTPUT_DIR})
-
             set(SLANG_PROFILE "spirv_1_4")
             set(SLANG_ENTRY_POINT "main")
             add_custom_command(
-                    OUTPUT ${OUTPUT_FILE}
-                    COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
-                    COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
-                    MAIN_DEPENDENCY ${SHADER_FILE_SLANG}
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                OUTPUT ${OUTPUT_FILE}
+                COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
+                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                MAIN_DEPENDENCY ${SHADER_FILE_SLANG}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             )
-            set(SLANG_SHADER_TARGET_NAME ${bare_name}-${extension}-slang)
-            if(NOT TARGET ${SLANG_SHADER_TARGET_NAME})
-                add_custom_target(${SLANG_SHADER_TARGET_NAME} DEPENDS ${OUTPUT_FILE})
-            endif()
-            add_dependencies(${PROJECT_NAME} ${SLANG_SHADER_TARGET_NAME})
+            list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
-                    MACOSX_PACKAGE_LOCATION Resources
+                MACOSX_PACKAGE_LOCATION Resources
             )
-            set_property(TARGET ${SLANG_SHADER_TARGET_NAME} PROPERTY FOLDER "SLANG_Shaders")
         endforeach()
+        add_custom_target(${SLANG_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+        set_property(TARGET ${SLANG_TARGET_NAME} PROPERTY FOLDER "Shaders-SLANG")
+        add_dependencies(${PROJECT_NAME} ${SLANG_TARGET_NAME})        
+    endif()
+
+    # GLSL shader compilation
+    if(Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)                
+        set(GLSL_TARGET_NAME ${PROJECT_NAME}-GLSL)
+        set(OUTPUT_FILES "")
+        foreach(SHADER_FILE_GLSL ${TARGET_SHADERS_GLSL})
+            get_filename_component(GLSL_SPV_FILE ${SHADER_FILE_GLSL} NAME_WLE)
+            get_filename_component(bare_name ${GLSL_SPV_FILE} NAME_WLE)
+            get_filename_component(extension ${SHADER_FILE_GLSL} LAST_EXT)
+            get_filename_component(directory ${SHADER_FILE_GLSL} DIRECTORY)
+            # Skip extensions that can't be compiled (cl, inlcudes)
+            if(${extension} STREQUAL ".cl" OR ${extension} STREQUAL ".h")
+                continue()
+            endif()
+            set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-glsl-spv")
+            set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}${extension}.spv)
+            file(MAKE_DIRECTORY ${OUTPUT_DIR})
+            add_custom_command(
+                OUTPUT ${OUTPUT_FILE}
+                COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} -I "${CMAKE_SOURCE_DIR}/shaders/includes/glsl" ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS}
+                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                MAIN_DEPENDENCY ${SHADER_FILE_GLSL}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+            list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
+            set_source_files_properties(${OUTPUT_FILE} PROPERTIES
+                MACOSX_PACKAGE_LOCATION Resources
+            )
+        endforeach()
+        add_custom_target(${GLSL_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+        set_property(TARGET ${GLSL_TARGET_NAME} PROPERTY FOLDER "Shaders-GLSL")
+        add_dependencies(${PROJECT_NAME} ${GLSL_TARGET_NAME})
     endif()
 
 endfunction()

@@ -62,10 +62,6 @@ A transcoded version of the API sample xref:./{api_samplespath}hello_triangle/RE
 
 A transcoded version of the API sample xref:./{api_samplespath}hello_triangle_1_3/README.adoc[Hello Triangle 1.3] that illustrates the usage of the C{pp} bindings of Vulkan provided by Vulkan-Hpp.
 
-=== xref:./{api_samplespath}hpp_hlsl_shaders/README.adoc[HPP HLSL shaders]
-
-A transcoded version of the API sample xref:./{api_samplespath}hlsl_shaders/README.adoc[HLSL Shaders] that illustrates the usage of the C{pp} bindings of Vulkan provided by Vulkan-Hpp.
-
 === xref:./{api_samplespath}hpp_instancing/README.adoc[HPP Instancing]
 
 A transcoded version of the API sample xref:./{api_samplespath}instancing/README.adoc[Instancing] that illustrates the usage of the C{pp} bindings of Vulkan provided by Vulkan-Hpp.
@@ -118,10 +114,6 @@ Loading and rendering of a 2D texture map from a file.
 === xref:./{api_samplespath}texture_mipmap_generation/README.adoc[Texture run-time mip-map generation]
 
 Generates a complete mip-chain for a texture at runtime instead of loading it from a file.
-
-=== xref:./{api_samplespath}hlsl_shaders/README.adoc[HLSL shaders]
-
-Converts High Level Shading Language (HLSL) shaders to Vulkan-compatible SPIR-V.
 
 === xref:./{api_samplespath}timestamp_queries/README.adoc[Timestamp queries]
 

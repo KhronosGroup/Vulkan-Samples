@@ -84,42 +84,6 @@ bool HelloTriangle::validate_extensions(const std::vector<const char *>         
 }
 
 /**
- * @brief Find the vulkan shader stage for a given a string.
- *
- * @param ext A string containing the shader stage name.
- * @return VkShaderStageFlagBits The shader stage mapping from the given string, VK_SHADER_STAGE_VERTEX_BIT otherwise.
- */
-VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
-{
-	if (ext == "vert")
-	{
-		return VK_SHADER_STAGE_VERTEX_BIT;
-	}
-	else if (ext == "frag")
-	{
-		return VK_SHADER_STAGE_FRAGMENT_BIT;
-	}
-	else if (ext == "comp")
-	{
-		return VK_SHADER_STAGE_COMPUTE_BIT;
-	}
-	else if (ext == "geom")
-	{
-		return VK_SHADER_STAGE_GEOMETRY_BIT;
-	}
-	else if (ext == "tesc")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-	}
-	else if (ext == "tese")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-	}
-
-	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
-};
-
-/**
  * @brief Initializes the Vulkan instance.
  */
 void HelloTriangle::init_instance()
@@ -688,9 +652,7 @@ void HelloTriangle::init_render_pass()
  */
 VkShaderModule HelloTriangle::load_shader_module(const std::string &path)
 {
-	auto                  buffer = vkb::fs::read_shader_binary(path);
-	std::vector<uint32_t> spirv  = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
-                                                        reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	auto spirv = vkb::fs::read_shader_binary_u32(path);
 
 	VkShaderModuleCreateInfo module_info{
 	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

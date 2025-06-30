@@ -235,8 +235,8 @@ void HPPOITDepthPeeling::render(float delta_time)
 
 void HPPOITDepthPeeling::create_background_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("oit_depth_peeling/background.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("oit_depth_peeling/background.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
@@ -280,8 +280,8 @@ void HPPOITDepthPeeling::create_combine_pass()
 
 void HPPOITDepthPeeling::create_combine_pass_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("oit_depth_peeling/combine.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("oit_depth_peeling/combine.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
@@ -384,8 +384,8 @@ void HPPOITDepthPeeling::create_gather_pass_pipelines()
 {
 	vk::Device device = get_device().get_handle();
 
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/gather.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("oit_depth_peeling/gather_first.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/gather.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("oit_depth_peeling/gather_first.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
@@ -414,7 +414,7 @@ void HPPOITDepthPeeling::create_gather_pass_pipelines()
 	                                                                  gatherPass.pipeline_layout,
 	                                                                  gatherPass.render_pass);
 
-	shader_stages[1] = load_shader("oit_depth_peeling/gather.frag", vk::ShaderStageFlagBits::eFragment);
+	shader_stages[1] = load_shader("oit_depth_peeling/gather.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 	gatherPass.pipeline = vkb::common::create_graphics_pipeline(device,
 	                                                            pipeline_cache,

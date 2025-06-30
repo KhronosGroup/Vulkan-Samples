@@ -406,8 +406,8 @@ void OpenCLInterop::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("open_cl_interop", "texture_display.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("open_cl_interop", "texture_display.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("open_cl_interop", "texture_display.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("open_cl_interop", "texture_display.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -872,7 +872,7 @@ void OpenCLInterop::prepare_opencl_resources()
 	opencl_objects.command_queue = clCreateCommandQueue(opencl_objects.context, opencl_objects.device_id, 0, &cl_result);
 	CL_CHECK(cl_result);
 
-	std::string kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
+	std::string kernel_source      = vkb::fs::read_text_file("open_cl_interop/procedural_texture.cl");
 	auto        kernel_source_data = kernel_source.c_str();
 	size_t      kernel_source_size = kernel_source.size();
 

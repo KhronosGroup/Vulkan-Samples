@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -377,8 +377,8 @@ void SeparateImageSampler::prepare_pipelines()
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("separate_image_sampler", "separate_image_sampler.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("separate_image_sampler", "separate_image_sampler.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("separate_image_sampler", "separate_image_sampler.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("separate_image_sampler", "separate_image_sampler.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {

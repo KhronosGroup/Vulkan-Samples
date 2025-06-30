@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/error.h"
 #include <vk_mem_alloc.h>
 #include <volk.h>
 
@@ -128,13 +129,6 @@ bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
  */
 int32_t get_bits_per_pixel(VkFormat format);
 
-enum class ShaderSourceLanguage
-{
-	GLSL,
-	HLSL,
-	SPV,
-};
-
 enum class ShadingLanguage
 {
 	GLSL,
@@ -143,14 +137,13 @@ enum class ShadingLanguage
 };
 
 /**
- * @brief Helper function to create a VkShaderModule
+ * @brief Helper function to create a VkShaderModule from a SPIR-V shader file
  * @param filename The shader location
  * @param device The logical device
  * @param stage The shader stage
- * @param src_language The shader language
- * @return The string to return.
+ * @return The shader module containing the loaded shader
  */
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL);
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage);
 
 /**
  * @brief Helper function to select a VkSurfaceFormatKHR

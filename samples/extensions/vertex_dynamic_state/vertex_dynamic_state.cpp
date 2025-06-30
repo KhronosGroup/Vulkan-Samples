@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, Mobica Limited
+/* Copyright (c) 2022-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -215,8 +215,8 @@ void VertexDynamicState::create_pipeline()
 	        0);
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("vertex_dynamic_state", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("vertex_dynamic_state", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("vertex_dynamic_state", "gbuffer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("vertex_dynamic_state", "gbuffer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Create graphics pipeline for dynamic rendering */
 	VkFormat color_rendering_format = get_render_context().get_format();

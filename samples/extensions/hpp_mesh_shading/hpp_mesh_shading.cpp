@@ -22,8 +22,6 @@
 
 #include "hpp_mesh_shading.h"
 
-#include "glsl_compiler.h"
-
 HPPMeshShading::HPPMeshShading()
 {
 	title = "Mesh shading";
@@ -34,8 +32,6 @@ HPPMeshShading::HPPMeshShading()
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 
 HPPMeshShading::~HPPMeshShading()
@@ -132,8 +128,8 @@ void HPPMeshShading::render(float delta_time)
 vk::Pipeline HPPMeshShading::create_pipeline()
 {
 	// Load our SPIR-V shaders.
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("mesh_shading", "ms.mesh", vk::ShaderStageFlagBits::eMeshEXT),
-	                                                                load_shader("mesh_shading", "ps.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("mesh_shading", "ms.mesh.spv", vk::ShaderStageFlagBits::eMeshEXT),
+	                                                                load_shader("mesh_shading", "ps.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// We will have one viewport and scissor box.
 	vk::PipelineViewportStateCreateInfo viewport_state{.viewportCount = 1, .scissorCount = 1};
