@@ -275,6 +275,7 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	auto              shadow_scene_subpass =
 	    std::make_unique<DepthMapSubpass>(get_render_context(), std::move(shadow_vert_shader), std::move(shadow_frag_shader), get_scene(), *shadow_camera);
 	shadow_render_pipeline.add_subpass(std::move(shadow_scene_subpass));
+	shadow_render_pipeline.set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE}});
 
 	vkb::ShaderSource composite_vert_shader("async_compute/composite.vert");
 	vkb::ShaderSource composite_frag_shader("async_compute/composite.frag");
