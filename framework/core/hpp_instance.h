@@ -48,15 +48,15 @@ class HPPInstance
 	 * @param application_name The name of the application
 	 * @param requested_extensions The extensions requested to be enabled
 	 * @param requested_layers The validation layers to be enabled
-	 * @param required_layer_settings The layer settings to be enabled
+	 * @param requested_layer_settings The layer settings to be enabled
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
 	HPPInstance(const std::string                            &application_name,
-	            const std::unordered_map<const char *, bool> &requested_extensions    = {},
-	            const std::unordered_map<const char *, bool> &requested_layers        = {},
-	            const std::vector<vk::LayerSettingEXT>       &required_layer_settings = {},
-	            uint32_t                                      api_version             = VK_API_VERSION_1_1);
+	            const std::unordered_map<const char *, bool> &requested_extensions     = {},
+	            const std::unordered_map<const char *, bool> &requested_layers         = {},
+	            const std::vector<vk::LayerSettingEXT>       &requested_layer_settings = {},
+	            uint32_t                                      api_version              = VK_API_VERSION_1_1);
 
 	/**
 	 * @brief Queries the GPUs of a vk::Instance that is already created
