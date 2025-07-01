@@ -24,10 +24,12 @@
 
 namespace vkb
 {
-ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &shader_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
-    device{device},
-    stage{stage},
-    entry_point{entry_point}
+ShaderModule::ShaderModule(vkb::core::DeviceC   &device,
+                           VkShaderStageFlagBits stage,
+                           const ShaderSource   &shader_source,
+                           const std::string    &entry_point,
+                           const ShaderVariant  &shader_variant) :
+    device{device}, stage{stage}, entry_point{entry_point}
 {
 	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", shader_source.get_filename(), shader_variant.get_id(), entry_point);
 
