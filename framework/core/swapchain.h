@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,12 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 enum ImageFormat
 {
@@ -79,7 +84,7 @@ class Swapchain
 	/**
 	 * @brief Constructor to create a swapchain.
 	 */
-	Swapchain(Device                                   &device,
+	Swapchain(vkb::core::DeviceC                       &device,
 	          VkSurfaceKHR                              surface,
 	          const VkPresentModeKHR                    present_mode,
 	          const std::vector<VkPresentModeKHR>      &present_mode_priority_list       = {VK_PRESENT_MODE_FIFO_KHR,
@@ -98,7 +103,7 @@ class Swapchain
 	 *        by configuring all parameters.
 	 */
 	Swapchain(Swapchain                                &old_swapchain,
-	          Device                                   &device,
+	          vkb::core::DeviceC                       &device,
 	          VkSurfaceKHR                              surface,
 	          const VkPresentModeKHR                    present_mode,
 	          const std::vector<VkPresentModeKHR>      &present_mode_priority_list       = {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR},
@@ -123,7 +128,7 @@ class Swapchain
 
 	bool is_valid() const;
 
-	Device &get_device();
+	vkb::core::DeviceC &get_device();
 
 	VkSwapchainKHR get_handle() const;
 
@@ -157,10 +162,10 @@ class Swapchain
 		VkImageCompressionPropertiesEXT compression_properties{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
 	};
 
-	static std::vector<SurfaceFormatCompression> query_supported_fixed_rate_compression(Device &device, const VkSurfaceKHR &surface);
+	static std::vector<SurfaceFormatCompression> query_supported_fixed_rate_compression(vkb::core::DeviceC &device, const VkSurfaceKHR &surface);
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
 

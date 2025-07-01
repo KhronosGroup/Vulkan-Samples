@@ -100,7 +100,7 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 
 	prepare_supported_sample_count_list();
 
-	depth_writeback_resolve_supported = get_device().is_enabled(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
+	depth_writeback_resolve_supported = get_device().is_extension_enabled(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
 	if (depth_writeback_resolve_supported)
 	{
 		prepare_depth_resolve_mode_list();

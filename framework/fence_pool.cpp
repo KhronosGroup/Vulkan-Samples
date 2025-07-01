@@ -21,7 +21,7 @@
 
 namespace vkb
 {
-FencePool::FencePool(Device &device) :
+FencePool::FencePool(vkb::core::DeviceC &device) :
     device{device}
 {
 }

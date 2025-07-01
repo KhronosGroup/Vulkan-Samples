@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,10 +21,11 @@
 
 #include "common/vk_common.h"
 #include "core/pipeline_layout.h"
-#include "core/render_pass.h"
 
 namespace vkb
 {
+class RenderPass;
+
 struct VertexInputState
 {
 	std::vector<VkVertexInputBindingDescription> bindings;

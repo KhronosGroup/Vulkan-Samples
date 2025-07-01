@@ -389,5 +389,45 @@ inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::
 	device.destroyFence(fence);
 }
 
+inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> const &queue_family_properties, vk::QueueFlagBits queue_flag)
+{
+	// Dedicated queue for compute
+	// Try to find a queue family index that supports compute but not graphics
+	if (queue_flag & vk::QueueFlagBits::eCompute)
+	{
+		auto propertyIt = std::ranges::find_if(queue_family_properties,
+		                                       [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics); });
+		if (propertyIt != queue_family_properties.end())
+		{
+			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+		}
+	}
+
+	// Dedicated queue for transfer
+	// Try to find a queue family index that supports transfer but not graphics and compute
+	if (queue_flag & vk::QueueFlagBits::eTransfer)
+	{
+		auto propertyIt = std::ranges::find_if(queue_family_properties,
+		                                       [queue_flag](const vk::QueueFamilyProperties &property) {
+			                                       return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
+			                                              !(property.queueFlags & vk::QueueFlagBits::eCompute);
+		                                       });
+		if (propertyIt != queue_family_properties.end())
+		{
+			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+		}
+	}
+
+	// For other queue types or if no separate compute queue is present, return the first one to support the requested flags
+	auto propertyIt = std::ranges::find_if(
+	    queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) == queue_flag; });
+	if (propertyIt != queue_family_properties.end())
+	{
+		return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+	}
+
+	throw std::runtime_error("Could not find a matching queue family index");
+}
+
 }        // namespace common
 }        // namespace vkb

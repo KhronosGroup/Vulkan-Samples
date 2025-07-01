@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,9 +45,10 @@ class HPPPipeline : private vkb::Pipeline
 class HPPComputePipeline : private vkb::ComputePipeline
 {
   public:
-	HPPComputePipeline(vkb::core::HPPDevice &device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState &pipeline_state) :
-	    vkb::ComputePipeline(
-	        reinterpret_cast<vkb::Device &>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState &>(pipeline_state))
+	HPPComputePipeline(vkb::core::DeviceCpp &device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState &pipeline_state) :
+	    vkb::ComputePipeline(reinterpret_cast<vkb::core::DeviceC &>(device),
+	                         static_cast<VkPipelineCache>(pipeline_cache),
+	                         reinterpret_cast<vkb::PipelineState &>(pipeline_state))
 	{}
 
 	vk::Pipeline get_handle() const
@@ -59,9 +60,10 @@ class HPPComputePipeline : private vkb::ComputePipeline
 class HPPGraphicsPipeline : private vkb::GraphicsPipeline
 {
   public:
-	HPPGraphicsPipeline(vkb::core::HPPDevice &device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState &pipeline_state) :
-	    vkb::GraphicsPipeline(
-	        reinterpret_cast<vkb::Device &>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState &>(pipeline_state))
+	HPPGraphicsPipeline(vkb::core::DeviceCpp &device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState &pipeline_state) :
+	    vkb::GraphicsPipeline(reinterpret_cast<vkb::core::DeviceC &>(device),
+	                          static_cast<VkPipelineCache>(pipeline_cache),
+	                          reinterpret_cast<vkb::PipelineState &>(pipeline_state))
 	{}
 
 	vk::Pipeline get_handle() const

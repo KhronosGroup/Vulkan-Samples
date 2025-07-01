@@ -236,8 +236,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &export_memory_allocate_Info};
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
-		memAllocInfo.memoryTypeIndex                               = get_device().get_memory_type(memReqs.memoryTypeBits,
-		                                                                                          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memAllocInfo.memoryTypeIndex                               = get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 

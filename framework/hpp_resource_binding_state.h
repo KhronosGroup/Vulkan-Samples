@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,11 +18,19 @@
 #pragma once
 
 #include "resource_binding_state.h"
-#include <core/hpp_image_view.h>
-#include <core/hpp_sampler.h>
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
+class Buffer;
+using BufferCpp = Buffer<vkb::BindingType::Cpp>;
+
+class HPPImageView;
+class HPPSampler;
+}        // namespace core
+
 /**
  * @brief facade class around vkb::ResourceBindingState, providing a vulkan.hpp-based interface
  *

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,10 +23,11 @@
 
 namespace vkb
 {
-class Device;
-
 namespace core
 {
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceC = Device<vkb::BindingType::C>;
 /**
  * @brief Represents a Vulkan Sampler
  */
@@ -38,7 +39,7 @@ class Sampler : public VulkanResourceC<VkSampler>
 	 * @param d The device to use
 	 * @param info Creation details
 	 */
-	Sampler(vkb::Device &d, const VkSamplerCreateInfo &info);
+	Sampler(vkb::core::DeviceC &d, const VkSamplerCreateInfo &info);
 
 	Sampler(const Sampler &) = delete;
 

@@ -23,7 +23,6 @@
 
 namespace vkb
 {
-class Device;
 
 namespace core
 {
@@ -35,7 +34,7 @@ using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
 class Queue
 {
   public:
-	Queue(Device &device, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index);
+	Queue(vkb::core::DeviceC &device, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index);
 
 	Queue(const Queue &) = default;
 
@@ -45,7 +44,7 @@ class Queue
 
 	Queue &operator=(Queue &&) = delete;
 
-	const Device &get_device() const;
+	const vkb::core::DeviceC &get_device() const;
 
 	VkQueue get_handle() const;
 
@@ -66,7 +65,7 @@ class Queue
 	VkResult wait_idle() const;
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	VkQueue handle{VK_NULL_HANDLE};
 

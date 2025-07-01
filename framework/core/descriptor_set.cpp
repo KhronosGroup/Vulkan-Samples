@@ -22,7 +22,7 @@
 
 namespace vkb
 {
-DescriptorSet::DescriptorSet(Device                                   &device,
+DescriptorSet::DescriptorSet(vkb::core::DeviceC                       &device,
                              const DescriptorSetLayout                &descriptor_set_layout,
                              DescriptorPool                           &descriptor_pool,
                              const BindingMap<VkDescriptorBufferInfo> &buffer_infos,

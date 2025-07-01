@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "common/vk_common.h"
+#include "core/hpp_image.h"
 #include "scene_graph/component.h"
 #include <vulkan/vulkan.hpp>
 
@@ -24,13 +26,12 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice;
-class HPPImage;
-class HPPImageView;
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
 }        // namespace core
-}        // namespace vkb
 
-namespace vkb::scene_graph::components
+namespace scene_graph::components
 {
 /**
  * @param format Vulkan format
@@ -76,7 +77,7 @@ class HPPImage : public vkb::sg::Component
 
 	void                                                        clear_data();
 	void                                                        coerce_format_to_srgb();
-	void                                                        create_vk_image(vkb::core::HPPDevice &device, vk::ImageViewType image_view_type = vk::ImageViewType::e2D, vk::ImageCreateFlags flags = {});
+	void                                                        create_vk_image(vkb::core::DeviceCpp &device, vk::ImageViewType image_view_type = vk::ImageViewType::e2D, vk::ImageCreateFlags flags = {});
 	void                                                        generate_mipmaps();
 	const std::vector<uint8_t>                                 &get_data() const;
 	const vk::Extent3D                                         &get_extent() const;
@@ -109,4 +110,5 @@ class HPPImage : public vkb::sg::Component
 	std::unique_ptr<vkb::core::HPPImageView>             vk_image_view;
 };
 
-}        // namespace vkb::scene_graph::components
+}        // namespace scene_graph::components
+}        // namespace vkb

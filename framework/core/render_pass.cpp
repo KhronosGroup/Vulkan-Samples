@@ -510,18 +510,22 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 	}
 }
 
-RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses) :
-    VulkanResource{VK_NULL_HANDLE, &device},
-    subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
+RenderPass::RenderPass(vkb::core::DeviceC               &device,
+                       const std::vector<Attachment>    &attachments,
+                       const std::vector<LoadStoreInfo> &load_store_infos,
+                       const std::vector<SubpassInfo>   &subpasses) :
+    VulkanResource{VK_NULL_HANDLE, &device}, subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
     color_output_count{}
 {
-	if (device.is_enabled(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME))
+	if (device.is_extension_enabled(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME))
 	{
-		create_renderpass<VkSubpassDescription2KHR, VkAttachmentDescription2KHR, VkAttachmentReference2KHR, VkSubpassDependency2KHR, VkRenderPassCreateInfo2KHR>(attachments, load_store_infos, subpasses);
+		create_renderpass<VkSubpassDescription2KHR, VkAttachmentDescription2KHR, VkAttachmentReference2KHR, VkSubpassDependency2KHR, VkRenderPassCreateInfo2KHR>(
+		    attachments, load_store_infos, subpasses);
 	}
 	else
 	{
-		create_renderpass<VkSubpassDescription, VkAttachmentDescription, VkAttachmentReference, VkSubpassDependency, VkRenderPassCreateInfo>(attachments, load_store_infos, subpasses);
+		create_renderpass<VkSubpassDescription, VkAttachmentDescription, VkAttachmentReference, VkSubpassDependency, VkRenderPassCreateInfo>(
+		    attachments, load_store_infos, subpasses);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,17 +19,23 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
-#include "core/render_pass.h"
-#include "rendering/render_target.h"
 
 namespace vkb
 {
+class RenderPass;
+class RenderTarget;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 class Framebuffer
 {
   public:
-	Framebuffer(Device &device, const RenderTarget &render_target, const RenderPass &render_pass);
+	Framebuffer(vkb::core::DeviceC &device, const RenderTarget &render_target, const RenderPass &render_pass);
 
 	Framebuffer(const Framebuffer &) = delete;
 
@@ -46,7 +52,7 @@ class Framebuffer
 	const VkExtent2D &get_extent() const;
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	VkFramebuffer handle{VK_NULL_HANDLE};
 

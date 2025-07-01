@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include <memory>
 #include <mutex>
 
@@ -34,7 +35,13 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+using DeviceC   = Device<vkb::BindingType::C>;
+}        // namespace core
 
 namespace sg
 {
@@ -71,7 +78,7 @@ struct TypeCast
 class GLTFLoader
 {
   public:
-	GLTFLoader(Device &device);
+	GLTFLoader(vkb::core::DeviceC &device);
 
 	virtual ~GLTFLoader() = default;
 
@@ -124,7 +131,7 @@ class GLTFLoader
 	 */
 	tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
 
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	tinygltf::Model model;
 

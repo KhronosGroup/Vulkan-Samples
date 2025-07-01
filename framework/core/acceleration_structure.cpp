@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@ namespace vkb
 {
 namespace core
 {
-AccelerationStructure::AccelerationStructure(Device                        &device,
+AccelerationStructure::AccelerationStructure(vkb::core::DeviceC            &device,
                                              VkAccelerationStructureTypeKHR type) :
     device{device},
     type{type}

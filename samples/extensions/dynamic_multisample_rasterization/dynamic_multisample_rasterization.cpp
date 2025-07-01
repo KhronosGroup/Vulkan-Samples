@@ -489,7 +489,7 @@ void DynamicMultisampleRasterization::setup_color_attachment()
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
-	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation.memoryTypeIndex = get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &color_attachment.mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), color_attachment.image, color_attachment.mem, 0));
 
@@ -531,7 +531,7 @@ void DynamicMultisampleRasterization::setup_depth_stencil()
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
-	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation.memoryTypeIndex = get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), depth_stencil.image, depth_stencil.mem, 0));
 

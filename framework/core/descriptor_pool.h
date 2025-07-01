@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,8 +24,14 @@
 
 namespace vkb
 {
-class Device;
 class DescriptorSetLayout;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 /**
  * @brief Manages an array of fixed size VkDescriptorPool and is able to allocate descriptor sets
@@ -35,7 +41,7 @@ class DescriptorPool
   public:
 	static const uint32_t MAX_SETS_PER_POOL = 16;
 
-	DescriptorPool(Device &                   device,
+	DescriptorPool(vkb::core::DeviceC        &device,
 	               const DescriptorSetLayout &descriptor_set_layout,
 	               uint32_t                   pool_size = MAX_SETS_PER_POOL);
 
@@ -60,7 +66,7 @@ class DescriptorPool
 	VkResult free(VkDescriptorSet descriptor_set);
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	const DescriptorSetLayout *descriptor_set_layout{nullptr};
 

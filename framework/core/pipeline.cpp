@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,13 +17,14 @@
 
 #include "pipeline.h"
 
+#include "debug.h"
 #include "device.h"
 #include "pipeline_layout.h"
 #include "shader_module.h"
 
 namespace vkb
 {
-Pipeline::Pipeline(Device &device) :
+Pipeline::Pipeline(vkb::core::DeviceC &device) :
     device{device}
 {}
 
@@ -54,9 +55,9 @@ const PipelineState &Pipeline::get_state() const
 	return state;
 }
 
-ComputePipeline::ComputePipeline(Device &        device,
-                                 VkPipelineCache pipeline_cache,
-                                 PipelineState & pipeline_state) :
+ComputePipeline::ComputePipeline(vkb::core::DeviceC &device,
+                                 VkPipelineCache     pipeline_cache,
+                                 PipelineState      &pipeline_state) :
     Pipeline{device}
 {
 	const ShaderModule *shader_module = pipeline_state.get_pipeline_layout().get_shader_modules().front();
@@ -122,9 +123,9 @@ ComputePipeline::ComputePipeline(Device &        device,
 	vkDestroyShaderModule(device.get_handle(), stage.module, nullptr);
 }
 
-GraphicsPipeline::GraphicsPipeline(Device &        device,
-                                   VkPipelineCache pipeline_cache,
-                                   PipelineState & pipeline_state) :
+GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device,
+                                   VkPipelineCache     pipeline_cache,
+                                   PipelineState      &pipeline_state) :
     Pipeline{device}
 {
 	std::vector<VkShaderModule> shader_modules;

@@ -306,4 +306,6 @@ std::vector<LoadStoreInfo> get_clear_store_all();
 std::vector<VkClearValue> get_clear_value();
 }        // namespace gbuffer
 
+uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queue_family_properties, VkQueueFlagBits queue_flag);
+
 }        // namespace vkb

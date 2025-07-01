@@ -19,6 +19,8 @@
 #pragma once
 
 #include "core/command_pool_base.h"
+#include "core/device.h"
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
@@ -61,10 +63,8 @@ class CommandPool : private vkb::core::CommandPoolBase
 	using CommandBufferLevelType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBufferLevel, VkCommandBufferLevel>::type;
 	using CommandPoolType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
 
-	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
-
   public:
-	CommandPool(DeviceType                               &device,
+	CommandPool(vkb::core::Device<bindingType>           &device,
 	            uint32_t                                  queue_family_index,
 	            vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
 	            size_t                                    thread_index = 0,
@@ -75,7 +75,7 @@ class CommandPool : private vkb::core::CommandPoolBase
 	CommandPool &operator=(CommandPool<bindingType> &&other) = default;
 	~CommandPool()                                           = default;
 
-	DeviceType                                            &get_device();
+	vkb::core::Device<bindingType>                        &get_device();
 	CommandPoolType                                        get_handle() const;
 	uint32_t                                               get_queue_family_index() const;
 	vkb::rendering::RenderFrame<bindingType>              *get_render_frame();
@@ -89,16 +89,20 @@ using CommandPoolC   = CommandPool<vkb::BindingType::C>;
 using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandPool<bindingType>::CommandPool(DeviceType                               &device,
+inline vkb::core::CommandPool<bindingType>::CommandPool(vkb::core::Device<bindingType>           &device,
                                                         uint32_t                                  queue_family_index,
                                                         vkb::rendering::RenderFrame<bindingType> *render_frame,
                                                         size_t                                    thread_index,
                                                         vkb::CommandBufferResetMode               reset_mode) :
-    CommandPoolBase(reinterpret_cast<vkb::core::HPPDevice &>(device), queue_family_index, reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame), thread_index, reset_mode)
+    CommandPoolBase(reinterpret_cast<vkb::core::DeviceCpp &>(device),
+                    queue_family_index,
+                    reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame),
+                    thread_index,
+                    reset_mode)
 {}
 
 template <vkb::BindingType bindingType>
-inline typename vkb::core::CommandPool<bindingType>::DeviceType &CommandPool<bindingType>::get_device()
+inline typename vkb::core::Device<bindingType> &CommandPool<bindingType>::get_device()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -106,7 +110,7 @@ inline typename vkb::core::CommandPool<bindingType>::DeviceType &CommandPool<bin
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Device &>(CommandPoolBase::get_device());
+		return reinterpret_cast<vkb::core::DeviceC &>(CommandPoolBase::get_device());
 	}
 }
 

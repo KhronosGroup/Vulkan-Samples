@@ -55,7 +55,7 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info.signalSemaphoreCount = 1;
 	submit_info.pSignalSemaphores    = &semaphores.render_complete;
 
-	queue = get_device().get_suitable_graphics_queue().get_handle();
+	queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle();
 
 	create_swapchain_buffers();
 	create_command_pool();
@@ -529,7 +529,7 @@ void ApiVulkanSample::submit_frame()
 		present_info.pImageIndices    = &current_buffer;
 
 		VkDisplayPresentInfoKHR disp_present_info{};
-		if (get_device().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		if (get_device().get_gpu().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
 		    window->get_display_present_info(&disp_present_info, width, height))
 		{
 			// Add display present info if supported and wanted
@@ -664,7 +664,7 @@ void ApiVulkanSample::setup_depth_stencil()
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
-	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation.memoryTypeIndex = get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), depth_stencil.image, depth_stencil.mem, 0));
 
@@ -1332,11 +1332,11 @@ void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuff
 
 void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::core::CommandBufferC &command_buffer)> &f)
 {
-	auto cmd = get_device().request_command_buffer();
+	auto cmd = get_device().get_command_pool().request_command_buffer();
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 	f(*cmd);
 	cmd->end();
 	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(*cmd, get_device().request_fence());
+	queue.submit(*cmd, get_device().get_fence_pool().request_fence());
 	get_device().get_fence_pool().wait();
 }
