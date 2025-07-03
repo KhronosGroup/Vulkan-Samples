@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,8 +26,14 @@ add_sample(
     NAME "HPP Hello Triangle"
     DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp."
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+        "hello_triangle/glsl/triangle.vert"
+        "hello_triangle/glsl/triangle.frag"
+    SHADER_FILES_HLSL
+        "hello_triangle/hlsl/triangle.vert.hlsl"
+        "hello_triangle/hlsl/triangle.frag.hlsl"
+    SHADER_FILES_SLANG
+        "hello_triangle/slang/triangle.vert.slang"
+        "hello_triangle/slang/triangle.frag.slang")
 
 if(${VKB_${FOLDER_NAME}})
     target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
