@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,13 +19,10 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
-#include "core/image.h"
 #include "core/image_view.h"
 
 namespace vkb
 {
-class Device;
-
 /**
  * @brief Description of render pass attachments.
  * Attachment descriptions can be used to automatically create render target images.
@@ -44,6 +41,13 @@ struct Attachment
 
 	Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage);
 };
+
+namespace core
+{
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 /**
  * @brief RenderTarget contains three vectors for: core::Image, core::ImageView and Attachment.
@@ -102,7 +106,7 @@ class RenderTarget
 	VkImageLayout get_layout(uint32_t attachment) const;
 
   private:
-	Device const &device;
+	vkb::core::DeviceC const &device;
 
 	VkExtent2D extent{};
 

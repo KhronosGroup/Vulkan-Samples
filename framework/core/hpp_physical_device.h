@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -86,7 +86,7 @@ class HPPPhysicalDevice
 
 	const std::vector<vk::QueueFamilyProperties> &get_queue_family_properties() const;
 
-	const vk::PhysicalDeviceFeatures get_requested_features() const;
+	const vk::PhysicalDeviceFeatures &get_requested_features() const;
 
 	vk::PhysicalDeviceFeatures &get_mutable_requested_features();
 
@@ -99,7 +99,7 @@ class HPPPhysicalDevice
 	 * @returns The extension feature struct
 	 */
 	template <typename HPPStructureType>
-	HPPStructureType get_extension_features()
+	HPPStructureType get_extension_features() const
 	{
 		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))

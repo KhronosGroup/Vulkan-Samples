@@ -17,6 +17,7 @@
 
 #include "core/hpp_debug.h"
 #include "core/command_buffer.h"
+#include "core/device.h"
 
 namespace vkb
 {

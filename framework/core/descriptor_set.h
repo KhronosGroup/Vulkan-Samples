@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,9 +22,15 @@
 
 namespace vkb
 {
-class Device;
 class DescriptorSetLayout;
 class DescriptorPool;
+
+namespace core
+{
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 /**
  * @brief A descriptor set handle allocated from a \ref DescriptorPool.
@@ -44,11 +50,11 @@ class DescriptorSet
 	 * @param buffer_infos The descriptors that describe buffer data
 	 * @param image_infos The descriptors that describe image data
 	 */
-	DescriptorSet(Device &                                  device,
-	              const DescriptorSetLayout &               descriptor_set_layout,
-	              DescriptorPool &                          descriptor_pool,
+	DescriptorSet(vkb::core::DeviceC                       &device,
+	              const DescriptorSetLayout                &descriptor_set_layout,
+	              DescriptorPool                           &descriptor_pool,
 	              const BindingMap<VkDescriptorBufferInfo> &buffer_infos = {},
-	              const BindingMap<VkDescriptorImageInfo> & image_infos  = {});
+	              const BindingMap<VkDescriptorImageInfo>  &image_infos  = {});
 
 	DescriptorSet(const DescriptorSet &) = delete;
 
@@ -68,7 +74,7 @@ class DescriptorSet
 	 * @param new_image_infos A map of image descriptors and their respective bindings
 	 */
 	void reset(const BindingMap<VkDescriptorBufferInfo> &new_buffer_infos = {},
-	           const BindingMap<VkDescriptorImageInfo> & new_image_infos  = {});
+	           const BindingMap<VkDescriptorImageInfo>  &new_image_infos  = {});
 
 	/**
 	 * @brief Updates the contents of the DescriptorSet by performing the write operations
@@ -97,7 +103,7 @@ class DescriptorSet
 	void prepare();
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	const DescriptorSetLayout &descriptor_set_layout;
 

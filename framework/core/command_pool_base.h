@@ -17,7 +17,9 @@
 
 #pragma once
 
-#include "core/hpp_device.h"
+#include "common/vk_common.h"
+#include <memory>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
@@ -30,10 +32,22 @@ using RenderFrameCpp = RenderFrame<vkb::BindingType::Cpp>;
 
 namespace core
 {
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
+
+template <vkb::BindingType bindingType>
+class CommandPool;
+using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
+
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+
 class CommandPoolBase
 {
   public:
-	CommandPoolBase(vkb::core::HPPDevice           &device,
+	CommandPoolBase(vkb::core::DeviceCpp           &device,
 	                uint32_t                        queue_family_index,
 	                vkb::rendering::RenderFrameCpp *render_frame = nullptr,
 	                size_t                          thread_index = 0,
@@ -45,7 +59,7 @@ class CommandPoolBase
 	~CommandPoolBase();
 
   protected:
-	vkb::core::HPPDevice                        &get_device();
+	vkb::core::DeviceCpp                        &get_device();
 	vk::CommandPool                              get_handle() const;
 	uint32_t                                     get_queue_family_index() const;
 	vkb::rendering::RenderFrameCpp              *get_render_frame();
@@ -55,7 +69,7 @@ class CommandPoolBase
 	void                                         reset_pool();
 
   private:
-	vkb::core::HPPDevice                                     &device;
+	vkb::core::DeviceCpp                                     &device;
 	vk::CommandPool                                           handle             = nullptr;
 	vkb::rendering::RenderFrameCpp                           *render_frame       = nullptr;
 	size_t                                                    thread_index       = 0;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,8 +40,8 @@ class HPPRenderPass;
 class HPPFramebuffer : private vkb::Framebuffer
 {
   public:
-	HPPFramebuffer(vkb::core::HPPDevice &device, const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass) :
-	    vkb::Framebuffer(reinterpret_cast<vkb::Device &>(device),
+	HPPFramebuffer(vkb::core::DeviceCpp &device, const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass) :
+	    vkb::Framebuffer(reinterpret_cast<vkb::core::DeviceC &>(device),
 	                     reinterpret_cast<vkb::RenderTarget const &>(render_target),
 	                     reinterpret_cast<vkb::RenderPass const &>(render_pass))
 	{}

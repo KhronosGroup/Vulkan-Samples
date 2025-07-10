@@ -384,7 +384,7 @@ void HPPComputeNBody::prepare_compute()
 {
 	vk::Device device = get_device().get_handle();
 
-	compute.queue_family_index = get_device().get_queue_family_index(vk::QueueFlagBits::eCompute);
+	compute.queue_family_index = vkb::common::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), vk::QueueFlagBits::eCompute);
 
 	vk::PhysicalDeviceLimits const &limits = get_device().get_gpu().get_properties().limits;
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
@@ -576,7 +576,7 @@ void HPPComputeNBody::prepare_graphics()
 {
 	vk::Device device = get_device().get_handle();
 
-	graphics.queue_family_index = get_device().get_queue_family_index(vk::QueueFlagBits::eGraphics);
+	graphics.queue_family_index = vkb::common::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), vk::QueueFlagBits::eGraphics);
 
 	// Vertex shader uniform buffer block
 	graphics.uniform_buffer =

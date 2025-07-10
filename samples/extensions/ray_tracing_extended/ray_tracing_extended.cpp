@@ -189,7 +189,7 @@ void RaytracingExtended::create_storage_image()
 	vkGetImageMemoryRequirements(get_device().get_handle(), storage_image.image, &memory_requirements);
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &storage_image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), storage_image.image, storage_image.memory, 0));
 
@@ -306,7 +306,7 @@ void RaytracingExtended::create_static_object_buffers()
 	// now transfer over to the end buffer
 	if (scene_options.use_vertex_staging_buffer)
 	{
-		auto cmd = get_device().request_command_buffer();
+		auto cmd = get_device().get_command_pool().request_command_buffer();
 		cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 		auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
@@ -325,7 +325,7 @@ void RaytracingExtended::create_static_object_buffers()
 
 		cmd->end();
 		auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-		queue.submit(*cmd, get_device().request_fence());
+		queue.submit(*cmd, get_device().get_fence_pool().request_fence());
 		get_device().get_fence_pool().wait();
 	}
 	else
@@ -1405,7 +1405,7 @@ void RaytracingExtended::draw()
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers    = &raytracing_command_buffers[i];
 
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit, get_device().request_fence()));
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit, get_device().get_fence_pool().request_fence()));
 	get_device().get_fence_pool().wait();
 
 	recreate_current_command_buffer();
@@ -1462,7 +1462,7 @@ void RaytracingExtended::draw()
 
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, get_device().request_fence()));
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, get_device().get_fence_pool().request_fence()));
 	get_device().get_fence_pool().wait();
 	ApiVulkanSample::submit_frame();
 }
@@ -1492,7 +1492,7 @@ std::unique_ptr<vkb::VulkanSampleC> create_ray_tracing_extended()
 	return std::make_unique<RaytracingExtended>();
 }
 
-RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const std::vector<SceneLoadInfo> &scenesToLoad)
+RaytracingExtended::RaytracingScene::RaytracingScene(vkb::core::DeviceC &device, const std::vector<SceneLoadInfo> &scenesToLoad)
 {
 	vkb::GLTFLoader loader{device};
 	scenes.resize(scenesToLoad.size());

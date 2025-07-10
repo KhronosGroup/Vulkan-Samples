@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,12 +22,17 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 class SemaphorePool
 {
   public:
-	SemaphorePool(Device &device);
+	SemaphorePool(vkb::core::DeviceC &device);
 
 	SemaphorePool(const SemaphorePool &) = delete;
 
@@ -48,7 +53,7 @@ class SemaphorePool
 	uint32_t get_active_semaphore_count() const;
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	std::vector<VkSemaphore> semaphores;
 	std::vector<VkSemaphore> released_semaphores;

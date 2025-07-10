@@ -1894,7 +1894,7 @@ ShaderObject::Image ShaderObject::create_output_image(VkFormat format, VkImageUs
 	// Get and set memory allocation size then allocate and bind memory
 	vkGetImageMemoryRequirements(get_device().get_handle(), image.image, &memory_requirements);
 	memory_allocation_info.allocationSize  = memory_requirements.size;
-	memory_allocation_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), image.image, image.memory, 0));
 

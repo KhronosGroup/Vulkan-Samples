@@ -48,7 +48,7 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info.setWaitSemaphores(semaphores.acquired_image_ready);
 	submit_info.setSignalSemaphores(semaphores.render_complete);
 
-	queue = get_device().get_suitable_graphics_queue().get_handle();
+	queue = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0).get_handle();
 
 	create_swapchain_buffers();
 	create_command_pool();
@@ -495,7 +495,7 @@ void HPPApiVulkanSample::submit_frame()
 		}
 
 		vk::DisplayPresentInfoKHR disp_present_info;
-		if (get_device().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		if (get_device().get_gpu().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
 		    window->get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(&disp_present_info), extent.width, extent.height))
 		{
 			// Add display present info if supported and wanted

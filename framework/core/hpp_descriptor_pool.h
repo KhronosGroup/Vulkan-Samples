@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,10 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice;
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+using DeviceC   = Device<vkb::BindingType::C>;
 
 /**
  * @brief facade class around vkb::DescriptorPool, providing a vulkan.hpp-based interface
@@ -36,8 +39,9 @@ class HPPDescriptorPool : private vkb::DescriptorPool
   public:
 	using vkb::DescriptorPool::reset;
 
-	HPPDescriptorPool(vkb::core::HPPDevice &device, const vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, uint32_t pool_size = MAX_SETS_PER_POOL) :
-	    vkb::DescriptorPool(reinterpret_cast<vkb::Device &>(device), reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout), pool_size)
+	HPPDescriptorPool(vkb::core::DeviceCpp &device, const vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, uint32_t pool_size = MAX_SETS_PER_POOL) :
+	    vkb::DescriptorPool(
+	        reinterpret_cast<vkb::core::DeviceC &>(device), reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout), pool_size)
 	{}
 };
 }        // namespace core

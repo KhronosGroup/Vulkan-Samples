@@ -94,7 +94,7 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device                            &device,
+DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                &device,
                                          const uint32_t                     set_index,
                                          const std::vector<ShaderModule *> &shader_modules,
                                          const std::vector<ShaderResource> &resource_set) :

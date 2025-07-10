@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,13 +19,14 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
-#include "core/image.h"
 #include "core/vulkan_resource.h"
 
 namespace vkb
 {
 namespace core
 {
+class Image;
+
 class ImageView : public vkb::core::VulkanResourceC<VkImageView>
 {
   public:

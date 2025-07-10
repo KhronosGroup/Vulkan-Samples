@@ -251,7 +251,6 @@ set(CORE_FILES
     core/hpp_descriptor_pool.h
     core/hpp_descriptor_set.h
     core/hpp_descriptor_set_layout.h
-    core/hpp_device.h
     core/hpp_framebuffer.h
     core/hpp_image.h
     core/hpp_image_view.h
@@ -270,7 +269,6 @@ set(CORE_FILES
     core/command_pool_base.cpp
     core/instance.cpp
     core/physical_device.cpp
-    core/device.cpp
     core/debug.cpp
     core/image_core.cpp
     core/shader_module.cpp
@@ -292,7 +290,6 @@ set(CORE_FILES
     core/query_pool.cpp
     core/acceleration_structure.cpp
     core/hpp_debug.cpp
-    core/hpp_device.cpp
     core/hpp_image_core.cpp
     core/hpp_image_view.cpp
     core/hpp_instance.cpp

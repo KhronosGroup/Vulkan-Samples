@@ -16,7 +16,10 @@
  */
 
 #include "stats/vulkan_stats_provider.h"
+#include "core/command_buffer.h"
+#include "core/device.h"
 #include "rendering/render_context.h"
+
 #include <regex>
 
 namespace vkb
@@ -32,14 +35,14 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>         &requested_
 		return;
 	}
 
-	Device               &device = render_context.get_device();
+	vkb::core::DeviceC   &device = render_context.get_device();
 	const PhysicalDevice &gpu    = device.get_gpu();
 
 	has_timestamps   = gpu.get_properties().limits.timestampComputeAndGraphics;
 	timestamp_period = gpu.get_properties().limits.timestampPeriod;
 
 	// Interrogate device for supported stats
-	uint32_t queue_family_index = device.get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
+	uint32_t queue_family_index = vkb::get_queue_family_index(gpu.get_queue_family_properties(), VK_QUEUE_GRAPHICS_BIT);
 
 	// Query number of available counters
 	uint32_t count = 0;
@@ -221,7 +224,7 @@ bool VulkanStatsProvider::fill_vendor_data()
 
 bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 {
-	Device               &device           = render_context.get_device();
+	vkb::core::DeviceC   &device           = render_context.get_device();
 	const PhysicalDevice &gpu              = device.get_gpu();
 	uint32_t              num_framebuffers = static_cast<uint32_t>(render_context.get_render_frames().size());
 
@@ -286,10 +289,10 @@ bool VulkanStatsProvider::is_supported(const CounterSamplingConfig &sampling_con
 		return false;
 	}
 
-	Device &device = render_context.get_device();
+	vkb::core::DeviceC &device = render_context.get_device();
 
 	// The VK_KHR_performance_query must be available and enabled
-	if (!(device.is_enabled("VK_KHR_performance_query") && device.is_enabled("VK_EXT_host_query_reset")))
+	if (!(device.is_extension_enabled("VK_KHR_performance_query") && device.is_extension_enabled("VK_EXT_host_query_reset")))
 	{
 		return false;
 	}

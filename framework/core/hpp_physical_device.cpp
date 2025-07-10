@@ -146,7 +146,7 @@ const std::vector<vk::QueueFamilyProperties> &HPPPhysicalDevice::get_queue_famil
 	return queue_family_properties;
 }
 
-const vk::PhysicalDeviceFeatures HPPPhysicalDevice::get_requested_features() const
+const vk::PhysicalDeviceFeatures &HPPPhysicalDevice::get_requested_features() const
 {
 	return requested_features;
 }

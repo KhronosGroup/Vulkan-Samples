@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,8 +16,8 @@
  */
 
 #include "rendering/render_target.h"
-
 #include "core/device.h"
+#include "core/image.h"
 
 namespace vkb
 {

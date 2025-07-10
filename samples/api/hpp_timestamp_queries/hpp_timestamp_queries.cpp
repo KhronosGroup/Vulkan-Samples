@@ -59,7 +59,7 @@ bool HPPTimestampQueries::prepare(const vkb::ApplicationOptions &options)
 		if (!device_limits.timestampComputeAndGraphics)
 		{
 			// Check if the graphics queue used in this sample supports time stamps
-			vk::QueueFamilyProperties const &graphics_queue_family_properties = get_device().get_suitable_graphics_queue().get_properties();
+			vk::QueueFamilyProperties const &graphics_queue_family_properties = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0).get_properties();
 			if (graphics_queue_family_properties.timestampValidBits == 0)
 			{
 				throw std::runtime_error{"The selected graphics queue family does not support timestamp queries!"};
