@@ -122,6 +122,16 @@ HPPHelloTriangle::~HPPHelloTriangle()
 		instance.destroySurfaceKHR(surface);
 	}
 
+	if (vertex_buffer_allocation != VK_NULL_HANDLE)
+	{
+		vmaDestroyBuffer(vma_allocator, vertex_buffer, vertex_buffer_allocation);
+	}
+
+	if (vma_allocator != VK_NULL_HANDLE)
+	{
+		vmaDestroyAllocator(vma_allocator);
+	}
+
 	if (device)
 	{
 		device.destroy();
@@ -159,6 +169,9 @@ bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
 
 		// get the (graphics) queue
 		queue = device.getQueue(graphics_queue_index, 0);
+
+		vma_allocator                                     = create_vma_allocator();
+		std::tie(vertex_buffer, vertex_buffer_allocation) = create_vertex_buffer();
 
 		init_swapchain();
 
@@ -338,11 +351,40 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 {
 	// Load our SPIR-V shaders.
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
-	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("triangle.vert.spv"), .pName = "main"},
-	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("triangle.frag.spv"), .pName = "main"}};
 
-	vk::PipelineVertexInputStateCreateInfo vertex_input;
+	// Samples support different shading languages, all of which are offline compiled to SPIR-V, the shader format that Vulkan uses.
+	// The shading language to load for can be selected via command line
+	std::string shader_folder{""};
+	switch (get_shading_language())
+	{
+		case vkb::ShadingLanguage::HLSL:
+			shader_folder = "hlsl";
+			break;
+		case vkb::ShadingLanguage::SLANG:
+			shader_folder = "slang";
+			break;
+		default:
+			shader_folder = "glsl";
+	}
+
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
+	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("hello_triangle/" + shader_folder + "/triangle.vert.spv"), .pName = "main"},
+	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("hello_triangle/" + shader_folder + "/triangle.frag.spv"), .pName = "main"}};
+
+	// Define the vertex input binding.
+	vk::VertexInputBindingDescription binding_description{.binding = 0, .stride = sizeof(Vertex), .inputRate = vk::VertexInputRate::eVertex};
+
+	// Define the vertex input attribute.
+	std::array<vk::VertexInputAttributeDescription, 2> attribute_descriptions{
+	    {{.location = 0, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, position)},
+	     {.location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, color)}}};
+
+	// Define the pipeline vertex input.
+	vk::PipelineVertexInputStateCreateInfo vertex_input{
+	    .vertexBindingDescriptionCount   = 1,
+	    .pVertexBindingDescriptions      = &binding_description,
+	    .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
+	    .pVertexAttributeDescriptions    = attribute_descriptions.data()};
 
 	// Our attachment will write to all color channels, but no blending is enabled.
 	vk::PipelineColorBlendAttachmentState blend_attachment{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
@@ -378,8 +420,8 @@ vk::ImageView HPPHelloTriangle::create_image_view(vk::Image image)
 	    .image            = image,
 	    .viewType         = vk::ImageViewType::e2D,
 	    .format           = swapchain_data.format,
-	    .components       = {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
-	    .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+	    .components       = {.r = vk::ComponentSwizzle::eR, .g = vk::ComponentSwizzle::eG, .b = vk::ComponentSwizzle::eB, .a = vk::ComponentSwizzle::eA},
+	    .subresourceRange = {.aspectMask = vk::ImageAspectFlagBits::eColor, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1}};
 	return device.createImageView(image_view_create_info);
 }
 
@@ -498,19 +540,20 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 
 vk::RenderPass HPPHelloTriangle::create_render_pass()
 {
-	vk::AttachmentDescription attachment{{},
-	                                     swapchain_data.format,                  // Backbuffer format
-	                                     vk::SampleCountFlagBits::e1,            // Not multisampled
-	                                     vk::AttachmentLoadOp::eClear,           // When starting the frame, we want tiles to be cleared
-	                                     vk::AttachmentStoreOp::eStore,          // When ending the frame, we want tiles to be written out
-	                                     vk::AttachmentLoadOp::eDontCare,        // Don't care about stencil since we're not using it
-	                                     vk::AttachmentStoreOp::eDontCare,
-	                                     vk::ImageLayout::eUndefined,             // The image layout will be undefined when the render pass begins
-	                                     vk::ImageLayout::ePresentSrcKHR};        // After the render pass is complete, we will transition to ePresentSrcKHR layout
+	vk::AttachmentDescription attachment{
+	    .format         = swapchain_data.format,                   // Backbuffer format.
+	    .samples        = vk::SampleCountFlagBits::e1,             // Not multisampled.
+	    .loadOp         = vk::AttachmentLoadOp::eClear,            // When starting the frame, we want tiles to be cleared.
+	    .storeOp        = vk::AttachmentStoreOp::eStore,           // When ending the frame, we want tiles to be written out.
+	    .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,         // Don't care about stencil since we're not using it.
+	    .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,        // Don't care about stencil since we're not using it.
+	    .initialLayout  = vk::ImageLayout::eUndefined,             // The image layout will be undefined when the render pass begins.
+	    .finalLayout    = vk::ImageLayout::ePresentSrcKHR          // After the render pass is complete, we will transition to PRESENT_SRC_KHR layout.
+	};
 
 	// We have one subpass. This subpass has one color attachment.
 	// While executing this subpass, the attachment will be in attachment optimal layout.
-	vk::AttachmentReference color_ref{0, vk::ImageLayout::eColorAttachmentOptimal};
+	vk::AttachmentReference color_ref{.attachment = 0, .layout = vk::ImageLayout::eColorAttachmentOptimal};
 
 	// We will end up with two transitions.
 	// The first one happens right before we start subpass #0, where
@@ -538,20 +581,17 @@ vk::RenderPass HPPHelloTriangle::create_render_pass()
 }
 
 /**
- * @brief Helper function to load a shader module.
+ * @brief Helper function to load a shader module from an offline-compiled SPIR-V file.
  * @param path The path for the shader (relative to the assets directory).
  * @returns A vk::ShaderModule handle. Aborts execution if shader creation fails.
  */
-vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
+vk::ShaderModule HPPHelloTriangle::create_shader_module(std::string const &path)
 {
 	auto spirv = vkb::fs::read_shader_binary_u32(path);
 
-	VkShaderModuleCreateInfo module_info{
-	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-	    .codeSize = spirv.size() * sizeof(uint32_t),
-	    .pCode    = spirv.data()};
+	vk::ShaderModuleCreateInfo shader_module_create_info{.codeSize = spirv.size() * sizeof(uint32_t), .pCode = spirv.data()};
 
-	return device.createShaderModule({.codeSize = static_cast<uint32_t>(spirv.size() * sizeof(uint32_t)), .pCode = spirv.data()});
+	return device.createShaderModule(shader_module_create_info);
 }
 
 vk::SwapchainKHR
@@ -595,23 +635,78 @@ vk::SwapchainKHR
 	// FIFO must be supported by all implementations.
 	vk::PresentModeKHR swapchain_present_mode = vk::PresentModeKHR::eFifo;
 
-	vk::SwapchainCreateInfoKHR swapchain_create_info;
-	swapchain_create_info.surface            = surface;
-	swapchain_create_info.minImageCount      = desired_swapchain_images;
-	swapchain_create_info.imageFormat        = surface_format.format;
-	swapchain_create_info.imageColorSpace    = surface_format.colorSpace;
-	swapchain_create_info.imageExtent.width  = swapchain_extent.width;
-	swapchain_create_info.imageExtent.height = swapchain_extent.height;
-	swapchain_create_info.imageArrayLayers   = 1;
-	swapchain_create_info.imageUsage         = vk::ImageUsageFlagBits::eColorAttachment;
-	swapchain_create_info.imageSharingMode   = vk::SharingMode::eExclusive;
-	swapchain_create_info.preTransform       = pre_transform;
-	swapchain_create_info.compositeAlpha     = composite;
-	swapchain_create_info.presentMode        = swapchain_present_mode;
-	swapchain_create_info.clipped            = true;
-	swapchain_create_info.oldSwapchain       = old_swapchain;
+	vk::SwapchainCreateInfoKHR swapchain_create_info{
+	    .surface          = surface,
+	    .minImageCount    = desired_swapchain_images,
+	    .imageFormat      = surface_format.format,
+	    .imageColorSpace  = surface_format.colorSpace,
+	    .imageExtent      = swapchain_extent,
+	    .imageArrayLayers = 1,
+	    .imageUsage       = vk::ImageUsageFlagBits::eColorAttachment,
+	    .imageSharingMode = vk::SharingMode::eExclusive,
+	    .preTransform     = pre_transform,
+	    .compositeAlpha   = composite,
+	    .presentMode      = swapchain_present_mode,
+	    .clipped          = true,
+	    .oldSwapchain     = old_swapchain};
 
 	return device.createSwapchainKHR(swapchain_create_info);
+}
+
+std::pair<vk::Buffer, VmaAllocation> HPPHelloTriangle::create_vertex_buffer()
+{
+	// Vertex data for a single colored triangle
+	const std::vector<Vertex> vertices = {
+	    {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
+	    {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	    {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+
+	const vk::DeviceSize buffer_size = sizeof(vertices[0]) * vertices.size();
+
+	// Copy Vertex data to a buffer accessible by the device
+
+	vk::BufferCreateInfo buffer_create_info{.size = buffer_size, .usage = vk::BufferUsageFlagBits::eVertexBuffer};
+
+	// We use the Vulkan Memory Allocator to find a memory type that can be written and mapped from the host
+	// On most setups this will return a memory type that resides in VRAM and is accessible from the host
+	VmaAllocationCreateInfo allocation_create_info{
+	    .flags         = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	    .usage         = VMA_MEMORY_USAGE_AUTO,
+	    .requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
+
+	vk::Buffer        vertex_buffer;
+	VmaAllocation     vertex_buffer_allocation;
+	VmaAllocationInfo allocation_info{};
+	vmaCreateBuffer(vma_allocator, reinterpret_cast<VkBufferCreateInfo *>(&buffer_create_info), &allocation_create_info, reinterpret_cast<VkBuffer *>(&vertex_buffer), &vertex_buffer_allocation, &allocation_info);
+	if (allocation_info.pMappedData)
+	{
+		memcpy(allocation_info.pMappedData, vertices.data(), buffer_size);
+	}
+	else
+	{
+		throw std::runtime_error("Could not map vertex buffer.");
+	}
+
+	return {vertex_buffer, vertex_buffer_allocation};
+}
+
+VmaAllocator HPPHelloTriangle::create_vma_allocator()
+{
+	// This sample uses the Vulkan Memory Alloctor (VMA), which needs to be set up
+	VmaVulkanFunctions vma_vulkan_functions{
+	    .vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr,
+	    .vkGetDeviceProcAddr   = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr};
+
+	VmaAllocatorCreateInfo allocator_info{.physicalDevice = gpu, .device = device, .pVulkanFunctions = &vma_vulkan_functions, .instance = instance};
+
+	VmaAllocator allocator;
+	VkResult     result = vmaCreateAllocator(&allocator_info, &allocator);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Could not create allocator for VMA allocator");
+	}
+
+	return allocator;
 }
 
 /**
@@ -731,6 +826,10 @@ void HPPHelloTriangle::render_triangle(uint32_t swapchain_index)
 	vk::Rect2D scissor{{0, 0}, {swapchain_data.extent.width, swapchain_data.extent.height}};
 	// Set scissor dynamically
 	cmd.setScissor(0, scissor);
+
+	// Bind the vertex buffer to source the draw calls from.
+	vk::DeviceSize offset = {0};
+	cmd.bindVertexBuffers(0, vertex_buffer, offset);
 
 	// Draw three vertices with one instance.
 	cmd.draw(3, 1, 0, 0);
