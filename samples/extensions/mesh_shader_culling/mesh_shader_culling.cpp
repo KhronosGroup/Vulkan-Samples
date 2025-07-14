@@ -374,8 +374,9 @@ void MeshShaderCulling::setup_query_result_buffer()
 	// Results are saved in a host visible buffer for easy access by the application
 	VK_CHECK(vkCreateBuffer(get_device().get_handle(), &buffer_create_info, nullptr, &query_result.buffer));
 	vkGetBufferMemoryRequirements(get_device().get_handle(), query_result.buffer, &memory_requirements);
-	memory_allocation.allocationSize  = memory_requirements.size;
-	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	memory_allocation.allocationSize = memory_requirements.size;
+	memory_allocation.memoryTypeIndex =
+	    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &query_result.memory));
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), query_result.buffer, query_result.memory, 0));
 

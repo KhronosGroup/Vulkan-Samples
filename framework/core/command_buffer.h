@@ -19,9 +19,13 @@
 #pragma once
 
 #include "common/hpp_vk_common.h"
+#include "core/device.h"
 #include "core/hpp_descriptor_set_layout.h"
-#include "core/hpp_device.h"
+#include "core/hpp_framebuffer.h"
 #include "core/hpp_physical_device.h"
+#include "core/hpp_render_pass.h"
+#include "core/hpp_sampler.h"
+#include "core/image.h"
 #include "core/physical_device.h"
 #include "hpp_resource_binding_state.h"
 #include "rendering/hpp_pipeline_state.h"
@@ -35,20 +39,7 @@ class QueryPool;
 namespace core
 {
 class HPPQueryPool;
-}        // namespace core
 
-namespace rendering
-{
-template <vkb::BindingType bindingType>
-class Subpass;
-using SubpassCpp = Subpass<vkb::BindingType::Cpp>;
-
-template <vkb::BindingType bindingType>
-struct LightingState;
-}        // namespace rendering
-
-namespace core
-{
 /**
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
@@ -261,10 +252,10 @@ class CommandBuffer
 	                                                     vkb::common::HPPBufferMemoryBarrier const &memory_barrier);
 	void                      copy_buffer_impl(vkb::core::BufferCpp const &src_buffer, vkb::core::BufferCpp const &dst_buffer, vk::DeviceSize size);
 	void                      execute_commands_impl(std::vector<std::shared_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> &secondary_command_buffers);
-	void                      flush_impl(vkb::core::HPPDevice &device, vk::PipelineBindPoint pipeline_bind_point);
+	void                      flush_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
 	void                      flush_descriptor_state_impl(vk::PipelineBindPoint pipeline_bind_point);
-	void                      flush_pipeline_state_impl(vkb::core::HPPDevice &device, vk::PipelineBindPoint pipeline_bind_point);
-	vkb::core::HPPRenderPass &get_render_pass_impl(vkb::core::HPPDevice                                           &device,
+	void                      flush_pipeline_state_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
+	vkb::core::HPPRenderPass &get_render_pass_impl(vkb::core::DeviceCpp                                           &device,
 	                                               vkb::rendering::HPPRenderTarget const                          &render_target,
 	                                               std::vector<vkb::common::HPPLoadStoreInfo> const               &load_store_infos,
 	                                               std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &subpasses);
@@ -896,7 +887,7 @@ inline typename vkb::core::CommandBuffer<bindingType>::RenderPassType &
 	else
 	{
 		return reinterpret_cast<vkb::RenderPass &>(
-		    get_render_pass_impl(reinterpret_cast<vkb::core::HPPDevice &>(this->get_device()),
+		    get_render_pass_impl(reinterpret_cast<vkb::core::DeviceCpp &>(this->get_device()),
 		                         reinterpret_cast<vkb::rendering::HPPRenderTarget const &>(render_target),
 		                         reinterpret_cast<std::vector<vkb::common::HPPLoadStoreInfo> const &>(load_store_infos),
 		                         reinterpret_cast<std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &>(subpasses)));
@@ -905,7 +896,7 @@ inline typename vkb::core::CommandBuffer<bindingType>::RenderPassType &
 
 template <vkb::BindingType bindingType>
 inline vkb::core::HPPRenderPass &
-    CommandBuffer<bindingType>::get_render_pass_impl(vkb::core::HPPDevice                                           &device,
+    CommandBuffer<bindingType>::get_render_pass_impl(vkb::core::DeviceCpp                                           &device,
                                                      vkb::rendering::HPPRenderTarget const                          &render_target,
                                                      std::vector<vkb::common::HPPLoadStoreInfo> const               &load_store_infos,
                                                      std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &subpasses)
@@ -1307,12 +1298,12 @@ inline void CommandBuffer<bindingType>::flush(vk::PipelineBindPoint pipeline_bin
 	}
 	else
 	{
-		flush_impl(reinterpret_cast<vkb::core::HPPDevice &>(this->get_device()), pipeline_bind_point);
+		flush_impl(reinterpret_cast<vkb::core::DeviceCpp &>(this->get_device()), pipeline_bind_point);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::flush_impl(vkb::core::HPPDevice &device, vk::PipelineBindPoint pipeline_bind_point)
+inline void CommandBuffer<bindingType>::flush_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point)
 {
 	flush_pipeline_state_impl(device, pipeline_bind_point);
 	flush_push_constants();
@@ -1472,7 +1463,7 @@ inline void CommandBuffer<bindingType>::flush_descriptor_state_impl(vk::Pipeline
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::flush_pipeline_state_impl(vkb::core::HPPDevice &device, vk::PipelineBindPoint pipeline_bind_point)
+inline void CommandBuffer<bindingType>::flush_pipeline_state_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point)
 {
 	// Create a new pipeline only if the graphics state changed
 	if (!pipeline_state.is_dirty())

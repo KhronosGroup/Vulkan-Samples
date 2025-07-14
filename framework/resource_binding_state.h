@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,11 +19,19 @@
 
 #include "common/vk_common.h"
 #include "core/buffer.h"
-#include "core/image_view.h"
-#include "core/sampler.h"
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
+class Buffer;
+using BufferC = Buffer<vkb::BindingType::C>;
+
+class ImageView;
+class Sampler;
+}        // namespace core
+
 /**
  * @brief A resource info is a struct containing the actual resource data.
  *

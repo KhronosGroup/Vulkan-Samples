@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include <set>
 #include <vulkan/vulkan.hpp>
 
@@ -24,7 +25,9 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice;
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
 
 struct HPPSwapchainProperties
 {
@@ -69,7 +72,7 @@ class HPPSwapchain
 	/**
 	 * @brief Constructor to create a swapchain.
 	 */
-	HPPSwapchain(HPPDevice                               &device,
+	HPPSwapchain(vkb::core::DeviceCpp                    &device,
 	             vk::SurfaceKHR                           surface,
 	             const vk::PresentModeKHR                 present_mode,
 	             const std::vector<vk::PresentModeKHR>   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
@@ -93,7 +96,7 @@ class HPPSwapchain
 
 	bool is_valid() const;
 
-	HPPDevice const &get_device() const;
+	vkb::core::DeviceCpp const &get_device() const;
 
 	vk::SwapchainKHR get_handle() const;
 
@@ -114,7 +117,7 @@ class HPPSwapchain
 	vk::PresentModeKHR get_present_mode() const;
 
   private:
-	HPPDevice &device;
+	vkb::core::DeviceCpp &device;
 
 	vk::SurfaceKHR surface;
 

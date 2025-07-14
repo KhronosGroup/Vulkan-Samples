@@ -67,9 +67,8 @@ void WaitIdle::create_render_context()
 	set_render_context(std::make_unique<CustomRenderContext>(get_device(), get_surface(), *window, wait_idle_enabled));
 }
 
-WaitIdle::CustomRenderContext::CustomRenderContext(vkb::Device &device, VkSurfaceKHR surface, const vkb::Window &window, int &wait_idle_enabled) :
-    RenderContext(device, surface, window),
-    wait_idle_enabled(wait_idle_enabled)
+WaitIdle::CustomRenderContext::CustomRenderContext(vkb::core::DeviceC &device, VkSurfaceKHR surface, const vkb::Window &window, int &wait_idle_enabled) :
+    RenderContext(device, surface, window), wait_idle_enabled(wait_idle_enabled)
 {}
 
 void WaitIdle::CustomRenderContext::wait_frame()

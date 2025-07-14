@@ -198,7 +198,7 @@ void HPPImage::coerce_format_to_srgb()
 	}
 }
 
-void HPPImage::create_vk_image(vkb::core::HPPDevice &device, vk::ImageViewType image_view_type, vk::ImageCreateFlags flags)
+void HPPImage::create_vk_image(vkb::core::DeviceCpp &device, vk::ImageViewType image_view_type, vk::ImageCreateFlags flags)
 {
 	assert(!vk_image && !vk_image_view && "Vulkan HPPImage already constructed");
 

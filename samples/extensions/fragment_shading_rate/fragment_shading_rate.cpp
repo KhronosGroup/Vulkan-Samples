@@ -104,7 +104,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	VkMemoryAllocateInfo memory_allocate_info{};
 	memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &shading_rate_image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), shading_rate_image.image, shading_rate_image.memory, 0));
 

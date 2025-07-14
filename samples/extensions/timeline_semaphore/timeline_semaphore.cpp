@@ -343,7 +343,7 @@ void TimelineSemaphore::setup_compute_pipeline()
 void TimelineSemaphore::setup_compute_resources()
 {
 	// Get compute queue
-	compute.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	compute.queue_family_index = vkb::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_COMPUTE_BIT);
 	vkGetDeviceQueue(get_device().get_handle(), compute.queue_family_index, 0, &compute.queue);
 
 	compute.command_pool = get_device().create_command_pool(compute.queue_family_index, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -398,7 +398,7 @@ void TimelineSemaphore::setup_game_of_life()
 
 	VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
 
-	VK_CHECK(get_device().wait_idle());
+	get_device().wait_idle();
 }
 
 void TimelineSemaphore::build_compute_command_buffers(const float elapsed)
@@ -498,7 +498,7 @@ void TimelineSemaphore::do_graphics_work()
 
 void TimelineSemaphore::setup_graphics_resources()
 {
-	graphics.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
+	graphics.queue_family_index = vkb::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_GRAPHICS_BIT);
 	graphics.queue              = queue;
 
 	graphics.command_pool = get_device().create_command_pool(graphics.queue_family_index, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);

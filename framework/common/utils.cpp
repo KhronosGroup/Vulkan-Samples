@@ -64,7 +64,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto cmd_buf = render_context.get_device().request_command_buffer();
+	auto cmd_buf = render_context.get_device().get_command_pool().request_command_buffer();
 
 	cmd_buf->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 

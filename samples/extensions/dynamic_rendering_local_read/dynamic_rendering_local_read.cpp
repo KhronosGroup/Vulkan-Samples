@@ -369,7 +369,7 @@ void DynamicRenderingLocalRead::create_attachment(VkFormat format, VkImageUsageF
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_ci, nullptr, &attachment.image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment.image, &memory_requirements);
 	memory_ai.allocationSize  = memory_requirements.size;
-	memory_ai.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_ai.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_ai, nullptr, &attachment.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment.image, attachment.memory, 0));
 

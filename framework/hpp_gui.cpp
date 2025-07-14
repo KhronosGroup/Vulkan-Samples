@@ -16,7 +16,7 @@
  */
 
 #include "hpp_gui.h"
-#include "core/hpp_queue.h"
+#include "core/hpp_sampler.h"
 #include "vulkan_sample.h"
 #include <imgui_internal.h>
 #include <numeric>

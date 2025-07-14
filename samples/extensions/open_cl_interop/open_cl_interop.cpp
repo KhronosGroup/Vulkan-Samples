@@ -567,7 +567,7 @@ void OpenCLInterop::prepare_shared_image()
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.pNext                = &export_memory_allocate_info;
 	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, 0);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, 0);
 
 	VK_CHECK(vkAllocateMemory(device_handle, &memory_allocate_info, nullptr, &shared_image.memory));
 	VK_CHECK(vkBindImageMemory(device_handle, shared_image.image, shared_image.memory, 0));

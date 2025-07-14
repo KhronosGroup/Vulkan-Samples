@@ -66,7 +66,6 @@ class RenderFrame
 	using FenceType                = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Fence, VkFence>::type;
 	using SemaphoreType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
 
-	using DeviceType              = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
 	using DescriptorSetLayoutType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDescriptorSetLayout, vkb::DescriptorSetLayout>::type;
 	using FencePoolType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
 	using QueueType               = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
@@ -74,7 +73,7 @@ class RenderFrame
 	using SemaphorePoolType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPSemaphorePool, vkb::SemaphorePool>::type;
 
   public:
-	RenderFrame(DeviceType &device, std::unique_ptr<RenderTargetType> &&render_target, size_t thread_count = 1);
+	RenderFrame(vkb::core::Device<bindingType> &device, std::unique_ptr<RenderTargetType> &&render_target, size_t thread_count = 1);
 	RenderFrame(RenderFrame<bindingType> const &)            = delete;
 	RenderFrame(RenderFrame<bindingType> &&)                 = default;
 	RenderFrame &operator=(RenderFrame<bindingType> const &) = delete;
@@ -101,19 +100,19 @@ class RenderFrame
 	vkb::core::CommandPool<bindingType> &get_command_pool(
 	    QueueType const &queue, vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool, size_t thread_index = 0);
 
-	DeviceType              &get_device();
-	FencePoolType           &get_fence_pool();
-	FencePoolType const     &get_fence_pool() const;
-	RenderTargetType        &get_render_target();
-	RenderTargetType const  &get_render_target() const;
-	SemaphorePoolType       &get_semaphore_pool();
-	SemaphorePoolType const &get_semaphore_pool() const;
-	DescriptorSetType        request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
-	                                                BindingMap<DescriptorBufferInfoType> const &buffer_infos,
-	                                                BindingMap<DescriptorImageInfoType> const  &image_infos,
-	                                                bool                                        update_after_bind,
-	                                                size_t                                      thread_index = 0);
-	void                     reset();
+	vkb::core::Device<bindingType> &get_device();
+	FencePoolType                  &get_fence_pool();
+	FencePoolType const            &get_fence_pool() const;
+	RenderTargetType               &get_render_target();
+	RenderTargetType const         &get_render_target() const;
+	SemaphorePoolType              &get_semaphore_pool();
+	SemaphorePoolType const        &get_semaphore_pool() const;
+	DescriptorSetType               request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
+	                                                       BindingMap<DescriptorBufferInfoType> const &buffer_infos,
+	                                                       BindingMap<DescriptorImageInfoType> const  &image_infos,
+	                                                       bool                                        update_after_bind,
+	                                                       size_t                                      thread_index = 0);
+	void                            reset();
 
 	/**
 	 * @brief Sets a new buffer allocation strategy
@@ -158,7 +157,7 @@ class RenderFrame
 	                                              size_t                                      thread_index = 0);
 
   private:
-	vkb::core::HPPDevice                                                                             &device;
+	vkb::core::DeviceCpp                                                                             &device;
 	std::map<vk::BufferUsageFlags, std::vector<std::pair<vkb::BufferPoolCpp, vkb::BufferBlockCpp *>>> buffer_pools;
 	std::map<uint32_t, std::vector<vkb::core::CommandPoolCpp>>                                        command_pools;           // Commands pools per queue family index
 	std::vector<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>>                        descriptor_pools;        // Descriptor pools per thread
@@ -175,8 +174,10 @@ using RenderFrameC   = RenderFrame<vkb::BindingType::C>;
 using RenderFrameCpp = RenderFrame<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline RenderFrame<bindingType>::RenderFrame(DeviceType &device_, std::unique_ptr<RenderTargetType> &&render_target, size_t thread_count) :
-    device(reinterpret_cast<vkb::core::HPPDevice &>(device_)), fence_pool{device}, semaphore_pool{device}, thread_count{thread_count}, descriptor_pools(thread_count), descriptor_sets(thread_count)
+inline RenderFrame<bindingType>::RenderFrame(vkb::core::Device<bindingType>     &device_,
+                                             std::unique_ptr<RenderTargetType> &&render_target,
+                                             size_t                              thread_count) :
+    device(reinterpret_cast<vkb::core::DeviceCpp &>(device_)), fence_pool{device}, semaphore_pool{device}, thread_count{thread_count}, descriptor_pools(thread_count), descriptor_sets(thread_count)
 {
 	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;        // Block size of a buffer pool in kilobytes
 
@@ -333,7 +334,7 @@ inline vkb::core::CommandPoolCpp &
 }
 
 template <vkb::BindingType bindingType>
-inline typename RenderFrame<bindingType>::DeviceType &RenderFrame<bindingType>::get_device()
+inline typename vkb::core::Device<bindingType> &RenderFrame<bindingType>::get_device()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -341,7 +342,7 @@ inline typename RenderFrame<bindingType>::DeviceType &RenderFrame<bindingType>::
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Device &>(device);
+		return reinterpret_cast<vkb::core::DeviceC &>(device);
 	}
 }
 

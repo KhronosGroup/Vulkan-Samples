@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 
 namespace vkb
 {
-DescriptorPool::DescriptorPool(Device &                   device,
+DescriptorPool::DescriptorPool(vkb::core::DeviceC        &device,
                                const DescriptorSetLayout &descriptor_set_layout,
                                uint32_t                   pool_size) :
     device{device},

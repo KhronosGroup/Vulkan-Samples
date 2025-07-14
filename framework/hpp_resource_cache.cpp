@@ -16,9 +16,9 @@
  */
 
 #include "hpp_resource_cache.h"
+#include "core/device.h"
 #include <common/hpp_resource_caching.h>
 #include <core/hpp_descriptor_set.h>
-#include <core/hpp_device.h>
 #include <core/hpp_image_view.h>
 #include <core/hpp_pipeline_layout.h>
 
@@ -28,7 +28,7 @@ namespace
 {
 template <class T, class... A>
 T &request_resource(
-    vkb::core::HPPDevice &device, vkb::HPPResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
+    vkb::core::DeviceCpp &device, vkb::HPPResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
 {
 	std::lock_guard<std::mutex> guard(resource_mutex);
 
@@ -38,7 +38,7 @@ T &request_resource(
 }
 }        // namespace
 
-HPPResourceCache::HPPResourceCache(vkb::core::HPPDevice &device) :
+HPPResourceCache::HPPResourceCache(vkb::core::DeviceCpp &device) :
     device{device}
 {}
 

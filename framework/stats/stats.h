@@ -31,7 +31,6 @@
 
 namespace vkb
 {
-class Device;
 class RenderContext;
 
 namespace core
