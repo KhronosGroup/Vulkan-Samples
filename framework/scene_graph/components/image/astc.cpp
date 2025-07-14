@@ -227,14 +227,19 @@ Astc::Astc(const Image &image) :
 	auto can_load_from_file = [this, profile, fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, std::vector<uint8_t> &dst_data, uint32_t width, uint32_t height, uint32_t depth) {
 		if (!use_cache)
 		{
+			LOGD("Device does not support ASTC format and cache is disabled. ASTC image {} will be decoded.", get_name())
 			return false;
 		}
 		try
 		{
 			if (!fs->exists(path))
 			{
-				LOGW("ASTC cache file {} does not exist. ASTC image will be decoded", path.string())
+				LOGW("Device does not support ASTC format and cache file {} does not exist. ASTC image {} will be decoded.", path.string(), get_name())
 				return false;
+			}
+			else
+			{
+				LOGD("Loading ASTC image {} from cache file {}", get_name(), path.string())
 			}
 			size_t offset = 0;
 
