@@ -873,11 +873,10 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		depth_attachment_info.clearValue                   = clear_values[1];
 
 		VkRenderingInfoKHR render_info   = vkb::initializers::rendering_info();
-		render_info.renderArea           = {0, 0, width, height};
+		render_info.renderArea           = {0, 0, static_cast<uint32_t>(attachment_width), static_cast<uint32_t>(attachment_height)};
 		render_info.layerCount           = 1;
 		render_info.colorAttachmentCount = 4;
 		render_info.pColorAttachments    = &color_attachment_info[0];
-		render_info.renderArea           = {0, 0, width, height};
 
 		render_info.pDepthAttachment = &depth_attachment_info;
 		if (!vkb::is_depth_only_format(depth_format))
