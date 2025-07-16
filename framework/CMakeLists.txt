@@ -44,14 +44,12 @@ set(FRAMEWORK_FILES
     hpp_api_vulkan_sample.h
     hpp_fence_pool.h
     hpp_gltf_loader.h
-    hpp_gui.h
     hpp_resource_binding_state.h
     hpp_resource_cache.h
     hpp_resource_record.h
     hpp_resource_replay.h
     hpp_semaphore_pool.h
     # Source Files
-    gui.cpp
     drawer.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
@@ -67,7 +65,6 @@ set(FRAMEWORK_FILES
     timer.cpp
     camera_core.cpp
     hpp_api_vulkan_sample.cpp
-    hpp_gui.cpp
     hpp_resource_cache.cpp)
 
 set(COMMON_FILES
