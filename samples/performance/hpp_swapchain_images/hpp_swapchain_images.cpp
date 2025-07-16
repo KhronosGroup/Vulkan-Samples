@@ -18,7 +18,6 @@
 #include "hpp_swapchain_images.h"
 
 #include <common/hpp_utils.h>
-#include <hpp_gui.h>
 #include <rendering/subpasses/hpp_forward_subpass.h>
 
 HPPSwapchainImages::HPPSwapchainImages()

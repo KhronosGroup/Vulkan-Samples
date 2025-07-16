@@ -21,7 +21,6 @@
 #include <algorithm>
 
 #include "gui.h"
-#include "hpp_gui.h"
 
 namespace plugins
 {
@@ -40,8 +39,8 @@ bool UserInterfaceOptions::handle_option(std::deque<std::string> &arguments)
 	std::string option = arguments[0].substr(2);
 	if (option == "hideui")
 	{
-		vkb::Gui::visible    = false;
-		vkb::HPPGui::visible = false;
+		vkb::GuiC::visible   = false;
+		vkb::GuiCpp::visible = false;
 
 		arguments.pop_front();
 		return true;
