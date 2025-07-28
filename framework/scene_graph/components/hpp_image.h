@@ -87,6 +87,8 @@ class HPPImage : public vkb::sg::Component
 	const std::vector<std::vector<vk::DeviceSize>>             &get_offsets() const;
 	const vkb::core::HPPImage                                  &get_vk_image() const;
 	const vkb::core::HPPImageView                              &get_vk_image_view() const;
+	void                                                        update_hash(size_t data_hash);
+	void                                                        update_hash();
 
   protected:
 	vkb::scene_graph::components::HPPMipmap              &get_mipmap(size_t index);
@@ -102,6 +104,7 @@ class HPPImage : public vkb::sg::Component
 
   private:
 	std::vector<uint8_t>                                 data;
+	size_t                                               data_hash{0};
 	vk::Format                                           format = vk::Format::eUndefined;
 	uint32_t                                             layers = 1;
 	std::vector<vkb::scene_graph::components::HPPMipmap> mipmaps{{}};
