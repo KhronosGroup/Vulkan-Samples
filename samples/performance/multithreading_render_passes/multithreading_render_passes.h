@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <ctpl_stl.h>
-
 #include "core/command_buffer.h"
 #include "rendering/render_pipeline.h"
 #include "rendering/subpasses/forward_subpass.h"
@@ -149,8 +147,6 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	 * @brief Main camera for scene rendering
 	 */
 	vkb::sg::Camera *camera{};
-
-	ctpl::thread_pool thread_pool;
 
 	uint32_t swapchain_attachment_index{0};
 

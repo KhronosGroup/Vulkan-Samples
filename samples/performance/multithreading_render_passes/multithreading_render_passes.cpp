@@ -198,11 +198,6 @@ std::vector<std::shared_ptr<vkb::core::CommandBufferC>>
 	auto use_multithreading = multithreading_mode != static_cast<int>(MultithreadingMode::None);
 	shadow_subpass->set_thread_index(use_multithreading ? 1 : 0);
 
-	if (use_multithreading && thread_pool.size() < 1)
-	{
-		thread_pool.resize(1);
-	}
-
 	switch (multithreading_mode)
 	{
 		case static_cast<int>(MultithreadingMode::PrimaryCommandBuffers):
@@ -234,8 +229,8 @@ void MultithreadingRenderPasses::record_separate_primary_command_buffers(std::ve
 	    get_render_context().get_active_frame().get_command_pool(queue, reset_mode, 1).request_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 	// Recording shadow command buffer
-	auto shadow_buffer_future = thread_pool.push(
-	    [this, shadow_command_buffer](size_t thread_id) {
+	auto shadow_buffer_future = std::async(
+	    [this, shadow_command_buffer]() {
 		    shadow_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		    draw_shadow_pass(*shadow_command_buffer);
 		    shadow_command_buffer->end();
@@ -278,9 +273,10 @@ void MultithreadingRenderPasses::record_separate_secondary_command_buffers(std::
 	auto &scene_framebuffer   = get_device().get_resource_cache().request_framebuffer(scene_render_target, scene_render_pass);
 
 	// Recording shadow command buffer
-	auto shadow_buffer_future = thread_pool.push(
-	    [this, shadow_command_buffer, &shadow_render_pass, &shadow_framebuffer](size_t thread_id) {
-		    shadow_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &shadow_render_pass, &shadow_framebuffer, 0);
+	auto shadow_buffer_future = std::async(
+	    [this, shadow_command_buffer, &shadow_render_pass, &shadow_framebuffer]() {
+		    shadow_command_buffer->begin(
+		        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &shadow_render_pass, &shadow_framebuffer, 0);
 		    draw_shadow_pass(*shadow_command_buffer);
 		    shadow_command_buffer->end();
 	    });

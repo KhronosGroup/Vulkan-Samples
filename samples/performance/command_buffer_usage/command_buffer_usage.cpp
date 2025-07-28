@@ -369,10 +369,13 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 
 			if (state.multi_threading)
 			{
-				auto fut = thread_pool.push(
-				    [this, cb_count, &primary_command_buffer, &sorted_opaque_nodes, mesh_start, mesh_end](size_t thread_id) {
-					    return record_draw_secondary(primary_command_buffer, sorted_opaque_nodes, mesh_start, mesh_end, thread_id);
-				    });
+				auto fut = thread_pool.push(std::bind(&CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary,
+				                                      this,
+				                                      std::ref(primary_command_buffer),
+				                                      std::cref(sorted_opaque_nodes),
+				                                      mesh_start,
+				                                      mesh_end,
+				                                      std::placeholders::_1));
 
 				secondary_cmd_buf_futures.push_back(std::move(fut));
 			}

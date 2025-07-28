@@ -34,9 +34,6 @@
 [submodule "third_party/astc"]
 	path = third_party/astc
 	url = https://github.com/ARM-software/astc-encoder
-[submodule "third_party/CTPL"]
-	path = third_party/CTPL
-	url = https://github.com/vit-vit/CTPL
 [submodule "third_party/vulkan"]
 	path = third_party/vulkan
 	url = https://github.com/KhronosGroup/Vulkan-Headers

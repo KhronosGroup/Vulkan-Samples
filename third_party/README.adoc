@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2024, Arm Limited and Contributors
+- Copyright (c) 2019-2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -23,9 +23,7 @@
 This project has multiple third-party dependencies, each of which may have independent licensing:
 
 * https://github.com/ARM-software/astc-encoder[astc-encoder]: ASTC Evaluation Codec
-* https://github.com/catchorg/Catch2[Catch2]: Modern C++ test framework
 * https://github.com/CLIUtils/CLI11[CLI11] Command line parser for C++11 and beyond
-* https://github.com/vit-vit/CTPL[CTPL]: Thread Pool Library
 * https://github.com/fmtlib/fmt[fmt]: A modern formating library
 * https://github.com/glfw/glfw[glfw]: A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
 * https://github.com/g-truc/glm[glm]: OpenGL Mathematics
