@@ -954,8 +954,10 @@ void ApiVulkanSample::handle_surface_changes()
 	                                                   get_render_context().get_swapchain().get_surface(),
 	                                                   &surface_properties));
 
-	if (surface_properties.currentExtent.width != get_render_context().get_surface_extent().width ||
-	    surface_properties.currentExtent.height != get_render_context().get_surface_extent().height)
+	if ((surface_properties.currentExtent.width != get_render_context().get_surface_extent().width ||
+	     surface_properties.currentExtent.height != get_render_context().get_surface_extent().height) &&
+	    (surface_properties.currentExtent.width != 0xFFFFFFFF &&
+	     surface_properties.currentExtent.height != 0xFFFFFFFF))
 	{
 		resize(surface_properties.currentExtent.width, surface_properties.currentExtent.height);
 	}

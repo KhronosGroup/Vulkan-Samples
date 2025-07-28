@@ -851,7 +851,8 @@ void HPPApiVulkanSample::handle_surface_changes()
 	vk::SurfaceCapabilitiesKHR surface_properties =
 	    get_device().get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().get_swapchain().get_surface());
 
-	if (surface_properties.currentExtent != get_render_context().get_surface_extent())
+	if (surface_properties.currentExtent != get_render_context().get_surface_extent() &&
+	    surface_properties.currentExtent != vk::Extent2D{0xFFFFFFFF, 0xFFFFFFFF})
 	{
 		resize(surface_properties.currentExtent.width, surface_properties.currentExtent.height);
 	}
