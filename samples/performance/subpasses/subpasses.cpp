@@ -361,7 +361,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 void draw_pipeline(vkb::core::CommandBufferC &command_buffer,
                    vkb::RenderTarget         &render_target,
                    vkb::RenderPipeline       &render_pipeline,
-                   vkb::Gui                  *gui = nullptr)
+                   vkb::GuiC                 *gui = nullptr)
 {
 	auto &extent = render_target.get_extent();
 

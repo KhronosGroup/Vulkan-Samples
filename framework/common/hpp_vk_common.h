@@ -152,6 +152,26 @@ inline void image_layout_transition(vk::CommandBuffer                command_buf
 	                             static_cast<VkImageSubresourceRange const &>(subresource_range));
 }
 
+inline void make_filters_valid(vk::PhysicalDevice physical_device, vk::Format format, vk::Filter *filter, vk::SamplerMipmapMode *mipmapMode = nullptr)
+{
+	// Not all formats support linear filtering, so we need to adjust them if they don't
+	if (*filter == vk::Filter::eNearest && (mipmapMode == nullptr || *mipmapMode == vk::SamplerMipmapMode::eNearest))
+	{
+		return;        // These must already be valid
+	}
+
+	vk::FormatProperties properties = physical_device.getFormatProperties(format);
+
+	if (!(properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
+	{
+		*filter = vk::Filter::eNearest;
+		if (mipmapMode)
+		{
+			*mipmapMode = vk::SamplerMipmapMode::eNearest;
+		}
+	}
+}
+
 inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice             gpu,
                                                   vk::SurfaceKHR                 surface,
                                                   std::vector<vk::Format> const &preferred_formats = {

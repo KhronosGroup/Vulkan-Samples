@@ -18,7 +18,6 @@
 #include "hpp_pipeline_cache.h"
 
 #include "common/hpp_utils.h"
-#include "hpp_gui.h"
 #include "rendering/subpasses/hpp_forward_subpass.h"
 
 HPPPipelineCache::HPPPipelineCache()
