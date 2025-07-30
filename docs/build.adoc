@@ -210,10 +210,10 @@ Alternatively, for command line builds use the steps below:
 cmake --build build/windows --config Release --target vulkan_samples
 ----
 
-`Step 3.` Run the *Vulkan Samples* application
+`Step 3.` Run the *Vulkan Samples* application by specifying the name of the sample
 
 ----
-build\windows\app\bin\Release\AMD64\vulkan_samples.exe
+build\windows\app\bin\Release\AMD64\vulkan_samples.exe <sample_name>
 ----
 
 == Linux

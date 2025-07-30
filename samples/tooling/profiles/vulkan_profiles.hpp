@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2021-2024 Valve Corporation
  * Copyright (C) 2021-2024 LunarG, Inc.
+ * Copyright (c) 2025, Arm Limited and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -12170,7 +12171,10 @@ struct FeaturesChain {
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
     VkPhysicalDeviceExternalFormatResolveFeaturesANDROID physicalDeviceExternalFormatResolveFeaturesANDROID{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FORMAT_RESOLVE_FEATURES_ANDROID, nullptr };
 #endif
+
+#ifdef VK_ENABLE_BETA_EXTENSIONS
     VkPhysicalDeviceCudaKernelLaunchFeaturesNV physicalDeviceCudaKernelLaunchFeaturesNV{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV, nullptr };
+#endif
     VkPhysicalDeviceSchedulingControlsFeaturesARM physicalDeviceSchedulingControlsFeaturesARM{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM, nullptr };
     VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG physicalDeviceRelaxedLineRasterizationFeaturesIMG{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG, nullptr };
     VkPhysicalDeviceRenderPassStripedFeaturesARM physicalDeviceRenderPassStripedFeaturesARM{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM, nullptr };
@@ -12382,7 +12386,10 @@ struct FeaturesChain {
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
         this->structureSize.insert({ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FORMAT_RESOLVE_FEATURES_ANDROID, size<VkPhysicalDeviceExternalFormatResolveFeaturesANDROID>() });
 #endif
+
+#ifdef VK_ENABLE_BETA_EXTENSIONS
         this->structureSize.insert({ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV, size<VkPhysicalDeviceCudaKernelLaunchFeaturesNV>() });
+#endif
         this->structureSize.insert({ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM, size<VkPhysicalDeviceSchedulingControlsFeaturesARM>() });
         this->structureSize.insert({ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG, size<VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG>() });
         this->structureSize.insert({ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM, size<VkPhysicalDeviceRenderPassStripedFeaturesARM>() });
@@ -12775,8 +12782,11 @@ struct FeaturesChain {
         physicalDeviceExternalFormatResolveFeaturesANDROID.pNext = pNext;
         pNext = &physicalDeviceExternalFormatResolveFeaturesANDROID;
 #endif
+
+#ifdef VK_ENABLE_BETA_EXTENSIONS
         physicalDeviceCudaKernelLaunchFeaturesNV.pNext = pNext;
         pNext = &physicalDeviceCudaKernelLaunchFeaturesNV;
+#endif
         physicalDeviceSchedulingControlsFeaturesARM.pNext = pNext;
         pNext = &physicalDeviceSchedulingControlsFeaturesARM;
         physicalDeviceRelaxedLineRasterizationFeaturesIMG.pNext = pNext;
@@ -13417,7 +13427,7 @@ VPAPI_ATTR void vpDestroyCapabilities(
     VpCapabilities                              capabilities,
     const VkAllocationCallbacks*                pAllocator) {
     (void)pAllocator;
-    
+
     delete capabilities;
 }
 

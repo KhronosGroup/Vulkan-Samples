@@ -92,6 +92,7 @@ set(ORDER_LIST
     "dynamic_multisample_rasterization"
     "sparse_image"
     "dynamic_primitive_clipping"
+    "hello_graph_pipeline"
 
     #Performance Samples
     "swapchain_images"

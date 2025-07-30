@@ -1,0 +1,80 @@
+; Copyright (c) 2024-2025, Arm Limited and Contributors
+;
+; SPDX-License-Identifier: Apache-2.0
+;
+; Licensed under the Apache License, Version 2.0 the "License";
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+
+
+; A simple neural network with a single pooling layer, expressed in SPIR-V assembly.
+; See the README.adoc for a more detailed explanation of this code.
+
+                     ; Boilerplate
+                     OpCapability Int8
+                     OpCapability Shader
+                     OpCapability TensorsARM
+                     OpCapability GraphARM
+                     OpExtension "SPV_ARM_tensors"
+                     OpExtension "SPV_ARM_graph"
+
+                     ; Import TOSA instructions for neural network operations
+             %tosa = OpExtInstImport "TOSA.001000.1"
+
+                     ; More boilerplate
+                     OpMemoryModel Logical GLSL450
+
+                     ; Descriptor set interface
+                     OpDecorate %input_tensor_ptr DescriptorSet 0
+                     OpDecorate %input_tensor_ptr Binding 0
+                     OpDecorate %output_tensor_ptr DescriptorSet 0
+                     OpDecorate %output_tensor_ptr Binding 1
+
+                     ; Types and constants
+             %uint = OpTypeInt 32 0
+            %uint8 = OpTypeInt 8 0
+           %uint_0 = OpConstant %uint 0
+           %uint_1 = OpConstant %uint 1
+           %uint_2 = OpConstant %uint 2
+           %uint_3 = OpConstant %uint 3
+           %uint_4 = OpConstant %uint 4
+            %float = OpTypeFloat 32
+          %uint8_0 = OpConstant %uint8 0
+           %uintv2 = OpTypeVector %uint 2
+           %uintv4 = OpTypeVector %uint 4
+           %array_type = OpTypeArray %uint %uint_1
+           %array_1  = OpConstantComposite %array_type %uint_1
+           %array_2  = OpConstantComposite %array_type %uint_2
+           %array_4  = OpConstantComposite %array_type %uint_4
+%tensor_type_r1_elem1 = OpTypeTensorARM %float %uint_1 %array_1
+%tensor_type_r1_elem2 = OpTypeTensorARM %uint %uint_1 %array_2
+%tensor_type_r1_elem4 = OpTypeTensorARM %uint %uint_1 %array_4
+  %avg_pool_kernel = OpConstantComposite %tensor_type_r1_elem2 %uint_3 %uint_3
+  %avg_pool_stride = OpConstantComposite %tensor_type_r1_elem2 %uint_2 %uint_2
+
+ %input_zero_point = OpConstantComposite %tensor_type_r1_elem1 %uint_0
+%output_zero_point = OpConstantComposite %tensor_type_r1_elem1 %uint_0
+     %avg_pool_pad = OpConstantComposite %tensor_type_r1_elem4 %uint_0 %uint_0 %uint_0 %uint_0
+     %float_tensor = OpTypeTensorARM %float %uint_4
+       %graph_type = OpTypeGraphARM 1 %float_tensor %float_tensor
+ %ptr_float_tensor = OpTypePointer UniformConstant %float_tensor
+
+ %input_tensor_ptr = OpVariable %ptr_float_tensor UniformConstant
+%output_tensor_ptr = OpVariable %ptr_float_tensor UniformConstant
+
+                     OpGraphEntryPointARM %graph "main" %input_tensor_ptr %output_tensor_ptr
+
+            %graph = OpGraphARM %graph_type
+               %in = OpGraphInputARM %float_tensor %uint_0
+         %avg_pool = OpExtInst %float_tensor %tosa AVG_POOL2D %avg_pool_kernel %avg_pool_stride %avg_pool_pad %uint_2 %in %input_zero_point %output_zero_point
+                     OpGraphSetOutputARM %avg_pool %uint_0
+                     OpGraphEndARM

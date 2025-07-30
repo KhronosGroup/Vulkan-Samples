@@ -1,5 +1,6 @@
 ////
 - Copyright (c) 2021-2024, The Khronos Group
+- Copyright (c) 2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -302,3 +303,12 @@ Demonstrate the use of the host image extension to directly copy from a host buf
 *Extensions:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_line_rasterization`], https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
 
 Demonstrate how to use dynamic multisample rasterization (MSAA)
+
+=== xref:./{extension_samplespath}graph_pipelines/README.adoc[Graph Pipelines]
+
+*Extensions*: `VK_ARM_tensors`, `VK_ARM_data_graph`
+
+There are a series of graph pipeline based examples each focusing on a specific aspect of building and executing a neural graph pipeline using Vulkan:
+
+1. xref:./{extension_samplespath}graph_pipelines/hello_graph_pipeline/README.adoc[hello_graph_pipeline]
+* Explains how to set up and execute a simple neural network using a graph pipeline.

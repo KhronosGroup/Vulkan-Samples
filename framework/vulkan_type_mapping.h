@@ -1,4 +1,5 @@
 /* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -82,6 +83,18 @@ template <>
 struct HPPType<VkSampler>
 {
 	using Type = vk::Sampler;
+};
+
+template <>
+struct HPPType<VkPipeline>
+{
+	using Type = vk::Pipeline;
+};
+
+template <>
+struct HPPType<VkPipelineLayout>
+{
+	using Type = vk::PipelineLayout;
 };
 }        // namespace detail
 

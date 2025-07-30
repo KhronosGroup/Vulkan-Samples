@@ -22,7 +22,7 @@
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_sample)
-    set(options)  
+    set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
     set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
 
@@ -35,7 +35,7 @@ function(add_sample)
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
         DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
+        TAGS
             "any"
         FILES
             ${TARGET_FILES}
@@ -54,7 +54,7 @@ endfunction()
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
-    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG)
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL SHADER_FILES_SLANG SHADER_FILES_SPVASM)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -83,7 +83,12 @@ function(add_sample_with_tags)
     # Add slang shader files for this sample
     foreach(SHADER_FILE_SLANG ${TARGET_SHADER_FILES_SLANG})
         list(APPEND SHADERS_SLANG "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_SLANG}")
-    endforeach()   
+    endforeach()
+
+    # Add spvasm shader files for this sample
+    foreach(SHADER_FILE_SPVASM ${TARGET_SHADER_FILES_SPVASM})
+        list(APPEND SHADERS_SPVASM "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_SPVASM}")
+    endforeach()
 
     add_project(
         TYPE "Sample"
@@ -92,7 +97,7 @@ function(add_sample_with_tags)
         AUTHOR ${TARGET_AUTHOR}
         NAME ${TARGET_NAME}
         DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
+        TAGS
             ${TARGET_TAGS}
         FILES
             ${SRC_FILES}
@@ -103,15 +108,19 @@ function(add_sample_with_tags)
         SHADERS_HLSL
             ${SHADERS_HLSL}
         SHADERS_SLANG
-            ${SHADERS_SLANG}            
+            ${SHADERS_SLANG}
+        SHADERS_SLANG
+            ${SHADERS_SLANG}
+        SHADERS_SPVASM
+            ${SHADERS_SPVASM}
         DXC_ADDITIONAL_ARGUMENTS ${TARGET_DXC_ADDITIONAL_ARGUMENTS}
         GLSLC_ADDITIONAL_ARGUMENTS ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS})
 endfunction()
 
 function(add_project)
-    set(options)  
+    set(options)
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION DXC_ADDITIONAL_ARGUMENTS GLSLC_ADDITIONAL_ARGUMENTS)
-    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL SHADERS_SLANG)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL SHADERS_SLANG SHADERS_SPVASM)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -138,16 +147,19 @@ function(add_project)
     if (TARGET_SHADERS_HLSL)
         source_group("\\Shaders\\hlsl" FILES ${TARGET_SHADERS_HLSL})
         # Disable automatic compilation of HLSL shaders for MSVC
-        set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")        
+        set_source_files_properties(SOURCE ${SHADERS_HLSL} PROPERTIES VS_SETTINGS "ExcludedFromBuild=true")
     endif()
     if (TARGET_SHADERS_SLANG)
         source_group("\\Shaders\\slang" FILES ${TARGET_SHADERS_SLANG})
-    endif()    
+    endif()
+    if (TARGET_SHADERS_SPVASM)
+        source_group("\\Shaders\\spvasm" FILES ${TARGET_SHADERS_SPVASM})
+    endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG})
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG} ${SHADERS_SPVASM})
 elseif(${TARGET_TYPE} STREQUAL "Test")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG})
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG} ${SHADERS_SPVASM})
 endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -160,7 +172,7 @@ endif()
         target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
-    # capitalise the first letter of the category  (performance -> Performance) 
+    # capitalise the first letter of the category  (performance -> Performance)
     string(SUBSTRING ${TARGET_CATEGORY} 0 1 FIRST_LETTER)
     string(TOUPPER ${FIRST_LETTER} FIRST_LETTER)
     string(REGEX REPLACE "^.(.*)" "${FIRST_LETTER}\\1" CATEGORY "${TARGET_CATEGORY}")
@@ -168,7 +180,7 @@ endif()
     if(${TARGET_TYPE} STREQUAL "Sample")
         # set sample properties
         set_target_properties(${PROJECT_NAME}
-            PROPERTIES 
+            PROPERTIES
                 SAMPLE_CATEGORY ${TARGET_CATEGORY}
                 SAMPLE_AUTHOR ${TARGET_AUTHOR}
                 SAMPLE_NAME ${TARGET_NAME}
@@ -185,12 +197,12 @@ endif()
     if(VKB_DO_CLANG_TIDY)
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
-   
+
     # HLSL compilation via DXC
     if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
         set(OUTPUT_FILES "")
         set(HLSL_TARGET_NAME ${PROJECT_NAME}-HLSL)
-        foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})        
+        foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
             get_filename_component(HLSL_SPV_FILE ${SHADER_FILE_HLSL} NAME_WLE)
             get_filename_component(bare_name ${HLSL_SPV_FILE} NAME_WLE)
             get_filename_component(extension ${HLSL_SPV_FILE} LAST_EXT)
@@ -242,7 +254,7 @@ endif()
         endforeach()
         add_custom_target(${HLSL_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
         set_property(TARGET ${HLSL_TARGET_NAME} PROPERTY FOLDER "Shaders-HLSL")
-        add_dependencies(${PROJECT_NAME} ${HLSL_TARGET_NAME})           
+        add_dependencies(${PROJECT_NAME} ${HLSL_TARGET_NAME})
     endif()
 
     # Slang shader compilation
@@ -274,11 +286,11 @@ endif()
         endforeach()
         add_custom_target(${SLANG_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
         set_property(TARGET ${SLANG_TARGET_NAME} PROPERTY FOLDER "Shaders-SLANG")
-        add_dependencies(${PROJECT_NAME} ${SLANG_TARGET_NAME})        
+        add_dependencies(${PROJECT_NAME} ${SLANG_TARGET_NAME})
     endif()
 
     # GLSL shader compilation
-    if(Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)                
+    if(Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)
         set(GLSL_TARGET_NAME ${PROJECT_NAME}-GLSL)
         set(OUTPUT_FILES "")
         foreach(SHADER_FILE_GLSL ${TARGET_SHADERS_GLSL})
@@ -293,9 +305,23 @@ endif()
             set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-glsl-spv")
             set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}${extension}.spv)
             file(MAKE_DIRECTORY ${OUTPUT_DIR})
+
+            # NOTE: Vulkan SDK has old glslc but new glslang. We must use glslang to compile `graph_pipelines`.
+            # TODO: Remove workaround once glslc is updated.
+            if ("${CMAKE_CURRENT_BINARY_DIR}" MATCHES "graph_pipelines")
+                #  glslang (NOT glslangValidator, as that also seems to be old)
+                get_filename_component(GLSLANG_PATH ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} DIRECTORY)
+                string(REPLACE "glslangValidator" "glslang" GLSLANG_EXECUTABLE ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE})
+                SET(COMPILE_COMMAND ${GLSLANG_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} -V -I"${CMAKE_SOURCE_DIR}/shaders/includes/glsl" ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS})
+            else()
+                # glslc
+                SET(COMPILE_COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} -I "${CMAKE_SOURCE_DIR}/shaders/includes/glsl" ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS})
+            endif()
+
+
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
-                COMMAND ${Vulkan_glslc_EXECUTABLE} ${SHADER_FILE_GLSL} -o ${OUTPUT_FILE} -I "${CMAKE_SOURCE_DIR}/shaders/includes/glsl" ${TARGET_GLSLC_ADDITIONAL_ARGUMENTS}
+                COMMAND ${COMPILE_COMMAND}
                 COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
                 MAIN_DEPENDENCY ${SHADER_FILE_GLSL}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -308,6 +334,36 @@ endif()
         add_custom_target(${GLSL_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
         set_property(TARGET ${GLSL_TARGET_NAME} PROPERTY FOLDER "Shaders-GLSL")
         add_dependencies(${PROJECT_NAME} ${GLSL_TARGET_NAME})
+    endif()
+
+    # spvasm shader compilation
+    if(Vulkan_spirvas_EXECUTABLE AND DEFINED SHADERS_SPVASM)
+        set(SPVASM_TARGET_NAME ${PROJECT_NAME}-SPVASM)
+        set(OUTPUT_FILES "")
+        foreach(SHADER_FILE_SPVASM ${TARGET_SHADERS_SPVASM})
+            get_filename_component(SPVASM_FILE ${SHADER_FILE_SPVASM} NAME_WLE)
+            get_filename_component(bare_name ${SPVASM_FILE} NAME_WLE)
+            get_filename_component(extension ${SHADER_FILE_SPVASM} LAST_EXT)
+            get_filename_component(directory ${SHADER_FILE_SPVASM} DIRECTORY)
+            set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shader-spvasm-spv")
+            set(OUTPUT_FILE ${OUTPUT_DIR}/${bare_name}${extension}.spv)
+            file(MAKE_DIRECTORY ${OUTPUT_DIR})
+            add_custom_command(
+                OUTPUT ${OUTPUT_FILE}
+                COMMAND ${Vulkan_spirvas_EXECUTABLE} ${SHADER_FILE_SPVASM} -o ${OUTPUT_FILE} ${TARGET_SPVASM_ADDITIONAL_ARGUMENTS}
+                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
+                MAIN_DEPENDENCY ${SHADER_FILE_SPVASM}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+            list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
+            set_source_files_properties(${OUTPUT_FILE} PROPERTIES
+                MACOSX_PACKAGE_LOCATION Resources
+            )
+        endforeach()
+        add_custom_target(${SPVASM_TARGET_NAME} DEPENDS ${OUTPUT_FILES})
+        set_property(TARGET ${SPVASM_TARGET_NAME} PROPERTY FOLDER "Shaders-SPVASM")
+        add_dependencies(${PROJECT_NAME} ${SPVASM_TARGET_NAME})
+
     endif()
 
 endfunction()
