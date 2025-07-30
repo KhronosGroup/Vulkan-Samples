@@ -229,6 +229,26 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev libwayland-dev libxkbcommon-dev
 ----
 
+=== Selecting the window system
+
+On Linux, the samples support different window systems. If not explicitly set, default is X11 Xcb. If you want to build with another window system, use the `VKB_WSI_SELECTION` CMake option like this:
+
+----
+cmake -G "Unix Makefiles" -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_WSI_SELECTION=WAYLAND
+----
+
+Available Linux window systems:
+
+[cols="1,1"]
+|===
+| VKB_WSI_SELECTION | Window system
+
+| XCB | X11 Xcb (Default)
+| XLIB | X11 Xlib
+| WAYLAND | Wayland
+| D2D | Direct to Display (`VK_KHR_DISPLAY`)
+|===
+
 === Build with CMake
 
 `Step 1.` The following command will generate the project
