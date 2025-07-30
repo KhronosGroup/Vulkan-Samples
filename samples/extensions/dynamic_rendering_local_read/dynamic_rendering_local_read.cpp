@@ -460,6 +460,7 @@ void DynamicRenderingLocalRead::update_uniform_buffer()
 	shader_data_vs.projection = camera.matrices.perspective;
 	shader_data_vs.view       = camera.matrices.view;
 	shader_data_vs.model      = glm::mat4(1.f);
+	shader_data_vs.inverse_transpose = glm::inverseTranspose(shader_data_vs.view * shader_data_vs.model);
 	buffers.ubo_vs->convert_and_update(shader_data_vs);
 }
 
@@ -692,8 +693,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	pipeline_create_info.subpass = 0;
 #endif
 
-	shader_stages[0] = load_shader("dynamic_rendering_local_read/scene_opaque.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering_local_read/scene_opaque.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering_local_read", "scene_opaque.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering_local_read", "scene_opaque.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &scene_opaque_pass.pipeline));
 
 	/*
@@ -731,8 +732,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	pipeline_create_info.subpass = 2;
 #endif
 
-	shader_stages[0] = load_shader("dynamic_rendering_local_read/scene_transparent.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering_local_read/scene_transparent.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering_local_read", "scene_transparent.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering_local_read", "scene_transparent.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &scene_transparent_pass.pipeline));
 
 	/*
@@ -771,8 +772,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	empty_vertex_input_state.sType         = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	pipeline_create_info.pVertexInputState = &empty_vertex_input_state;
 
-	shader_stages[0] = load_shader("dynamic_rendering_local_read/composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering_local_read/composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering_local_read", "composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering_local_read", "composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &composition_pass.pipeline));
 }
 
