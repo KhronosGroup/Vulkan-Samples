@@ -1,5 +1,6 @@
 /* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2024-2025, Bradley Austin Davis. All rights reserved.
+ * Copyright (c) 2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -337,12 +338,14 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 */
 	void clear();
 
+	VmaAllocation allocation = VK_NULL_HANDLE;
+
   private:
 	vk::Buffer create_buffer_impl(vk::BufferCreateInfo const &create_info);
 	vk::Image  create_image_impl(vk::ImageCreateInfo const &create_info);
 
 	VmaAllocationCreateInfo allocation_create_info = {};
-	VmaAllocation           allocation             = VK_NULL_HANDLE;
+
 	/**
 	 * @brief A pointer to the allocation memory, if the memory is HOST_VISIBLE and is currently (or persistently) mapped.
 	 * Contains null otherwise.
