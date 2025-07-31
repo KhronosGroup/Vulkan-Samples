@@ -45,10 +45,10 @@ VSOutput main(VSInput input, uniform float4x4 pushMatrix, uniform float4 pushCol
     VSOutput output;
     output.Pos = mul(ubo.projection, mul(ubo.view, mul(pushMatrix, float4(input.Pos, 1.0))));
     // Vertex position in world space
-    output.WorldPos = float3(mul((float3x3)pushMatrix, input.Pos));
+    output.WorldPos = mul(pushMatrix, float4(input.Pos, 1.0)).xyz;
     // GL to Vulkan coord space
     output.WorldPos.y = -output.WorldPos.y;
-    output.Normal = normalize(mul((float3x3)ubo.inverseTranspose, input.Normal));
+    output.Normal = mul((float3x3)nodeMat, input.Normal);    
     output.Color = pushColor;
     return output;
 }

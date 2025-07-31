@@ -460,7 +460,6 @@ void DynamicRenderingLocalRead::update_uniform_buffer()
 	shader_data_vs.projection = camera.matrices.perspective;
 	shader_data_vs.view       = camera.matrices.view;
 	shader_data_vs.model      = glm::mat4(1.f);
-	shader_data_vs.inverse_transpose = glm::inverseTranspose(shader_data_vs.view * shader_data_vs.model);
 	buffers.ubo_vs->convert_and_update(shader_data_vs);
 }
 
@@ -728,7 +727,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount = 1;
+	blend_state.attachmentCount  = 1;
 	pipeline_create_info.subpass = 2;
 #endif
 
@@ -750,7 +749,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount = 1;
+	blend_state.attachmentCount  = 1;
 	pipeline_create_info.subpass = 1;
 #endif
 
@@ -950,15 +949,15 @@ void DynamicRenderingLocalRead::build_command_buffers()
 
 		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
 #else
-		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-		render_pass_begin_info.renderPass = render_pass;
-		render_pass_begin_info.renderArea.offset.x = 0;
-		render_pass_begin_info.renderArea.offset.y = 0;
-		render_pass_begin_info.renderArea.extent.width = width;
+		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.renderPass               = render_pass;
+		render_pass_begin_info.renderArea.offset.x      = 0;
+		render_pass_begin_info.renderArea.offset.y      = 0;
+		render_pass_begin_info.renderArea.extent.width  = width;
 		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.clearValueCount = 5;
-		render_pass_begin_info.pClearValues = clear_values;
-		render_pass_begin_info.framebuffer = framebuffers[i];
+		render_pass_begin_info.clearValueCount          = 5;
+		render_pass_begin_info.pClearValues             = clear_values;
+		render_pass_begin_info.framebuffer              = framebuffers[i];
 
 		// Start our render pass, which contains multiple sub passes
 		vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);

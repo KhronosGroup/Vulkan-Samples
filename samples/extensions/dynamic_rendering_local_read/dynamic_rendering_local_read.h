@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,6 @@
 
 #include "api_vulkan_sample.h"
 #include "gltf_loader.h"
-#include <glm/gtc/matrix_inverse.hpp>
 
 // Can be used to toggle between renderpasses + subpasses and dynamic rendering + local read
 #define USE_DYNAMIC_RENDERING
@@ -53,7 +52,6 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 model;
 		glm::mat4 view;
-		glm::mat4 inverse_transpose;
 	} shader_data_vs;
 
 	struct Light
