@@ -38,6 +38,13 @@ DynamicRenderingLocalRead::DynamicRenderingLocalRead()
 	// To simplify barrier setup used for dynamic rendering, we use sync2
 	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 
+	// Slang shaders require additional extensions to be enabled
+	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
+	{
+		add_device_extension(VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME);
+		add_device_extension(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
+	}
+
 	// Dynamic rendering doesn't use render passes
 	// To make sure that framework related classes like the user interface are aware of this, we explicitly st the base class' renderpass to a null handle
 	render_pass = VK_NULL_HANDLE;
