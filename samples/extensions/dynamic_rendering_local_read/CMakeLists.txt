@@ -32,6 +32,13 @@ add_sample(
         "dynamic_rendering_local_read/glsl/scene_opaque.frag"
         "dynamic_rendering_local_read/glsl/scene_transparent.vert"
         "dynamic_rendering_local_read/glsl/scene_transparent.frag"
+    SHADER_FILES_HLSL
+        "dynamic_rendering_local_read/hlsl/composition.frag.hlsl"
+        "dynamic_rendering_local_read/hlsl/composition.vert.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_opaque.vert.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_opaque.frag.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_transparent.vert.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_transparent.frag.hlsl"
     SHADER_FILES_SLANG
         "dynamic_rendering_local_read/slang/composition.frag.slang"
         "dynamic_rendering_local_read/slang/composition.vert.slang"

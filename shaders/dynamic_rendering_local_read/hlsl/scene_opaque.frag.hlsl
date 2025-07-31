@@ -15,19 +15,16 @@
  * limitations under the License.
  */
 
-[[vk::input_attachment_index(0)]] SubpassInput positionDepthAttachment;
-
-[[vk::binding(2, 0)]] Sampler2D samplerTexture;
-
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
-    float3 Color;
-    float2 UV;
+    float3 Normal : NORMAL0;
+    float4 Color : COLOR0;
+    float3 WorldPos : POS0;
 };
 
-[[SpecializationConstant]] const float NEAR_PLANE = 0.1;
-[[SpecializationConstant]] const float FAR_PLANE = 256.0;
+[[vk::constant_id(0)]] const float NEAR_PLANE = 0.1;
+[[vk::constant_id(1)]] const float FAR_PLANE = 256.0;
 
 float linearDepth(float depth)
 {
@@ -35,20 +32,25 @@ float linearDepth(float depth)
 	return (2.0f * NEAR_PLANE * FAR_PLANE) / (FAR_PLANE + NEAR_PLANE - z * (FAR_PLANE - NEAR_PLANE));	
 }
 
-[shader("fragment")]
-float4 main(VSOutput input)
+struct FSOutput
 {
-	// Sample depth from deferred depth buffer and discard if obscured
-	float depth = positionDepthAttachment.SubpassLoad().a;
+    float4 Color : SV_TARGET0;
+    float4 PositionDepth : SV_TARGET1;
+    float4 Normal : SV_TARGET2;
+    float4 Albedo : SV_TARGET3;
+};
 
-    // Save the sampled texture color before discarding.
-    // This is to avoid implicit derivatives in non-uniform control flow.
-    // @todo: reversed depth
-    float4 sampledColor = samplerTexture.Sample(input.UV);
-	if ((depth != 0.0) && (linearDepth(input.Pos.z) < depth))
-	{
-//		discard;
-	};
-
-	return sampledColor;
+FSOutput main(VSOutput input)
+{
+    FSOutput output;
+	float3 N = normalize(input.Normal);
+	N.y = -N.y;
+	output.Normal = float4(N, 1.0);
+	output.Albedo = input.Color;
+	// Store linearized depth in alpha component
+    output.PositionDepth.rgb = input.WorldPos;
+    output.PositionDepth.a = linearDepth(input.Pos.z);
+    // Write color attachments to avoid undefined behaviour (validation error)
+    output.Color = (1.0).rrrr;
+	return output;
 }

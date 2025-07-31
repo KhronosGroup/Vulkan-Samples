@@ -17,17 +17,18 @@
 
 [[vk::input_attachment_index(0)]] SubpassInput positionDepthAttachment;
 
-[[vk::binding(2, 0)]] Sampler2D samplerTexture;
+Texture2D texture : register(t2);
+SamplerState samplerTexture : register(s2);
 
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
-    float3 Color;
-    float2 UV;
+    float3 Color : COLOR0;
+    float2 UV : TEXCOORD0;
 };
 
-[[SpecializationConstant]] const float NEAR_PLANE = 0.1;
-[[SpecializationConstant]] const float FAR_PLANE = 256.0;
+[[vk::constant_id(0)]] const float NEAR_PLANE = 0.1;
+[[vk::constant_id(1)]] const float FAR_PLANE = 256.0;
 
 float linearDepth(float depth)
 {
@@ -35,8 +36,7 @@ float linearDepth(float depth)
 	return (2.0f * NEAR_PLANE * FAR_PLANE) / (FAR_PLANE + NEAR_PLANE - z * (FAR_PLANE - NEAR_PLANE));	
 }
 
-[shader("fragment")]
-float4 main(VSOutput input)
+float4 main(VSOutput input) : SV_TARGET
 {
 	// Sample depth from deferred depth buffer and discard if obscured
 	float depth = positionDepthAttachment.SubpassLoad().a;
@@ -44,7 +44,7 @@ float4 main(VSOutput input)
     // Save the sampled texture color before discarding.
     // This is to avoid implicit derivatives in non-uniform control flow.
     // @todo: reversed depth
-    float4 sampledColor = samplerTexture.Sample(input.UV);
+    float4 sampledColor = texture.Sample(samplerTexture, input.UV);
 	if ((depth != 0.0) && (linearDepth(input.Pos.z) < depth))
 	{
 //		discard;
