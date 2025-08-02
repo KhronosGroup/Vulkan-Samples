@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Sascha Willems
+# Copyright (c) 2024-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,23 @@ add_sample(
     NAME "Dynamic Rendering local reads"
     DESCRIPTION "Demonstrates the dynamic rendering local read extension to use input attachments with dynamic rendering"
     SHADER_FILES_GLSL
-        "dynamic_rendering_local_read/composition.frag"
-        "dynamic_rendering_local_read/composition.vert"
-        "dynamic_rendering_local_read/scene_opaque.vert"
-        "dynamic_rendering_local_read/scene_opaque.frag"
-        "dynamic_rendering_local_read/scene_transparent.vert"
-        "dynamic_rendering_local_read/scene_transparent.frag")
+        "dynamic_rendering_local_read/glsl/composition.frag"
+        "dynamic_rendering_local_read/glsl/composition.vert"
+        "dynamic_rendering_local_read/glsl/scene_opaque.vert"
+        "dynamic_rendering_local_read/glsl/scene_opaque.frag"
+        "dynamic_rendering_local_read/glsl/scene_transparent.vert"
+        "dynamic_rendering_local_read/glsl/scene_transparent.frag"
+    SHADER_FILES_HLSL
+        "dynamic_rendering_local_read/hlsl/composition.frag.hlsl"
+        "dynamic_rendering_local_read/hlsl/composition.vert.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_opaque.vert.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_opaque.frag.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_transparent.vert.hlsl"
+        "dynamic_rendering_local_read/hlsl/scene_transparent.frag.hlsl"
+    SHADER_FILES_SLANG
+        "dynamic_rendering_local_read/slang/composition.frag.slang"
+        "dynamic_rendering_local_read/slang/composition.vert.slang"
+        "dynamic_rendering_local_read/slang/scene_opaque.vert.slang"
+        "dynamic_rendering_local_read/slang/scene_opaque.frag.slang"
+        "dynamic_rendering_local_read/slang/scene_transparent.vert.slang"
+        "dynamic_rendering_local_read/slang/scene_transparent.frag.slang")

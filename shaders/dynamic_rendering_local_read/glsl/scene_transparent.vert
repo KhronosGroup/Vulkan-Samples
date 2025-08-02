@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,37 +18,28 @@
 
 layout (location = 0) in vec4 inPos;
 layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec2 inUV;
 
-layout (binding = 0) uniform UBO 
+layout (binding = 1) uniform UBO 
 {
 	mat4 projection;
 	mat4 model;
 	mat4 view;
 } ubo;
 
-layout (location = 0) out vec3 outNormal;
-layout (location = 1) out vec4 outColor;
-layout (location = 2) out vec3 outWorldPos;
+layout (location = 0) out vec4 outColor;
+layout (location = 1) out vec2 outUV;
 
 layout(push_constant) uniform SceneNode {
 	mat4 matrix;
 	vec4 color;
 } sceneNode;
 
-void main() 
-{
-	mat4 nodeMat = ubo.model * sceneNode.matrix;
 
-	gl_Position = ubo.projection * ubo.view * nodeMat * inPos;
+void main () 
+{
+	outColor = vec4(1.0);
+	outUV = inUV;
 	
-	// Vertex position in world space
-	outWorldPos = vec3(sceneNode.matrix * inPos);
-	// GL to Vulkan coord space
-	outWorldPos.y = -outWorldPos.y;
-	
-	// Normal in world space
-	mat3 mNormal = transpose(inverse(mat3(mat3(nodeMat))));
-	outNormal = normalize(mNormal * inNormal);
-	
-	outColor = sceneNode.color;
+	gl_Position = ubo.projection * ubo.view * ubo.model * sceneNode.matrix * vec4(inPos.xyz, 1.0);		
 }

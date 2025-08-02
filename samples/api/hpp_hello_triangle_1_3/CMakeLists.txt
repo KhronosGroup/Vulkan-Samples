@@ -27,8 +27,14 @@ add_sample(
     NAME "Vulkan 1.3 HPP Hello Triangle"
     DESCRIPTION "An introduction into Vulkan using Vulkan 1.3 using Vulkan-Hpp"
     SHADER_FILES_GLSL
-        "hello_triangle_1_3/triangle.vert"
-        "hello_triangle_1_3/triangle.frag")
+        "hello_triangle_1_3/glsl/triangle.vert"
+        "hello_triangle_1_3/glsl/triangle.frag"
+    SHADER_FILES_HLSL
+        "hello_triangle_1_3/hlsl/triangle.vert.hlsl"
+        "hello_triangle_1_3/hlsl/triangle.frag.hlsl"
+    SHADER_FILES_SLANG
+        "hello_triangle_1_3/slang/triangle.vert.slang"
+        "hello_triangle_1_3/slang/triangle.frag.slang")
 
 if(${VKB_${FOLDER_NAME}})
     target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)

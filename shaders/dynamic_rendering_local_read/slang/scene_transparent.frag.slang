@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,18 +15,19 @@
  * limitations under the License.
  */
 
-// Should be zero, also rename in other shader
-layout (input_attachment_index = 0, binding = 0) uniform subpassInput positionDepthAttachment;
+[[vk::input_attachment_index(0)]] SubpassInput positionDepthAttachment;
 
-layout (binding = 2) uniform sampler2D samplerTexture;
+[[vk::binding(2, 0)]] Sampler2D samplerTexture;
 
-layout (location = 0) in vec4 inColor;
-layout (location = 1) in vec2 inUV;
+struct VSOutput
+{
+    float4 Pos : SV_POSITION;
+    float3 Color;
+    float2 UV;
+};
 
-layout (location = 0) out vec4 outColor;
-
-layout (constant_id = 0) const float NEAR_PLANE = 0.1f;
-layout (constant_id = 1) const float FAR_PLANE = 256.0f;
+[[SpecializationConstant]] const float NEAR_PLANE = 0.1;
+[[SpecializationConstant]] const float FAR_PLANE = 256.0;
 
 float linearDepth(float depth)
 {
@@ -35,19 +35,20 @@ float linearDepth(float depth)
 	return (2.0f * NEAR_PLANE * FAR_PLANE) / (FAR_PLANE + NEAR_PLANE - z * (FAR_PLANE - NEAR_PLANE));	
 }
 
-void main () 
+[shader("fragment")]
+float4 main(VSOutput input)
 {
 	// Sample depth from deferred depth buffer and discard if obscured
-	float depth = subpassLoad(positionDepthAttachment).a;
+	float depth = positionDepthAttachment.SubpassLoad().a;
 
-	// Save the sampled texture color before discarding.
-	// This is to avoid implicit derivatives in non-uniform control flow.
-	// @todo: reversed depth
-	vec4 sampledColor = texture(samplerTexture, inUV);
-	if ((depth != 0.0) && (linearDepth(gl_FragCoord.z) < depth))
+    // Save the sampled texture color before discarding.
+    // This is to avoid implicit derivatives in non-uniform control flow.
+    // @todo: reversed depth
+    float4 sampledColor = samplerTexture.Sample(input.UV);
+	if ((depth != 0.0) && (linearDepth(input.Pos.z) < depth))
 	{
 //		discard;
 	};
 
-	outColor = sampledColor;
+	return sampledColor;
 }
