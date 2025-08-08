@@ -210,10 +210,10 @@ Alternatively, for command line builds use the steps below:
 cmake --build build/windows --config Release --target vulkan_samples
 ----
 
-`Step 3.` Run the *Vulkan Samples* application
+`Step 3.` Run the *Vulkan Samples* application by specifying the name of the sample
 
 ----
-build\windows\app\bin\Release\AMD64\vulkan_samples.exe
+build\windows\app\bin\Release\AMD64\vulkan_samples.exe sample <sample_name>
 ----
 
 == Linux
@@ -368,7 +368,7 @@ ____
 It is highly recommended to install https://d.android.com/studio[Android Studio] to build, run and trace the sample project. Building via Android Studio requires at least Ladybug 2024.2.1.
 
 Android Studio uses the following plugins/tools to build samples:
- 
+
 * Android Gradle Plugin
 * CMake Plugin, which installs and uses Ninja
 * NDK
