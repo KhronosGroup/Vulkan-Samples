@@ -646,12 +646,28 @@ void HPPHelloTriangleV13::init_pipeline()
 	                                                      .pDynamicStates    = dynamic_states.data()};
 
 	// Load our SPIR-V shaders.
+
+	// Samples support different shading languages, all of which are offline compiled to SPIR-V, the shader format that Vulkan uses.
+	// The shading language to load for can be selected via command line
+	std::string shader_folder{""};
+	switch (get_shading_language())
+	{
+		case vkb::ShadingLanguage::HLSL:
+			shader_folder = "hlsl";
+			break;
+		case vkb::ShadingLanguage::SLANG:
+			shader_folder = "slang";
+			break;
+		default:
+			shader_folder = "glsl";
+	}
+
 	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{
 	    {.stage  = vk::ShaderStageFlagBits::eVertex,
-	     .module = load_shader_module("hello_triangle_1_3/triangle.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	     .module = load_shader_module("hello_triangle_1_3/" + shader_folder + "/triangle.vert.spv", vk::ShaderStageFlagBits::eVertex),
 	     .pName  = "main"},        // Vertex shader stage
 	    {.stage  = vk::ShaderStageFlagBits::eFragment,
-	     .module = load_shader_module("hello_triangle_1_3/triangle.frag.spv", vk::ShaderStageFlagBits::eFragment),
+	     .module = load_shader_module("hello_triangle_1_3/" + shader_folder + "/triangle.frag.spv", vk::ShaderStageFlagBits::eFragment),
 	     .pName  = "main"}        // Fragment shader stage
 	}};
 
@@ -855,7 +871,7 @@ void HPPHelloTriangleV13::init_vertex_buffer()
  * @param shader_stage The shader stage flag specifying the type of shader (e.g., vk::ShaderStageFlagBits::eVertex).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
-vk::ShaderModule HPPHelloTriangleV13::load_shader_module(const char *path, vk::ShaderStageFlagBits shader_stage)
+vk::ShaderModule HPPHelloTriangleV13::load_shader_module(const std::string &path, vk::ShaderStageFlagBits shader_stage)
 {
 	auto spirv = vkb::fs::read_shader_binary_u32(path);
 

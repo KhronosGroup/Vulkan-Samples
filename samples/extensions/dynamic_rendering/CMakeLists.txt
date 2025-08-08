@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2024, Holochip Corporation
+# Copyright (c) 2020-2025, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample(
         "dynamic_rendering/glsl/gbuffer.frag"
     SHADER_FILES_HLSL
         "dynamic_rendering/hlsl/gbuffer.vert.hlsl"
-        "dynamic_rendering/hlsl/gbuffer.frag.hlsl")
+        "dynamic_rendering/hlsl/gbuffer.frag.hlsl"
+    SHADER_FILES_SLANG
+        "dynamic_rendering/slang/gbuffer.vert.slang"
+        "dynamic_rendering/slang/gbuffer.frag.slang")
