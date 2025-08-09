@@ -36,6 +36,10 @@
 #include <imgui_internal.h>
 #include <numeric>
 
+#if defined(PLATFORM__MACOS)
+#	include <TargetConditionals.h>
+#endif
+
 namespace vkb
 {
 
