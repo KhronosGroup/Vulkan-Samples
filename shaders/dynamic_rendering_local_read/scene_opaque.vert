@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec4 inPos;
+layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNormal;
 
 layout (binding = 0) uniform UBO 
@@ -39,10 +39,10 @@ void main()
 {
 	mat4 nodeMat = ubo.model * sceneNode.matrix;
 
-	gl_Position = ubo.projection * ubo.view * nodeMat * inPos;
+	gl_Position = ubo.projection * ubo.view * nodeMat * vec4(inPos, 1.0);
 	
 	// Vertex position in world space
-	outWorldPos = vec3(sceneNode.matrix * inPos);
+	outWorldPos = vec3(sceneNode.matrix * vec4(inPos, 1.0));
 	// GL to Vulkan coord space
 	outWorldPos.y = -outWorldPos.y;
 	
