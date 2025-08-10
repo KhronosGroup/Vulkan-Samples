@@ -335,7 +335,7 @@ It's recommended to open the *vulkan_samples* Xcode project that is generated in
 Alternatively, you can build with cmake as shown here
 
 ----
-cmake --build build/ios --config Release --target vulkan_samples -j$(sysctl -n hw.ncpu) -- -sdk iphoneos -allowProvisioningUpdates
+cmake --build build/ios --config Release --target vulkan_samples -j$(sysctl -n hw.ncpu) -- -allowProvisioningUpdates
 ----
 
 `Step 3.` Run the *Vulkan Samples* application
