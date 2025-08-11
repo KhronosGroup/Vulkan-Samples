@@ -36,6 +36,10 @@
 #include <imgui_internal.h>
 #include <numeric>
 
+#if defined(PLATFORM__MACOS)
+#	include <TargetConditionals.h>
+#endif
+
 namespace vkb
 {
 
@@ -548,7 +552,9 @@ inline void
 	push_transform       = glm::scale(push_transform, glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
 	command_buffer.pushConstants(pipeline_layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4), &push_transform);
 
-	command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), {0});
+	vk::DeviceSize vertex_offsets[1]    = {0};
+	vk::Buffer     vertex_buffer_handle = vertex_buffer->get_handle();
+	command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
 
 	command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint16);
 
