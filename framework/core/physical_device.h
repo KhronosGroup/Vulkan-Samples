@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,6 +23,13 @@ namespace vkb
 {
 class Instance;
 
+struct DriverVersion
+{
+	uint16_t major;
+	uint16_t minor;
+	uint16_t patch;
+};
+
 /**
  * @brief A wrapper class for VkPhysicalDevice
  *
@@ -41,6 +48,8 @@ class PhysicalDevice
 
 	PhysicalDevice &operator=(PhysicalDevice &&) = delete;
 
+	DriverVersion get_driver_version() const;
+
 	Instance &get_instance() const;
 
 	VkBool32 is_present_supported(VkSurfaceKHR surface, uint32_t queue_family_index) const;
@@ -56,6 +65,8 @@ class PhysicalDevice
 	const VkPhysicalDeviceProperties &get_properties() const;
 
 	const VkPhysicalDeviceMemoryProperties &get_memory_properties() const;
+
+	uint32_t get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found = nullptr) const;
 
 	const std::vector<VkQueueFamilyProperties> &get_queue_family_properties() const;
 

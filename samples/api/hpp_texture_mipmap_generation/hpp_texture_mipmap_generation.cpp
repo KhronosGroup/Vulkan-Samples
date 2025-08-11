@@ -281,12 +281,27 @@ void HPPTextureMipMapGeneration::load_assets()
 	ktxTexture_Destroy(ktx_texture);
 
 	// Create optimal tiled target image on the device
-	std::tie(texture.image, texture.device_memory) =
-	    get_device().create_image(format,
-	                              texture.extent,
-	                              texture.mip_levels,
-	                              vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled,
-	                              vk::MemoryPropertyFlagBits::eDeviceLocal);
+	auto device = get_device().get_handle();
+
+	vk::ImageCreateInfo image_create_info{.imageType   = vk::ImageType::e2D,
+	                                      .format      = format,
+	                                      .extent      = {.width = texture.extent.width, .height = texture.extent.height, .depth = 1},
+	                                      .mipLevels   = texture.mip_levels,
+	                                      .arrayLayers = 1,
+	                                      .samples     = vk::SampleCountFlagBits::e1,
+	                                      .tiling      = vk::ImageTiling::eOptimal,
+	                                      .usage =
+	                                          vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled,
+	                                      .sharingMode = vk::SharingMode::eExclusive};
+	texture.image = device.createImage(image_create_info);
+
+	vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(texture.image);
+
+	vk::MemoryAllocateInfo memory_allocation{.allocationSize  = memory_requirements.size,
+	                                         .memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
+	                                                                                                   vk::MemoryPropertyFlagBits::eDeviceLocal)};
+	texture.device_memory = device.allocateMemory(memory_allocation);
+	device.bindImageMemory(texture.image, texture.device_memory, 0);
 
 	vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(get_device().get_handle(), get_device().get_command_pool().get_handle());
 	copy_command.begin(vk::CommandBufferBeginInfo());

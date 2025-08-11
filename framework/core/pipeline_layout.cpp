@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,11 +20,12 @@
 #include "descriptor_set_layout.h"
 #include "device.h"
 #include "pipeline.h"
+#include "resource_cache.h"
 #include "shader_module.h"
 
 namespace vkb
 {
-PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules) :
+PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<ShaderModule *> &shader_modules) :
     device{device},
     shader_modules{shader_modules}
 {

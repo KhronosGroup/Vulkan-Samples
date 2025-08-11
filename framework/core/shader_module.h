@@ -26,7 +26,12 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 /// Types of shader resources
 enum class ShaderResourceType
@@ -165,7 +170,7 @@ class ShaderSource
 class ShaderModule
 {
   public:
-	ShaderModule(Device               &device,
+	ShaderModule(vkb::core::DeviceC   &device,
 	             VkShaderStageFlagBits stage,
 	             const ShaderSource   &shader_source,
 	             const std::string    &entry_point,
@@ -207,7 +212,7 @@ class ShaderModule
 	void set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode);
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	/// Shader unique id
 	size_t id;

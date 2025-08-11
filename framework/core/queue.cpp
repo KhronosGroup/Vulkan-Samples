@@ -22,12 +22,8 @@
 
 namespace vkb
 {
-Queue::Queue(Device &device, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index) :
-    device{device},
-    family_index{family_index},
-    index{index},
-    can_present{can_present},
-    properties{properties}
+Queue::Queue(vkb::core::DeviceC &device, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index) :
+    device{device}, family_index{family_index}, index{index}, can_present{can_present}, properties{properties}
 {
 	vkGetDeviceQueue(device.get_handle(), family_index, index, &handle);
 }
@@ -47,7 +43,7 @@ Queue::Queue(Queue &&other) :
 	other.index        = 0;
 }
 
-const Device &Queue::get_device() const
+const vkb::core::DeviceC &Queue::get_device() const
 {
 	return device;
 }

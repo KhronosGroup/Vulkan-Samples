@@ -358,7 +358,7 @@ struct HPPRecordHelper<vkb::core::HPPGraphicsPipeline, A...>
 }        // namespace
 
 template <class T, class... A>
-T &request_resource(vkb::core::HPPDevice &device, vkb::HPPResourceRecord *recorder, std::unordered_map<size_t, T> &resources, A &...args)
+T &request_resource(vkb::core::DeviceCpp &device, vkb::HPPResourceRecord *recorder, std::unordered_map<size_t, T> &resources, A &...args)
 {
 	HPPRecordHelper<T, A...> record_helper;
 

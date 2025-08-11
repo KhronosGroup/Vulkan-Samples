@@ -98,7 +98,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	create_gui(*window, &get_stats());
 
 	// Hide GUI compression options other than default if the required extension is not supported
-	if (!get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+	if (!get_device().is_extension_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 	{
 		for (int i = 0; i < static_cast<int>(TargetCompression::Count); i++)
 		{
@@ -221,7 +221,7 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 		                                  VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM, VK_FORMAT_B8G8R8A8_SRGB};
 
 		VkFormat chosen_format{VK_FORMAT_UNDEFINED};
-		if (get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+		if (get_device().is_extension_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 		{
 			for (auto &candidate_format : format_list)
 			{

@@ -648,7 +648,7 @@ void ComputeNBody::prepare_compute()
 	// Separate command pool as queue family for compute may be different than graphics
 	VkCommandPoolCreateInfo command_pool_create_info = {};
 	command_pool_create_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_create_info.queueFamilyIndex        = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	command_pool_create_info.queueFamilyIndex        = vkb::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_COMPUTE_BIT);
 	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_create_info, nullptr, &compute.command_pool));
 
 	// Create a command buffer for compute operations
@@ -835,8 +835,9 @@ bool ComputeNBody::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	graphics.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
-	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	auto const &queue_family_properties = get_device().get_gpu().get_queue_family_properties();
+	graphics.queue_family_index         = vkb::get_queue_family_index(queue_family_properties, VK_QUEUE_GRAPHICS_BIT);
+	compute.queue_family_index          = vkb::get_queue_family_index(queue_family_properties, VK_QUEUE_COMPUTE_BIT);
 
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
 	work_group_size = std::min(static_cast<uint32_t>(256), get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);

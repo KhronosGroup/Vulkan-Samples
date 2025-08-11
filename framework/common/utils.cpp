@@ -64,7 +64,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto cmd_buf = render_context.get_device().request_command_buffer();
+	auto cmd_buf = render_context.get_device().get_command_pool().request_command_buffer();
 
 	cmd_buf->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -285,6 +285,27 @@ sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExte
 	scene.add_component(std::move(free_camera_script), *camera_node);
 
 	return *camera_node;
+}
+
+size_t calculate_hash(const std::vector<uint8_t> &data)
+{
+	static_assert(sizeof(data[0]) == 1);
+	constexpr size_t chunk_size = sizeof(size_t) / sizeof(data[0]);
+	size_t           data_hash  = 0;
+	size_t           offset     = 0;
+
+	for (; offset + chunk_size < data.size(); offset += chunk_size)
+	{
+		glm::detail::hash_combine(data_hash, *reinterpret_cast<size_t const *>(&data[offset]));
+	}
+
+	if (offset < data.size())
+	{
+		size_t it = 0;
+		std::memcpy(&it, &data[offset], data.size() - offset);
+		glm::detail::hash_combine(data_hash, it);
+	}
+	return data_hash;
 }
 
 }        // namespace vkb

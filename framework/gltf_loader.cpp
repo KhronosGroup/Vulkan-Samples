@@ -19,6 +19,7 @@
 #define TINYGLTF_IMPLEMENTATION
 #include "gltf_loader.h"
 
+#include <future>
 #include <limits>
 #include <queue>
 
@@ -50,8 +51,6 @@
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/animation.h"
-
-#include <ctpl_stl.h>
 
 namespace vkb
 {
@@ -403,7 +402,7 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
     {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
-GLTFLoader::GLTFLoader(Device &device) :
+GLTFLoader::GLTFLoader(vkb::core::DeviceC &device) :
     device{device}
 {
 }
@@ -551,25 +550,19 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	timer.start();
 
 	// Load images
-	auto thread_count = std::thread::hardware_concurrency();
-	thread_count      = thread_count == 0 ? 1 : thread_count;
-	ctpl::thread_pool thread_pool(thread_count);
-
 	auto image_count = to_u32(model.images.size());
 
 	std::vector<std::future<std::unique_ptr<sg::Image>>> image_component_futures;
 	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
-		auto fut = thread_pool.push(
-		    [this, image_index](size_t) {
+		image_component_futures.push_back(std::async(
+		    [this, image_index]() {
 			    auto image = parse_image(model.images[image_index]);
 
 			    LOGI("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
 
 			    return image;
-		    });
-
-		image_component_futures.push_back(std::move(fut));
+		    }));
 	}
 
 	std::vector<std::unique_ptr<sg::Image>> image_components;
@@ -582,7 +575,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	{
 		std::vector<vkb::core::BufferC> transient_buffers;
 
-		auto command_buffer = device.request_command_buffer();
+		auto command_buffer = device.get_command_pool().request_command_buffer();
 
 		command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
@@ -611,7 +604,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-		queue.submit(*command_buffer, device.request_fence());
+		queue.submit(*command_buffer, device.get_fence_pool().request_fence());
 
 		device.get_fence_pool().wait();
 		device.get_fence_pool().reset();
@@ -626,6 +619,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 	auto elapsed_time = timer.stop();
 
+	auto thread_count = std::thread::hardware_concurrency();
+	thread_count      = thread_count == 0 ? 1 : thread_count;
 	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count);
 
 	// Load textures
@@ -1109,7 +1104,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto command_buffer = device.request_command_buffer();
+	auto command_buffer = device.get_command_pool().request_command_buffer();
 
 	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -1316,7 +1311,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 	command_buffer->end();
 
-	queue.submit(*command_buffer, device.request_fence());
+	queue.submit(*command_buffer, device.get_fence_pool().request_fence());
 
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();
@@ -1491,7 +1486,6 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	{
 		if (!device.is_image_format_supported(image->get_format()))
 		{
-			LOGW("ASTC not supported: decoding {}", image->get_name());
 			image = std::make_unique<sg::Astc>(*image);
 			image->generate_mipmaps();
 		}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -80,6 +80,8 @@ class Image : public Component
 
 	const std::vector<uint8_t> &get_data() const;
 
+	size_t get_data_hash() const;
+
 	void clear_data();
 
 	VkFormat get_format() const;
@@ -94,7 +96,7 @@ class Image : public Component
 
 	void generate_mipmaps();
 
-	void create_vk_image(Device &device, VkImageViewType image_view_type = VK_IMAGE_VIEW_TYPE_2D, VkImageCreateFlags flags = 0);
+	void create_vk_image(vkb::core::DeviceC &device, VkImageViewType image_view_type = VK_IMAGE_VIEW_TYPE_2D, VkImageCreateFlags flags = 0);
 
 	const core::Image &get_vk_image() const;
 
@@ -123,8 +125,14 @@ class Image : public Component
 
 	std::vector<Mipmap> &get_mut_mipmaps();
 
+	void update_hash();
+
+	void update_hash(size_t data_hash);
+
   private:
 	std::vector<uint8_t> data;
+
+	size_t data_hash{0};
 
 	VkFormat format{VK_FORMAT_UNDEFINED};
 

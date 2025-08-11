@@ -173,7 +173,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		submit.commandBufferCount = 1;
 		submit.pCommandBuffers    = &cmd;
 
-		auto fence = get_device().request_fence();
+		auto fence = get_device().get_fence_pool().request_fence();
 		VK_CHECK(vkQueueSubmit(queue, 1, &submit, fence));
 		VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &fence, VK_TRUE, UINT64_MAX));
 
@@ -194,7 +194,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		frequency_content_image_view = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
 
 		{
-			auto _cmd = get_device().request_command_buffer();
+			auto _cmd = get_device().get_command_pool().request_command_buffer();
 			_cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 			auto _memory_barrier            = vkb::ImageMemoryBarrier();
 			_memory_barrier.dst_access_mask = 0;
@@ -206,7 +206,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 			_cmd->end();
 
 			auto &queue  = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-			auto  _fence = get_device().request_fence();
+			auto  _fence = get_device().get_fence_pool().request_fence();
 			queue.submit(*_cmd, _fence);
 			VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &_fence, VK_TRUE, UINT64_MAX));
 		}

@@ -59,7 +59,7 @@ Profiles::~Profiles()
 
 // This sample overrides the device creation part of the framework
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
-std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
+std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::PhysicalDevice &gpu)
 {
 	// Check if the profile is supported at device level
 	VkBool32 profile_supported;
@@ -113,9 +113,9 @@ std::unique_ptr<vkb::Device> Profiles::create_device(vkb::PhysicalDevice &gpu)
 	}
 
 	// Post device setup required for the framework
-	auto device = std::make_unique<vkb::Device>(gpu, vulkan_device, get_surface());
+	auto device = std::make_unique<vkb::core::DeviceC>(gpu, vulkan_device, get_surface());
 	device->add_queue(0, queue_create_info.queueFamilyIndex, queue_family_properties[selected_queue_family], true);
-	device->prepare_memory_allocator();
+	vkb::allocated::init(*device);        // prepare the memory allocator
 	device->create_internal_command_pool();
 	device->create_internal_fence_pool();
 
@@ -261,7 +261,7 @@ void Profiles::generate_textures()
 		VkMemoryRequirements memory_requirements;
 		vkGetImageMemoryRequirements(get_device().get_handle(), textures[i].image, &memory_requirements);
 		memory_allocation_info.allocationSize  = memory_requirements.size;
-		memory_allocation_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &textures[i].memory));
 		VK_CHECK(vkBindImageMemory(get_device().get_handle(), textures[i].image, textures[i].memory, 0));
 		image_view.image = textures[i].image;
@@ -284,7 +284,7 @@ void Profiles::generate_textures()
 		staging_buffer.unmap();
 		staging_buffer.flush();
 
-		auto cmd = get_device().request_command_buffer();
+		auto cmd = get_device().get_command_pool().request_command_buffer();
 		cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 		vkb::image_layout_transition(cmd->get_handle(), textures[i].image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -298,8 +298,9 @@ void Profiles::generate_textures()
 
 		cmd->end();
 
-		get_device().get_suitable_graphics_queue().submit(*cmd, VK_NULL_HANDLE);
-		get_device().get_suitable_graphics_queue().wait_idle();
+		auto const &graphicsQueue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+		graphicsQueue.submit(*cmd, VK_NULL_HANDLE);
+		graphicsQueue.wait_idle();
 	}
 
 	// Create immutable sampler for the textures

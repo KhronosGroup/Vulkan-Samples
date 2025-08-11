@@ -51,7 +51,7 @@ std::string get_sponza_texture_filename(const std::string &short_name)
 class HPPCompressedImage : public vkb::scene_graph::components::HPPImage
 {
   public:
-	HPPCompressedImage(vkb::core::HPPDevice                                  &device,
+	HPPCompressedImage(vkb::core::DeviceCpp                                  &device,
 	                   const std::string                                     &name,
 	                   std::vector<vkb::scene_graph::components::HPPMipmap> &&mipmaps,
 	                   vk::Format                                             format) :
@@ -243,7 +243,7 @@ void HPPTextureCompressionComparison::create_subpass()
 bool HPPTextureCompressionComparison::is_texture_format_supported(const HPPTextureCompressionData &tcd, vk::PhysicalDeviceFeatures const &device_features)
 {
 	const bool supported_by_feature   = tcd.feature_ptr && device_features.*tcd.feature_ptr;
-	const bool supported_by_extension = tcd.extension_name.length() && get_device().is_extension_supported(tcd.extension_name);
+	const bool supported_by_extension = tcd.extension_name.length() && get_device().get_gpu().is_extension_supported(tcd.extension_name);
 	const bool supported_by_default   = tcd.always_supported;
 
 	return supported_by_default || supported_by_feature || supported_by_extension;

@@ -369,7 +369,7 @@ void DynamicRenderingLocalRead::create_attachment(VkFormat format, VkImageUsageF
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_ci, nullptr, &attachment.image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment.image, &memory_requirements);
 	memory_ai.allocationSize  = memory_requirements.size;
-	memory_ai.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_ai.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_ai, nullptr, &attachment.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment.image, attachment.memory, 0));
 
@@ -873,11 +873,10 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		depth_attachment_info.clearValue                   = clear_values[1];
 
 		VkRenderingInfoKHR render_info   = vkb::initializers::rendering_info();
-		render_info.renderArea           = {0, 0, width, height};
+		render_info.renderArea           = {0, 0, static_cast<uint32_t>(attachment_width), static_cast<uint32_t>(attachment_height)};
 		render_info.layerCount           = 1;
 		render_info.colorAttachmentCount = 4;
 		render_info.pColorAttachments    = &color_attachment_info[0];
-		render_info.renderArea           = {0, 0, width, height};
 
 		render_info.pDepthAttachment = &depth_attachment_info;
 		if (!vkb::is_depth_only_format(depth_format))

@@ -44,14 +44,12 @@ set(FRAMEWORK_FILES
     hpp_api_vulkan_sample.h
     hpp_fence_pool.h
     hpp_gltf_loader.h
-    hpp_gui.h
     hpp_resource_binding_state.h
     hpp_resource_cache.h
     hpp_resource_record.h
     hpp_resource_replay.h
     hpp_semaphore_pool.h
     # Source Files
-    gui.cpp
     drawer.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
@@ -67,7 +65,6 @@ set(FRAMEWORK_FILES
     timer.cpp
     camera_core.cpp
     hpp_api_vulkan_sample.cpp
-    hpp_gui.cpp
     hpp_resource_cache.cpp)
 
 set(COMMON_FILES
@@ -251,7 +248,6 @@ set(CORE_FILES
     core/hpp_descriptor_pool.h
     core/hpp_descriptor_set.h
     core/hpp_descriptor_set_layout.h
-    core/hpp_device.h
     core/hpp_framebuffer.h
     core/hpp_image.h
     core/hpp_image_view.h
@@ -270,7 +266,6 @@ set(CORE_FILES
     core/command_pool_base.cpp
     core/instance.cpp
     core/physical_device.cpp
-    core/device.cpp
     core/debug.cpp
     core/image_core.cpp
     core/shader_module.cpp
@@ -292,7 +287,6 @@ set(CORE_FILES
     core/query_pool.cpp
     core/acceleration_structure.cpp
     core/hpp_debug.cpp
-    core/hpp_device.cpp
     core/hpp_image_core.cpp
     core/hpp_image_view.cpp
     core/hpp_instance.cpp
@@ -506,7 +500,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     vma
     spirv-cross-glsl
     spdlog
-    ctpl
     plugins)
 
 if(${NEED_LINK_ATOMIC})

@@ -58,7 +58,7 @@ class HPPRenderContext
 	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode
 	 * @param surface_format_priority_list The order in which the swapchain prioritizes selecting its surface format
 	 */
-	HPPRenderContext(vkb::core::HPPDevice                    &device,
+	HPPRenderContext(vkb::core::DeviceCpp                    &device,
 	                 vk::SurfaceKHR                           surface,
 	                 const vkb::Window                       &window,
 	                 vk::PresentModeKHR                       present_mode                 = vk::PresentModeKHR::eFifo,
@@ -190,7 +190,7 @@ class HPPRenderContext
 	vk::Semaphore request_semaphore_with_ownership();
 	void          release_owned_semaphore(vk::Semaphore semaphore);
 
-	vkb::core::HPPDevice &get_device();
+	vkb::core::DeviceCpp &get_device();
 
 	/**
 	 * @brief Returns the format that the RenderTargets are created with within the HPPRenderContext
@@ -220,7 +220,7 @@ class HPPRenderContext
 	vk::Extent2D surface_extent;
 
   private:
-	vkb::core::HPPDevice &device;
+	vkb::core::DeviceCpp &device;
 
 	const vkb::Window &window;
 

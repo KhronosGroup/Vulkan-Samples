@@ -371,12 +371,6 @@ set(SPDLOG_FMT_EXTERNAL ON)
 add_subdirectory(spdlog)
 set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
 
-# ctpl
-add_library(ctpl INTERFACE)
-set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
-target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
-target_include_directories(ctpl SYSTEM INTERFACE ${CTPL_DIR})
-
 # OpenCL
 add_library(opencl INTERFACE)
 set(OPENCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl)

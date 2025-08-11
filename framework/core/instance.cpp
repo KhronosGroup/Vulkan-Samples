@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-#include "physical_device.h"
-
 #include "instance.h"
-
+#include "physical_device.h"
 #include <algorithm>
 #include <functional>
+
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 #	define USE_VALIDATION_LAYERS
