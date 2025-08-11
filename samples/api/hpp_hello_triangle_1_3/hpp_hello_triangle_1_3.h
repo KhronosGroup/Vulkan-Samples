@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "core/hpp_instance.h"
 #include "platform/application.h"
 #include "platform/window.h"
 

@@ -17,11 +17,9 @@
  */
 
 #include "gpu_selection.h"
+#include "core/instance.h"
 
 #include <algorithm>
-
-#include "core/hpp_instance.h"
-#include "core/instance.h"
 
 namespace plugins
 {
@@ -47,8 +45,8 @@ bool GpuSelection::handle_option(std::deque<std::string> &arguments)
 		}
 		uint32_t gpu_index = static_cast<uint32_t>(std::stoul(arguments[1]));
 
-		vkb::Instance::selected_gpu_index          = gpu_index;
-		vkb::core::HPPInstance::selected_gpu_index = gpu_index;
+		vkb::core::InstanceC::selected_gpu_index   = gpu_index;
+		vkb::core::InstanceCpp::selected_gpu_index = gpu_index;
 
 		arguments.pop_front();
 		arguments.pop_front();

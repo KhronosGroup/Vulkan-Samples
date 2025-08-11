@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ AndroidWindow::AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, 
 {
 }
 
-VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
+VkSurfaceKHR AndroidWindow::create_surface(vkb::core::InstanceC &instance)
 {
 	return create_surface(instance.get_handle(), VK_NULL_HANDLE);
 }

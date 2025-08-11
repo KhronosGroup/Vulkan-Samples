@@ -124,7 +124,7 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::PhysicalDevice 
 
 // This sample overrides the instance creation part of the framework
 // Instead of manually setting up all properties we use the Vulkan Profiles library to simplify instance setup
-std::unique_ptr<vkb::Instance> Profiles::create_instance()
+std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 {
 	// Initialize Volk Vulkan Loader
 	VkResult result = volkInitialize();
@@ -210,7 +210,7 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance()
 
 	volkLoadInstance(vulkan_instance);
 
-	return std::make_unique<vkb::Instance>(vulkan_instance);
+	return std::make_unique<vkb::core::InstanceC>(vulkan_instance);
 }
 
 void Profiles::generate_textures()
