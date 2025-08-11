@@ -32,8 +32,8 @@ DescriptorIndexing::DescriptorIndexing()
 	// See: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2350.
 	add_device_extension(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
 
-#if defined(PLATFORM__MACOS) && TARGET_OS_OSX
-	// On macOS use layer setting to configure MoltenVK for using Metal argument buffers (needed for descriptor indexing)
+#if defined(PLATFORM__MACOS)
+	// On Apple use layer setting to enable MoltenVK's Metal argument buffers - needed for descriptor indexing/scaling
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
 	VkLayerSettingEXT layerSetting;
@@ -47,10 +47,6 @@ DescriptorIndexing::DescriptorIndexing()
 	layerSetting.pValues                         = &useMetalArgumentBuffers;
 
 	add_layer_setting(layerSetting);
-
-	// On macOS also set environment variable as fallback in case layer settings not available at runtime with older SDKs
-	// Will not work in batch mode, but is the best we can do short of using the deprecated MoltenVK private config API
-	setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "1", 1);
 #endif
 }
 
