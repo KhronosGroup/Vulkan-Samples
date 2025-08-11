@@ -682,7 +682,7 @@ void HelloTriangleV13::init_swapchain()
  * @param shader_stage The shader stage flag specifying the type of shader (e.g., VK_SHADER_STAGE_VERTEX_BIT).
  * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
  */
-VkShaderModule HelloTriangleV13::load_shader_module(const char *path, VkShaderStageFlagBits shader_stage)
+VkShaderModule HelloTriangleV13::load_shader_module(const std::string &path, VkShaderStageFlagBits shader_stage)
 {
 	auto spirv = vkb::fs::read_shader_binary_u32(path);
 
@@ -780,15 +780,31 @@ void HelloTriangleV13::init_pipeline()
 	    .pDynamicStates    = dynamic_states.data()};
 
 	// Load our SPIR-V shaders.
+
+	// Samples support different shading languages, all of which are offline compiled to SPIR-V, the shader format that Vulkan uses.
+	// The shading language to load for can be selected via command line
+	std::string shader_folder{""};
+	switch (get_shading_language())
+	{
+		case vkb::ShadingLanguage::HLSL:
+			shader_folder = "hlsl";
+			break;
+		case vkb::ShadingLanguage::SLANG:
+			shader_folder = "slang";
+			break;
+		default:
+			shader_folder = "glsl";
+	}
+
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {{
 	    {.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	     .stage  = VK_SHADER_STAGE_VERTEX_BIT,
-	     .module = load_shader_module("hello_triangle_1_3/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	     .module = load_shader_module("hello_triangle_1_3/" + shader_folder + "/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
 	     .pName  = "main"},        // Vertex shader stage
 	    {
 	        .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 	        .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
-	        .module = load_shader_module("hello_triangle_1_3/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
+	        .module = load_shader_module("hello_triangle_1_3/" + shader_folder + "/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 	        .pName  = "main"}        // Fragment shader stage
 	}};
 

@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,17 +15,16 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec3 inNormal;
-layout (location = 1) in vec4 inColor;
-layout (location = 2) in vec3 inWorldPos;
+struct VSOutput
+{
+    float4 Pos : SV_POSITION;
+    float3 Normal;
+    float4 Color;
+    float3 WorldPos;
+};
 
-layout (location = 0) out vec4 outColor;
-layout (location = 1) out vec4 outPositionDepth;
-layout (location = 2) out vec4 outNormal;
-layout (location = 3) out vec4 outAlbedo;
-
-layout (constant_id = 0) const float NEAR_PLANE = 0.1f;
-layout (constant_id = 1) const float FAR_PLANE = 256.0f;
+[[SpecializationConstant]] const float NEAR_PLANE = 0.1;
+[[SpecializationConstant]] const float FAR_PLANE = 256.0;
 
 float linearDepth(float depth)
 {
@@ -34,19 +32,26 @@ float linearDepth(float depth)
 	return (2.0f * NEAR_PLANE * FAR_PLANE) / (FAR_PLANE + NEAR_PLANE - z * (FAR_PLANE - NEAR_PLANE));	
 }
 
-void main() 
+struct FSOutput
 {
-	outPositionDepth = vec4(inWorldPos, 1.0);
+    float4 Color;
+    float4 PositionDepth;
+    float4 Normal;
+    float4 Albedo;
+};
 
-	vec3 N = normalize(inNormal);
+[shader("fragment")]
+FSOutput main(VSOutput input)
+{
+    FSOutput output;
+	float3 N = normalize(input.Normal);
 	N.y = -N.y;
-	outNormal = vec4(N, 1.0);
-
-	outAlbedo = inColor;
-
+	output.Normal = float4(N, 1.0);
+	output.Albedo = input.Color;
 	// Store linearized depth in alpha component
-	outPositionDepth.a = linearDepth(gl_FragCoord.z);
-
-	// Write color attachments to avoid undefined behaviour (validation error)
-	outColor = vec4(0.0);
+    output.PositionDepth.rgb = input.WorldPos;
+    output.PositionDepth.a = linearDepth(input.Pos.z);
+    // Write color attachments to avoid undefined behaviour (validation error)
+    output.Color = (1.0).rrrr;
+	return output;
 }

@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +15,13 @@
  * limitations under the License.
  */
 
-layout (location = 0) out vec2 outUV;
-
-void main() 
+struct VSOutput
 {
-	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
+    float4 Position : SV_POSITION;
+    [[vk::location(0)]] float3 Color : COLOR0;
+};
+
+float4 main(VSOutput input) : SV_TARGET
+{
+    return float4(input.Color, 1.0);
 }

@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,30 +15,22 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec4 inPos;
-layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec2 inUV;
-
-layout (binding = 1) uniform UBO 
+struct VSInput
 {
-	mat4 projection;
-	mat4 model;
-	mat4 view;
-} ubo;
+    [[vk::location(0)]] float3 Position : POSITION0;
+    [[vk::location(1)]] float3 Color : COLOR0;
+};
 
-layout (location = 0) out vec4 outColor;
-layout (location = 1) out vec2 outUV;
-
-layout(push_constant) uniform SceneNode {
-	mat4 matrix;
-	vec4 color;
-} sceneNode;
-
-
-void main () 
+struct VSOutput
 {
-	outColor = vec4(1.0);
-	outUV = inUV;
-	
-	gl_Position = ubo.projection * ubo.view * ubo.model * sceneNode.matrix * vec4(inPos.xyz, 1.0);		
+    float4 Position : SV_POSITION;
+    [[vk::location(0)]] float3 Color : COLOR0;
+};
+
+VSOutput main(VSInput input)
+{        
+    VSOutput output;
+    output.Position = float4(input.Position, 1.0);
+    output.Color = input.Color;
+    return output;
 }
