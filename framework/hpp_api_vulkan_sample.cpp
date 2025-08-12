@@ -56,11 +56,13 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	create_command_buffers();
 	create_synchronization_primitives();
 	setup_depth_stencil();
+
+	// Update extent before setup methods so samples can use correct dimensions
+	extent = get_render_context().get_surface_extent();
+
 	setup_render_pass();
 	create_pipeline_cache();
 	setup_framebuffer();
-
-	extent = get_render_context().get_surface_extent();
 
 	prepare_gui();
 

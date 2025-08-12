@@ -62,12 +62,14 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	create_command_buffers();
 	create_synchronization_primitives();
 	setup_depth_stencil();
+
+	// Update width and height before setup methods so samples can use correct dimensions
+	width  = get_render_context().get_surface_extent().width;
+	height = get_render_context().get_surface_extent().height;
+
 	setup_render_pass();
 	create_pipeline_cache();
 	setup_framebuffer();
-
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
 
 	prepare_gui();
 
