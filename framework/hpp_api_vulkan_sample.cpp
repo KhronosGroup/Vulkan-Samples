@@ -32,6 +32,9 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 	depth_format = vkb::common::get_suitable_depth_format(get_device().get_gpu().get_handle());
 
+	// Update extent from surface extent to reflect command line arguments
+	extent = get_render_context().get_surface_extent();
+
 	// Create synchronization objects
 	// Create a semaphore used to synchronize image presentation
 	// Ensures that the current swapchain render target has completed presentation and has been released by the presentation engine, ready for rendering
@@ -56,10 +59,6 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	create_command_buffers();
 	create_synchronization_primitives();
 	setup_depth_stencil();
-
-	// Update extent before setup methods so samples can use correct dimensions
-	extent = get_render_context().get_surface_extent();
-
 	setup_render_pass();
 	create_pipeline_cache();
 	setup_framebuffer();

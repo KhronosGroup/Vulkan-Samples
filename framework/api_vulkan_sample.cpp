@@ -35,6 +35,10 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 	depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
 
+	// Update width and height from surface extent to reflect command line arguments
+	width  = get_render_context().get_surface_extent().width;
+	height = get_render_context().get_surface_extent().height;
+
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
 	// Create a semaphore used to synchronize image presentation
@@ -62,11 +66,6 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	create_command_buffers();
 	create_synchronization_primitives();
 	setup_depth_stencil();
-
-	// Update width and height before setup methods so samples can use correct dimensions
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
-
 	setup_render_pass();
 	create_pipeline_cache();
 	setup_framebuffer();
