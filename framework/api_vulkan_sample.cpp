@@ -26,6 +26,9 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
 bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))

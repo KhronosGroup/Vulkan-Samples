@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <core/hpp_instance.h>
+#include "core/instance.h"
 #include <map>
 #include <vulkan/vulkan.hpp>
 
@@ -25,8 +25,6 @@ namespace vkb
 {
 namespace core
 {
-class HPPInstance;
-
 struct DriverVersion
 {
 	uint16_t major;
@@ -42,7 +40,7 @@ struct DriverVersion
 class HPPPhysicalDevice
 {
   public:
-	HPPPhysicalDevice(HPPInstance &instance, vk::PhysicalDevice physical_device);
+	HPPPhysicalDevice(vkb::core::InstanceCpp &instance, vk::PhysicalDevice physical_device);
 
 	HPPPhysicalDevice(const HPPPhysicalDevice &) = delete;
 
@@ -69,7 +67,7 @@ class HPPPhysicalDevice
 
 	vk::PhysicalDevice get_handle() const;
 
-	vkb::core::HPPInstance &get_instance() const;
+	vkb::core::InstanceCpp &get_instance() const;
 
 	const vk::PhysicalDeviceMemoryProperties &get_memory_properties() const;
 
@@ -213,7 +211,7 @@ class HPPPhysicalDevice
 
   private:
 	// Handle to the Vulkan instance
-	HPPInstance &instance;
+	vkb::core::InstanceCpp &instance;
 
 	// Handle to the Vulkan physical device
 	vk::PhysicalDevice handle{nullptr};

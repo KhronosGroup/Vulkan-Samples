@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -242,7 +242,7 @@ DirectWindow::~DirectWindow()
 	}
 }
 
-VkSurfaceKHR DirectWindow::create_surface(Instance &instance)
+VkSurfaceKHR DirectWindow::create_surface(vkb::core::InstanceC &instance)
 {
 	return create_surface(instance.get_handle(), instance.get_first_gpu().get_handle());
 }

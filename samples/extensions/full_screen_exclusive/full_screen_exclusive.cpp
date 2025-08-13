@@ -824,7 +824,7 @@ bool FullScreenExclusive::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	vk_instance = std::make_unique<vkb::Instance>(context.instance);
+	vk_instance = std::make_unique<vkb::core::InstanceC>(context.instance);
 
 	context.surface = window->create_surface(*vk_instance);
 	if (!context.surface)

@@ -75,8 +75,8 @@ class FullScreenExclusive : public vkb::Application
 	};
 
   private:
-	Context                        context{};
-	std::unique_ptr<vkb::Instance> vk_instance{};
+	Context                               context{};
+	std::unique_ptr<vkb::core::InstanceC> vk_instance{};
 
 	HWND                                     HWND_application_window{};                       // sync the application HWND handle
 	bool                                     is_windowed = true;                              // this is to tell if the application window is already set in the desired mode

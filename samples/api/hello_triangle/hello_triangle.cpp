@@ -1077,7 +1077,7 @@ bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance();
 
-	vk_instance = std::make_unique<vkb::Instance>(context.instance);
+	vk_instance = std::make_unique<vkb::core::InstanceC>(context.instance);
 
 	context.surface                     = options.window->create_surface(*vk_instance);
 	auto &extent                        = options.window->get_extent();

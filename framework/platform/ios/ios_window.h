@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Inc.
+/* Copyright (c) 2023-2025, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,7 +49,7 @@ class IosWindow : public Window
 	 * @brief Creates a Vulkan surface to the native window
 	 *        If headless, this will return VK_NULL_HANDLE
 	 */
-	VkSurfaceKHR create_surface(Instance &instance) override;
+	VkSurfaceKHR create_surface(vkb::core::InstanceC &instance) override;
 
 	/**
 	 * @brief Creates a Vulkan surface to the native window

@@ -19,7 +19,7 @@
 
 namespace vkb
 {
-PhysicalDevice::PhysicalDevice(Instance &instance, VkPhysicalDevice physical_device) :
+PhysicalDevice::PhysicalDevice(vkb::core::InstanceC &instance, VkPhysicalDevice physical_device) :
     instance{instance},
     handle{physical_device}
 {
@@ -78,7 +78,7 @@ DriverVersion PhysicalDevice::get_driver_version() const
 	return version;
 }
 
-Instance &PhysicalDevice::get_instance() const
+vkb::core::InstanceC &PhysicalDevice::get_instance() const
 {
 	return instance;
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,7 +37,7 @@ class DirectWindow : public Window
 
 	virtual ~DirectWindow();
 
-	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+	virtual VkSurfaceKHR create_surface(vkb::core::InstanceC &instance) override;
 
 	virtual VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
 

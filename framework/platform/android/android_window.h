@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ class AndroidWindow : public Window
 	 * @brief Creates a Vulkan surface to the native window
 	 *        If headless, this will return VK_NULL_HANDLE
 	 */
-	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+	virtual VkSurfaceKHR create_surface(vkb::core::InstanceC &instance) override;
 
 	/**
 	 * @brief Creates a Vulkan surface to the native window

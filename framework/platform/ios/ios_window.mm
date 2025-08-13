@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Inc.
+/* Copyright (c) 2023-2025, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,7 @@ IosWindow::IosWindow(IosPlatform *platform, const Window::Properties &properties
 {
 }
 
-VkSurfaceKHR IosWindow::create_surface(Instance &instance)
+VkSurfaceKHR IosWindow::create_surface(vkb::core::InstanceC &instance)
 {
 	return create_surface(instance.get_handle(), VK_NULL_HANDLE);
 }
