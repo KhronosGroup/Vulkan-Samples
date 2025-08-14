@@ -165,37 +165,27 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance()
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	}
+#endif
 
-#	if defined(PLATFORM__MACOS) && TARGET_OS_OSX
-	// On macOS use layer setting to configure MoltenVK for using Metal argument buffers (needed for descriptor indexing/scaling)
-	VkLayerSettingEXT            layerSetting{};
-	const int32_t                useMetalArgumentBuffers = 1;
+#if defined(PLATFORM__MACOS)
+	// On Apple use layer setting to enable MoltenVK's Metal argument buffers - needed for descriptor indexing/scaling
+	enabled_extensions.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
+
+	VkLayerSettingEXT layerSetting{};
+	layerSetting.pLayerName   = "MoltenVK";
+	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
+	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
+	layerSetting.valueCount   = 1;
+
+	const int32_t useMetalArgumentBuffers = 1;
+	layerSetting.pValues                  = &useMetalArgumentBuffers;
+
 	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{};
+	layerSettingsCreateInfo.sType        = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
+	layerSettingsCreateInfo.settingCount = 1;
+	layerSettingsCreateInfo.pSettings    = &layerSetting;
 
-	if (std::ranges::any_of(available_instance_extensions,
-	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
-	{
-		enabled_extensions.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
-
-		layerSetting.pLayerName   = "MoltenVK";
-		layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
-		layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
-		layerSetting.valueCount   = 1;
-		layerSetting.pValues      = &useMetalArgumentBuffers;
-
-		layerSettingsCreateInfo.sType        = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
-		layerSettingsCreateInfo.settingCount = 1;
-		layerSettingsCreateInfo.pSettings    = &layerSetting;
-
-		create_info.pNext = &layerSettingsCreateInfo;
-	}
-	else
-	{
-		// If layer settings is not available at runtime, set macOS environment variable for support of older Vulkan SDKs
-		// Will not work in batch mode, but is the best we can do short of using the deprecated MoltenVK private config API
-		setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "1", 1);
-	}
-#	endif
+	create_info.pNext = &layerSettingsCreateInfo;
 #endif
 
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;

@@ -229,6 +229,26 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe sample <sample_name>
 sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev libwayland-dev libxkbcommon-dev
 ----
 
+=== Selecting the window system
+
+On Linux, the samples support different window systems. If not explicitly set, default is X11 Xcb. If you want to build with another window system, use the `VKB_WSI_SELECTION` CMake option like this:
+
+----
+cmake -G "Unix Makefiles" -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_WSI_SELECTION=WAYLAND
+----
+
+Available Linux window systems:
+
+[cols="1,1"]
+|===
+| VKB_WSI_SELECTION | Window system
+
+| XCB | X11 Xcb (Default)
+| XLIB | X11 Xlib
+| WAYLAND | Wayland
+| D2D | Direct to Display (`VK_KHR_DISPLAY`)
+|===
+
 === Build with CMake
 
 `Step 1.` The following command will generate the project
@@ -271,7 +291,7 @@ source /PATH/TO/VULKAN/SDK/setup-env.sh
 `Step 1.` The following command will generate the project
 
 ----
-cmake -G Xcode -Bbuild/mac-xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx
+cmake -G Xcode -Bbuild/mac-xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
 ----
 
 Open the *vulkan_samples* Xcode project inside build/mac-xcode and build with command-B.  To run Vulkan Samples, use Xcode's edit-scheme selection and set the arguments to --help. Click the "Play" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
@@ -279,7 +299,7 @@ Open the *vulkan_samples* Xcode project inside build/mac-xcode and build with co
 Alternatively, for command line builds use the steps below:
 
 ----
-cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx
+cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
 ----
 
 `Step 2.` Build the project
@@ -335,7 +355,7 @@ It's recommended to open the *vulkan_samples* Xcode project that is generated in
 Alternatively, you can build with cmake as shown here
 
 ----
-cmake --build build/ios --config Release --target vulkan_samples -j$(sysctl -n hw.ncpu) -- -sdk iphoneos -allowProvisioningUpdates
+cmake --build build/ios --config Release --target vulkan_samples -j$(sysctl -n hw.ncpu) -- -allowProvisioningUpdates
 ----
 
 `Step 3.` Run the *Vulkan Samples* application
