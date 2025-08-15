@@ -26,35 +26,6 @@
 #include <core/sampler.h>
 #include <rendering/subpass.h>
 
-// Extend the type mapping from VkType to vk::Type for some Tensor-related structs, so that we can use some templated
-// types in the sample framework.
-namespace vkb
-{
-namespace detail
-{
-template <>
-struct HPPType<VkTensorCreateInfoARM>
-{
-	using Type = vk::TensorCreateInfoARM;
-};
-template <>
-struct HPPType<VkTensorARM>
-{
-	using Type = vk::TensorARM;
-};
-template <>
-struct HPPType<VkTensorViewARM>
-{
-	using Type = vk::TensorViewARM;
-};
-template <>
-struct HPPType<VkDataGraphPipelineSessionARM>
-{
-	using Type = vk::DataGraphPipelineSessionARM;
-};
-}        // namespace detail
-}        // namespace vkb
-
 /**
  * Simple wrapper around an array of elements of type T which interprets it as a multidimensional array,
  * allowing convenient access to elements using a multidimensional index.
@@ -62,30 +33,30 @@ struct HPPType<VkDataGraphPipelineSessionARM>
 template <typename T>
 struct MultidimensionalArrayView
 {
-	T                   *data;
-	std::vector<int64_t> dimensions;
+    T                   *data;
+    std::vector<int64_t> dimensions;
 
-	MultidimensionalArrayView(T *data, const std::vector<int64_t> &dimensions) :
-	    data(data), dimensions(dimensions)
-	{
-	}
+    MultidimensionalArrayView(T *data, const std::vector<int64_t> &dimensions) :
+        data(data), dimensions(dimensions)
+    {
+    }
 
-	T &operator[](std::initializer_list<int64_t> indices)
-	{
-		if (indices.size() != dimensions.size())
-		{
-			throw std::runtime_error("Number of indices must match number of dimensions");
-		}
-		size_t index      = 0;
-		size_t multiplier = 1;
-		// Calculate the index based on the provided indices and dimensions
-		for (int i = dimensions.size() - 1; i >= 0; --i)
-		{
-			index += *(indices.begin() + i) * multiplier;
-			multiplier *= dimensions[i];
-		}
-		return data[index];
-	}
+    T &operator[](std::initializer_list<int64_t> indices)
+    {
+        if (indices.size() != dimensions.size())
+        {
+            throw std::runtime_error("Number of indices must match number of dimensions");
+        }
+        size_t index      = 0;
+        size_t multiplier = 1;
+        // Calculate the index based on the provided indices and dimensions
+        for (int i = dimensions.size() - 1; i >= 0; --i)
+        {
+            index += *(indices.begin() + i) * multiplier;
+            multiplier *= dimensions[i];
+        }
+        return data[index];
+    }
 };
 
 /*
@@ -142,18 +113,39 @@ void vmaDestroyDataGraphPipelineSession(VkDevice                      device,
 class TensorBuilder : public vkb::allocated::BuilderBaseC<TensorBuilder, VkTensorCreateInfoARM>
 {
   public:
-	TensorBuilder(std::vector<int64_t> in_dimensions);
+    TensorBuilder(std::vector<int64_t> in_dimensions);
 
-	TensorBuilder &with_format(VkFormat format);
-	TensorBuilder &with_tiling(VkTensorTilingARM tiling);
-	TensorBuilder &with_usage(VkTensorUsageFlagsARM usage);
+    TensorBuilder &with_format(VkFormat format);
+    TensorBuilder &with_tiling(VkTensorTilingARM tiling);
+    TensorBuilder &with_usage(VkTensorUsageFlagsARM usage);
 
   private:
-	// VkTensorCreateInfoARM (stored in the base class) has a pointer to a VkTensorDescriptionARM,
-	// so we need to store that struct separately so that it outlives the pointer.
-	VkTensorDescriptionARM description;
-	// The description points to a dimensions array, so we need to store that array separately so that it outlives the pointer.
-	std::vector<int64_t> dimensions;
+    // VkTensorCreateInfoARM (stored in the base class) has a pointer to a VkTensorDescriptionARM,
+    // so we need to store that struct separately so that it outlives the pointer.
+    VkTensorDescriptionARM description;
+    // The description points to a dimensions array, so we need to store that array separately so that it outlives the pointer.
+    std::vector<int64_t> dimensions;
+};
+
+/*
+ * @brief Common descriptor class used by Tensor and ExternallyAllocatedTensor.
+ */
+class TensorDescriptor
+{
+  public:
+    TensorDescriptor(const TensorBuilder &builder);
+    ~TensorDescriptor() = default;
+
+    const VkTensorCreateInfoARM &get_create_info() const;
+
+    const VkTensorDescriptionARM &get_description() const;
+
+  private:
+    VkTensorCreateInfoARM create_info;
+    // create_info has a pointer to a VkTensorDescriptionARM, so we need to store that struct separately so that it outlives the pointer.
+    VkTensorDescriptionARM description;
+    // The description points to a dimensions array, so we need to store that array separately so that it outlives the pointer.
+    std::vector<int64_t> dimensions;
 };
 
 /*
@@ -162,19 +154,15 @@ class TensorBuilder : public vkb::allocated::BuilderBaseC<TensorBuilder, VkTenso
 class Tensor : public vkb::allocated::AllocatedC<VkTensorARM>
 {
   public:
-	Tensor(vkb::core::DeviceC &device, TensorBuilder const &builder);
-	~Tensor();
+    Tensor(vkb::core::DeviceC &device, TensorBuilder const &builder);
+    ~Tensor();
 
-	const VkTensorDescriptionARM &get_description() const;
+    const VkTensorDescriptionARM &get_description() const;
 
-	VkFormat get_format() const;
+    VkFormat get_format() const;
 
   private:
-	VkTensorCreateInfoARM create_info;
-	// create_info has a pointer to a VkTensorDescriptionARM, so we need to store that struct separately so that it outlives the pointer.
-	VkTensorDescriptionARM description;
-	// The description points to a dimensions array, so we need to store that array separately so that it outlives the pointer.
-	std::vector<int64_t> dimensions;
+    TensorDescriptor descriptor;
 };
 
 /*
@@ -184,20 +172,16 @@ class Tensor : public vkb::allocated::AllocatedC<VkTensorARM>
 class ExternallyAllocatedTensor : public vkb::core::VulkanResourceC<VkTensorARM>
 {
   public:
-	ExternallyAllocatedTensor(vkb::core::DeviceC &device, TensorBuilder const &builder, VkDeviceMemory existing_memory,
-	                          VkDeviceSize existing_memory_offset);
-	~ExternallyAllocatedTensor();
+    ExternallyAllocatedTensor(vkb::core::DeviceC &device, TensorBuilder const &builder, VkDeviceMemory existing_memory,
+                              VkDeviceSize existing_memory_offset);
+    ~ExternallyAllocatedTensor();
 
-	const VkTensorDescriptionARM &get_description() const;
+    const VkTensorDescriptionARM &get_description() const;
 
-	VkFormat get_format() const;
+    VkFormat get_format() const;
 
   private:
-	VkTensorCreateInfoARM create_info;
-	// create_info has a pointer to a VkTensorDescriptionARM, so we need to store that struct separately so that it outlives the pointer.
-	VkTensorDescriptionARM description;
-	// The description points to a dimensions array, so we need to store that array separately so that it outlives the pointer.
-	std::vector<int64_t> dimensions;
+    TensorDescriptor descriptor;
 };
 
 /*
@@ -206,9 +190,13 @@ class ExternallyAllocatedTensor : public vkb::core::VulkanResourceC<VkTensorARM>
 class TensorView : public vkb::core::VulkanResourceC<VkTensorViewARM>
 {
   public:
-	TensorView(Tensor &tensor, VkFormat format = VK_FORMAT_UNDEFINED);                           // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
-	TensorView(ExternallyAllocatedTensor &tensor, VkFormat format = VK_FORMAT_UNDEFINED);        // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
-	~TensorView();
+    TensorView(Tensor &tensor, VkFormat format = VK_FORMAT_UNDEFINED);                           // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
+    TensorView(ExternallyAllocatedTensor &tensor, VkFormat format = VK_FORMAT_UNDEFINED);        // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
+    ~TensorView();
+
+  private:
+    template <typename T>
+    void Init(T &tensor, VkFormat format);
 };
 
 /*
@@ -217,10 +205,10 @@ class TensorView : public vkb::core::VulkanResourceC<VkTensorViewARM>
 template <typename DataType>
 struct PipelineConstantTensor
 {
-	std::vector<int64_t>           dimensions;
-	std::vector<DataType>          constant_data;
-	VkTensorDescriptionARM         tensor_description{};
-	VkDataGraphPipelineConstantARM pipeline_constant{};
+    std::vector<int64_t>           dimensions;
+    std::vector<DataType>          constant_data;
+    VkTensorDescriptionARM         tensor_description{};
+    VkDataGraphPipelineConstantARM pipeline_constant{};
 };
 
 /*
@@ -234,17 +222,17 @@ struct PipelineConstantTensor
 class DataGraphPipelineLayout : public vkb::core::VulkanResourceC<VkPipelineLayout>
 {
   public:
-	/*
-	 * @brief Creates a DataGraphPipelineLayout. Assumes all tensor bindings are in the first descriptor set.
-	 * @param tensor_bindings The binding numbers for every tensor, which are assumed to be in the first descriptor set.
-	 */
-	DataGraphPipelineLayout(vkb::core::DeviceC &device, std::set<uint32_t> tensor_bindings);
-	~DataGraphPipelineLayout();
+    /*
+     * @brief Creates a DataGraphPipelineLayout. Assumes all tensor bindings are in the first descriptor set.
+     * @param tensor_bindings The binding numbers for every tensor, which are assumed to be in the first descriptor set.
+     */
+    DataGraphPipelineLayout(vkb::core::DeviceC &device, const std::set<uint32_t> &tensor_bindings);
+    ~DataGraphPipelineLayout();
 
-	const VkDescriptorSetLayout &get_descriptor_set_layout() const;
+    const VkDescriptorSetLayout &get_descriptor_set_layout() const;
 
   private:
-	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 };
 
 /*
@@ -253,21 +241,21 @@ class DataGraphPipelineLayout : public vkb::core::VulkanResourceC<VkPipelineLayo
 class DataGraphPipeline : public vkb::core::VulkanResourceC<VkPipeline>
 {
   public:
-	/*
-	 * @brief Creates a DataGraphPipeline.
-	 * @param tensor_descriptions Descriptions (shape, format, etc.) for each tensor that will be bound to this pipeline.
-	 *                            The first key in the map is the set number and the second key is the binding number.
-	 */
-	DataGraphPipeline(vkb::core::DeviceC                                                    &device,
-	                  VkPipelineLayout                                                       layout,
-	                  VkShaderModule                                                         shader_module,
-	                  const char                                                            *entry_point,
-	                  std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> tensor_descriptions,
-	                  std::vector<VkDataGraphPipelineConstantARM *>                          data_graph_pipeline_constants = std::vector<VkDataGraphPipelineConstantARM *>());
-	~DataGraphPipeline();
+    /*
+     * @brief Creates a DataGraphPipeline.
+     * @param tensor_descriptions Descriptions (shape, format, etc.) for each tensor that will be bound to this pipeline.
+     *                            The first key in the map is the set number and the second key is the binding number.
+     */
+    DataGraphPipeline(vkb::core::DeviceC                                                           &device,
+                      VkPipelineLayout                                                              layout,
+                      VkShaderModule                                                                shader_module,
+                      const char                                                                   *entry_point,
+                      const std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> &tensor_descriptions,
+                      const std::vector<VkDataGraphPipelineConstantARM *>                          &data_graph_pipeline_constants = std::vector<VkDataGraphPipelineConstantARM *>());
+    ~DataGraphPipeline();
 
   private:
-	VkShaderModule shader_module = VK_NULL_HANDLE;
+    VkShaderModule shader_module = VK_NULL_HANDLE;
 };
 
 /*
@@ -278,8 +266,8 @@ class DataGraphPipeline : public vkb::core::VulkanResourceC<VkPipeline>
 class DataGraphPipelineSession : public vkb::allocated::AllocatedC<VkDataGraphPipelineSessionARM>
 {
   public:
-	DataGraphPipelineSession(vkb::core::DeviceC &device, VkPipeline data_graph_pipeline, VmaAllocationCreateInfo alloc_create_info);
-	~DataGraphPipelineSession();
+    DataGraphPipelineSession(vkb::core::DeviceC &device, VkPipeline data_graph_pipeline, VmaAllocationCreateInfo alloc_create_info);
+    ~DataGraphPipelineSession();
 };
 
 /*
@@ -290,13 +278,13 @@ class DataGraphPipelineSession : public vkb::allocated::AllocatedC<VkDataGraphPi
 class ComputePipelineLayoutWithTensors : public vkb::core::VulkanResourceC<VkPipelineLayout>
 {
   public:
-	ComputePipelineLayoutWithTensors(vkb::core::DeviceC &device, vkb::ShaderModule &shader_module);
-	~ComputePipelineLayoutWithTensors();
+    ComputePipelineLayoutWithTensors(vkb::core::DeviceC &device, vkb::ShaderModule &shader_module);
+    ~ComputePipelineLayoutWithTensors();
 
-	const std::map<uint32_t, VkDescriptorSetLayout> &get_descriptor_set_layouts() const;
+    const std::map<uint32_t, VkDescriptorSetLayout> &get_descriptor_set_layouts() const;
 
   private:
-	std::map<uint32_t, VkDescriptorSetLayout> descriptor_set_layouts;
+    std::map<uint32_t, VkDescriptorSetLayout> descriptor_set_layouts;
 };
 
 /*
@@ -308,11 +296,11 @@ class ComputePipelineLayoutWithTensors : public vkb::core::VulkanResourceC<VkPip
 class ComputePipelineWithTensors : public vkb::core::VulkanResourceC<VkPipeline>
 {
   public:
-	ComputePipelineWithTensors(vkb::core::DeviceC &device, VkPipelineLayout layout, vkb::ShaderModule &shader);
-	~ComputePipelineWithTensors();
+    ComputePipelineWithTensors(vkb::core::DeviceC &device, VkPipelineLayout layout, vkb::ShaderModule &shader);
+    ~ComputePipelineWithTensors();
 
   private:
-	VkShaderModule shader_module = VK_NULL_HANDLE;
+    VkShaderModule shader_module = VK_NULL_HANDLE;
 };
 
 /*
@@ -321,16 +309,16 @@ class ComputePipelineWithTensors : public vkb::core::VulkanResourceC<VkPipeline>
 class BlitSubpass : public vkb::rendering::SubpassC
 {
   public:
-	BlitSubpass(vkb::RenderContext &renderContext, vkb::core::ImageView *source = nullptr);
+    BlitSubpass(vkb::RenderContext &renderContext, vkb::core::ImageView *source = nullptr);
 
-	void prepare() override;
+    void prepare() override;
 
-	void set_source(vkb::core::ImageView *source);
+    void set_source(vkb::core::ImageView *source);
 
-	void draw(vkb::core::CommandBufferC &command_buffer) override;
+    void draw(vkb::core::CommandBufferC &command_buffer) override;
 
   private:
-	vkb::PipelineLayout                *pipeline_layout = nullptr;
-	vkb::core::ImageView               *source          = nullptr;
-	std::unique_ptr<vkb::core::Sampler> sampler         = nullptr;
+    vkb::PipelineLayout                *pipeline_layout = nullptr;
+    vkb::core::ImageView               *source          = nullptr;
+    std::unique_ptr<vkb::core::Sampler> sampler         = nullptr;
 };
