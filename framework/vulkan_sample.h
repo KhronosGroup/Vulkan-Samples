@@ -20,8 +20,8 @@
 
 #include "common/hpp_utils.h"
 #include "core/debug.h"
+#include "gui.h"
 #include "hpp_gltf_loader.h"
-#include "hpp_gui.h"
 #include "platform/application.h"
 #include "platform/window.h"
 #include "rendering/hpp_render_pipeline.h"
@@ -101,7 +101,6 @@ namespace vkb
  * - Core classes: Classes in vkb::core wrap Vulkan objects for indexing and hashing.
  */
 
-class Gui;
 class RenderPipeline;
 class Stats;
 
@@ -135,7 +134,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using GuiType            = typename std::conditional<bindingType == BindingType::Cpp, vkb::HPPGui, vkb::Gui>::type;
 	using InstanceType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPInstance, vkb::Instance>::type;
 	using PhysicalDeviceType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPhysicalDevice, vkb::PhysicalDevice>::type;
 	using RenderContextType  = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
@@ -265,8 +263,8 @@ class VulkanSample : public vkb::Application
 
 	vkb::core::Device<bindingType>       &get_device();
 	vkb::core::Device<bindingType> const &get_device() const;
-	GuiType                              &get_gui();
-	GuiType const                        &get_gui() const;
+	vkb::Gui<bindingType>                &get_gui();
+	vkb::Gui<bindingType> const          &get_gui() const;
 	InstanceType                         &get_instance();
 	InstanceType const                   &get_instance() const;
 	RenderPipelineType                   &get_render_pipeline();
@@ -407,7 +405,7 @@ class VulkanSample : public vkb::Application
 	 */
 	std::unique_ptr<vkb::scene_graph::HPPScene> scene;
 
-	std::unique_ptr<vkb::HPPGui> gui;
+	std::unique_ptr<vkb::GuiCpp> gui;
 
 	std::unique_ptr<vkb::stats::HPPStats> stats;
 
@@ -450,6 +448,11 @@ class VulkanSample : public vkb::Application
 
 	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
 };
+
+using VulkanSampleC   = VulkanSample<vkb::BindingType::C>;
+using VulkanSampleCpp = VulkanSample<vkb::BindingType::Cpp>;
+
+// Member function definitions
 
 template <vkb::BindingType bindingType>
 inline VulkanSample<bindingType>::~VulkanSample()
@@ -724,7 +727,7 @@ inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::GuiType &VulkanSample<bindingType>::get_gui()
+inline vkb::Gui<bindingType> &VulkanSample<bindingType>::get_gui()
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -732,12 +735,12 @@ inline typename VulkanSample<bindingType>::GuiType &VulkanSample<bindingType>::g
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Gui &>(*gui);
+		return reinterpret_cast<vkb::GuiC &>(*gui);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::GuiType const &VulkanSample<bindingType>::get_gui() const
+inline vkb::Gui<bindingType> const &VulkanSample<bindingType>::get_gui() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -745,7 +748,7 @@ inline typename VulkanSample<bindingType>::GuiType const &VulkanSample<bindingTy
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Gui const &>(*gui);
+		return reinterpret_cast<vkb::GuiC const &>(*gui);
 	}
 }
 
@@ -1172,12 +1175,15 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		gui = std::make_unique<vkb::HPPGui>(*this, window, stats, font_size, explicit_update);
+		gui = std::make_unique<vkb::GuiCpp>(get_render_context(), window, stats, font_size, explicit_update);
 	}
 	else
 	{
-		gui = std::make_unique<vkb::HPPGui>(
-		    *reinterpret_cast<VulkanSampleCpp *>(this), window, reinterpret_cast<vkb::stats::HPPStats const *>(stats), font_size, explicit_update);
+		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::HPPRenderContext &>(get_render_context()),
+		                                    window,
+		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats),
+		                                    font_size,
+		                                    explicit_update);
 	}
 }
 
@@ -1441,8 +1447,5 @@ inline void VulkanSample<bindingType>::update_stats(float delta_time)
 		}
 	}
 }
-
-using VulkanSampleC   = VulkanSample<vkb::BindingType::C>;
-using VulkanSampleCpp = VulkanSample<vkb::BindingType::Cpp>;
 
 }        // namespace vkb

@@ -18,6 +18,7 @@
 
 #include "hpp_api_vulkan_sample.h"
 #include "core/hpp_queue.h"
+#include "gui.h"
 
 // Instantiate the default dispatcher
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
