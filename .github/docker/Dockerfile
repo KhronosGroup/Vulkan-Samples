@@ -80,7 +80,7 @@ ENV PATH="$PATH:$ANDROID_HOME/platform-tools:${ANDROID_SDK_TOOLS}/tools/bin:$AND
 RUN mkdir -p $ANDROID_HOME
 
 # Configure Android NDK
-ENV NDK_VERSION=r25b
+ENV NDK_VERSION=r28c
 
 RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_VERSION-linux.zip -O /tmp/android-ndk.zip \
     && unzip -qq /tmp/android-ndk.zip -d /usr/local \
