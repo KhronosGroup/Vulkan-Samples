@@ -84,8 +84,9 @@ class Instance
 	 * @brief Queries the GPUs of a InstanceType that is already created
 	 * @param instance A valid InstanceType
 	 * @param externally_enabled_extensions List of extensions that have been enabled, used for following checks e.g. during device creation
+	 * @param needsToInitializeDispatcher If the sample uses the C-bindings and some "non-standard" initialization, the dispatcher needs to be initialized
 	 */
-	Instance(vk::Instance instance, const std::vector<const char *> &externally_enabled_extensions = {});
+	Instance(vk::Instance instance, const std::vector<const char *> &externally_enabled_extensions = {}, bool needsToInitializeDispatcher = false);
 	Instance(VkInstance instance, const std::vector<const char *> &externally_enabled_extensions = {});
 
 	Instance(Instance const &) = delete;
@@ -561,9 +562,21 @@ inline Instance<bindingType>::Instance(std::string const                        
 {}
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(vk::Instance instance, const std::vector<const char *> &externally_enabled_extensions) :
+inline Instance<bindingType>::Instance(vk::Instance instance, const std::vector<const char *> &externally_enabled_extensions, bool needsToInitializeDispatcher) :
     handle{instance}
 {
+	if (needsToInitializeDispatcher)
+	{
+#if defined(_HPP_VULKAN_LIBRARY)
+		static vk::detail::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
+#else
+		static vk::detail::DynamicLoader dl;
+#endif
+		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
+	}
+
 	// Some parts of the framework will check for certain extensions to be enabled
 	// To make those work we need to copy over externally enabled extensions into this class
 	for (auto extension : externally_enabled_extensions)
@@ -577,13 +590,13 @@ inline Instance<bindingType>::Instance(vk::Instance instance, const std::vector<
 	}
 	else
 	{
-		throw std::runtime_error("HPPInstance not valid");
+		throw std::runtime_error("Instance not valid");
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline Instance<bindingType>::Instance(VkInstance instance, const std::vector<const char *> &externally_enabled_extensions) :
-    Instance<bindingType>(static_cast<vk::Instance>(instance), externally_enabled_extensions)
+    Instance<bindingType>(static_cast<vk::Instance>(instance), externally_enabled_extensions, true)
 {}
 
 template <vkb::BindingType bindingType>
