@@ -213,7 +213,6 @@ Astc::Astc(const Image &image) :
 {
 	init();
 
-	vkb::filesystem::init();
 	auto fs = vkb::filesystem::get();
 
 	size_t key = ASTC_CACHE_SEED;
