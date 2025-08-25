@@ -23,7 +23,7 @@ namespace vkb
 {
 namespace core
 {
-HPPPhysicalDevice::HPPPhysicalDevice(HPPInstance &instance, vk::PhysicalDevice physical_device) :
+HPPPhysicalDevice::HPPPhysicalDevice(vkb::core::InstanceCpp &instance, vk::PhysicalDevice physical_device) :
     instance{instance},
     handle{physical_device}
 {
@@ -97,7 +97,7 @@ vk::PhysicalDevice HPPPhysicalDevice::get_handle() const
 	return handle;
 }
 
-vkb::core::HPPInstance &HPPPhysicalDevice::get_instance() const
+vkb::core::InstanceCpp &HPPPhysicalDevice::get_instance() const
 {
 	return instance;
 }

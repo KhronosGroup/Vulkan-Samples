@@ -21,8 +21,6 @@
 
 namespace vkb
 {
-class Instance;
-
 struct DriverVersion
 {
 	uint16_t major;
@@ -38,7 +36,7 @@ struct DriverVersion
 class PhysicalDevice
 {
   public:
-	PhysicalDevice(Instance &instance, VkPhysicalDevice physical_device);
+	PhysicalDevice(vkb::core::InstanceC &instance, VkPhysicalDevice physical_device);
 
 	PhysicalDevice(const PhysicalDevice &) = delete;
 
@@ -50,7 +48,7 @@ class PhysicalDevice
 
 	DriverVersion get_driver_version() const;
 
-	Instance &get_instance() const;
+	vkb::core::InstanceC &get_instance() const;
 
 	VkBool32 is_present_supported(VkSurfaceKHR surface, uint32_t queue_family_index) const;
 
@@ -219,7 +217,7 @@ class PhysicalDevice
 
   private:
 	// Handle to the Vulkan instance
-	Instance &instance;
+	vkb::core::InstanceC &instance;
 
 	// Handle to the Vulkan physical device
 	VkPhysicalDevice handle{VK_NULL_HANDLE};
