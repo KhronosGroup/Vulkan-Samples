@@ -470,8 +470,10 @@ void Profiles::setup_descriptor_pool()
 void Profiles::setup_descriptor_set_layout()
 {
 	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-	VkDescriptorSetLayoutCreateInfo           descriptor_layout_create_info{};
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info{};
+	descriptor_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
 	// Mark second slot as variable for descriptor indexing
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT descriptor_set_layout_binding_flags{};
@@ -497,10 +499,8 @@ void Profiles::setup_descriptor_set_layout()
 	        VK_SHADER_STAGE_FRAGMENT_BIT,
 	        1,
 	        static_cast<uint32_t>(textures.size()))};
-	descriptor_layout_create_info =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
+	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &base_descriptor_set_layout));
 
 	// Set layout for the samplers
@@ -511,10 +511,8 @@ void Profiles::setup_descriptor_set_layout()
 	        VK_SHADER_STAGE_FRAGMENT_BIT,
 	        0,
 	        static_cast<uint32_t>(textures.size()))};
-	descriptor_layout_create_info =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
+	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &sampler_descriptor_set_layout));
 
 	// Pipeline layout
