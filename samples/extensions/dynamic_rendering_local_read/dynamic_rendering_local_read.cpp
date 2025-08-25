@@ -38,6 +38,13 @@ DynamicRenderingLocalRead::DynamicRenderingLocalRead()
 	// To simplify barrier setup used for dynamic rendering, we use sync2
 	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 
+	// Slang shaders require additional extensions to be enabled
+	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
+	{
+		add_device_extension(VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME);
+		add_device_extension(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
+	}
+
 	// Dynamic rendering doesn't use render passes
 	// To make sure that framework related classes like the user interface are aware of this, we explicitly st the base class' renderpass to a null handle
 	render_pass = VK_NULL_HANDLE;
@@ -692,8 +699,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	pipeline_create_info.subpass = 0;
 #endif
 
-	shader_stages[0] = load_shader("dynamic_rendering_local_read/scene_opaque.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering_local_read/scene_opaque.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering_local_read", "scene_opaque.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering_local_read", "scene_opaque.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &scene_opaque_pass.pipeline));
 
 	/*
@@ -731,8 +738,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	pipeline_create_info.subpass = 2;
 #endif
 
-	shader_stages[0] = load_shader("dynamic_rendering_local_read/scene_transparent.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering_local_read/scene_transparent.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering_local_read", "scene_transparent.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering_local_read", "scene_transparent.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &scene_transparent_pass.pipeline));
 
 	/*
@@ -771,8 +778,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	empty_vertex_input_state.sType         = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	pipeline_create_info.pVertexInputState = &empty_vertex_input_state;
 
-	shader_stages[0] = load_shader("dynamic_rendering_local_read/composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering_local_read/composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering_local_read", "composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering_local_read", "composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &composition_pass.pipeline));
 }
 

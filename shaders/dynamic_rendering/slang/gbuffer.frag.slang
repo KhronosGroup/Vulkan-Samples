@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,24 +15,16 @@
  * limitations under the License.
  */
 
-TextureCube textureEnvMap : register(t1);
-SamplerState samplerEnvMap : register(s1);
-
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
-    [[vk::location(0)]] float3 UVW : TEXCOORD0;
-    [[vk::location(1)]] float3 Normal : NORMAL0;
-    [[vk::location(2)]] float3 ViewVec : TEXCOORD1;
-    [[vk::location(3)]] float3 LightVec : TEXCOORD2;
+    float3 UVW;
+    float3 Normal;
+    float3 ViewVec;
+    float3 LightVec;
 };
 
-struct FSOutput
-{
-    float4 Color0 : SV_TARGET0;
-};
-
-[[vk::constant_id(0)]] const int type = 0;
+[[SpecializationConstant]] const int type = 0;
 
 #define PI 3.1415926
 #define TwoPI (2.0 * PI)
@@ -45,12 +37,13 @@ struct UBOMatrices
     float4x4 inverseModelView;
     float modelscale;
 };
-[[vk::binding(0, 0)]]
-ConstantBuffer<UBOMatrices> uboMatrices : register(b0);
+ConstantBuffer<UBOMatrices> uboMatrices;
 
-FSOutput main(VSOutput input)
+SamplerCube samplerEnvMap;
+
+[shader("fragment")]
+float4 main(VSOutput input)
 {
-    FSOutput output = (FSOutput) 0;
     float4 color;
     float3 wcNormal;
 
@@ -59,7 +52,7 @@ FSOutput main(VSOutput input)
         case 0: // Skybox
 			{
                 float3 normal = normalize(input.UVW);
-                color = textureEnvMap.Sample(samplerEnvMap, normal);
+                color = samplerEnvMap.Sample(normal);
             }
             break;
 
@@ -93,7 +86,7 @@ FSOutput main(VSOutput input)
 
                 float spec = max((fresnel * geoAtt) / (NdotV * NdotL * 3.14), 0.0);
 
-                color = textureEnvMap.Sample(samplerEnvMap, reflect(-wViewVec, wNormal));
+                color = samplerEnvMap.Sample(reflect(-wViewVec, wNormal));
 
                 color = float4(color.rgb * NdotL * (k + spec * (1.0 - k)), 1.0);
             }
@@ -102,8 +95,8 @@ FSOutput main(VSOutput input)
         case 2: // Refract
 			{
                 float3 wViewVec = mul((float4x3) uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
-                float3 wNormal = mul((float4x3) uboMatrices.inverseModelView, input.Normal).xyz;
-                color = textureEnvMap.Sample(samplerEnvMap, refract(-wViewVec, wNormal, 1.0 / 1.6));
+                float3 wNormal = mul((float4x3)uboMatrices.inverseModelView, input.Normal).xyz;
+                color = samplerEnvMap.Sample(refract(-wViewVec, wNormal, 1.0 / 1.6));
             }
             break;
     }
@@ -111,7 +104,6 @@ FSOutput main(VSOutput input)
 
 	// Color with manual exposure into attachment 0
     const float exposure = 1.0;
-    output.Color0.rgb = float3(1.0, 1.0, 1.0) - exp(-color.rgb * exposure);
-    
-    return output;
+    float3 outColor = float3(1.0, 1.0, 1.0) - exp(-color.rgb * exposure);
+    return float4(outColor, 1.0);
 }
