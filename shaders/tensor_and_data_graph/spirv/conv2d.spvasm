@@ -1,0 +1,89 @@
+; Copyright (c) 2025, Arm Limited and Contributors
+;
+; SPDX-License-Identifier: Apache-2.0
+;
+; Licensed under the Apache License, Version 2.0 the "License";
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+
+; A simple neural network with a single conv2d layer, expressed in SPIR-V assembly.
+
+                                  ; Boilerplate
+                                  OpCapability Shader
+                                  OpCapability TensorsARM
+                                  OpCapability GraphARM
+                                  OpExtension "SPV_ARM_tensors"
+                                  OpExtension "SPV_ARM_graph"
+
+                                 ; Import TOSA instructions for neural network operations
+                         %tosa = OpExtInstImport "TOSA.001000.1"
+
+                                 ; More boilerplate
+                                 OpMemoryModel Logical GLSL450
+
+                                 ; Descriptor set interface
+                                 OpDecorate %input_tensor_ptr DescriptorSet 0
+                                 OpDecorate %input_tensor_ptr Binding 0
+                                 OpDecorate %output_tensor_ptr DescriptorSet 0
+                                 OpDecorate %output_tensor_ptr Binding 1
+
+                                 ; Types and constants
+                         %bool = OpTypeBool
+                        %false = OpConstantFalse %bool
+                         %uint = OpTypeInt 32 0
+                       %uint_0 = OpConstant %uint 0
+                       %uint_1 = OpConstant %uint 1
+                       %uint_2 = OpConstant %uint 2
+                       %uint_3 = OpConstant %uint 3
+                       %uint_4 = OpConstant %uint 4
+                        %width = OpConstant %uint 20
+                       %height = OpConstant %uint 20
+                        %float = OpTypeFloat 32
+                      %float_0 = OpConstant %float 0
+                %uint_array_l1 = OpTypeArray %uint %uint_1
+                %uint_array_l4 = OpTypeArray %uint %uint_4
+              %uint_array_l1_1 = OpConstantComposite %uint_array_l1 %uint_1
+              %uint_array_l1_2 = OpConstantComposite %uint_array_l1 %uint_2
+              %uint_array_l1_3 = OpConstantComposite %uint_array_l1 %uint_3
+              %uint_array_l1_4 = OpConstantComposite %uint_array_l1 %uint_4
+        %uint_array_l4_3_3_3_3 = OpConstantComposite %uint_array_l4 %uint_3 %uint_3 %uint_3 %uint_3
+        %uint_array_l4_1_h_w_3 = OpConstantComposite %uint_array_l4 %uint_1 %height %width %uint_3
+           %float_tensor_r1_s1 = OpTypeTensorARM %float %uint_1 %uint_array_l1_1
+            %uint_tensor_r1_s2 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_2
+           %float_tensor_r1_s3 = OpTypeTensorARM %float %uint_1 %uint_array_l1_3
+            %uint_tensor_r1_s4 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_4
+    %float_tensor_r4_s_3_3_3_3 = OpTypeTensorARM %float %uint_4 %uint_array_l4_3_3_3_3
+    %float_tensor_r4_s_1_h_w_3 = OpTypeTensorARM %float %uint_4 %uint_array_l4_1_h_w_3
+%ptr_float_tensor_r4_s_1_h_w_3 = OpTypePointer UniformConstant %float_tensor_r4_s_1_h_w_3
+
+                                 ; Parameters for conv2d layer
+                     %conv_pad = OpConstantComposite %uint_tensor_r1_s4 %uint_1 %uint_1 %uint_1 %uint_1
+                  %conv_stride = OpConstantComposite %uint_tensor_r1_s2 %uint_1 %uint_1
+                %conv_dilation = OpConstantComposite %uint_tensor_r1_s2 %uint_1 %uint_1
+        %conv_input_zero_point = OpConstantComposite %float_tensor_r1_s1 %float_0
+       %conv_weight_zero_point = OpConstantComposite %float_tensor_r1_s1 %float_0
+
+                 %conv_weights = OpGraphConstantARM %float_tensor_r4_s_3_3_3_3 0
+                  %conv_biases = OpGraphConstantARM %float_tensor_r1_s3 1
+
+                                 ; Graph type and interface variables
+                   %graph_type = OpTypeGraphARM 1 %float_tensor_r4_s_1_h_w_3 %float_tensor_r4_s_1_h_w_3
+             %input_tensor_ptr = OpVariable %ptr_float_tensor_r4_s_1_h_w_3 UniformConstant
+            %output_tensor_ptr = OpVariable %ptr_float_tensor_r4_s_1_h_w_3 UniformConstant
+
+                                 ; Neural network layers defined as a graph
+                                 OpGraphEntryPointARM %graph "main" %input_tensor_ptr %output_tensor_ptr
+                        %graph = OpGraphARM %graph_type
+                           %in = OpGraphInputARM %float_tensor_r4_s_1_h_w_3 %uint_0
+                          %out = OpExtInst %float_tensor_r4_s_1_h_w_3 %tosa CONV2D %conv_pad %conv_stride %conv_dilation %uint_2 %false %in %conv_weights %conv_biases %conv_input_zero_point %conv_weight_zero_point
+                                 OpGraphSetOutputARM %out %uint_0
+                                 OpGraphEndARM

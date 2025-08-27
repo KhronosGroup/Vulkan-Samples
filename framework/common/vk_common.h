@@ -146,6 +146,14 @@ enum class ShadingLanguage
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage);
 
 /**
+ * @brief Helper function to create a VkShaderModule from a SPIR-V vector
+ * @param spirv The SPIR-V code in vector format
+ * @param device The logical device
+ * @return The shader module containing the loaded shader
+ */
+VkShaderModule load_shader_from_vector(const std::vector<uint32_t> &spirv, VkDevice device);
+
+/**
  * @brief Helper function to select a VkSurfaceFormatKHR
  * @param gpu The VkPhysicalDevice to select a format for.
  * @param surface The VkSurfaceKHR to select a format for.
