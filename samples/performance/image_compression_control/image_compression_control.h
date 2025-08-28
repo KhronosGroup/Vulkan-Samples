@@ -40,7 +40,7 @@ class ImageCompressionControlSample : public vkb::VulkanSampleC
 
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	virtual ~ImageCompressionControlSample() = default;
 

@@ -82,7 +82,7 @@ CalibratedTimestamps::~CalibratedTimestamps()
 	}
 }
 
-void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
+void CalibratedTimestamps::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{

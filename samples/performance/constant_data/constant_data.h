@@ -245,7 +245,7 @@ class ConstantData : public vkb::VulkanSampleC
 
 	virtual void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	/**
 	 * @brief Helper function to determine the constant data method that is selected and supported by the sample

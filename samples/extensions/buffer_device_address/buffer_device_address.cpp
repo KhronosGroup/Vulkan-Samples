@@ -426,13 +426,10 @@ void BufferDeviceAddress::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
-void BufferDeviceAddress::request_gpu_features(vkb::PhysicalDevice &gpu)
+void BufferDeviceAddress::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Need to enable the bufferDeviceAddress feature.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR,
-	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
 }
 
 std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,7 +55,7 @@ class HostImageCopy : public ApiVulkanSample
 
 	HostImageCopy();
 	~HostImageCopy();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         load_texture();
 	void         load_assets();
 	void         destroy_texture(Texture texture);

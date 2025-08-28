@@ -63,7 +63,7 @@ Synchronization2::~Synchronization2()
 	}
 }
 
-void Synchronization2::request_gpu_features(vkb::PhysicalDevice &gpu)
+void Synchronization2::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -72,10 +72,7 @@ void Synchronization2::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Enable synchronization2 feature
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceSynchronization2FeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR,
-	                         synchronization2);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 }
 
 void Synchronization2::load_assets()

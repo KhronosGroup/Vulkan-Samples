@@ -89,14 +89,11 @@ bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void DynamicRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicRendering::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (enable_dynamic)
 	{
-		REQUEST_REQUIRED_FEATURE(gpu,
-		                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
-		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
-		                         dynamicRendering);
+		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
 	}
 
 	if (gpu.get_features().samplerAnisotropy)

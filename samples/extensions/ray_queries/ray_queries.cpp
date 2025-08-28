@@ -96,20 +96,11 @@ RayQueries::~RayQueries()
 	}
 }
 
-void RayQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
+void RayQueries::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-	                         bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceAccelerationStructureFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
-	                         accelerationStructure);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceRayQueryFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR,
-	                         rayQuery);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayQueryFeaturesKHR, rayQuery);
 }
 
 void RayQueries::render(float delta_time)

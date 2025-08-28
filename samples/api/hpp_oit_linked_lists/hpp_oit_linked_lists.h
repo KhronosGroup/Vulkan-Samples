@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA
+/* Copyright (c) 2023-2025, NVIDIA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class HPPOITLinkedLists : public HPPApiVulkanSample
 	bool resize(const uint32_t width, const uint32_t height) override;
 
 	// from vkb::VulkanSample
-	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
 	void build_command_buffers() override;

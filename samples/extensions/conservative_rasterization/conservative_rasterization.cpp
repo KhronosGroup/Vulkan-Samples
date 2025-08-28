@@ -71,7 +71,7 @@ ConservativeRasterization::~ConservativeRasterization()
 	triangle.indices.reset();
 }
 
-void ConservativeRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ConservativeRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	gpu.get_mutable_requested_features().fillModeNonSolid = gpu.get_features().fillModeNonSolid;
 	gpu.get_mutable_requested_features().wideLines        = gpu.get_features().wideLines;

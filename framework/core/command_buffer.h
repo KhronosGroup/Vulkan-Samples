@@ -22,7 +22,6 @@
 #include "core/device.h"
 #include "core/hpp_descriptor_set_layout.h"
 #include "core/hpp_framebuffer.h"
-#include "core/hpp_physical_device.h"
 #include "core/hpp_render_pass.h"
 #include "core/hpp_sampler.h"
 #include "core/image.h"

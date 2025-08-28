@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -120,7 +120,7 @@ class TimelineSemaphore : public ApiVulkanSample
 	void setup_graphics_pipeline();
 	void build_graphics_command_buffer();
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 };

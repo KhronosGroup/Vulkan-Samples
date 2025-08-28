@@ -128,12 +128,12 @@ RaytracingReflection::~RaytracingReflection()
     Enable extension features required by this sample
     These are passed to device creation via a pNext structure chain
 */
-void RaytracingReflection::request_gpu_features(vkb::PhysicalDevice &gpu)
+void RaytracingReflection::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES, scalarBlockLayout);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, accelerationStructure);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, rayTracingPipeline);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, scalarBlockLayout);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
 
 	if (gpu.get_features().shaderInt64)
 	{

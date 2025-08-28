@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Google
+/* Copyright (c) 2023-2025, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class OITLinkedLists : public ApiVulkanSample
 	bool resize(const uint32_t width, const uint32_t height) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -195,7 +195,7 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	// from vkb::VulkanSample
-	virtual void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
 	virtual void build_command_buffers() override;
