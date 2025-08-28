@@ -51,16 +51,10 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 	}
 }
 
-void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicMultisampleRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3RasterizationSamples);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
-	                         dynamicRendering);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3RasterizationSamples);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
 }
 
 const std::string to_string(VkSampleCountFlagBits count)

@@ -535,38 +535,20 @@ bool DescriptorIndexing::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DescriptorIndexing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	gpu.get_mutable_requested_features().shaderSampledImageArrayDynamicIndexing = VK_TRUE;
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         shaderSampledImageArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
 
 	// These are required to support the 4 descriptor binding flags we use in this sample.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingSampledImageUpdateAfterBind);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingPartiallyBound);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingUpdateUnusedWhilePending);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingVariableDescriptorCount);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingSampledImageUpdateAfterBind);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingPartiallyBound);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingUpdateUnusedWhilePending);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
 
 	// Enables use of runtimeDescriptorArrays in SPIR-V shaders.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         runtimeDescriptorArray);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
 
 	// There are lot of properties associated with descriptor_indexing, grab them here.
 	descriptor_indexing_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;

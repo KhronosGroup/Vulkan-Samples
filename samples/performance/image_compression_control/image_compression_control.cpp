@@ -42,22 +42,16 @@ ImageCompressionControlSample::ImageCompressionControlSample()
 	config.insert<vkb::IntSetting>(2, static_cast<int>(gui_target_compression), 2);
 }
 
-void ImageCompressionControlSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ImageCompressionControlSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 	{
-		REQUEST_REQUIRED_FEATURE(gpu,
-		                         VkPhysicalDeviceImageCompressionControlFeaturesEXT,
-		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT,
-		                         imageCompressionControl);
+		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceImageCompressionControlFeaturesEXT, imageCompressionControl);
 	}
 
 	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
 	{
-		REQUEST_OPTIONAL_FEATURE(gpu,
-		                         VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT,
-		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT,
-		                         imageCompressionControlSwapchain);
+		REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT, imageCompressionControlSwapchain);
 	}
 }
 

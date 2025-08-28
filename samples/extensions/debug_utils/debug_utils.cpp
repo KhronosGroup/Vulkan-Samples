@@ -283,7 +283,7 @@ void DebugUtils::debug_name_objects()
 	set_object_name(VK_OBJECT_TYPE_RENDER_PASS, (uint64_t) filter_pass.render_pass, "Bloom filter pass render pass");
 }
 
-void DebugUtils::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DebugUtils::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

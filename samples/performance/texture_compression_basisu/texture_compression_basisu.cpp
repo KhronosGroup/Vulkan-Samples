@@ -42,7 +42,7 @@ TextureCompressionBasisu::~TextureCompressionBasisu()
 	}
 }
 
-void TextureCompressionBasisu::request_gpu_features(vkb::PhysicalDevice &gpu)
+void TextureCompressionBasisu::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{

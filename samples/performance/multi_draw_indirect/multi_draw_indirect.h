@@ -134,7 +134,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC>       cpu_staging_buffer;
 	std::unique_ptr<vkb::core::BufferC>       indirect_call_buffer;
 
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void create_samplers();

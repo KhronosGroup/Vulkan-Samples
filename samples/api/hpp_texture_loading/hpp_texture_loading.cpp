@@ -74,7 +74,7 @@ bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
 }
 
 // Enable physical device features required for this example
-void HPPTextureLoading::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPTextureLoading::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

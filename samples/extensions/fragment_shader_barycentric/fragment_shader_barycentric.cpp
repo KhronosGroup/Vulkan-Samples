@@ -383,15 +383,12 @@ void FragmentShaderBarycentric::on_update_ui_overlay(vkb::Drawer &drawer)
 }
 
 /**
- * @fn void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
+ * @fn void FragmentShaderBarycentric::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
  * @brief Enabling features related to Vulkan extensions
  */
-void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
+void FragmentShaderBarycentric::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR,
-	                         fragmentShaderBarycentric);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR, fragmentShaderBarycentric);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
