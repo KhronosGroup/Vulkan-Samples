@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Sascha Willems
+# Copyright (c) 2019-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample_with_tags(
         "texture_loading/glsl/texture.frag"
     SHADER_FILES_HLSL
         "texture_loading/hlsl/texture.vert.hlsl"
-        "texture_loading/hlsl/texture.frag.hlsl")
+        "texture_loading/hlsl/texture.frag.hlsl"
+    SHADER_FILES_SLANG
+        "texture_loading/slang/texture.vert.slang"
+        "texture_loading/slang/texture.frag.slang")

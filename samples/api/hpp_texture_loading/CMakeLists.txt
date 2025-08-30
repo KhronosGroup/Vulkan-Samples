@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample_with_tags(
         "texture_loading/glsl/texture.frag"
     SHADER_FILES_HLSL
         "texture_loading/hlsl/texture.vert.hlsl"
-        "texture_loading/hlsl/texture.frag.hlsl")
+        "texture_loading/hlsl/texture.frag.hlsl"
+    SHADER_FILES_SLANG
+        "texture_loading/slang/texture.vert.slang"
+        "texture_loading/slang/texture.frag.slang")
