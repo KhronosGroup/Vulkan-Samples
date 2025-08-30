@@ -342,7 +342,7 @@ cmake -G Xcode -Bbuild/ios -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -D
 ----
 NB:  You MUST change the XXXX in the above to your TeamID (or Organizational Unit identifier in your Apple Development certificate) for code signing, and YYYY to your bundle identifier. iOS will NOT allow the application to run without code signing and bundle identifier setup.
 
-Alternatively, you can build for the iOS Simulator without code signing or specifying a bundle identifier (a default bundle id will be used). However, depending on your host architecture, you MUST select either arm64 (Apple Silicon) or x86_64 in the command below
+Alternatively, you can build for the iOS Simulator without code signing or specifying a bundle identifier (a default bundle id will be used). However, depending on your host architecture, you MUST select either arm64 (Apple Silicon) or x86_64 in the command below. *Note: On arm64 hosts the Vulkan library may not load on iOS Simulator without specifying your TeamID and bundle identifier as shown above.*
 
 ----
 cmake -G Xcode -Bbuild/ios-sim -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=<arm64|x86_64> -DCMAKE_IOS_INSTALL_COMBINED=NO
