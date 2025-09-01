@@ -204,6 +204,14 @@ struct HPPType<VkPhysicalDeviceMeshShaderFeaturesEXT>
 	using Type = vk::PhysicalDeviceMeshShaderFeaturesEXT;
 };
 
+#ifdef VKB_ENABLE_PORTABILITY
+template <>
+struct HPPType<VkPhysicalDevicePortabilitySubsetFeaturesKHR>
+{
+	using Type = vk::PhysicalDevicePortabilitySubsetFeaturesKHR;
+};
+#endif
+
 template <>
 struct HPPType<VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT>
 {
