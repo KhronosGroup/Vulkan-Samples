@@ -111,6 +111,26 @@ With the `dynamicRenderingLocalReads` feature enabled, it's now possible to use 
 . Draw transparent geometry with a forward pass reading depth from an attachment
 . End dynamic rendering with `vkCmdEndRenderingKHR`
 
+== Understanding the location mapping with an example
+
+To help better grasp idea of location remapping, let's use the following simple fragment shader
+
+```glsl
+layout(location=0) out vec4 A;
+layout(location=1) out vec4 B;
+layout(location=2) out vec4 C;
+```
+
+Now if we set our `VkRenderingAttachmentLocationInfo::pColorAttachment` to be `[1, 2, 0]`
+
+- Writes to `A` write to `VkRenderingInfo::pColorAttachments[2]`
+- Writes to `B` write to `VkRenderingInfo::pColorAttachments[0]`
+- Writes to `C` write to `VkRenderingInfo::pColorAttachments[1]`
+
+But if we set our `VkRenderingAttachmentLocationInfo::pColorAttachment` to be only `[1, 2]`
+
+Any writes to `A` will be discarded.
+
 == Conclusion
 
 With the addition of `VK_KHR_dynamic_rendering_local_read` it's now finally possible to fully replace renderpasses, including those that have multiple subpasses. This makes dynamic rendering a fully fledged replacement for renderpasses on all implementations, including tile based architectures.
