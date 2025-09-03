@@ -67,7 +67,7 @@ TimestampQueries::~TimestampQueries()
 	}
 }
 
-void TimestampQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
+void TimestampQueries::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

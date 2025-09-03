@@ -90,7 +90,7 @@ bool HPPTimestampQueries::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-void HPPTimestampQueries::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPTimestampQueries::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

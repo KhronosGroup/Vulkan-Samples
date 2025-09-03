@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024, Holochip Corporation
+ * Copyright (c) 2021-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,7 @@ class DynamicRendering : public ApiVulkanSample
 	void build_command_buffers() override;
 	void view_changed() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:
 	void load_assets();

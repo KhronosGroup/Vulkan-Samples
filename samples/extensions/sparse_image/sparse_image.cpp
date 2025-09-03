@@ -1369,7 +1369,7 @@ void SparseImage::create_texture_sampler()
 /**
  * @brief Enable required GPU features.
  */
-void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
+void SparseImage::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().sparseBinding && gpu.get_features().sparseResidencyImage2D && gpu.get_features().shaderResourceResidency)
 	{

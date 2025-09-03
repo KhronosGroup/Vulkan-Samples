@@ -35,7 +35,7 @@ class MeshShading : public ApiVulkanSample
 	MeshShading();
 	~MeshShading() override;
 
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	void prepare_pipelines();
 	void build_command_buffers() override;

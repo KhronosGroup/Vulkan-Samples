@@ -106,7 +106,7 @@ void OITDepthPeeling::render(float delta_time)
 	update_scene_constants();
 }
 
-void OITDepthPeeling::request_gpu_features(vkb::PhysicalDevice &gpu)
+void OITDepthPeeling::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{

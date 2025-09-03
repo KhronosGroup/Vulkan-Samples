@@ -973,18 +973,15 @@ SwapchainRecreation::~SwapchainRecreation()
 	}
 }
 
-void SwapchainRecreation::request_gpu_features(vkb::PhysicalDevice &gpu)
+void SwapchainRecreation::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (allow_maintenance1)
 	{
-		REQUEST_OPTIONAL_FEATURE(gpu,
-		                         VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT,
-		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
-		                         swapchainMaintenance1);
+		REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT, swapchainMaintenance1);
 	}
 }
 
-std::unique_ptr<vkb::core::DeviceC> SwapchainRecreation::create_device(vkb::PhysicalDevice &gpu)
+std::unique_ptr<vkb::core::DeviceC> SwapchainRecreation::create_device(vkb::core::PhysicalDeviceC &gpu)
 {
 	std::unique_ptr<vkb::core::DeviceC> device = vkb::VulkanSampleC::create_device(gpu);
 

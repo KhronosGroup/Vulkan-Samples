@@ -59,7 +59,7 @@ Profiles::~Profiles()
 
 // This sample overrides the device creation part of the framework
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
-std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::PhysicalDevice &gpu)
+std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Check if the profile is supported at device level
 	VkBool32 profile_supported;

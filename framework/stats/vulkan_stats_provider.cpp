@@ -35,8 +35,8 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>         &requested_
 		return;
 	}
 
-	vkb::core::DeviceC   &device = render_context.get_device();
-	const PhysicalDevice &gpu    = device.get_gpu();
+	vkb::core::DeviceC               &device = render_context.get_device();
+	vkb::core::PhysicalDeviceC const &gpu    = device.get_gpu();
 
 	has_timestamps   = gpu.get_properties().limits.timestampComputeAndGraphics;
 	timestamp_period = gpu.get_properties().limits.timestampPeriod;
@@ -44,30 +44,14 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>         &requested_
 	// Interrogate device for supported stats
 	uint32_t queue_family_index = vkb::get_queue_family_index(gpu.get_queue_family_properties(), VK_QUEUE_GRAPHICS_BIT);
 
-	// Query number of available counters
-	uint32_t count = 0;
-	gpu.enumerate_queue_family_performance_query_counters(queue_family_index, &count,
-	                                                      nullptr, nullptr);
-
-	if (count == 0)
+	std::vector<VkPerformanceCounterKHR>            counters;
+	std::vector<VkPerformanceCounterDescriptionKHR> descs;
+	std::tie(counters, descs) = gpu.enumerate_queue_family_performance_query_counters(queue_family_index);
+	assert(counters.size() == descs.size());
+	if (counters.size() == 0 || descs.size() == 0)
 	{
 		return;        // No counters available
 	}
-
-	std::vector<VkPerformanceCounterKHR>            counters(count);
-	std::vector<VkPerformanceCounterDescriptionKHR> descs(count);
-
-	for (uint32_t i = 0; i < count; i++)
-	{
-		counters[i].sType = VK_STRUCTURE_TYPE_PERFORMANCE_COUNTER_KHR;
-		counters[i].pNext = nullptr;
-		descs[i].sType    = VK_STRUCTURE_TYPE_PERFORMANCE_COUNTER_DESCRIPTION_KHR;
-		descs[i].pNext    = nullptr;
-	}
-
-	// Now get the list of counters and their descriptions
-	gpu.enumerate_queue_family_performance_query_counters(queue_family_index, &count,
-	                                                      counters.data(), descs.data());
 
 	// Every vendor has a different set of performance counters each
 	// with different names. Match them to the stats we want, where available.
@@ -224,9 +208,9 @@ bool VulkanStatsProvider::fill_vendor_data()
 
 bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 {
-	vkb::core::DeviceC   &device           = render_context.get_device();
-	const PhysicalDevice &gpu              = device.get_gpu();
-	uint32_t              num_framebuffers = static_cast<uint32_t>(render_context.get_render_frames().size());
+	vkb::core::DeviceC               &device           = render_context.get_device();
+	vkb::core::PhysicalDeviceC const &gpu              = device.get_gpu();
+	uint32_t                          num_framebuffers = static_cast<uint32_t>(render_context.get_render_frames().size());
 
 	// Now we know the available counters, we can build a query pool that will collect them.
 	// We will check that the counters can be collected in a single pass. Multi-pass would

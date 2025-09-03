@@ -69,7 +69,7 @@ bool HPPHDR::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-void HPPHDR::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPHDR::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

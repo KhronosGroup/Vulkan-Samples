@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Sascha Willems
- * Copyright (c) 2023-2024, Holochip Corporation
+/* Copyright (c) 2019-2025, Sascha Willems
+ * Copyright (c) 2023-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -118,7 +118,7 @@ class MemoryBudget : public ApiVulkanSample
   public:
 	MemoryBudget();
 	~MemoryBudget() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 
 	void load_assets();

@@ -173,8 +173,8 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	bool recreate_swapchain_on_present_mode_change = false;
 
 	// from vkb::VulkanSample
-	void                                request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	std::unique_ptr<vkb::core::DeviceC> create_device(vkb::PhysicalDevice &gpu) override;
+	void                                request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	std::unique_ptr<vkb::core::DeviceC> create_device(vkb::core::PhysicalDeviceC &gpu) override;
 
 	void get_queue();
 	void query_surface_format();

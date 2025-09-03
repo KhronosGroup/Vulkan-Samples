@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -96,7 +96,7 @@ class ComputeNBody : public ApiVulkanSample
 
 	ComputeNBody();
 	~ComputeNBody();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         load_assets();
 	void         build_command_buffers() override;
 	void         build_compute_command_buffer();

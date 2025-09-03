@@ -73,11 +73,11 @@ bool HPPMeshShading::prepare(const vkb::ApplicationOptions &options)
 	return prepared;
 }
 
-void HPPMeshShading::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPMeshShading::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	HPP_REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceMeshShaderFeaturesEXT, meshShader);
+	REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceMeshShaderFeaturesEXT, meshShader);
 }
 
 /*

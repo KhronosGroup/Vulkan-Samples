@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Holochip
+/* Copyright (c) 2021-2025, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	~FragmentShadingRateDynamic() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(uint32_t new_width, uint32_t new_height) override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void setup_framebuffer() override;
