@@ -1,4 +1,4 @@
-/* Copyright (c) 2025s, Sascha Willems
+/* Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
