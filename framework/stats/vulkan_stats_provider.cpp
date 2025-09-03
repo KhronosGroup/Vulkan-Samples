@@ -47,7 +47,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>         &requested_
 	std::vector<VkPerformanceCounterKHR>            counters;
 	std::vector<VkPerformanceCounterDescriptionKHR> descs;
 	std::tie(counters, descs) = gpu.enumerate_queue_family_performance_query_counters(queue_family_index);
-	assert(counters.size() != descs.size());
+	assert(counters.size() == descs.size());
 	if (counters.size() == 0 || descs.size() == 0)
 	{
 		return;        // No counters available
