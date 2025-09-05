@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +16,13 @@
  */
 #version 450
 
-layout (location = 0) in vec4 inColor;
-layout (location = 0) out vec4 color;
+layout (location = 0) in vec3 inPos;
+layout (location = 1) in vec3 inNormal;
 
-void main()
+layout (location = 0) out vec3 outNormal;
+
+void main(void)
 {
-  color = inColor;
+	outNormal = inNormal;
+	gl_Position = vec4(inPos.xyz, 1.0f);
 }

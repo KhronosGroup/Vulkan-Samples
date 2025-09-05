@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,13 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
 
-layout (location = 0) in vec3 inColor;
-
-layout (location = 0) out vec4 outFragColor;
-
-void main(void)
+struct VSInput
 {
-	outFragColor = vec4(inColor, 1.0f);
+    float4 Pos;
+    float3 Normal;
+}
+
+struct VSOutput
+{
+    float4 Pos : SV_Position;
+    float3 Normal;
+}
+
+[shader("vertex")]
+VSOutput main(VSInput input)
+{
+    VSOutput output;
+    output.Normal = input.Normal;
+    output.Pos = float4(input.Pos.xyz, 1.0);
+    return output;
 }
