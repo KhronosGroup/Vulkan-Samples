@@ -35,6 +35,7 @@ struct UBO {
     float4x4 model;
     float4x4 view;
     float4x4 proj;
+    float4x4 normal;
 };
 ConstantBuffer<UBO> ubo;
 
@@ -48,9 +49,7 @@ VSOutput main(VSInput input)
     float4 FragPos = mul(ubo.model, float4(input.Pos, 1.0f));
     float3 lightPos = float3(-20.0f, 5.0f, 5.0f);
     float3 lPos = mul(float3x3(ubo.model), lightPos.xyz);
-    output.Normal = mul(float3x3(transpose(ubo.view * ubo.model)), input.Normal);
-    // @todo
-    // output.Normal = float3x3(transpose(inverse(ubo.view * ubo.model))) * input.Normal;
+    output.Normal = mul(float3x3(ubo.normal), input.Normal);
 
     output.LightVec = lPos.xyz - FragPos.xyz;
     output.ViewVec = -mul(ubo.view, mul(ubo.model, float4(input.Pos, 1.0f))).xyz;

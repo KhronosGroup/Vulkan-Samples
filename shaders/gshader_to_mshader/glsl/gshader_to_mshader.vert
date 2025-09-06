@@ -20,6 +20,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
+    mat4 normal;
 } ubo;
 
 layout(location = 0) in vec3 inPosition;
@@ -38,7 +39,7 @@ void main()
     vec4 FragPos = ubo.model * vec4(inPosition, 1.0f);
     vec3 lightPos = vec3(-20.0f, 5.0f, 5.0f);
     vec3 lPos = mat3(ubo.model) * lightPos.xyz;
-    outNormal = mat3(transpose(inverse( ubo.view *ubo.model))) * inNormal;
+    outNormal = mat3(ubo.normal) * inNormal;
 
     outLightVec = lPos.xyz - FragPos.xyz;
     outViewVec = - (ubo.view * ubo.model * vec4(inPosition, 1.0f)).xyz;    

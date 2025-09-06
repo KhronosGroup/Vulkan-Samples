@@ -134,10 +134,11 @@ void GshaderToMshader::update_uniform_buffers()
 {
 	for (auto &ubo : ubos)
 	{
-		ubo.proj  = camera.matrices.perspective;
-		ubo.view  = camera.matrices.view;
-		ubo.model = glm::mat4(1.f);
-		ubo.model = glm::rotate(ubo.model, glm::pi<float>(), glm::vec3(0, 0, 1));
+		ubo.proj   = camera.matrices.perspective;
+		ubo.view   = camera.matrices.view;
+		ubo.model  = glm::mat4(1.f);
+		ubo.model  = glm::rotate(ubo.model, glm::pi<float>(), glm::vec3(0, 0, 1));
+		ubo.normal = glm::transpose(glm::inverse(ubo.view * ubo.model));
 	}
 	uniform_buffer_vs->convert_and_update(ubos[0]);
 	uniform_buffer_gs->convert_and_update(ubos[1]);
