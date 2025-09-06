@@ -22,7 +22,7 @@ struct VSOutput
 };
 
 [shader("vertex")]
-VSOutput main(uint VertexIndex: SV_VertexID, uint InstanceIndex: SV_InstanceID, uniform float registers_phase)
+VSOutput main(uint VertexIndex: SV_VertexID, uint InstanceIndex: SV_VulkanInstanceID, uniform float registers_phase)
 {
     VSOutput output;
 
