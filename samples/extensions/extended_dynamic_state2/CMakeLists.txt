@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Mobica Limited
+# Copyright (c) 2023-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,11 +26,20 @@ add_sample(
     NAME "Extended Dynamic State 2"
     DESCRIPTION "Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are need to be created."
     SHADER_FILES_GLSL
-    "extended_dynamic_state2/baseline.vert"
-    "extended_dynamic_state2/baseline.frag"
-    "extended_dynamic_state2/tess.vert"
-    "extended_dynamic_state2/tess.tese"
-    "extended_dynamic_state2/tess.tesc"
-    "extended_dynamic_state2/tess.frag"
-    "extended_dynamic_state2/background.vert"
-    "extended_dynamic_state2/background.frag")
+        "extended_dynamic_state2/glsl/baseline.vert"
+        "extended_dynamic_state2/glsl/baseline.frag"
+        "extended_dynamic_state2/glsl/tess.vert"
+        "extended_dynamic_state2/glsl/tess.tese"
+        "extended_dynamic_state2/glsl/tess.tesc"
+        "extended_dynamic_state2/glsl/tess.frag"
+        "extended_dynamic_state2/glsl/background.vert"
+        "extended_dynamic_state2/glsl/background.frag"
+    SHADER_FILES_SLANG
+        "extended_dynamic_state2/slang/baseline.vert.slang"
+        "extended_dynamic_state2/slang/baseline.frag.slang"
+        "extended_dynamic_state2/slang/tess.vert.slang"
+        "extended_dynamic_state2/slang/tess.tese.slang"
+        "extended_dynamic_state2/slang/tess.tesc.slang"
+        "extended_dynamic_state2/slang/tess.frag.slang"
+        "extended_dynamic_state2/slang/background.vert.slang"
+        "extended_dynamic_state2/slang/background.frag.slang")

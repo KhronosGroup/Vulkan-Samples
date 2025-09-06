@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, Sascha Willems
+# Copyright (c) 2021-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,4 +34,9 @@ add_sample_with_tags(
         "synchronization_2/hlsl/particle.vert.hlsl"
         "synchronization_2/hlsl/particle.frag.hlsl"
         "synchronization_2/hlsl/particle_calculate.comp.hlsl"
-        "synchronization_2/hlsl/particle_integrate.comp.hlsl")
+        "synchronization_2/hlsl/particle_integrate.comp.hlsl"
+    SHADER_FILES_SLANG
+        "synchronization_2/slang/particle.vert.slang"
+        "synchronization_2/slang/particle.frag.slang"
+        "synchronization_2/slang/particle_calculate.comp.slang"
+        "synchronization_2/slang/particle_integrate.comp.slang")

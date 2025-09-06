@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, Arm Limited and Contributors
+# Copyright (c) 2021-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,8 +26,15 @@ add_sample_with_tags(
         NAME "Timeline semaphore"
         DESCRIPTION "Demonstrates use of timeline semaphores to express complex queue dependency graphs"
         SHADER_FILES_GLSL
-            "timeline_semaphore/game_of_life_update.comp"
-            "timeline_semaphore/game_of_life_mutate.comp"
-            "timeline_semaphore/game_of_life_init.comp"
-            "timeline_semaphore/render.vert"
-            "timeline_semaphore/render.frag")
+            "timeline_semaphore/glsl/game_of_life_update.comp"
+            "timeline_semaphore/glsl/game_of_life_mutate.comp"
+            "timeline_semaphore/glsl/game_of_life_init.comp"
+            "timeline_semaphore/glsl/render.vert"
+            "timeline_semaphore/glsl/render.frag"
+        SHADER_FILES_SLANG
+            "timeline_semaphore/slang/game_of_life_update.comp.slang"
+            "timeline_semaphore/slang/game_of_life_mutate.comp.slang"
+            "timeline_semaphore/slang/game_of_life_init.comp.slang"
+            "timeline_semaphore/slang/render.vert.slang"
+            "timeline_semaphore/slang/render.frag.slang"
+)
