@@ -1,4 +1,5 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,26 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
-layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(set = 0, binding = 0, rgba8) writeonly uniform image2D ImageOutput;
-layout(set = 1, binding = 0) uniform sampler2D ImageInput;
+[[vk::image_format("rgba8")]] RWTexture2D<float4> ImageOutput;
+[[vk::binding(0, 1)]] Sampler2D ImageInput;
 
-void main()
+//  Slang/HLSL do not have GLSL's (not)equal functions
+bool3 notEqual(float3 a, float3 b) {
+    return bool3(a.x != b.x, a.y != b.y, a.z != b.z);
+}
+
+[shader("compute")]
+[numthreads(8, 8, 1)]
+void main(uint3 globalInvocationID: SV_DispatchThreadID)
 {
-    ivec2 index = ivec2(gl_GlobalInvocationID.xy);
-    vec2 uv = (vec2(index) + 0.5) / vec2(textureSize(ImageInput, 0));
+    float2 textureSize;
+    ImageInput.GetDimensions(textureSize.x, textureSize.y);
+
+    int2 index = int2(globalInvocationID.xy);
+    float2 uv = (float2(index) + 0.5) / textureSize;
     int neighbors = 0;
 
-    vec4 self = textureLod(ImageInput, uv, 0.0);
-    bool is_alive = any(notEqual(self.rgb, vec3(0.0)));
-    vec3 total = self.rgb;
+    float4 self = ImageInput.SampleLevel(uv, 0.0);
+    bool is_alive = any(notEqual(self.rgb, float3(0.0)));
+    float3 total = self.rgb;
 
 #define CHECK_OFFSET(x, y) { \
-    vec3 tmp; \
-    tmp = textureLodOffset(ImageInput, uv, 0.0, ivec2(x, y)).rgb; \
-    if (any(notEqual(tmp, vec3(0.0)))) { \
+    float3 tmp; \
+    tmp = ImageInput.SampleLevel(uv, 0.0, int2(x, y)).rgb; \
+    if (any(notEqual(tmp, float3(0.0)))) { \
         neighbors++; \
         total += tmp.rgb; \
     } \
@@ -56,7 +65,7 @@ void main()
         }
         else
         {
-            total = vec3(0.0);
+            total = float3(0.0);
         }
     }
     else
@@ -64,14 +73,14 @@ void main()
         is_alive = neighbors == 3u;
         if (is_alive)
         {
-            vec3 fresh_color = vec3(uv.x, uv.y, 1.0 - uv.x - uv.y);
+            float3 fresh_color = float3(uv.x, uv.y, 1.0 - uv.x - uv.y);
             total = fresh_color;
         }
         else
         {
-            total = vec3(0.0);
+            total = float3(0.0);
         }
     }
 
-    imageStore(ImageOutput, index, vec4(total, 0.0));
+    ImageOutput[int2(globalInvocationID.xy)] = float4(total, 0.0);
 }

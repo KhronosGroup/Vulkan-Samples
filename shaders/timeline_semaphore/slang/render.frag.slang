@@ -1,4 +1,5 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,19 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
 
-layout(set = 0, binding = 0) uniform sampler2D in_image;
-layout(location = 0) in vec2 in_uv;
-layout(location = 0) out vec4 out_color;
-
-vec4 convert_color(vec4 value)
+struct VSOutput
 {
-    float gray = dot(value.rgb, vec3(0.3, 0.6, 0.1));
-    return vec4(mix(vec3(gray), value.rgb, value.a), 1.0);
+    float4 Pos : SV_Position;
+    float2 UV;
 }
 
-void main()
+Sampler2D in_image;
+
+float4 convert_color(float4 value)
 {
-    out_color = convert_color(textureLod(in_image, in_uv, 0.0));
+    float gray = dot(value.rgb, float3(0.3, 0.6, 0.1));
+    return float4(lerp(float3(gray), value.rgb, value.a), 1.0);
+}
+
+[shader("fragment")]
+float4 main(VSOutput input)
+{
+    return convert_color(in_image.SampleLevel(input.UV, 0.0));
 }
