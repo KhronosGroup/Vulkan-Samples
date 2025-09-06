@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,24 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
 
-layout(location = 0) in vec3 inPos;
-layout(location = 1) in vec3 inNormal;
+[[vk::binding(1, 0)]] SamplerCube samplerEnvMap;
 
-layout(location = 0) out vec3 outPos;
-layout(location = 1) out vec3 outNormal;
-
-layout(binding = 0) uniform UBO
+struct VSOutput
 {
-	mat4  projection;
-	mat4  view;
-}
-ubo;
+    float4 Pos : SV_POSITION;
+    float3 UVW;
+};
 
-void main(void)
+[shader("fragment")]
+float4 main(VSOutput input)
 {
-	gl_Position = vec4(inPos, 1.0);
-	outNormal   = mat3(ubo.view) * inNormal;
-	outPos      = inPos;
+	return float4(samplerEnvMap.Sample(normalize(input.UVW)).rgb, 1.0);
 }

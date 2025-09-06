@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,9 +16,18 @@
  */
 #version 450
 
-layout(location = 0) out vec4 outFragColor;
+layout(binding = 1) uniform samplerCube samplerEnvMap;
+
+layout(location = 0) in vec3 inUVW;
+
+layout(location = 0) out vec4 outColor0;
 
 void main()
 {
-	outFragColor = vec4(0.6667, 0.1176, 0.1176, 1.0);
+	vec4 color;
+
+	vec3 normal = normalize(inUVW);
+	color       = texture(samplerEnvMap, normal);
+
+	outColor0 = vec4(color.rgb, 1.0);
 }

@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,20 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
 
-layout(binding = 1) uniform samplerCube samplerEnvMap;
-
-layout(location = 0) in vec3 inUVW;
-
-layout(location = 0) out vec4 outColor0;
-
-void main()
+struct VSInput
 {
-	vec4 color;
+    float3 Pos;
+    float3 Normal;
+};
 
-	vec3 normal = normalize(inUVW);
-	color       = texture(samplerEnvMap, normal);
+struct VSOutput
+{
+    float4 Pos : SV_POSITION;
+    float3 LocPos;
+    float3 Normal;
+};
 
-	outColor0 = vec4(color.rgb, 1.0);
+struct UBO
+{
+    float4x4 projection;
+    float4x4 view;
+};
+ConstantBuffer<UBO> ubo;
+
+[shader("vertex")]
+VSOutput main(VSInput input)
+{
+    VSOutput output;
+    output.Pos = float4(input.Pos, 1.0);
+    output.Normal = mul(float3x3(ubo.view), input.Normal);
+    output.LocPos = input.Pos;
+    return output;
 }

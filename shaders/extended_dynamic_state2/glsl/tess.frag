@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,25 +16,9 @@
  */
 #version 450
 
-layout(location = 0) in vec3 inPos;
-layout(location = 1) in vec3 inNormal;
-
-layout(binding = 0) uniform UBO
-{
-	mat4 projection;
-	mat4 view;
-}
-ubo;
-
-layout(location = 0) out vec3 outUVW;
-
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
+layout(location = 0) out vec4 outFragColor;
 
 void main()
 {
-	outUVW      = inPos;
-	gl_Position = ubo.projection * vec4(mat3(ubo.view) * (inPos * 10), 1.0);
+	outFragColor = vec4(0.6667, 0.1176, 0.1176, 1.0);
 }
