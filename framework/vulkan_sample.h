@@ -1123,6 +1123,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		}
 		add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 		add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+		add_device_extension(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
 	}
 
 #ifdef VKB_ENABLE_PORTABILITY
