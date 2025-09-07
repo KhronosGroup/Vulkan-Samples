@@ -1,4 +1,5 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,13 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
+
+struct VSOutput
+{
+    float4 Pos : SV_Position;
+    nointerpolation float4 Color;
+}
 
 // Nothing interesting, just interpolate color from vertex.
-layout(location = 0) flat in vec4 in_color;
-layout(location = 0) out vec4 out_color;
-
-void main()
+[shader("fragment")]
+float4 main(VSOutput input)
 {
-    out_color = in_color;
+    return input.Color;
 }

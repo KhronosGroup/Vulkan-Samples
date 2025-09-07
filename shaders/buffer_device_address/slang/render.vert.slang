@@ -1,4 +1,5 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,39 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#version 450
 
-// Allows buffer_reference.
-#extension GL_EXT_buffer_reference : require
-
-// Since we did not enable vertexPipelineStoresAndAtomics, we must mark everything readonly.
-layout(std430, buffer_reference, buffer_reference_align = 8) readonly buffer Position
+struct VSOutput
 {
-    vec2 positions[];
-};
+    float4 Pos : SV_Position;
+    nointerpolation float4 Color;
+}
 
-layout(std430, buffer_reference, buffer_reference_align = 8) readonly buffer PositionReferences
+struct Registers
 {
-    // Represents an array of pointers, where each pointer points to its own VBO (Position).
-    // The size of a pointer (VkDeviceAddress) is always 8 in Vulkan.
-    Position buffers[];
-};
-
-layout(push_constant) uniform Registers
-{
-    mat4 view_projection;
-
+    float4x4 view_projection;
     // This is a pointer to an array of pointers, essentially:
     // const VBO * const *vbos
-    PositionReferences references;
-} registers;
+    float2 **positions;
+};
 
-// Flat shading looks a little cooler here :)
-layout(location = 0) flat out vec4 out_color;
-
-void main()
+[shader("vertex")]
+VSOutput main(uint instanceIndex: SV_InstanceID, uint vertexIndex: SV_VertexID, uniform Registers registers)
 {
-    int slice = gl_InstanceIndex;
+    int slice = instanceIndex;
 
     // One VBO per instance, load the VBO pointer.
     // The cool thing here is that a compute shader could hypothetically
@@ -56,21 +43,22 @@ void main()
     // but that's not always flexible enough, and enforces a very specific engine design to work.
     // We can even modify the attribute layout per slice here, since we can just cast the pointer
     // to something else if we want.
-    restrict Position positions = registers.references.buffers[slice];
+    float2* positions = registers.positions[slice];
 
     // Load the vertex based on VertexIndex instead of an attribute. Fully flexible.
     // Only downside is that we do not get format conversion for free like we do with normal vertex attributes.
-    vec2 pos = positions.positions[gl_VertexIndex] * 2.5;
+    float2 pos = positions[vertexIndex] * 2.5;
 
     // Place the quad meshes on screen and center it.
-    pos += 3.0 * (vec2(slice % 8, slice / 8) - 3.5);
+    pos += 3.0 * (float2(slice % 8, slice / 8) - 3.5);
 
+    VSOutput output;
     // Normal projection.
-    gl_Position = registers.view_projection * vec4(pos, 0.0, 1.0);
+    output.Pos = mul(registers.view_projection, float4(pos, 0.0, 1.0));
 
     // Color the vertex. Use a combination of a wave and checkerboard, completely arbitrary.
-    int index_x = gl_VertexIndex % 16;
-    int index_y = gl_VertexIndex / 16;
+    int index_x = vertexIndex % 16;
+    int index_y = vertexIndex / 16;
 
     float r = 0.5 + 0.3 * sin(float(index_x));
     float g = 0.5 + 0.3 * sin(float(index_y));
@@ -79,5 +67,7 @@ void main()
     r *= float(checkerboard) * 0.8 + 0.2;
     g *= float(checkerboard) * 0.8 + 0.2;
 
-    out_color = vec4(r, g, 0.15, 1.0);
+    output.Color = float4(r, g, 0.15, 1.0);
+
+    return output;
 }
