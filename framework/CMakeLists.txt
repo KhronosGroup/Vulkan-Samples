@@ -250,7 +250,6 @@ set(CORE_FILES
     core/hpp_framebuffer.h
     core/hpp_image.h
     core/hpp_image_view.h
-    core/hpp_physical_device.h
     core/hpp_pipeline.h
     core/hpp_pipeline_layout.h
     core/hpp_query_pool.h
@@ -262,7 +261,6 @@ set(CORE_FILES
     core/vulkan_resource.h
     # Source Files
     core/command_pool_base.cpp
-    core/physical_device.cpp
     core/debug.cpp
     core/image_core.cpp
     core/shader_module.cpp
@@ -285,7 +283,6 @@ set(CORE_FILES
     core/hpp_debug.cpp
     core/hpp_image_core.cpp
     core/hpp_image_view.cpp
-    core/hpp_physical_device.cpp
     core/hpp_pipeline_layout.cpp
     core/hpp_queue.cpp
     core/hpp_sampler.cpp

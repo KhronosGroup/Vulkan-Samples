@@ -82,7 +82,7 @@ class ShaderDebugPrintf : public ApiVulkanSample
 
 	ShaderDebugPrintf();
 	~ShaderDebugPrintf();
-	virtual void                          request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void                          request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void                                  build_command_buffers() override;
 	void                                  load_assets();
 	void                                  setup_descriptor_pool();

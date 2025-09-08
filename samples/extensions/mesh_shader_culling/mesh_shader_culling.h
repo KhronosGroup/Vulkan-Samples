@@ -52,7 +52,7 @@ class MeshShaderCulling : public ApiVulkanSample
 	} ubo_cull{};
 	MeshShaderCulling();
 	~MeshShaderCulling() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();

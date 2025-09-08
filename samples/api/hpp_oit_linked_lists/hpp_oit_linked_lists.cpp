@@ -75,7 +75,7 @@ bool HPPOITLinkedLists::resize(const uint32_t width, const uint32_t height)
 	return HPPApiVulkanSample::resize(width, height);
 }
 
-void HPPOITLinkedLists::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPOITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	auto       &requested_features = gpu.get_mutable_requested_features();
 	auto const &features           = gpu.get_features();

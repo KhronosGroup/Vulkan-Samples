@@ -45,7 +45,7 @@ TextureMipMapGeneration::~TextureMipMapGeneration()
 }
 
 // Enable physical device features required for this example
-void TextureMipMapGeneration::request_gpu_features(vkb::PhysicalDevice &gpu)
+void TextureMipMapGeneration::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

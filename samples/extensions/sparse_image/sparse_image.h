@@ -393,7 +393,7 @@ class SparseImage : public ApiVulkanSample
 	void         build_command_buffers() override;
 	void         render(float delta_time) override;
 	bool         prepare(const vkb::ApplicationOptions &options) override;
-	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 

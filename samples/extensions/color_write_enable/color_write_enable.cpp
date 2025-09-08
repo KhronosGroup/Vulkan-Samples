@@ -237,16 +237,13 @@ void ColorWriteEnable::create_attachments()
 	create_attachment(format, &attachments.blue);
 }
 
-void ColorWriteEnable::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceColorWriteEnableFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT,
-	                         colorWriteEnable);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceColorWriteEnableFeaturesEXT, colorWriteEnable);
 
+	if (gpu.get_features().independentBlend)
 	{
-		auto &features            = gpu.get_mutable_requested_features();
-		features.independentBlend = VK_TRUE;
+		gpu.get_mutable_requested_features().independentBlend = true;
 	}
 }
 

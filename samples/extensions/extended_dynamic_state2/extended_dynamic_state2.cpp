@@ -722,27 +722,19 @@ void ExtendedDynamicState2::create_descriptor_sets()
 }
 
 /**
- * @fn void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
+ * @fn void ExtendedDynamicState2::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
  * @brief Enabling features related to Vulkan extensions
  */
-void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ExtendedDynamicState2::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT, extendedDynamicState2);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
-	                         extendedDynamicState2PatchControlPoints);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2PatchControlPoints);
 
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT, extendedDynamicState);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT,
-	                         primitiveTopologyListRestart);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT, primitiveTopologyListRestart);
 
 	// Tessellation shader support is required for this example
 	auto &requested_features = gpu.get_mutable_requested_features();

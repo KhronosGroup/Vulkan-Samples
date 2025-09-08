@@ -425,9 +425,9 @@ void GshaderToMshader::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void GshaderToMshader::request_gpu_features(vkb::PhysicalDevice &gpu)
+void GshaderToMshader::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
 
 	if (gpu.get_features().geometryShader)
 	{

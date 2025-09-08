@@ -43,10 +43,10 @@ HostImageCopy::~HostImageCopy()
 }
 
 // Enable physical device features required for this example
-void HostImageCopy::request_gpu_features(vkb::PhysicalDevice &gpu)
+void HostImageCopy::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable host image copy feature (required for this sample to work)
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceHostImageCopyFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_FEATURES_EXT, hostImageCopy);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceHostImageCopyFeaturesEXT, hostImageCopy);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
