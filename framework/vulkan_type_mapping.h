@@ -1,5 +1,5 @@
 /* Copyright (c) 2025, Arm Limited and Contributors
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,7 +52,7 @@ struct HPPType<VkCommandBuffer>
 template <>
 struct HPPType<VkDataGraphPipelineSessionARM>
 {
-    using Type = vk::DataGraphPipelineSessionARM;
+	using Type = vk::DataGraphPipelineSessionARM;
 };
 
 template <>
@@ -106,19 +106,19 @@ struct HPPType<VkSampler>
 template <>
 struct HPPType<VkTensorARM>
 {
-    using Type = vk::TensorARM;
+	using Type = vk::TensorARM;
 };
 
 template <>
 struct HPPType<VkTensorCreateInfoARM>
 {
-    using Type = vk::TensorCreateInfoARM;
+	using Type = vk::TensorCreateInfoARM;
 };
 
 template <>
 struct HPPType<VkTensorViewARM>
 {
-    using Type = vk::TensorViewARM;
+	using Type = vk::TensorViewARM;
 };
 }        // namespace detail
 
