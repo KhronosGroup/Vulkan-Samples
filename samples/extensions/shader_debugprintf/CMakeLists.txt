@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Sascha Willems
+# Copyright (c) 2024-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -31,4 +31,7 @@ add_sample(
     SHADER_FILES_HLSL
         "shader_debugprintf/hlsl/scene.vert.hlsl"
         "shader_debugprintf/hlsl/scene.frag.hlsl"
-    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_non_semantic_info")
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_non_semantic_info"
+    SHADER_FILES_SLANG
+        "shader_debugprintf/slang/scene.vert.slang"
+        "shader_debugprintf/slang/scene.frag.slang")

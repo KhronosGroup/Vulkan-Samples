@@ -37,4 +37,8 @@ add_sample(
         "ray_tracing_position_fetch/hlsl/raygen.rgen.hlsl"
     DXC_ADDITIONAL_ARGUMENTS
         "-fspv-extension=SPV_KHR_ray_query -fspv-extension=SPV_KHR_ray_tracing"
+    SHADER_FILES_SLANG
+        "ray_tracing_position_fetch/slang/closesthit.rchit.slang"
+        "ray_tracing_position_fetch/slang/miss.rmiss.slang"
+        "ray_tracing_position_fetch/slang/raygen.rgen.slang"
     )

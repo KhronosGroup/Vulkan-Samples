@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, Sascha Willems
+# Copyright (c) 2022-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample(
         "conditional_rendering/glsl/model.frag"
     SHADER_FILES_HLSL
         "conditional_rendering/hlsl/model.vert.hlsl"
-        "conditional_rendering/hlsl/model.frag.hlsl")
+        "conditional_rendering/hlsl/model.frag.hlsl"
+    SHADER_FILES_SLANG
+        "conditional_rendering/slang/model.vert.slang"
+        "conditional_rendering/slang/model.frag.slang")

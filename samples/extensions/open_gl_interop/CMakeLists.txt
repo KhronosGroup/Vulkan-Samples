@@ -1,5 +1,5 @@
-# Copyright (c) 2020-2024, Bradley Austin Davis
-# Copyright (c) 2020-2024, Arm Limited
+# Copyright (c) 2020-2025, Bradley Austin Davis
+# Copyright (c) 2020-2025, Arm Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -60,5 +60,8 @@ if (NOT (ANDROID OR DIRECT_TO_DISPLAY OR IOS))
             "texture_loading/glsl/texture.frag"
         SHADER_FILES_HLSL
             "texture_loading/hlsl/texture.vert.hlsl"
-            "texture_loading/hlsl/texture.frag.hlsl")
+            "texture_loading/hlsl/texture.frag.hlsl"
+        SHADER_FILES_SLANG
+            "texture_loading/slang/texture.vert.slang"
+            "texture_loading/slang/texture.frag.slang")
 endif()

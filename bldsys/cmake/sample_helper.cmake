@@ -246,7 +246,13 @@ endif()
     endif()
 
     # Slang shader compilation
-    if(Vulkan_slang_EXECUTABLE AND DEFINED SHADERS_SLANG)
+    # Skip on MacOS/iOS due to CI/CD using potentially broken slang compiler versions from the SDK
+    # Might revisit once Slang shipped with the SDK is usable
+    set(SLANG_SKIP_COMPILE false)
+    if (($ENV{CI} MATCHES true) AND ((CMAKE_SYSTEM_NAME MATCHES "Darwin") OR (CMAKE_SYSTEM_NAME MATCHES "iOS")))
+        set(SLANG_SKIP_COMPILE true)
+    endif()
+    if(NOT SLANG_SKIP_COMPILE AND Vulkan_slang_EXECUTABLE AND DEFINED SHADERS_SLANG)
         set(OUTPUT_FILES "")
         set(SLANG_TARGET_NAME ${PROJECT_NAME}-SLANG)
         foreach(SHADER_FILE_SLANG ${TARGET_SHADERS_SLANG})
