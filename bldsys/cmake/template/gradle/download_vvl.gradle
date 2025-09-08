@@ -36,7 +36,7 @@ apply plugin: 'com.android.application'
  */
 
 // get the validation layer version.
-def VVL_VER = "1.3.296.0"
+def VVL_VER = "1.4.321.0"
 if (ext.has("vvl_version")) {
     VVL_VER = ext.vvl_version
 }

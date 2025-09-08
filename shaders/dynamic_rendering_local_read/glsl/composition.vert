@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2024, Huawei Technologies Co., Ltd.
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,14 +16,10 @@
  * limitations under the License.
  */
 
-layout(location = 0) in vec2 in_position;
-layout(location = 1) in vec3 in_color;
+layout (location = 0) out vec2 outUV;
 
-layout(location = 0) out vec3 out_color;
-
-void main()
+void main() 
 {
-    gl_Position = vec4(in_position, 0.5, 1.0);
-
-    out_color = in_color;
+	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
 }

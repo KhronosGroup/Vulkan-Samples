@@ -154,7 +154,7 @@ class HelloTriangleV13 : public vkb::Application
 
 	void init_swapchain();
 
-	VkShaderModule load_shader_module(const char *path, VkShaderStageFlagBits shader_stage);
+	VkShaderModule load_shader_module(const std::string &path, VkShaderStageFlagBits shader_stage);
 
 	void init_pipeline();
 
@@ -171,7 +171,7 @@ class HelloTriangleV13 : public vkb::Application
   private:
 	Context context;
 
-	std::unique_ptr<vkb::Instance> vk_instance;
+	std::unique_ptr<vkb::core::InstanceC> vk_instance;
 };
 
 std::unique_ptr<vkb::Application> create_hello_triangle_1_3();

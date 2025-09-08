@@ -71,7 +71,7 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 	}
 }
 
-void ShaderDebugPrintf::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ShaderDebugPrintf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	auto const &supportedFeatures = gpu.get_features();
 	auto       &requestedFeatures = gpu.get_mutable_requested_features();
@@ -421,7 +421,7 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 }
 
 // This sample overrides the instance creation part of the framework to chain in additional structures
-std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
+std::unique_ptr<vkb::core::InstanceC> ShaderDebugPrintf::create_instance()
 {
 	auto debugprintf_api_version = VK_API_VERSION_1_1;
 
@@ -548,7 +548,7 @@ std::unique_ptr<vkb::Instance> ShaderDebugPrintf::create_instance()
 
 	volkLoadInstance(vulkan_instance);
 
-	return std::make_unique<vkb::Instance>(vulkan_instance, enabled_extensions);
+	return std::make_unique<vkb::core::InstanceC>(vulkan_instance, enabled_extensions);
 }
 
 void ShaderDebugPrintf::render(float delta_time)

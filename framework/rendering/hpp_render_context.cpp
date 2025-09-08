@@ -19,8 +19,8 @@
 #include "rendering/hpp_render_context.h"
 #include "buffer_pool.h"
 #include "core/command_buffer.h"
-#include "core/hpp_physical_device.h"
 #include "core/hpp_queue.h"
+#include "core/physical_device.h"
 #include "platform/window.h"
 
 namespace vkb

@@ -59,7 +59,7 @@ Profiles::~Profiles()
 
 // This sample overrides the device creation part of the framework
 // Instead of manually setting up all extensions, features, etc. we use the Vulkan Profiles library to simplify device setup
-std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::PhysicalDevice &gpu)
+std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Check if the profile is supported at device level
 	VkBool32 profile_supported;
@@ -124,7 +124,7 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::PhysicalDevice 
 
 // This sample overrides the instance creation part of the framework
 // Instead of manually setting up all properties we use the Vulkan Profiles library to simplify instance setup
-std::unique_ptr<vkb::Instance> Profiles::create_instance()
+std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 {
 	// Initialize Volk Vulkan Loader
 	VkResult result = volkInitialize();
@@ -210,7 +210,7 @@ std::unique_ptr<vkb::Instance> Profiles::create_instance()
 
 	volkLoadInstance(vulkan_instance);
 
-	return std::make_unique<vkb::Instance>(vulkan_instance);
+	return std::make_unique<vkb::core::InstanceC>(vulkan_instance);
 }
 
 void Profiles::generate_textures()
@@ -470,8 +470,10 @@ void Profiles::setup_descriptor_pool()
 void Profiles::setup_descriptor_set_layout()
 {
 	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-	VkDescriptorSetLayoutCreateInfo           descriptor_layout_create_info{};
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info{};
+	descriptor_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
 	// Mark second slot as variable for descriptor indexing
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT descriptor_set_layout_binding_flags{};
@@ -497,10 +499,8 @@ void Profiles::setup_descriptor_set_layout()
 	        VK_SHADER_STAGE_FRAGMENT_BIT,
 	        1,
 	        static_cast<uint32_t>(textures.size()))};
-	descriptor_layout_create_info =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
+	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &base_descriptor_set_layout));
 
 	// Set layout for the samplers
@@ -511,10 +511,8 @@ void Profiles::setup_descriptor_set_layout()
 	        VK_SHADER_STAGE_FRAGMENT_BIT,
 	        0,
 	        static_cast<uint32_t>(textures.size()))};
-	descriptor_layout_create_info =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
+	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &sampler_descriptor_set_layout));
 
 	// Pipeline layout

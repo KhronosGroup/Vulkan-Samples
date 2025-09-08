@@ -20,7 +20,7 @@
 #include "common/hpp_vk_common.h"
 #include "common/vk_common.h"
 #include "core/buffer.h"
-#include "core/hpp_physical_device.h"
+#include "core/physical_device.h"
 #include "hpp_debug.h"
 #include "hpp_fence_pool.h"
 #include "hpp_queue.h"
@@ -70,11 +70,10 @@ class Device
 	using SemaphoreType              = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
 	using SurfaceType                = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
-	using DebugUtilsType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDebugUtils, vkb::DebugUtils>::type;
-	using FencePoolType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
-	using PhysicalDeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPPhysicalDevice, vkb::PhysicalDevice>::type;
-	using CoreQueueType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
-	using ResourceCacheType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPResourceCache, vkb::ResourceCache>::type;
+	using DebugUtilsType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDebugUtils, vkb::DebugUtils>::type;
+	using FencePoolType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
+	using CoreQueueType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
+	using ResourceCacheType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPResourceCache, vkb::ResourceCache>::type;
 
   public:
 	/**
@@ -84,7 +83,7 @@ class Device
 	 * @param debug_utils The debug utils to be associated to this device
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
 	 */
-	Device(PhysicalDeviceType                           &gpu,
+	Device(PhysicalDevice<bindingType>                  &gpu,
 	       SurfaceType                                   surface,
 	       std::unique_ptr<DebugUtilsType>             &&debug_utils,
 	       std::unordered_map<const char *, bool> const &requested_extensions = {});
@@ -95,7 +94,7 @@ class Device
 	 * @param vulkan_device A valid Vulkan device
 	 * @param surface The surface
 	 */
-	Device(PhysicalDeviceType &gpu, DeviceType &vulkan_device, SurfaceType surface);
+	Device(PhysicalDevice<bindingType> &gpu, DeviceType &vulkan_device, SurfaceType surface);
 
 	Device(const Device &) = delete;
 	Device(Device &&)      = delete;
@@ -117,7 +116,7 @@ class Device
 	vkb::core::CommandPool<bindingType> &get_command_pool() const;
 	DebugUtilsType const                &get_debug_utils() const;
 	FencePoolType                       &get_fence_pool() const;
-	PhysicalDeviceType const            &get_gpu() const;
+	PhysicalDevice<bindingType> const   &get_gpu() const;
 	CoreQueueType const                 &get_queue(uint32_t queue_family_index, uint32_t queue_index) const;
 	CoreQueueType const                 &get_queue_by_flags(QueueFlagsType queue_flags, uint32_t queue_index) const;
 	CoreQueueType const                 &get_queue_by_present(uint32_t queue_index) const;
@@ -142,7 +141,7 @@ class Device
 	std::unique_ptr<vkb::core::HPPDebugUtils>     debug_utils;
 	std::vector<const char *>                     enabled_extensions{};
 	std::unique_ptr<vkb::HPPFencePool>            fence_pool;
-	vkb::core::HPPPhysicalDevice                 &gpu;
+	vkb::core::PhysicalDeviceCpp                 &gpu;
 	std::vector<std::vector<vkb::core::HPPQueue>> queues;
 	vkb::HPPResourceCache                         resource_cache;
 	vk::SurfaceKHR                                surface = nullptr;
@@ -162,7 +161,7 @@ namespace core
 {
 
 template <>
-inline Device<vkb::BindingType::Cpp>::Device(vkb::core::HPPPhysicalDevice                 &gpu,
+inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp                 &gpu,
                                              vk::SurfaceKHR                                surface,
                                              std::unique_ptr<vkb::core::HPPDebugUtils>   &&debug_utils,
                                              std::unordered_map<const char *, bool> const &requested_extensions) :
@@ -172,25 +171,25 @@ inline Device<vkb::BindingType::Cpp>::Device(vkb::core::HPPPhysicalDevice       
 }
 
 template <>
-inline Device<vkb::BindingType::C>::Device(vkb::PhysicalDevice                          &gpu,
+inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC                   &gpu,
                                            VkSurfaceKHR                                  surface,
                                            std::unique_ptr<vkb::DebugUtils>            &&debug_utils,
                                            std::unordered_map<const char *, bool> const &requested_extensions) :
-    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this}, debug_utils{reinterpret_cast<vkb::core::HPPDebugUtils *>(debug_utils.release())}, gpu{reinterpret_cast<vkb::core::HPPPhysicalDevice &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface(static_cast<vk::SurfaceKHR>(surface))
+    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this}, debug_utils{reinterpret_cast<vkb::core::HPPDebugUtils *>(debug_utils.release())}, gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface(static_cast<vk::SurfaceKHR>(surface))
 {
 	init(requested_extensions);
 }
 
 template <>
-inline Device<vkb::BindingType::Cpp>::Device(vkb::core::HPPPhysicalDevice &gpu, vk::Device &vulkan_device, vk::SurfaceKHR surface) :
+inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp &gpu, vk::Device &vulkan_device, vk::SurfaceKHR surface) :
     VulkanResource{vulkan_device}, gpu{gpu}, surface{surface}, resource_cache{*this}
 {
 	debug_utils = std::make_unique<HPPDummyDebugUtils>();
 }
 
 template <>
-inline Device<vkb::BindingType::C>::Device(vkb::PhysicalDevice &gpu, VkDevice &vulkan_device, VkSurfaceKHR surface) :
-    VulkanResource{vulkan_device}, gpu{reinterpret_cast<vkb::core::HPPPhysicalDevice &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface{static_cast<vk::SurfaceKHR>(surface)}
+inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC &gpu, VkDevice &vulkan_device, VkSurfaceKHR surface) :
+    VulkanResource{vulkan_device}, gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface{static_cast<vk::SurfaceKHR>(surface)}
 {
 	debug_utils = std::make_unique<HPPDummyDebugUtils>();
 }
@@ -390,7 +389,7 @@ inline typename Device<bindingType>::FencePoolType &Device<bindingType>::get_fen
 }
 
 template <vkb::BindingType bindingType>
-inline typename Device<bindingType>::PhysicalDeviceType const &Device<bindingType>::get_gpu() const
+inline PhysicalDevice<bindingType> const &Device<bindingType>::get_gpu() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -398,7 +397,7 @@ inline typename Device<bindingType>::PhysicalDeviceType const &Device<bindingTyp
 	}
 	else
 	{
-		return reinterpret_cast<vkb::PhysicalDevice const &>(gpu);
+		return reinterpret_cast<vkb::core::PhysicalDeviceC const &>(gpu);
 	}
 }
 

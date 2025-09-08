@@ -63,7 +63,7 @@ class RayTracingPositionFetch : public ApiVulkanSample
 	RayTracingPositionFetch();
 	virtual ~RayTracingPositionFetch();
 
-	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         create_storage_image();
 	void         create_bottom_level_acceleration_structure();
 	void         create_top_level_acceleration_structure();

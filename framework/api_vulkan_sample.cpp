@@ -26,6 +26,9 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
 bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))
@@ -34,6 +37,10 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
+
+	// Update width and height from surface extent to reflect command line arguments
+	width  = get_render_context().get_surface_extent().width;
+	height = get_render_context().get_surface_extent().height;
 
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
@@ -65,9 +72,6 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	setup_render_pass();
 	create_pipeline_cache();
 	setup_framebuffer();
-
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
 
 	prepare_gui();
 

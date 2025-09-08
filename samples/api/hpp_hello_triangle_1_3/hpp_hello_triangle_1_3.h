@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "core/hpp_instance.h"
 #include "platform/application.h"
 #include "platform/window.h"
 
@@ -149,7 +148,7 @@ class HPPHelloTriangleV13 : public vkb::Application
 	void             init_pipeline();
 	void             init_swapchain();
 	void             init_vertex_buffer();
-	vk::ShaderModule load_shader_module(const char *path, vk::ShaderStageFlagBits shader_stage);
+	vk::ShaderModule load_shader_module(const std::string &path, vk::ShaderStageFlagBits shader_stage);
 	vk::Result       present_image(uint32_t index);
 	void             render_triangle(uint32_t swapchain_index);
 	void             select_physical_device_and_surface(vkb::Window *window);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ class DescriptorIndexing : public ApiVulkanSample
 	~DescriptorIndexing();
 
   private:
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;

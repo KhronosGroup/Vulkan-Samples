@@ -66,7 +66,7 @@ bool HPPTerrainTessellation::prepare(const vkb::ApplicationOptions &options)
 	return prepared;
 }
 
-void HPPTerrainTessellation::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPTerrainTessellation::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Tessellation shader support is required for this example
 	auto &available_features = gpu.get_features();

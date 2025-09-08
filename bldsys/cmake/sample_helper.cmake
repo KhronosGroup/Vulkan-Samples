@@ -272,7 +272,7 @@ endif()
             set(SLANG_ENTRY_POINT "main")
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
-                COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
+                COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -matrix-layout-column-major -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
                 COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
                 MAIN_DEPENDENCY ${SHADER_FILE_SLANG}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

@@ -60,21 +60,15 @@ RayTracingPositionFetch::~RayTracingPositionFetch()
 	}
 }
 
-void RayTracingPositionFetch::request_gpu_features(vkb::PhysicalDevice &gpu)
+void RayTracingPositionFetch::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Features required for ray tracing
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, rayTracingPipeline);
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
 
 	// Sample sepcific feature
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR,
-	                         rayTracingPositionFetch);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR, rayTracingPositionFetch);
 }
 
 /*

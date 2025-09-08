@@ -47,7 +47,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 
 	virtual ~MultithreadingRenderPasses() = default;
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
