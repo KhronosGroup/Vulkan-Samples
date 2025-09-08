@@ -17,7 +17,7 @@
 
 #include "core/hpp_swapchain.h"
 #include "core/device.h"
-#include "core/hpp_physical_device.h"
+#include "core/physical_device.h"
 
 namespace vkb
 {

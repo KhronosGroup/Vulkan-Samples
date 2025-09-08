@@ -445,14 +445,11 @@ void VertexDynamicState::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void VertexDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
+void VertexDynamicState::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT,
-	                         vertexInputDynamicState);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT, vertexInputDynamicState);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{

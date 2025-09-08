@@ -304,10 +304,10 @@ void ShaderObject::create_default_sampler()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &standard_sampler));
 }
 
-void ShaderObject::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ShaderObject::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable Shader Object
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceShaderObjectFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT, shaderObject);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceShaderObjectFeaturesEXT, shaderObject);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -323,10 +323,7 @@ void ShaderObject::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Enable Dynamic Rendering
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
-	                         dynamicRendering);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
 
 	// Enable Geometry Shaders
 	auto &requested_geometry_shader          = gpu.get_mutable_requested_features();

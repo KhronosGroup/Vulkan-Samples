@@ -123,7 +123,7 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void ConstantData::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ConstantData::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().vertexPipelineStoresAndAtomics)
 	{

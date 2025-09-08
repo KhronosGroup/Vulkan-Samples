@@ -192,9 +192,9 @@ bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &op
 	return true;
 }
 
-void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, storageInputOutput16);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, storageInputOutput16);
 }
 
 void KHR16BitStorageInputOutputSample::update(float delta_time)

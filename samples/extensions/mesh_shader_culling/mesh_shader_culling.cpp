@@ -50,12 +50,12 @@ MeshShaderCulling::~MeshShaderCulling()
 	}
 }
 
-void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MeshShaderCulling::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Check whether the device supports task and mesh shaders
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShaderQueries);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, taskShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShaderQueries);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, taskShader);
 
 	// Pipeline statistics
 	auto &requested_features = gpu.get_mutable_requested_features();

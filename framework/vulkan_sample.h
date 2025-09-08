@@ -134,7 +134,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using PhysicalDeviceType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPhysicalDevice, vkb::PhysicalDevice>::type;
 	using RenderContextType  = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
 	using RenderPipelineType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderPipeline, vkb::RenderPipeline>::type;
 	using RenderTargetType   = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
@@ -163,7 +162,7 @@ class VulkanSample : public vkb::Application
 	 * @brief Create the Vulkan device used by this sample
 	 * @note Can be overridden to implement custom device creation
 	 */
-	virtual std::unique_ptr<vkb::core::Device<bindingType>> create_device(PhysicalDeviceType &gpu);
+	virtual std::unique_ptr<vkb::core::Device<bindingType>> create_device(vkb::core::PhysicalDevice<bindingType> &gpu);
 
 	/**
 	 * @brief Create the Vulkan instance used by this sample
@@ -209,7 +208,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Request features from the gpu based on what is supported
 	 */
-	virtual void request_gpu_features(PhysicalDeviceType &gpu);
+	virtual void request_gpu_features(vkb::core::PhysicalDevice<bindingType> &gpu);
 
 	/**
 	 * @brief Resets the stats view max values for high demanding configs
@@ -501,7 +500,7 @@ inline void VulkanSample<bindingType>::add_layer_setting(LayerSettingType const 
 }
 
 template <vkb::BindingType bindingType>
-inline std::unique_ptr<typename vkb::core::Device<bindingType>> VulkanSample<bindingType>::create_device(PhysicalDeviceType &gpu)
+inline std::unique_ptr<typename vkb::core::Device<bindingType>> VulkanSample<bindingType>::create_device(vkb::core::PhysicalDevice<bindingType> &gpu)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1100,7 +1099,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	}
 	else
 	{
-		request_gpu_features(reinterpret_cast<vkb::PhysicalDevice &>(gpu));
+		request_gpu_features(reinterpret_cast<vkb::core::PhysicalDeviceC &>(gpu));
 	}
 
 	// Creating vulkan device, specifying the swapchain extension always
@@ -1152,7 +1151,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	}
 	else
 	{
-		device.reset(reinterpret_cast<vkb::core::DeviceCpp *>(create_device(reinterpret_cast<vkb::PhysicalDevice &>(gpu)).release()));
+		device.reset(reinterpret_cast<vkb::core::DeviceCpp *>(create_device(reinterpret_cast<vkb::core::PhysicalDeviceC &>(gpu)).release()));
 	}
 
 	// initialize C++-Bindings default dispatcher, optional third step
@@ -1215,7 +1214,7 @@ inline void VulkanSample<bindingType>::render_impl(vkb::core::CommandBufferCpp &
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::request_gpu_features(PhysicalDeviceType &gpu)
+inline void VulkanSample<bindingType>::request_gpu_features(vkb::core::PhysicalDevice<bindingType> &gpu)
 {
 	// To be overridden by sample
 }

@@ -80,7 +80,7 @@ class Profiles : public ApiVulkanSample
 	bool                                  prepare(const vkb::ApplicationOptions &options) override;
 	void                                  render(float delta_time) override;
 	void                                  view_changed() override;
-	std::unique_ptr<vkb::core::DeviceC>   create_device(vkb::PhysicalDevice &gpu) override;
+	std::unique_ptr<vkb::core::DeviceC>   create_device(vkb::core::PhysicalDeviceC &gpu) override;
 	std::unique_ptr<vkb::core::InstanceC> create_instance() override;
 	virtual void                          on_update_ui_overlay(vkb::Drawer &drawer) override;
 };

@@ -76,7 +76,7 @@ bool HPPOITDepthPeeling::resize(const uint32_t width, const uint32_t height)
 	return HPPApiVulkanSample::resize(width, height);
 }
 
-void HPPOITDepthPeeling::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPOITDepthPeeling::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{

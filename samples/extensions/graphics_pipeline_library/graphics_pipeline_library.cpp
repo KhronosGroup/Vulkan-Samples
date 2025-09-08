@@ -58,13 +58,10 @@ GraphicsPipelineLibrary::GraphicsPipelineLibrary()
 	add_device_extension(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
 }
 
-void GraphicsPipelineLibrary::request_gpu_features(vkb::PhysicalDevice &gpu)
+void GraphicsPipelineLibrary::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable extension features required by this sample
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT,
-	                         graphicsPipelineLibrary);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT, graphicsPipelineLibrary);
 }
 
 GraphicsPipelineLibrary::~GraphicsPipelineLibrary()

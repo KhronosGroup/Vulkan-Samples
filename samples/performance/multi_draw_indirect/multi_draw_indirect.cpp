@@ -93,7 +93,7 @@ MultiDrawIndirect::~MultiDrawIndirect()
 	}
 }
 
-void MultiDrawIndirect::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MultiDrawIndirect::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().multiDrawIndirect)
 	{
@@ -109,7 +109,7 @@ void MultiDrawIndirect::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	// Query whether the device supports buffer device addresses
 	m_supports_buffer_device =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES, bufferDeviceAddress);
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, bufferDeviceAddress);
 
 	// This sample references 128 objects. We need to check whether this is supported by the device
 	VkPhysicalDeviceProperties physical_device_properties;

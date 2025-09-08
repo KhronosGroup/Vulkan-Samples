@@ -82,7 +82,7 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
-	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void          request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
 	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
 	void          delete_scratch_buffer(ScratchBuffer &scratch_buffer);

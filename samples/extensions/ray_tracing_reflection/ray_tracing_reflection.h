@@ -127,7 +127,7 @@ class RaytracingReflection : public ApiVulkanSample
 	void draw();
 
 	void build_command_buffers() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 };

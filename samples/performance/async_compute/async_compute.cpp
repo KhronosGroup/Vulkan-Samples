@@ -38,12 +38,11 @@ AsyncComputeSample::AsyncComputeSample()
 	config.insert<vkb::BoolSetting>(1, double_buffer_hdr_frames, true);
 }
 
-void AsyncComputeSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+void AsyncComputeSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 #ifdef VKB_ENABLE_PORTABILITY
 	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR, mutableComparisonSamplers);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 #endif
 }
 
