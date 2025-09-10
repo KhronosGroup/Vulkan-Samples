@@ -1,0 +1,26 @@
+// Copyright (c) 2025, Arm Limited and Contributors
+digraph D {
+
+    {
+        rank=same;
+        input_tensor[shape=ellipse]
+        output_tensor[shape=ellipse]
+        data_graph_pipeline[shape=box]
+    }
+    {
+        rank=same;
+        output_image[shape=ellipse]
+        swapchain[shape=ellipse]
+
+        visualization_pipeline[shape=box]
+        blit[shape=box]
+    }
+
+    input_tensor -> data_graph_pipeline
+    data_graph_pipeline -> output_tensor
+
+    input_tensor -> visualization_pipeline
+    output_tensor -> visualization_pipeline
+    visualization_pipeline -> output_image -> blit -> swapchain
+
+}
