@@ -268,6 +268,12 @@ struct HPPType<VkPhysicalDeviceSynchronization2FeaturesKHR>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceTensorFeaturesARM>
+{
+	using Type = vk::PhysicalDeviceTensorFeaturesARM;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR>
 {
 	using Type = vk::PhysicalDeviceTimelineSemaphoreFeaturesKHR;
@@ -283,6 +289,12 @@ template <>
 struct HPPType<VkPhysicalDeviceVulkan12Features>
 {
 	using Type = vk::PhysicalDeviceVulkan12Features;
+};
+
+template <>
+struct HPPType<VkPhysicalDeviceVulkan13Features>
+{
+	using Type = vk::PhysicalDeviceVulkan13Features;
 };
 
 template <>

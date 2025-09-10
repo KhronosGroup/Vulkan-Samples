@@ -50,7 +50,7 @@ class SimpleTensorAndDataGraph : public vkb::VulkanSampleC
 	SimpleTensorAndDataGraph();
 	~SimpleTensorAndDataGraph() override;
 
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
