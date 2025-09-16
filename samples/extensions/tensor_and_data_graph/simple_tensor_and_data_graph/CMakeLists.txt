@@ -15,7 +15,8 @@
 # limitations under the License.
 #
 
-add_sample_with_tags(
+if(WIN32 OR ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_sample_with_tags(
         ID "simple_tensor_and_data_graph"
         CATEGORY "extensions/tensor_and_data_graph"
         AUTHOR "Arm Ltd."
@@ -34,4 +35,5 @@ add_sample_with_tags(
             "tensor_and_data_graph/glsl/visualization_two_tensors.comp"
         SHADER_FILES_SPVASM
             "tensor_and_data_graph/simple_tensor_and_data_graph/spirv/pooling.spvasm"
-)
+    )
+endif()
