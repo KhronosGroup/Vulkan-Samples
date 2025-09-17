@@ -252,8 +252,11 @@ void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_comm
 	primary_command_buffer.end_render_pass();
 }
 
-CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::RenderContext &render_context,
-                                                                     vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene_, vkb::sg::Camera &camera) :
+CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,
+                                                                     vkb::ShaderSource             &&vertex_shader,
+                                                                     vkb::ShaderSource             &&fragment_shader,
+                                                                     vkb::sg::Scene                 &scene_,
+                                                                     vkb::sg::Camera                &camera) :
     vkb::ForwardSubpass{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
 {
 }

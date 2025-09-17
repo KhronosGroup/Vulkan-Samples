@@ -31,7 +31,6 @@
 
 namespace vkb
 {
-class RenderContext;
 
 namespace core
 {
@@ -39,6 +38,13 @@ template <vkb::BindingType bindingType>
 class CommandBuffer;
 using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
 }        // namespace core
+
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+class RenderContext;
+using RenderContextC = RenderContext<vkb::BindingType::C>;
+}        // namespace rendering
 
 /*
  * @brief Helper class for querying statistics about the CPU and the GPU
@@ -51,7 +57,7 @@ class Stats
 	 * @param render_context The RenderContext for this sample
 	 * @param buffer_size Size of the circular buffers
 	 */
-	explicit Stats(RenderContext &render_context, size_t buffer_size = 16);
+	explicit Stats(vkb::rendering::RenderContextC &render_context, size_t buffer_size = 16);
 
 	/**
 	 * @brief Destroys the Stats object
@@ -140,7 +146,7 @@ class Stats
 
   private:
 	/// The render context
-	RenderContext &render_context;
+	vkb::rendering::RenderContextC &render_context;
 
 	/// Stats that were requested - they may not all be available
 	std::set<StatIndex> requested_stats;

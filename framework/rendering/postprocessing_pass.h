@@ -84,7 +84,7 @@ class PostProcessingPassBase
 	/**
 	 * @brief Returns the parent's render context.
 	 */
-	RenderContext &get_render_context() const;
+	vkb::rendering::RenderContextC &get_render_context() const;
 
 	/**
 	 * @brief Returns the parent's fullscreen triangle vertex shader source.
