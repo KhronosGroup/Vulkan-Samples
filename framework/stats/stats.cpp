@@ -33,7 +33,7 @@
 
 namespace vkb
 {
-Stats::Stats(RenderContext &render_context, size_t buffer_size) :
+Stats::Stats(vkb::rendering::RenderContextC &render_context, size_t buffer_size) :
     render_context(render_context),
     buffer_size(buffer_size)
 {

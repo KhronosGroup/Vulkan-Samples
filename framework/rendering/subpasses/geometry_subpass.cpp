@@ -18,7 +18,9 @@
 #include "rendering/subpasses/geometry_subpass.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "core/command_buffer.h"
 #include "rendering/render_context.h"
+#include "resource_cache.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
@@ -30,7 +32,8 @@
 
 namespace vkb
 {
-GeometrySubpass::GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
+GeometrySubpass::GeometrySubpass(
+    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
     Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
     meshes{scene_.get_components<sg::Mesh>()},
     camera{camera},

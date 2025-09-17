@@ -103,7 +103,6 @@ class Gui
 	using PipelineCacheType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineCache, VkPipelineCache>::type;
 	using PipelineLayoutType                = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineLayout, VkPipelineLayout>::type;
 	using PipelineShaderStageCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineShaderStageCreateInfo, VkPipelineShaderStageCreateInfo>::type;
-	using RenderContextType                 = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
 	using RenderPassType                    = typename std::conditional<bindingType == BindingType::Cpp, vk::RenderPass, VkRenderPass>::type;
 	using StatsType                         = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
@@ -162,7 +161,11 @@ class Gui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	Gui(RenderContextType &render_context, Window const &window, StatsType const *stats = nullptr, float font_size = 21.0f, bool explicit_update = false);
+	Gui(vkb::rendering::RenderContext<bindingType> &render_context,
+	    Window const                               &window,
+	    StatsType const                            *stats           = nullptr,
+	    float                                       font_size       = 21.0f,
+	    bool                                        explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
@@ -310,7 +313,7 @@ class Gui
 	vk::Pipeline                             pipeline;
 	vkb::core::HPPPipelineLayout            *pipeline_layout = nullptr;
 	bool                                     prev_visible    = true;
-	vkb::rendering::HPPRenderContext        &render_context;
+	vkb::rendering::RenderContextCpp        &render_context;
 	std::unique_ptr<vkb::core::HPPSampler>   sampler;
 	StatsView                                stats_view;
 	uint32_t                                 subpass = 0;
@@ -323,7 +326,8 @@ using GuiC   = Gui<vkb::BindingType::C>;
 using GuiCpp = Gui<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline Gui<bindingType>::Gui(RenderContextType &render_context_, Window const &window, StatsType const *stats, float font_size, bool explicit_update) :
+inline Gui<bindingType>::Gui(
+    vkb::rendering::RenderContext<bindingType> &render_context_, Window const &window, StatsType const *stats, float font_size, bool explicit_update) :
     render_context{render_context_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},

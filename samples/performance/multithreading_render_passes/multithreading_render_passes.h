@@ -61,11 +61,11 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	class ShadowSubpass : public vkb::GeometrySubpass
 	{
 	  public:
-		ShadowSubpass(vkb::RenderContext &render_context,
-		              vkb::ShaderSource &&vertex_source,
-		              vkb::ShaderSource &&fragment_source,
-		              vkb::sg::Scene     &scene,
-		              vkb::sg::Camera    &camera);
+		ShadowSubpass(vkb::rendering::RenderContextC &render_context,
+		              vkb::ShaderSource             &&vertex_source,
+		              vkb::ShaderSource             &&fragment_source,
+		              vkb::sg::Scene                 &scene,
+		              vkb::sg::Camera                &camera);
 
 	  protected:
 		virtual void prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer, VkFrontFace front_face, bool double_sided_material)
@@ -84,7 +84,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	class MainSubpass : public vkb::ForwardSubpass
 	{
 	  public:
-		MainSubpass(vkb::RenderContext                              &render_context,
+		MainSubpass(vkb::rendering::RenderContextC                  &render_context,
 		            vkb::ShaderSource                              &&vertex_source,
 		            vkb::ShaderSource                              &&fragment_source,
 		            vkb::sg::Scene                                  &scene,

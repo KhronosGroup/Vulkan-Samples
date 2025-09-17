@@ -280,7 +280,7 @@ void Platform::update()
 		{
 			if (app->has_render_context())
 			{
-				on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+				on_post_draw(reinterpret_cast<vkb::rendering::RenderContextC &>(app->get_render_context()));
 			}
 		}
 		else if (auto *app = dynamic_cast<VulkanSampleC *>(active_app.get()))
@@ -531,7 +531,7 @@ void Platform::resize(uint32_t width, uint32_t height)
 		}                               \
 	}
 
-void Platform::on_post_draw(RenderContext &context)
+void Platform::on_post_draw(vkb::rendering::RenderContextC &context)
 {
 	HOOK(Hook::PostDraw, on_post_draw(context));
 }

@@ -44,7 +44,7 @@ class Screenshot : public ScreenshotTags
 
 	void on_update(float delta_time) override;
 	void on_app_start(const std::string &app_info) override;
-	void on_post_draw(vkb::RenderContext &context) override;
+	void on_post_draw(vkb::rendering::RenderContextC &context) override;
 
 	bool handle_option(std::deque<std::string> &arguments) override;
 

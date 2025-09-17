@@ -22,7 +22,12 @@
 
 namespace vkb
 {
+namespace rendering
+{
+template <vkb::BindingType bindingType>
 class RenderContext;
+using RenderContextC = RenderContext<vkb::BindingType::C>;
+}        // namespace rendering
 
 class VulkanStatsProvider : public StatsProvider
 {
@@ -83,8 +88,7 @@ class VulkanStatsProvider : public StatsProvider
 	 * @param sampling_config Sampling mode configuration (polling or continuous)
 	 * @param render_context The render context
 	 */
-	VulkanStatsProvider(std::set<StatIndex> &requested_stats, const CounterSamplingConfig &sampling_config,
-	                    RenderContext &render_context);
+	VulkanStatsProvider(std::set<StatIndex> &requested_stats, const CounterSamplingConfig &sampling_config, vkb::rendering::RenderContextC &render_context);
 
 	/**
 	 * @brief Destructs a VulkanStatsProvider
@@ -133,7 +137,7 @@ class VulkanStatsProvider : public StatsProvider
 
   private:
 	// The render context
-	RenderContext &render_context;
+	vkb::rendering::RenderContextC &render_context;
 
 	// The query pool for the performance queries
 	std::unique_ptr<QueryPool> query_pool;

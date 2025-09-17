@@ -18,16 +18,17 @@
 #include "lighting_subpass.h"
 
 #include "buffer_pool.h"
+#include "core/command_buffer.h"
 #include "rendering/render_context.h"
+#include "resource_cache.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/scene.h"
 
 namespace vkb
 {
-LightingSubpass::LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &cam, sg::Scene &scene_) :
-    Subpass{render_context, std::move(vertex_shader), std::move(fragment_shader)},
-    camera{cam},
-    scene{scene_}
+LightingSubpass::LightingSubpass(
+    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &cam, sg::Scene &scene_) :
+    Subpass{render_context, std::move(vertex_shader), std::move(fragment_shader)}, camera{cam}, scene{scene_}
 {
 }
 

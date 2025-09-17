@@ -71,8 +71,11 @@ class PostProcessingRenderPass;
 class PostProcessingSubpass : public vkb::rendering::SubpassC
 {
   public:
-	PostProcessingSubpass(PostProcessingRenderPass *parent, RenderContext &render_context, ShaderSource &&triangle_vs,
-	                      ShaderSource &&fs, ShaderVariant &&fs_variant = {});
+	PostProcessingSubpass(PostProcessingRenderPass       *parent,
+	                      vkb::rendering::RenderContextC &render_context,
+	                      ShaderSource                  &&triangle_vs,
+	                      ShaderSource                  &&fs,
+	                      ShaderVariant                 &&fs_variant = {});
 
 	PostProcessingSubpass(const PostProcessingSubpass &to_copy)            = delete;
 	PostProcessingSubpass &operator=(const PostProcessingSubpass &to_copy) = delete;

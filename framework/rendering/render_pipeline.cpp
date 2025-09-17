@@ -16,7 +16,7 @@
  */
 
 #include "render_pipeline.h"
-
+#include "core/command_buffer.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"

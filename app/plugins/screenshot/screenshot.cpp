@@ -21,6 +21,7 @@
 #include <chrono>
 #include <iomanip>
 
+#include "common/utils.h"
 #include "rendering/render_context.h"
 
 namespace plugins
@@ -79,7 +80,7 @@ void Screenshot::on_app_start(const std::string &name)
 	current_frame    = 0;
 }
 
-void Screenshot::on_post_draw(vkb::RenderContext &context)
+void Screenshot::on_post_draw(vkb::rendering::RenderContextC &context)
 {
 	if (current_frame == frame_number)
 	{
@@ -99,7 +100,7 @@ void Screenshot::on_post_draw(vkb::RenderContext &context)
 			output_path = stream.str();
 		}
 
-		screenshot(context, output_path);
+		vkb::screenshot(context, output_path);
 	}
 }
 }        // namespace plugins

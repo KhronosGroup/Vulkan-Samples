@@ -24,9 +24,9 @@
 
 namespace vkb
 {
-VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>         &requested_stats,
-                                         const CounterSamplingConfig &sampling_config,
-                                         RenderContext               &render_context) :
+VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>            &requested_stats,
+                                         const CounterSamplingConfig    &sampling_config,
+                                         vkb::rendering::RenderContextC &render_context) :
     render_context(render_context)
 {
 	// Check all the Vulkan capabilities we require are present

@@ -203,6 +203,16 @@ inline vk::Format choose_blendable_format(vk::PhysicalDevice gpu, const std::vec
 	throw std::runtime_error("No suitable blendable format could be determined");
 }
 
+inline vk::ImageCompressionPropertiesEXT query_applied_compression(vk::Device device, vk::Image image)
+{
+	vk::ImageSubresource2EXT image_subresource{
+	    .imageSubresource = {.aspectMask = vk::ImageAspectFlagBits::eColor, .mipLevel = 0, .arrayLayer = 0}};
+
+	auto imageSubresourceLayout = device.getImageSubresourceLayout2EXT<vk::SubresourceLayout2EXT, vk::ImageCompressionPropertiesEXT>(image, image_subresource);
+
+	return imageSubresourceLayout.get<vk::ImageCompressionPropertiesEXT>();
+}
+
 // helper functions not backed by vk_common.h
 inline vk::CommandBuffer
     allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)

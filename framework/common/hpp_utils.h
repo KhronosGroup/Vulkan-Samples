@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,10 +17,8 @@
 
 #pragma once
 
-#include <common/utils.h>
-
-#include <rendering/hpp_render_context.h>
-#include <scene_graph/hpp_scene.h>
+#include "common/utils.h"
+#include "scene_graph/hpp_scene.h"
 
 /**
  * @brief facade helper functions around the functions in common/utils.h, providing a vulkan.hpp-based interface
@@ -34,9 +32,9 @@ inline sg::Node &add_free_camera(vkb::scene_graph::HPPScene &scene, const std::s
 	return vkb::add_free_camera(reinterpret_cast<vkb::sg::Scene &>(scene), node_name, static_cast<VkExtent2D>(extent));
 }
 
-inline void screenshot(vkb::rendering::HPPRenderContext &render_context, const std::string &filename)
+inline void screenshot(vkb::rendering::RenderContextCpp &render_context, const std::string &filename)
 {
-	vkb::screenshot(reinterpret_cast<vkb::RenderContext &>(render_context), filename);
+	vkb::screenshot(reinterpret_cast<vkb::rendering::RenderContextC &>(render_context), filename);
 }
 }        // namespace common
 }        // namespace vkb

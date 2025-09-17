@@ -30,8 +30,14 @@
 namespace vkb
 {
 class Platform;
-class RenderContext;
 class Plugin;
+
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+class RenderContext;
+using RenderContextC = RenderContext<vkb::BindingType::C>;
+}        // namespace rendering
 
 /**
  * @brief Tags are used to define a plugins behaviour. This is useful to dictate which plugins will work together
@@ -140,7 +146,7 @@ class Plugin
 	/**
 	 * @brief Post Draw
 	 */
-	virtual void on_post_draw(RenderContext &context) = 0;
+	virtual void on_post_draw(vkb::rendering::RenderContextC &context) = 0;
 
 	/**
 	 * @brief Allows to add a UI to a sample

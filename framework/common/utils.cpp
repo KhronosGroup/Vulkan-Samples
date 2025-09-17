@@ -20,6 +20,8 @@
 #include <queue>
 #include <stdexcept>
 
+#include "core/command_buffer.h"
+#include "rendering/render_frame.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/sub_mesh.h"
@@ -40,7 +42,7 @@ std::string get_extension(const std::string &uri)
 	return uri.substr(dot_pos + 1);
 }
 
-void screenshot(RenderContext &render_context, const std::string &filename)
+void screenshot(vkb::rendering::RenderContextC &render_context, const std::string &filename)
 {
 	assert(render_context.get_format() == VK_FORMAT_R8G8B8A8_UNORM ||
 	       render_context.get_format() == VK_FORMAT_B8G8R8A8_UNORM ||
