@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Mobica Limited
+# Copyright (c) 2023-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample(
         "dynamic_blending/glsl/blending.frag"
     SHADER_FILES_HLSL
         "dynamic_blending/hlsl/blending.vert.hlsl"
-        "dynamic_blending/hlsl/blending.frag.hlsl")
+        "dynamic_blending/hlsl/blending.frag.hlsl"
+    SHADER_FILES_SLANG
+        "dynamic_blending/slang/blending.vert.slang"
+        "dynamic_blending/slang/blending.frag.slang")

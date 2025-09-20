@@ -245,6 +245,11 @@ void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		gpu.get_mutable_requested_features().independentBlend = true;
 	}
+
+	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
+	{
+		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = true;
+	}
 }
 
 void ColorWriteEnable::setup_descriptor_pool()

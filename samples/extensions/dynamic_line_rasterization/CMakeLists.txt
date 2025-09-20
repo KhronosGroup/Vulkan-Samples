@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Mobica Limited
+# Copyright (c) 2023-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,4 +34,9 @@ add_sample(
         "dynamic_line_rasterization/hlsl/base.vert.hlsl"
         "dynamic_line_rasterization/hlsl/base.frag.hlsl"
         "dynamic_line_rasterization/hlsl/grid.vert.hlsl"
-        "dynamic_line_rasterization/hlsl/grid.frag.hlsl")
+        "dynamic_line_rasterization/hlsl/grid.frag.hlsl"
+    SHADER_FILES_SLANG
+        "dynamic_line_rasterization/slang/base.vert.slang"
+        "dynamic_line_rasterization/slang/base.frag.slang"
+        "dynamic_line_rasterization/slang/grid.vert.slang"
+        "dynamic_line_rasterization/slang/grid.frag.slang")
