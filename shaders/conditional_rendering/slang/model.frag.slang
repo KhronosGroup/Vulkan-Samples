@@ -31,7 +31,7 @@ float4 main(VSOutput input)
 	float3 L = normalize(input.LightVec);
 	float3 V = normalize(input.ViewVec);
 	float3 R = reflect(-L, N);
-	float3 ambient = float3(0.1);
+	float3 ambient = float3(0.25);
 	float3 diffuse = max(dot(N, L), 0.0) * float3(1.0);
 	float3 specular = pow(max(dot(R, V), 0.0), 16.0) * float3(0.75);
 	return float4((ambient + diffuse) * input.Color.rgb + specular, 1.0);
