@@ -44,7 +44,8 @@ VSOutput main(VSInput input, uniform float4x4 modelMatrix, uniform float4 modelC
 {
     VSOutput output;
     float4 localPos = mul(ubo.view, mul(modelMatrix, float4(input.Pos, 1.0)));
-    output.Normal = input.Normal;
+    float3x3 nMat = (float3x3)mul(ubo.view, modelMatrix);
+    output.Normal = mul(nMat, input.Normal);
     output.Color = modelColor.rgb;
     output.Pos = mul(ubo.projection, localPos);
     const float3 lightPos = float3(10.0, -10.0, 10.0);
