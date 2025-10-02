@@ -248,7 +248,14 @@ void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 
 	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
 	{
-		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = true;
+		if (gpu.get_features().shaderStorageImageReadWithoutFormat)
+		{
+			gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = true;
+		}
+		else
+		{
+			throw std::runtime_error("When using Slang shaders, this sample requires support for reading storage images without format (shaderStorageImageReadWithoutFormat)");
+		}
 	}
 }
 
