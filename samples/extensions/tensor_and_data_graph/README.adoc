@@ -31,10 +31,6 @@ To demonstrate their use, we’ve added data graph pipeline-based samples that w
 The samples in this folder are:
 
 * xref:simple_tensor_and_data_graph/README.adoc[Simple tensor and data graph]
-* xref:graph_constants/README.adoc[Graph constants]
-* xref:compute_shaders_with_tensors/README.adoc[Compute shaders with tensors]
-* xref:tensor_image_aliasing/README.adoc[Tensor image aliasing]
-* xref:postprocessing_with_vgf/README.adoc[Postprocessing with VGF]
 
 == Setup
 
@@ -48,12 +44,16 @@ In order to compile the shader code used in these samples, a recent version of t
 
 === Enable the emulation layers (Graph & Tensor)
 
+Note: The ML Emulation Layer for Vulkan is only required on devices where the *VK_ARM_tensors* and *VK_ARM_data_graph* extensions are not available.
+
 Install and enable link:https://github.com/arm/ai-ml-emulation-layer-for-vulkan[ML Emulation Layer for Vulkan] from GitHub. Please follow the steps in that repository to build and enable the emulation layers.
 
 Alternatively, on Windows, the Vulkan Configurator tool — which is part of the Vulkan SDK — can also be used, as described below. If it is not already installed, it can be obtained from the link:https://vulkan.lunarg.com/[Vulkan SDK] website.
 
 Once installed, open Vulkan Configurator and navigate to the Vulkan Layers Location tab. Click the plus (+) symbol to append a user-defined layers path,
 and navigate to the folder containing the built layers (DLLs and json files). Please note that there are two separate layers that need to be enabled, so if these are in separate folders then you will need to add both.
+
+Note: It is recommended to disable the validation layer when running these samples as the new extensions are not supported yet.
 
 image::loading_layers.png[Loading Layers Completed]
 
