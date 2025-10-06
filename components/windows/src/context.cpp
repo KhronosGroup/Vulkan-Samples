@@ -1,4 +1,5 @@
-/* Copyright (c) 2023, Thomas Atkinson
+/* Copyright (c) 2023-2025, Thomas Atkinson
+ * Copyright (c) 2025, Chris Djali
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -87,6 +88,15 @@ WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hP
 	_temp_directory             = get_temp_path_from_environment();
 	_arguments                  = get_args();
 
+	auto isRedirected = [](DWORD stdHandle) {
+		DWORD fileType = GetFileType(GetStdHandle(stdHandle));
+		return fileType == FILE_TYPE_DISK || fileType == FILE_TYPE_PIPE;
+	};
+
+	bool inRedirected  = isRedirected(STD_INPUT_HANDLE);
+	bool outRedirected = isRedirected(STD_OUTPUT_HANDLE);
+	bool errRedirected = isRedirected(STD_ERROR_HANDLE);
+
 	// Attempt to attach to the parent process console if it exists
 	if (!AttachConsole(ATTACH_PARENT_PROCESS))
 	{
@@ -98,8 +108,17 @@ WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hP
 	}
 
 	FILE *fp;
-	freopen_s(&fp, "conin$", "r", stdin);
-	freopen_s(&fp, "conout$", "w", stdout);
-	freopen_s(&fp, "conout$", "w", stderr);
+	if (!inRedirected)
+	{
+		freopen_s(&fp, "conin$", "r", stdin);
+	}
+	if (!outRedirected)
+	{
+		freopen_s(&fp, "conout$", "w", stdout);
+	}
+	if (!errRedirected)
+	{
+		freopen_s(&fp, "conout$", "w", stderr);
+	}
 }
 }        // namespace vkb
