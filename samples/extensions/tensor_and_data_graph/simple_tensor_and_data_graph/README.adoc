@@ -26,13 +26,13 @@ endif::[]
 
 This sample demonstrates the usage of the `VK_ARM_tensors` and `VK_ARM_data_graph` extensions for machine learning inference. These extensions provide a way to define tensor data and construct computation graphs for neural network execution using hardware acceleration.
 
-This is the first in a series of samples which introduce the tensor and data graph extensions. Please see the parent xref:..\README.adoc[tensor and data graph] page for the full list of samples.
+This is the first in a series of samples which introduce the tensor and data graph extensions. Please see the parent xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph] page for the full list of samples.
 
 NOTE: While the model used in this example is expressed using https://www.mlplatform.org/tosa/[TOSA operations], there is currently no defined way to query for TOSA operation support from the Vulkan API. Execution of this sample may fail on implementations of these extensions that do not include specific support for TOSA operations.
 
 == Setup
 
-If you would like to build and run this sample, please make sure to first follow the setup steps on the xref:..\README.adoc[tensor and data graph] page.
+If you would like to build and run this sample, please make sure to first follow the setup steps on the xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph] page.
 
 == Introduction
 
@@ -498,7 +498,7 @@ Accesses to tensor resources must be synchronised correctly, just as for images 
 
 == Conclusion
 
-In this sample we've introduced the VK_ARM_tensors and VK_ARM_data_graph extensions and shown how to use them to run a simple neural network. We've shown the steps needed to run a neural network - creating a pipeline layout, data graph pipeline, data graph pipeline session, tensor objects, descriptor sets and finally recording binding and dispatch commands in a command buffer. The following samples in xref:..\README.adoc[this series] build upon these concepts.
+In this sample we've introduced the VK_ARM_tensors and VK_ARM_data_graph extensions and shown how to use them to run a simple neural network. We've shown the steps needed to run a neural network - creating a pipeline layout, data graph pipeline, data graph pipeline session, tensor objects, descriptor sets and finally recording binding and dispatch commands in a command buffer. The following samples in xref:samples/extensions/tensor_and_data_graph/README.adoc[this series] build upon these concepts.
 
 == Appendix A: SPIR-V programs for neural networks
 

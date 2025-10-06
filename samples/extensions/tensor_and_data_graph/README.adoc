@@ -30,7 +30,7 @@ To demonstrate their use, we’ve added data graph pipeline-based samples that w
 
 The samples in this folder are:
 
-* xref:simple_tensor_and_data_graph/README.adoc[Simple tensor and data graph]
+* xref:./simple_tensor_and_data_graph/README.adoc[Simple tensor and data graph]
 
 == Setup
 
@@ -55,11 +55,11 @@ and navigate to the folder containing the built layers (DLLs and json files). Pl
 
 Note: It is recommended to disable the validation layer when running these samples as the new extensions are not supported yet.
 
-image::loading_layers.png[Loading Layers Completed]
+image::./loading_layers.png[Loading Layers Completed]
 
 This should add the layers to the Vulkan Loader Management tab. The Graph layer needs to sit on top of the Tensor layer.
 
-image::verify_layers.png[VK Layers]
+image::./verify_layers.png[VK Layers]
 
 When running any of these samples, if you receive an error message similar to:
 ----
