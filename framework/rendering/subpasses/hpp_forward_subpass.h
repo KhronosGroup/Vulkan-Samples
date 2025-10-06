@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,8 +19,6 @@
 
 #include "rendering/subpasses/forward_subpass.h"
 
-#include <rendering/hpp_render_context.h>
-
 namespace vkb
 {
 namespace rendering
@@ -35,12 +33,12 @@ namespace subpasses
 class HPPForwardSubpass : public vkb::ForwardSubpass
 {
   public:
-	HPPForwardSubpass(vkb::rendering::HPPRenderContext &render_context,
+	HPPForwardSubpass(vkb::rendering::RenderContextCpp &render_context,
 	                  vkb::ShaderSource               &&vertex_shader,
 	                  vkb::ShaderSource               &&fragment_shader,
 	                  vkb::scene_graph::HPPScene       &scene,
 	                  vkb::sg::Camera                  &camera) :
-	    vkb::ForwardSubpass(reinterpret_cast<vkb::RenderContext &>(render_context),
+	    vkb::ForwardSubpass(reinterpret_cast<vkb::rendering::RenderContextC &>(render_context),
 	                        std::forward<ShaderSource>(vertex_shader),
 	                        std::forward<ShaderSource>(fragment_shader),
 	                        reinterpret_cast<vkb::sg::Scene &>(scene),

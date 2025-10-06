@@ -30,6 +30,7 @@
 #include "rendering/hpp_pipeline_state.h"
 #include "rendering/hpp_render_target.h"
 #include "rendering/subpass.h"
+#include "resource_cache.h"
 
 namespace vkb
 {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@ PostProcessingPassBase::PostProcessingPassBase(PostProcessingPipeline *parent) :
     parent{parent}
 {}
 
-RenderContext &PostProcessingPassBase::get_render_context() const
+vkb::rendering::RenderContextC &PostProcessingPassBase::get_render_context() const
 {
 	return *parent->render_context;
 }

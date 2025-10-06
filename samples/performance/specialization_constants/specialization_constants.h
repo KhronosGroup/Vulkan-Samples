@@ -52,9 +52,11 @@ class SpecializationConstants : public vkb::VulkanSampleC
 	class ForwardSubpassCustomLights : public vkb::ForwardSubpass
 	{
 	  public:
-		ForwardSubpassCustomLights(vkb::RenderContext &render_context,
-		                           vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source,
-		                           vkb::sg::Scene &scene, vkb::sg::Camera &camera);
+		ForwardSubpassCustomLights(vkb::rendering::RenderContextC &render_context,
+		                           vkb::ShaderSource             &&vertex_source,
+		                           vkb::ShaderSource             &&fragment_source,
+		                           vkb::sg::Scene                 &scene,
+		                           vkb::sg::Camera                &camera);
 
 		virtual void prepare() override;
 

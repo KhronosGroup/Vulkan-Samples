@@ -34,7 +34,7 @@ class PostProcessingPipeline
 	/**
 	 * @brief Creates a rendering pipeline entirely made of fullscreen post-processing subpasses.
 	 */
-	PostProcessingPipeline(RenderContext &render_context, ShaderSource triangle_vs);
+	PostProcessingPipeline(vkb::rendering::RenderContextC &render_context, ShaderSource triangle_vs);
 
 	PostProcessingPipeline(const PostProcessingPipeline &to_copy)            = delete;
 	PostProcessingPipeline &operator=(const PostProcessingPipeline &to_copy) = delete;
@@ -82,7 +82,7 @@ class PostProcessingPipeline
 	/**
 	 * @brief Returns the current render context.
 	 */
-	inline RenderContext &get_render_context() const
+	inline vkb::rendering::RenderContextC &get_render_context() const
 	{
 		return *render_context;
 	}
@@ -96,7 +96,7 @@ class PostProcessingPipeline
 	}
 
   private:
-	RenderContext                                       *render_context{nullptr};
+	vkb::rendering::RenderContextC                      *render_context{nullptr};
 	ShaderSource                                         triangle_vs;
 	std::vector<std::unique_ptr<PostProcessingPassBase>> passes{};
 	size_t                                               current_pass_index{0};

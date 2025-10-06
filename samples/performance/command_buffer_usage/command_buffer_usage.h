@@ -144,9 +144,11 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 	class ForwardSubpassSecondary : public vkb::ForwardSubpass
 	{
 	  public:
-		ForwardSubpassSecondary(vkb::RenderContext &render_context,
-		                        vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source,
-		                        vkb::sg::Scene &scene, vkb::sg::Camera &camera);
+		ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,
+		                        vkb::ShaderSource             &&vertex_source,
+		                        vkb::ShaderSource             &&fragment_source,
+		                        vkb::sg::Scene                 &scene,
+		                        vkb::sg::Camera                &camera);
 
 		void draw(vkb::core::CommandBufferC &primary_command_buffer) override;
 
