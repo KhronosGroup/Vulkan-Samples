@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Arm Limited and Contributors
+# Copyright (c) 2021-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,6 +26,10 @@ add_sample_with_tags(
         NAME "Buffer device address"
         DESCRIPTION "Demonstrates use of buffer device address for flexible vertex attribute fetch"
         SHADER_FILES_GLSL
-                "buffer_device_address/update_vbo.comp"
-                "buffer_device_address/render.vert"
-                "buffer_device_address/render.frag")
+            "buffer_device_address/glsl/update_vbo.comp"
+            "buffer_device_address/glsl/render.vert"
+            "buffer_device_address/glsl/render.frag"
+        SHADER_FILES_SLANG
+            "buffer_device_address/slang/update_vbo.comp.slang"
+            "buffer_device_address/slang/render.vert.slang"
+            "buffer_device_address/slang/render.frag.slang")

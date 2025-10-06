@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2024, Sascha Willems
+# Copyright (c) 2020-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -38,4 +38,11 @@ add_sample(
         "debug_utils/hlsl/bloom.vert.hlsl"
         "debug_utils/hlsl/bloom.frag.hlsl"
         "debug_utils/hlsl/gbuffer.vert.hlsl"
-        "debug_utils/hlsl/gbuffer.frag.hlsl")
+        "debug_utils/hlsl/gbuffer.frag.hlsl"
+    SHADER_FILES_SLANG
+        "debug_utils/slang/composition.vert.slang"
+        "debug_utils/slang/composition.frag.slang"
+        "debug_utils/slang/bloom.vert.slang"
+        "debug_utils/slang/bloom.frag.slang"
+        "debug_utils/slang/gbuffer.vert.slang"
+        "debug_utils/slang/gbuffer.frag.slang")

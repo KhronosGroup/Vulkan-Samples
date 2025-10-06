@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, Sascha Willems
+# Copyright (c) 2021-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample_with_tags(
         "texture_compression_basisu/glsl/texture.frag"
     SHADER_FILES_HLSL
         "texture_compression_basisu/hlsl/texture.vert.hlsl"
-        "texture_compression_basisu/hlsl/texture.frag.hlsl")
+        "texture_compression_basisu/hlsl/texture.frag.hlsl"
+    SHADER_FILES_SLANG
+        "texture_compression_basisu/slang/texture.vert.slang"
+        "texture_compression_basisu/slang/texture.frag.slang")

@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample_with_tags(
         "texture_mipmap_generation/glsl/texture.frag"
     SHADER_FILES_HLSL
         "texture_mipmap_generation/hlsl/texture.vert.hlsl"
-        "texture_mipmap_generation/hlsl/texture.frag.hlsl")
+        "texture_mipmap_generation/hlsl/texture.frag.hlsl"
+    SHADER_FILES_SLANG
+        "texture_mipmap_generation/slang/texture.vert.slang"
+        "texture_mipmap_generation/slang/texture.frag.slang")
