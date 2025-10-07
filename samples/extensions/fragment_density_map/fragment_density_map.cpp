@@ -351,7 +351,7 @@ void FragmentDensityMap::build_command_buffers()
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VkCommandBuffer cmd_buffer = draw_cmd_buffers[i];
-		std::string     debug_name = std::format("Draw command buffer {}", i);
+		std::string     debug_name = fmt::format("Draw command buffer {}", i);
 		debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_COMMAND_BUFFER, get_object_handle(cmd_buffer), debug_name.c_str());
 
 		VK_CHECK(vkBeginCommandBuffer(cmd_buffer, &command_buffer_begin_info));
@@ -852,7 +852,7 @@ void FragmentDensityMap::setup_descriptor_set_main_pass()
 		VkDescriptorSetAllocateInfo descriptor_set_alloc_info = vkb::initializers::descriptor_set_allocate_info(main_pass.descriptor_pool, &main_pass.meshes.pipeline.set_layout, 1);
 		VK_CHECK(vkAllocateDescriptorSets(device_handle, &descriptor_set_alloc_info, &mesh_descriptor));
 
-		std::string debug_name = std::format("Descriptor Set glTF submesh-{} <{}>", i, mesh_data.submesh->get_name());
+		std::string debug_name = fmt::format("Descriptor Set glTF submesh-{} <{}>", i, mesh_data.submesh->get_name());
 		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET, get_object_handle(mesh_descriptor), debug_name.c_str());
 
 		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*mesh_data.vertex_ubo);
@@ -962,14 +962,14 @@ void FragmentDensityMap::update_uniform_buffer(float delta_time)
 		}
 
 		// Small animation rotating the eye center around a circle.
-		constexpr float frame_factor           = 2.0f * glm::pi<float>() / float(frame_period);
-		const float     frame_angle            = float(frame_idx) * frame_factor;
+		constexpr float frame_factor           = 2.0f * glm::pi<float>() / static_cast<float>(frame_period);
+		const float     frame_angle            = static_cast<float>(frame_idx) * frame_factor;
 		const float     rotating_center_radius = 0.12f * min_dimension;
 
 		FDMUBO new_fdm_data{
 		    .eye_center = {
-		        float(fdm.extend.width) * 0.5f + rotating_center_radius * sin(frame_angle),
-		        float(fdm.extend.height) * 0.5f + rotating_center_radius * cos(frame_angle),
+		        static_cast<float>(fdm.extend.width) * 0.5f + rotating_center_radius * sin(frame_angle),
+		        static_cast<float>(fdm.extend.height) * 0.5f + rotating_center_radius * cos(frame_angle),
 		        0.0f, 0.0f},
 		    .circle_radius = {min_dimension * radius_factor_1x1, min_dimension * radius_factor_1x2, min_dimension * radius_factor_2x2, min_dimension * radius_factor_2x4},
 		};
@@ -1022,7 +1022,7 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		{
 			available_options.supports_fdm = true;
 
-			available_options.supports_dynamic_fdm &= bool(supported_extension_features.fragmentDensityMapDynamic);
+			available_options.supports_dynamic_fdm &= static_cast<bool>(supported_extension_features.fragmentDensityMapDynamic);
 			if (!available_options.supports_dynamic_fdm)
 			{
 				LOGW("Dynamic FDM is not supported. The FDM cannot be updated.");
@@ -1454,11 +1454,11 @@ void FragmentDensityMap::setup_framebuffer()
 		{
 			framebuffer_create_info.pAttachments = &swapchain_buffers[i].view;
 			VK_CHECK(vkCreateFramebuffer(device_handle, &framebuffer_create_info, nullptr, &framebuffers[i]));
-			std::string object_debug_name{std::format("Swapchain Framebuffer {}", i)};
+			std::string object_debug_name{fmt::format("Swapchain Framebuffer {}", i)};
 			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_FRAMEBUFFER, get_object_handle(framebuffers[i]), object_debug_name.c_str());
-			object_debug_name = std::format("Swapchain Image {}", i);
+			object_debug_name = fmt::format("Swapchain Image {}", i);
 			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE, get_object_handle(swapchain_buffers[i].image), object_debug_name.c_str());
-			object_debug_name = std::format("Swapchain Image View {}", i);
+			object_debug_name = fmt::format("Swapchain Image View {}", i);
 			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE_VIEW, get_object_handle(swapchain_buffers[i].view), object_debug_name.c_str());
 		}
 	}
