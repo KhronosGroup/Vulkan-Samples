@@ -704,7 +704,7 @@ ComputePipelineWithTensors::~ComputePipelineWithTensors()
 	vkDestroyPipeline(get_device().get_handle(), get_handle(), nullptr);
 }
 
-BlitSubpass::BlitSubpass(vkb::RenderContext &renderContext, vkb::core::ImageView *source) :
+BlitSubpass::BlitSubpass(vkb::rendering::RenderContextC &renderContext, vkb::core::ImageView *source) :
     vkb::rendering::SubpassC(renderContext, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"}, vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
     source(source)
 {

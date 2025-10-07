@@ -22,7 +22,9 @@
 
 #pragma once
 
+#include <resource_cache.h>
 #include <core/allocated.h>
+#include <core/command_buffer.h>
 #include <core/sampler.h>
 #include <rendering/subpass.h>
 
@@ -309,7 +311,7 @@ class ComputePipelineWithTensors : public vkb::core::VulkanResourceC<VkPipeline>
 class BlitSubpass : public vkb::rendering::SubpassC
 {
   public:
-	BlitSubpass(vkb::RenderContext &renderContext, vkb::core::ImageView *source = nullptr);
+	BlitSubpass(vkb::rendering::RenderContextC &renderContext, vkb::core::ImageView *source = nullptr);
 
 	void prepare() override;
 
