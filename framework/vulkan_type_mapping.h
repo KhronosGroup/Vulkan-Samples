@@ -157,6 +157,12 @@ struct HPPType<VkPhysicalDeviceFloat16Int8FeaturesKHR>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>
+{
+	using Type = vk::PhysicalDeviceFragmentDensityMapFeaturesEXT;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR>
 {
 	using Type = vk::PhysicalDeviceFragmentShaderBarycentricFeaturesKHR;

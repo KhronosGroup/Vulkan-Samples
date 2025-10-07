@@ -43,7 +43,7 @@ class FragmentDensityMap : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   protected:
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:
 	struct PipelineData

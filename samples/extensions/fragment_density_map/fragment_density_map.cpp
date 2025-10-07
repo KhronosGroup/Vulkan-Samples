@@ -982,7 +982,7 @@ void FragmentDensityMap::update_uniform_buffer(float delta_time)
 	}
 }
 
-void FragmentDensityMap::request_gpu_features(vkb::PhysicalDevice &gpu)
+void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	VulkanSample::request_gpu_features(gpu);
 	auto &requested_features = gpu.get_mutable_requested_features();
@@ -1012,7 +1012,7 @@ void FragmentDensityMap::request_gpu_features(vkb::PhysicalDevice &gpu)
 	if (gpu.is_extension_supported(VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME))
 	{
 		const auto &supported_extension_features =
-		    gpu.get_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT);
+		    gpu.get_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>();
 
 		if (!supported_extension_features.fragmentDensityMap)
 		{
@@ -1029,8 +1029,7 @@ void FragmentDensityMap::request_gpu_features(vkb::PhysicalDevice &gpu)
 				current_options.update_fdm = false;
 			}
 
-			auto &requested_extension_features = gpu.add_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>(
-			    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT);
+			auto &requested_extension_features                     = gpu.add_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>();
 			requested_extension_features.fragmentDensityMap        = VK_TRUE;
 			requested_extension_features.fragmentDensityMapDynamic = available_options.supports_dynamic_fdm;
 			// fragmentDensityMapNonSubsampledImages is not supported on all GPUs.
