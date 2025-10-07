@@ -18,6 +18,7 @@
 
 #include "hpp_texture_compression_comparison.h"
 #include "core/hpp_queue.h"
+#include "rendering/subpasses/forward_subpass.h"
 
 namespace
 {
@@ -234,7 +235,7 @@ void HPPTextureCompressionComparison::create_subpass()
 	auto                       scene_sub_pass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(
         get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = std::make_unique<vkb::rendering::HPPRenderPipeline>();
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineCpp>();
 	render_pipeline->add_subpass(std::move(scene_sub_pass));
 
 	set_render_pipeline(std::move(render_pipeline));

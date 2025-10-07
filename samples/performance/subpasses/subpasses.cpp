@@ -305,7 +305,7 @@ void Subpasses::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpasses()
+std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_one_renderpass_two_subpasses()
 {
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
@@ -329,7 +329,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	subpasses.push_back(std::move(scene_subpass));
 	subpasses.push_back(std::move(lighting_subpass));
 
-	auto render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(subpasses));
 
 	render_pipeline->set_load_store(vkb::gbuffer::get_clear_all_store_swapchain());
 
@@ -338,7 +338,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	return render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_geometry_renderpass()
 {
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
@@ -353,7 +353,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
-	auto geometry_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
+	auto geometry_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(scene_subpasses));
 
 	geometry_render_pipeline->set_load_store(vkb::gbuffer::get_clear_store_all());
 
@@ -362,7 +362,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	return geometry_render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_lighting_renderpass()
 {
 	// Lighting subpass
 	auto lighting_vs      = vkb::ShaderSource{"deferred/lighting.vert.spv"};
@@ -375,7 +375,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> lighting_subpasses{};
 	lighting_subpasses.push_back(std::move(lighting_subpass));
 
-	auto lighting_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(lighting_subpasses));
+	auto lighting_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(lighting_subpasses));
 
 	lighting_render_pipeline->set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
@@ -384,10 +384,10 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	return lighting_render_pipeline;
 }
 
-void draw_pipeline(vkb::core::CommandBufferC &command_buffer,
-                   vkb::RenderTarget         &render_target,
-                   vkb::RenderPipeline       &render_pipeline,
-                   vkb::GuiC                 *gui = nullptr)
+void draw_pipeline(vkb::core::CommandBufferC       &command_buffer,
+                   vkb::RenderTarget               &render_target,
+                   vkb::rendering::RenderPipelineC &render_pipeline,
+                   vkb::GuiC                       *gui = nullptr)
 {
 	auto &extent = render_target.get_extent();
 

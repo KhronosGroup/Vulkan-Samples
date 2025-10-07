@@ -24,7 +24,7 @@
 #include "hpp_gltf_loader.h"
 #include "platform/application.h"
 #include "platform/window.h"
-#include "rendering/hpp_render_pipeline.h"
+#include "rendering/render_pipeline.h"
 #include "stats/hpp_stats.h"
 
 #if defined(PLATFORM__MACOS)
@@ -101,7 +101,6 @@ namespace vkb
  * - Core classes: Classes in vkb::core wrap Vulkan objects for indexing and hashing.
  */
 
-class RenderPipeline;
 class Stats;
 
 namespace core
@@ -136,10 +135,13 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using RenderPipelineType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderPipeline, vkb::RenderPipeline>::type;
-	using RenderTargetType   = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
-	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
-	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
+	using RenderTargetType  = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using SceneType         = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
+	using StatsType         = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
+	using Extent2DType      = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using LayerSettingType  = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
+	using SurfaceFormatType = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
+	using SurfaceType       = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
 	using InstanceCreateFlagsType     = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
 	using Extent2DType                = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
@@ -252,24 +254,24 @@ class VulkanSample : public vkb::Application
 	 */
 	void create_render_context(const std::vector<SurfaceFormatType> &surface_priority_list);
 
-	vkb::core::Device<bindingType>         &get_device();
-	vkb::core::Device<bindingType> const   &get_device() const;
-	vkb::Gui<bindingType>                  &get_gui();
-	vkb::Gui<bindingType> const            &get_gui() const;
-	vkb::core::Instance<bindingType>       &get_instance();
-	vkb::core::Instance<bindingType> const &get_instance() const;
-	RenderPipelineType                     &get_render_pipeline();
-	RenderPipelineType const               &get_render_pipeline() const;
-	SceneType                              &get_scene();
-	StatsType                              &get_stats();
-	SurfaceType                             get_surface() const;
-	std::vector<SurfaceFormatType>         &get_surface_priority_list();
-	std::vector<SurfaceFormatType> const   &get_surface_priority_list() const;
-	bool                                    has_device() const;
-	bool                                    has_instance() const;
-	bool                                    has_gui() const;
-	bool                                    has_render_pipeline() const;
-	bool                                    has_scene();
+	vkb::core::Device<bindingType>                    &get_device();
+	vkb::core::Device<bindingType> const              &get_device() const;
+	vkb::Gui<bindingType>                             &get_gui();
+	vkb::Gui<bindingType> const                       &get_gui() const;
+	vkb::core::Instance<bindingType>                  &get_instance();
+	vkb::core::Instance<bindingType> const            &get_instance() const;
+	vkb::rendering::RenderPipeline<bindingType>       &get_render_pipeline();
+	vkb::rendering::RenderPipeline<bindingType> const &get_render_pipeline() const;
+	SceneType                                         &get_scene();
+	StatsType                                         &get_stats();
+	SurfaceType                                        get_surface() const;
+	std::vector<SurfaceFormatType>                    &get_surface_priority_list();
+	std::vector<SurfaceFormatType> const              &get_surface_priority_list() const;
+	bool                                               has_device() const;
+	bool                                               has_instance() const;
+	bool                                               has_gui() const;
+	bool                                               has_render_pipeline() const;
+	bool                                               has_scene();
 
 	/**
 	 * @brief Loads the scene
@@ -294,7 +296,7 @@ class VulkanSample : public vkb::Application
 
 	void set_render_context(std::unique_ptr<vkb::rendering::RenderContext<bindingType>> &&render_context);
 
-	void set_render_pipeline(std::unique_ptr<RenderPipelineType> &&render_pipeline);
+	void set_render_pipeline(std::unique_ptr<vkb::rendering::RenderPipeline<bindingType>> &&render_pipeline);
 
 	/**
 	 * @brief Main loop sample events
@@ -364,7 +366,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Pipeline used for rendering, it should be set up by the concrete sample
 	 */
-	std::unique_ptr<vkb::rendering::HPPRenderPipeline> render_pipeline;
+	std::unique_ptr<vkb::rendering::RenderPipelineCpp> render_pipeline;
 
 	/**
 	 * @brief Holds all scene information
@@ -929,7 +931,7 @@ inline vkb::rendering::RenderContext<bindingType> &VulkanSample<bindingType>::ge
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::RenderPipelineType const &VulkanSample<bindingType>::get_render_pipeline() const
+inline vkb::rendering::RenderPipeline<bindingType> const &VulkanSample<bindingType>::get_render_pipeline() const
 {
 	assert(render_pipeline && "Render pipeline was not created");
 	if constexpr (bindingType == BindingType::Cpp)
@@ -938,12 +940,12 @@ inline typename VulkanSample<bindingType>::RenderPipelineType const &VulkanSampl
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderPipeline const &>(*render_pipeline);
+		return reinterpret_cast<vkb::rendering::RenderPipelineC const &>(*render_pipeline);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::RenderPipelineType &VulkanSample<bindingType>::get_render_pipeline()
+inline vkb::rendering::RenderPipeline<bindingType> &VulkanSample<bindingType>::get_render_pipeline()
 {
 	assert(render_pipeline && "Render pipeline was not created");
 	if constexpr (bindingType == BindingType::Cpp)
@@ -952,7 +954,7 @@ inline typename VulkanSample<bindingType>::RenderPipelineType &VulkanSample<bind
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderPipeline &>(*render_pipeline);
+		return reinterpret_cast<vkb::rendering::RenderPipelineC &>(*render_pipeline);
 	}
 }
 
@@ -1426,7 +1428,7 @@ inline void VulkanSample<bindingType>::set_render_context(std::unique_ptr<vkb::r
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::set_render_pipeline(std::unique_ptr<RenderPipelineType> &&rp)
+inline void VulkanSample<bindingType>::set_render_pipeline(std::unique_ptr<vkb::rendering::RenderPipeline<bindingType>> &&rp)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1434,7 +1436,7 @@ inline void VulkanSample<bindingType>::set_render_pipeline(std::unique_ptr<Rende
 	}
 	else
 	{
-		render_pipeline.reset(reinterpret_cast<vkb::rendering::HPPRenderPipeline *>(rp.release()));
+		render_pipeline.reset(reinterpret_cast<vkb::rendering::RenderPipelineCpp *>(rp.release()));
 	}
 }
 

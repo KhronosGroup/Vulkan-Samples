@@ -56,17 +56,17 @@ class Subpasses : public vkb::VulkanSampleC
 	/**
 	 * @return A good pipeline
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_one_renderpass_two_subpasses();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_one_renderpass_two_subpasses();
 
 	/**
 	 * @return A geometry render pass which should run first
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_geometry_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_geometry_renderpass();
 
 	/**
 	 * @return A lighting render pass which should run second
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_lighting_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_lighting_renderpass();
 
 	/**
 	 * @brief Draws using the good pipeline: one render pass with two subpasses
@@ -81,13 +81,13 @@ class Subpasses : public vkb::VulkanSampleC
 	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
 	/// Good pipeline with two subpasses within one render pass
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> render_pipeline{};
 
 	/// 1. Bad pipeline with a geometry subpass in the first render pass
-	std::unique_ptr<vkb::RenderPipeline> geometry_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> geometry_render_pipeline{};
 
 	/// 2. Bad pipeline with a lighting subpass in the second render pass
-	std::unique_ptr<vkb::RenderPipeline> lighting_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> lighting_render_pipeline{};
 
 	vkb::sg::PerspectiveCamera *camera{};
 

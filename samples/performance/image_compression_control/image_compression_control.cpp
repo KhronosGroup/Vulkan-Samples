@@ -76,7 +76,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	scene_subpass->set_output_attachments({static_cast<int>(Attachments::Color)});
 
 	// Forward rendering pass
-	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
 	render_pipeline->set_load_store(scene_load_store);
 	set_render_pipeline(std::move(render_pipeline));

@@ -111,12 +111,12 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	/**
 	 * @return Shadow render pass which should run first
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_shadow_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_shadow_renderpass();
 
 	/**
 	 * @return Main render pass which should run second
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_main_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_main_renderpass();
 
 	const uint32_t SHADOWMAP_RESOLUTION{1024};
 
@@ -125,12 +125,12 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	/**
 	 * @brief Pipeline for shadowmap rendering
 	 */
-	std::unique_ptr<vkb::RenderPipeline> shadow_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> shadow_render_pipeline{};
 
 	/**
 	 * @brief Pipeline which uses shadowmap
 	 */
-	std::unique_ptr<vkb::RenderPipeline> main_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> main_render_pipeline{};
 
 	/**
 	 * @brief Subpass for shadowmap rendering
