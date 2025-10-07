@@ -1,4 +1,5 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
+ * Copyright (c) 2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,6 +71,15 @@ inline VkCommandBufferInheritanceInfo command_buffer_inheritance_info()
 	VkCommandBufferInheritanceInfo command_buffer_inheritance_info{};
 	command_buffer_inheritance_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
 	return command_buffer_inheritance_info;
+}
+
+inline VkComponentMapping component_mapping()
+{
+	return {
+	    .r = VK_COMPONENT_SWIZZLE_R,
+	    .g = VK_COMPONENT_SWIZZLE_G,
+	    .b = VK_COMPONENT_SWIZZLE_B,
+	    .a = VK_COMPONENT_SWIZZLE_A};
 }
 
 inline VkRenderPassBeginInfo render_pass_begin_info()
