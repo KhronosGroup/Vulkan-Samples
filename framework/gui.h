@@ -250,6 +250,12 @@ class Gui
 
 	bool update_buffers();
 
+	/**
+	 * @brief Shows a child with statistics
+	 * @param stats Statistics to show
+	 */
+	void show_stats(const StatsType &stats);
+
   private:
 	static constexpr char const      *default_font        = "Roboto-Regular";            // The name of the default font file to use
 	static constexpr char const      *default_window_font = "RobotoMono-Regular";        // The name of the default window font file to use
@@ -278,12 +284,6 @@ class Gui
 	 * @param position The absolute position to set
 	 */
 	void show_debug_window(DebugInfo &debug_info, const ImVec2 &position);
-
-	/**
-	 * @brief Shows a child with statistics
-	 * @param stats Statistics to show
-	 */
-	void show_stats(const StatsType &stats);
 
 	/**
 	 * @brief Updates Vulkan buffers
