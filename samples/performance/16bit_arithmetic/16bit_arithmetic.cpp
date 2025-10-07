@@ -177,9 +177,7 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	// Setup the visualization subpass which is there to blit the final result to screen.
 	vkb::ShaderSource vertex_source{"16bit_arithmetic/visualize.vert.spv"};
 	vkb::ShaderSource fragment_source{"16bit_arithmetic/visualize.frag.spv"};
-	auto              subpass = std::make_unique<VisualizationSubpass>(get_render_context(),
-                                                          std::move(vertex_source),
-                                                          std::move(fragment_source));
+	auto              subpass = std::make_unique<VisualizationSubpass>(get_render_context(), std::move(vertex_source), std::move(fragment_source));
 
 	subpass->view    = image_view.get();
 	subpass->sampler = sampler.get();
@@ -192,9 +190,9 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::RenderContext &context,
-                                                                     vkb::ShaderSource &&vertex_source,
-                                                                     vkb::ShaderSource &&fragment_source) :
+KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::rendering::RenderContextC &context,
+                                                                     vkb::ShaderSource             &&vertex_source,
+                                                                     vkb::ShaderSource             &&fragment_source) :
     vkb::rendering::SubpassC(context, std::move(vertex_source), std::move(fragment_source))
 {
 	set_output_attachments({0});

@@ -26,6 +26,13 @@
 
 namespace vkb
 {
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+class RenderContext;
+using RenderContextC = RenderContext<vkb::BindingType::C>;
+}        // namespace rendering
+
 /**
  * @brief PluginBase is the base class that plugins inherit from. The class enforces the use of tags when creating new plugins.
  * 		  For method information see Plugin
@@ -46,7 +53,7 @@ class PluginBase : public Plugin, public Tag<TAGS...>
 	void on_app_start(const std::string &app_id) override{};
 	void on_app_close(const std::string &app_id) override{};
 	void on_platform_close() override{};
-	void on_post_draw(RenderContext &context) override{};
+	void on_post_draw(vkb::rendering::RenderContextC &context) override{};
 	void on_app_error(const std::string &app_id) override{};
 	void on_update_ui_overlay(vkb::Drawer &drawer) override{};
 

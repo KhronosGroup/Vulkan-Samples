@@ -65,7 +65,8 @@ struct alignas(16) DeferredLights
 class LightingSubpass : public vkb::rendering::SubpassC
 {
   public:
-	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);
+	LightingSubpass(
+	    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);
 
 	virtual void prepare() override;
 

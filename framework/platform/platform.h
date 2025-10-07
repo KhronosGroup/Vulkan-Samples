@@ -130,7 +130,7 @@ class Platform
 
 	void set_window_properties(const Window::OptionalProperties &properties);
 
-	void on_post_draw(RenderContext &context);
+	void on_post_draw(vkb::rendering::RenderContextC &context);
 
 	static const uint32_t MIN_WINDOW_WIDTH;
 	static const uint32_t MIN_WINDOW_HEIGHT;

@@ -113,7 +113,9 @@ class HPPPhysicalDevice;
 
 namespace rendering
 {
-class HPPRenderContext;
+template <vkb::BindingType bindingType>
+class RenderContext;
+
 class HPPRenderTarget;
 }        // namespace rendering
 
@@ -134,7 +136,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using RenderContextType  = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
 	using RenderPipelineType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderPipeline, vkb::RenderPipeline>::type;
 	using RenderTargetType   = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
@@ -144,10 +145,10 @@ class VulkanSample : public vkb::Application
 	using SurfaceFormatType  = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
 	using SurfaceType        = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
-	Configuration           &get_configuration();
-	RenderContextType       &get_render_context();
-	RenderContextType const &get_render_context() const;
-	bool                     has_render_context() const;
+	Configuration                                    &get_configuration();
+	vkb::rendering::RenderContext<bindingType>       &get_render_context();
+	vkb::rendering::RenderContext<bindingType> const &get_render_context() const;
+	bool                                              has_render_context() const;
 
 	/// <summary>
 	/// PROTECTED VIRTUAL INTERFACE
@@ -304,7 +305,7 @@ class VulkanSample : public vkb::Application
 	 */
 	void set_high_priority_graphics_queue_enable(bool enable);
 
-	void set_render_context(std::unique_ptr<RenderContextType> &&render_context);
+	void set_render_context(std::unique_ptr<vkb::rendering::RenderContext<bindingType>> &&render_context);
 
 	void set_render_pipeline(std::unique_ptr<RenderPipelineType> &&render_pipeline);
 
@@ -391,7 +392,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
 	 */
-	std::unique_ptr<vkb::rendering::HPPRenderContext> render_context;
+	std::unique_ptr<vkb::rendering::RenderContextCpp> render_context;
 
 	/**
 	 * @brief Pipeline used for rendering, it should be set up by the concrete sample
@@ -552,7 +553,7 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 #endif
 
 	render_context =
-	    std::make_unique<vkb::rendering::HPPRenderContext>(*device, surface, *window, present_mode, present_mode_priority_list, surface_priority_list);
+	    std::make_unique<vkb::rendering::RenderContextCpp>(*device, surface, *window, present_mode, present_mode_priority_list, surface_priority_list);
 }
 
 template <vkb::BindingType bindingType>
@@ -834,21 +835,21 @@ inline std::vector<typename VulkanSample<bindingType>::LayerSettingType> const &
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::RenderContextType const &VulkanSample<bindingType>::get_render_context() const
+inline vkb::rendering::RenderContext<bindingType> const &VulkanSample<bindingType>::get_render_context() const
 {
 	assert(render_context && "Render context is not valid");
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		return reinterpret_cast<vkb::rendering::HPPRenderContext const &>(*render_context);
+		return *render_context;
 	}
 	else
 	{
-		return *render_context;
+		return reinterpret_cast<vkb::rendering::RenderContextC const &>(*render_context);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::RenderContextType &VulkanSample<bindingType>::get_render_context()
+inline vkb::rendering::RenderContext<bindingType> &VulkanSample<bindingType>::get_render_context()
 {
 	assert(render_context && "Render context is not valid");
 	if constexpr (bindingType == BindingType::Cpp)
@@ -857,7 +858,7 @@ inline typename VulkanSample<bindingType>::RenderContextType &VulkanSample<bindi
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderContext &>(*render_context);
+		return reinterpret_cast<vkb::rendering::RenderContextC &>(*render_context);
 	}
 }
 
@@ -1177,7 +1178,7 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 	}
 	else
 	{
-		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::HPPRenderContext &>(get_render_context()),
+		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::RenderContextCpp &>(get_render_context()),
 		                                    window,
 		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats),
 		                                    font_size,
@@ -1267,7 +1268,7 @@ inline void VulkanSample<bindingType>::set_high_priority_graphics_queue_enable(b
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::set_render_context(std::unique_ptr<RenderContextType> &&rc)
+inline void VulkanSample<bindingType>::set_render_context(std::unique_ptr<vkb::rendering::RenderContext<bindingType>> &&rc)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1275,7 +1276,7 @@ inline void VulkanSample<bindingType>::set_render_context(std::unique_ptr<Render
 	}
 	else
 	{
-		render_context.reset(reinterpret_cast<vkb::rendering::HPPRenderContext *>(rc.release()));
+		render_context.reset(reinterpret_cast<vkb::rendering::RenderContextCpp *>(rc.release()));
 	}
 }
 
@@ -1344,7 +1345,7 @@ inline void VulkanSample<bindingType>::update(float delta_time)
 	stats->end_sampling(*command_buffer);
 	command_buffer->end();
 
-	render_context->submit(*command_buffer);
+	render_context->submit(command_buffer);
 }
 
 template <vkb::BindingType bindingType>

@@ -22,13 +22,13 @@
 #include "rendering/hpp_pipeline_state.h"
 #include "rendering/hpp_render_target.h"
 #include "rendering/pipeline_state.h"
+#include "rendering/render_context.h"
 #include "rendering/render_frame.h"
 #include "scene_graph/components/light.h"
 #include "scene_graph/node.h"
 
 namespace vkb
 {
-class RenderContext;
 class RenderTarget;
 class ShaderSource;
 
@@ -40,8 +40,6 @@ class CommandBuffer;
 
 namespace rendering
 {
-class HPPRenderContext;
-
 struct alignas(16) Light
 {
 	glm::vec4 position;         // position.w represents type of light
@@ -87,11 +85,10 @@ class Subpass
 
 	using DepthStencilStateType =
 	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
-	using RenderContextType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderContext, vkb::RenderContext>::type;
-	using RenderTargetType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using RenderTargetType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 
   public:
-	Subpass(RenderContextType &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
+	Subpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
 
 	Subpass(const Subpass &)            = delete;
 	Subpass(Subpass &&)                 = default;
@@ -131,7 +128,7 @@ class Subpass
 	const std::vector<uint32_t>                               &get_input_attachments() const;
 	LightingState<bindingType>                                &get_lighting_state();
 	const std::vector<uint32_t>                               &get_output_attachments() const;
-	RenderContextType                                         &get_render_context();
+	RenderContext<bindingType>                                &get_render_context();
 	std::unordered_map<std::string, ShaderResourceMode> const &get_resource_mode_map() const;
 	SampleCountflagBitsType                                    get_sample_count() const;
 	const ShaderSource                                        &get_vertex_shader() const;
@@ -186,7 +183,7 @@ class Subpass
 	/// Default to swapchain output attachment
 	std::vector<uint32_t> output_attachments = {0};
 
-	vkb::rendering::HPPRenderContext &render_context;
+	vkb::rendering::RenderContextCpp &render_context;
 
 	// A map of shader resource names and the mode of constant data
 	std::unordered_map<std::string, ShaderResourceMode> resource_mode_map;
@@ -197,15 +194,7 @@ class Subpass
 
 using SubpassC   = Subpass<vkb::BindingType::C>;
 using SubpassCpp = Subpass<vkb::BindingType::Cpp>;
-}        // namespace rendering
-}        // namespace vkb
 
-#include "rendering/hpp_render_context.h"
-
-namespace vkb
-{
-namespace rendering
-{
 inline glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 {
 	// Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
@@ -216,8 +205,10 @@ inline glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 }
 
 template <vkb::BindingType bindingType>
-inline Subpass<bindingType>::Subpass(RenderContextType &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source) :
-    render_context{reinterpret_cast<vkb::rendering::HPPRenderContext &>(render_context)},
+inline Subpass<bindingType>::Subpass(vkb::rendering::RenderContext<bindingType> &render_context,
+                                     ShaderSource                              &&vertex_source,
+                                     ShaderSource                              &&fragment_source) :
+    render_context{reinterpret_cast<vkb::rendering::RenderContextCpp &>(render_context)},
     vertex_shader{std::move(vertex_source)},
     fragment_shader{std::move(fragment_source)}
 {
@@ -249,7 +240,7 @@ inline const std::vector<uint32_t> &Subpass<bindingType>::get_output_attachments
 }
 
 template <vkb::BindingType bindingType>
-inline typename vkb::rendering::Subpass<bindingType>::RenderContextType &Subpass<bindingType>::get_render_context()
+inline typename vkb::rendering::RenderContext<bindingType> &Subpass<bindingType>::get_render_context()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -257,7 +248,7 @@ inline typename vkb::rendering::Subpass<bindingType>::RenderContextType &Subpass
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderContext &>(render_context);
+		return reinterpret_cast<vkb::rendering::RenderContextC &>(render_context);
 	}
 }
 
