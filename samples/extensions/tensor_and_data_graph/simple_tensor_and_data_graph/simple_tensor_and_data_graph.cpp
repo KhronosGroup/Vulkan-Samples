@@ -65,6 +65,16 @@ void SimpleTensorAndDataGraph::request_gpu_features(vkb::core::PhysicalDeviceC &
 
 	// Update-after-bind is required for the emulation layer
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, descriptorBindingUniformBufferUpdateAfterBind);
+
+	// Enable Int64, if available.
+	if (gpu.get_features().shaderInt64)
+	{
+		gpu.get_mutable_requested_features().shaderInt64 = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("Required feature VkPhysicalDeviceFeatures::shaderInt64 is not supported.");
+	}
 }
 
 /**

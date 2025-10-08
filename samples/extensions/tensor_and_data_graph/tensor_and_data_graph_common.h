@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include <resource_cache.h>
 #include <core/allocated.h>
 #include <core/command_buffer.h>
 #include <core/sampler.h>
 #include <rendering/subpass.h>
+#include <resource_cache.h>
 
 /**
  * Simple wrapper around an array of elements of type T which interprets it as a multidimensional array,
