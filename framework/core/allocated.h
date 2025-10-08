@@ -1,5 +1,6 @@
 /* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2024-2025, Bradley Austin Davis. All rights reserved.
+ * Copyright (c) 2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -182,6 +183,11 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	DeviceMemoryType get_memory() const;
 
 	/**
+	 * @brief Retrieves the offset into the raw Vulkan memory object (which can be retrieved from get_memory()).
+	 */
+	DeviceSizeType get_memory_offset() const;
+
+	/**
 	 * @brief Maps Vulkan memory if it isn't already mapped to a host visible address. Does nothing if the
 	 * allocation is already mapped (including persistently mapped allocations).
 	 * @return Pointer to host visible memory.
@@ -309,6 +315,25 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * instead of `protected`, and because it (mostly) isolates interaction with the VMA to a single class
 	 */
 	[[nodiscard]] ImageType create_image(ImageCreateInfoType const &create_info);
+
+	/**
+	 * @brief Internal method to retrieve the VMA allocation owned by this object.
+	 *
+	 * This is needed for derived classes to handle some of the VMA allocation code themselves,
+	 * in particular for Tensor objects to be allocated, in tensor_and_data_graph_common.cpp.
+	 * Once Tensor objects are integrated into VMA, this code can be refactored and this function removed.
+	 */
+	VmaAllocation get_allocation() const;
+
+	/**
+	 * @brief Internal method to set the VMA allocation owned by this object.
+	 *
+	 * This is needed for derived classes to handle some of the VMA allocation code themselves,
+	 * in particular for Tensor objects to be allocated, in tensor_and_data_graph_common.cpp.
+	 * Once Tensor objects are integrated into VMA, this code can be refactored and this function removed.
+	 */
+	void set_allocation(VmaAllocation alloc);
+
 	/**
 	 * @brief The post_create method is called after the creation of a buffer or image to store the allocation info internally.  Derived classes
 	 * could in theory override this to ensure any post-allocation operations are performed, but the base class should always be called to ensure
@@ -564,6 +589,21 @@ inline typename Allocated<bindingType, HandleType>::DeviceMemoryType Allocated<b
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
+inline typename Allocated<bindingType, HandleType>::DeviceSizeType Allocated<bindingType, HandleType>::get_memory_offset() const
+{
+	VmaAllocationInfo alloc_info;
+	vmaGetAllocationInfo(get_memory_allocator(), allocation, &alloc_info);
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return static_cast<vk::DeviceSize>(alloc_info.offset);
+	}
+	else
+	{
+		return alloc_info.offset;
+	}
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
 inline uint8_t *Allocated<bindingType, HandleType>::map()
 {
 	if (!persistent && !mapped())
@@ -578,6 +618,18 @@ template <vkb::BindingType bindingType, typename HandleType>
 inline bool Allocated<bindingType, HandleType>::mapped() const
 {
 	return mapped_data != nullptr;
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
+inline VmaAllocation Allocated<bindingType, HandleType>::get_allocation() const
+{
+	return allocation;
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
+inline void Allocated<bindingType, HandleType>::set_allocation(VmaAllocation alloc)
+{
+	allocation = alloc;
 }
 
 template <vkb::BindingType bindingType, typename HandleType>

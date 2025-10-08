@@ -1,4 +1,5 @@
-/* Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2025, Arm Limited and Contributors
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,6 +47,12 @@ template <>
 struct HPPType<VkCommandBuffer>
 {
 	using Type = vk::CommandBuffer;
+};
+
+template <>
+struct HPPType<VkDataGraphPipelineSessionARM>
+{
+	using Type = vk::DataGraphPipelineSessionARM;
 };
 
 template <>
@@ -261,6 +268,12 @@ struct HPPType<VkPhysicalDeviceSynchronization2FeaturesKHR>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceTensorFeaturesARM>
+{
+	using Type = vk::PhysicalDeviceTensorFeaturesARM;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR>
 {
 	using Type = vk::PhysicalDeviceTimelineSemaphoreFeaturesKHR;
@@ -279,9 +292,27 @@ struct HPPType<VkPhysicalDeviceVulkan12Features>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceVulkan13Features>
+{
+	using Type = vk::PhysicalDeviceVulkan13Features;
+};
+
+template <>
 struct HPPType<VkPhysicalDevice16BitStorageFeatures>
 {
 	using Type = vk::PhysicalDevice16BitStorageFeatures;
+};
+
+template <>
+struct HPPType<VkPipeline>
+{
+	using Type = vk::Pipeline;
+};
+
+template <>
+struct HPPType<VkPipelineLayout>
+{
+	using Type = vk::PipelineLayout;
 };
 
 template <>
@@ -294,6 +325,24 @@ template <>
 struct HPPType<VkSampler>
 {
 	using Type = vk::Sampler;
+};
+
+template <>
+struct HPPType<VkTensorARM>
+{
+	using Type = vk::TensorARM;
+};
+
+template <>
+struct HPPType<VkTensorCreateInfoARM>
+{
+	using Type = vk::TensorCreateInfoARM;
+};
+
+template <>
+struct HPPType<VkTensorViewARM>
+{
+	using Type = vk::TensorViewARM;
 };
 }        // namespace detail
 

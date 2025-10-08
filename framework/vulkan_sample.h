@@ -79,11 +79,11 @@ namespace vkb
  * - updating Stats and Gui
  * - getting an active RenderTarget constructed by the factory function of the RenderFrame
  * - setting up barriers for color and depth, note that these are only for the default RenderTarget
- * - calling VulkanSample::draw_swapchain_renderpass (see below)
+ * - calling VulkanSample::draw_renderpass (see below)
  * - setting up a barrier for the Swapchain transition to present
  * - submitting the CommandBuffer and end the Frame (present)
  *
- * @subsection draw_swapchain Draw swapchain renderpass
+ * @subsection draw_renderpass Draw renderpass
  * The function starts and ends a RenderPass which includes setting up viewport, scissors,
  * blend state (etc.) and calling draw_scene.
  * Note that RenderPipeline::draw is not virtual in RenderPipeline, but internally it calls
@@ -548,8 +548,8 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
-	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
+	vk::PresentModeKHR               present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	std::vector<vk::PresentModeKHR>  present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
