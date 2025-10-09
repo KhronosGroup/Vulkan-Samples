@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,12 +26,12 @@ namespace vkb
 {
 namespace sg
 {
-Transform::Transform(Node &n) :
+Transform::Transform(vkb::scene_graph::NodeC &n) :
     node{n}
 {
 }
 
-Node &Transform::get_node()
+vkb::scene_graph::NodeC &Transform::get_node()
 {
 	return node;
 }

@@ -27,6 +27,7 @@
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 #include <tiny_gltf.h>
 
+#include "scene_graph/node.h"
 #include "timer.h"
 
 #include "vulkan/vulkan.h"
@@ -91,7 +92,7 @@ class GLTFLoader
 	std::unique_ptr<sg::SubMesh> read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
   protected:
-	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node, size_t index) const;
+	virtual std::unique_ptr<vkb::scene_graph::NodeC> parse_node(const tinygltf::Node &gltf_node, size_t index) const;
 
 	virtual std::unique_ptr<sg::Camera> parse_camera(const tinygltf::Camera &gltf_camera) const;
 

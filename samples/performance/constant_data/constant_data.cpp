@@ -47,7 +47,7 @@ namespace
 /**
  * @brief Helper function to fill the contents of the MVPUniform struct with the transform of the node and the camera view-projection matrix.
  */
-inline MVPUniform fill_mvp(vkb::sg::Node &node, vkb::sg::Camera &camera)
+inline MVPUniform fill_mvp(vkb::scene_graph::NodeC &node, vkb::sg::Camera &camera)
 {
 	MVPUniform mvp;
 
@@ -304,7 +304,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 }
 
 void ConstantData::PushConstantSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                       vkb::sg::Node             &node,
+                                                       vkb::scene_graph::NodeC   &node,
                                                        size_t                     thread_index)
 {
 	mvp_uniform = fill_mvp(node, camera);
@@ -341,7 +341,7 @@ void ConstantData::PushConstantSubpass::prepare_push_constants(vkb::core::Comman
 }
 
 void ConstantData::DescriptorSetSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                        vkb::sg::Node             &node,
+                                                        vkb::scene_graph::NodeC   &node,
                                                         size_t                     thread_index)
 {
 	MVPUniform mvp;
@@ -441,7 +441,7 @@ void ConstantData::BufferArraySubpass::draw(vkb::core::CommandBufferC &command_b
 }
 
 void ConstantData::BufferArraySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                      vkb::sg::Node             &node,
+                                                      vkb::scene_graph::NodeC   &node,
                                                       size_t                     thread_index)
 {
 	/**
