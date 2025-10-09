@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ namespace vkb
 {
 namespace sg
 {
-NodeAnimation::NodeAnimation(Node &node, TransformAnimFn animation_fn) :
+NodeAnimation::NodeAnimation(vkb::scene_graph::NodeC &node, TransformAnimFn animation_fn) :
     NodeScript{node, ""},
     animation_fn{animation_fn}
 {

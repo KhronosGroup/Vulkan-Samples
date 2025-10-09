@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,18 +41,18 @@ const std::string &Scene::get_name() const
 	return name;
 }
 
-void Scene::set_nodes(std::vector<std::unique_ptr<Node>> &&n)
+void Scene::set_nodes(std::vector<std::unique_ptr<vkb::scene_graph::NodeC>> &&n)
 {
 	assert(nodes.empty() && "Scene nodes were already set");
 	nodes = std::move(n);
 }
 
-void Scene::add_node(std::unique_ptr<Node> &&n)
+void Scene::add_node(std::unique_ptr<vkb::scene_graph::NodeC> &&n)
 {
 	nodes.emplace_back(std::move(n));
 }
 
-void Scene::add_child(Node &child)
+void Scene::add_child(vkb::scene_graph::NodeC &child)
 {
 	root->add_child(child);
 }
@@ -65,7 +65,7 @@ std::unique_ptr<Component> Scene::get_model(uint32_t index)
 	return std::move(meshes[index]);
 }
 
-void Scene::add_component(std::unique_ptr<Component> &&component, Node &node)
+void Scene::add_component(std::unique_ptr<Component> &&component, vkb::scene_graph::NodeC &node)
 {
 	node.set_component(*component);
 
@@ -99,11 +99,11 @@ bool Scene::has_component(const std::type_index &type_info) const
 	return (component != components.end() && !component->second.empty());
 }
 
-Node *Scene::find_node(const std::string &node_name)
+vkb::scene_graph::NodeC *Scene::find_node(const std::string &node_name)
 {
 	for (auto root_node : root->get_children())
 	{
-		std::queue<sg::Node *> traverse_nodes{};
+		std::queue<vkb::scene_graph::NodeC *> traverse_nodes{};
 		traverse_nodes.push(root_node);
 
 		while (!traverse_nodes.empty())
@@ -126,12 +126,12 @@ Node *Scene::find_node(const std::string &node_name)
 	return nullptr;
 }
 
-void Scene::set_root_node(Node &node)
+void Scene::set_root_node(vkb::scene_graph::NodeC &node)
 {
 	root = &node;
 }
 
-Node &Scene::get_root_node()
+vkb::scene_graph::NodeC &Scene::get_root_node()
 {
 	return *root;
 }

@@ -844,7 +844,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	// Load nodes
 	auto meshes = scene.get_components<sg::Mesh>();
 
-	std::vector<std::unique_ptr<sg::Node>> nodes;
+	std::vector<std::unique_ptr<vkb::scene_graph::NodeC>> nodes;
 
 	for (size_t node_index = 0; node_index < model.nodes.size(); ++node_index)
 	{
@@ -1016,7 +1016,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	scene.set_components(std::move(animations));
 
 	// Load scenes
-	std::queue<std::pair<sg::Node &, int>> traverse_nodes;
+	std::queue<std::pair<vkb::scene_graph::NodeC &, int>> traverse_nodes;
 
 	tinygltf::Scene *gltf_scene{nullptr};
 
@@ -1038,7 +1038,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 		throw std::runtime_error("Couldn't determine which scene to load!");
 	}
 
-	auto root_node = std::make_unique<sg::Node>(0, gltf_scene->name);
+	auto root_node = std::make_unique<vkb::scene_graph::NodeC>(0, gltf_scene->name);
 
 	for (auto node_index : gltf_scene->nodes)
 	{
@@ -1075,7 +1075,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	scene.set_nodes(std::move(nodes));
 
 	// Create node for the default camera
-	auto camera_node = std::make_unique<sg::Node>(-1, "default_camera");
+	auto camera_node = std::make_unique<vkb::scene_graph::NodeC>(-1, "default_camera");
 
 	auto default_camera = create_default_camera();
 	default_camera->set_node(*camera_node);
@@ -1320,9 +1320,9 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 	return std::move(submesh);
 }
 
-std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node, size_t index) const
+std::unique_ptr<vkb::scene_graph::NodeC> GLTFLoader::parse_node(const tinygltf::Node &gltf_node, size_t index) const
 {
-	auto node = std::make_unique<sg::Node>(index, gltf_node.name);
+	auto node = std::make_unique<vkb::scene_graph::NodeC>(index, gltf_node.name);
 
 	auto &transform = node->get_component<sg::Transform>();
 

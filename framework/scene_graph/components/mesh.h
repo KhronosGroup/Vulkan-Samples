@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,7 @@
 
 #include "scene_graph/component.h"
 #include "scene_graph/components/aabb.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
@@ -48,16 +49,16 @@ class Mesh : public Component
 
 	const std::vector<SubMesh *> &get_submeshes() const;
 
-	void add_node(Node &node);
+	void add_node(vkb::scene_graph::NodeC &node);
 
-	const std::vector<Node *> &get_nodes() const;
+	const std::vector<vkb::scene_graph::NodeC *> &get_nodes() const;
 
   private:
 	AABB bounds;
 
 	std::vector<SubMesh *> submeshes;
 
-	std::vector<Node *> nodes;
+	std::vector<vkb::scene_graph::NodeC *> nodes;
 };
 }        // namespace sg
 }        // namespace vkb
