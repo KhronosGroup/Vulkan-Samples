@@ -303,7 +303,8 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
-	auto scene_subpass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
+	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -335,7 +336,8 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
-	auto scene_subpass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
+	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
