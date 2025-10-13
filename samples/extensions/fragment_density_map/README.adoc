@@ -38,7 +38,7 @@ NOTE: VR is not a requirement for fragment density map, but foveated rendering i
 
 The key extension used in this sample is `VK_EXT_fragment_density_map`, along with its dependencies `VK_KHR_create_renderpass2` and `VK_KHR_get_physical_device_properties2`. While `VK_EXT_fragment_density_map2` exists and can reduce host-to-device latency, it is not used in this sample.
 
-A more flexible alternative to `VK_EXT_fragment_density_map` is xref:samples/extensions/fragment_shading_rate/README.adoc[Fragment Shading Rate](`VK_KHR_fragment_shading_rate`). The KHR extension is the recommended approach for new applications, since it offers greate flexibility allowing applications to select a rate per draw-call, per primitive, or similar to `VK_EXT_fragment_density_map` per region of the framebuffer.
+Developers who want to use `VK_EXT_fragment_density_map` should also consider reviewing xref:samples/extensions/fragment_shading_rate/README.adoc[Fragment Shading Rate] (`VK_KHR_fragment_shading_rate`). The KHR extension offers applications more precise control over the shading rate and provides additional options to developers, allowing them to select a rate per draw call, per primitive, or similar to `VK_EXT_fragment_density_map`—per region of the framebuffer.
 
 === Feature description
 
@@ -57,7 +57,7 @@ Fragment density map exposes optional features that must be enabled at device cr
 
 * `fragmentDensityMap` should always be enabled; without it the extension has no effect.
 * `fragmentDensityMapDynamic` reduces latency between command-buffer recording and draw execution by removing the requirement that the density map be ready at record time. This is not supported on all devices. On devices that do not support it, `VK_EXT_fragment_density_map2` can help reduce latency.
-* `fragmentDensityMapNonSubsampledImages` (not widely supported) allows render passes to use non-subsampled attachments, potentially enabling direct rendering to the swapchain.
+* `fragmentDensityMapNonSubsampledImages` (not universally supported) allows render passes to use non-subsampled attachments, potentially enabling direct rendering to the swapchain.
 
 === Density map image
 
@@ -82,7 +82,7 @@ The density map is read at different times depending on the `fragmentDensityMapD
 
 - If `fragmentDensityMapDynamic = false`, the density map must be available at command-buffer record time but the map cannot be modified after calling `vkCmdBeginRenderPass(...)` The map is still used after submision, which can introduce noticeable lag between density-map updates and the displayed frame.
 - If `fragmentDensityMapDynamic = true`, the density map is read during `VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT`, eliminating the need to produce the map before recording the command buffer. This yields the lowest latency but requires driver support.
-- `VK_EXT_fragment_density_map2` improves performance on devices without `fragmentDensityMapDynamic` by allowing modififications to the density map between `vkCmdBeginRenderPass(...)` and `vkEndCommandBuffer(...)` see https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_fragment_density_map2.html[VK_EXT_fragment_density_map2] for more details.
++- `VK_EXT_fragment_density_map2` improves performance on devices without `fragmentDensityMapDynamic` by allowing modifications to the density map between `vkCmdBeginRenderPass(...)` and `vkEndCommandBuffer(...)`. See https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_fragment_density_map2.html[VK_EXT_fragment_density_map2] for more details.
 
 === Render pass setup
 
@@ -112,7 +112,7 @@ TIP: The intermediate pass typically also draws/composites the UI at full surfac
 
 Below is a simple pipeline arrangement used on this sample.
 
-1. The density map is computed once outside the render loop and reused each frame. This is done in a separate command-buffer, all the othe commands will go to the same command buffer. The sample also includes a UI option to update the fragment density map attachment every frame using `fragmentDensityMapDynamic`. If this option is selected, an additional pass at the beginning of the main command-buffer produces the fragment density map attachment.
+1. The density map is computed once outside the render loop and reused each frame. This is done in a separate command-buffer, all the other commands will go to the same command buffer. The sample also includes a UI option to update the fragment density map attachment every frame using `fragmentDensityMapDynamic`. If this option is selected, an additional pass at the beginning of the main command-buffer produces the fragment density map attachment.
 
 2. The sample renders a simple scene using forward rendering. The main pass uses the fragment density map as an attachment. Typically, this pass is rendered at a lower resolution, but in our sample it is rendered at a higher resolution to make the performance difference more noticeable.
 
@@ -186,9 +186,9 @@ The most important fields are `.flags`, `.minFilter`, `.magFilter`, and `.mipmap
 == Conclusion
 
 ////
-THis is necessary to have the sample show up on the build for the docs site under https://docs.vulkan.org
+This is necessary to have the sample show up on the build for the docs site under https://docs.vulkan.org
 ////
 
 `VK_EXT_fragment_density_map` is particularly effective with VR and `VK_KHR_multiview`, enabling techniques like foveated rendering that reduce peripheral shading work while preserving perceived quality.
 
-However, due to setup complexity and uneven device support, consider using the successor xref:samples/extensions/fragment_shading_rate/README.adoc[Fragment Shading Rate](`VK_KHR_fragment_shading_rate`), which generally offers broader device support, simpler setup, and greater flexibility when specifying where lower shading rates apply.
+However, we suggest that developers also consider xref:samples/extensions/fragment_shading_rate/README.adoc[Fragment Shading Rate] (`VK_KHR_fragment_shading_rate`),  which generally offers broader device support, simpler setup, more options, and greater control when specifying where lower shading rates apply.

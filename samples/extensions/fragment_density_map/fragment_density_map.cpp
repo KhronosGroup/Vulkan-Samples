@@ -342,6 +342,7 @@ void FragmentDensityMap::build_command_buffers()
 	render_pass_begin_info.clearValueCount       = is_fdm_enabled() ? clear_values.size() : (clear_values.size() - 1);
 	render_pass_begin_info.pClearValues          = clear_values.data();
 
+	assert((main_pass.extend.height > 0) && (main_pass.extend.width > 0));
 	VkRect2D   main_scissor  = vkb::initializers::rect2D(main_pass.extend.width, main_pass.extend.height, 0, 0);
 	VkViewport main_viewport = vkb::initializers::viewport(static_cast<float>(main_scissor.extent.width), static_cast<float>(main_scissor.extent.height), 0.0f, 1.0f);
 
@@ -605,8 +606,9 @@ void FragmentDensityMap::load_assets()
 	sg_scene = loader.read_scene_from_file("scenes/bonza/Bonza.gltf");
 	assert(sg_scene);
 
-	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(50.0f, static_cast<float>(main_pass.extend.width) / static_cast<float>(main_pass.extend.height), 4000.0f, 1.0f);
+	camera.type              = vkb::CameraType::FirstPerson;
+	const float aspect_ratio = 1.0f;        // dummy value. Reset by update_extents.
+	camera.set_perspective(50.0f, aspect_ratio, 4000.0f, 1.0f);
 	camera.set_rotation(glm::vec3(230.0f, 101.0f, -5.0f));
 	camera.set_translation(glm::vec3(115.0f, -390.0f, 18.0f));
 	camera.translation_speed = 100.0f;
@@ -1042,7 +1044,7 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	if (!available_options.supports_fdm)
 	{
 		current_options.enable_fdm = false;
-		LOGW("Fragment density map is not supported");
+		LOGE("Fragment density map is not supported");
 	}
 	else
 	{
@@ -1514,6 +1516,7 @@ void FragmentDensityMap::setup_depth_stencil()
 	update_extents();
 	assert(main_pass.extend.width == (fdm.extend.width * fdm.texel_size.width));
 	assert(main_pass.extend.height == (fdm.extend.height * fdm.texel_size.height));
+	assert((main_pass.extend.height > 0) && (main_pass.extend.width > 0));
 
 	// Create depth stencil image.
 	{
@@ -1569,6 +1572,7 @@ void FragmentDensityMap::setup_color()
 {
 	assert(main_pass.extend.width == (fdm.extend.width * fdm.texel_size.width));
 	assert(main_pass.extend.height == (fdm.extend.height * fdm.texel_size.height));
+	assert((main_pass.extend.height > 0) && (main_pass.extend.width > 0));
 
 	destroy_image(main_pass.image);
 

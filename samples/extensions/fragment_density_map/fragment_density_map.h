@@ -117,7 +117,7 @@ class FragmentDensityMap : public ApiVulkanSample
 	struct
 	{
 		ImageData        image{};
-		VkExtent2D       extend{32 * 32 * 4, 23 * 32 * 4};
+		VkExtent2D       extend{};
 		VkFramebuffer    framebuffer{VK_NULL_HANDLE};
 		VkDescriptorPool descriptor_pool{VK_NULL_HANDLE};
 
