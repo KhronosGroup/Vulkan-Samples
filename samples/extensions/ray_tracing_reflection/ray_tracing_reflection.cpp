@@ -271,9 +271,10 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModelGp
 
 	// Create a scratch buffer as a temporary storage for the acceleration structure build
 	std::unique_ptr<vkb::core::BufferC> sc_buffer;
-	sc_buffer = std::make_unique<vkb::core::BufferC>(get_device(), acceleration_structure_build_sizes_info.buildScratchSize,
-	                                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
+	sc_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(acceleration_structure_build_sizes_info.buildScratchSize)
+	                                                                   .with_usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+	                                                                   .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
+	                                                                   .with_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment));
 
 	VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
 	acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
@@ -363,9 +364,10 @@ void RaytracingReflection::create_top_level_acceleration_structure(std::vector<V
 
 	// Create a scratch buffer as a temporary storage for the acceleration structure build
 	std::unique_ptr<vkb::core::BufferC> sc_buffer;
-	sc_buffer = std::make_unique<vkb::core::BufferC>(get_device(), acceleration_structure_build_sizes_info.buildScratchSize,
-	                                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
+	sc_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(acceleration_structure_build_sizes_info.buildScratchSize)
+	                                                                   .with_usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+	                                                                   .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
+	                                                                   .with_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment));
 
 	VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
 	acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
@@ -575,9 +577,20 @@ void RaytracingReflection::create_shader_binding_tables()
 	const VmaMemoryUsage     sbt_memory_usage       = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), handle_size_aligned * rgen_index.size(), sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), handle_size_aligned * miss_index.size(), sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), handle_size_aligned * hit_index.size(), sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size_aligned * rgen_index.size())
+	                                                                                     .with_usage(sbt_buffer_usage_flags)
+	                                                                                     .with_vma_usage(sbt_memory_usage)
+	                                                                                     .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+
+	miss_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size_aligned * miss_index.size())
+	                                                                                   .with_usage(sbt_buffer_usage_flags)
+	                                                                                   .with_vma_usage(sbt_memory_usage)
+	                                                                                   .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+
+	hit_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size_aligned * hit_index.size())
+	                                                                                  .with_usage(sbt_buffer_usage_flags)
+	                                                                                  .with_vma_usage(sbt_memory_usage)
+	                                                                                  .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 
 	// Copy the pipeline's shader handles into a host buffer
 	const auto           group_count = static_cast<uint32_t>(rgen_index.size() + miss_index.size() + hit_index.size());
