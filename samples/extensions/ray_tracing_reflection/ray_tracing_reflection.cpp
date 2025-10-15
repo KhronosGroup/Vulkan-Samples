@@ -581,16 +581,14 @@ void RaytracingReflection::create_shader_binding_tables()
 	                                                                                     .with_usage(sbt_buffer_usage_flags)
 	                                                                                     .with_vma_usage(sbt_memory_usage)
 	                                                                                     .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
-
-	miss_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size_aligned * miss_index.size())
-	                                                                                   .with_usage(sbt_buffer_usage_flags)
-	                                                                                   .with_vma_usage(sbt_memory_usage)
-	                                                                                   .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
-
-	hit_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size_aligned * hit_index.size())
-	                                                                                  .with_usage(sbt_buffer_usage_flags)
-	                                                                                  .with_vma_usage(sbt_memory_usage)
-	                                                                                  .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size_aligned * miss_index.size())
+                                                                                       .with_usage(sbt_buffer_usage_flags)
+                                                                                       .with_vma_usage(sbt_memory_usage)
+                                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size_aligned * hit_index.size())
+                                                                                      .with_usage(sbt_buffer_usage_flags)
+                                                                                      .with_vma_usage(sbt_memory_usage)
+                                                                                      .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 
 	// Copy the pipeline's shader handles into a host buffer
 	const auto           group_count = static_cast<uint32_t>(rgen_index.size() + miss_index.size() + hit_index.size());

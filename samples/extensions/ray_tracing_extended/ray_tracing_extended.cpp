@@ -670,21 +670,21 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 
 	// The top level acceleration structure contains (bottom level) instance as the input geometry
 	VkAccelerationStructureGeometryKHR acceleration_structure_geometry{};
-	acceleration_structure_geometry.sType                              = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-	acceleration_structure_geometry.geometryType                       = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-	acceleration_structure_geometry.flags                              = VK_GEOMETRY_OPAQUE_BIT_KHR;
-	acceleration_structure_geometry.geometry.instances                 = {};
-	acceleration_structure_geometry.geometry.instances.sType           = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+	acceleration_structure_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	acceleration_structure_geometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+	acceleration_structure_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	acceleration_structure_geometry.geometry.instances = {};
+	acceleration_structure_geometry.geometry.instances.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
 	acceleration_structure_geometry.geometry.instances.arrayOfPointers = VK_FALSE;
-	acceleration_structure_geometry.geometry.instances.data            = instance_data_device_address;
+	acceleration_structure_geometry.geometry.instances.data = instance_data_device_address;
 
 	// Get the size requirements for buffers involved in the acceleration structure build process
 	VkAccelerationStructureBuildGeometryInfoKHR acceleration_structure_build_geometry_info{};
-	acceleration_structure_build_geometry_info.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-	acceleration_structure_build_geometry_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	acceleration_structure_build_geometry_info.flags         = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	acceleration_structure_build_geometry_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	acceleration_structure_build_geometry_info.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+	acceleration_structure_build_geometry_info.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	acceleration_structure_build_geometry_info.geometryCount = 1;
-	acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
+	acceleration_structure_build_geometry_info.pGeometries = &acceleration_structure_geometry;
 
 	const uint32_t primitive_count = instances.size();
 
@@ -711,10 +711,10 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	if (top_level_acceleration_structure.handle == nullptr)
 	{
 		VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
-		acceleration_structure_create_info.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+		acceleration_structure_create_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
 		acceleration_structure_create_info.buffer = top_level_acceleration_structure.buffer->get_handle();
-		acceleration_structure_create_info.size   = acceleration_structure_build_sizes_info.accelerationStructureSize;
-		acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+		acceleration_structure_create_info.size = acceleration_structure_build_sizes_info.accelerationStructureSize;
+		acceleration_structure_create_info.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 		vkCreateAccelerationStructureKHR(get_device().get_handle(), &acceleration_structure_create_info, nullptr,
 		                                 &top_level_acceleration_structure.handle);
 	}
@@ -733,24 +733,24 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	                                                               .with_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment));
 
 	VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{};
-	acceleration_build_geometry_info.sType                    = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-	acceleration_build_geometry_info.type                     = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	acceleration_build_geometry_info.flags                    = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
-	acceleration_build_geometry_info.mode                     = is_update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR : VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+	acceleration_build_geometry_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	acceleration_build_geometry_info.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+	acceleration_build_geometry_info.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+	acceleration_build_geometry_info.mode = is_update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR : VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 	acceleration_build_geometry_info.dstAccelerationStructure = top_level_acceleration_structure.handle;
 	if (is_update)
 	{
 		acceleration_build_geometry_info.srcAccelerationStructure = top_level_acceleration_structure.handle;
 	}
-	acceleration_build_geometry_info.geometryCount             = 1;
-	acceleration_build_geometry_info.pGeometries               = &acceleration_structure_geometry;
+	acceleration_build_geometry_info.geometryCount = 1;
+	acceleration_build_geometry_info.pGeometries = &acceleration_structure_geometry;
 	acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer->get_device_address();
 
 	VkAccelerationStructureBuildRangeInfoKHR acceleration_structure_build_range_info;
-	acceleration_structure_build_range_info.primitiveCount                                           = primitive_count;
-	acceleration_structure_build_range_info.primitiveOffset                                          = 0;
-	acceleration_structure_build_range_info.firstVertex                                              = 0;
-	acceleration_structure_build_range_info.transformOffset                                          = 0;
+	acceleration_structure_build_range_info.primitiveCount = primitive_count;
+	acceleration_structure_build_range_info.primitiveOffset = 0;
+	acceleration_structure_build_range_info.firstVertex = 0;
+	acceleration_structure_build_range_info.transformOffset = 0;
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> acceleration_build_structure_range_infos = {&acceleration_structure_build_range_info};
 
 	// Build the acceleration structure on the device via a one-time command buffer submission
@@ -767,7 +767,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 
 	// Get the top acceleration structure's handle, which will be used to set up its descriptor
 	VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
-	acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+	acceleration_device_address_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	acceleration_device_address_info.accelerationStructure = top_level_acceleration_structure.handle;
 	top_level_acceleration_structure.device_address =
 	    vkGetAccelerationStructureDeviceAddressKHR(get_device().get_handle(), &acceleration_device_address_info);
@@ -862,9 +862,21 @@ void RaytracingExtended::create_shader_binding_tables()
 
 	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size).with_usage(sbt_buffer_usage_flags).with_vma_usage(sbt_memory_usage).with_vma_flags(0).with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
-	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size).with_usage(sbt_buffer_usage_flags).with_vma_usage(sbt_memory_usage).with_vma_flags(0).with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
-	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size).with_usage(sbt_buffer_usage_flags).with_vma_usage(sbt_memory_usage).with_vma_flags(0).with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+	                                                                                     .with_usage(sbt_buffer_usage_flags)
+	                                                                                     .with_vma_usage(sbt_memory_usage)
+	                                                                                     .with_vma_flags(0)
+	                                                                                     .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+                                                                                       .with_usage(sbt_buffer_usage_flags)
+                                                                                       .with_vma_usage(sbt_memory_usage)
+                                                                                       .with_vma_flags(0)
+                                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+                                                                                      .with_usage(sbt_buffer_usage_flags)
+                                                                                      .with_vma_usage(sbt_memory_usage)
+                                                                                      .with_vma_flags(0)
+                                                                                      .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
@@ -1293,7 +1305,7 @@ void RaytracingExtended::build_command_buffers()
 				barrier.size   = model_buffer.bottom_level_acceleration_structure->get_buffer()->get_size();
 #else
 				barrier.buffer = model_buffer.bottom_level_acceleration_structure.buffer->get_handle();
-				barrier.size   = model_buffer.bottom_level_acceleration_structure.buffer->get_size();
+				barrier.size = model_buffer.bottom_level_acceleration_structure.buffer->get_size();
 #endif
 				barriers.push_back(barrier);
 			}

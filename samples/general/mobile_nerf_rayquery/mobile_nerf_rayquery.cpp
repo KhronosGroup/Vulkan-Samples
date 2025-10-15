@@ -887,7 +887,6 @@ void MobileNerfRayQuery::create_bottom_level_acceleration_structure(int model_en
 		    get_buffer_device_address(model.vertex_buffer->get_handle()),
 		    get_buffer_device_address(model.index_buffer->get_handle()));
 	}
-
 	model.bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	model.bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
