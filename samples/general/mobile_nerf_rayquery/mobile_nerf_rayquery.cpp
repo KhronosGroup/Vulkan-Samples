@@ -151,6 +151,7 @@ bool MobileNerfRayQuery::prepare(const vkb::ApplicationOptions &options)
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.01f, 256.0f);
 
 	VkPhysicalDeviceProperties2 device_properties{};
+	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &acceleration_structure_properties;
 
 	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
