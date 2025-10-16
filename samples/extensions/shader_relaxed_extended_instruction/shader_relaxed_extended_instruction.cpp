@@ -2,7 +2,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *
-* Licensed under the Apache License, Version 2.0 the "License";
+ * Licensed under the Apache License, Version 2.0 the "License";
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -27,9 +27,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL s_debug_utils_message_callback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
     void                                       *pUserData)
 {
-	(void)messageSeverity;
-	(void)messageType;
-	(void)pUserData;
+	(void) messageSeverity;
+	(void) messageType;
+	(void) pUserData;
 	if (pCallbackData && pCallbackData->pMessage)
 	{
 		LOGI("{}", pCallbackData->pMessage);
@@ -41,7 +41,7 @@ ShaderRelaxedExtendedInstruction::ShaderRelaxedExtendedInstruction()
 {
 	title = "Shader relaxed extended instruction (VK_KHR_shader_relaxed_extended_instruction)";
 
- // Instance prerequisite for feature chaining and layer settings (optional)
+	// Instance prerequisite for feature chaining and layer settings (optional)
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
@@ -53,7 +53,7 @@ ShaderRelaxedExtendedInstruction::ShaderRelaxedExtendedInstruction()
 	// Optionally, enable debug printf so shaders using debugPrintfEXT will print via VVL
 	{
 		static const char *enables[] = {
-			"VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT",
+		    "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT",
 		};
 
 		VkLayerSettingEXT layer_setting{};
@@ -112,8 +112,8 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
 
 	const char *validation_layer_name = "VK_LAYER_KHRONOS_validation";
 	auto        vvl_properties        = std::ranges::find_if(layer_properties, [validation_layer_name](const VkLayerProperties &p) {
-		return strcmp(p.layerName, validation_layer_name) == 0;
-	});
+        return strcmp(p.layerName, validation_layer_name) == 0;
+    });
 
 	if (vvl_properties != layer_properties.end())
 	{
@@ -255,10 +255,10 @@ void ShaderRelaxedExtendedInstruction::record_minimal_present_cmd(VkCommandBuffe
 	subresource_range.layerCount     = 1;
 
 	vkb::image_layout_transition(cmd,
-	                            swapchain_buffers[current_buffer].image,
-	                            VK_IMAGE_LAYOUT_UNDEFINED,
-	                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-	                            subresource_range);
+	                             swapchain_buffers[current_buffer].image,
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+	                             subresource_range);
 
 	VK_CHECK(vkEndCommandBuffer(cmd));
 }

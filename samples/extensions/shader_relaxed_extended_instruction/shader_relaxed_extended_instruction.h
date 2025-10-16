@@ -25,7 +25,7 @@ class ShaderRelaxedExtendedInstruction : public ApiVulkanSample
 	ShaderRelaxedExtendedInstruction();
 	~ShaderRelaxedExtendedInstruction() override;
 
-	void build_command_buffers() override; // Not used; per-frame recording in render()
+	void build_command_buffers() override;        // Not used; per-frame recording in render()
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
