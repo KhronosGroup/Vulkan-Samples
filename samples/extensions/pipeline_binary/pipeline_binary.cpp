@@ -17,11 +17,10 @@
 
 #include "pipeline_binary.h"
 
-#include "common/vk_initializers.h"
 #include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "core/device.h"
 #include "core/util/logging.hpp"
-
 
 PipelineBinary::PipelineBinary()
 {
@@ -143,7 +142,7 @@ void PipelineBinary::create_compute_pipeline()
 	compute_shader       = compute_shader_stage.module;
 
 	// Cache the compute pipeline create info for reuse by the pipeline binary demo
-	compute_ci_cache = {VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
+	compute_ci_cache        = {VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
 	compute_ci_cache.stage  = compute_shader_stage;
 	compute_ci_cache.layout = pipeline_layout;
 
@@ -158,7 +157,7 @@ void PipelineBinary::create_compute_pipeline()
 
 void PipelineBinary::log_pipeline_binary_support()
 {
-	VkPhysicalDevicePipelineBinaryFeaturesKHR features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_FEATURES_KHR};
+	VkPhysicalDevicePipelineBinaryFeaturesKHR   features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_FEATURES_KHR};
 	VkPhysicalDevicePipelineBinaryPropertiesKHR props{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_PROPERTIES_KHR};
 
 	VkPhysicalDeviceFeatures2 features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
@@ -190,7 +189,7 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 
 	// Query a pipeline key for these creation parameters
 	VkPipelineBinaryKeyKHR key{VK_STRUCTURE_TYPE_PIPELINE_BINARY_KEY_KHR};
-	VkResult res = vkGetPipelineKeyKHR(get_device().get_handle(), &pipeline_create_info_khr, &key);
+	VkResult               res = vkGetPipelineKeyKHR(get_device().get_handle(), &pipeline_create_info_khr, &key);
 	if (res != VK_SUCCESS)
 	{
 		LOGW("vkGetPipelineKeyKHR failed ({}); skipping binary capture", static_cast<int>(res));
@@ -205,8 +204,8 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	handles.pPipelineBinaries   = &pipeline_binary;
 
 	VkPipelineBinaryCreateInfoKHR create_info{VK_STRUCTURE_TYPE_PIPELINE_BINARY_CREATE_INFO_KHR};
-	create_info.pipeline            = VK_NULL_HANDLE; // Using pPipelineCreateInfo path; no capture flag required on a pipeline object
-	create_info.pPipelineCreateInfo = &pipeline_create_info_khr; // Only one of the three must be non-NULL
+	create_info.pipeline            = VK_NULL_HANDLE;                   // Using pPipelineCreateInfo path; no capture flag required on a pipeline object
+	create_info.pPipelineCreateInfo = &pipeline_create_info_khr;        // Only one of the three must be non-NULL
 	create_info.pNext               = nullptr;
 	create_info.pKeysAndDataInfo    = nullptr;
 
@@ -218,7 +217,7 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	}
 
 	// Query the size first (spec requires a valid pPipelineBinaryKey pointer)
-	size_t binary_size = 0;
+	size_t                      binary_size = 0;
 	VkPipelineBinaryDataInfoKHR binary_info{VK_STRUCTURE_TYPE_PIPELINE_BINARY_DATA_INFO_KHR};
 	binary_info.pipelineBinary = pipeline_binary;
 
@@ -230,7 +229,7 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 		return;
 	}
 
-	std::vector<uint8_t> data(binary_size);
+	std::vector<uint8_t>   data(binary_size);
 	VkPipelineBinaryKeyKHR key2{VK_STRUCTURE_TYPE_PIPELINE_BINARY_KEY_KHR};
 	res = vkGetPipelineBinaryDataKHR(get_device().get_handle(), &binary_info, &key2, &binary_size, data.data());
 	if (res == VK_SUCCESS)

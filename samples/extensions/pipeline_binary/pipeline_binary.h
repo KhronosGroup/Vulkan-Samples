@@ -38,7 +38,7 @@ class PipelineBinary : public ApiVulkanSample
 	VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
 	VkPipeline       compute_pipeline{VK_NULL_HANDLE};
 	VkShaderModule   compute_shader{VK_NULL_HANDLE};
-	
+
 	// Cached shader stage and pipeline create info for reuse (avoid reloading/rebuilding)
 	VkPipelineShaderStageCreateInfo compute_shader_stage{};
 	VkComputePipelineCreateInfo     compute_ci_cache{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
