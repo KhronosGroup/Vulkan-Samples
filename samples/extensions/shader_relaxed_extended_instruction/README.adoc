@@ -1,0 +1,81 @@
+////
+- Copyright (c) 2025, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= VK_KHR_shader_relaxed_extended_instruction — Enable SPIR-V relaxed extended instruction for non-semantic sets
+
+This sample demonstrates the device feature VK_KHR_shader_relaxed_extended_instruction and how it relates to SPV_KHR_relaxed_extended_instruction in SPIR-V. The SPIR-V extension introduces a new instruction that allows certain forward references in extended instruction sets used by non-semantic information (for example, the NonSemantic.DebugPrintf instruction set used by GL_EXT_debug_printf). In Vulkan, those non-semantic instruction sets are allowed via VK_KHR_shader_non_semantic_info.
+
+== What is it?
+- SPV_KHR_relaxed_extended_instruction adds a SPIR-V mechanism to relax forward‑reference rules for extended instruction sets, specifically for non‑semantic information.
+- VK_KHR_shader_relaxed_extended_instruction is the Vulkan device extension/feature that allows modules using that SPIR‑V extension to be consumed by the driver.
+- This interacts with SPV_KHR_non_semantic_info and VK_KHR_shader_non_semantic_info: the relaxed forward‑reference rule applies to non‑semantic extended instruction sets like `NonSemantic.DebugPrintf`.
+
+The feature is exposed via `VkPhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR` with a single boolean field `shaderRelaxedExtendedInstruction`.
+
+== Why/when to use it
+- When compiling shaders that embed non‑semantic extended instruction sets (e.g., debug info or debugPrintf) that may use forward references that were previously disallowed.
+- When you want tool and debugging SPIR‑V to be accepted by implementations that support this relaxation, without affecting the program’s semantics (non‑semantic content does not change the observable results).
+- Shaders should continue to function when the feature is off; the relaxation only affects acceptance of certain SPIR‑V forms, not execution semantics.
+
+== What this sample does
+- Enables device extensions: `VK_KHR_shader_relaxed_extended_instruction` and `VK_KHR_shader_non_semantic_info`.
+- Requests the feature via the framework’s feature‑chaining helper.
+- Builds a tiny compute pipeline whose shader calls `debugPrintfEXT` (a non‑semantic extended instruction).
+- Records a per‑frame command buffer that dispatches the compute shader once, then transitions the swapchain image to `PRESENT` and presents. This keeps WSI synchronization correct and demonstrates consumption of a shader module that contains non‑semantic extended instructions.
+
+== Required Vulkan extensions and features
+- Device extensions (required by this sample):
+  * `VK_KHR_shader_relaxed_extended_instruction`
+  * `VK_KHR_shader_non_semantic_info`
+- Instance extension for feature chaining: `VK_KHR_get_physical_device_properties2` (the framework enables this; the sample requests it explicitly).
+- Device feature (required): `VkPhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR::shaderRelaxedExtendedInstruction = VK_TRUE`
+
+Code excerpt:
+[source,cpp]
+----
+ShaderRelaxedExtendedInstruction::ShaderRelaxedExtendedInstruction()
+{
+    title = "Shader relaxed extended instruction (VK_KHR_shader_relaxed_extended_instruction)";
+    add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    add_device_extension(VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME);
+    add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+}
+
+void ShaderRelaxedExtendedInstruction::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
+{
+    REQUEST_REQUIRED_FEATURE(gpu,
+        VkPhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR,
+        shaderRelaxedExtendedInstruction);
+}
+----
+
+Shader (GLSL) used by this sample:
+[source,glsl]
+----
+#version 450
+#extension GL_EXT_debug_printf : enable
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+void main() {
+    debugPrintfEXT("relaxed-ext-inst demo: gid = %u", gl_GlobalInvocationID.x);
+}
+----
+
+TIP: To actually see the `debugPrintfEXT` output, run with validation configured to capture debug printf (see the `shader_debugprintf` sample or use VK_EXT_layer_settings to enable `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT`). This sample registers an INFO‑severity `VkDebugUtilsMessengerEXT` so messages are visible when validation is active.
+
+NOTE: If `VK_EXT_layer_settings` is not available from the validation layer at runtime, the sample automatically falls back to `VK_EXT_validation_features` and enables `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT` during instance creation. In that case you do not need any environment configuration to see output.
+
