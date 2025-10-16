@@ -233,6 +233,10 @@ Demonstrate how to use logical operations dynamically, which can reduce the numb
 
 === xref:./{extension_samplespath}patch_control_points/README.adoc[Patch control points]
 
+*Extension*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_pipeline_binary[`VK_KHR_pipeline_binaries`]
+
+Demonstrate how to use pipeline binaries which provides a method to obtain binary data associated with individual pipelines such that applications can manage caching themselves instead of using VkPipelineCache objects.
+
 *Extension*: https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html[`VK_EXT_extended_dynamic_state2`]
 
 Demonstrate how to use patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.

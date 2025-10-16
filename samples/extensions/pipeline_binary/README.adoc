@@ -1,0 +1,78 @@
+////
+- Copyright (c) 2025, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Pipeline binary (VK_KHR_pipeline_binary)
+:description: Demonstrates querying a pipeline key and capturing a pipeline binary.
+
+== Overview
+VK_KHR_pipeline_binary lets you explicitly capture and reuse driver-produced pipeline binaries. Instead of relying only on opaque pipeline caches, you can:
+
+- Compute a portable pipeline key up front for a given set of creation parameters.
+- Ask the driver to give you an implementation-specific binary for that key.
+- Persist that binary and reuse it on the same driver/device to avoid runtime compilation hitches.
+
+This sample builds a tiny compute pipeline solely to demonstrate that flow. It logs support, queries a key, and (if available) captures the binary data.
+
+== Why and when to use it
+Pipeline caches are useful, but they are intentionally opaque and not keyed by a structure you can compute deterministically. Pipeline binaries add:
+
+- Deterministic cache management (you can compute the key before creating a pipeline).
+- Cross-process or install-time pre-warming strategies.
+- A clear, explicit handle (VkPipelineBinaryKHR) you can store and manage.
+
+They complement other techniques:
+
+- VK_EXT_graphics_pipeline_library reduces link-time work, but doesn’t hand you the final binary for persistence.
+- VK_EXT_shader_object changes the binding model, not binary persistence.
+
+== How it works (TL;DR)
+. Prepare the same creation info you’d pass to vkCreate*Pipelines (compute or graphics).
+. Wrap it in VkPipelineCreateInfoKHR.
+. vkGetPipelineKeyKHR(device, &VkPipelineCreateInfoKHR, &VkPipelineBinaryKeyKHR) → portable key.
+. vkCreatePipelineBinariesKHR(device, &VkPipelineBinaryCreateInfoKHR, …) → VkPipelineBinaryKHR handle.
+. vkGetPipelineBinaryDataKHR(device, &VkPipelineBinaryDataInfoKHR, …) → query size, then fetch bytes.
+. Store bytes together with device/vendor/driver identifiers and the key.
+
+== Required Vulkan extensions and features
+To use feature chaining like the other samples, this sample enables the following and requests the needed feature explicitly:
+
+- Instance: `VK_KHR_get_physical_device_properties2` — required by the framework to chain extension feature structs during device creation.
+- Device: `VK_KHR_pipeline_binary` — the extension demonstrated here.
+- Device: `VK_KHR_maintenance5` — defines the `VkPipelineCreateFlags2` flag space that includes CAPTURE_DATA (not required for this sample’s path, but commonly expected by validation).
+- Device: `VK_KHR_dynamic_rendering`, `VK_KHR_depth_stencil_resolve`, `VK_KHR_create_renderpass2` — commonly used by the framework/WSI paths; enabled to avoid spurious present-time validation issues.
+
+Note: This sample uses the `pPipelineCreateInfo` path when creating pipeline binaries, so it does not require creating a live pipeline with `CAPTURE_DATA` set.
+
+== Walkthrough of the code
+- log_pipeline_binary_support() uses vkGetPhysicalDeviceFeatures2/properties2 to show what the driver supports and prefers regarding internal caches and compression.
+- demo_pipeline_key_and_binary():
+  * Reuses the cached compute pipeline creation info and wraps it in VkPipelineCreateInfoKHR.
+  * Calls vkGetPipelineKeyKHR to compute the key.
+  * Calls vkCreatePipelineBinariesKHR with pPipelineCreateInfo set (and pipeline/pKeysAndDataInfo null) to get a VkPipelineBinaryKHR.
+  * Calls vkGetPipelineBinaryDataKHR twice to first query size, then fetch bytes (requires a valid VkPipelineBinaryKeyKHR pointer on both calls).
+
+== Best practices and caveats
+- Treat captured binaries as opaque and device/driver-specific; don’t assume portability across vendors or driver revisions.
+- Record identity metadata (vendor ID, device ID, driver version, pipeline key) so you can invalidate stale entries.
+- Some drivers may prefer or enforce internal caches; honor properties like pipelineBinaryPrefersInternalCache.
+- Not all implementations will return data; some may return zero bytes. Handle that gracefully.
+- Any change in creation parameters changes the key and the resulting binary.
+
+== References
+- Vulkan specification and Khronos Registry entries for VK_KHR_pipeline_binary
+- Related samples: graphics_pipeline_library, pipeline_cache
