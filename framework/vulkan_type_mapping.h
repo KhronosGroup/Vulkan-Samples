@@ -163,12 +163,6 @@ struct HPPType<VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR>
 };
 
 template <>
-struct HPPType<VkPhysicalDeviceShaderQuadControlFeaturesKHR>
-{
-	using Type = vk::PhysicalDeviceShaderQuadControlFeaturesKHR;
-};
-
-template <>
 struct HPPType<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>
 {
 	using Type = vk::PhysicalDeviceFragmentShadingRateFeaturesKHR;
