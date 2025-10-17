@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,4 +34,9 @@ add_sample_with_tags(
         "compute_nbody/hlsl/particle.vert.hlsl"
         "compute_nbody/hlsl/particle.frag.hlsl"
         "compute_nbody/hlsl/particle_calculate.comp.hlsl"
-        "compute_nbody/hlsl/particle_integrate.comp.hlsl")
+        "compute_nbody/hlsl/particle_integrate.comp.hlsl"
+    SHADER_FILES_SLANG
+        "compute_nbody/slang/particle.vert.slang"
+        "compute_nbody/slang/particle.frag.slang"
+        "compute_nbody/slang/particle_calculate.comp.slang"
+        "compute_nbody/slang/particle_integrate.comp.slang")

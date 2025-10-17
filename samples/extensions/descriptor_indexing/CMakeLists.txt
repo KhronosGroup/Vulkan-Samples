@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, Arm Limited and Contributors
+# Copyright (c) 2021-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -35,4 +35,9 @@ add_sample_with_tags(
                 "descriptor_indexing/hlsl/nonuniform-quads.frag.hlsl"
                 "descriptor_indexing/hlsl/update-after-bind-quads.vert.hlsl"
                 "descriptor_indexing/hlsl/update-after-bind-quads.frag.hlsl"
-        DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing")
+        DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing"
+        SHADER_FILES_SLANG
+                "descriptor_indexing/slang/nonuniform-quads.vert.slang"
+                "descriptor_indexing/slang/nonuniform-quads.frag.slang"
+                "descriptor_indexing/slang/update-after-bind-quads.vert.slang"
+                "descriptor_indexing/slang/update-after-bind-quads.frag.slang")
