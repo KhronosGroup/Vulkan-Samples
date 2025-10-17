@@ -20,7 +20,7 @@ struct VSInput
 {
     float3 Pos : POSITION0;
     float3 Normal;
-	float2 UV;
+    float2 UV;
 };
 
 struct VSOutput
@@ -48,21 +48,21 @@ ConstantBuffer<UBO> ubo;
 struct Push_Constants {
     float4x4 model;
 
-	float4 base_color_factor;
-	float metallic_factor;
-	float roughness_factor;
+    float4 base_color_factor;
+    float metallic_factor;
+    float roughness_factor;
 
-	uint baseTextureIndex;
-	uint normalTextureIndex;
-	uint metallicRoughnessTextureIndex;
+    uint baseTextureIndex;
+    uint normalTextureIndex;
+    uint metallicRoughnessTextureIndex;
 } ;
 
 [shader("vertex")]
 VSOutput main(VSInput input, uniform Push_Constants push_constants)
 {
     VSOutput output;
-	output.UV = input.UV;
-	float4 localPos = mul(ubo.view, mul(push_constants.model, float4(input.Pos, 1.0)));
+    output.UV = input.UV;
+    float4 localPos = mul(ubo.view, mul(push_constants.model, float4(input.Pos, 1.0)));
     output.Pos = mul(ubo.projection, localPos);
     output.Normal = mul(float3x3(mul(ubo.view, push_constants.model)), input.Normal);
     float3 lightPos = float3(10.0, -10.0, 10.0);

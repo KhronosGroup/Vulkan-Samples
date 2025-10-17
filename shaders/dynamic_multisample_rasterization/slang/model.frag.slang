@@ -40,7 +40,7 @@ float4 getColor(in VSOutput input)
     if (input.BaseTextureIndex != -1)
         color = Textures[uint(round(input.BaseTextureIndex))].Sample(input.UV);
 
-	return color;
+    return color;
 }
 
 float3 getNormal(in VSOutput input)
@@ -50,7 +50,7 @@ float3 getNormal(in VSOutput input)
     if (input.NormalTextureIndex != -1)
         normal = Textures[uint(round(input.NormalTextureIndex))].Sample(input.UV).xyz * 2.0 - 1.0;
 
-	return normal;
+    return normal;
 }
 
 float3 getPBR(in VSOutput input)
@@ -60,20 +60,20 @@ float3 getPBR(in VSOutput input)
     if (input.MetallicRoughnessTextureIndex != -1)
         pbr = Textures[uint(round(input.MetallicRoughnessTextureIndex))].Sample(input.UV).xyz;
 
-	return pbr;
+    return pbr;
 }
 
 [shader("fragment")]
 float4 main(VSOutput input)
 {
-	float3 N = normalize(getNormal(input));
+    float3 N = normalize(getNormal(input));
     float3 L = normalize(input.LightVec);
     float3 V = normalize(input.ViewVec);
-	float3 R = reflect(-L, N);
+    float3 R = reflect(-L, N);
     float3 ambient = float3(0.25);
     float3 diffuse = max(dot(N, L), 0.0) * float3(0.75) * getPBR(input);
-	float3 specular = pow(max(dot(R, V), 0.0), 16.0) * float3(0.75);
+    float3 specular = pow(max(dot(R, V), 0.0), 16.0) * float3(0.75);
 
     float4 base_color = getColor(input);
-	return float4(ambient * base_color.rgb + specular, base_color.a);
+    return float4(ambient * base_color.rgb + specular, base_color.a);
 }
