@@ -47,7 +47,7 @@ VSOutput main(VSInput input, uniform float4 offset, uniform float4 color, unifor
 
     switch(object_type) {
         case 0: // Skybox
-            worldPos = mul((float4x3) ubo.skyboxModelview, input.Pos).xyz;
+            worldPos = mul((float3x3) ubo.skyboxModelview, input.Pos.xyz);
             output.Pos = mul(ubo.projection, float4(worldPos, 1.0));
             break;
         case 1: // Object
@@ -56,7 +56,7 @@ VSOutput main(VSInput input, uniform float4 offset, uniform float4 color, unifor
             output.Pos = mul(ubo.projection, mul(ubo.modelview, float4(localPos, 1.0)));
             break;
     }
-    output.Normal = mul((float4x3)ubo.modelview, input.Normal).xyz;
+    output.Normal = mul((float3x3)ubo.modelview, input.Normal);
     output.UV = input.UV;
     
     float3 lightPos = float3(0.0f, -10.0f, 10.0f);
