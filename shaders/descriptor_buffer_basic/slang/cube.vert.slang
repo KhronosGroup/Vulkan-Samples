@@ -18,14 +18,12 @@
 struct VSInput
 {
     float3 Pos;
-    float3 Normal;
     float2 UV;
 };
 
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
-    float3 Normal;
     float2 UV;
 };
 
@@ -44,7 +42,6 @@ struct UBOModel {
 VSOutput main(VSInput input)
 {
     VSOutput output;
-    output.Normal = input.Normal;
     output.UV = input.UV;
     output.Pos = mul(uboCamera.projection, mul(uboCamera.view, mul(uboModel.local, float4(input.Pos.xyz, 1.0))));
     return output;

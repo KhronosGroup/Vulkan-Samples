@@ -18,7 +18,6 @@
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
-    float3 Normal;
     float2 UV;
 };
 
