@@ -23,8 +23,9 @@
 class RayTracingPositionFetch : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR    ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR   acceleration_structure_features{};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{};
 
 	std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure{nullptr};
 	std::unique_ptr<vkb::core::AccelerationStructure> top_level_acceleration_structure{nullptr};

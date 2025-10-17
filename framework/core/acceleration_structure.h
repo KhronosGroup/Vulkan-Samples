@@ -133,6 +133,11 @@ class AccelerationStructure
 		geometries.clear();
 	}
 
+    void set_scrach_buffer_alignment(VkDeviceSize alignment)
+    {
+		scratch_buffer_alignment = alignment;
+    }
+
   private:
 	vkb::core::DeviceC &device;
 
@@ -143,6 +148,8 @@ class AccelerationStructure
 	VkAccelerationStructureTypeKHR type{};
 
 	VkAccelerationStructureBuildSizesInfoKHR build_sizes_info{};
+
+    VkDeviceSize scratch_buffer_alignment{0};
 
 	struct Geometry
 	{
