@@ -59,7 +59,7 @@ VSOutput main(VSInput input, uniform float4 offset, uniform float4 color, unifor
     output.Normal = mul((float4x3)ubo.modelview, input.Normal).xyz;
     output.UV = input.UV;
     
-    float3 lightPos = float3(0.0f, -5.0f, 5.0f);
+    float3 lightPos = float3(0.0f, -10.0f, 10.0f);
     output.LightVec = lightPos.xyz - worldPos.xyz;
     output.ViewVec = -worldPos.xyz;
     return output;
