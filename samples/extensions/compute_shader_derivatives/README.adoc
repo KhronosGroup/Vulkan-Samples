@@ -1,0 +1,46 @@
+////
+- Copyright (c) 2025, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= VK_KHR_compute_shader_derivatives — Derivatives in compute shaders
+
+This sample demonstrates VK_KHR_compute_shader_derivatives, which enables the use of derivative instructions (like dFdx/dFdy) inside compute shaders. Traditionally, derivatives are only available in fragment shaders, but this extension defines derivative groups in compute and how invocations are paired for derivative computations.
+
+== What is it?
+- SPIR-V: The companion SPIR-V extension allows derivative instructions in the Compute execution model.
+- Vulkan: The device feature is exposed via `VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR` with two booleans:
+  * `computeDerivativeGroupQuads` — enables quad-based derivative groups.
+  * `computeDerivativeGroupLinear` — enables linearly mapped derivative groups.
+- GLSL: Use `#extension GL_KHR_compute_shader_derivatives : enable` and a layout qualifier to choose the grouping:
+  * `layout(derivative_group_quadsNV) in;`
+  * `layout(derivative_group_linearNV) in;`
+  (The `NV` suffix is retained in the GLSL tokens for compatibility.)
+
+== Why/when to use it
+- Port algorithms that rely on derivatives (e.g., LOD selection, filtering, gradients) to compute for flexibility or performance.
+- Keep consistent behavior with fragment-stage derivatives by choosing an appropriate grouping mode (quads vs. linear).
+
+== What this sample does
+- Requests and requires the feature `computeDerivativeGroupQuads`.
+- Builds a minimal compute pipeline with a shader that calls `dFdx`/`dFdy` in compute.
+- Runs a small per-frame command buffer that dispatches once and then transitions the swapchain image to `PRESENT` so presentation is validation-clean. The compute shader has no resource bindings; it exists to demonstrate that derivative instructions are accepted and execute in compute.
+
+== Required Vulkan extensions and features
+- Instance extension: `VK_KHR_get_physical_device_properties2` (for feature chaining).
+- Device extension: `VK_KHR_compute_shader_derivatives` (required).
+- Device feature: `VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR::computeDerivativeGroupQuads = VK_TRUE`.
+

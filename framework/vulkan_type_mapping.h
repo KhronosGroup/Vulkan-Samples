@@ -267,6 +267,12 @@ struct HPPType<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR>
+{
+	using Type = vk::PhysicalDeviceComputeShaderDerivativesFeaturesKHR;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>
 {
 	using Type = vk::PhysicalDeviceVertexInputDynamicStateFeaturesEXT;
