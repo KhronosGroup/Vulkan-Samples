@@ -19,7 +19,6 @@ struct VSInput
 {
 	float3 Pos;
 	float3 Normal;
-	float3 Color;
 };
 
 struct VSOutput
