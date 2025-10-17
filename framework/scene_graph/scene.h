@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,12 +26,12 @@
 
 #include "scene_graph/components/light.h"
 #include "scene_graph/components/texture.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
 namespace sg
 {
-class Node;
 class Component;
 class SubMesh;
 
@@ -48,17 +48,17 @@ class Scene
 
 	const std::string &get_name() const;
 
-	void set_nodes(std::vector<std::unique_ptr<Node>> &&nodes);
+	void set_nodes(std::vector<std::unique_ptr<vkb::scene_graph::NodeC>> &&nodes);
 
-	void add_node(std::unique_ptr<Node> &&node);
+	void add_node(std::unique_ptr<vkb::scene_graph::NodeC> &&node);
 
-	void add_child(Node &child);
+	void add_child(vkb::scene_graph::NodeC &child);
 
 	std::unique_ptr<Component> get_model(uint32_t index = 0);
 
 	void add_component(std::unique_ptr<Component> &&component);
 
-	void add_component(std::unique_ptr<Component> &&component, Node &node);
+	void add_component(std::unique_ptr<Component> &&component, vkb::scene_graph::NodeC &node);
 
 	/**
 	 * @brief Set list of components for the given type
@@ -124,19 +124,19 @@ class Scene
 
 	bool has_component(const std::type_index &type_info) const;
 
-	Node *find_node(const std::string &name);
+	vkb::scene_graph::NodeC *find_node(const std::string &name);
 
-	void set_root_node(Node &node);
+	void set_root_node(vkb::scene_graph::NodeC &node);
 
-	Node &get_root_node();
+	vkb::scene_graph::NodeC &get_root_node();
 
   private:
 	std::string name;
 
 	/// List of all the nodes
-	std::vector<std::unique_ptr<Node>> nodes;
+	std::vector<std::unique_ptr<vkb::scene_graph::NodeC>> nodes;
 
-	Node *root{nullptr};
+	vkb::scene_graph::NodeC *root{nullptr};
 
 	std::unordered_map<std::type_index, std::vector<std::unique_ptr<Component>>> components;
 };

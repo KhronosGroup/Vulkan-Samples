@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,6 +28,7 @@
 
 #include "core/shader_module.h"
 #include "scene_graph/component.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
@@ -68,9 +69,9 @@ class Light : public Component
 
 	virtual std::type_index get_type() override;
 
-	void set_node(Node &node);
+	void set_node(vkb::scene_graph::NodeC &node);
 
-	Node *get_node();
+	vkb::scene_graph::NodeC *get_node();
 
 	void set_light_type(const LightType &type);
 
@@ -81,7 +82,7 @@ class Light : public Component
 	const LightProperties &get_properties();
 
   private:
-	Node *node{nullptr};
+	vkb::scene_graph::NodeC *node = nullptr;
 
 	LightType light_type;
 

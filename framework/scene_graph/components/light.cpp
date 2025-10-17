@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,7 @@
  */
 
 #include "light.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
@@ -30,12 +31,12 @@ std::type_index Light::get_type()
 	return typeid(Light);
 }
 
-void Light::set_node(Node &n)
+void Light::set_node(vkb::scene_graph::NodeC &n)
 {
 	node = &n;
 }
 
-Node *Light::get_node()
+vkb::scene_graph::NodeC *Light::get_node()
 {
 	return node;
 }

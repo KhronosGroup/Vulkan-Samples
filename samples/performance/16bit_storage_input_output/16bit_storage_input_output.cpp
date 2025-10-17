@@ -119,7 +119,7 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 				continue;
 			}
 
-			auto node = std::make_unique<vkb::sg::Node>(-1, "Teapot");
+			auto node = std::make_unique<vkb::scene_graph::NodeC>(-1, "Teapot");
 			node->set_component(*teapot_mesh);
 			teapot_mesh->add_node(*node);
 
