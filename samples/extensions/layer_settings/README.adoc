@@ -1,0 +1,149 @@
+////
+- Copyright (c) 2025, Holochip Inc
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= VK_EXT_layer_settings — Configure validation layers programmatically
+
+This sample demonstrates how to use VK_EXT_layer_settings to configure Vulkan layers (in particular `VK_LAYER_KHRONOS_validation`) directly from your application. Instead of relying on environment variables or JSON files, you can enable features like Best Practices and `debugPrintfEXT`, tune message filtering, or change output settings via code.
+
+== Why use layer settings?
+
+- Portability and reproducibility: ship settings with the app, not the environment.
+- Fine-grained control: enable/disable individual validation features and categories.
+- Better UX for samples and tools: turn on useful validation features without asking users to edit configs.
+
+VK_EXT_layer_settings supersedes the older `VK_EXT_validation_features` and `VK_EXT_validation_flags` by offering a general, extensible way to pass settings to any Vulkan layer (not just validation).
+
+== What this sample does
+
+- Enables the instance extension `VK_EXT_layer_settings` (optionally).
+- Adds settings for the Khronos validation layer before the Vulkan instance is created:
+  - Enables Best Practices checks.
+  - Enables `debugPrintfEXT` support (so shader `debugPrintf` messages are emitted via validation).
+- Runs a minimal frame loop that presents without validation errors (uses a small per‑frame command buffer that transitions the swapchain image to `PRESENT`).
+
+== When to use it vs. alternatives
+- Prefer VK_EXT_layer_settings whenever you need to configure validation from within your app (development builds, samples, tools).
+- `VK_EXT_validation_features` and `VK_EXT_validation_flags` are deprecated by layer settings; use those only for legacy purposes.
+
+== Using VK_EXT_layer_settings
+If you are integrating layer settings directly into your own Vulkan app, the flow is simple:
+
+1. Enable validation layers (e.g., "VK_LAYER_KHRONOS_validation").
+2. Check that the validation layer advertises the instance extension VK_EXT_layer_settings.
+3. If available, add VK_EXT_layer_settings to your instance extension list.
+4. Create one or more VkLayerSettingEXT entries (for example, to enable Best Practices and debugPrintfEXT).
+5. Chain a VkLayerSettingsCreateInfoEXT with those settings into VkInstanceCreateInfo::pNext.
+6. Call vkCreateInstance as usual. The layer consumes the settings at instance creation time.
+7. Optional: Create a VkDebugUtilsMessengerEXT so you can see validation output.
+
+=== Minimal C/C++ example (C API shown)
+[source,cpp]
+----
+#include <vulkan/vulkan.h>
+#include <vector>
+#include <cstring>
+
+static const char *kValidationLayer = "VK_LAYER_KHRONOS_validation";
+
+// Helper to check if VK_EXT_layer_settings is advertised by the validation layer
+bool layer_settings_supported()
+{
+    uint32_t count = 0;
+    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, nullptr);
+    std::vector<VkExtensionProperties> exts(count);
+    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, exts.data());
+    for (auto &e : exts)
+    {
+        if (strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0)
+            return true;
+    }
+    return false;
+}
+
+VkInstance create_instance_with_layer_settings()
+{
+    std::vector<const char *> instance_exts;
+    instance_exts.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+    // Add your platform surface extension(s), e.g. VK_KHR_xcb_surface, VK_KHR_win32_surface, etc.
+
+    const char *layers[] = {kValidationLayer};
+
+    // Prepare layer settings (strings) we want to enable
+    static const char *enables[] = {
+        "VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT",
+        "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT",
+    };
+
+    // One setting object that enables both features above
+    VkLayerSettingEXT setting{};
+    setting.pLayerName   = kValidationLayer;
+    setting.pSettingName = "enables";                         // well-known name used by VVL
+    setting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;   // string list
+    setting.valueCount   = static_cast<uint32_t>(std::size(enables));
+    setting.pValues      = enables;                            // const char* array
+
+    VkLayerSettingsCreateInfoEXT layer_settings_ci{VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT};
+    layer_settings_ci.settingCount = 1;
+    layer_settings_ci.pSettings    = &setting;
+
+    // Build instance create info and chain layer settings if supported
+    VkInstanceCreateInfo ici{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+    ici.ppEnabledLayerNames   = layers;
+    ici.enabledLayerCount     = 1;
+    ici.ppEnabledExtensionNames = instance_exts.data();
+    ici.enabledExtensionCount   = static_cast<uint32_t>(instance_exts.size());
+
+    const bool has_layer_settings = layer_settings_supported();
+    if (has_layer_settings)
+    {
+        // You also need to add VK_EXT_layer_settings to the enabled instance extensions
+        instance_exts.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
+        ici.ppEnabledExtensionNames = instance_exts.data();
+        ici.enabledExtensionCount   = static_cast<uint32_t>(instance_exts.size());
+        ici.pNext                   = &layer_settings_ci;
+    }
+    else
+    {
+        // Fallback for older SDKs: use VK_EXT_validation_features
+        static const VkValidationFeatureEnableEXT vfe[] = {
+            VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+            VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT,
+        };
+        static VkValidationFeaturesEXT validation_features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+        validation_features.enabledValidationFeatureCount = static_cast<uint32_t>(std::size(vfe));
+        validation_features.pEnabledValidationFeatures    = vfe;
+        ici.pNext = &validation_features;   // no VK_EXT_layer_settings needed for this path
+    }
+
+    VkInstance instance = VK_NULL_HANDLE;
+    VkResult   result   = vkCreateInstance(&ici, nullptr, &instance);
+    if (result != VK_SUCCESS)
+    {
+        // Handle error (missing extensions/layers, etc.)
+        return VK_NULL_HANDLE;
+    }
+
+    return instance;
+}
+----
+
+TIP: debugPrintfEXT only produces messages when your shaders call debugPrintf. See the shader_debugprintf sample for a complete pipeline + shader example that emits messages through validation.
+
+NOTE: VK_EXT_layer_settings is an instance extension provided by the layer. On some systems it may not be present; the fallback above using VK_EXT_validation_features enables the same categories in a more limited, legacy way.
+
+CAUTION: Layer settings only affect layers that recognize them. Enabling layer settings without enabling the corresponding layer (e.g., VK_LAYER_KHRONOS_validation) has no effect.
