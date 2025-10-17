@@ -63,7 +63,7 @@ float4 main(float2 inUV : TEXCOORD0)
         ar = ts.y / ts.x;
     }
 
-    float2 P = inUV.yx - float2(0, (25 >> 1) * ar * blurScale);
+    float2 P = inUV.yx - float2(0, (weights.getCount() >> 1) * ar * blurScale);
 
     float4 color = float4(0.0, 0.0, 0.0, 0.0);
     for (int i = 0; i < 25; i++)
