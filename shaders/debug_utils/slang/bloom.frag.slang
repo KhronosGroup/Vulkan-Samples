@@ -66,7 +66,7 @@ float4 main(float2 inUV : TEXCOORD0)
     float2 P = inUV.yx - float2(0, (weights.getCount() >> 1) * ar * blurScale);
 
     float4 color = float4(0.0, 0.0, 0.0, 0.0);
-    for (int i = 0; i < 25; i++)
+    for (int i = 0; i < weights.getCount(); i++)
     {
         float2 dv = float2(0.0, i * blurScale) * ar;
         color += samplerColor1.Sample(P + dv) * weights[i] * blurStrength;

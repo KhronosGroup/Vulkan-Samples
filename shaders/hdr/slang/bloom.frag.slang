@@ -69,10 +69,10 @@ float4 main(VSOutput input)
 		ar = ts.y / ts.x;
 	}
 
-	float2 P = input.UV.yx - float2(0, (25 >> 1) * ar * blurScale);
+    float2 P = input.UV.yx - float2(0, (weights.getCount() >> 1) * ar * blurScale);
 
-	float4 color = float4(0.0, 0.0, 0.0, 0.0);
-	for (int i = 0; i < 25; i++)
+    float4 color = float4(0.0, 0.0, 0.0, 0.0);
+    for (int i = 0; i < weights.getCount(); i++)
 	{
         float2 dv = float2(0.0, i * blurScale) * ar;
         color += samplerColor1.Sample(P + dv) * weights[i] * blurStrength;
