@@ -45,11 +45,11 @@ ConstantsHSOutput ConstantsHS(InputPatch<VSOutput, 3> patch)
 {
     ConstantsHSOutput output;
     if (ubo.tessellationFactor > 0.0) {
-		output.TessLevelInner[0] = ubo.tessellationFactor;
-		output.TessLevelInner[1] = ubo.tessellationFactor;
-		output.TessLevelOuter[0] = ubo.tessellationFactor;
-		output.TessLevelOuter[1] = ubo.tessellationFactor;
-		output.TessLevelOuter[2] = ubo.tessellationFactor;
+        output.TessLevelInner[0] = ubo.tessellationFactor;
+        output.TessLevelInner[1] = ubo.tessellationFactor;
+        output.TessLevelOuter[0] = ubo.tessellationFactor;
+        output.TessLevelOuter[1] = ubo.tessellationFactor;
+        output.TessLevelOuter[2] = ubo.tessellationFactor;
     } else {
         output.TessLevelInner[0] = 1;
         output.TessLevelInner[1] = 1;
@@ -62,18 +62,14 @@ ConstantsHSOutput ConstantsHS(InputPatch<VSOutput, 3> patch)
 
 [shader("hull")]
 [domain("tri")]
-// @todo layout(triangles, equal_spacing, cw) in;
 [partitioning("integer")]
 [outputtopology("triangle_cw")]
 [outputcontrolpoints(3)]
 [patchconstantfunc("ConstantsHS")]
-// [maxtessfactor(20.0f)]
 HSOutput main(InputPatch<VSOutput, 3> patch, uint InvocationID: SV_OutputControlPointID)
 {
     HSOutput output;
     output.Pos = patch[InvocationID].Pos.xyz;
     output.Normal = patch[InvocationID].Normal;
-	// @todo
-    // outPos[gl_InvocationID] = inPos[gl_InvocationID];
     return output;
 }

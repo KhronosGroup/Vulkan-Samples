@@ -33,7 +33,6 @@ struct UBO
 };
 ConstantBuffer<UBO> ubo;
 
-// @todo: bindings not necessary here
 [[vk::binding(1, 0)]] Sampler2D samplerEnvMap;
 [[vk::binding(2, 0)]] Sampler2D samplerSphere;
 

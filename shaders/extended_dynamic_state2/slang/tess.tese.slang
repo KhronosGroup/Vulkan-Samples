@@ -36,7 +36,7 @@ struct DSOutput
 
 struct ConstantsHSOutput
 {
-    float TessLevelOuter[4] : SV_TessFactor;
+    float TessLevelOuter[3] : SV_TessFactor;
     float TessLevelInner[2] : SV_InsideTessFactor;
 };
 

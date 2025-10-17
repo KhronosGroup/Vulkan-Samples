@@ -32,7 +32,6 @@ struct UBO
 {
     float4x4 projection;
     float4x4 view;
-    float tessLevel;
 };
 ConstantBuffer<UBO> ubo;
 
@@ -40,7 +39,7 @@ ConstantBuffer<UBO> ubo;
 VSOutput main(VSInput input)
 {
     VSOutput output;
-	output.UVW = input.Pos;
+    output.UVW = input.Pos;
     output.Pos = mul(ubo.projection, mul(ubo.view, float4(input.Pos * 10.0, 1.0)));
     return output;
 }

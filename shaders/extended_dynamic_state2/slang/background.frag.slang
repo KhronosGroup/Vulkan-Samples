@@ -27,5 +27,5 @@ struct VSOutput
 [shader("fragment")]
 float4 main(VSOutput input)
 {
-	return float4(samplerEnvMap.Sample(normalize(input.UVW)).rgb, 1.0);
+    return float4(samplerEnvMap.Sample(normalize(input.UVW)).rgb, 1.0);
 }

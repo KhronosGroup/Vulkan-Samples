@@ -58,9 +58,7 @@ VSOutput main(VSInput input, uniform float4x4 model, uniform float4 color)
     output.FragColor   		= color;
 	float4 localPos    		= mul(ubo.view, mul(model, float4(input.Pos, 1.0)));
     output.Pos 				= mul(ubo.projection, localPos);
-	// @todo
-	float3x3 nmat			= (float3x3)mul(ubo.view, model);
-	output.Normal      		= mul(nmat, input.Normal);
+    output.Normal           = mul((float3x3)mul(ubo.view, model), input.Normal);
 	float4 positionWorld 	= mul(model, float4(input.Pos, 1.0));
     output.LightVec 		= ubo_baseline.lightPosition.xyz - positionWorld.xyz;
     output.LightColor[0] 	= ubo_baseline.lightColor.xyz * ubo_baseline.lightColor.w;
