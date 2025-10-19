@@ -176,11 +176,11 @@ void PipelineBinary::log_pipeline_binary_support()
 	snprintf(buf, sizeof(buf), "VK_KHR_pipeline_binary supported feature: pipelineBinaries = %s\n", pb);
 	log_text_ += buf;
 
-	const char *ic  = props.pipelineBinaryInternalCache ? "true" : "false";
-	const char *icc = props.pipelineBinaryInternalCacheControl ? "true" : "false";
-	const char *pic = props.pipelineBinaryPrefersInternalCache ? "true" : "false";
+	const char *ic   = props.pipelineBinaryInternalCache ? "true" : "false";
+	const char *icc  = props.pipelineBinaryInternalCacheControl ? "true" : "false";
+	const char *pic  = props.pipelineBinaryPrefersInternalCache ? "true" : "false";
 	const char *pic2 = props.pipelineBinaryPrecompiledInternalCache ? "true" : "false";
-	const char *cd  = props.pipelineBinaryCompressedData ? "true" : "false";
+	const char *cd   = props.pipelineBinaryCompressedData ? "true" : "false";
 	LOGI("VK_KHR_pipeline_binary properties: internalCache={}, internalCacheControl={}, prefersInternalCache={}, precompiledInternalCache={}, compressedData={}", ic, icc, pic, pic2, cd);
 	snprintf(buf, sizeof(buf), "VK_KHR_pipeline_binary properties: internalCache=%s, internalCacheControl=%s, prefersInternalCache=%s, precompiledInternalCache=%s, compressedData=%s\n", ic, icc, pic, pic2, cd);
 	log_text_ += buf;
