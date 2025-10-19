@@ -16,6 +16,10 @@
 - limitations under the License.
 -
 ////
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/layer_settings[Khronos Vulkan samples github repository].
+endif::[]
+
 = VK_EXT_layer_settings — Configure validation layers programmatically
 
 This sample demonstrates how to use VK_EXT_layer_settings to configure Vulkan layers (in particular `VK_LAYER_KHRONOS_validation`) directly from your application. Instead of relying on environment variables or JSON files, you can enable features like Best Practices and `debugPrintfEXT`, tune message filtering, or change output settings via code.
