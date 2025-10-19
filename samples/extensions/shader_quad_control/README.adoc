@@ -17,6 +17,10 @@
 -
 ////
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/shader_quad_control[Khronos Vulkan samples github repository].
+endif::[]
+
 = Shader quad control (VK_KHR_shader_quad_control)
 
 This sample demonstrates VK_KHR_shader_quad_control in a minimal graphics pipeline.
