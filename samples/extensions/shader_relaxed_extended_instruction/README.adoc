@@ -16,6 +16,11 @@
 - limitations under the License.
 -
 ////
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/shader_relaxed_extended[Khronos Vulkan samples github repository].
+endif::[]
+
 = VK_KHR_shader_relaxed_extended_instruction — Enable SPIR-V relaxed extended instruction for non-semantic sets
 
 This sample demonstrates the device feature VK_KHR_shader_relaxed_extended_instruction and how it relates to SPV_KHR_relaxed_extended_instruction in SPIR-V. The SPIR-V extension introduces a new instruction that allows certain forward references in extended instruction sets used by non-semantic information (for example, the NonSemantic.DebugPrintf instruction set used by GL_EXT_debug_printf). In Vulkan, those non-semantic instruction sets are allowed via VK_KHR_shader_non_semantic_info.
