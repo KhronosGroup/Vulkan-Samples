@@ -26,9 +26,9 @@ LayerSettingsSample::~LayerSettingsSample()
 {
 	if (debug_messenger_ != VK_NULL_HANDLE && has_instance())
 	{
-		VkInstance instance = get_instance().get_handle();
+		VkInstance instance  = get_instance().get_handle();
 		auto       fpDestroy = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-		    vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+            vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
 		if (fpDestroy)
 		{
 			fpDestroy(instance, debug_messenger_, nullptr);
@@ -48,18 +48,18 @@ std::unique_ptr<vkb::core::InstanceC> LayerSettingsSample::create_instance()
 	{
 		VkDebugUtilsMessengerCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
 		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-		                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-		                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-		                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 		info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-		                  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-		                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+		                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+		                   VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		info.pfnUserCallback = &LayerSettingsSample::debug_callback;
 		info.pUserData       = this;
 
 		VkInstance instance = inst->get_handle();
 		auto       fpCreate = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-		    vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+            vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
 		if (fpCreate && debug_messenger_ == VK_NULL_HANDLE)
 		{
 			VkResult res = fpCreate(instance, &info, nullptr, &debug_messenger_);
@@ -146,12 +146,12 @@ bool LayerSettingsSample::prepare(const vkb::ApplicationOptions &options)
 	{
 		VkDebugUtilsMessengerCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
 		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-		                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-		                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-		                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 		info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-		                  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-		                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+		                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+		                   VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		info.pfnUserCallback = &LayerSettingsSample::debug_callback;
 		info.pUserData       = this;
 
@@ -182,12 +182,12 @@ void LayerSettingsSample::record_minimal_present_cmd(VkCommandBuffer cmd, uint32
 	bp_barrier.srcAccessMask   = 0;
 	bp_barrier.dstAccessMask   = 0;
 	vkCmdPipelineBarrier(cmd,
-	                    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-	                    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-	                    0,
-	                    1, &bp_barrier,
-	                    0, nullptr,
-	                    0, nullptr);
+	                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+	                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+	                     0,
+	                     1, &bp_barrier,
+	                     0, nullptr,
+	                     0, nullptr);
 
 	// Minimal render pass only to draw the UI overlay with collected validation messages.
 	VkRenderPassBeginInfo render_pass_begin = vkb::initializers::render_pass_begin_info();
@@ -265,8 +265,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL LayerSettingsSample::debug_callback(
 	}
 
 	const char *sev = (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)   ? "ERROR" :
-	                 (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) ? "WARNING" :
-	                 (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)    ? "INFO" : "VERBOSE";
+	                  (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) ? "WARNING" :
+	                  (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)    ? "INFO" :
+	                                                                                        "VERBOSE";
 
 	char type_buf[32] = {};
 	int  ofs          = 0;
@@ -288,7 +289,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL LayerSettingsSample::debug_callback(
 	{
 		self->log_text_.erase(0, self->log_text_.size() - 64 * 1024);
 	}
-	return VK_FALSE; // do not abort calls
+	return VK_FALSE;        // do not abort calls
 }
 
 void LayerSettingsSample::on_update_ui_overlay(vkb::Drawer &drawer)

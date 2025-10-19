@@ -51,10 +51,10 @@ class LayerSettingsSample : public ApiVulkanSample
 
 	// Debug messenger callback.
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
-	    VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
-	    VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
-	    const VkDebugUtilsMessengerCallbackDataEXT      *pCallbackData,
-	    void                                            *pUserData);
+	    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+	    VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
+	    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+	    void                                       *pUserData);
 };
 
 std::unique_ptr<vkb::Application> create_layer_settings();
