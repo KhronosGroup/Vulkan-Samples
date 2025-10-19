@@ -17,6 +17,8 @@
 
 #include "compute_shader_derivatives.h"
 
+#include <cstdio>
+
 #include "common/vk_common.h"
 #include "common/vk_initializers.h"
 #include "core/util/logging.hpp"
@@ -235,13 +237,14 @@ void ComputeShaderDerivatives::render(float delta_time)
 		VkQueue q     = static_cast<VkQueue>(queue.get_handle());
 		VK_CHECK(vkQueueSubmit(q, 1, &submit_info, VK_NULL_HANDLE));
 
-		// One-time readback and print results after the compute dispatch completes
+		// One-time readback and collect results after the compute dispatch completes
 		if (!printed_once)
 		{
 			VK_CHECK(vkQueueWaitIdle(q));
 			void *mapped = nullptr;
 			VK_CHECK(vkMapMemory(get_device().get_handle(), result_memory, 0, result_size, 0, &mapped));
 			float *data = static_cast<float *>(mapped);
+			log_text_.clear();
 			// Each entry is float4: v, ddx, ddy, pad
 			for (uint32_t y = 0; y < 4; ++y)
 			{
@@ -251,7 +254,12 @@ void ComputeShaderDerivatives::render(float delta_time)
 					float    v   = data[idx * 4 + 0];
 					float    ddx = data[idx * 4 + 1];
 					float    ddy = data[idx * 4 + 2];
-					LOGI("compute-derivatives CPU: tid=({}, {}) v={} ddx={} ddy={}", x, y, v, ddx, ddy);
+					// Store as human-readable line for GUI and also keep LOGI for debug environments
+					char buf[160];
+					snprintf(buf, sizeof(buf), "tid=(%u,%u) v=%.6f ddx=%.6f ddy=%.6f", x, y, v, ddx, ddy);
+					log_text_ += buf;
+					log_text_ += '\n';
+					LOGI("compute-derivatives CPU: {}", buf);
 				}
 			}
 			vkUnmapMemory(get_device().get_handle(), result_memory);
@@ -261,6 +269,21 @@ void ComputeShaderDerivatives::render(float delta_time)
 
 	// Present (waits on render_complete)
 	submit_frame();
+}
+
+void ComputeShaderDerivatives::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	if (drawer.header("Compute shader derivatives"))
+	{
+		if (log_text_.empty())
+		{
+			drawer.text("Results will be shown here after first dispatch.");
+		}
+		else
+		{
+			drawer.text("%s", log_text_.c_str());
+		}
+	}
 }
 
 std::unique_ptr<vkb::Application> create_compute_shader_derivatives()

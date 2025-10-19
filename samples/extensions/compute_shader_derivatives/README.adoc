@@ -16,6 +16,10 @@
 - limitations under the License.
 -
 ////
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/compute_shader_derivatives[Khronos Vulkan samples github repository].
+endif::[]
+
 = VK_KHR_compute_shader_derivatives — Derivatives in compute shaders
 
 This sample demonstrates VK_KHR_compute_shader_derivatives, which enables the use of derivative instructions (like dFdx/dFdy) inside compute shaders. Traditionally, derivatives are only available in fragment shaders, but this extension defines derivative groups in compute and how invocations are paired for derivative computations.

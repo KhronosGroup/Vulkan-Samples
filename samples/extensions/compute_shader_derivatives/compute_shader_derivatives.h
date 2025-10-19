@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "api_vulkan_sample.h"
 
 class ComputeShaderDerivatives : public ApiVulkanSample
@@ -29,6 +31,7 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
 	void create_output_buffer_and_descriptors();
@@ -50,6 +53,9 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 	uint32_t       result_stride{16};        // 3 floats (v,dx,dy) + padding -> 16 bytes
 	VkDeviceSize   result_size{result_stride * result_count};
 	bool           printed_once{false};
+
+	// Cached log text to show in GUI
+	std::string log_text_;
 };
 
 std::unique_ptr<vkb::Application> create_compute_shader_derivatives();
