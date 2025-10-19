@@ -16,6 +16,10 @@
 - limitations under the License.
 -
 ////
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/pipeline_binary[Khronos Vulkan samples github repository].
+endif::[]
+
 = Pipeline binary (VK_KHR_pipeline_binary)
 :description: Demonstrates querying a pipeline key and capturing a pipeline binary.
 
@@ -74,5 +78,5 @@ Note: This sample uses the `pPipelineCreateInfo` path when creating pipeline bin
 - Any change in creation parameters changes the key and the resulting binary.
 
 == References
-- Vulkan specification and Khronos Registry entries for VK_KHR_pipeline_binary
-- Related samples: graphics_pipeline_library, pipeline_cache
+- VK_KHR_pipeline_binary specification: xref:https://docs.vulkan.org/spec/latest/chapters/pipelines.html#pipelines-binaries[pipeline binaries]
+- Related samples: xref:../graphics_pipeline_library/README.adoc[graphics_pipeline_library], xref:../pipeline_cache/README.adoc[pipeline_cache]

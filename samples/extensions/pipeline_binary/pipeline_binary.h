@@ -18,6 +18,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include <string>
 
 // Minimal sample that demonstrates VK_KHR_pipeline_binary usage by creating a
 // trivial compute pipeline, querying the pipeline key, and (if supported)
@@ -32,6 +33,7 @@ class PipelineBinary : public ApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
 	// Resources for a minimal compute pipeline used for demonstrating pipeline binaries
@@ -45,6 +47,9 @@ class PipelineBinary : public ApiVulkanSample
 
 	// Pipeline binary objects
 	VkPipelineBinaryKHR pipeline_binary{VK_NULL_HANDLE};
+
+	// Aggregated UI log text shown in the overlay
+	std::string log_text_{};
 
 	// Internal helpers
 	void create_compute_pipeline();
