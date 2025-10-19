@@ -26,17 +26,35 @@ class LayerSettingsSample : public ApiVulkanSample
 {
   public:
 	LayerSettingsSample();
-	~LayerSettingsSample() override = default;
+	~LayerSettingsSample() override;
+
+	// Install the DebugUtils messenger as early as possible by overriding instance creation.
+	std::unique_ptr<vkb::core::InstanceC> create_instance() override;
 
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override
 	{}
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
 	// Records a per-frame minimal command buffer that transitions the acquired
-	// swapchain image to PRESENT so we can present without validation errors.
+	// swapchain image to PRESENT so we can present without validation errors,
+	// and draws the UI to show validation messages.
 	void record_minimal_present_cmd(VkCommandBuffer cmd, uint32_t image_index);
+
+	// Aggregated validation output for GUI.
+	std::string log_text_;
+
+	// Local debug messenger to capture Validation Layer messages at runtime.
+	VkDebugUtilsMessengerEXT debug_messenger_ = VK_NULL_HANDLE;
+
+	// Debug messenger callback.
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
+	    VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
+	    VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
+	    const VkDebugUtilsMessengerCallbackDataEXT      *pCallbackData,
+	    void                                            *pUserData);
 };
 
 std::unique_ptr<vkb::Application> create_layer_settings();
