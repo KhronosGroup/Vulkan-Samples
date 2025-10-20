@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,12 +50,12 @@ const std::vector<SubMesh *> &Mesh::get_submeshes() const
 	return submeshes;
 }
 
-void Mesh::add_node(Node &node)
+void Mesh::add_node(vkb::scene_graph::NodeC &node)
 {
 	nodes.push_back(&node);
 }
 
-const std::vector<Node *> &Mesh::get_nodes() const
+const std::vector<vkb::scene_graph::NodeC *> &Mesh::get_nodes() const
 {
 	return nodes;
 }

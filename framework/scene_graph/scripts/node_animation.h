@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,7 +39,7 @@ namespace sg
 class NodeAnimation : public NodeScript
 {
   public:
-	NodeAnimation(Node &node, TransformAnimFn animation_fn);
+	NodeAnimation(vkb::scene_graph::NodeC &node, TransformAnimFn animation_fn);
 
 	virtual ~NodeAnimation() = default;
 
