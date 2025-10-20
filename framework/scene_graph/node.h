@@ -130,7 +130,7 @@ inline Node<bindingType> *Node<bindingType>::get_parent()
 	}
 	else
 	{
-		return dynamic_cast<NodeC *>(parent);
+		return reinterpret_cast<NodeC *>(parent);
 	}
 }
 
@@ -150,22 +150,13 @@ inline bool Node<bindingType>::has_component() const
 template <vkb::BindingType bindingType>
 inline bool Node<bindingType>::has_component(std::type_index index) const
 {
-	return components.count(index) > 0;
+	return components.contains(index);
 }
 
 template <vkb::BindingType bindingType>
 inline void Node<bindingType>::set_component(vkb::sg::Component &component)
 {
-	auto it = components.find(component.get_type());
-
-	if (it != components.end())
-	{
-		it->second = &component;
-	}
-	else
-	{
-		components.insert(std::make_pair(component.get_type(), &component));
-	}
+	components[component.get_type()] = &component;
 }
 
 template <vkb::BindingType bindingType>
