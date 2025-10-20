@@ -1407,8 +1407,13 @@ void RaytracingExtended::draw()
 	// Prepare current swap chain image as transfer destination
 	vkb::image_layout_transition(draw_cmd_buffers[i],
 	                             get_render_context().get_swapchain().get_images()[i],
+	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                             {},
+	                             VK_ACCESS_TRANSFER_WRITE_BIT,
 	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Prepare ray tracing output image as transfer source
 	vkb::image_layout_transition(draw_cmd_buffers[i],
