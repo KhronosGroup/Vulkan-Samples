@@ -295,6 +295,12 @@ struct HPPType<VkSampler>
 {
 	using Type = vk::Sampler;
 };
+
+template <>
+struct HPPType<VkPhysicalDevicePipelineBinaryFeaturesKHR>
+{
+	using Type = vk::PhysicalDevicePipelineBinaryFeaturesKHR;
+};
 }        // namespace detail
 
 template <vkb::BindingType bindingType, typename T>
