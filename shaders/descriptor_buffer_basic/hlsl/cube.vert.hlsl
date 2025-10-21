@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,8 +18,7 @@
 struct VSInput
 {
     [[vk::location(0)]] float3 Pos : POSITION0;
-    [[vk::location(1)]] float3 Normal : NORMAL0;
-    [[vk::location(2)]] float2 UV : TEXCOORD0;
+    [[vk::location(1)]] float2 UV : TEXCOORD0;
 };
 
 struct UBOCamera

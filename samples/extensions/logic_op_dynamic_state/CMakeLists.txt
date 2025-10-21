@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Mobica Limited
+# Copyright (c) 2023-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,4 +34,9 @@ add_sample(
         "logic_op_dynamic_state/hlsl/background.vert.hlsl"
         "logic_op_dynamic_state/hlsl/background.frag.hlsl"
         "logic_op_dynamic_state/hlsl/baseline.vert.hlsl"
-        "logic_op_dynamic_state/hlsl/baseline.frag.hlsl")
+        "logic_op_dynamic_state/hlsl/baseline.frag.hlsl"
+    SHADER_FILES_SLANG
+        "logic_op_dynamic_state/slang/background.vert.slang"
+        "logic_op_dynamic_state/slang/background.frag.slang"
+        "logic_op_dynamic_state/slang/baseline.vert.slang"
+        "logic_op_dynamic_state/slang/baseline.frag.slang")

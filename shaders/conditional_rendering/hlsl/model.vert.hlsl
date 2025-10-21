@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,7 +49,8 @@ VSOutput main(VSInput input)
 {
     VSOutput output = (VSOutput) 0;
     float4 localPos = mul(ubo.view, mul(push_constants.model, float4(input.Pos, 1.0)));   
-    output.Normal = input.Normal;
+    float3x3 nMat = (float3x3) mul(ubo.view, push_constants.model);
+    output.Normal = mul(nMat, input.Normal);
     output.Color = push_constants.color.rgb;
     output.Pos = mul(ubo.projection, localPos);
     const float3 lightPos = float3(10.0, -10.0, 10.0);

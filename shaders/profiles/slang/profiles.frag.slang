@@ -16,17 +16,17 @@
  */
 
 [[vk::binding(1, 0)]]
-Sampler2D textures[] : register(t1, space0);
+Sampler2D textures[];
 
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
-    [[vk::location(0)]] float2 UV : TEXCOORD0;
-    [[vk::location(1)]] nointerpolation int TexIndex : TEXCOORD1;
+    float2 UV;
+    nointerpolation int TexIndex;
 };
 
 [shader("fragment")]
-float4 main(VSOutput input) : SV_TARGET
+float4 main(VSOutput input)
 {
     return textures[NonUniformResourceIndex(input.TexIndex)].Sample(input.UV);
 }

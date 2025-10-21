@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Mobica Limited
+# Copyright (c) 2023-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,12 @@ add_sample(
     NAME "Fragment shader barycentric"
     DESCRIPTION "Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment."
     SHADER_FILES_GLSL
-    "fragment_shader_barycentric/object.vert"
-    "fragment_shader_barycentric/object.frag"
-    "fragment_shader_barycentric/skybox.vert"
-    "fragment_shader_barycentric/skybox.frag")
+        "fragment_shader_barycentric/glsl/object.vert"
+        "fragment_shader_barycentric/glsl/object.frag"
+        "fragment_shader_barycentric/glsl/skybox.vert"
+        "fragment_shader_barycentric/glsl/skybox.frag"
+    SHADER_FILES_SLANG
+        "fragment_shader_barycentric/slang/object.vert.slang"
+        "fragment_shader_barycentric/slang/object.frag.slang"
+        "fragment_shader_barycentric/slang/skybox.vert.slang"
+        "fragment_shader_barycentric/slang/skybox.frag.slang")
