@@ -686,15 +686,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 
-	VkRenderingInputAttachmentIndexInfo rendering_attachment_index_info{VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO};
 	pipeline_rendering_create_info.pNext = &rendering_attachment_index_info;
-
-	std::array<uint32_t, 4> colorAttachments                     = {VK_ATTACHMENT_UNUSED, 0, 1, 2};
-	rendering_attachment_index_info.pNext                        = nullptr;
-	rendering_attachment_index_info.colorAttachmentCount         = colorAttachments.size();
-	rendering_attachment_index_info.pColorAttachmentInputIndices = colorAttachments.data();
-	rendering_attachment_index_info.pDepthInputAttachmentIndex   = nullptr;
-	rendering_attachment_index_info.pStencilInputAttachmentIndex = nullptr;
 #else
 	pipeline_create_info.subpass = 0;
 #endif
@@ -901,6 +893,9 @@ void DynamicRenderingLocalRead::build_command_buffers()
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Set input attachment indices for the composition and transparent passes
+		vkCmdSetRenderingInputAttachmentIndicesKHR(cmd, &rendering_attachment_index_info);
 
 		/*
 		    First draw
