@@ -62,7 +62,7 @@ struct BufferBuilder
 		return alignment;
 	}
 
-  protected:
+  private:
 	DeviceSizeType alignment{0};
 };
 
