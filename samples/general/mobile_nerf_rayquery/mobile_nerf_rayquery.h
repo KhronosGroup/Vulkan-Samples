@@ -167,6 +167,9 @@ class MobileNerfRayQuery : public ApiVulkanSample
 	// Feature map format
 	VkFormat feature_map_format = VK_FORMAT_R16G16B16A16_SFLOAT;
 
+	// Acceleration structure properties.
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
+
 	void read_json_map();
 	void load_shaders();
 	void create_uniforms();

@@ -56,6 +56,14 @@ struct BufferBuilder
 	BufferPtr<bindingType> build_unique(vkb::core::Device<bindingType> &device) const;
 	BufferBuilder         &with_flags(BufferCreateFlagsType flags);
 	BufferBuilder         &with_usage(BufferUsageFlagsType usage);
+	BufferBuilder         &with_alignment(DeviceSizeType align);
+	DeviceSizeType         get_alignment() const
+	{
+		return alignment;
+	}
+
+  private:
+	DeviceSizeType alignment{0};
 };
 
 using BufferBuilderC   = BufferBuilder<vkb::BindingType::C>;
@@ -95,6 +103,13 @@ template <vkb::BindingType bindingType>
 inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_usage(BufferUsageFlagsType usage)
 {
 	this->get_create_info().usage = usage;
+	return *this;
+}
+
+template <vkb::BindingType bindingType>
+inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_alignment(DeviceSizeType align)
+{
+	this->alignment = align;
 	return *this;
 }
 
@@ -221,6 +236,7 @@ inline Buffer<bindingType>::Buffer(vkb::core::Device<bindingType> &device,
            BufferBuilder<bindingType>(size)
                .with_usage(buffer_usage)
                .with_vma_usage(memory_usage)
+               .with_alignment(0)
                .with_vma_flags(flags)
                .with_queue_families(queue_family_indices)
                .with_implicit_sharing_mode())
@@ -230,7 +246,7 @@ template <vkb::BindingType bindingType>
 inline Buffer<bindingType>::Buffer(vkb::core::Device<bindingType> &device, const BufferBuilder<bindingType> &builder) :
     ParentType(builder.get_allocation_create_info(), nullptr, &device), size(builder.get_create_info().size)
 {
-	this->set_handle(this->create_buffer(builder.get_create_info()));
+	this->set_handle(this->create_buffer(builder.get_create_info(), builder.get_alignment()));
 	if (!builder.get_debug_name().empty())
 	{
 		this->set_debug_name(builder.get_debug_name());
