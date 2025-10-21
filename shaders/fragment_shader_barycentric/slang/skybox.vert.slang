@@ -1,4 +1,3 @@
-#version 450
 /* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -37,7 +36,7 @@ ConstantBuffer<UBO> ubo;
 VSOutput main(VSInput input)
 {
     VSOutput output;
-    output.Pos = mul(ubo.projection, float4(mul((float3x3)ubo.modelview, input.Pos.xyz), 1.0));
+    output.Pos = mul(ubo.projection, float4(mul((float3x3)ubo.modelview, input.Pos), 1.0));
     output.UVW = input.Pos;
     return output;
 }

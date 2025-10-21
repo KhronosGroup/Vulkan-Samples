@@ -24,7 +24,7 @@ struct VSOutput
 
 struct GSOutput
 {
-    float4 Pos : SV_POSITION;
+    float4 Pos : SV_Position;
     float3 Color;
 };
 
@@ -40,23 +40,21 @@ struct UBO {
 void main(triangle VSOutput input[3], inout LineStream<GSOutput> outStream)
 {
     float normalLength = 0.1f;
-    for (int i = 0; i < 3; i++)
-    {
-        // middle point of triangle
-        float3 pos = (input[0].Pos.xyz + input[1].Pos.xyz + input[2].Pos.xyz) / 3.0;
-        float3 normal = input[i].Normal.xyz;
 
-        GSOutput output;
+    // middle point of triangle
+    float3 pos = (input[0].Pos.xyz + input[1].Pos.xyz + input[2].Pos.xyz) / 3.0;
+    float3 normal = input[0].Normal.xyz;
 
-        // line vertices
-        output.Pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(pos, 1.0))));
-        output.Color = float3(1.0, 0.0, 0.0);
-        outStream.Append(output);
+    GSOutput output;
 
-        output.Pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model,  float4(pos + normal * normalLength, 1.0))));
-        output.Color = float3(0.0, 0.0, 1.0);
-        outStream.Append(output);
+    // line vertices
+    output.Pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(pos, 1.0))));
+    output.Color = float3(1.0, 0.0, 0.0);
+    outStream.Append(output);
 
-        outStream.RestartStrip();
-    }
+    output.Pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model,  float4(pos + normal * normalLength, 1.0))));
+    output.Color = float3(0.0, 0.0, 1.0);
+    outStream.Append(output);
+
+    outStream.RestartStrip();
 }

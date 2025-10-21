@@ -1,4 +1,3 @@
-#version 450
 /* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -32,31 +31,31 @@ float4 main(VSOutput input, float3 baryCoords: SV_Barycentrics, noperspective fl
     float3 vColor2 = GetAttributeAtVertex(input.Color, 2);
 
     float4 outColor = 0.0;
-	switch (type) {
-		case 0:
+    switch (type) {
+        case 0:
         {
             outColor.rgb = vColor0 * baryCoords.x +
                            vColor1 * baryCoords.y +
                            vColor2 * baryCoords.z;
-			outColor.a = 1.0;
-			break;
-		}
-		case 1:
+            outColor.a = 1.0;
+            break;
+        }
+        case 1:
         {
             outColor.rgb = baryCoords - baryCoordsAffine;
-			const float exposure = 10.f;
-			outColor = float4(vec3(1.0) - exp(-outColor.rgb * exposure), 1.0);
-			break;
-		}
-		case 2:
+            const float exposure = 10.f;
+            outColor = float4(float3(1.0) - exp(-outColor.rgb * exposure), 1.0);
+            break;
+        }
+        case 2:
         {
             if (baryCoords.x < 0.01 || baryCoords.y < 0.01 || baryCoords.z < 0.01) 
-				outColor = float4(0.0, 0.0, 0.0, 1.0);
-			else
-				outColor = float4(0.5, 0.5, 0.5, 1.0);
-			break;
-		}
-		case 3:
+                outColor = float4(0.0, 0.0, 0.0, 1.0);
+            else
+                outColor = float4(0.5, 0.5, 0.5, 1.0);
+            break;
+        }
+        case 3:
         {
             if (baryCoords.x <= baryCoords.y && baryCoords.x <= baryCoords.z)
                 outColor = float4(vColor0.rgb * baryCoords.x, 1.0);
@@ -64,12 +63,12 @@ float4 main(VSOutput input, float3 baryCoords: SV_Barycentrics, noperspective fl
                 outColor = float4(vColor1.rgb * baryCoords.y, 1.0);
             else
                 outColor = float4(vColor2.rgb * baryCoords.z, 1.0); 
-			break;
-		}
-		case 4:
+            break;
+        }
+        case 4:
         {
             outColor = samplerColorMap.Sample(float2(sin(baryCoords.x) + cos(2 * baryCoords.z), sin(baryCoords.x) + cos(2 * baryCoords.y)));
-		}
+        }
         }
         return outColor;
 }

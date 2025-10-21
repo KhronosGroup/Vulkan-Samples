@@ -36,7 +36,7 @@ struct UBO
     float4x4 projection;
     float4x4 modelview;
     float4x4 skybox_modelview;
-	int colorShadingRates;
+    int color_shading_rates;
 };
 ConstantBuffer<UBO> ubo;
 

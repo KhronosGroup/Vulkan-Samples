@@ -46,6 +46,6 @@ VSOutput main(VSInput input, uint VertexIndex: SV_VertexID)
 {
     VSOutput output;
     output.Pos = mul(ubo.projection, mul(ubo.modelview, float4(input.Pos.xyz, 1.0)));
-	output.Color = triangleColors[VertexIndex % 6];
-	return output;
+    output.Color = triangleColors[VertexIndex % 6];
+    return output;
 }
