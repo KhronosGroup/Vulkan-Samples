@@ -30,12 +30,12 @@ struct VSOutput
     float2 UV;
     float3 ViewVec;
     float3 LightVec;
-    float4 BaseColorFactor;
-    float MetallicFactor;
-    float RoughnessFactor;
-    uint BaseTextureIndex;
-    uint NormalTextureIndex;
-    uint MetallicRoughnessTextureIndex;
+    nointerpolation float4 BaseColorFactor;
+    nointerpolation float MetallicFactor;
+    nointerpolation float RoughnessFactor;
+    nointerpolation uint BaseTextureIndex;
+    nointerpolation uint NormalTextureIndex;
+    nointerpolation uint MetallicRoughnessTextureIndex;
 };
 
 struct UBO

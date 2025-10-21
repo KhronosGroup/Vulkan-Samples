@@ -19,7 +19,7 @@ struct VSOutput
 {
     float4 Pos : SV_POSITION;
     float2 UV;
-    uint ColorOffset;
+    nointerpolation uint ColorOffset;
 };
 
 struct Col
