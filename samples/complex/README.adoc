@@ -1,0 +1,35 @@
+////
+- Copyright (c) 2021-2024, The Khronos Group
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+ifndef::complex_samplespath[:complex_samplespath:]
+
+== Complex samples
+
+The goal of these samples is to demonstrate how to use Vulkan in a real world scenario.  These are meant to be demonstrations of how to use Vulkan as a whole instead of a singular item within Vulkan.
+
+This format for samples is to demonstrate how to work with other libraries or setup projects.  Some of the samples may or may not use the Framework as needed.
+
+While the Vulkan concepts found here aren't complex, the interaction and unique benefit with the real-world use cases they work with are meant to be.  Examples of what might eventually be found here include AI, OpenXR, GLTF, etc.  Topics which don't belong in the other sample categories by themselves yet are useful in many areas.
+
+=== xref:./{complex_samplespath}render_octmap/README.adoc[Render an Octo-Map]
+
+*Instancing*: https://docs.vulkan.org/spec/latest/chapters/drawing.html#vkCmdDrawIndexed[`vkCmdDrawIndexed`]
+
+Uses instancing to render octmaps generated in realtime by ARCore and ARKit then saved, and joined together using Point Cloud Registration into one shared map.
+
+These maps are commonly used by Robot Operating System (ROS) and this is a solution showing how to render the map created.  This is a topic of interest to SLAM and AI with OpenXR for map understanding and joining.
