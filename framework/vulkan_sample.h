@@ -501,18 +501,21 @@ inline void VulkanSample<bindingType>::add_layer_setting(LayerSettingType const 
 }
 
 template <vkb::BindingType bindingType>
-inline std::unique_ptr<typename vkb::core::Device<bindingType>> VulkanSample<bindingType>::create_device(vkb::core::PhysicalDevice<bindingType> &gpu)
+inline std::unique_ptr<typename vkb::core::Device<bindingType>>
+    VulkanSample<bindingType>::create_device(vkb::core::PhysicalDevice<bindingType> &gpu)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		return std::make_unique<vkb::core::DeviceCpp>(gpu, surface, std::move(debug_utils), get_device_extensions());
+		return std::make_unique<vkb::core::DeviceCpp>(
+		    gpu, surface, std::move(debug_utils), get_device_extensions(), [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
 	}
 	else
 	{
 		return std::make_unique<vkb::core::DeviceC>(gpu,
 		                                            static_cast<VkSurfaceKHR>(surface),
 		                                            std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
-		                                            get_device_extensions());
+		                                            get_device_extensions(),
+		                                            [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); });
 	}
 }
 
@@ -1074,9 +1077,6 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		instance.reset(reinterpret_cast<vkb::core::InstanceCpp *>(create_instance().release()));
 	}
 
-	// initialize C++-Bindings default dispatcher, second step
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(instance->get_handle());
-
 	// Getting a valid vulkan surface from the platform
 	surface = static_cast<vk::SurfaceKHR>(window->create_surface(reinterpret_cast<vkb::core::InstanceC &>(*instance)));
 	if (!surface)
@@ -1091,16 +1091,6 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	if (gpu.get_features().textureCompressionASTC_LDR)
 	{
 		gpu.get_mutable_requested_features().textureCompressionASTC_LDR = true;
-	}
-
-	// Request sample required GPU features
-	if constexpr (bindingType == BindingType::Cpp)
-	{
-		request_gpu_features(gpu);
-	}
-	else
-	{
-		request_gpu_features(reinterpret_cast<vkb::core::PhysicalDeviceC &>(gpu));
 	}
 
 	// Creating vulkan device, specifying the swapchain extension always
