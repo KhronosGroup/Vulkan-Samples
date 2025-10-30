@@ -43,9 +43,9 @@ struct AccelerationStructure
 class RaytracingInvocationReorder : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR        ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR       acceleration_structure_features{};
-	VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT invocation_reorder_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR          ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR         acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT   invocation_reorder_features{};
 	VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT invocation_reorder_properties{};
 
 	AccelerationStructure bottom_level_acceleration_structure;
@@ -74,9 +74,9 @@ class RaytracingInvocationReorder : public ApiVulkanSample
 	{
 		glm::mat4 view_inverse;
 		glm::mat4 proj_inverse;
-		int32_t   enable_ser;        // Toggle for enabling/disabling SER
-		int32_t   use_coherence_hint; // Toggle for using coherence hints
-		float     time;              // For animation
+		int32_t   enable_ser;                // Toggle for enabling/disabling SER
+		int32_t   use_coherence_hint;        // Toggle for using coherence hints
+		float     time;                      // For animation
 	} uniform_data;
 	std::unique_ptr<vkb::core::BufferC> ubo;
 
@@ -85,9 +85,9 @@ class RaytracingInvocationReorder : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
 
-	bool ser_enabled          = true;  // User-controllable toggle
+	bool ser_enabled            = true;        // User-controllable toggle
 	bool coherence_hint_enabled = true;
-	bool ser_supported        = false; // Device capability
+	bool ser_supported          = false;        // Device capability
 
 	RaytracingInvocationReorder();
 	~RaytracingInvocationReorder();

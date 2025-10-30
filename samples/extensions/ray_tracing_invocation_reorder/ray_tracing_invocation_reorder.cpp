@@ -817,11 +817,11 @@ void RaytracingInvocationReorder::build_command_buffers()
 
 void RaytracingInvocationReorder::update_uniform_buffers()
 {
-	uniform_data.proj_inverse = glm::inverse(camera.matrices.perspective);
-	uniform_data.view_inverse = glm::inverse(camera.matrices.view);
-	uniform_data.enable_ser = ser_enabled ? 1 : 0;
+	uniform_data.proj_inverse       = glm::inverse(camera.matrices.perspective);
+	uniform_data.view_inverse       = glm::inverse(camera.matrices.view);
+	uniform_data.enable_ser         = ser_enabled ? 1 : 0;
 	uniform_data.use_coherence_hint = coherence_hint_enabled ? 1 : 0;
-	uniform_data.time = timer * 0.5f;  // Animate the scene
+	uniform_data.time               = timer * 0.5f;        // Animate the scene
 	ubo->convert_and_update(uniform_data);
 }
 
@@ -859,7 +859,7 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 	device_properties_reorder.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties_reorder.pNext = &invocation_reorder_properties;
 	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties_reorder);
-	
+
 	// Check if device can actually reorder (not just provide hit objects)
 	ser_supported = (invocation_reorder_properties.rayTracingInvocationReorderReorderingHint == VK_RAY_TRACING_INVOCATION_REORDER_MODE_REORDER_EXT);
 	if (ser_supported)
@@ -879,7 +879,7 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 	create_storage_image();
 	create_scene();
 	create_uniform_buffer();
-	update_uniform_buffers();  // Initialize uniform data
+	update_uniform_buffers();        // Initialize uniform data
 	create_ray_tracing_pipeline();
 	create_shader_binding_tables();
 	create_descriptor_sets();
