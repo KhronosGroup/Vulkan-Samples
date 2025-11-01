@@ -167,27 +167,6 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 	}
 #endif
 
-#if defined(PLATFORM__MACOS)
-	// On Apple use layer setting to enable MoltenVK's Metal argument buffers - needed for descriptor indexing/scaling
-	enabled_extensions.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
-
-	VkLayerSettingEXT layerSetting{};
-	layerSetting.pLayerName   = "MoltenVK";
-	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
-	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
-	layerSetting.valueCount   = 1;
-
-	const int32_t useMetalArgumentBuffers = 1;
-	layerSetting.pValues                  = &useMetalArgumentBuffers;
-
-	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{};
-	layerSettingsCreateInfo.sType        = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
-	layerSettingsCreateInfo.settingCount = 1;
-	layerSettingsCreateInfo.pSettings    = &layerSetting;
-
-	create_info.pNext = &layerSettingsCreateInfo;
-#endif
-
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());

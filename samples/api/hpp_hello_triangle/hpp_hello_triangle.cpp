@@ -76,7 +76,10 @@ HPPHelloTriangle::HPPHelloTriangle()
 HPPHelloTriangle::~HPPHelloTriangle()
 {
 	// Don't release anything until the GPU is completely idle.
-	device.waitIdle();
+	if (device)
+	{
+		device.waitIdle();
+	}
 
 	teardown_framebuffers();
 
@@ -142,7 +145,10 @@ HPPHelloTriangle::~HPPHelloTriangle()
 		instance.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
 	}
 
-	instance.destroy();
+	if (instance)
+	{
+		instance.destroy();
+	}
 }
 
 bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
@@ -915,7 +921,10 @@ void HPPHelloTriangle::select_physical_device_and_surface()
 void HPPHelloTriangle::teardown_framebuffers()
 {
 	// Wait until device is idle before teardown.
-	queue.waitIdle();
+	if (queue)
+	{
+		queue.waitIdle();
+	}
 
 	for (auto &framebuffer : swapchain_data.framebuffers)
 	{

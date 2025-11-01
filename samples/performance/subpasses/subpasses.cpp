@@ -51,7 +51,7 @@ Subpasses::Subpasses()
 	config.insert<vkb::IntSetting>(3, configs[Config::TransientAttachments].value, 0);
 	config.insert<vkb::IntSetting>(3, configs[Config::GBufferSize].value, 1);
 
-#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR && defined(VKB_ENABLE_PORTABILITY)
 	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
@@ -62,8 +62,8 @@ Subpasses::Subpasses()
 	layerSetting.valueCount   = 1;
 
 	// Make this static so layer setting reference remains valid after leaving constructor scope
-	static const int32_t useMetalArgumentBuffers = 0;
-	layerSetting.pValues                         = &useMetalArgumentBuffers;
+	static const int32_t disableMetalArgumentBuffers = 0;
+	layerSetting.pValues                             = &disableMetalArgumentBuffers;
 
 	add_layer_setting(layerSetting);
 #endif

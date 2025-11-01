@@ -997,7 +997,10 @@ HelloTriangle::~HelloTriangle()
 {
 	// When destroying the application, we need to make sure the GPU is no longer accessing any resources
 	// This is done by doing a device wait idle, which blocks until the GPU signals
-	vkDeviceWaitIdle(context.device);
+	if (context.device != VK_NULL_HANDLE)
+	{
+		vkDeviceWaitIdle(context.device);
+	}
 
 	for (auto &framebuffer : context.swapchain_framebuffers)
 	{
