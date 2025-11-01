@@ -251,7 +251,7 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_lay
 	// Vulkan does not provide a reflection API for layer settings. Layer settings are described in each layer JSON manifest.
 	bool is_available = std::ranges::any_of(
 	    enabled_layers, [&requested_layer_setting](auto const &available_layer) { return strcmp(available_layer, requested_layer_setting.pLayerName) == 0; });
-#if defined(PLATFORM__MACOS)
+#if defined(PLATFORM__MACOS) && defined(VKB_ENABLE_PORTABILITY)
 	// On Apple platforms the MoltenVK layer is implicitly enabled and available, and cannot be explicitly added or checked via enabled_layers.
 	is_available = is_available || strcmp(requested_layer_setting.pLayerName, "MoltenVK") == 0;
 #endif
