@@ -31,6 +31,7 @@ To demonstrate their use, we’ve added data graph pipeline-based samples that w
 The samples in this folder are:
 
 * xref:./simple_tensor_and_data_graph/README.adoc[Simple tensor and data graph]
+* xref:./compute_shaders_with_tensors/README.adoc[Compute shaders with tensors]
 
 == Setup
 

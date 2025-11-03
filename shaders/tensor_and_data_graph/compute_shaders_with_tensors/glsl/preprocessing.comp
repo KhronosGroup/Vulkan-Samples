@@ -1,0 +1,55 @@
+#version 460
+
+/* Copyright (c) 2025, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Compute shader which generates a simple pattern and writes it to a tensor (output_tensor)
+
+// Enable the extension that allows us to write to Tensors.
+#extension GL_ARM_tensors : enable
+
+// Output tensor - 4-dimensional array of floats
+layout (set = 0, binding = 0) writeonly uniform tensorARM<float, 4> output_tensor;
+
+// Push constant time variable, used to gradually increase the RGB values.
+layout(push_constant) uniform push_constants
+{
+	float time;
+};
+
+layout(local_size_x = 1, local_size_y = 1) in;
+void main()
+{
+    uint tensor_coords[4] = uint[](0, gl_GlobalInvocationID.y, gl_GlobalInvocationID.x, 0);
+
+    // Offset coordinates and determine what colour to write to tensor, which creates a dynamic plasma pattern.
+    vec2 offset_coords = gl_GlobalInvocationID.xy / 5.0;
+    float t = time;
+    float x = offset_coords.x;
+    float y = offset_coords.y;
+
+    // Generate plasma effect using sine and cosine functions
+    float plasma = sin(x + t) + sin(y + t) + cos(x + y + t);
+
+    // Use step functions to create natural hard edges
+    float r = step(0.0, plasma);
+    float g = step(1.0, plasma);
+    float b = step(2.0, plasma);
+
+    float[3] rgb_values = { r, g, b };
+    tensorWriteARM(output_tensor, tensor_coords, rgb_values);
+}
