@@ -273,7 +273,7 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
-void RayQueries::load_node(vkb::sg::Node &node)
+void RayQueries::load_node(vkb::scene_graph::NodeC &node)
 {
 	if (node.has_component<vkb::sg::Mesh>())
 	{

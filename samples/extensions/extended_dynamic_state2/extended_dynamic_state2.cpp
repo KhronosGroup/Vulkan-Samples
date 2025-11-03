@@ -95,9 +95,9 @@ void ExtendedDynamicState2::load_assets()
 {
 	load_scene("scenes/primitives/primitives.gltf");
 
-	std::vector<SceneNode>       scene_elements;
-	std::vector<vkb::sg::Node *> node_scene_list = {&(get_scene().get_root_node())};
-	vkb::sg::Node               *node            = nullptr;
+	std::vector<SceneNode>                 scene_elements;
+	std::vector<vkb::scene_graph::NodeC *> node_scene_list = {&(get_scene().get_root_node())};
+	vkb::scene_graph::NodeC               *node            = nullptr;
 
 	for (size_t list_it = 0; node_scene_list.size() > list_it; ++list_it)
 	{
