@@ -113,11 +113,14 @@ void RenderPipeline::draw(vkb::core::CommandBufferC &command_buffer, RenderTarge
 			command_buffer.next_subpass();
 		}
 
-		if (subpass->get_debug_name().empty())
+		if (contents != VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS)
 		{
-			subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+			if (subpass->get_debug_name().empty())
+			{
+				subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+			}
+			ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
 		}
-		ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
 
 		subpass->draw(command_buffer);
 	}
