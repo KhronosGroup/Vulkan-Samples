@@ -130,3 +130,4 @@
 ** xref:docs/build.adoc[Build guide]
 ** xref:docs/memory_limits.adoc[Memory limits]
 ** xref:docs/misc.adoc[Miscellaneous]
+* link:https://github.com/KhronosGroup/Vulkan-Samples[GitHub Repository, window=_blank]
