@@ -38,7 +38,7 @@ if(APPLE)
 	if(VKB_ENABLE_PORTABILITY)
 		find_package(Vulkan QUIET OPTIONAL_COMPONENTS MoltenVK)
 		if(USE_MoltenVK OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR ${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator")))
-			# if using MoltenVK, or MoltenVK for iOS was not found, or using iOS Simulator, look for MoltenVK in the Vulkan SDK and MoltenVK project locations
+			# if using MoltenVK standalone, or MoltenVK for iOS not found or using iOS Simulator, look for MoltenVK in Vulkan SDK and MoltenVK project paths
 			if(NOT Vulkan_MoltenVK_LIBRARY)
 				# since both are available in the Vulkan SDK and MoltenVK github project, make sure we look for MoltenVK framework on iOS and dylib on macOS
 				set(_saved_cmake_find_framework ${CMAKE_FIND_FRAMEWORK})
@@ -72,13 +72,13 @@ if(APPLE)
 				else()
 					message(FATAL_ERROR "Vulkan library found in MoltenVK search path. Please set VULKAN_SDK to the MoltenVK project install location.")
 				endif()
-				message(STATUS "Using MoltenVK: ${Vulkan_MoltenVK_LIBRARY}")
+				message(STATUS "Using MoltenVK standalone: ${Vulkan_MoltenVK_LIBRARY}")
 			else()
 				message(FATAL_ERROR "Can't find MoltenVK library. Please install the Vulkan SDK or MoltenVK project and set VULKAN_SDK.")
 			endif()
-		elseif(IOS)
-			# if not using MoltenVK standalone on iOS, set up global Vulkan Library define for iOS Vulkan loader
-			add_compile_definitions(_HPP_VULKAN_LIBRARY="vulkan.framework/vulkan")
+		#else()
+			# if not using MoltenVK standalone, retain find_package() results for MoltenVK, Vulkan loader, and Validation Layer library defines
+			# no need to override with _HPP_VULKAN_LIBRARY in this case since Vulkan DynamicLoader will find/load Vulkan library on macOS & iOS
 		endif()
 	endif()
 
