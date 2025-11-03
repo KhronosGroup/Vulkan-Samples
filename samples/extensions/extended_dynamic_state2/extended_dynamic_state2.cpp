@@ -505,6 +505,7 @@ void ExtendedDynamicState2::build_command_buffers()
 
 		/* Change topology to patch list and setting patch control points value */
 		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
+		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffer, VK_FALSE);
 		vkCmdSetPatchControlPointsEXT(draw_cmd_buffer, patch_control_points_triangle);
 
 		/* Drawing scene with objects using tessellation feature */
