@@ -92,6 +92,7 @@
 ** xref:samples/extensions/synchronization_2/README.adoc[Synchronization 2]
 ** xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph]
 *** xref:samples/extensions/tensor_and_data_graph/simple_tensor_and_data_graph/README.adoc[Simple Tensor and Data Graph]
+*** xref:samples/extensions/tensor_and_data_graph/graph_constants/README.adoc[Graph constants]
 ** xref:samples/extensions/timeline_semaphore/README.adoc[Timeline semaphore]
 ** xref:samples/extensions/vertex_dynamic_state/README.adoc[Vertex dynamic state]
 ** xref:samples/extensions/dynamic_multisample_rasterization/README.adoc[Dynamic multisample rasterization]
