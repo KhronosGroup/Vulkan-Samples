@@ -47,13 +47,18 @@ Profiles::~Profiles()
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
 		for (auto &tex : textures)
+		{
+			vkDestroyImageView(get_device().get_handle(), tex.image_view, nullptr);
+			vkDestroyImage(get_device().get_handle(), tex.image, nullptr);
 			vkFreeMemory(get_device().get_handle(), tex.memory, nullptr);
+		}
 
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), base_descriptor_set_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), sampler_descriptor_set_layout, nullptr);
+		vkDestroySampler(get_device().get_handle(), sampler, nullptr);
 	}
 }
 
@@ -91,6 +96,20 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalD
 
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	uint32_t device_extension_count;
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, nullptr));
+	std::vector<VkExtensionProperties> available_device_extensions(device_extension_count);
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, available_device_extensions.data()));
+
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	if (std::ranges::any_of(available_device_extensions,
+	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
+	{
+		enabled_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+	}
+#endif
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 	create_info.pNext                   = gpu.get_extension_feature_chain();
@@ -443,6 +462,7 @@ void Profiles::setup_descriptor_pool()
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
 	        3);
+	descriptor_pool_create_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -480,6 +500,7 @@ void Profiles::setup_descriptor_set_layout()
 	        static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
+	descriptor_layout_create_info.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &base_descriptor_set_layout));
 
 	// Set layout for the samplers
@@ -492,6 +513,7 @@ void Profiles::setup_descriptor_set_layout()
 	        static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
+	descriptor_layout_create_info.pNext        = nullptr;
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &sampler_descriptor_set_layout));
 
 	// Pipeline layout
