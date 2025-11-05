@@ -363,7 +363,7 @@ void DynamicMultisampleRasterization::load_assets()
 		VkDescriptorImageInfo imageInfo;
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView   = image->get_vk_image_view().get_handle();
-		imageInfo.sampler     = texture->get_sampler()->vk_sampler.get_handle();
+		imageInfo.sampler     = texture->get_sampler()->get_core_sampler().get_handle();
 
 		image_infos.push_back(imageInfo);
 		name_to_texture_id.emplace(name, static_cast<int32_t>(image_infos.size()) - 1);

@@ -535,7 +535,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	scene.set_components(std::move(light_components));
 
 	// Load samplers
-	std::vector<std::unique_ptr<sg::Sampler>>
+	std::vector<std::unique_ptr<vkb::scene_graph::components::SamplerC>>
 	    sampler_components(model.samplers.size());
 
 	for (size_t sampler_index = 0; sampler_index < model.samplers.size(); sampler_index++)
@@ -625,7 +625,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 
 	// Load textures
 	auto images                  = scene.get_components<sg::Image>();
-	auto samplers                = scene.get_components<sg::Sampler>();
+	auto samplers                = scene.get_components<vkb::scene_graph::components::SamplerC>();
 	auto default_sampler_linear  = create_default_sampler(TINYGLTF_TEXTURE_FILTER_LINEAR);
 	auto default_sampler_nearest = create_default_sampler(TINYGLTF_TEXTURE_FILTER_NEAREST);
 	bool used_nearest_sampler    = false;
@@ -1496,7 +1496,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	return image;
 }
 
-std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &gltf_sampler) const
+std::unique_ptr<vkb::scene_graph::components::SamplerC> GLTFLoader::parse_sampler(const tinygltf::Sampler &gltf_sampler) const
 {
 	auto name = gltf_sampler.name;
 
@@ -1521,7 +1521,7 @@ std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 	core::Sampler vk_sampler{device, sampler_info};
 	vk_sampler.set_debug_name(gltf_sampler.name);
 
-	return std::make_unique<sg::Sampler>(name, std::move(vk_sampler));
+	return std::make_unique<vkb::scene_graph::components::SamplerC>(name, std::move(vk_sampler));
 }
 
 std::unique_ptr<sg::Texture> GLTFLoader::parse_texture(const tinygltf::Texture &gltf_texture) const
@@ -1535,7 +1535,7 @@ std::unique_ptr<sg::PBRMaterial> GLTFLoader::create_default_material()
 	return parse_material(gltf_material);
 }
 
-std::unique_ptr<sg::Sampler> GLTFLoader::create_default_sampler(int filter)
+std::unique_ptr<vkb::scene_graph::components::SamplerC> GLTFLoader::create_default_sampler(int filter)
 {
 	tinygltf::Sampler gltf_sampler;
 

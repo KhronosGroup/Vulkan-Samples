@@ -178,7 +178,6 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/material.cpp
     scene_graph/components/mesh.cpp
     scene_graph/components/pbr_material.cpp
-    scene_graph/components/sampler.cpp
     scene_graph/components/sub_mesh.cpp
     scene_graph/components/texture.cpp
     scene_graph/components/transform.cpp

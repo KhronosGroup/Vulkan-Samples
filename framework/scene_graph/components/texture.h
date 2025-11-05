@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,14 +47,14 @@ class Texture : public Component
 
 	Image *get_image();
 
-	void set_sampler(Sampler &sampler);
+	void set_sampler(vkb::scene_graph::components::SamplerC &sampler);
 
-	Sampler *get_sampler();
+	vkb::scene_graph::components::SamplerC *get_sampler();
 
   private:
 	Image *image{nullptr};
 
-	Sampler *sampler{nullptr};
+	vkb::scene_graph::components::SamplerC *sampler = nullptr;
 };
 }        // namespace sg
 }        // namespace vkb

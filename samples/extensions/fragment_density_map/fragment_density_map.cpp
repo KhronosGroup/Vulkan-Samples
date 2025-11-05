@@ -859,7 +859,7 @@ void FragmentDensityMap::setup_descriptor_set_main_pass()
 
 		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*mesh_data.vertex_ubo);
 		VkDescriptorImageInfo  image_descriptor  = vkb::initializers::descriptor_image_info(
-            mesh_data.base_color_texture->get_sampler()->vk_sampler.get_handle(),
+            mesh_data.base_color_texture->get_sampler()->get_core_sampler().get_handle(),
             mesh_data.base_color_texture->get_image()->get_vk_image_view().get_handle(),
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		std::array<VkWriteDescriptorSet, 2> write_descriptor_sets =
