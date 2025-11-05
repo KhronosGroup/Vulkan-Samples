@@ -251,9 +251,19 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_lay
 	// Vulkan does not provide a reflection API for layer settings. Layer settings are described in each layer JSON manifest.
 	bool is_available = std::ranges::any_of(
 	    enabled_layers, [&requested_layer_setting](auto const &available_layer) { return strcmp(available_layer, requested_layer_setting.pLayerName) == 0; });
-#if defined(PLATFORM__MACOS) && defined(VKB_ENABLE_PORTABILITY)
-	// On Apple platforms the MoltenVK layer is implicitly enabled and available, and cannot be explicitly added or checked via enabled_layers.
-	is_available = is_available || strcmp(requested_layer_setting.pLayerName, "MoltenVK") == 0;
+
+#if defined(PLATFORM__MACOS)
+	// On Apple the MoltenVK driver configuration layer is implicitly enabled and available, and cannot be explicitly added or checked via enabled_layers.
+	if (!is_available && strcmp(requested_layer_setting.pLayerName, "MoltenVK") == 0)
+	{
+		// Check for VK_EXT_layer_settings extension in the driver which indicates MoltenVK vs. KosmicKrisp (note: VK_MVK_moltenvk extension is deprecated).
+		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
+		if (std::ranges::any_of(available_instance_extensions,
+		                        [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+		{
+			is_available = true;
+		}
+	}
 #endif
 
 	if (!is_available)

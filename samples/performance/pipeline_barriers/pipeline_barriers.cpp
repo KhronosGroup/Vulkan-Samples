@@ -39,9 +39,9 @@ PipelineBarriers::PipelineBarriers()
 	config.insert<vkb::IntSetting>(1, reinterpret_cast<int &>(dependency_type), DependencyType::FRAG_TO_VERT);
 	config.insert<vkb::IntSetting>(2, reinterpret_cast<int &>(dependency_type), DependencyType::FRAG_TO_FRAG);
 
-#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR && defined(VKB_ENABLE_PORTABILITY)
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional=*/true);
 
 	VkLayerSettingEXT layerSetting;
 	layerSetting.pLayerName   = "MoltenVK";

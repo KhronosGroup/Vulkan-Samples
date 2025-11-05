@@ -105,6 +105,8 @@ if(APPLE)
 			set(CMAKE_SUPPRESS_REGENERATION ON)
 		endif()
 	endif()
+else()
+    option(VKB_ENABLE_PORTABILITY "Enable portability enumeration and subset features in the framework.  This is default off on non-Apple platforms." OFF)
 endif()
 
 set(VKB_WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors")

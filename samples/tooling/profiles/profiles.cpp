@@ -98,14 +98,8 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalD
 	enabled_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	uint32_t device_extension_count;
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, nullptr));
-	std::vector<VkExtensionProperties> available_device_extensions(device_extension_count);
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, available_device_extensions.data()));
-
-	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
-	if (std::ranges::any_of(available_device_extensions,
-	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
+	if (gpu.is_extension_supported(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
 	{
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 	}
@@ -172,12 +166,15 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 	VkInstanceCreateInfo create_info{};
 
 #if (defined(VKB_ENABLE_PORTABILITY))
+	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
+	// Enumerate all instance extensions for the loader + driver to determine if VK_KHR_portability_enumeration is available
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
 	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
-	// If VK_KHR_portability_enumeration is available at runtime, enable the extension and flag for instance creation
+	// If VK_KHR_portability_enumeration is available in the implementation, then we must enable the extension
 	if (std::ranges::any_of(available_instance_extensions,
 	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
