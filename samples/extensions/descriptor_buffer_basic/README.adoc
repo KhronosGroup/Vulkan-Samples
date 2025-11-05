@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023-2024, Sascha Willems
+- Copyright (c) 2023-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -26,7 +26,7 @@ endif::[]
 == Overview
 
 Binding and managing descriptors in Vulkan can become pretty complex, both for the application and the driver.
-With the https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer[`VK_EXT_descriptor_buffer`] extension, this interface is simplified and maps more directly to how hardware sees descriptors.
+With the https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_ext_descriptor_buffer[`VK_EXT_descriptor_buffer`] extension, this interface is simplified and maps more directly to how hardware sees descriptors.
 It also simplifies the programming model, as you no longer have to create descriptor pool upfront.
 
 This sample shows how to use that extension by rendering multiple objects with different uniform buffers and images using the new interface of creating and binding descriptors.
