@@ -197,7 +197,7 @@ void GeometrySubpass::draw_submesh(vkb::core::CommandBufferC &command_buffer, sg
 		if (auto layout_binding = descriptor_set_layout.get_layout_binding(texture.first))
 		{
 			command_buffer.bind_image(texture.second->get_image()->get_vk_image_view(),
-			                          texture.second->get_sampler()->vk_sampler,
+			                          texture.second->get_sampler()->get_core_sampler(),
 			                          0, layout_binding->binding, 0);
 		}
 	}
