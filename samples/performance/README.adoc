@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2024, The Khronos Group
+- Copyright (c) 2021-2025, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -105,7 +105,7 @@ This sample will look in detail at the implementation and performance implicatio
 Vulkan render-passes use attachments to describe input and output render targets.
 This sample shows how loading and storing attachments might affect performance on mobile.
 During the creation of a render-pass, you can specify various color attachments and a depth-stencil attachment.
-Each of those is described by a https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentDescription.html[`VkAttachmentDescription`] struct, which contains attributes to specify the https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentLoadOp.html[load operation] (`loadOp`) and the https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentStoreOp.html[store operation] (`storeOp`).
+Each of those is described by a https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkAttachmentDescription.html[`VkAttachmentDescription`] struct, which contains attributes to specify the https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkAttachmentLoadOp.html[load operation] (`loadOp`) and the https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkAttachmentStoreOp.html[store operation] (`storeOp`).
 This sample lets you choose between different combinations of these operations at runtime.
 
 === xref:./{performance_samplespath}specialization_constants/README.adoc[Specialization constants]

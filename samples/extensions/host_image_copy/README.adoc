@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2024, Sascha Willems
+- Copyright (c) 2024-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -38,7 +38,7 @@ NOTE: A staged upload usually has to first perform a CPU copy of data to a GPU-v
 
 == Enabling the Extension
 
-The `VK_EXT_host_image_copy` extension needs to be enabled at device level. Depending on the Vulkan version you target, additional extensions might need to be enabled. See the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html#_extension_and_version_dependencies[extension and version dependencies] of the extension spec for details.
+The `VK_EXT_host_image_copy` extension needs to be enabled at device level. Depending on the Vulkan version you target, additional extensions might need to be enabled. See the https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_host_image_copy.html#_extension_and_version_dependencies[extension and version dependencies] of the extension spec for details.
 
 In addition to the extension(s) you also need to enable the `hostImageCopy` for the extension structure:
 
@@ -165,5 +165,5 @@ Aside from the use-case shown in this sample, the `VK_EXT_host_image_copy` exten
 
 * https://www.khronos.org/blog/copying-images-on-the-host-in-vulkan[Copying Images on the Host in Vulkan]
 * https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_host_image_copy.html[Extension proposal]
-* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_host_image_copy.html[Specification]
+* https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_host_image_copy.html[Specification]
 * https://vulkan.gpuinfo.org/displayextensiondetail?extension=VK_EXT_host_image_copy[Extension device support]

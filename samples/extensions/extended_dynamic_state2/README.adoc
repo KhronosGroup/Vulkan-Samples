@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2023, Mobica Limited
+- Copyright (c) 2023-2025, Mobica Limited
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -260,7 +260,7 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 == Enabling the Extension
 
 The extended dynamic state 2 api requires Vulkan 1.0 and the appropriate headers / SDK is required.
-This extension has been https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html#_promotion_to_vulkan_1_3[partially] promoted to Vulkan 1.3.
+This extension has been https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_extended_dynamic_state2.html#_promotion_to_vulkan_1_3[partially] promoted to Vulkan 1.3.
 
 The device extension is provided by `VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME`.
 It also requires  `VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME` instance extension to be enabled.
@@ -271,6 +271,6 @@ add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
 ----
 
-If the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceExtendedDynamicState2FeaturesEXT.html[`VkPhysicalDeviceExtendedDynamicState2FeaturesEXT`] structure is included in the pNext chain of the `VkPhysicalDeviceFeatures2` structure passed to vkGetPhysicalDeviceFeatures2, it is filled in to indicate whether each corresponding feature is supported.
+If the https://registry.khronos.org/vulkan/specs/latest/man/html/VkPhysicalDeviceExtendedDynamicState2FeaturesEXT.html[`VkPhysicalDeviceExtendedDynamicState2FeaturesEXT`] structure is included in the pNext chain of the `VkPhysicalDeviceFeatures2` structure passed to vkGetPhysicalDeviceFeatures2, it is filled in to indicate whether each corresponding feature is supported.
 `VkPhysicalDeviceExtendedDynamicState2FeaturesEXT` can also be used in the pNext chain of `VkDeviceCreateInfo` to selectively enable these features.
 o selectively enable these features.

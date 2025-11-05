@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2022-2024, Sascha Willems
+- Copyright (c) 2022-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -32,8 +32,8 @@ improve performance where needed.
 
 == Introduction
 
-Vulkan offers several https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#queries[query types] that allow you to query different types of information from the GPU.
-One such query type is the https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#queries-timestamps[timestamp query].
+Vulkan offers several https://registry.khronos.org/vulkan/specs/latest/html/vkspec.html#queries[query types] that allow you to query different types of information from the GPU.
+One such query type is the https://registry.khronos.org/vulkan/specs/latest/html/vkspec.html#queries-timestamps[timestamp query].
 
 This provides your application with a mechanism to time the execution of commands on the GPU.
 As with the other query types, a query pool is then used to either directly fetch or copy over the results to the host.
@@ -256,7 +256,7 @@ float delta_in_ms = float(time_stamps[1] - time_stamps[0]) * device_limits.times
 
 == vkCmdWriteTimestamp2
 
-The https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_synchronization2.html[VK_KHR_synchronization2] extension introduced `vkCmdWriteTimestamp2`.
+The https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_synchronization2.html[VK_KHR_synchronization2] extension introduced `vkCmdWriteTimestamp2`.
 This is pretty much the same as the `vkCmdWriteTimestamp` function used in this sample, but adds support for some additional pipeline stages using `VkPipelineStageFlags2`.
 
 == Verdict
