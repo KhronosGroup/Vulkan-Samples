@@ -74,7 +74,7 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalD
 	// Simplified queue setup (only graphics)
 	uint32_t                selected_queue_family   = 0;
 	const auto             &queue_family_properties = gpu.get_queue_family_properties();
-	const float             default_queue_priority{0.0f};
+	const float             default_queue_priority{0.5f};
 	VkDeviceQueueCreateInfo queue_create_info{};
 	queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 	queue_create_info.queueCount       = 1;
