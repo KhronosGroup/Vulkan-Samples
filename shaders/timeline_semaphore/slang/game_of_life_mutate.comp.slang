@@ -36,5 +36,5 @@ void main(uint3 globalInvocationID: SV_DispatchThreadID, uniform float counter)
     else
         v.w = 0.0;
 
-    ImageOutput[int2(globalInvocationID.xy)] = v; 
+    ImageOutput[globalInvocationID.xy] = v; 
 }

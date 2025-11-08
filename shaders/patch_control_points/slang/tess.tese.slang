@@ -17,15 +17,15 @@
 
 struct UBO
 {
-	float4x4 projection;
-	float4x4 view;
+    float4x4 projection;
+    float4x4 view;
 };
 ConstantBuffer<UBO> ubo;
 
 struct HSOutput
 {
-	float4 Pos : SV_POSITION;
-	float3 Color;
+    float4 Pos : SV_POSITION;
+    float3 Color;
 };
 
 struct ConstantsHSOutput
@@ -36,27 +36,25 @@ struct ConstantsHSOutput
 
 struct DSOutput
 {
-	float4 Pos : SV_POSITION;
-	float3 Color;
+    float4 Pos : SV_POSITION;
+    float3 Color;
 };
-
-/// layout(triangles, equal_spacing, cw) in;
 
 float4 interpolate3D(float4 v0, float4 v1, float4 v2, float3 TessCoord)
 {
-	return TessCoord.x * v0 + TessCoord.y * v1 + TessCoord.z * v2;
+    return TessCoord.x * v0 + TessCoord.y * v1 + TessCoord.z * v2;
 }
 
 [domain("tri")]
 [shader("domain")]
 DSOutput main(ConstantsHSOutput input, float3 TessCoord : SV_DomainLocation, const OutputPatch<HSOutput, 3> patch)
 {
-	DSOutput output;
-	
-	float4 pos = interpolate3D(patch[0].Pos, patch[1].Pos, patch[2].Pos, TessCoord);
-	
-	output.Pos = mul(ubo.projection, mul(ubo.view, pos));
-	output.Color = patch[0].Color;
+    DSOutput output;
+    
+    float4 pos = interpolate3D(patch[0].Pos, patch[1].Pos, patch[2].Pos, TessCoord);
+    
+    output.Pos = mul(ubo.projection, mul(ubo.view, pos));
+    output.Color = patch[0].Color;
 
-	return output;
+    return output;
 }

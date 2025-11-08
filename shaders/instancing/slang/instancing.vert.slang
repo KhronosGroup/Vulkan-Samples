@@ -31,11 +31,11 @@ struct VSInput
 struct VSOutput
 {
     float4 Pos : SV_POSITION;	
-	float3 Normal;
-	float3 Color;
-	float3 UV;
-	float3 ViewVec;
-	float3 LightVec;
+    float3 Normal;
+    float3 Color;
+    float3 UV;
+    float3 ViewVec;
+    float3 LightVec;
 };
 
 struct UBO

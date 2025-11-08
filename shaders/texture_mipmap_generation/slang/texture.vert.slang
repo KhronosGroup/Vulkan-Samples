@@ -24,7 +24,7 @@ struct VSInput
 struct UBO
 {
     float4x4 projection;
-    float4x4 model;
+    float4x4 modelview;
     float lodBias;
     int samplerIndex;
 };
@@ -41,6 +41,6 @@ VSOutput main(VSInput input)
 {
     VSOutput output;
     output.UV = input.UV;
-    output.Pos = mul(ubo.projection, mul(ubo.model, float4(input.Pos.xyz, 1.0)));  
+    output.Pos = mul(ubo.projection, mul(ubo.modelview, float4(input.Pos.xyz, 1.0)));
     return output;
 }

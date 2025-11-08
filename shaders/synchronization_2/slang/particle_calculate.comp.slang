@@ -29,7 +29,7 @@ struct UBO
 };
 ConstantBuffer<UBO> ubo;
 
-[[vk::constant_id(1)]] const int SHARED_DATA_SIZE = 512;
+[[vk::constant_id(1)]] const int SHARED_DATA_SIZE = 1024;
 [[vk::constant_id(2)]] const float GRAVITY = 0.002;
 [[vk::constant_id(3)]] const float POWER = 0.75;
 [[vk::constant_id(4)]] const float SOFTEN = 0.05;
@@ -43,7 +43,7 @@ groupshared float4 sharedData[SHARED_DATA_SIZE];
 [numthreads(256, 1, 1)]
 void main(uint3 GlobalInvocationID : SV_DispatchThreadID, uint3 LocalInvocationID : SV_GroupThreadID)
 {
-	// Current SSBO index
+    // Current SSBO index
     uint index = GlobalInvocationID.x;
     if (index >= ubo.particleCount)
         return;
@@ -78,7 +78,7 @@ void main(uint3 GlobalInvocationID : SV_DispatchThreadID, uint3 LocalInvocationI
 
     particles[index].vel.xyz += ubo.deltaT * TIME_FACTOR * acceleration.xyz;
 
-	// Gradient texture position
+    // Gradient texture position
     particles[index].vel.w += 0.1 * TIME_FACTOR * ubo.deltaT;
     if (particles[index].vel.w > 1.0)
     {

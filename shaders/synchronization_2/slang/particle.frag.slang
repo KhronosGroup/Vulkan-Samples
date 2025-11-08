@@ -21,17 +21,13 @@ Sampler2D samplerGradientRamp;
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
+    float2 PointCoord : SV_PointCoord;
     float GradientPos;
-    float2 CenterPos;
-    float PSize : SV_PointSize;
-    // remove
-    float PointSize;
 };
 
 [shader("fragment")]
 float4 main(VSOutput input)
 {
     float3 color = samplerGradientRamp.Sample(float2(input.GradientPos, 0.0)).rgb;
-    float2 PointCoord = (input.Pos.xy - input.CenterPos.xy) / input.PointSize + 0.5;
-    return float4(samplerColorMap.Sample(PointCoord).rgb * color, 1);
+    return float4(samplerColorMap.Sample(input.PointCoord).rgb * color, 1.0);
 }

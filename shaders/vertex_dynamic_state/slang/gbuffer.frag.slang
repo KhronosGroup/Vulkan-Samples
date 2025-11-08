@@ -53,15 +53,15 @@ FSOutput main(VSOutput input)
     switch (type)
     {
         case 0: // Skybox
-			{
+            {
                 float3 normal = normalize(input.UVW);
                 color = samplerEnvMap.Sample(normal);
             }
             break;
 
         case 1: // Reflect
-			{
-                float3 wViewVec = mul((float3x3) uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
+            {
+                float3 wViewVec = mul((float3x3) uboMatrices.inverseModelView, normalize(input.ViewVec));
                 float3 normal = normalize(input.Normal);
                 float3 wNormal = mul((float3x3) uboMatrices.inverseModelView, normal).xyz;
 
@@ -73,7 +73,7 @@ FSOutput main(VSOutput input)
                 float NdotV = max(dot(normal, eyeDir), 0.0);
                 float VdotH = max(dot(eyeDir, halfVec), 0.0);
 
-				// Geometric attenuation
+                // Geometric attenuation
                 float NH2 = 2.0 * NdotH;
                 float g1 = (NH2 * NdotV) / VdotH;
                 float g2 = (NH2 * NdotL) / VdotH;
@@ -82,7 +82,7 @@ FSOutput main(VSOutput input)
                 const float F0 = 0.6;
                 const float k = 0.2;
 
-				// Fresnel (schlick approximation)
+                // Fresnel (schlick approximation)
                 float fresnel = pow(1.0 - VdotH, 5.0);
                 fresnel *= (1.0 - F0);
                 fresnel += F0;
@@ -96,16 +96,16 @@ FSOutput main(VSOutput input)
             break;
 
         case 2: // Refract
-			{
-                float3 wViewVec = mul((float4x3) uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
-                float3 wNormal = mul((float4x3)uboMatrices.inverseModelView, input.Normal).xyz;
+            {
+                float3 wViewVec = mul((float3x3) uboMatrices.inverseModelView, normalize(input.ViewVec));
+                float3 wNormal = mul((float3x3)uboMatrices.inverseModelView, input.Normal);
                 color = samplerEnvMap.Sample(refract(-wViewVec, wNormal, 1.0 / 1.6));
             }
             break;
     }
 
 
-	// Color with manual exposure into attachment 0
+    // Color with manual exposure into attachment 0
     const float exposure = 1.0;
     output.Color0.rgb = float3(1.0, 1.0, 1.0) - exp(-color.rgb * exposure);
     

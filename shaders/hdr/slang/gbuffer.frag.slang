@@ -15,12 +15,6 @@
  * limitations under the License.
  */
 
-struct VSInput
-{
-    float3 Pos;
-    float3 Normal;
-};
-
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
@@ -72,9 +66,9 @@ FSOutput main(VSOutput input)
 
         case 1: // Reflect
         {
-            float3 wViewVec = mul((float3x3)uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
+            float3 wViewVec = mul((float3x3)uboMatrices.inverseModelView, normalize(input.ViewVec));
             float3 normal = normalize(input.Normal);
-            float3 wNormal = mul((float3x3)uboMatrices.inverseModelView, normal).xyz;
+            float3 wNormal = mul((float3x3)uboMatrices.inverseModelView, normal);
 
             float NdotL = max(dot(normal, input.LightVec), 0.0);
 
@@ -109,8 +103,8 @@ FSOutput main(VSOutput input)
 
         case 2: // Refract
         {
-            float3 wViewVec = mul((float4x3)uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
-            float3 wNormal = mul((float4x3)uboMatrices.inverseModelView, input.Normal).xyz;
+            float3 wViewVec = mul((float3x3)uboMatrices.inverseModelView, normalize(input.ViewVec));
+            float3 wNormal = mul((float3x3)uboMatrices.inverseModelView, input.Normal);
             color = samplerEnvMap.Sample(refract(-wViewVec, wNormal, 1.0 / 1.6));
         }
         break;

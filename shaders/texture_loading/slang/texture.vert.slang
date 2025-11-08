@@ -45,11 +45,11 @@ struct VSOutput
 VSOutput main(VSInput input)
 {
     VSOutput output;
-    float3 vecPos = mul((float3x3) ubo.model, input.Pos.xyz).xyz;
-    float3 lightPos = mul((float3x3) ubo.model, (1.0).xxx);   
+    float3 vecPos = mul((float3x3) ubo.model, input.Pos);
+    float3 lightPos = mul((float3x3) ubo.model, (1.0).xxx);
     output.UV = input.UV;
     output.LodBias = ubo.lodBias;
-    output.Pos = mul(ubo.projection, mul(ubo.model, float4(input.Pos.xyz, 1.0)));
+    output.Pos = mul(ubo.projection, mul(ubo.model, float4(input.Pos, 1.0)));
     output.Normal = mul((float3x3) ubo.model, input.Normal);
     output.LightVec = lightPos - vecPos;
     output.ViewVec = ubo.viewPos.xyz - vecPos;   

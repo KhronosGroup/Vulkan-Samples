@@ -17,7 +17,7 @@
 
 struct VSInput
 {
-    float3 Pos : POSITION0;
+    float2 Pos : POSITION0;
     float2 UV;
 };
 
@@ -40,6 +40,6 @@ VSOutput main(VSInput input)
 {
     VSOutput output;
     output.UV = input.UV;
-    output.Pos = mul(mvp.proj, mul(mvp.view, mul(mvp.model, float4(input.Pos.xyz, 1.0))));
+    output.Pos = mul(mvp.proj, mul(mvp.view, mul(mvp.model, float4(input.Pos, 0.0, 1.0))));
     return output;
 }

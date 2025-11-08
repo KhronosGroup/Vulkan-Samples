@@ -49,7 +49,7 @@ VSOutput main(VSInput input, uniform float4 offset, uniform float4 color, unifor
 
     switch(object_type) {
         case 0: // Skysphere                     
-            tmpPos = mul((float3x3) ubo.skybox_modelview, input.Pos.xyz);
+            tmpPos = mul((float3x3) ubo.skybox_modelview, input.Pos);
             output.Pos = mul(ubo.projection, float4(tmpPos, 1.0));
             break;
         case 1: // Object         
@@ -61,8 +61,8 @@ VSOutput main(VSInput input, uniform float4 offset, uniform float4 color, unifor
     output.UV  = input.UV;
     output.Normal = mul((float3x3) ubo.modelview, input.Normal);
     float3 lightPos = mul((float3x3) ubo.modelview, float3(0.0, -10.0, -10.0));
-    output.LightVec = lightPos.xyz - tmpPos.xyz;
-    output.ViewVec = -tmpPos.xyz;
+    output.LightVec = lightPos - tmpPos;
+    output.ViewVec = -tmpPos;
 
     // Output the vertex position using debug printf
     if (input.VertexIndex == 0) {

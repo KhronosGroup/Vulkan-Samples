@@ -39,6 +39,6 @@ VSOutput main(VSInput input)
 {
     VSOutput output;
 	output.UVW = input.Pos;
-    output.Pos = mul(ubo.projection, mul(ubo.view, float4(input.Pos.xyz * 10.0, 1.0)));
+    output.Pos = mul(ubo.projection, mul(ubo.view, float4(input.Pos * 10.0, 1.0)));
     return output;
 }

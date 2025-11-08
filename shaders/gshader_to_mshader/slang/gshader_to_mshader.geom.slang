@@ -36,7 +36,7 @@ struct UBO {
 [[vk::binding(1, 0)]] ConstantBuffer<UBO> ubo;
 
 [shader("geometry")]
-[maxvertexcount(6)]
+[maxvertexcount(2)]
 void main(triangle VSOutput input[3], inout LineStream<GSOutput> outStream)
 {
     float normalLength = 0.1f;

@@ -48,16 +48,16 @@ VSOutput main(VSInput input)
     output.UVW = input.Pos;
     float3 worldPos;
     switch (type) {
-		case 0: // Skybox
-			worldPos = mul((float4x3)ubo.skyboxModelview, input.Pos).xyz;
-			output.Pos = mul(ubo.projection, float4(worldPos, 1.0));
-			break;
-		case 1: // Object
-			worldPos = mul(ubo.modelview, float4(input.Pos * ubo.modelscale, 1.0)).xyz;
-			output.Pos = mul(ubo.projection, mul(ubo.modelview, float4(input.Pos.xyz * ubo.modelscale, 1.0)));
-			break;
+        case 0: // Skybox
+            worldPos = mul((float3x3)ubo.skyboxModelview, input.Pos);
+            output.Pos = mul(ubo.projection, float4(worldPos, 1.0));
+            break;
+        case 1: // Object
+            worldPos = mul(ubo.modelview, float4(input.Pos * ubo.modelscale, 1.0)).xyz;
+            output.Pos = mul(ubo.projection, mul(ubo.modelview, float4(input.Pos.xyz * ubo.modelscale, 1.0)));
+            break;
     }
-    output.Normal = mul((float4x3)ubo.modelview, input.Normal).xyz;
+    output.Normal = mul((float3x3)ubo.modelview, input.Normal);
     float3 lightPos = float3(0.0f, -5.0f, 5.0f);
     output.LightVec = lightPos.xyz - worldPos.xyz;
     output.ViewVec = -worldPos.xyz;

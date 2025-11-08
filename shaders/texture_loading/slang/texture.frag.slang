@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-[[vk::binding(1, 0)]] Sampler2D SamplerColor;
+[[vk::binding(1, 0)]] Sampler2D samplerColor;
 
 struct VSOutput
 {
@@ -30,12 +30,12 @@ struct VSOutput
 [shader("fragment")]
 float4 main(VSOutput input)
 {
-    float4 color = SamplerColor.SampleBias(input.UV, input.LodBias);
+    float4 color = samplerColor.SampleBias(input.UV, input.LodBias);
     float3 N = normalize(input.Normal);
     float3 L = normalize(input.LightVec);
     float3 V = normalize(input.ViewVec);
     float3 R = reflect(-L, N);
-    float3 diffuse = max(dot(N, L), 0.0).xxx;
-    float3 specular = (pow(max(dot(R, V), 0.0), 16.0)).xxx * color.a;
+    float3 diffuse = max(dot(N, L), 0.0);
+    float3 specular = (pow(max(dot(R, V), 0.0), 16.0)) * color.a;
     return float4(diffuse * color.rgb + specular, 1.0);
 }
