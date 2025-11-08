@@ -24,13 +24,13 @@ struct VSInput
 
 struct VSOutput
 {
-	float4 Pos : SV_POSITION;
+    float4 Pos : SV_POSITION;
     float3 Normal;
     float4 FragColor;
-	float3 LightVec;
-	float3 LightColor[2];
-	float3 ViewVec;
-	float LightIntensity;	
+    float3 LightVec;
+    float3 LightColor[2];
+    float3 ViewVec;
+    float LightIntensity;	
 };
 
 struct UBO
@@ -56,13 +56,13 @@ VSOutput main(VSInput input, uniform float4x4 model, uniform float4 color)
 {
     VSOutput output;
     output.FragColor   		= color;
-	float4 localPos    		= mul(ubo.view, mul(model, float4(input.Pos, 1.0)));
+    float4 localPos    		= mul(ubo.view, mul(model, float4(input.Pos, 1.0)));
     output.Pos 				= mul(ubo.projection, localPos);
     output.Normal           = mul((float3x3)mul(ubo.view, model), input.Normal);
-	float4 positionWorld 	= mul(model, float4(input.Pos, 1.0));
+    float4 positionWorld 	= mul(model, float4(input.Pos, 1.0));
     output.LightVec 		= ubo_baseline.lightPosition.xyz - positionWorld.xyz;
     output.LightColor[0] 	= ubo_baseline.lightColor.xyz * ubo_baseline.lightColor.w;
-	output.LightColor[1] 	= ubo_baseline.ambientLightColor.xyz * ubo_baseline.ambientLightColor.w;
+    output.LightColor[1] 	= ubo_baseline.ambientLightColor.xyz * ubo_baseline.ambientLightColor.w;
     output.ViewVec 			= -localPos.xyz;
     output.LightIntensity 	= ubo_baseline.lightIntensity;
     return output;

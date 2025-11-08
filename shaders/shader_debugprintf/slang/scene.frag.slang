@@ -29,16 +29,16 @@ struct VSOutput
 [shader("fragment")]
 float4 main(VSOutput input, uniform float4 offset, uniform float4 color, uniform int object_type)
 {
-	float4 out_color;
+    float4 out_color;
 
-	switch (object_type) {
-		case 0: // Skysphere
+    switch (object_type) {
+        case 0: // Skysphere
         {
             out_color = samplerEnvMap.Sample(float2(input.UV.x, 1.0 - input.UV.y));
         }
-		break;
-		
-		case 1: // Phong shaded objects
+        break;
+        
+        case 1: // Phong shaded objects
         {
             float3 ambient = color.rgb * (0.5).xxx;
             float3 N = normalize(input.Normal);
@@ -50,7 +50,7 @@ float4 main(VSOutput input, uniform float4 offset, uniform float4 color, uniform
             out_color = float4(ambient + diffuse + specular, 1.0);	
         }
         break;
-	}
+    }
 
     return float4(out_color.rgb, 1.0);
 }

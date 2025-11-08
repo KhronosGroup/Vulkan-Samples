@@ -63,57 +63,57 @@ FSOutput main(VSOutput input)
     float3 wcNormal;
 
     switch (type) {
-		case 0: // Skybox
-		{
+        case 0: // Skybox
+        {
             float3 normal = normalize(input.UVW);
             color = samplerEnvMap.Sample(normal);
-		}
-		break;
+        }
+        break;
 
-		case 1: // Reflect
-		{
-			float3 wViewVec = mul((float3x3)uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
-			float3 normal = normalize(input.Normal);
-			float3 wNormal = mul((float3x3)uboMatrices.inverseModelView, normal).xyz;
+        case 1: // Reflect
+        {
+            float3 wViewVec = mul((float3x3)uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
+            float3 normal = normalize(input.Normal);
+            float3 wNormal = mul((float3x3)uboMatrices.inverseModelView, normal).xyz;
 
-			float NdotL = max(dot(normal, input.LightVec), 0.0);
+            float NdotL = max(dot(normal, input.LightVec), 0.0);
 
-			float3 eyeDir = normalize(input.ViewVec);
-			float3 halfVec = normalize(input.LightVec + eyeDir);
-			float NdotH = max(dot(normal, halfVec), 0.0);
-			float NdotV = max(dot(normal, eyeDir), 0.0);
-			float VdotH = max(dot(eyeDir, halfVec), 0.0);
+            float3 eyeDir = normalize(input.ViewVec);
+            float3 halfVec = normalize(input.LightVec + eyeDir);
+            float NdotH = max(dot(normal, halfVec), 0.0);
+            float NdotV = max(dot(normal, eyeDir), 0.0);
+            float VdotH = max(dot(eyeDir, halfVec), 0.0);
 
-			// Geometric attenuation
-			float NH2 = 2.0 * NdotH;
-			float g1 = (NH2 * NdotV) / VdotH;
-			float g2 = (NH2 * NdotL) / VdotH;
-			float geoAtt = min(1.0, min(g1, g2));
+            // Geometric attenuation
+            float NH2 = 2.0 * NdotH;
+            float g1 = (NH2 * NdotV) / VdotH;
+            float g2 = (NH2 * NdotL) / VdotH;
+            float geoAtt = min(1.0, min(g1, g2));
 
-			const float F0 = 0.6;
-			const float k = 0.2;
+            const float F0 = 0.6;
+            const float k = 0.2;
 
-			// Fresnel (schlick approximation)
-			float fresnel = pow(1.0 - VdotH, 5.0);
-			fresnel *= (1.0 - F0);
-			fresnel += F0;
+            // Fresnel (schlick approximation)
+            float fresnel = pow(1.0 - VdotH, 5.0);
+            fresnel *= (1.0 - F0);
+            fresnel += F0;
 
-			// Note: clamp to zero to mitigate any divide by zero
-			float spec = max((fresnel * geoAtt) / (NdotV * NdotL * 3.14), 0.0);
+            // Note: clamp to zero to mitigate any divide by zero
+            float spec = max((fresnel * geoAtt) / (NdotV * NdotL * 3.14), 0.0);
 
             color = samplerEnvMap.Sample(reflect(-wViewVec, wNormal));
 
-			color = float4(color.rgb * NdotL * (k + spec * (1.0 - k)), 1.0);
-		}
-		break;
+            color = float4(color.rgb * NdotL * (k + spec * (1.0 - k)), 1.0);
+        }
+        break;
 
-		case 2: // Refract
-		{
-			float3 wViewVec = mul((float4x3)uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
+        case 2: // Refract
+        {
+            float3 wViewVec = mul((float4x3)uboMatrices.inverseModelView, normalize(input.ViewVec)).xyz;
             float3 wNormal = mul((float4x3)uboMatrices.inverseModelView, input.Normal).xyz;
             color = samplerEnvMap.Sample(refract(-wViewVec, wNormal, 1.0 / 1.6));
-		}
-		break;
+        }
+        break;
     }
 
     // Color with manual exposure into attachment 0

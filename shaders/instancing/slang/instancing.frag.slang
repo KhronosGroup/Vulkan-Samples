@@ -18,11 +18,11 @@
 struct VSOutput
 {
     float4 Pos : SV_POSITION;	
-	float3 Normal;
-	float3 Color;
-	float3 UV;
-	float3 ViewVec;
-	float3 LightVec;
+    float3 Normal;
+    float3 Color;
+    float3 UV;
+    float3 ViewVec;
+    float3 LightVec;
 };
 
 [[vk::binding(1,0)]] Sampler2DArray samplerArray;
@@ -31,11 +31,11 @@ struct VSOutput
 float4 main(VSOutput input)
 {
     float4 color = samplerArray.Sample(input.UV) * float4(input.Color, 1.0);
-	float3 N = normalize(input.Normal);
-	float3 L = normalize(input.LightVec);
-	float3 V = normalize(input.ViewVec);
-	float3 R = reflect(-L, N);
-	float3 diffuse = max(dot(N, L), 0.1) * input.Color;
-	float3 specular = (dot(N,L) > 0.0) ? pow(max(dot(R, V), 0.0), 16.0) * float3(0.75, 0.75, 0.75) * color.r : float3(0.0, 0.0, 0.0);
-	return float4(diffuse * color.rgb + specular, 1.0);
+    float3 N = normalize(input.Normal);
+    float3 L = normalize(input.LightVec);
+    float3 V = normalize(input.ViewVec);
+    float3 R = reflect(-L, N);
+    float3 diffuse = max(dot(N, L), 0.1) * input.Color;
+    float3 specular = (dot(N,L) > 0.0) ? pow(max(dot(R, V), 0.0), 16.0) * float3(0.75, 0.75, 0.75) * color.r : float3(0.0, 0.0, 0.0);
+    return float4(diffuse * color.rgb + specular, 1.0);
 }
