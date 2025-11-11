@@ -260,6 +260,7 @@ class RaytracingExtended : public ApiVulkanSample
 	RaytracingExtended();
 	~RaytracingExtended() override;
 
+	void                 create_render_context() override;
 	void                 request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	uint64_t             get_buffer_device_address(VkBuffer buffer);
 	void                 create_storage_image();

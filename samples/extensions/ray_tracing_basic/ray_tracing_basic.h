@@ -59,12 +59,11 @@ class RaytracingBasic : public ApiVulkanSample
 
 	struct StorageImage
 	{
-		VkDeviceMemory memory;
-		VkImage        image = VK_NULL_HANDLE;
-		VkImageView    view;
-		VkFormat       format;
-		uint32_t       width;
-		uint32_t       height;
+		VkDeviceMemory memory = VK_NULL_HANDLE;
+		VkImage        image  = VK_NULL_HANDLE;
+		VkImageView    view   = VK_NULL_HANDLE;
+		uint32_t       width  = 0;
+		uint32_t       height = 0;
 	} storage_image;
 
 	struct UniformData
@@ -82,6 +81,7 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
+	void          create_render_context() override;
 	void          request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
 	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
