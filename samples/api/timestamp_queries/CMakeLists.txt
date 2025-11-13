@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, Sascha Willems
+# Copyright (c) 2022-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -38,4 +38,11 @@ add_sample_with_tags(
         "hdr/hlsl/bloom.vert.hlsl"
         "hdr/hlsl/bloom.frag.hlsl"
         "hdr/hlsl/gbuffer.vert.hlsl"
-        "hdr/hlsl/gbuffer.frag.hlsl")
+        "hdr/hlsl/gbuffer.frag.hlsl"
+    SHADER_FILES_SLANG
+        "hdr/slang/composition.vert.slang"
+        "hdr/slang/composition.frag.slang"
+        "hdr/slang/bloom.vert.slang"
+        "hdr/slang/bloom.frag.slang"
+        "hdr/slang/gbuffer.vert.slang"
+        "hdr/slang/gbuffer.frag.slang")

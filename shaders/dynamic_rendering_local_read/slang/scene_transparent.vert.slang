@@ -42,8 +42,6 @@ VSOutput main(VSInput input, uniform float4x4 pushMatrix, uniform float4 pushCol
 {
     VSOutput output;
     output.Color = pushColor;
-    // @todo
-    // outColor = vec4(1.0);
     output.Pos = mul(ubo.projection, mul(ubo.view, mul(pushMatrix, float4(input.Pos, 1.0))));
     output.UV = input.UV;
     return output;
