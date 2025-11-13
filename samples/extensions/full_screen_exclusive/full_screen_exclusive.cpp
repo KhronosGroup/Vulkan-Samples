@@ -220,7 +220,7 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 		throw std::runtime_error("Required device extensions are missing, will try without.");
 	}
 
-	float queue_priority = 1.0f;
+	float queue_priority = 0.5f;
 
 	VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
 	queue_info.queueFamilyIndex = context.graphics_queue_index;
