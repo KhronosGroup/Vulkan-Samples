@@ -497,7 +497,7 @@ std::unique_ptr<vkb::core::InstanceC> ShaderDebugPrintf::create_instance()
 	std::vector<VkExtensionProperties> available_instance_extensions(available_extension_count);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &available_extension_count, available_instance_extensions.data()));
 
-	// If VK_KHR_portability_enumeration is available in the portability implementation, then we must enable the extension
+	// If VK_KHR_portability_enumeration is available in the implementation, then we must enable the extension
 	bool portability_enumeration_available = false;
 	if (std::ranges::any_of(available_instance_extensions,
 	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
