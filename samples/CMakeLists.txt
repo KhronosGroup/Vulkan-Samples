@@ -93,6 +93,7 @@ set(ORDER_LIST
     "sparse_image"
     "dynamic_primitive_clipping"
     "simple_tensor_and_data_graph"
+    "compute_shaders_with_tensors"
 
     #Performance Samples
     "swapchain_images"
