@@ -128,6 +128,8 @@ class MultiDrawIndirect : public ApiVulkanSample
 	const vkb::Queue                      *compute_queue{nullptr};
 	std::vector<uint32_t>                  queue_families;
 
+	std::shared_ptr<vkb::core::CommandBufferC> ui_overlay_command_buffer;
+
 	// CPU Draw Calls
 	void                                      cpu_cull();
 	std::vector<VkDrawIndexedIndirectCommand> cpu_commands;
