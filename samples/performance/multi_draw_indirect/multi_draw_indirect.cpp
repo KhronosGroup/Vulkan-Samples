@@ -198,13 +198,13 @@ void MultiDrawIndirect::on_update_ui_overlay(vkb::Drawer &drawer)
 			assert(!!indirect_call_buffer && !!cpu_staging_buffer && indirect_call_buffer->get_size() == cpu_staging_buffer->get_size());
 			assert(cpu_commands.size() * sizeof(cpu_commands[0]) == cpu_staging_buffer->get_size());
 
-			auto cmd = get_device().get_command_pool().request_command_buffer();
-			cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-			cmd->copy_buffer(*indirect_call_buffer, *cpu_staging_buffer, cpu_staging_buffer->get_size());
-			cmd->end();
+			ui_overlay_command_buffer->reset(vkb::CommandBufferResetMode::ResetIndividually);
+			ui_overlay_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+			ui_overlay_command_buffer->copy_buffer(*indirect_call_buffer, *cpu_staging_buffer, cpu_staging_buffer->get_size());
+			ui_overlay_command_buffer->end();
 
 			auto &queue = get_device().get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
-			queue.submit(*cmd, get_device().get_fence_pool().request_fence());
+			queue.submit(*ui_overlay_command_buffer, get_device().get_fence_pool().request_fence());
 			get_device().get_fence_pool().wait();
 
 			memcpy(cpu_commands.data(), cpu_staging_buffer->get_data(), cpu_staging_buffer->get_size());
@@ -277,6 +277,8 @@ bool MultiDrawIndirect::prepare(const vkb::ApplicationOptions &options)
 			queue_families.emplace_back(index);
 		}
 	}
+
+	ui_overlay_command_buffer = get_device().get_command_pool().request_command_buffer();
 
 	create_samplers();
 	load_scene();
