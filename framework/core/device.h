@@ -82,11 +82,13 @@ class Device
 	 * @param surface The surface
 	 * @param debug_utils The debug utils to be associated to this device
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
+	 * @param request_gpu_features (Optional) A function that will be called to request specific gpu features before device creation
 	 */
-	Device(PhysicalDevice<bindingType>                  &gpu,
-	       SurfaceType                                   surface,
-	       std::unique_ptr<DebugUtilsType>             &&debug_utils,
-	       std::unordered_map<const char *, bool> const &requested_extensions = {});
+	Device(PhysicalDevice<bindingType>                                  &gpu,
+	       SurfaceType                                                   surface,
+	       std::unique_ptr<DebugUtilsType>                             &&debug_utils,
+	       std::unordered_map<const char *, bool> const                 &requested_extensions = {},
+	       std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features = {});
 
 	/**
 	 * @brief Device constructor
@@ -134,7 +136,7 @@ class Device
 	void flush_command_buffer_impl(
 	    vk::Device device, vk::CommandBuffer command_buffer, vk::Queue queue, bool free = true, vk::Semaphore signal_semaphore = nullptr) const;
 	vkb::core::HPPQueue const &get_queue_by_flags_impl(vk::QueueFlags queue_flags, uint32_t queue_index) const;
-	void                       init(std::unordered_map<const char *, bool> const &requested_extensions);
+	void                       init(std::unordered_map<const char *, bool> const &requested_extensions, std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features);
 
   private:
 	std::unique_ptr<vkb::core::CommandPoolCpp>    command_pool;
@@ -161,23 +163,25 @@ namespace core
 {
 
 template <>
-inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp                 &gpu,
-                                             vk::SurfaceKHR                                surface,
-                                             std::unique_ptr<vkb::core::HPPDebugUtils>   &&debug_utils,
-                                             std::unordered_map<const char *, bool> const &requested_extensions) :
+inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp                       &gpu,
+                                             vk::SurfaceKHR                                      surface,
+                                             std::unique_ptr<vkb::core::HPPDebugUtils>         &&debug_utils,
+                                             std::unordered_map<const char *, bool> const       &requested_extensions,
+                                             std::function<void(vkb::core::PhysicalDeviceCpp &)> request_gpu_features) :
     vkb::core::VulkanResourceCpp<vk::Device>{nullptr, this}, debug_utils{std::move(debug_utils)}, gpu{gpu}, resource_cache{*this}, surface(surface)
 {
-	init(requested_extensions);
+	init(requested_extensions, request_gpu_features);
 }
 
 template <>
-inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC                   &gpu,
-                                           VkSurfaceKHR                                  surface,
-                                           std::unique_ptr<vkb::DebugUtils>            &&debug_utils,
-                                           std::unordered_map<const char *, bool> const &requested_extensions) :
+inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC                       &gpu,
+                                           VkSurfaceKHR                                      surface,
+                                           std::unique_ptr<vkb::DebugUtils>                &&debug_utils,
+                                           std::unordered_map<const char *, bool> const     &requested_extensions,
+                                           std::function<void(vkb::core::PhysicalDeviceC &)> request_gpu_features) :
     vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this}, debug_utils{reinterpret_cast<vkb::core::HPPDebugUtils *>(debug_utils.release())}, gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface(static_cast<vk::SurfaceKHR>(surface))
 {
-	init(requested_extensions);
+	init(requested_extensions, request_gpu_features);
 }
 
 template <>
@@ -615,7 +619,7 @@ vkb::core::HPPQueue const &Device<bindingType>::get_queue_by_flags_impl(vk::Queu
 }
 
 template <vkb::BindingType bindingType>
-inline void Device<bindingType>::init(std::unordered_map<const char *, bool> const &requested_extensions)
+inline void Device<bindingType>::init(std::unordered_map<const char *, bool> const &requested_extensions, std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features)
 {
 	LOGI("Selected GPU: {}", *gpu.get_properties().deviceName);
 
@@ -717,6 +721,15 @@ inline void Device<bindingType>::init(std::unordered_map<const char *, bool> con
 		{
 			throw VulkanException(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
 		}
+	}
+
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		request_gpu_features(gpu);
+	}
+	else
+	{
+		request_gpu_features(reinterpret_cast<vkb::core::PhysicalDeviceC &>(gpu));
 	}
 
 	// Latest requested feature will have the pNext's all set up for device creation.
