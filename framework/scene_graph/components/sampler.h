@@ -1,4 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,30 +18,73 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <typeinfo>
-#include <vector>
-
+#include "core/hpp_sampler.h"
 #include "core/sampler.h"
 #include "scene_graph/component.h"
 
 namespace vkb
 {
-namespace sg
+namespace scene_graph
 {
-class Sampler : public Component
+namespace components
+{
+template <vkb::BindingType bindingType>
+class Sampler : public vkb::sg::Component
 {
   public:
-	Sampler(const std::string &name, core::Sampler &&vk_sampler);
+	using CoreSamplerType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPSampler, vkb::core::Sampler>::type;
+
+  public:
+	Sampler(std::string const &name, CoreSamplerType &&core_sampler);
 
 	Sampler(Sampler &&other) = default;
+	virtual ~Sampler()       = default;
 
-	virtual ~Sampler() = default;
+	CoreSamplerType const &get_core_sampler() const;
 
 	virtual std::type_index get_type() override;
 
-	core::Sampler vk_sampler;
+  private:
+	vkb::core::HPPSampler core_sampler;
 };
-}        // namespace sg
+
+using SamplerC   = Sampler<vkb::BindingType::C>;
+using SamplerCpp = Sampler<vkb::BindingType::Cpp>;
+
+// Member function definitions
+
+template <>
+inline Sampler<vkb::BindingType::Cpp>::Sampler(std::string const &name, vkb::core::HPPSampler &&core_sampler_) :
+    Component{name},
+    core_sampler{std::move(core_sampler_)}
+{
+}
+
+template <>
+inline Sampler<vkb::BindingType::C>::Sampler(std::string const &name, vkb::core::Sampler &&core_sampler_) :
+    Component{name},
+    core_sampler{std::move(reinterpret_cast<vkb::core::HPPSampler &&>(core_sampler_))}
+{
+}
+
+template <vkb::BindingType bindingType>
+inline typename Sampler<bindingType>::CoreSamplerType const &Sampler<bindingType>::get_core_sampler() const
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return core_sampler;
+	}
+	else
+	{
+		return reinterpret_cast<vkb::core::Sampler const &>(core_sampler);
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline std::type_index Sampler<bindingType>::get_type()
+{
+	return typeid(Sampler<bindingType>);
+}
+}        // namespace components
+}        // namespace scene_graph
 }        // namespace vkb

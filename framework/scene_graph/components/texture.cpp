@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,12 +43,12 @@ Image *Texture::get_image()
 	return image;
 }
 
-void Texture::set_sampler(Sampler &s)
+void Texture::set_sampler(vkb::scene_graph::components::SamplerC &s)
 {
 	sampler = &s;
 }
 
-Sampler *Texture::get_sampler()
+vkb::scene_graph::components::SamplerC *Texture::get_sampler()
 {
 	assert(sampler && "Texture has no sampler");
 	return sampler;
