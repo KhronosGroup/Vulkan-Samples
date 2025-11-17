@@ -1,6 +1,6 @@
 ////
-- Copyright (c) 2024, The Khronos Group
-- Copyright (c) 2024, Arm Limited and Contributors
+- Copyright (c) 2024-2025, The Khronos Group
+- Copyright (c) 2024-2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -30,7 +30,7 @@ endif::[]
 
 == Overview
 
-This sample shows how a Vulkan application can control the compression of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImage.html[`VkImage`] elements, in particular a framebuffer attachment and the swapchain.
+This sample shows how a Vulkan application can control the compression of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImage.html[`VkImage`] elements, in particular a framebuffer attachment and the swapchain.
 This requires enabling and using the extensions https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control[`VK_EXT_image_compression_control`] and https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control_swapchain[`VK_EXT_image_compression_control_swapchain`], respectively.
 Applications that use compression generally perform better thanks to the reduced memory footprint and bandwidth.
 
@@ -119,12 +119,12 @@ This is the case for the Space Module scene shown above.
 
 == VK_EXT_image_compression_control
 
-This sample enables the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_image_compression_control.html[`VK_EXT_image_compression_control`] extension and requests the relevant device feature, https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceImageCompressionControlFeaturesEXT.html[`imageCompressionControl`]
+This sample enables the https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_image_compression_control.html[`VK_EXT_image_compression_control`] extension and requests the relevant device feature, https://registry.khronos.org/vulkan/specs/latest/man/html/VkPhysicalDeviceImageCompressionControlFeaturesEXT.html[`imageCompressionControl`]
 This extension abstracts how applications choose a fixed compression rate, in terms of "minimum number of bits per component (BPC)".
 
 === Query for image compression support
 
-To query if a particular image supports fixed-rate compression, add a https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageFormatProperties2KHR.html[`VkImageFormatProperties2`], and call https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkGetPhysicalDeviceImageFormatProperties2KHR.html[`vkGetPhysicalDeviceImageFormatProperties2KHR`]:
+To query if a particular image supports fixed-rate compression, add a https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageFormatProperties2KHR.html[`VkImageFormatProperties2`], and call https://registry.khronos.org/vulkan/specs/latest/man/html/vkGetPhysicalDeviceImageFormatProperties2KHR.html[`vkGetPhysicalDeviceImageFormatProperties2KHR`]:
 
 [,cpp]
 ----
@@ -148,8 +148,8 @@ vkGetPhysicalDeviceImageFormatProperties2KHR(device.get_gpu().get_handle(), &ima
 
 In the Vulkan Samples framework, this happens in the https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/common/vk_common.cpp[`vkb::query_supported_fixed_rate_compression`] function.
 
-Then inspect the values written to the `imageCompressionFixedRateFlags` component of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`].
-If fixed-rate compression is supported, the flags will indicate which levels may be selected for this image, for instance https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionFixedRateFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT`] or https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionFixedRateFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT`].
+Then inspect the values written to the `imageCompressionFixedRateFlags` component of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`].
+If fixed-rate compression is supported, the flags will indicate which levels may be selected for this image, for instance https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionFixedRateFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT`] or https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionFixedRateFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT`].
 The sample will use the minimum BPC available for its high compression setting, and the maximum BPC available for its low compression setting.
 
 image::./images/fixed_rate_levels.png[Image Compression Control sample, 900, align="center"]
@@ -159,7 +159,7 @@ __Fixed-rate options__
 
 === Request image compression
 
-To request fixed-rate compression, provide a https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionControlEXT.html[`VkImageCompressionControlEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCreateInfo.html[`VkImageCreateInfo`]:  
+To request fixed-rate compression, provide a https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionControlEXT.html[`VkImageCompressionControlEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCreateInfo.html[`VkImageCreateInfo`]:  
 
 [,cpp]
 ----
@@ -180,13 +180,13 @@ image_info.pNext     = &compression_control;
 vkCreateImage(device, &image_info, nullptr, &new_image);
 ----
 
-Note that, instead of using https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT`], one may use https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT`], and in that case it would not be necessary to provide a specific set of `pFixedRateFlags`.
+Note that, instead of using https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT`], one may use https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT`], and in that case it would not be necessary to provide a specific set of `pFixedRateFlags`.
 
 In the Vulkan Samples framework, this happens in the https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/core/image.cpp[`core::Image`] constructor.
 
 === Verify image compression [[verify_image_compression]]
 
-To query which compression was applied, if any, once a https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImage.html[`VkImage`] has been created, add a https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageSubresource2EXT.html[`VkImageSubresource2EXT`], and call https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkGetImageSubresourceLayout2EXT.html[`vkGetImageSubresourceLayout2EXT`]:
+To query which compression was applied, if any, once a https://registry.khronos.org/vulkan/specs/latest/man/html/VkImage.html[`VkImage`] has been created, add a https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageSubresource2EXT.html[`VkImageSubresource2EXT`], and call https://registry.khronos.org/vulkan/specs/latest/man/html/vkGetImageSubresourceLayout2EXT.html[`vkGetImageSubresourceLayout2EXT`]:
 
 [,cpp]
 ----
@@ -203,18 +203,18 @@ image_subresource.imageSubresource.arrayLayer = 0;
 vkGetImageSubresourceLayout2EXT(device, image, &image_subresource, &subresource_layout);
 ----
 
-Then inspect the values written to the `imageCompressionFlags` and  `imageCompressionFixedRateFlags` components of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`].
+Then inspect the values written to the `imageCompressionFlags` and  `imageCompressionFixedRateFlags` components of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`].
 In the Vulkan Samples framework, this happens in the https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/core/image.cpp[`core::Image::query_applied_compression`] function.
 
 
 == VK_EXT_image_compression_control_swapchain
 
-Compression control for swapchain images is similar, but it requires the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_image_compression_control_swapchain.html[`VK_EXT_image_compression_control_swapchain`] extension and the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT.html[`imageCompressionControlSwapchain`] device feature to be enabled.
-These depend on the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_image_compression_control.html[`VK_EXT_image_compression_control`] being available and enabled too.
+Compression control for swapchain images is similar, but it requires the https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_image_compression_control_swapchain.html[`VK_EXT_image_compression_control_swapchain`] extension and the https://registry.khronos.org/vulkan/specs/latest/man/html/VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT.html[`imageCompressionControlSwapchain`] device feature to be enabled.
+These depend on the https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_image_compression_control.html[`VK_EXT_image_compression_control`] being available and enabled too.
 
 === Query for surface compression support
 
-To query if the surface supports fixed-rate compression, add a https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageFormatProperties2KHR.html[`VkImageFormatProperties2`], and call https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkGetPhysicalDeviceImageFormatProperties2KHR.html[`vkGetPhysicalDeviceImageFormatProperties2KHR`]:
+To query if the surface supports fixed-rate compression, add a https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageFormatProperties2KHR.html[`VkImageFormatProperties2`], and call https://registry.khronos.org/vulkan/specs/latest/man/html/vkGetPhysicalDeviceImageFormatProperties2KHR.html[`vkGetPhysicalDeviceImageFormatProperties2KHR`]:
 
 [,cpp]
 ----
@@ -239,12 +239,12 @@ for (uint32_t i = 0; i < surface_format_count; i++)
 vkGetPhysicalDeviceSurfaceFormats2KHR(device, &surface_info, &surface_format_count, surface_formats.data());
 ----
 
-Then inspect the values written to the `imageCompressionFixedRateFlags` component of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`], associated to a particular https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSurfaceFormat2KHR.html[`VkSurfaceFormat2KHR`].
+Then inspect the values written to the `imageCompressionFixedRateFlags` component of https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionPropertiesEXT.html[`VkImageCompressionPropertiesEXT`], associated to a particular https://registry.khronos.org/vulkan/specs/latest/man/html/VkSurfaceFormat2KHR.html[`VkSurfaceFormat2KHR`].
 In the Vulkan Samples framework, this happens in the https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/core/swapchain.cpp[`Swapchain::query_supported_fixed_rate_compression`] function.
 
 === Request surface compression
 
-To request fixed-rate compression, provide a https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionControlEXT.html[`VkImageCompressionControlEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSwapchainCreateInfoKHR.html[`VkSwapchainCreateInfoKHR`]:  
+To request fixed-rate compression, provide a https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionControlEXT.html[`VkImageCompressionControlEXT`] to the `pNext` chain of https://registry.khronos.org/vulkan/specs/latest/man/html/VkSwapchainCreateInfoKHR.html[`VkSwapchainCreateInfoKHR`]:  
 
 [,cpp]
 ----
@@ -262,13 +262,13 @@ create_info.pNext   = &compression_control;
 vkCreateSwapchainKHR(device, &create_info, nullptr, &new_swapchain);
 ----
 
-Similarly to regular images, https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT`] may be used instead.
+Similarly to regular images, https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT`] may be used instead.
 
 In the Vulkan Samples framework, this happens in the https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/core/swapchain.cpp[`Swapchain`] constructor.
 
 === Verify surface compression
 
-To verify that compression was applied to the swapchain images, use the same method as described for a regular https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImage.html[`VkImage`] in <<verify_image_compression>>.
+To verify that compression was applied to the swapchain images, use the same method as described for a regular https://registry.khronos.org/vulkan/specs/latest/man/html/VkImage.html[`VkImage`] in <<verify_image_compression>>.
 No need to enable https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_image_compression_control_swapchain[`VK_EXT_image_compression_control_swapchain`] for this.
 
 In the Vulkan Samples framework, this happens in the https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/core/swapchain.cpp[`Swapchain::get_applied_compression`] function.
@@ -278,9 +278,9 @@ The most likely reason is that, even though the GPU supports it, other IP compon
 
 == Disabling fixed-rate compression
 
-As explained above, the `flags` in https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionControlEXT.html[`VkImageCompressionControlEXT`] control the compression scheme selection for images.
+As explained above, the `flags` in https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionControlEXT.html[`VkImageCompressionControlEXT`] control the compression scheme selection for images.
 Take care not to accidentally disable <<default_compression>> when disabling <<fixed_rate_compression>>.
-That is, ensure that https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_DEFAULT_EXT`] is used by default, rather than https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_DISABLED_EXT`], which disables all compression, negatively impacting performance.
+That is, ensure that https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_DEFAULT_EXT`] is used by default, rather than https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageCompressionFlagBitsEXT.html[`VK_IMAGE_COMPRESSION_DISABLED_EXT`], which disables all compression, negatively impacting performance.
 
 == Conclusion
 
