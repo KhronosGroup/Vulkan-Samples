@@ -105,6 +105,14 @@ Tracy is not currently enabled for Android builds. In the future, we may add sup
 
 *Default:* `OFF`
 
+=== VKB_SKIP_SLANG_SHADER_COMPILATION
+
+By default, Slang shaders are compiled if a Slang compiler is found on the system. In cases where this is undesirable, set this to `OFF` to disable Slang shader compilation.
+
+You can still select Slang as a shading language target for the samples since Slang shaders are included as precompiled SPIR-V files.
+
+*Default:* `OFF`
+
 == Quality Assurance
 
 We use a small set of tools to provide a level of quality to the project.
