@@ -33648,25 +33648,6 @@ VPAPI_ATTR VkResult vpCreateInstance(
 		}
 	}
 
-#ifdef __APPLE__
-	bool has_portability_ext = false;
-	for (std::size_t ext_index = 0, ext_count = extensions.size(); ext_index < ext_count; ++ext_index)
-	{
-		if (strcmp(extensions[ext_index], VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0)
-		{
-			has_portability_ext = true;
-			break;
-		}
-	}
-
-	if (!has_portability_ext)
-	{
-		extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-	}
-
-	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#endif
-
 	if (!extensions.empty())
 	{
 		createInfo.enabledExtensionCount   = static_cast<uint32_t>(extensions.size());
