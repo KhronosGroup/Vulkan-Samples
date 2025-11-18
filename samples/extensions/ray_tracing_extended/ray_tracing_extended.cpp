@@ -133,6 +133,12 @@ RaytracingExtended::~RaytracingExtended()
 	}
 }
 
+void RaytracingExtended::create_render_context()
+{
+	// select an RGB8A8_SRGB surface format, skipping the ApiVulkanSample::create_render_context implementation
+	VulkanSample::create_render_context({{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
+}
+
 void RaytracingExtended::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable extension features required by this sample
@@ -161,7 +167,7 @@ void RaytracingExtended::create_storage_image()
 
 	VkImageCreateInfo image = vkb::initializers::image_create_info();
 	image.imageType         = VK_IMAGE_TYPE_2D;
-	image.format            = VK_FORMAT_B8G8R8A8_UNORM;
+	image.format            = VK_FORMAT_R8G8B8A8_UNORM;
 	image.extent.width      = storage_image.width;
 	image.extent.height     = storage_image.height;
 	image.extent.depth      = 1;
@@ -183,7 +189,7 @@ void RaytracingExtended::create_storage_image()
 
 	VkImageViewCreateInfo color_image_view           = vkb::initializers::image_view_create_info();
 	color_image_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	color_image_view.format                          = VK_FORMAT_B8G8R8A8_UNORM;
+	color_image_view.format                          = image.format;
 	color_image_view.subresourceRange                = {};
 	color_image_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 	color_image_view.subresourceRange.baseMipLevel   = 0;
