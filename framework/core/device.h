@@ -638,7 +638,7 @@ inline void Device<bindingType>::init(std::unordered_map<const char *, bool> con
 		if (gpu.has_high_priority_graphics_queue() &&
 		    (vkb::common::get_queue_family_index(queue_family_properties, vk::QueueFlagBits::eGraphics) == queue_family_index))
 		{
-			queue_priorities.back()[0] = 1.0f;
+			queue_priorities.back()[0] = 0.5f;
 		}
 
 		queue_create_infos.push_back({.queueFamilyIndex = queue_family_index,
