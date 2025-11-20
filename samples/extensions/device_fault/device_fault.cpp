@@ -295,10 +295,10 @@ void DeviceFault::create_graphics_pipeline()
 
 void DeviceFault::create_pipelines()
 {
-    setMemoryDebugLabel("Creating Compute Pipeline");
+    set_memory_debug_label("Creating Compute Pipeline");
     create_compute_pipeline();
 
-    setMemoryDebugLabel("Creating Graphics Pipeline");
+    set_memory_debug_label("Creating Graphics Pipeline");
     create_graphics_pipeline();
 }
 
@@ -393,10 +393,10 @@ DeviceFault::TestBuffer DeviceFault::create_vbo_buffer()
     memory_allocation_info.allocationSize  = memory_requirements.size;
     memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    setMemoryDebugLabel("Allocating Vertex Buffer Object");
+    set_memory_debug_label("Allocating Vertex Buffer Object");
     VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &buffer.memory));
 
-    setMemoryDebugLabel("Binding Vertex Buffer Object");
+    set_memory_debug_label("Binding Vertex Buffer Object");
     VK_CHECK(vkBindBufferMemory(get_device().get_handle(), buffer.buffer, buffer.memory, 0));
 
     // Once we've bound the buffer, we query the buffer device address.
@@ -435,11 +435,11 @@ DeviceFault::TestBuffer DeviceFault::create_pointer_buffer()
     memory_allocation_info.allocationSize  = memory_requirements.size;
     memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    setMemoryDebugLabel("Allocating Pointer Buffer ");
+    set_memory_debug_label("Allocating Pointer Buffer ");
     VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &buffer.memory));
 
     // DONE: LOGI("PointerBuffer::BindMemory::Binding");
-    setMemoryDebugLabel("Binding Pointer Buffer ");
+    set_memory_debug_label("Binding Pointer Buffer ");
     VK_CHECK(vkBindBufferMemory(get_device().get_handle(), buffer.buffer, buffer.memory, 0));
 
     VkBufferDeviceAddressInfoKHR address_info{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR};
@@ -585,25 +585,22 @@ void DeviceFault::render(float delta_time)
 
 }
 
-void DeviceFault::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DeviceFault::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
     LOGI("Requesting features from GPU.");
     // Need to enable the bufferDeviceAddress feature.
     REQUEST_REQUIRED_FEATURE(gpu,
                              VkPhysicalDeviceBufferDeviceAddressFeaturesKHR,
-                             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR,
                              bufferDeviceAddress);
 
     // Enable the deviceFault feature for handling hardware faults.
     REQUEST_REQUIRED_FEATURE(gpu,
                              VkPhysicalDeviceFaultFeaturesEXT,
-                             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT,
                              deviceFault);
 
     // Enable binding report for getting more information on GPU virtual address spaces
     REQUEST_OPTIONAL_FEATURE(gpu,
                              VkPhysicalDeviceAddressBindingReportFeaturesEXT,
-                             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ADDRESS_BINDING_REPORT_FEATURES_EXT,
                              reportAddressBinding);
 
     // Add explicit debug utils feature request
@@ -624,7 +621,7 @@ std::unique_ptr<ApiVulkanSample> create_device_fault()
     return std::make_unique<DeviceFault>();
 }
 
-void DeviceFault::setMemoryDebugLabel(std::string current_address_reporter)
+void DeviceFault::set_memory_debug_label(std::string current_address_reporter)
 {
-    this->current_memory_label = current_address_reporter;
+    this->current_memory_label = std::move(current_address_reporter);
 }
