@@ -28,7 +28,7 @@ public:
     ~DeviceFault();
 
 private:
-    virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+    virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
     virtual void render(float delta_time) override;
     virtual void build_command_buffers() override;
     virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
@@ -76,7 +76,7 @@ private:
 
     // Simple tagging variable to follow memory address changes in pipeline
     std::string             current_memory_label;
-    void                    setMemoryDebugLabel(std::string current_address_reporter);
+    void                    set_memory_debug_label(std::string current_address_reporter);
 
     std::unique_ptr<vkb::core::BufferC> create_index_buffer();
     std::unique_ptr<vkb::core::BufferC> index_buffer;
