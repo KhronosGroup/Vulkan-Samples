@@ -35,9 +35,8 @@ allocated and bound/unbound addresses in Vulkan application.
 [,cpp]
 ----
 REQUEST_OPTIONAL_FEATURE(gpu,
-    VkPhysicalDeviceFaultFeaturesEXT,
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT,
-    deviceFault);
+                         VkPhysicalDeviceFaultFeaturesEXT,
+                         deviceFault);
 ----
 
 This code enables the device fault feature, which allows us to query detailed information about device lost errors.
@@ -48,9 +47,8 @@ The feature must be enabled before creating the logical device.
 [,cpp]
 ----
 REQUEST_OPTIONAL_FEATURE(gpu,
-    VkPhysicalDeviceAddressBindingReportFeaturesEXT,
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ADDRESS_BINDING_REPORT_FEATURES_EXT,
-    reportAddressBinding);
+                         VkPhysicalDeviceAddressBindingReportFeaturesEXT,
+                         reportAddressBinding);
 ----
 
 This feature enables monitoring of GPU memory address bindings, providing insights into memory allocation.
