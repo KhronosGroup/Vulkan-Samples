@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,7 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	void build_command_buffers() override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
@@ -97,6 +97,12 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 
 	int32_t attachment_width{0};
 	int32_t attachment_height{0};
+
+	std::array<uint32_t, 4>             color_attachment_input_indices{VK_ATTACHMENT_UNUSED, 0, 1, 2};
+	VkRenderingInputAttachmentIndexInfo rendering_attachment_index_info{VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO_KHR,
+	                                                                    nullptr,
+	                                                                    static_cast<uint32_t>(color_attachment_input_indices.size()),
+	                                                                    color_attachment_input_indices.data()};
 
 	void setup_framebuffer() override;
 	void setup_render_pass() override;

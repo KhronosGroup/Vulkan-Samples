@@ -42,7 +42,7 @@ Instancing::~Instancing()
 	}
 }
 
-void Instancing::request_gpu_features(vkb::PhysicalDevice &gpu)
+void Instancing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	auto &requested_features = gpu.get_mutable_requested_features();
 

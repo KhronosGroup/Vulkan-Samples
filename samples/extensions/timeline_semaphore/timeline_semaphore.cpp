@@ -330,13 +330,13 @@ void TimelineSemaphore::setup_compute_pipeline()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &compute.pipeline_layout));
 	VkComputePipelineCreateInfo info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout);
 
-	info.stage = load_shader("timeline_semaphore/game_of_life_update.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+	info.stage = load_shader("timeline_semaphore", "game_of_life_update.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &compute.update_pipeline));
 
-	info.stage = load_shader("timeline_semaphore/game_of_life_mutate.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+	info.stage = load_shader("timeline_semaphore", "game_of_life_mutate.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &compute.mutate_pipeline));
 
-	info.stage = load_shader("timeline_semaphore/game_of_life_init.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+	info.stage = load_shader("timeline_semaphore", "game_of_life_init.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &compute.init_pipeline));
 }
 
@@ -550,8 +550,8 @@ void TimelineSemaphore::setup_graphics_pipeline()
 	info.pStages    = stages;
 	info.stageCount = 2;
 
-	stages[0] = load_shader("timeline_semaphore/render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	stages[1] = load_shader("timeline_semaphore/render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	stages[0] = load_shader("timeline_semaphore", "render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	stages[1] = load_shader("timeline_semaphore", "render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &graphics.pipeline));
 }
 
@@ -607,13 +607,10 @@ void TimelineSemaphore::build_graphics_command_buffer()
 	VK_CHECK(vkEndCommandBuffer(graphics.command_buffer));
 }
 
-void TimelineSemaphore::request_gpu_features(vkb::PhysicalDevice &gpu)
+void TimelineSemaphore::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Need to enable the timelineSemaphore feature.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceTimelineSemaphoreFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR,
-	                         timelineSemaphore);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTimelineSemaphoreFeaturesKHR, timelineSemaphore);
 }
 
 bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)

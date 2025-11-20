@@ -51,16 +51,10 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 	}
 }
 
-void DynamicMultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicMultisampleRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3RasterizationSamples);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
-	                         dynamicRendering);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3RasterizationSamples);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
 }
 
 const std::string to_string(VkSampleCountFlagBits count)
@@ -667,8 +661,8 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	shader_stages[0] = load_shader("dynamic_multisample_rasterization/model.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_multisample_rasterization/model.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_multisample_rasterization", "model.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_multisample_rasterization", "model.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Add a pipeline for the opaque counterclockwise faces
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_opaque));

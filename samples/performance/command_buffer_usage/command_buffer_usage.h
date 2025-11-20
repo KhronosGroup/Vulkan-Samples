@@ -144,9 +144,11 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 	class ForwardSubpassSecondary : public vkb::ForwardSubpass
 	{
 	  public:
-		ForwardSubpassSecondary(vkb::RenderContext &render_context,
-		                        vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source,
-		                        vkb::sg::Scene &scene, vkb::sg::Camera &camera);
+		ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,
+		                        vkb::ShaderSource             &&vertex_source,
+		                        vkb::ShaderSource             &&fragment_source,
+		                        vkb::sg::Scene                 &scene,
+		                        vkb::sg::Camera                &camera);
 
 		void draw(vkb::core::CommandBufferC &primary_command_buffer) override;
 
@@ -167,11 +169,11 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 		 * @param mesh_end Index to the mesh where recording will stop (not included)
 		 * @param thread_index Identifies the resources allocated for this thread
 		 */
-		void record_draw(vkb::core::CommandBufferC                                         &command_buffer,
-		                 const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-		                 uint32_t                                                           mesh_start,
-		                 uint32_t                                                           mesh_end,
-		                 size_t                                                             thread_index = 0);
+		void record_draw(vkb::core::CommandBufferC                                                   &command_buffer,
+		                 const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
+		                 uint32_t                                                                     mesh_start,
+		                 uint32_t                                                                     mesh_end,
+		                 size_t                                                                       thread_index = 0);
 
 		/**
 		 * @brief Records the necessary commands to draw the specified range of scene meshes
@@ -184,11 +186,11 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 		 * @param thread_index Identifies the resources allocated for this thread
 		 * @return a pointer to the recorded secondary command buffer
 		 */
-		std::shared_ptr<vkb::core::CommandBufferC> record_draw_secondary(vkb::core::CommandBufferC                                         &primary_command_buffer,
-		                                                                 const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-		                                                                 uint32_t                                                           mesh_start,
-		                                                                 uint32_t                                                           mesh_end,
-		                                                                 size_t                                                             thread_index = 0);
+		std::shared_ptr<vkb::core::CommandBufferC> record_draw_secondary(vkb::core::CommandBufferC                                                   &primary_command_buffer,
+		                                                                 const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
+		                                                                 uint32_t                                                                     mesh_start,
+		                                                                 uint32_t                                                                     mesh_end,
+		                                                                 size_t                                                                       thread_index = 0);
 
 		VkViewport viewport{};
 

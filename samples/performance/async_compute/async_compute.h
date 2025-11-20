@@ -33,7 +33,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	virtual ~AsyncComputeSample() = default;
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
@@ -83,17 +83,22 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	struct DepthMapSubpass : vkb::ForwardSubpass
 	{
-		DepthMapSubpass(vkb::RenderContext &render_context,
-		                vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                vkb::sg::Scene &scene, vkb::sg::Camera &camera);
+		DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
+		                vkb::ShaderSource             &&vertex_shader,
+		                vkb::ShaderSource             &&fragment_shader,
+		                vkb::sg::Scene                 &scene,
+		                vkb::sg::Camera                &camera);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 	};
 
 	struct ShadowMapForwardSubpass : vkb::ForwardSubpass
 	{
-		ShadowMapForwardSubpass(vkb::RenderContext &render_context,
-		                        vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                        vkb::sg::Scene &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera);
+		ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
+		                        vkb::ShaderSource             &&vertex_shader,
+		                        vkb::ShaderSource             &&fragment_shader,
+		                        vkb::sg::Scene                 &scene,
+		                        vkb::sg::Camera                &camera,
+		                        vkb::sg::Camera                &shadow_camera);
 		void         set_shadow_map(const vkb::core::ImageView *view, const vkb::core::Sampler *sampler);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 
@@ -104,8 +109,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	struct CompositeSubpass : vkb::rendering::SubpassC
 	{
-		CompositeSubpass(vkb::RenderContext &render_context,
-		                 vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);
+		CompositeSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);
 		void         set_texture(const vkb::core::ImageView *hdr_view, const vkb::core::ImageView *bloom_view,
 		                         const vkb::core::Sampler *sampler);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;

@@ -150,6 +150,12 @@ bool MobileNerfRayQuery::prepare(const vkb::ApplicationOptions &options)
 
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.01f, 256.0f);
 
+	VkPhysicalDeviceProperties2 device_properties{};
+	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	device_properties.pNext = &acceleration_structure_properties;
+
+	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
+
 	// Each models may have submodels
 	int models_entry = 0;
 	for (int model_index = 0; model_index < num_models; model_index++)
@@ -179,17 +185,17 @@ bool MobileNerfRayQuery::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void MobileNerfRayQuery::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MobileNerfRayQuery::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, accelerationStructure);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayQueryFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR, rayQuery);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, shaderUniformBufferArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, shaderSampledImageArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, shaderStorageBufferArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, runtimeDescriptorArray);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, descriptorBindingVariableDescriptorCount);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceScalarBlockLayoutFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT, scalarBlockLayout);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayQueryFeaturesKHR, rayQuery);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderUniformBufferArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderStorageBufferArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceScalarBlockLayoutFeaturesEXT, scalarBlockLayout);
 }
 
 void MobileNerfRayQuery::render(float delta_time)
@@ -837,6 +843,7 @@ void MobileNerfRayQuery::create_top_level_acceleration_structure()
 
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
 	top_level_acceleration_structure->add_instance_geometry(instances_buffer, acceleration_structure_instances.size());
+	top_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	top_level_acceleration_structure->build(queue);
 }
 
@@ -880,6 +887,7 @@ void MobileNerfRayQuery::create_bottom_level_acceleration_structure(int model_en
 		    get_buffer_device_address(model.vertex_buffer->get_handle()),
 		    get_buffer_device_address(model.index_buffer->get_handle()));
 	}
+	model.bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	model.bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 

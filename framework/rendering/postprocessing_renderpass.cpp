@@ -24,8 +24,11 @@ namespace vkb
 constexpr uint32_t DEPTH_RESOLVE_BITMASK = 0x80000000;
 constexpr uint32_t ATTACHMENT_BITMASK    = 0x7FFFFFFF;
 
-PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass *parent, RenderContext &render_context, ShaderSource &&triangle_vs,
-                                             ShaderSource &&fs, ShaderVariant &&fs_variant) :
+PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass       *parent,
+                                             vkb::rendering::RenderContextC &render_context,
+                                             ShaderSource                  &&triangle_vs,
+                                             ShaderSource                  &&fs,
+                                             ShaderVariant                 &&fs_variant) :
     Subpass(render_context, std::move(triangle_vs), std::move(fs)),
     parent{parent},
     fs_variant{std::move(fs_variant)}

@@ -105,6 +105,14 @@ Tracy is not currently enabled for Android builds. In the future, we may add sup
 
 *Default:* `OFF`
 
+=== VKB_SKIP_SLANG_SHADER_COMPILATION
+
+By default, Slang shaders are compiled if a Slang compiler is found on the system. In cases where this is undesirable, set this to `OFF` to disable Slang shader compilation.
+
+You can still select Slang as a shading language target for the samples since Slang shaders are included as precompiled SPIR-V files.
+
+*Default:* `OFF`
+
 == Quality Assurance
 
 We use a small set of tools to provide a level of quality to the project.
@@ -210,10 +218,10 @@ Alternatively, for command line builds use the steps below:
 cmake --build build/windows --config Release --target vulkan_samples
 ----
 
-`Step 3.` Run the *Vulkan Samples* application
+`Step 3.` Run the *Vulkan Samples* application by specifying the name of the sample
 
 ----
-build\windows\app\bin\Release\AMD64\vulkan_samples.exe
+build\windows\app\bin\Release\AMD64\vulkan_samples.exe sample <sample_name>
 ----
 
 == Linux
@@ -291,7 +299,7 @@ source /PATH/TO/VULKAN/SDK/setup-env.sh
 `Step 1.` The following command will generate the project
 
 ----
-cmake -G Xcode -Bbuild/mac-xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+cmake -G Xcode -Bbuild/mac-xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3
 ----
 
 Open the *vulkan_samples* Xcode project inside build/mac-xcode and build with command-B.  To run Vulkan Samples, use Xcode's edit-scheme selection and set the arguments to --help. Click the "Play" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
@@ -299,7 +307,7 @@ Open the *vulkan_samples* Xcode project inside build/mac-xcode and build with co
 Alternatively, for command line builds use the steps below:
 
 ----
-cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_SYSROOT=macosx -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3
 ----
 
 `Step 2.` Build the project
@@ -338,14 +346,14 @@ source /PATH/TO/VULKAN/SDK/iOS/setup-env.sh
 `Step 1.` The following command will generate the project
 
 ----
-cmake -G Xcode -Bbuild/ios -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_IOS_INSTALL_COMBINED=NO -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="XXXX" -DMACOSX_BUNDLE_GUI_IDENTIFIER="com.YYYY.vulkansamples"
+cmake -G Xcode -Bbuild/ios -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_IOS_INSTALL_COMBINED=NO -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="XXXX" -DMACOSX_BUNDLE_GUI_IDENTIFIER="com.YYYY.vulkansamples"
 ----
 NB:  You MUST change the XXXX in the above to your TeamID (or Organizational Unit identifier in your Apple Development certificate) for code signing, and YYYY to your bundle identifier. iOS will NOT allow the application to run without code signing and bundle identifier setup.
 
-Alternatively, you can build for the iOS Simulator without code signing or specifying a bundle identifier (a default bundle id will be used). However, depending on your host architecture, you MUST select either arm64 (Apple Silicon) or x86_64 in the command below
+Alternatively, you can build for the iOS Simulator (requires Vulkan SDK 1.4.321.0 or later) without code signing or specifying a bundle identifier (a default bundle id will be used). However, depending on your host architecture, you MUST select either arm64 (Apple Silicon) or x86_64 in the command below. _Note: On arm64 (Apple Silicon) hosts the Vulkan library may not load on iOS Simulator without specifying your TeamID and bundle identifier as shown above._
 
 ----
-cmake -G Xcode -Bbuild/ios-sim -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=<arm64|x86_64> -DCMAKE_IOS_INSTALL_COMBINED=NO
+cmake -G Xcode -Bbuild/ios-sim -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=YES -DCMAKE_OSX_ARCHITECTURES=<arm64|x86_64> -DCMAKE_IOS_INSTALL_COMBINED=NO
 ----
 
 `Step 2.` Build the project
@@ -388,7 +396,7 @@ ____
 It is highly recommended to install https://d.android.com/studio[Android Studio] to build, run and trace the sample project. Building via Android Studio requires at least Ladybug 2024.2.1.
 
 Android Studio uses the following plugins/tools to build samples:
- 
+
 * Android Gradle Plugin
 * CMake Plugin, which installs and uses Ninja
 * NDK

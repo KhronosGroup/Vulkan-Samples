@@ -84,7 +84,7 @@ bool HPPPushDescriptors::prepare(const vkb::ApplicationOptions &options)
 	return prepared;
 }
 
-void HPPPushDescriptors::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPPushDescriptors::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)

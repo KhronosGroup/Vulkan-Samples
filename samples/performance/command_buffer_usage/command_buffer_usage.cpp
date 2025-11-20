@@ -252,17 +252,20 @@ void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_comm
 	primary_command_buffer.end_render_pass();
 }
 
-CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::RenderContext &render_context,
-                                                                     vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene_, vkb::sg::Camera &camera) :
+CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,
+                                                                     vkb::ShaderSource             &&vertex_shader,
+                                                                     vkb::ShaderSource             &&fragment_shader,
+                                                                     vkb::sg::Scene                 &scene_,
+                                                                     vkb::sg::Camera                &camera) :
     vkb::ForwardSubpass{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
 {
 }
 
-void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::CommandBufferC                                         &command_buffer,
-                                                              const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-                                                              uint32_t                                                           mesh_start,
-                                                              uint32_t                                                           mesh_end,
-                                                              size_t                                                             thread_index)
+void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::CommandBufferC                                                   &command_buffer,
+                                                              const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
+                                                              uint32_t                                                                     mesh_start,
+                                                              uint32_t                                                                     mesh_end,
+                                                              size_t                                                                       thread_index)
 {
 	command_buffer.set_color_blend_state(color_blend_state);
 
@@ -280,11 +283,11 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::Command
 }
 
 std::shared_ptr<vkb::core::CommandBufferC>
-    CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::core::CommandBufferC                                         &primary_command_buffer,
-                                                                       const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-                                                                       uint32_t                                                           mesh_start,
-                                                                       uint32_t                                                           mesh_end,
-                                                                       size_t                                                             thread_index)
+    CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::core::CommandBufferC                                                   &primary_command_buffer,
+                                                                       const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
+                                                                       uint32_t                                                                     mesh_start,
+                                                                       uint32_t                                                                     mesh_end,
+                                                                       size_t                                                                       thread_index)
 {
 	const auto &queue = get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -308,15 +311,15 @@ std::shared_ptr<vkb::core::CommandBufferC>
 
 void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC &primary_command_buffer)
 {
-	std::multimap<float, std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> opaque_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> opaque_nodes;
 
-	std::multimap<float, std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> transparent_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> transparent_nodes;
 
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
 	// Sort opaque objects in front-to-back order
 	// Note: sorting objects does not help on PowerVR, so it can be avoided to save CPU cycles
-	std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> sorted_opaque_nodes;
+	std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> sorted_opaque_nodes;
 	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{
 		sorted_opaque_nodes.push_back(node_it->second);
@@ -324,7 +327,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 	const auto opaque_submeshes = vkb::to_u32(sorted_opaque_nodes.size());
 
 	// Sort transparent objects in back-to-front order
-	std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> sorted_transparent_nodes;
+	std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> sorted_transparent_nodes;
 	for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
 	{
 		sorted_transparent_nodes.push_back(node_it->second);

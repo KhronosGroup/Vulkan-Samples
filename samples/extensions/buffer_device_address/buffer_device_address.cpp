@@ -109,7 +109,7 @@ void BufferDeviceAddress::create_compute_pipeline()
 {
 	pipelines.compute_pipeline_layout = create_pipeline_layout(false);
 	VkComputePipelineCreateInfo info  = vkb::initializers::compute_pipeline_create_info(pipelines.compute_pipeline_layout);
-	info.stage                        = load_shader("buffer_device_address/update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+	info.stage                        = load_shader("buffer_device_address", "update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_update_pipeline));
 }
 
@@ -155,8 +155,8 @@ void BufferDeviceAddress::create_graphics_pipeline()
 	info.pStages    = stages;
 	info.stageCount = 2;
 
-	stages[0] = load_shader("buffer_device_address/render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	stages[1] = load_shader("buffer_device_address/render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	stages[0] = load_shader("buffer_device_address", "render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	stages[1] = load_shader("buffer_device_address", "render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.bindless_vbo_pipeline));
 }
 
@@ -426,13 +426,10 @@ void BufferDeviceAddress::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
-void BufferDeviceAddress::request_gpu_features(vkb::PhysicalDevice &gpu)
+void BufferDeviceAddress::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Need to enable the bufferDeviceAddress feature.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR,
-	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
 }
 
 std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address()

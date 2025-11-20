@@ -36,8 +36,8 @@ if(APPLE)
     set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability enumeration and subset features in the framework.  This is required to be set when running on Apple platforms." FORCE)
 
 	find_package(Vulkan QUIET OPTIONAL_COMPONENTS MoltenVK)
-	if(USE_MoltenVK OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR (${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator" AND ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64"))))
-		# if using MoltenVK, or MoltenVK for iOS was not found, or using iOS Simulator on x86_64, look for MoltenVK in the Vulkan SDK and MoltenVK project locations
+	if(USE_MoltenVK OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR ${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator")))
+		# if using MoltenVK, or MoltenVK for iOS was not found, or using iOS Simulator, look for MoltenVK in the Vulkan SDK and MoltenVK project locations
 		if(NOT Vulkan_MoltenVK_LIBRARY)
 			# since both are available in the Vulkan SDK and MoltenVK github project, make sure we look for MoltenVK framework on iOS and dylib on macOS
 			set(_saved_cmake_find_framework ${CMAKE_FIND_FRAMEWORK})
@@ -117,6 +117,7 @@ set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND,
 set(VKB_CLANG_TIDY OFF CACHE STRING "Use CMake Clang Tidy integration")
 set(VKB_CLANG_TIDY_EXTRAS "-header-filter=framework,samples,app;-checks=-*,google-*,-google-runtime-references;--fix;--fix-errors" CACHE STRING "Clang Tidy Parameters")
 set(VKB_PROFILING OFF CACHE BOOL "Enable Tracy profiling")
+set(VKB_SKIP_SLANG_SHADER_COMPILATION OFF CACHE BOOL "Skips compilation for Slang shader")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")

@@ -1,0 +1,86 @@
+; Copyright (c) 2024-2025, Arm Limited and Contributors
+;
+; SPDX-License-Identifier: Apache-2.0
+;
+; Licensed under the Apache License, Version 2.0 the "License";
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+
+; A simple neural network with a single pooling layer, expressed in SPIR-V assembly.
+; See simple_tensor_and_data_graph/README.adoc for a more detailed explanation of this code.
+
+                                   ; Boilerplate
+                                   OpCapability Shader
+                                   OpCapability TensorsARM
+                                   OpCapability GraphARM
+                                   OpExtension "SPV_ARM_tensors"
+                                   OpExtension "SPV_ARM_graph"
+
+                                   ; Import TOSA instructions for neural network operations
+                           %tosa = OpExtInstImport "TOSA.001000.1"
+
+                                   ; More boilerplate
+                                   OpMemoryModel Logical GLSL450
+
+                                   ; Descriptor set interface
+                                   OpDecorate %input_tensor_ptr DescriptorSet 0
+                                   OpDecorate %input_tensor_ptr Binding 0
+                                   OpDecorate %output_tensor_ptr DescriptorSet 0
+                                   OpDecorate %output_tensor_ptr Binding 1
+
+                                   ; Types and constants
+                           %uint = OpTypeInt 32 0
+                          %float = OpTypeFloat 32
+                         %uint_0 = OpConstant %uint 0
+                         %uint_1 = OpConstant %uint 1
+                         %uint_2 = OpConstant %uint 2
+                         %uint_3 = OpConstant %uint 3
+                         %uint_4 = OpConstant %uint 4
+                    %input_width = OpConstant %uint 10
+                   %input_height = OpConstant %uint 10
+                   %output_width = OpConstant %uint 5
+                  %output_height = OpConstant %uint 5
+                        %float_0 = OpConstant %float 0
+                  %uint_array_l1 = OpTypeArray %uint %uint_1
+                  %uint_array_l4 = OpTypeArray %uint %uint_4
+               %uint_array_l1_1  = OpConstantComposite %uint_array_l1 %uint_1
+               %uint_array_l1_2  = OpConstantComposite %uint_array_l1 %uint_2
+               %uint_array_l1_4  = OpConstantComposite %uint_array_l1 %uint_4
+        %uint_array_l4_1_ih_iw_3 = OpConstantComposite %uint_array_l4 %uint_1 %input_height %input_width %uint_3
+        %uint_array_l4_1_oh_ow_3 = OpConstantComposite %uint_array_l4 %uint_1 %output_height %output_width %uint_3
+             %float_tensor_r1_s1 = OpTypeTensorARM %float %uint_1 %uint_array_l1_1
+              %uint_tensor_r1_s2 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_2
+              %uint_tensor_r1_s4 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_4
+    %float_tensor_r4_s_1_ih_iw_3 = OpTypeTensorARM %float %uint_4 %uint_array_l4_1_ih_iw_3
+    %float_tensor_r4_s_1_oh_ow_3 = OpTypeTensorARM %float %uint_4 %uint_array_l4_1_oh_ow_3
+%ptr_float_tensor_r4_s_1_ih_iw_3 = OpTypePointer UniformConstant %float_tensor_r4_s_1_ih_iw_3
+%ptr_float_tensor_r4_s_1_oh_ow_3 = OpTypePointer UniformConstant %float_tensor_r4_s_1_oh_ow_3
+
+                                   ; Parameters for pooling layer
+                %avg_pool_kernel = OpConstantComposite %uint_tensor_r1_s2 %uint_3 %uint_3
+                %avg_pool_stride = OpConstantComposite %uint_tensor_r1_s2 %uint_2 %uint_2
+                   %avg_pool_pad = OpConstantComposite %uint_tensor_r1_s4 %uint_0 %uint_0 %uint_0 %uint_0
+      %avg_pool_input_zero_point = OpConstantComposite %float_tensor_r1_s1 %float_0
+     %avg_pool_output_zero_point = OpConstantComposite %float_tensor_r1_s1 %float_0
+
+                                   ; Graph type and interface variables
+                     %graph_type = OpTypeGraphARM 1 %float_tensor_r4_s_1_ih_iw_3 %float_tensor_r4_s_1_oh_ow_3
+               %input_tensor_ptr = OpVariable %ptr_float_tensor_r4_s_1_ih_iw_3 UniformConstant
+              %output_tensor_ptr = OpVariable %ptr_float_tensor_r4_s_1_oh_ow_3 UniformConstant
+
+                                   ; Neural network layers defined as a graph
+                                   OpGraphEntryPointARM %graph "main" %input_tensor_ptr %output_tensor_ptr
+                          %graph = OpGraphARM %graph_type
+                             %in = OpGraphInputARM %float_tensor_r4_s_1_ih_iw_3 %uint_0
+                            %out = OpExtInst %float_tensor_r4_s_1_oh_ow_3 %tosa AVG_POOL2D %avg_pool_kernel %avg_pool_stride %avg_pool_pad %uint_2 %in %avg_pool_input_zero_point %avg_pool_output_zero_point
+                                   OpGraphSetOutputARM %out %uint_0
+                                   OpGraphEndARM

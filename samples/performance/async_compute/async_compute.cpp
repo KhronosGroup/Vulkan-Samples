@@ -38,12 +38,11 @@ AsyncComputeSample::AsyncComputeSample()
 	config.insert<vkb::BoolSetting>(1, double_buffer_hdr_frames, true);
 }
 
-void AsyncComputeSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+void AsyncComputeSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 #ifdef VKB_ENABLE_PORTABILITY
 	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR, mutableComparisonSamplers);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 #endif
 }
 
@@ -826,7 +825,7 @@ std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 	return std::make_unique<AsyncComputeSample>();
 }
 
-AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::RenderContext &render_context,
+AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
                                                      vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
                                                      vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
     vkb::ForwardSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
@@ -842,7 +841,7 @@ void AsyncComputeSample::DepthMapSubpass::draw(vkb::core::CommandBufferC &comman
 	vkb::ForwardSubpass::draw(command_buffer);
 }
 
-AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::RenderContext &render_context,
+AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
                                                                      vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
                                                                      vkb::sg::Scene &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera_) :
     vkb::ForwardSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera),
@@ -875,7 +874,9 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::core::CommandBufferC
 	vkb::ForwardSubpass::draw(command_buffer);
 }
 
-AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader) :
+AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::rendering::RenderContextC &render_context,
+                                                       vkb::ShaderSource             &&vertex_shader,
+                                                       vkb::ShaderSource             &&fragment_shader) :
     vkb::rendering::SubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader))
 {
 }

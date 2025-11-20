@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!--
+Copyright (c) 2025, Arm Limited and Contributors
+-->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg height='44pt' preserveAspectRatio='xMidYMid meet' viewBox='0.00 0.00 444.00 44.00' width='444pt' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns='http://www.w3.org/2000/svg'>
+<g class='graph' id='graph0' transform='scale(1 1) rotate(0) translate(4 40)'>
+<title>Overview</title>
+<polygon fill='#ffffff' points='-4,4 -4,-40 440,-40 440,4 -4,4' stroke='transparent'/>
+
+<g class='node' id='node1'>
+<title>Input Tensor</title>
+<polygon fill='none' points='109,-36 0,-36 0,0 109,0 109,-36' stroke='#000000'/>
+<text fill='#000000' font-family='Times,serif' font-size='14.00' text-anchor='middle' x='54.5' y='-14.3'>Input Tensor</text>
+</g>
+
+<g class='node' id='node3'>
+<title>Neural Network</title>
+<polygon fill='none' points='279,-36 145,-36 145,0 279,0 279,-36' stroke='#000000'/>
+<text fill='#000000' font-family='Times,serif' font-size='14.00' text-anchor='middle' x='212' y='-14.3'>Neural Network</text>
+</g>
+
+<g class='edge' id='edge1'>
+<title>Input Tensor&#45;&gt;Neural Network</title>
+<path d='M109.1438,-18C117.4455,-18 126.1427,-18 134.8146,-18' fill='none' stroke='#000000'/>
+<polygon fill='#000000' points='134.9578,-21.5001 144.9578,-18 134.9578,-14.5001 134.9578,-21.5001' stroke='#000000'/>
+</g>
+
+<g class='node' id='node2'>
+<title>Output Tensor</title>
+<polygon fill='none' points='436,-36 315,-36 315,0 436,0 436,-36' stroke='#000000'/>
+<text fill='#000000' font-family='Times,serif' font-size='14.00' text-anchor='middle' x='375.5' y='-14.3'>Output Tensor</text>
+</g>
+
+<g class='edge' id='edge2'>
+<title>Neural Network&#45;&gt;Output Tensor</title>
+<path d='M279.4457,-18C287.7631,-18 296.2845,-18 304.6508,-18' fill='none' stroke='#000000'/>
+<polygon fill='#000000' points='304.7548,-21.5001 314.7548,-18 304.7548,-14.5001 304.7548,-21.5001' stroke='#000000'/>
+</g>
+</g>
+</svg>

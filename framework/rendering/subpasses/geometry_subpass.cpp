@@ -18,7 +18,9 @@
 #include "rendering/subpasses/geometry_subpass.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "core/command_buffer.h"
 #include "rendering/render_context.h"
+#include "resource_cache.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
@@ -30,7 +32,8 @@
 
 namespace vkb
 {
-GeometrySubpass::GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
+GeometrySubpass::GeometrySubpass(
+    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
     Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
     meshes{scene_.get_components<sg::Mesh>()},
     camera{camera},
@@ -53,7 +56,8 @@ void GeometrySubpass::prepare()
 	}
 }
 
-void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes, std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
+void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &opaque_nodes,
+                                       std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &transparent_nodes)
 {
 	auto camera_transform = camera.get_node()->get_transform().get_world_matrix();
 
@@ -87,8 +91,8 @@ void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *
 
 void GeometrySubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> opaque_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> transparent_nodes;
 
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
@@ -139,7 +143,7 @@ void GeometrySubpass::draw(vkb::core::CommandBufferC &command_buffer)
 	}
 }
 
-void GeometrySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, sg::Node &node, size_t thread_index)
+void GeometrySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index)
 {
 	GlobalUniform global_uniform;
 

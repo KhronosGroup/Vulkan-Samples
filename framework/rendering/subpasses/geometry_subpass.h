@@ -35,7 +35,6 @@ using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
 namespace sg
 {
 class Scene;
-class Node;
 class Mesh;
 class SubMesh;
 class Camera;
@@ -79,7 +78,8 @@ class GeometrySubpass : public vkb::rendering::SubpassC
 	 * @param scene Scene to render on this subpass
 	 * @param camera Camera used to look at the scene
 	 */
-	GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
+	GeometrySubpass(
+	    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
 
 	virtual ~GeometrySubpass() = default;
 
@@ -96,7 +96,7 @@ class GeometrySubpass : public vkb::rendering::SubpassC
 	void set_thread_index(uint32_t index);
 
   protected:
-	virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, sg::Node &node, size_t thread_index);
+	virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index);
 
 	void draw_submesh(vkb::core::CommandBufferC &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
@@ -113,8 +113,8 @@ class GeometrySubpass : public vkb::rendering::SubpassC
 	 * @brief Sorts objects based on distance from camera and classifies them
 	 *        into opaque and transparent in the arrays provided
 	 */
-	void get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes,
-	                      std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes);
+	void get_sorted_nodes(std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &opaque_nodes,
+	                      std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &transparent_nodes);
 
 	sg::Camera &camera;
 

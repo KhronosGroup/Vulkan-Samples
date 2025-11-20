@@ -29,8 +29,9 @@
 class RaytracingExtended : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR    ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR   acceleration_structure_features{};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{};
 
 	enum RenderMode : uint32_t
 	{
@@ -260,7 +261,7 @@ class RaytracingExtended : public ApiVulkanSample
 	RaytracingExtended();
 	~RaytracingExtended() override;
 
-	void                 request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void                 request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	uint64_t             get_buffer_device_address(VkBuffer buffer);
 	void                 create_storage_image();
 	void                 create_static_object_buffers();

@@ -33,11 +33,12 @@
 
 namespace vkb
 {
-class PhysicalDevice;
-
 namespace core
 {
-class HPPPhysicalDevice;
+template <vkb::BindingType bindingType>
+class PhysicalDevice;
+using PhysicalDeviceC   = PhysicalDevice<vkb::BindingType::C>;
+using PhysicalDeviceCpp = PhysicalDevice<vkb::BindingType::Cpp>;
 
 /**
  * @brief A wrapper class for InstanceType
@@ -51,8 +52,6 @@ class Instance
   public:
 	using InstanceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Instance, VkInstance>::type;
 	using SurfaceType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
-
-	using PhysicalDeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPPhysicalDevice, vkb::PhysicalDevice>::type;
 
   public:
 	/**
@@ -103,7 +102,7 @@ class Instance
 	 * @brief Tries to find the first available discrete GPU
 	 * @returns A valid physical device
 	 */
-	PhysicalDeviceType &get_first_gpu();
+	PhysicalDevice<bindingType> &get_first_gpu();
 
 	InstanceType get_handle() const;
 
@@ -113,7 +112,7 @@ class Instance
 	 * @param headless_surface Is surface created with VK_EXT_headless_surface
 	 * @returns A valid physical device
 	 */
-	PhysicalDeviceType &get_suitable_gpu(SurfaceType surface, bool headless_surface);
+	PhysicalDevice<bindingType> &get_suitable_gpu(SurfaceType surface, bool headless_surface);
 
 	/**
 	 * @brief Checks if the given extension is enabled in the InstanceType
@@ -129,7 +128,7 @@ class Instance
 
   private:
 	std::vector<const char *>                                  enabled_extensions;        // The enabled extensions
-	std::vector<std::unique_ptr<vkb::core::HPPPhysicalDevice>> gpus;                      // The physical devices found on the machine
+	std::vector<std::unique_ptr<vkb::core::PhysicalDeviceCpp>> gpus;                      // The physical devices found on the machine
 	vk::Instance                                               handle;                    // The Vulkan instance
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -143,7 +142,7 @@ using InstanceCpp = Instance<vkb::BindingType::Cpp>;
 }        // namespace core
 }        // namespace vkb
 
-#include "core/hpp_physical_device.h"
+#include "core/physical_device.h"
 
 namespace vkb
 {
@@ -628,7 +627,7 @@ inline Instance<bindingType>::~Instance()
 #endif
 
 template <vkb::BindingType bindingType>
-inline typename Instance<bindingType>::PhysicalDeviceType &Instance<bindingType>::get_first_gpu()
+inline PhysicalDevice<bindingType> &Instance<bindingType>::get_first_gpu()
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
@@ -645,7 +644,7 @@ inline typename Instance<bindingType>::PhysicalDeviceType &Instance<bindingType>
 	}
 	else
 	{
-		return reinterpret_cast<vkb::PhysicalDevice &>(**gpuIt);
+		return reinterpret_cast<vkb::core::PhysicalDeviceC &>(**gpuIt);
 	}
 }
 
@@ -664,7 +663,7 @@ inline typename Instance<bindingType>::InstanceType Instance<bindingType>::get_h
 }
 
 template <vkb::BindingType bindingType>
-inline typename Instance<bindingType>::PhysicalDeviceType &Instance<bindingType>::get_suitable_gpu(SurfaceType surface, bool headless_surface)
+inline PhysicalDevice<bindingType> &Instance<bindingType>::get_suitable_gpu(SurfaceType surface, bool headless_surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
@@ -725,7 +724,7 @@ inline typename Instance<bindingType>::PhysicalDeviceType &Instance<bindingType>
 	}
 	else
 	{
-		return reinterpret_cast<vkb::PhysicalDevice &>(**gpuIt);
+		return reinterpret_cast<vkb::core::PhysicalDeviceC &>(**gpuIt);
 	}
 }
 
@@ -751,11 +750,11 @@ inline void Instance<bindingType>::query_gpus()
 	{
 		if constexpr (bindingType == BindingType::Cpp)
 		{
-			gpus.push_back(std::make_unique<vkb::core::HPPPhysicalDevice>(*this, physical_device));
+			gpus.push_back(std::make_unique<vkb::core::PhysicalDeviceCpp>(*this, physical_device));
 		}
 		else
 		{
-			gpus.push_back(std::make_unique<vkb::core::HPPPhysicalDevice>(*reinterpret_cast<vkb::core::InstanceCpp *>(this), physical_device));
+			gpus.push_back(std::make_unique<vkb::core::PhysicalDeviceCpp>(*reinterpret_cast<vkb::core::InstanceCpp *>(this), physical_device));
 		}
 	}
 }

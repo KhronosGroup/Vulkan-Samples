@@ -41,7 +41,7 @@ class MobileNerfRayQuery : public ApiVulkanSample
   public:
 	MobileNerfRayQuery();
 	~MobileNerfRayQuery() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
@@ -166,6 +166,9 @@ class MobileNerfRayQuery : public ApiVulkanSample
 
 	// Feature map format
 	VkFormat feature_map_format = VK_FORMAT_R16G16B16A16_SFLOAT;
+
+	// Acceleration structure properties.
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
 
 	void read_json_map();
 	void load_shaders();

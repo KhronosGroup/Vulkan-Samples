@@ -71,7 +71,7 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 	}
 }
 
-void ShaderDebugPrintf::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ShaderDebugPrintf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	auto const &supportedFeatures = gpu.get_features();
 	auto       &requestedFeatures = gpu.get_mutable_requested_features();

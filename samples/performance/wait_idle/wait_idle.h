@@ -35,7 +35,7 @@ class WaitIdle : public vkb::VulkanSampleC
 	 * @brief This RenderContext is responsible containing the scene's RenderFrames
 	 *		  It implements a custom wait_frame function which alternates between waiting with WaitIdle or Fences
 	 */
-	class CustomRenderContext : public vkb::RenderContext
+	class CustomRenderContext : public vkb::rendering::RenderContextC
 	{
 	  public:
 		CustomRenderContext(vkb::core::DeviceC &device, VkSurfaceKHR surface, const vkb::Window &window, int &wait_idle_enabled);

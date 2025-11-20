@@ -110,7 +110,6 @@ set(RENDERING_FILES
     rendering/render_target.h
     rendering/subpass.h
     rendering/hpp_pipeline_state.h
-    rendering/hpp_render_context.h
     rendering/hpp_render_pipeline.h
     rendering/hpp_render_target.h
     # Source files
@@ -119,10 +118,8 @@ set(RENDERING_FILES
     rendering/postprocessing_pass.cpp
     rendering/postprocessing_renderpass.cpp
     rendering/postprocessing_computepass.cpp
-    rendering/render_context.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
-    rendering/hpp_render_context.cpp
     rendering/hpp_render_target.cpp)
 
 set(RENDERING_SUBPASSES_FILES
@@ -145,7 +142,6 @@ set(SCENE_GRAPH_FILES
     scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
-    scene_graph/node.cpp
     scene_graph/scene.cpp
     scene_graph/script.cpp)
 
@@ -250,7 +246,6 @@ set(CORE_FILES
     core/hpp_framebuffer.h
     core/hpp_image.h
     core/hpp_image_view.h
-    core/hpp_physical_device.h
     core/hpp_pipeline.h
     core/hpp_pipeline_layout.h
     core/hpp_query_pool.h
@@ -262,7 +257,6 @@ set(CORE_FILES
     core/vulkan_resource.h
     # Source Files
     core/command_pool_base.cpp
-    core/physical_device.cpp
     core/debug.cpp
     core/image_core.cpp
     core/shader_module.cpp
@@ -285,7 +279,6 @@ set(CORE_FILES
     core/hpp_debug.cpp
     core/hpp_image_core.cpp
     core/hpp_image_view.cpp
-    core/hpp_physical_device.cpp
     core/hpp_pipeline_layout.cpp
     core/hpp_queue.cpp
     core/hpp_sampler.cpp

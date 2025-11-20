@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, Holochip
+/* Copyright (c) 2022-2025, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -128,7 +128,7 @@ class Portability : public ApiVulkanSample
 
 	Portability();
 	~Portability() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 	void create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);
 	void prepare_offscreen_buffer();

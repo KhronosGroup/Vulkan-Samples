@@ -41,7 +41,7 @@ class MobileNerf : public ApiVulkanSample
   public:
 	MobileNerf();
 	~MobileNerf() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;

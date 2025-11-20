@@ -71,19 +71,19 @@ DynamicRenderingLocalRead::~DynamicRenderingLocalRead()
 	}
 }
 
-void DynamicRenderingLocalRead::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicRenderingLocalRead::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}
 #if defined(USE_DYNAMIC_RENDERING)
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR, dynamicRendering);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
 
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES_KHR, dynamicRenderingLocalRead);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR, dynamicRenderingLocalRead);
 
 	// To simplify barrier setup used for dynamic rendering, we use sync2
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR, synchronization2);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 #endif
 }
 
@@ -686,15 +686,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 
-	VkRenderingInputAttachmentIndexInfo rendering_attachment_index_info{VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO};
 	pipeline_rendering_create_info.pNext = &rendering_attachment_index_info;
-
-	std::array<uint32_t, 4> colorAttachments                     = {VK_ATTACHMENT_UNUSED, 0, 1, 2};
-	rendering_attachment_index_info.pNext                        = nullptr;
-	rendering_attachment_index_info.colorAttachmentCount         = colorAttachments.size();
-	rendering_attachment_index_info.pColorAttachmentInputIndices = colorAttachments.data();
-	rendering_attachment_index_info.pDepthInputAttachmentIndex   = nullptr;
-	rendering_attachment_index_info.pStencilInputAttachmentIndex = nullptr;
 #else
 	pipeline_create_info.subpass = 0;
 #endif
@@ -901,6 +893,9 @@ void DynamicRenderingLocalRead::build_command_buffers()
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Set input attachment indices for the composition and transparent passes
+		vkCmdSetRenderingInputAttachmentIndicesKHR(cmd, &rendering_attachment_index_info);
 
 		/*
 		    First draw

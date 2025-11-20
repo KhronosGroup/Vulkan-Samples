@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -113,9 +113,9 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 
 	struct SceneNode
 	{
-		std::string       name;
-		vkb::sg::Node    *node;
-		vkb::sg::SubMesh *sub_mesh;
+		std::string              name;
+		vkb::scene_graph::NodeC *node;
+		vkb::sg::SubMesh        *sub_mesh;
 	};
 	std::vector<SceneNode> scene_elements_baseline;
 	std::vector<SceneNode> scene_elements_tess;
@@ -136,7 +136,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void update(float delta_time) override;
 

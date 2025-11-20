@@ -39,12 +39,11 @@ MultithreadingRenderPasses::MultithreadingRenderPasses()
 	config.insert<vkb::IntSetting>(2, multithreading_mode, 2);
 }
 
-void MultithreadingRenderPasses::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MultithreadingRenderPasses::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 #ifdef VKB_ENABLE_PORTABILITY
 	// Since shadowmap_sampler_create_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR, mutableComparisonSamplers);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 #endif
 }
 
@@ -442,7 +441,7 @@ void MultithreadingRenderPasses::draw_main_pass(vkb::core::CommandBufferC &comma
 	}
 }
 
-MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::RenderContext                              &render_context,
+MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderContextC                  &render_context,
                                                      vkb::ShaderSource                              &&vertex_source,
                                                      vkb::ShaderSource                              &&fragment_source,
                                                      vkb::sg::Scene                                  &scene,
@@ -499,11 +498,11 @@ void MultithreadingRenderPasses::MainSubpass::draw(vkb::core::CommandBufferC &co
 	ForwardSubpass::draw(command_buffer);
 }
 
-MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::RenderContext &render_context,
-                                                         vkb::ShaderSource &&vertex_source,
-                                                         vkb::ShaderSource &&fragment_source,
-                                                         vkb::sg::Scene     &scene,
-                                                         vkb::sg::Camera    &camera) :
+MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::rendering::RenderContextC &render_context,
+                                                         vkb::ShaderSource             &&vertex_source,
+                                                         vkb::ShaderSource             &&fragment_source,
+                                                         vkb::sg::Scene                 &scene,
+                                                         vkb::sg::Camera                &camera) :
     vkb::GeometrySubpass{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
 {
 }

@@ -62,24 +62,15 @@ RaytracingBasic::~RaytracingBasic()
 	}
 }
 
-void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
+void RaytracingBasic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceRayTracingPipelineFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
-	                         rayTracingPipeline);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceAccelerationStructureFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
-	                         accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
 }
 
 /*
@@ -754,8 +745,13 @@ void RaytracingBasic::build_command_buffers()
 		// Prepare current swap chain image as transfer destination
 		vkb::image_layout_transition(draw_cmd_buffers[i],
 		                             get_render_context().get_swapchain().get_images()[i],
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             {},
+		                             VK_ACCESS_TRANSFER_WRITE_BIT,
 		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             subresource_range);
 
 		// Prepare ray tracing output image as transfer source
 		vkb::image_layout_transition(draw_cmd_buffers[i],

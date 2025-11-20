@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, Holochip Corporation
+# Copyright (c) 2021-2025, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -31,5 +31,8 @@ add_sample_with_tags(
     SHADER_FILES_HLSL
         "ray_queries/hlsl/ray_shadow.vert.hlsl"
         "ray_queries/hlsl/ray_shadow.frag.hlsl"
-    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_ray_query")
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_ray_query"
+    SHADER_FILES_SLANG
+        "ray_queries/slang/ray_shadow.vert.slang"
+        "ray_queries/slang/ray_shadow.frag.slang")
 

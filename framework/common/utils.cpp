@@ -20,6 +20,8 @@
 #include <queue>
 #include <stdexcept>
 
+#include "core/command_buffer.h"
+#include "rendering/render_frame.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/sub_mesh.h"
@@ -40,7 +42,7 @@ std::string get_extension(const std::string &uri)
 	return uri.substr(dot_pos + 1);
 }
 
-void screenshot(RenderContext &render_context, const std::string &filename)
+void screenshot(vkb::rendering::RenderContextC &render_context, const std::string &filename)
 {
 	assert(render_context.get_format() == VK_FORMAT_R8G8B8A8_UNORM ||
 	       render_context.get_format() == VK_FORMAT_B8G8R8A8_UNORM ||
@@ -213,10 +215,15 @@ std::string to_snake_case(const std::string &text)
 	return result.str();
 }
 
-sg::Light &add_light(sg::Scene &scene, sg::LightType type, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_light(sg::Scene                 &scene,
+                     sg::LightType              type,
+                     const glm::vec3           &position,
+                     const glm::quat           &rotation,
+                     const sg::LightProperties &props,
+                     vkb::scene_graph::NodeC   *parent_node)
 {
 	auto light_ptr = std::make_unique<sg::Light>("light");
-	auto node      = std::make_unique<sg::Node>(-1, "light node");
+	auto node      = std::make_unique<vkb::scene_graph::NodeC>(-1, "light node");
 
 	if (parent_node)
 	{
@@ -242,22 +249,22 @@ sg::Light &add_light(sg::Scene &scene, sg::LightType type, const glm::vec3 &posi
 	return light;
 }
 
-sg::Light &add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
 {
 	return add_light(scene, sg::LightType::Point, position, {}, props, parent_node);
 }
 
-sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
 {
 	return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
 }
 
-sg::Light &add_spot_light(sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_spot_light(sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
 {
 	return add_light(scene, sg::LightType::Spot, position, rotation, props, parent_node);
 }
 
-sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent)
+vkb::scene_graph::NodeC &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent)
 {
 	auto camera_node = scene.find_node(node_name);
 
