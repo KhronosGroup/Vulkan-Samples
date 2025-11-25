@@ -26,6 +26,6 @@ add_sample(
         NAME "Device Fault"
         DESCRIPTION "Using VK_EXT_device_fault extension to get more information when VK_ERROR_DEVICE_LOST error occurs."
         SHADER_FILES_GLSL
-        "device_fault/render.vert"
-        "device_fault/render.frag"
-        "device_fault/update_vbo.comp")
+        "device_fault/glsl/render.vert"
+        "device_fault/glsl/render.frag"
+        "device_fault/glsl/update_vbo.comp")
