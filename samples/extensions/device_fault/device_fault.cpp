@@ -242,7 +242,8 @@ void DeviceFault::create_compute_pipeline()
 {
     pipelines.compute_pipeline_layout = create_pipeline_layout(false);
     VkComputePipelineCreateInfo info  = vkb::initializers::compute_pipeline_create_info(pipelines.compute_pipeline_layout);
-    info.stage                        = load_shader("device_fault/update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+    // info.stage                        = load_shader("device_fault/update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+    info.stage                        = load_shader("device_fault", "update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
     VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_update_pipeline));
 }
 
@@ -288,8 +289,8 @@ void DeviceFault::create_graphics_pipeline()
     info.pStages    = stages;
     info.stageCount = 2;
 
-    stages[0] = load_shader("device_fault/render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-    stages[1] = load_shader("device_fault/render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+    stages[0] = load_shader("device_fault", "render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+    stages[1] = load_shader("device_fault", "render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
     VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.bindless_vbo_pipeline));
 }
 
