@@ -57,6 +57,7 @@ DeviceFault::~DeviceFault()
         }
         vkDestroyBuffer(vk_device, pointer_buffer.buffer, nullptr);
         vkFreeMemory(vk_device, pointer_buffer.memory, nullptr);
+        vkDestroyDebugUtilsMessengerEXT(get_instance().get_handle(), debug_utils_messenger, nullptr);
     }
 }
 
@@ -171,15 +172,16 @@ bool DeviceFault::prepare(const vkb::ApplicationOptions &options)
 
     // Set up debug utils messenger with proper user data pointer
     VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-    debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                              VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-                                              VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+    //debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+   //                                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+   //                                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+    //debug_utils_create_info.messageType =  VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+    //                                       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+    //                                       VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT;
 
+    debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+    debug_utils_create_info.messageType =  VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT;
 
-
-    debug_utils_create_info.messageType =  VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                                           VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT;
     debug_utils_create_info.pfnUserCallback = debug_callback;
     debug_utils_create_info.pUserData = this; // Pass 'this' pointer to access instance methods
 
@@ -242,7 +244,6 @@ void DeviceFault::create_compute_pipeline()
 {
     pipelines.compute_pipeline_layout = create_pipeline_layout(false);
     VkComputePipelineCreateInfo info  = vkb::initializers::compute_pipeline_create_info(pipelines.compute_pipeline_layout);
-    // info.stage                        = load_shader("device_fault/update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
     info.stage                        = load_shader("device_fault", "update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
     VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_update_pipeline));
 }
@@ -581,8 +582,19 @@ void DeviceFault::render(float delta_time)
     // A bit of a hack. This is usually seated in ApiVulkanSample::submit_frame(), but that throws immediately if the device enters an error state.
     // So we incorrectly call wait_idle here, so we can get the GPU in error state, and we can query it for device_fault before an exception is thrown.
     VkResult error = get_device().get_queue_by_present(0).wait_idle();
-    check_device_fault(error);
-    ApiVulkanSample::submit_frame();
+
+    try
+    {
+        ApiVulkanSample::submit_frame();
+    }
+    catch (std::exception const &e)
+    {
+        vk::DeviceLostError const *device_lost_error = reinterpret_cast<vk::DeviceLostError const *>(&e);
+        if (device_lost_error)
+        {
+            check_device_fault(VK_ERROR_DEVICE_LOST);
+        }
+    }
 
 }
 
@@ -603,18 +615,6 @@ void DeviceFault::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
     REQUEST_OPTIONAL_FEATURE(gpu,
                              VkPhysicalDeviceAddressBindingReportFeaturesEXT,
                              reportAddressBinding);
-
-    // Add explicit debug utils feature request
-    auto &features = gpu.get_mutable_requested_features();
-
-    VkValidationFeaturesEXT validation_features = {};
-    validation_features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-    validation_features.enabledValidationFeatureCount = 1;
-
-    VkValidationFeatureEnableEXT enabled_features[] = {
-            VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
-    };
-    validation_features.pEnabledValidationFeatures = enabled_features;
 }
 
 std::unique_ptr<ApiVulkanSample> create_device_fault()
