@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <numeric>
 
+#include "core/debug.h"
 #include "core/device.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
@@ -287,6 +288,7 @@ std::shared_ptr<vkb::core::CommandBufferC>
                                                                        const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
                                                                        uint32_t                                                                     mesh_start,
                                                                        uint32_t                                                                     mesh_end,
+                                                                       uint32_t                                                                     subpass_index,
                                                                        size_t                                                                       thread_index)
 {
 	const auto &queue = get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -298,11 +300,15 @@ std::shared_ptr<vkb::core::CommandBufferC>
 
 	secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 
-	secondary_command_buffer->set_viewport(0, {viewport});
+	{
+		vkb::ScopedDebugLabel subpass_debug_label{*secondary_command_buffer, fmt::format("Record secondary command buffer, subpass #{}", subpass_index).c_str()};
 
-	secondary_command_buffer->set_scissor(0, {scissor});
+		secondary_command_buffer->set_viewport(0, {viewport});
 
-	record_draw(*secondary_command_buffer, nodes, mesh_start, mesh_end, thread_index);
+		secondary_command_buffer->set_scissor(0, {scissor});
+
+		record_draw(*secondary_command_buffer, nodes, mesh_start, mesh_end, thread_index);
+	}
 
 	secondary_command_buffer->end();
 
@@ -378,13 +384,14 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 				                                      std::cref(sorted_opaque_nodes),
 				                                      mesh_start,
 				                                      mesh_end,
+				                                      cb_count,
 				                                      std::placeholders::_1));
 
 				secondary_cmd_buf_futures.push_back(std::move(fut));
 			}
 			else
 			{
-				secondary_command_buffers.push_back(record_draw_secondary(primary_command_buffer, sorted_opaque_nodes, mesh_start, mesh_end));
+				secondary_command_buffers.push_back(record_draw_secondary(primary_command_buffer, sorted_opaque_nodes, mesh_start, mesh_end, cb_count));
 			}
 
 			mesh_start = mesh_end;
@@ -416,7 +423,8 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 	{
 		if (use_secondary_command_buffers)
 		{
-			secondary_command_buffers.push_back(record_draw_secondary(primary_command_buffer, sorted_transparent_nodes, 0, transparent_submeshes));
+			secondary_command_buffers.push_back(
+			    record_draw_secondary(primary_command_buffer, sorted_transparent_nodes, 0, transparent_submeshes, state.secondary_cmd_buf_count));
 		}
 		else
 		{
