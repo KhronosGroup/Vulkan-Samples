@@ -58,6 +58,7 @@
 ** xref:samples/extensions/debug_utils/README.adoc[Debug utils]
 ** xref:samples/extensions/descriptor_buffer_basic/README.adoc[Descriptor buffer basic]
 ** xref:samples/extensions/descriptor_indexing/README.adoc[Descriptor indexing]
+** xref:samples/extensions/device_fault/README.adoc[Device Fault]
 ** xref:samples/extensions/dynamic_line_rasterization/README.adoc[Dynamic line rasterization]
 ** xref:samples/extensions/dynamic_primitive_clipping/README.adoc[Dynamic primitive clipping]
 ** xref:samples/extensions/dynamic_rendering/README.adoc[Dynamic rendering]
