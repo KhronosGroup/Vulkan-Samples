@@ -82,21 +82,26 @@ class ShaderDebugPrintf : public ApiVulkanSample
 
 	ShaderDebugPrintf();
 	~ShaderDebugPrintf();
-	virtual void                          request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
-	void                                  build_command_buffers() override;
-	void                                  load_assets();
-	void                                  setup_descriptor_pool();
-	void                                  setup_descriptor_set_layout();
-	void                                  setup_descriptor_sets();
-	void                                  prepare_pipelines();
-	void                                  prepare_uniform_buffers();
-	void                                  update_uniform_buffers();
-	void                                  draw();
-	bool                                  prepare(const vkb::ApplicationOptions &options) override;
-	std::unique_ptr<vkb::core::InstanceC> create_instance() override;
-	virtual void                          render(float delta_time) override;
-	virtual void                          on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual bool                          resize(const uint32_t width, const uint32_t height) override;
+	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	void         request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const override;
+	void         request_validation_feature_enables(std::vector<ValidationFeatureEnableType> &requested_layer_settings) const override;
+	void         build_command_buffers() override;
+	void         load_assets();
+	void         setup_descriptor_pool();
+	void         setup_descriptor_set_layout();
+	void         setup_descriptor_sets();
+	void         prepare_pipelines();
+	void         prepare_uniform_buffers();
+	void         update_uniform_buffers();
+	void         draw();
+	bool         prepare(const vkb::ApplicationOptions &options) override;
+	virtual void render(float delta_time) override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
+
+  protected:
+	virtual uint32_t get_api_version() const override;
+	virtual void     request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;
 };
 
 std::unique_ptr<vkb::Application> create_shader_debugprintf();

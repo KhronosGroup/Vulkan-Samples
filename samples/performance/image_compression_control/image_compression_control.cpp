@@ -31,9 +31,6 @@ ImageCompressionControlSample::ImageCompressionControlSample()
 	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME, true);
 	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME, true);
 
-	// Extension dependency requirements (given that instance API version is 1.0.0)
-	add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	// Batch mode will test the toggle between different compression modes
@@ -53,6 +50,12 @@ void ImageCompressionControlSample::request_gpu_features(vkb::core::PhysicalDevi
 	{
 		REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT, imageCompressionControlSwapchain);
 	}
+}
+
+void ImageCompressionControlSample::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &options)

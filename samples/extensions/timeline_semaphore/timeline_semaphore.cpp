@@ -38,7 +38,6 @@ TimelineSemaphore::TimelineSemaphore()
 	title = "Timeline Semaphore";
 
 	add_device_extension(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 }
 
 TimelineSemaphore::~TimelineSemaphore()

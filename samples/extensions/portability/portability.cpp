@@ -33,12 +33,6 @@ Portability::Portability() :
     filter_pass()
 {
 	title = "Portability";
-	// These instance extensions are conditionally added by the sample framework when VKB_ENABLE_PORTABILITY is enabled
-	// add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	// add_instance_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, /*optional=*/true);
-
-	// VK_KHR_portability_subset depends on VK_KHR_get_physical_device_properties2 or Vulkan 1.1 (default for project)
-	// This device extension is conditionally added by the sample framework when VKB_ENABLE_PORTABILITY is enabled
 }
 
 Portability::~Portability()
@@ -78,6 +72,12 @@ Portability::~Portability()
 	}
 }
 
+uint32_t Portability::get_api_version() const
+{
+	// Portability is a Vulkan 1.3 extension
+	return VK_API_VERSION_1_3;
+}
+
 void Portability::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
@@ -85,6 +85,12 @@ void Portability::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
+}
+
+void Portability::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void Portability::build_command_buffers()

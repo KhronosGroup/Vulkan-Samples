@@ -25,9 +25,6 @@ RaytracingBasic::RaytracingBasic()
 {
 	title = "Hardware accelerated ray tracing";
 
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
-
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);

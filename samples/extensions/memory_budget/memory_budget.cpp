@@ -29,7 +29,6 @@ MemoryBudget::MemoryBudget()
 	title = "Memory Budget";
 
 	// Enable instance and device extensions required to use VK_EXT_memory_budget
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 
 	// Initialize physical device memory properties variables

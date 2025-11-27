@@ -77,7 +77,6 @@ MSAASample::MSAASample()
 	add_device_extension(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, true);
 
 	// Extension dependency requirements (given that instance API version is 1.0.0)
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, true);
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, true);
 	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME, true);
 	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME, true);
