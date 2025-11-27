@@ -33,10 +33,6 @@ Portability::Portability() :
     filter_pass()
 {
 	title = "Portability";
-	// Portability is a Vulkan 1.3 extension
-	set_api_version(VK_API_VERSION_1_3);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, /*optional*/ true);
 }
 
 Portability::~Portability()
@@ -76,6 +72,12 @@ Portability::~Portability()
 	}
 }
 
+uint32_t Portability::get_api_version() const
+{
+	// Portability is a Vulkan 1.3 extension
+	return VK_API_VERSION_1_3;
+}
+
 void Portability::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
@@ -83,6 +85,12 @@ void Portability::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
+}
+
+void Portability::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void Portability::build_command_buffers()

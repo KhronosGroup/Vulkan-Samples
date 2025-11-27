@@ -79,8 +79,7 @@ void camera_set_look_at(vkb::Camera &camera, const glm::vec3 look, const glm::ve
 MobileNerf::MobileNerf()
 {
 	title = "Mobile NeRF";
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
+
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	// Required by VK_KHR_spirv_1_4
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);

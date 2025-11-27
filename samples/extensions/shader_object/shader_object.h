@@ -140,6 +140,9 @@ class ShaderObject : public ApiVulkanSample
 	void build_shader(VkDevice device, Shader *shader);
 	void bind_shader(VkCommandBuffer cmd_buffer, ShaderObject::Shader *shader);
 
+  protected:
+	virtual void request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;
+
   private:
 	void create_default_sampler();
 	void load_assets();

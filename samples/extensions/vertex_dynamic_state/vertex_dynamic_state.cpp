@@ -21,7 +21,6 @@ VertexDynamicState::VertexDynamicState()
 {
 	title = "Vertex Dynamic State";
 
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_VERTEX_INPUT_DYNAMIC_STATE_EXTENSION_NAME);
 }
 

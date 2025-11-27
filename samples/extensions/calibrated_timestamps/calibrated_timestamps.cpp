@@ -39,8 +39,6 @@ CalibratedTimestamps::CalibratedTimestamps() :
 {
 	title = "Calibrated Timestamps";
 
-	// Add instance extensions required for calibrated timestamps
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	// NOTICE THAT: calibrated timestamps is a DEVICE extension!
 	add_device_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
 }
