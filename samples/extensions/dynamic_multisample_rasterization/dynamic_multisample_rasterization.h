@@ -125,6 +125,9 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	void         draw_node(VkCommandBuffer &, SceneNode &);
 	void         destroy_image_data(ImageData &image_data);
 	void         attachments_setup(std::vector<VkRenderingAttachmentInfoKHR> &attachments, std::vector<VkClearValue> &clear_values);
+
+  protected:
+	uint32_t get_api_version() const override;
 };
 
 std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_multisample_rasterization();

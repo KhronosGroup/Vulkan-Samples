@@ -144,6 +144,10 @@ class Portability : public ApiVulkanSample
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
+
+  protected:
+	uint32_t get_api_version() const override;
+	void     request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 };
 
 std::unique_ptr<vkb::Application> create_portability();

@@ -18,8 +18,11 @@
 
 #pragma once
 
+#include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/hpp_debug.h"
 #include <ranges>
+#include <unordered_set>
 #include <vulkan/vulkan.hpp>
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -50,8 +53,10 @@ template <vkb::BindingType bindingType>
 class Instance
 {
   public:
-	using InstanceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Instance, VkInstance>::type;
-	using SurfaceType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using InstanceCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
+	using InstanceType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Instance, VkInstance>::type;
+	using LayerSettingType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
+	using SurfaceType             = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
   public:
 	/**
@@ -62,22 +67,31 @@ class Instance
 	/**
 	 * @brief Initializes the connection to Vulkan
 	 * @param application_name The name of the application
-	 * @param requested_extensions The extensions requested to be enabled
-	 * @param requested_layers The validation layers to be enabled
-	 * @param requested_layer_settings The layer settings to be enabled
 	 * @param api_version The Vulkan API version that the instance will be using
-	 * @throws runtime_error if the required extensions and validation layers are not found
+	 * @param requested_layers The requested layers to be enabled
+	 * @param requested_extensions The requested extensions to be enabled
+	 * @param get_pNext A function pointer returning the pNext pointer for the InstanceCreateInfo
+	 * @param get_create_flags A function pointer returning the InstanceCreateFlags for the InstanceCreateInfo
+	 * @throws runtime_error if a required layer or extension is not available
 	 */
-	Instance(std::string const                            &application_name,
-	         std::unordered_map<char const *, bool> const &requested_extensions     = {},
-	         std::unordered_map<char const *, bool> const &requested_layers         = {},
-	         const std::vector<vk::LayerSettingEXT>       &requested_layer_settings = {},
-	         uint32_t                                      api_version              = VK_API_VERSION_1_1);
-	Instance(std::string const                            &application_name,
-	         std::unordered_map<char const *, bool> const &requested_extensions,
-	         std::unordered_map<char const *, bool> const &requested_layers,
-	         std::vector<VkLayerSettingEXT> const         &requested_layer_settings,
-	         uint32_t                                      api_version = VK_API_VERSION_1_1);
+	Instance(
+	    std::string const                                                                               &application_name,
+	    uint32_t                                                                                         api_version          = VK_API_VERSION_1_1,
+	    std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_layers     = {},
+	    std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_extensions = {},
+	    std::function<void *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext =
+	        [](std::vector<std::string> const &, std::vector<std::string> const &) { return nullptr; },
+	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const &get_create_flags =
+	        [](std::vector<std::string> const &) {
+		        if constexpr (bindingType == vkb::BindingType::Cpp)
+		        {
+			        return vk::InstanceCreateFlags{};
+		        }
+		        else
+		        {
+			        return 0;
+		        }
+	        });
 
 	/**
 	 * @brief Queries the GPUs of a InstanceType that is already created
@@ -96,7 +110,7 @@ class Instance
 	Instance &operator=(Instance const &) = delete;
 	Instance &operator=(Instance &&)      = delete;
 
-	const std::vector<const char *> &get_extensions();
+	const std::vector<std::string> &get_extensions();
 
 	/**
 	 * @brief Tries to find the first available discrete GPU
@@ -127,7 +141,7 @@ class Instance
 	void query_gpus();
 
   private:
-	std::vector<const char *>                                  enabled_extensions;        // The enabled extensions
+	std::vector<std::string>                                   enabled_extensions;        // The enabled extensions
 	std::vector<std::unique_ptr<vkb::core::PhysicalDeviceCpp>> gpus;                      // The physical devices found on the machine
 	vk::Instance                                               handle;                    // The Vulkan instance
 
@@ -150,63 +164,16 @@ namespace core
 {
 namespace
 {
-#ifdef USE_VALIDATION_LAYERS
-inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
-                                                                       vk::DebugUtilsMessageTypeFlagsEXT             message_type,
-                                                                       vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
-                                                                       void                                         *user_data)
-{
-	// Log debug message
-	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
-	{
-		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
-	{
-		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	return false;
-}
-
-inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT flags,
-                                                       vk::DebugReportObjectTypeEXT /*type*/,
-                                                       uint64_t /*object*/,
-                                                       size_t /*location*/,
-                                                       int32_t /*message_code*/,
-                                                       char const *layer_prefix,
-                                                       char const *message,
-                                                       void * /*user_data*/)
-{
-	if (flags & vk::DebugReportFlagBitsEXT::eError)
-	{
-		LOGE("{}: {}", layer_prefix, message);
-	}
-	else if (flags & vk::DebugReportFlagBitsEXT::eWarning)
-	{
-		LOGW("{}: {}", layer_prefix, message);
-	}
-	else if (flags & vk::DebugReportFlagBitsEXT::ePerformanceWarning)
-	{
-		LOGW("{}: {}", layer_prefix, message);
-	}
-	else
-	{
-		LOGI("{}: {}", layer_prefix, message);
-	}
-	return false;
-}
-#endif
-
-inline bool enable_extension(char const                                 *requested_extension,
+inline bool enable_extension(std::string const                          &requested_extension,
                              std::vector<vk::ExtensionProperties> const &available_extensions,
-                             std::vector<char const *>                  &enabled_extensions)
+                             std::vector<std::string>                   &enabled_extensions)
 {
-	bool is_available = std::ranges::any_of(available_extensions,
-	                                        [&requested_extension](auto const &available_extension) { return strcmp(requested_extension, available_extension.extensionName) == 0; });
+	bool is_available = std::ranges::any_of(
+	    available_extensions, [&requested_extension](auto const &available_extension) { return requested_extension == available_extension.extensionName; });
 	if (is_available)
 	{
-		bool is_already_enabled = std::ranges::any_of(
-		    enabled_extensions, [&requested_extension](auto const &enabled_extension) { return strcmp(requested_extension, enabled_extension) == 0; });
+		bool is_already_enabled =
+		    std::ranges::any_of(enabled_extensions, [&requested_extension](auto const &enabled_extension) { return requested_extension == enabled_extension; });
 		if (!is_already_enabled)
 		{
 			LOGI("Extension {} available, enabling it", requested_extension);
@@ -221,18 +188,19 @@ inline bool enable_extension(char const                                 *request
 	return is_available;
 }
 
-inline bool enable_layer(char const *requested_layer, std::vector<vk::LayerProperties> const &available_layers, std::vector<char const *> &enabled_layers)
+inline bool
+    enable_layer(std::string const &requested_layer, std::vector<vk::LayerProperties> const &available_layers, std::vector<std::string> &enabled_layers)
 {
-	bool is_available = std::ranges::any_of(
-	    available_layers, [&requested_layer](auto const &available_layer) { return strcmp(requested_layer, available_layer.layerName) == 0; });
+	bool is_available =
+	    std::ranges::any_of(available_layers, [&requested_layer](auto const &available_layer) { return requested_layer == available_layer.layerName; });
 	if (is_available)
 	{
 		bool is_already_enabled =
-		    std::ranges::any_of(enabled_layers, [&requested_layer](auto const &enabled_layer) { return strcmp(requested_layer, enabled_layer) == 0; });
+		    std::ranges::any_of(enabled_layers, [&requested_layer](auto const &enabled_layer) { return requested_layer == enabled_layer; });
 		if (!is_already_enabled)
 		{
 			LOGI("Layer {} available, enabling it", requested_layer);
-			enabled_layers.emplace_back(requested_layer);
+			enabled_layers.emplace_back(requested_layer.c_str());
 		}
 	}
 	else
@@ -241,59 +209,6 @@ inline bool enable_layer(char const *requested_layer, std::vector<vk::LayerPrope
 	}
 
 	return is_available;
-}
-
-inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_layer_setting,
-                                 std::vector<char const *> const  &enabled_layers,
-                                 std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
-{
-	// We are checking if the layer is available.
-	// Vulkan does not provide a reflection API for layer settings. Layer settings are described in each layer JSON manifest.
-	bool is_available = std::ranges::any_of(
-	    enabled_layers, [&requested_layer_setting](auto const &available_layer) { return strcmp(available_layer, requested_layer_setting.pLayerName) == 0; });
-
-#if defined(PLATFORM__MACOS)
-	// On Apple the MoltenVK driver configuration layer is implicitly enabled and available, and cannot be explicitly added or checked via enabled_layers.
-	if (!is_available && strcmp(requested_layer_setting.pLayerName, "MoltenVK") == 0)
-	{
-		// Check for VK_EXT_layer_settings extension in the driver which indicates MoltenVK vs. KosmicKrisp (note: VK_MVK_moltenvk extension is deprecated).
-		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		if (std::ranges::any_of(available_instance_extensions,
-		                        [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
-		{
-			is_available = true;
-		}
-	}
-#endif
-
-	if (!is_available)
-	{
-		LOGW("Layer: {} not found. Disabling layer setting: {}", requested_layer_setting.pLayerName, requested_layer_setting.pSettingName);
-		return false;
-	}
-
-	bool is_already_enabled = std::ranges::any_of(enabled_layer_settings,
-	                                              [&requested_layer_setting](VkLayerSettingEXT const &enabled_layer_setting) {
-		                                              return (strcmp(requested_layer_setting.pLayerName, enabled_layer_setting.pLayerName) == 0) &&
-		                                                     (strcmp(requested_layer_setting.pSettingName, enabled_layer_setting.pSettingName) == 0);
-	                                              });
-
-	if (is_already_enabled)
-	{
-		LOGW("Ignoring duplicated layer setting {} in layer {}.", requested_layer_setting.pSettingName, requested_layer_setting.pLayerName);
-		return false;
-	}
-
-	LOGI("Enabling layer setting {} in layer {}.", requested_layer_setting.pSettingName, requested_layer_setting.pLayerName);
-	enabled_layer_settings.push_back(requested_layer_setting);
-	return true;
-}
-
-inline bool enable_layer_setting(VkLayerSettingEXT const          &requested_layer_setting,
-                                 std::vector<char const *> const  &enabled_layers,
-                                 std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
-{
-	return enable_layer_setting(reinterpret_cast<vk::LayerSettingEXT const &>(requested_layer_setting), enabled_layers, enabled_layer_settings);
 }
 
 inline bool validate_layers(std::vector<char const *> const &required, std::vector<vk::LayerProperties> const &available)
@@ -322,220 +237,101 @@ inline bool validate_layers(std::vector<char const *> const &required, std::vect
 }        // namespace
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(std::string const                            &application_name,
-                                       std::unordered_map<char const *, bool> const &requested_extensions,
-                                       std::unordered_map<char const *, bool> const &requested_layers,
-                                       std::vector<vk::LayerSettingEXT> const       &requested_layer_settings,
-                                       uint32_t                                      api_version)
+inline Instance<bindingType>::Instance(std::string const                                                                               &application_name,
+                                       uint32_t                                                                                         api_version,
+                                       std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_layers,
+                                       std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_extensions,
+                                       std::function<void *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext,
+                                       std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const                  &get_create_flags)
 {
-	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-
-#ifdef USE_VALIDATION_LAYERS
-	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
-	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-	bool       has_debug_report = false;
-
-	if (!has_debug_utils)
+	// check API version
+	LOGI("Requesting Vulkan API version {}.{}", VK_VERSION_MAJOR(api_version), VK_VERSION_MINOR(api_version));
+	if (api_version < VK_API_VERSION_1_1)
 	{
-		has_debug_report = enable_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-		if (!has_debug_report)
-		{
-			LOGW("Neither of {} or {} are available; disabling debug reporting", VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-		}
+		LOGE("Vulkan API version {}.{} is requested but version 1.1 or higher is required.", VK_VERSION_MAJOR(api_version), VK_VERSION_MINOR(api_version));
+		throw std::runtime_error("Requested Vulkan API version is too low.");
 	}
-#endif
-
-#if (defined(VKB_ENABLE_PORTABILITY))
-	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-	bool portability_enumeration_available = enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-#endif
-
-#ifdef USE_VALIDATION_LAYERS
-	const char *validation_layer_name = "VK_LAYER_KHRONOS_validation";
-#	ifdef USE_VALIDATION_LAYER_FEATURES
-	bool validation_features = false;
+	uint32_t instance_api_version = vk::enumerateInstanceVersion();
+	LOGI("Vulkan instance supports API version {}.{}", VK_VERSION_MAJOR(instance_api_version), VK_VERSION_MINOR(instance_api_version));
+	if (instance_api_version < api_version)
 	{
-		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(std::string(validation_layer_name));
-		validation_features                                                      = enable_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, available_layer_instance_extensions, enabled_extensions);
-	}
-#	endif        // USE_VALIDATION_LAYER_FEATURES
-#endif            // USE_VALIDATION_LAYERS
-
-	// Specific surface extensions are obtained from  Window::get_required_surface_extensions
-	// They are already added to requested_extensions by VulkanSample::prepare
-
-	// Even for a headless surface a swapchain is still required
-	enable_extension(VK_KHR_SURFACE_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-
-	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
-	// which will be used for stats gathering where available.
-	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
-
-	for (auto requested_extension : requested_extensions)
-	{
-		auto const &extension_name        = requested_extension.first;
-		auto        extension_is_optional = requested_extension.second;
-		if (!enable_extension(extension_name, available_instance_extensions, enabled_extensions))
-		{
-			if (extension_is_optional)
-			{
-				LOGW("Optional instance extension {} not available, some features may be disabled", extension_name);
-			}
-			else
-			{
-				LOGE("Required instance extension {} not available, cannot run", extension_name);
-				throw std::runtime_error("Required instance extensions are missing.");
-			}
-		}
+		LOGE("Vulkan API version {}.{} is requested but only version {}.{} is supported.",
+		     VK_VERSION_MAJOR(api_version),
+		     VK_VERSION_MINOR(api_version),
+		     VK_VERSION_MAJOR(instance_api_version),
+		     VK_VERSION_MINOR(instance_api_version));
+		throw std::runtime_error("Requested Vulkan API version is too high.");
 	}
 
-	std::vector<vk::LayerProperties> supported_layers = vk::enumerateInstanceLayerProperties();
-
-	std::vector<char const *> enabled_layers;
-
-	auto layer_error = false;
+	// Check for optional and required layers
+	std::vector<vk::LayerProperties> available_layers = vk::enumerateInstanceLayerProperties();
+	std::vector<std::string>         enabled_layers;
 	for (auto const &requested_layer : requested_layers)
 	{
-		auto const &layer_name        = requested_layer.first;
-		auto        layer_is_optional = requested_layer.second;
-		if (!enable_layer(layer_name, supported_layers, enabled_layers))
+		if (!enable_layer(requested_layer.first, available_layers, enabled_layers))
 		{
-			if (layer_is_optional)
+			if (requested_layer.second == vkb::RequestMode::Optional)
 			{
-				LOGW("Optional layer {} not available, some features may be disabled", layer_name);
+				LOGW("Optional layer {} not available, some features may be disabled", requested_layer.first);
 			}
 			else
 			{
-				LOGE("Required layer {} not available, cannot run", layer_name);
+				LOGE("Required layer {} not available, cannot run", requested_layer.first);
 				throw std::runtime_error("Required layers are missing.");
 			}
 		}
 	}
+	std::vector<char const *> enabled_layers_cstr;
+	for (auto &layer : enabled_layers)
+	{
+		enabled_layers_cstr.push_back(layer.c_str());
+	}
 
-#ifdef USE_VALIDATION_LAYERS
-	// NOTE: It's important to have the validation layer as the last one here!!!!
-	//			 Otherwise, device creation fails !?!
-	enable_layer(validation_layer_name, supported_layers, enabled_layers);
-#endif
+	// Check for optional and required extensions
+	std::vector<vk::ExtensionProperties> available_extensions = vk::enumerateInstanceExtensionProperties();
+
+	if (contains(enabled_layers, "VK_LAYER_KHRONOS_validation"))
+	{
+		const std::string                    validation_layer_name               = "VK_LAYER_KHRONOS_validation";
+		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(validation_layer_name);
+		available_extensions.insert(available_extensions.end(),
+		                            available_layer_instance_extensions.begin(),
+		                            available_layer_instance_extensions.end());
+	}
+
+	for (auto const &requested_extension : requested_extensions)
+	{
+		if (!enable_extension(requested_extension.first, available_extensions, enabled_extensions))
+		{
+			if (requested_extension.second == vkb::RequestMode::Optional)
+			{
+				LOGW("Optional instance extension {} not available, some features may be disabled", requested_extension.first);
+			}
+			else
+			{
+				LOGE("Required instance extension {} not available, cannot run", requested_extension.first);
+				throw std::runtime_error("Required instance extensions are missing.");
+			}
+		}
+	}
+	std::vector<const char *> enabled_extensions_cstr;
+	for (auto &extension : enabled_extensions)
+	{
+		enabled_extensions_cstr.push_back(extension.c_str());
+	}
 
 	vk::ApplicationInfo app_info{.pApplicationName = application_name.c_str(), .pEngineName = "Vulkan Samples", .apiVersion = api_version};
 
-	vk::InstanceCreateInfo instance_info{.pApplicationInfo        = &app_info,
-	                                     .enabledLayerCount       = static_cast<uint32_t>(enabled_layers.size()),
-	                                     .ppEnabledLayerNames     = enabled_layers.data(),
-	                                     .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size()),
-	                                     .ppEnabledExtensionNames = enabled_extensions.data()};
-
-	std::vector<vk::LayerSettingEXT> enabled_layer_settings;
-
-	for (auto const &layer_setting : requested_layer_settings)
-	{
-		enable_layer_setting(layer_setting, enabled_layers, enabled_layer_settings);
-	}
-
-#ifdef USE_VALIDATION_LAYERS
-	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
-	vk::DebugReportCallbackCreateInfoEXT debug_report_create_info;
-	if (has_debug_utils)
-	{
-		debug_utils_create_info = vk::DebugUtilsMessengerCreateInfoEXT{
-		    .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-		    .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-		    .pfnUserCallback = debug_utils_messenger_callback};
-
-		instance_info.pNext = &debug_utils_create_info;
-	}
-	else if (has_debug_report)
-	{
-		debug_report_create_info = {.flags =
-		                                vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
-		                            .pfnCallback = debug_callback};
-
-		instance_info.pNext = &debug_report_create_info;
-	}
-#endif
-
-#if (defined(VKB_ENABLE_PORTABILITY))
-	if (portability_enumeration_available)
-	{
-		instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
-	}
-#endif
-
-	// Some of the specialized layers need to be enabled explicitly
-	// The validation layer does not need to be enabled in code and it can also be configured using the vulkan configurator.
-#ifdef USE_VALIDATION_LAYER_FEATURES
-
-#	if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
-	const vk::Bool32 setting_validate_gpuav = true;
-	if (validation_features)
-	{
-		enable_layer_setting(vk::LayerSettingEXT(validation_layer_name, "gpuav_enable", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_gpuav), enabled_layers, enabled_layer_settings);
-	}
-#	endif
-
-#	if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
-	const vk::Bool32 setting_validate_best_practices        = true;
-	const vk::Bool32 setting_validate_best_practices_arm    = true;
-	const vk::Bool32 setting_validate_best_practices_amd    = true;
-	const vk::Bool32 setting_validate_best_practices_img    = true;
-	const vk::Bool32 setting_validate_best_practices_nvidia = true;
-	if (validation_features)
-	{
-		enable_layer_setting(
-		    vk::LayerSettingEXT(validation_layer_name, "validate_best_practices", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices),
-		    enabled_layers,
-		    enabled_layer_settings);
-		enable_layer_setting(
-		    vk::LayerSettingEXT(validation_layer_name, "validate_best_practices_arm", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_arm),
-		    enabled_layers,
-		    enabled_layer_settings);
-		enable_layer_setting(
-		    vk::LayerSettingEXT(validation_layer_name, "validate_best_practices_amd", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_amd),
-		    enabled_layers,
-		    enabled_layer_settings);
-		enable_layer_setting(
-		    vk::LayerSettingEXT(validation_layer_name, "validate_best_practices_img", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_img),
-		    enabled_layers,
-		    enabled_layer_settings);
-		enable_layer_setting(
-		    vk::LayerSettingEXT(
-		        validation_layer_name, "validate_best_practices_nvidia", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_nvidia),
-		    enabled_layers,
-		    enabled_layer_settings);
-	}
-#	endif
-
-#	if defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
-	const vk::Bool32 setting_validate_sync            = true;
-	const vk::Bool32 setting_validate_sync_heuristics = true;
-	if (validation_features)
-	{
-		enable_layer_setting(vk::LayerSettingEXT(validation_layer_name, "validate_sync", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_sync),
-		                     enabled_layers,
-		                     enabled_layer_settings);
-		enable_layer_setting(
-		    vk::LayerSettingEXT(
-		        validation_layer_name, "syncval_shader_accesses_heuristic", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_sync_heuristics),
-		    enabled_layers,
-		    enabled_layer_settings);
-	}
-#	endif
-#endif
-
-	vk::LayerSettingsCreateInfoEXT layerSettingsCreateInfo;
-
-	// If layer settings are defined, then activate the sample's required layer settings during instance creation
-	if (enabled_layer_settings.size() > 0)
-	{
-		layerSettingsCreateInfo.settingCount = static_cast<uint32_t>(enabled_layer_settings.size());
-		layerSettingsCreateInfo.pSettings    = enabled_layer_settings.data();
-		layerSettingsCreateInfo.pNext        = instance_info.pNext;
-		instance_info.pNext                  = &layerSettingsCreateInfo;
-	}
+	vk::InstanceCreateInfo create_info{.pNext                   = get_pNext(enabled_layers, enabled_extensions),
+	                                   .flags                   = static_cast<vk::InstanceCreateFlags>(get_create_flags(enabled_extensions)),
+	                                   .pApplicationInfo        = &app_info,
+	                                   .enabledLayerCount       = static_cast<uint32_t>(enabled_layers_cstr.size()),
+	                                   .ppEnabledLayerNames     = enabled_layers_cstr.data(),
+	                                   .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions_cstr.size()),
+	                                   .ppEnabledExtensionNames = enabled_extensions_cstr.data()};
 
 	// Create the Vulkan instance
-	handle = vk::createInstance(instance_info);
+	handle = vk::createInstance(create_info);
 
 	// initialize the Vulkan-Hpp default dispatcher on the instance
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(handle);
@@ -543,32 +339,19 @@ inline Instance<bindingType>::Instance(std::string const                        
 	// Need to load volk for all the not-yet Vulkan-Hpp calls
 	volkLoadInstance(handle);
 
-#ifdef USE_VALIDATION_LAYERS
-	if (has_debug_utils)
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	if (contains(enabled_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(debug_utils_create_info);
+		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(vkb::core::getDefaultDebugUtilsMessengerCreateInfoEXT());
 	}
-	else if (has_debug_report)
+	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 	{
-		debug_report_callback = handle.createDebugReportCallbackEXT(debug_report_create_info);
+		debug_report_callback = handle.createDebugReportCallbackEXT(vkb::core::getDefaultDebugReportCallbackCreateInfoEXT());
 	}
 #endif
 
 	query_gpus();
 }
-
-template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(std::string const                            &application_name,
-                                       std::unordered_map<char const *, bool> const &requested_extensions,
-                                       std::unordered_map<char const *, bool> const &requested_layers,
-                                       std::vector<VkLayerSettingEXT> const         &requested_layer_settings,
-                                       uint32_t                                      api_version) :
-    Instance<bindingType>(application_name,
-                          requested_extensions,
-                          requested_layers,
-                          reinterpret_cast<std::vector<vk::LayerSettingEXT> const &>(requested_layer_settings),
-                          api_version)
-{}
 
 template <vkb::BindingType bindingType>
 inline Instance<bindingType>::Instance(vk::Instance instance, const std::vector<const char *> &externally_enabled_extensions, bool needsToInitializeDispatcher) :
@@ -611,7 +394,7 @@ inline Instance<bindingType>::Instance(VkInstance instance, const std::vector<co
 template <vkb::BindingType bindingType>
 inline Instance<bindingType>::~Instance()
 {
-#ifdef USE_VALIDATION_LAYERS
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	if (debug_utils_messenger)
 	{
 		handle.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
@@ -741,7 +524,7 @@ inline PhysicalDevice<bindingType> &Instance<bindingType>::get_suitable_gpu(Surf
 template <vkb::BindingType bindingType>
 inline bool Instance<bindingType>::is_enabled(char const *extension) const
 {
-	return std::ranges::find_if(enabled_extensions, [extension](char const *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) !=
+	return std::ranges::find_if(enabled_extensions, [extension](std::string const &enabled_extension) { return enabled_extension == extension; }) !=
 	       enabled_extensions.end();
 }
 
@@ -770,7 +553,7 @@ inline void Instance<bindingType>::query_gpus()
 }
 
 template <vkb::BindingType bindingType>
-inline std::vector<char const *> const &Instance<bindingType>::get_extensions()
+inline std::vector<std::string> const &Instance<bindingType>::get_extensions()
 {
 	return enabled_extensions;
 }

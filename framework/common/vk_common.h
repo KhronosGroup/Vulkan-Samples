@@ -55,6 +55,12 @@ enum class CommandBufferResetMode
 	AlwaysAllocate,
 };
 
+enum class RequestMode
+{
+	Optional,
+	Required
+};
+
 /**
  * @brief Helper function to determine if a Vulkan format is depth only.
  * @param format Vulkan format to check.
