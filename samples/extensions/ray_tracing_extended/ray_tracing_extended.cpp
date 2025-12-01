@@ -1541,7 +1541,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::core::DeviceC &device,
 					VkDescriptorImageInfo imageInfo;
 					imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 					imageInfo.imageView   = image->get_vk_image_view().get_handle();
-					imageInfo.sampler     = baseTextureIter->second->get_sampler()->vk_sampler.get_handle();
+					imageInfo.sampler     = baseTextureIter->second->get_sampler()->get_core_sampler().get_handle();
 					imageInfos.push_back(imageInfo);
 				}
 
