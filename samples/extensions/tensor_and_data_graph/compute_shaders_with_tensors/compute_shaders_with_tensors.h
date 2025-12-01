@@ -31,10 +31,10 @@
  *          (`data_graph_pipeline`).
  *          The Data Graph Pipeline runs a neural network and produces an output which is written into the `output_tensor` Tensor.
  *          Two constant tensors (`constant_weights_tensor` & `constant_bias_tensor`) are also passed into the Convolution2d operator in the form of weights and bias.
- *          The `output_tensor` is then is then copied to `postprocessed_tensor` by another compute shader simply for demonstrative purposes.
+ *          The `output_tensor` is then copied to `postprocessed_tensor` by another compute shader simply for demonstrative purposes.
  *          In reality this shader would be used for postprocessing, hence the shader name (`postprocessing.comp`).
  *          In order to visualize the results of this pipeline, there is a Compute Pipeline (`visualization_pipeline`) which copies the
- *          contents of `input_tensor` and `postprocessed_tensor` into an Image (`output_image`) which is blitted to the Swapchain.
+ *          contents of the `input_tensor`, `output_tensor` and `postprocessed_tensor` into an Image (`output_image`) which is blitted to the Swapchain.
  *
  *			As a diagram, this looks like:
  *

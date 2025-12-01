@@ -93,6 +93,7 @@ bool ComputeShadersWithTensors::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	// Workaround for emulation layer issue, remove once fixed.
 	volkLoadDevice(get_device().get_handle());
 
 	// We use the GUI framework for labels on the visualization
@@ -267,7 +268,7 @@ void ComputeShadersWithTensors::prepare_bias_tensor()
 
 /*
  * Creates the Tensors used as output of the neural network and visualization pipeline.
- * Also creates a Tensor Views (analogous to an Image View).
+ * Also creates Tensor Views (analogous to an Image View).
  */
 void ComputeShadersWithTensors::prepare_output_tensors()
 {
@@ -310,7 +311,7 @@ void ComputeShadersWithTensors::prepare_output_image(uint32_t width, uint32_t he
 void ComputeShadersWithTensors::prepare_data_graph_pipeline()
 {
 	// Create the Pipeline Layout. This is equivalent to the pipeline layout for compute or data graph pipelines, describing what bind points are available.
-	// The neural network has its input tensor on binding 0 and its output tensor at binding 1.
+	// The neural network has its input tensor at binding 0 and its output tensor at binding 1.
 	//
 	// In order to create the layout, we just need to know which binding slots are tensors - no further details needed yet.
 	std::set<uint32_t> tensor_bindings = {0, 1};
@@ -500,7 +501,7 @@ void ComputeShadersWithTensors::prepare_visualization_pipeline_descriptor_set()
 
 	std::map<uint32_t, VkDescriptorImageInfo> image_bindings =
 	    {
-	        // Binding 2 is the output image
+	        // Binding 3 is the output image
 	        {3, VkDescriptorImageInfo{VK_NULL_HANDLE, output_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL}}};
 
 	write_descriptor_set(get_device().get_handle(), visualization_pipeline_descriptor_set, image_bindings, tensor_bindings);

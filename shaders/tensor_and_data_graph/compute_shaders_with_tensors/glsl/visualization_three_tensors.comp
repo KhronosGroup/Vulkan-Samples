@@ -38,61 +38,34 @@ layout(push_constant) uniform push_constants
 };
 
 // If the given pixel_coord is within the rectangle described by (left,top,width, height), then updates
-// `color` with data from the `input_tensor` at an interpolated location based on the position in the rectangle.
-void draw_input_tensor(inout vec4 color, ivec2 pixel_coord, int left, int top, int width, int height)
-{
-	if (pixel_coord.x >= left && pixel_coord.x < left + width && pixel_coord.y >= top && pixel_coord.y < top + height)
-	{
-		// Query the size of the tensor, in dimensions 2 (width) and 1 (height)
-		uint tensor_width = tensorSizeARM(input_tensor, 2);
-		uint tensor_height = tensorSizeARM(input_tensor, 1);
-		// Work out the location in the tensor to read from
-		uint[4] tensor_coords = { 0, 
-			uint(float(pixel_coord.y - top) / height * tensor_height), 
-			uint(float(pixel_coord.x - left) / width * tensor_width), 
-			0 };
-		// Read three values from the tensor, starting from this location and moving along the least-significant dimension.
-		// This gives us the red, green and blue values.
-		float[3] value;
-		tensorReadARM(input_tensor, tensor_coords, value);
-		color = vec4(value[0], value[1], value[2], 1.0f);		
-	}
+// `color` with data from the tensor at an interpolated location based on the position in the rectangle.
+#define DEFINE_DRAW_TENSOR(FUNC_NAME, TENSOR_NAME)                                        \
+void FUNC_NAME(inout vec4 color, ivec2 pixel_coord,                                       \
+               int left, int top, int width, int height)                                  \
+{                                                                                         \
+    if (pixel_coord.x >= left && pixel_coord.x < left + width &&                          \
+        pixel_coord.y >= top  && pixel_coord.y < top + height)                            \
+    {                                                                                     \
+        uint tensor_width  = tensorSizeARM(TENSOR_NAME, 2);                               \
+        uint tensor_height = tensorSizeARM(TENSOR_NAME, 1);                               \
+                                                                                          \
+        uint[4] tensor_coords = {                                                         \
+            0,                                                                            \
+            uint(float(pixel_coord.y - top)  / float(height) * float(tensor_height)),     \
+            uint(float(pixel_coord.x - left) / float(width)  * float(tensor_width)),      \
+            0                                                                             \
+        };                                                                                \
+                                                                                          \
+        float[3] value;                                                                   \
+        tensorReadARM(TENSOR_NAME, tensor_coords, value);                                 \
+        color = vec4(value[0], value[1], value[2], 1.0);                                  \
+    }                                                                                     \
 }
 
-// As above, but reads from the output_tensor.
-void draw_output_tensor(inout vec4 color, ivec2 pixel_coord, int left, int top, int width, int height)
-{
-	if (pixel_coord.x >= left && pixel_coord.x < left + width && pixel_coord.y >= top && pixel_coord.y < top + height)
-	{
-		uint tensor_width = tensorSizeARM(output_tensor, 2);
-		uint tensor_height = tensorSizeARM(output_tensor, 1);
-		uint[4] tensor_coords = { 0, 
-			uint(float(pixel_coord.y - top) / height * tensor_height), 
-			uint(float(pixel_coord.x - left) / width * tensor_width), 
-			0 };
-		float[3] value;
-		tensorReadARM(output_tensor, tensor_coords, value);
-		color = vec4(value[0], value[1], value[2], 1.0f);		
-	}
-}
-
-// As above, but reads from the postprocessed_tensor.
-void draw_postprocessed_tensor(inout vec4 color, ivec2 pixel_coord, int left, int top, int width, int height)
-{
-	if (pixel_coord.x >= left && pixel_coord.x < left + width && pixel_coord.y >= top && pixel_coord.y < top + height)
-	{
-		uint tensor_width = tensorSizeARM(postprocessed_tensor, 2);
-		uint tensor_height = tensorSizeARM(postprocessed_tensor, 1);
-		uint[4] tensor_coords = { 0, 
-			uint(float(pixel_coord.y - top) / height * tensor_height), 
-			uint(float(pixel_coord.x - left) / width * tensor_width), 
-			0 };
-		float[3] value;
-		tensorReadARM(postprocessed_tensor, tensor_coords, value);
-		color = vec4(value[0], value[1], value[2], 1.0f);		
-	}
-}
-
+// Generate the three concrete functions
+DEFINE_DRAW_TENSOR(draw_input_tensor,         input_tensor)
+DEFINE_DRAW_TENSOR(draw_output_tensor,        output_tensor)
+DEFINE_DRAW_TENSOR(draw_postprocessed_tensor, postprocessed_tensor)
 
 layout(local_size_x = 8, local_size_y = 8) in;
 void main() 
