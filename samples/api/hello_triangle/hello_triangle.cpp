@@ -310,7 +310,7 @@ void HelloTriangle::init_device()
 #endif
 
 	// The sample uses a single graphics queue
-	const float queue_priority = 1.0f;
+	const float queue_priority = 0.5f;
 
 	VkDeviceQueueCreateInfo queue_info{
 	    .sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
