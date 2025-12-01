@@ -87,6 +87,9 @@ bool SimpleTensorAndDataGraph::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	// Workaround for emulation layer issue, remove once fixed.
+	volkLoadDevice(get_device().get_handle());
+
 	// We use the GUI framework for labels on the visualization
 	create_gui(*window, &get_stats());
 

@@ -89,6 +89,9 @@ bool GraphConstants::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	// Workaround for emulation layer issue, remove once fixed.
+	volkLoadDevice(get_device().get_handle());
+
 	// We use the GUI framework for labels on the visualization
 	create_gui(*window, &get_stats());
 
@@ -158,18 +161,9 @@ void GraphConstants::prepare_input_tensor()
 	{
 		for (int x = 0; x < dimensions[2]; ++x)
 		{
-			// Fill initially with blue color.
-			input_tensor_data.push_back(glm::fvec3{0, 0, 1.0f});
-
-			// Overwrite with white color if position is within the square.
-			if (y >= offset && y < right_offset)
-			{
-				if (x >= offset && x < right_offset)
-				{
-					uint64_t index           = (y * dimensions[2]) + x;
-					input_tensor_data[index] = glm::fvec3{1.0f, 1.0f, 1.0f};
-				}
-			}
+			// Fill initially with blue color otherwise, overwrite with white color if position is within the square.
+			auto color = ((offset <= y) && (y < right_offset) && (offset <= x) && (x < right_offset)) ? glm::fvec3(1.0f, 1.0f, 1.0f) : glm::fvec3(0.0f, 0.0f, 1.0f);
+			input_tensor_data.push_back(color);
 		}
 	}
 	input_tensor->update(input_tensor_data);
@@ -285,7 +279,7 @@ void GraphConstants::prepare_bias_tensor()
  */
 void GraphConstants::prepare_output_tensor()
 {
-	// The output of the network is determined by the kernel size (3 x 3),
+	// The output shape of the network is determined by the kernel size (3 x 3),
 	// strides (2, 2), dilation (1, 1) and padding (0, 0, 0, 0).
 	std::vector<int64_t> dimensions = {1, 20, 20, 3};
 	output_tensor                   = std::make_unique<Tensor>(get_device(),
