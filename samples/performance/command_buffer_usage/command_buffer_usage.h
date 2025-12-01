@@ -183,6 +183,7 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 		 * @param nodes The meshes to draw
 		 * @param mesh_start Index to the first mesh to draw
 		 * @param mesh_end Index to the mesh where recording will stop (not included)
+		 * @param subpass_index Index of the subpass being recorded
 		 * @param thread_index Identifies the resources allocated for this thread
 		 * @return a pointer to the recorded secondary command buffer
 		 */
@@ -190,6 +191,7 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 		                                                                 const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
 		                                                                 uint32_t                                                                     mesh_start,
 		                                                                 uint32_t                                                                     mesh_end,
+		                                                                 uint32_t                                                                     subpass_index,
 		                                                                 size_t                                                                       thread_index = 0);
 
 		VkViewport viewport{};
