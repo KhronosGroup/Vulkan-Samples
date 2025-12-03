@@ -182,33 +182,14 @@ Please make sure, when running any sample, that you either:
 * Run Command Prompt or Visual Studio as administrator
 ____
 
-`Step 1.` The following command will generate the VS project
+`Step 1.` Generate the VS solution from the root of the repository
 
-----
-cmake -G "Visual Studio 15 2017 Win64" -S . -Bbuild/windows
-----
-
-(Prior to CMake v3.13)
-
-----
-cmake -G "Visual Studio 15 2017 Win64" . -Bbuild/windows
-----
-
-(New in CMake v3.14.
-Visual Studio 2019 must be installed)
-
-----
- cmake -G "Visual Studio 16 2019" -A x64 -S . -Bbuild/windows
-----
-
-(New in CMake v3.21.
-Visual Studio 2022 must be installed)
-
+(For other VS versions please refer to https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#id15[CMake Generators])
 ----
  cmake -G "Visual Studio 17 2022" -A x64 -S . -Bbuild/windows
 ----
 
-Open the *vulkan_samples.sln* VS project inside build/windows and build with Ctrl-Shift-B. To run Vulkan Samples, use Visual Studio's Debug Properties selection and set the Debugging Command Arguments to --help. Click the "Local Windows Debugger" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
+Open the *vulkan_samples.sln* or *vulkan_samples.slnx* VS solution inside *build/windows* and build with Ctrl-Shift-B. To run Vulkan Samples, use Visual Studio's Debug Properties selection and set the Debugging Command Arguments to --help. Click the "Local Windows Debugger" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
 
 Alternatively, for command line builds use the steps below:
 
