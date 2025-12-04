@@ -30,7 +30,6 @@
 namespace vkb
 {
 class RenderTarget;
-class ShaderSource;
 
 namespace core
 {
@@ -83,12 +82,12 @@ class Subpass
 	using ResolveModeFlagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ResolveModeFlagBits, VkResolveModeFlagBits>::type;
 	using SampleCountflagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SampleCountFlagBits, VkSampleCountFlagBits>::type;
 
-	using DepthStencilStateType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
-	using RenderTargetType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using DepthStencilStateType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
+	using RenderTargetType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using ShaderSourceType      = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
 
   public:
-	Subpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
+	Subpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_shader, ShaderSourceType &&fragment_shader);
 
 	Subpass(const Subpass &)            = delete;
 	Subpass(Subpass &&)                 = default;
@@ -124,14 +123,14 @@ class Subpass
 	ResolveModeFlagBitsType                                    get_depth_stencil_resolve_mode() const;
 	DepthStencilStateType                                     &get_depth_stencil_state();
 	const bool                                                &get_disable_depth_stencil_attachment() const;
-	const ShaderSource                                        &get_fragment_shader() const;
+	const ShaderSourceType                                    &get_fragment_shader() const;
 	const std::vector<uint32_t>                               &get_input_attachments() const;
 	LightingState<bindingType>                                &get_lighting_state();
 	const std::vector<uint32_t>                               &get_output_attachments() const;
 	RenderContext<bindingType>                                &get_render_context();
 	std::unordered_map<std::string, ShaderResourceMode> const &get_resource_mode_map() const;
 	SampleCountflagBitsType                                    get_sample_count() const;
-	const ShaderSource                                        &get_vertex_shader() const;
+	const ShaderSourceType                                    &get_vertex_shader() const;
 	void                                                       set_color_resolve_attachments(std::vector<uint32_t> const &color_resolve);
 	void                                                       set_debug_name(const std::string &name);
 	void                                                       set_disable_depth_stencil_attachment(bool disable_depth_stencil);
@@ -147,6 +146,14 @@ class Subpass
 	 *        pass and before proceeding with a new subpass.
 	 */
 	void update_render_target_attachments(RenderTargetType &render_target);
+
+  protected:
+	vkb::rendering::HPPDepthStencilState get_depth_stencil_state_impl() const;
+	vkb::core::HPPShaderSource const    &get_fragment_shader_impl() const;
+	LightingStateCpp                    &get_lighting_state_impl();
+	vk::SampleCountFlagBits              get_sample_count_impl() const;
+	vkb::rendering::RenderContextCpp    &get_render_context_impl();
+	vkb::core::HPPShaderSource const    &get_vertex_shader_impl() const;
 
   private:
 	/// Default to no color resolve attachments
@@ -175,7 +182,7 @@ class Subpass
 	/// The structure containing all the requested render-ready lights for the scene
 	LightingStateCpp lighting_state{};
 
-	ShaderSource fragment_shader;
+	vkb::core::HPPShaderSource fragment_shader;
 
 	/// Default to no input attachments
 	std::vector<uint32_t> input_attachments = {};
@@ -188,8 +195,8 @@ class Subpass
 	// A map of shader resource names and the mode of constant data
 	std::unordered_map<std::string, ShaderResourceMode> resource_mode_map;
 
-	vk::SampleCountFlagBits sample_count{vk::SampleCountFlagBits::e1};
-	ShaderSource            vertex_shader;
+	vk::SampleCountFlagBits    sample_count{vk::SampleCountFlagBits::e1};
+	vkb::core::HPPShaderSource vertex_shader;
 };
 
 using SubpassC   = Subpass<vkb::BindingType::C>;
@@ -206,12 +213,20 @@ inline glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 
 template <vkb::BindingType bindingType>
 inline Subpass<bindingType>::Subpass(vkb::rendering::RenderContext<bindingType> &render_context,
-                                     ShaderSource                              &&vertex_source,
-                                     ShaderSource                              &&fragment_source) :
-    render_context{reinterpret_cast<vkb::rendering::RenderContextCpp &>(render_context)},
-    vertex_shader{std::move(vertex_source)},
-    fragment_shader{std::move(fragment_source)}
+                                     ShaderSourceType                          &&vertex_source,
+                                     ShaderSourceType                          &&fragment_source) :
+    render_context{reinterpret_cast<vkb::rendering::RenderContextCpp &>(render_context)}
 {
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		vertex_shader   = std::move(vertex_source);
+		fragment_shader = std::move(fragment_source);
+	}
+	else
+	{
+		vertex_shader   = std::move(reinterpret_cast<vkb::core::HPPShaderSource &&>(vertex_source));
+		fragment_shader = std::move(reinterpret_cast<vkb::core::HPPShaderSource &&>(fragment_source));
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -263,18 +278,25 @@ inline typename Subpass<bindingType>::SampleCountflagBitsType Subpass<bindingTyp
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return sample_count;
+		return get_sample_count_impl();
 	}
 	else
 	{
-		return static_cast<VkSampleCountFlagBits>(sample_count);
+		return static_cast<VkSampleCountFlagBits>(get_sample_count_impl());
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline const ShaderSource &Subpass<bindingType>::get_vertex_shader() const
+inline const typename Subpass<bindingType>::ShaderSourceType &Subpass<bindingType>::get_vertex_shader() const
 {
-	return vertex_shader;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return get_vertex_shader_impl();
+	}
+	else
+	{
+		return reinterpret_cast<vkb::ShaderSource const &>(get_vertex_shader_impl());
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -402,9 +424,16 @@ inline const bool &Subpass<bindingType>::get_disable_depth_stencil_attachment() 
 }
 
 template <vkb::BindingType bindingType>
-inline const ShaderSource &Subpass<bindingType>::get_fragment_shader() const
+inline const typename Subpass<bindingType>::ShaderSourceType &Subpass<bindingType>::get_fragment_shader() const
 {
-	return fragment_shader;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return get_fragment_shader_impl();
+	}
+	else
+	{
+		return reinterpret_cast<vkb::ShaderSource const &>(get_fragment_shader_impl());
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -475,5 +504,42 @@ inline void Subpass<bindingType>::update_render_target_attachments(RenderTargetT
 	render_target.set_input_attachments(input_attachments);
 	render_target.set_output_attachments(output_attachments);
 }
+
+template <vkb::BindingType bindingType>
+inline vkb::core::HPPShaderSource const &Subpass<bindingType>::get_fragment_shader_impl() const
+{
+	return fragment_shader;
+}
+
+template <vkb::BindingType bindingType>
+inline vk::SampleCountFlagBits Subpass<bindingType>::get_sample_count_impl() const
+{
+	return sample_count;
+}
+
+template <vkb::BindingType bindingType>
+inline vkb::rendering::HPPDepthStencilState Subpass<bindingType>::get_depth_stencil_state_impl() const
+{
+	return depth_stencil_state;
+}
+
+template <vkb::BindingType bindingType>
+inline LightingStateCpp &Subpass<bindingType>::get_lighting_state_impl()
+{
+	return lighting_state;
+}
+
+template <vkb::BindingType bindingType>
+inline vkb::rendering::RenderContextCpp &Subpass<bindingType>::get_render_context_impl()
+{
+	return render_context;
+}
+
+template <vkb::BindingType bindingType>
+inline vkb::core::HPPShaderSource const &Subpass<bindingType>::get_vertex_shader_impl() const
+{
+	return vertex_shader;
+}
+
 }        // namespace rendering
 }        // namespace vkb

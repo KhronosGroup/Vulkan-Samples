@@ -503,7 +503,7 @@ MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::rendering::RenderC
                                                          vkb::ShaderSource             &&fragment_source,
                                                          vkb::sg::Scene                 &scene,
                                                          vkb::sg::Camera                &camera) :
-    vkb::GeometrySubpass{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
+    vkb::rendering::subpasses::GeometrySubpassC{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
 {
 }
 

@@ -34,8 +34,12 @@ namespace vkb
 {
 namespace core
 {
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+
 class ImageView;
-}
+}        // namespace core
 
 /**
  * @brief Struct to hold the internal state of the Resource Cache
