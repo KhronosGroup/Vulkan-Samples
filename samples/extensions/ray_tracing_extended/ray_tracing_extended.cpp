@@ -153,7 +153,7 @@ void RaytracingExtended::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	// Using this removes the need to explicitly force an image format inside the shader
 	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
 	{
-		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = VK_TRUE;
+		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
 		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
 	}
 	else

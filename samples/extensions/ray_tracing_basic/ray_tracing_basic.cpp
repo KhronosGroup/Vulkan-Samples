@@ -71,7 +71,7 @@ void RaytracingBasic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
 
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
-	
+
 	// Using this removes the need to explicitly force an image format inside the shader
 	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
 	{
