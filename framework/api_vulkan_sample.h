@@ -59,7 +59,7 @@ struct SwapchainBuffer
 struct Texture
 {
 	std::unique_ptr<vkb::sg::Image> image;
-	VkSampler                       sampler;
+	VkSampler                       sampler = VK_NULL_HANDLE;
 };
 
 /**
