@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Holochip Corporation
-*
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
@@ -16,10 +16,10 @@
  */
 #pragma once
 
-#include <vector>
-#include <string>
-#include <glm/glm.hpp>
 #include "model_loader.h"
+#include <glm/glm.hpp>
+#include <string>
+#include <vector>
 
 // Forward declarations
 class Engine;
@@ -33,12 +33,12 @@ class ModelLoader;
  * @param rotation The rotation to apply to the model.
  * @param scale The scale to apply to the model.
  */
-bool LoadGLTFModel(Engine* engine, const std::string& modelPath,
-                   const glm::vec3& position, const glm::vec3& rotation, const glm::vec3& scale);
+bool LoadGLTFModel(Engine *engine, const std::string &modelPath,
+                   const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale);
 
 /**
  * @brief Load a GLTF model with default transform values.
  * @param engine The engine to create entities in.
  * @param modelPath The path to the GLTF model file.
  */
-void LoadGLTFModel(Engine* engine, const std::string& modelPath);
+void LoadGLTFModel(Engine *engine, const std::string &modelPath);

@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Holochip Corporation
-*
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
@@ -17,6 +17,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 // Define the defaultDispatchLoaderDynamic variable
-namespace vk::detail {
-    DispatchLoaderDynamic defaultDispatchLoaderDynamic;
+namespace vk::detail
+{
+DispatchLoaderDynamic defaultDispatchLoaderDynamic;
 }

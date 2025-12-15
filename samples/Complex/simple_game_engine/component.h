@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Holochip Corporation
-*
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
@@ -31,70 +31,91 @@ class Entity;
  * This class implements the component system as described in the Engine_Architecture chapter:
  * https://github.com/KhronosGroup/Vulkan-Tutorial/blob/master/en/Building_a_Simple_Engine/Engine_Architecture/03_component_systems.adoc
  */
-class Component {
-protected:
-    Entity* owner = nullptr;
-    std::string name;
-    bool active = true;
+class Component
+{
+  protected:
+	Entity     *owner = nullptr;
+	std::string name;
+	bool        active = true;
 
-public:
-    /**
-     * @brief Constructor with optional name.
-     * @param componentName The name of the component.
-     */
-    explicit Component(const std::string& componentName = "Component") : name(componentName) {}
+  public:
+	/**
+	 * @brief Constructor with optional name.
+	 * @param componentName The name of the component.
+	 */
+	explicit Component(const std::string &componentName = "Component") :
+	    name(componentName)
+	{}
 
-    /**
-     * @brief Virtual destructor for proper cleanup.
-     */
-    virtual ~Component() = default;
+	/**
+	 * @brief Virtual destructor for proper cleanup.
+	 */
+	virtual ~Component() = default;
 
-    /**
-     * @brief Initialize the component.
-     * Called when the component is added to an entity.
-     */
-    virtual void Initialize() {}
+	/**
+	 * @brief Initialize the component.
+	 * Called when the component is added to an entity.
+	 */
+	virtual void Initialize()
+	{}
 
-    /**
-     * @brief Update the component.
-     * Called every frame.
-     * @param deltaTime The time elapsed since the last frame.
-     */
-    virtual void Update(std::chrono::milliseconds deltaTime) {}
+	/**
+	 * @brief Update the component.
+	 * Called every frame.
+	 * @param deltaTime The time elapsed since the last frame.
+	 */
+	virtual void Update(std::chrono::milliseconds deltaTime)
+	{}
 
-    /**
-     * @brief Render the component.
-     * Called during the rendering phase.
-     */
-    virtual void Render() {}
+	/**
+	 * @brief Render the component.
+	 * Called during the rendering phase.
+	 */
+	virtual void Render()
+	{}
 
-    /**
-     * @brief Set the owner entity of this component.
-     * @param entity The entity that owns this component.
-     */
-    void SetOwner(Entity* entity) { owner = entity; }
+	/**
+	 * @brief Set the owner entity of this component.
+	 * @param entity The entity that owns this component.
+	 */
+	void SetOwner(Entity *entity)
+	{
+		owner = entity;
+	}
 
-    /**
-     * @brief Get the owner entity of this component.
-     * @return The entity that owns this component.
-     */
-    Entity* GetOwner() const { return owner; }
+	/**
+	 * @brief Get the owner entity of this component.
+	 * @return The entity that owns this component.
+	 */
+	Entity *GetOwner() const
+	{
+		return owner;
+	}
 
-    /**
-     * @brief Get the name of the component.
-     * @return The name of the component.
-     */
-    const std::string& GetName() const { return name; }
+	/**
+	 * @brief Get the name of the component.
+	 * @return The name of the component.
+	 */
+	const std::string &GetName() const
+	{
+		return name;
+	}
 
-    /**
-     * @brief Check if the component is active.
-     * @return True if the component is active, false otherwise.
-     */
-    bool IsActive() const { return active; }
+	/**
+	 * @brief Check if the component is active.
+	 * @return True if the component is active, false otherwise.
+	 */
+	bool IsActive() const
+	{
+		return active;
+	}
 
-    /**
-     * @brief Set the active state of the component.
-     * @param isActive The new active state.
-     */
-    void SetActive(bool isActive) { active = isActive; }
+	/**
+	 * @brief Set the active state of the component.
+	 * @param isActive The new active state.
+	 */
+	void SetActive(bool isActive)
+	{
+		active = isActive;
+	}
 };

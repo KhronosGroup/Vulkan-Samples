@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Holochip Corporation
-*
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
@@ -16,25 +16,26 @@
  */
 #pragma once
 
-#include <string>
-#include <memory>
-#include <fstream>
-#include <iostream>
 #include <chrono>
-#include <mutex>
-#include <unordered_map>
-#include <functional>
 #include <ctime>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <unordered_map>
 
 /**
  * @brief Enum for different log levels.
  */
-enum class LogLevel {
-    Debug,
-    Info,
-    Warning,
-    Error,
-    Fatal
+enum class LogLevel
+{
+	Debug,
+	Info,
+	Warning,
+	Error,
+	Fatal
 };
 
 /**
@@ -43,217 +44,238 @@ enum class LogLevel {
  * This class implements the debugging system as described in the Tooling chapter:
  * @see en/Building_a_Simple_Engine/Tooling/03_debugging_and_renderdoc.adoc
  */
-class DebugSystem {
-public:
-    /**
-     * @brief Get the singleton instance of the debug system.
-     * @return Reference to the debug system instance.
-     */
-    static DebugSystem& GetInstance() {
-        static DebugSystem instance;
-        return instance;
-    }
+class DebugSystem
+{
+  public:
+	/**
+	 * @brief Get the singleton instance of the debug system.
+	 * @return Reference to the debug system instance.
+	 */
+	static DebugSystem &GetInstance()
+	{
+		static DebugSystem instance;
+		return instance;
+	}
 
-    /**
-     * @brief Initialize the debug system.
-     * @param logFilePath The path to the log file.
-     * @return True if initialization was successful, false otherwise.
-     */
-    bool Initialize(const std::string& logFilePath = "engine.log") {
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief Initialize the debug system.
+	 * @param logFilePath The path to the log file.
+	 * @return True if initialization was successful, false otherwise.
+	 */
+	bool Initialize(const std::string &logFilePath = "engine.log")
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 
-        // Open log file
-        logFile.open(logFilePath, std::ios::out | std::ios::trunc);
-        if (!logFile.is_open()) {
-            std::cerr << "Failed to open log file: " << logFilePath << std::endl;
-            return false;
-        }
+		// Open log file
+		logFile.open(logFilePath, std::ios::out | std::ios::trunc);
+		if (!logFile.is_open())
+		{
+			std::cerr << "Failed to open log file: " << logFilePath << std::endl;
+			return false;
+		}
 
-        // Log initialization
-        Log(LogLevel::Info, "DebugSystem", "Debug system initialized");
+		// Log initialization
+		Log(LogLevel::Info, "DebugSystem", "Debug system initialized");
 
-        initialized = true;
-        return true;
-    }
+		initialized = true;
+		return true;
+	}
 
-    /**
-     * @brief Clean up debug system resources.
-     */
-    void Cleanup() {
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief Clean up debug system resources.
+	 */
+	void Cleanup()
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 
-        if (initialized) {
-            // Log cleanup
-            Log(LogLevel::Info, "DebugSystem", "Debug system shutting down");
+		if (initialized)
+		{
+			// Log cleanup
+			Log(LogLevel::Info, "DebugSystem", "Debug system shutting down");
 
-            // Close log file
-            if (logFile.is_open()) {
-                logFile.close();
-            }
+			// Close log file
+			if (logFile.is_open())
+			{
+				logFile.close();
+			}
 
-            initialized = false;
-        }
-    }
+			initialized = false;
+		}
+	}
 
-    /**
-     * @brief Log a message.
-     * @param level The log level.
-     * @param tag The tag for the log message.
-     * @param message The log message.
-     */
-    void Log(LogLevel level, const std::string& tag, const std::string& message) {
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief Log a message.
+	 * @param level The log level.
+	 * @param tag The tag for the log message.
+	 * @param message The log message.
+	 */
+	void Log(LogLevel level, const std::string &tag, const std::string &message)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 
-        // Get current time
-        auto now = std::chrono::system_clock::now();
-        auto time = std::chrono::system_clock::to_time_t(now);
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+		// Get current time
+		auto now  = std::chrono::system_clock::now();
+		auto time = std::chrono::system_clock::to_time_t(now);
+		auto ms   = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-        char timeStr[20];
-        std::strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
+		char timeStr[20];
+		std::strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
 
-        // Format log message
-        std::string levelStr;
-        switch (level) {
-            case LogLevel::Debug:
-                levelStr = "DEBUG";
-                break;
-            case LogLevel::Info:
-                levelStr = "INFO";
-                break;
-            case LogLevel::Warning:
-                levelStr = "WARNING";
-                break;
-            case LogLevel::Error:
-                levelStr = "ERROR";
-                break;
-            case LogLevel::Fatal:
-                levelStr = "FATAL";
-                break;
-        }
+		// Format log message
+		std::string levelStr;
+		switch (level)
+		{
+			case LogLevel::Debug:
+				levelStr = "DEBUG";
+				break;
+			case LogLevel::Info:
+				levelStr = "INFO";
+				break;
+			case LogLevel::Warning:
+				levelStr = "WARNING";
+				break;
+			case LogLevel::Error:
+				levelStr = "ERROR";
+				break;
+			case LogLevel::Fatal:
+				levelStr = "FATAL";
+				break;
+		}
 
-        std::string formattedMessage =
-            std::string(timeStr) + "." + std::to_string(ms.count()) +
-            " [" + levelStr + "] " +
-            "[" + tag + "] " +
-            message;
+		std::string formattedMessage =
+		    std::string(timeStr) + "." + std::to_string(ms.count()) +
+		    " [" + levelStr + "] " +
+		    "[" + tag + "] " +
+		    message;
 
-        // Write to console
-        if (level >= LogLevel::Warning) {
-            std::cerr << formattedMessage << std::endl;
-        } else {
-            std::cout << formattedMessage << std::endl;
-        }
+		// Write to console
+		if (level >= LogLevel::Warning)
+		{
+			std::cerr << formattedMessage << std::endl;
+		}
+		else
+		{
+			std::cout << formattedMessage << std::endl;
+		}
 
-        // Write to log file
-        if (logFile.is_open()) {
-            logFile << formattedMessage << std::endl;
-            logFile.flush();
-        }
+		// Write to log file
+		if (logFile.is_open())
+		{
+			logFile << formattedMessage << std::endl;
+			logFile.flush();
+		}
 
-        // Call registered callbacks
-        for (const auto& kv : logCallbacks) {
-            kv.second(level, tag, message);
-        }
+		// Call registered callbacks
+		for (const auto &kv : logCallbacks)
+		{
+			kv.second(level, tag, message);
+		}
 
-        // If fatal, trigger crash handler
-        if (level == LogLevel::Fatal && crashHandler) {
-            crashHandler(formattedMessage);
-        }
-    }
+		// If fatal, trigger crash handler
+		if (level == LogLevel::Fatal && crashHandler)
+		{
+			crashHandler(formattedMessage);
+		}
+	}
 
-    /**
-     * @brief Register a log callback.
-     * @param callback The callback function to be called when a log message is generated.
-     * @return An ID that can be used to unregister the callback.
-     */
-    int RegisterLogCallback(std::function<void(LogLevel, const std::string&, const std::string&)> callback) {
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief Register a log callback.
+	 * @param callback The callback function to be called when a log message is generated.
+	 * @return An ID that can be used to unregister the callback.
+	 */
+	int RegisterLogCallback(std::function<void(LogLevel, const std::string &, const std::string &)> callback)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 
-        int id = nextCallbackId++;
-        logCallbacks[id] = callback;
-        return id;
-    }
+		int id           = nextCallbackId++;
+		logCallbacks[id] = callback;
+		return id;
+	}
 
-    /**
-     * @brief Unregister a log callback.
-     * @param id The ID of the callback to unregister.
-     */
-    void UnregisterLogCallback(int id) {
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief Unregister a log callback.
+	 * @param id The ID of the callback to unregister.
+	 */
+	void UnregisterLogCallback(int id)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 
-        logCallbacks.erase(id);
-    }
+		logCallbacks.erase(id);
+	}
 
-    /**
-     * @brief Set the crash handler.
-     * @param handler The crash handler function.
-     */
-    void SetCrashHandler(std::function<void(const std::string&)> handler) {
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief Set the crash handler.
+	 * @param handler The crash handler function.
+	 */
+	void SetCrashHandler(std::function<void(const std::string &)> handler)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 
-        crashHandler = handler;
-    }
+		crashHandler = handler;
+	}
 
-    /**
-     * @brief Start a performance measurement.
-     * @param name The name of the measurement.
-     */
-    void StartMeasurement(const std::string& name) {
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief Start a performance measurement.
+	 * @param name The name of the measurement.
+	 */
+	void StartMeasurement(const std::string &name)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 
-        auto now = std::chrono::high_resolution_clock::now();
-        measurements[name] = now;
-    }
+		auto now           = std::chrono::high_resolution_clock::now();
+		measurements[name] = now;
+	}
 
-    /**
-     * @brief End a performance measurement and log the result.
-     * @param name The name of the measurement.
-     */
-    void StopMeasurement(const std::string& name) {
-        auto now = std::chrono::high_resolution_clock::now();
-        std::lock_guard<std::mutex> lock(mutex);
+	/**
+	 * @brief End a performance measurement and log the result.
+	 * @param name The name of the measurement.
+	 */
+	void StopMeasurement(const std::string &name)
+	{
+		auto                        now = std::chrono::high_resolution_clock::now();
+		std::lock_guard<std::mutex> lock(mutex);
 
-        auto it = measurements.find(name);
+		auto it = measurements.find(name);
 
-        if (it != measurements.end()) {
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - it->second).count();
-            Log(LogLevel::Debug, "Performance", name + ": " + std::to_string(duration) + " us");
-            measurements.erase(it);
-        } else {
-            Log(LogLevel::Error, "Performance", "No measurement started with name: " + name);
-        }
-    }
+		if (it != measurements.end())
+		{
+			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - it->second).count();
+			Log(LogLevel::Debug, "Performance", name + ": " + std::to_string(duration) + " us");
+			measurements.erase(it);
+		}
+		else
+		{
+			Log(LogLevel::Error, "Performance", "No measurement started with name: " + name);
+		}
+	}
 
+  protected:
+	// Protected constructor for inheritance
+	DebugSystem()          = default;
+	virtual ~DebugSystem() = default;
 
-protected:
-    // Protected constructor for inheritance
-    DebugSystem() = default;
-    virtual ~DebugSystem() = default;
+	// Delete copy constructor and assignment operator
+	DebugSystem(const DebugSystem &)            = delete;
+	DebugSystem &operator=(const DebugSystem &) = delete;
 
-    // Delete copy constructor and assignment operator
-    DebugSystem(const DebugSystem&) = delete;
-    DebugSystem& operator=(const DebugSystem&) = delete;
+	// Mutex for thread safety
+	std::mutex mutex;
 
-    // Mutex for thread safety
-    std::mutex mutex;
+	// Log file
+	std::ofstream logFile;
 
-    // Log file
-    std::ofstream logFile;
+	// Initialization flag
+	bool initialized = false;
 
-    // Initialization flag
-    bool initialized = false;
+	// Log callbacks
+	std::unordered_map<int, std::function<void(LogLevel, const std::string &, const std::string &)>> logCallbacks;
+	int                                                                                              nextCallbackId = 0;
 
-    // Log callbacks
-    std::unordered_map<int, std::function<void(LogLevel, const std::string&, const std::string&)>> logCallbacks;
-    int nextCallbackId = 0;
+	// Crash handler
+	std::function<void(const std::string &)> crashHandler;
 
-    // Crash handler
-    std::function<void(const std::string&)> crashHandler;
-
-    // Performance measurements
-    std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> measurements;
-
+	// Performance measurements
+	std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> measurements;
 };
 
 // Convenience macros for logging

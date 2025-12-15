@@ -1,5 +1,5 @@
 /* Copyright (c) 2025 Holochip Corporation
-*
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
@@ -19,28 +19,38 @@
 // Most of the Entity class implementation is in the header file
 // This file is mainly for any methods that might need additional implementation
 
-void Entity::Initialize() {
-    for (auto& component : components) {
-        component->Initialize();
-    }
+void Entity::Initialize()
+{
+	for (auto &component : components)
+	{
+		component->Initialize();
+	}
 }
 
-void Entity::Update(std::chrono::milliseconds deltaTime) {
-    if (!active) return;
+void Entity::Update(std::chrono::milliseconds deltaTime)
+{
+	if (!active)
+		return;
 
-    for (auto& component : components) {
-        if (component->IsActive()) {
-            component->Update(deltaTime);
-        }
-    }
+	for (auto &component : components)
+	{
+		if (component->IsActive())
+		{
+			component->Update(deltaTime);
+		}
+	}
 }
 
-void Entity::Render() {
-    if (!active) return;
+void Entity::Render()
+{
+	if (!active)
+		return;
 
-    for (auto& component : components) {
-        if (component->IsActive()) {
-            component->Render();
-        }
-    }
+	for (auto &component : components)
+	{
+		if (component->IsActive())
+		{
+			component->Render();
+		}
+	}
 }
