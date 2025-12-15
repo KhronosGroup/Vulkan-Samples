@@ -1,0 +1,104 @@
+// Copyright (c) 2025. Holochip Inc
+
+= Forward, Forward+, and Deferred — choosing the right path
+
+Vulkan lets you build many kinds of pipelines. In practice, most real‑time engines gravitate toward one of three shading architectures: Forward, Forward+, or Deferred.
+
+This page explains what each one is, why this sample chooses Forward+, and where the relevant pieces live in the code.
+
+== Forward rendering
+
+Forward draws each object with its lighting in a single pass. It’s the most direct model: bind a material, bind lights (uniforms or textures/SSBOs), draw. It’s easy to reason about and integrates well with transparency and MSAA.
+
+Pros:
+
+* Simple and predictable.
+* Good with transparent objects and MSAA.
+* Great for small light counts or baked lighting.
+
+Cons:
+
+* Per‑pixel light loops can get expensive as the number of lights grows.
+* You evaluate lights even when most don’t affect the pixel.
+
+== Forward+ (what we use for dynamic lights)
+
+Forward+ partitions the screen into tiles and assigns lights to those tiles with a compute pass. The main pass then shades with only the lights relevant to the pixel’s tile. In this sample we use a lightweight Forward+ that focuses on emissive/simplified lights to keep the code approachable.
+
+Pros:
+
+* Scales to many local lights; you only evaluate lights that might affect the pixel.
+* Keeps forward’s strengths (transparency/MSAA friendliness).
+
+Cons:
+
+* Requires a pre‑pass or depth info and a compute dispatch to build the tile lists.
+* More moving parts than plain forward.
+
+== Deferred shading (when to consider it)
+
+Deferred writes material properties (G‑Buffer) in the first pass, then lights that buffer in a second pass. That turns lighting cost into “cost per lighted pixel” and tends to excel with many lights, but it makes transparency and MSAA trickier.
+
+Pros:
+
+* Many dynamic lights at high performance.
+* Clear separation of material/write and light/evaluate.
+
+Cons:
+
+* Transparent objects must be handled separately (often with a forward pass).
+* MSAA is more complex; memory bandwidth can be high.
+
+== What the sample uses (and why)
+
+We use Forward+ for small, dynamic lights and a forward material path for everything else. That keeps the code compact while still letting you place many little lights around the scene. Transparency (glass) is shaded in a second forward pass so order and blending are correct.
+
+If your project needs hundreds of shadowed lights and complex post‑lighting, explore a deferred path or a hybrid: deferred for opaque, forward for transparent.
+
+== Implementation highlights in this codebase
+
+* A small compute pass builds per‑tile light lists.
+* Per‑frame SSBOs hold tile headers/light indices; the main PBR pass reads those to loop only relevant lights.
+* Descriptor updates happen at the frame’s safe point so we don’t touch in‑use sets.
+
+== Where to look in the code
+
+* Forward/Forward+ render loop integration:
+** `renderer_rendering.cpp`
+* Pipeline + descriptor layout setup:
+** `renderer_pipelines.cpp`
+* Main PBR shader (reads per-tile light lists when Forward+ is enabled):
+** `shaders/pbr.slang`
+
+NOTE: The tile/cluster build shader is wired in `renderer_pipelines.cpp`. Start there and follow which compute pipeline is created for the Forward+ light assignment pass.
+
+== Choosing for your project
+
+Use Forward if:
+
+* Light count is low, transparency/MSAA are priorities, and you want the simplest pipeline.
+
+Use Forward+ if:
+
+* You want many local lights but still want forward’s strengths.
+
+Use Deferred if:
+
+* You need to scale to many dynamic lights with complex lighting, and you’re ready to solve transparency/MSAA separately.
+
+There’s no one answer; pick the simplest that meets your needs. You can always grow the pipeline later.
+
+== Future work ideas
+
+If you want to expand the lighting system beyond “readable sample”:
+
+* Add clustered Forward+ (3D clusters using depth slices) instead of 2D tiles.
+* Add shadows (start with a single directional shadow map, then add point/spot shadows).
+* Add a small deferred path for opaque only (keep transparent as forward).
+* Add ray query helpers for selective effects (reflection rays, shadow rays, or AO probes) without building a full RT pipeline.
+
+== What to read next
+
+* `Rendering_Pipeline_Overview.adoc`
+* `ForwardPlus_Rendering.adoc`
+* `Synchronization_2_Frame_Pacing.adoc`

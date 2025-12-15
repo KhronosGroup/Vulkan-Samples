@@ -1,0 +1,53 @@
+// Copyright (c) 2025. Holochip Inc
+
+= VK_EXT_robustness2 — safer defaults for real‑world engines
+
+Vulkan lets you run fast and close to the metal. That also means a bad index or out‑of‑range access can produce undefined results. `VK_EXT_robustness2` tightens that up so mistakes fail predictably instead of corrupting memory or producing flicker.
+
+== What it gives you
+
+* Robust buffer access 2 — out‑of‑bounds buffer reads return zero; writes are discarded.
+* Robust image access 2 — out‑of‑range image coordinates clamp or return zero per the spec.
+* Null descriptors — a descriptor can be left “null” and the shader sees a defined zero value instead of UB.
+
+These behaviors make the engine more forgiving while students iterate and while textures stream in.
+
+== How we use it here
+
+* We enable the extension and feature structs during device creation when available.
+* Shaders are written assuming legal ranges, but if a streaming texture or optional binding is temporarily missing, sampling a null descriptor is defined and safe.
+* The Forward+/reflection paths avoid mid‑frame descriptor edits; robustness2 then acts as an extra safety net.
+
+== When to enable
+
+Always enable when the device supports it for teaching samples and tools. For shipping titles, you can still keep it on; the performance cost is generally negligible on modern drivers, and the safety is worth it.
+
+== Where to look in the code
+
+* Device extension/feature enable:
+** `renderer_core.cpp`
+** `vulkan_device.cpp`
+* Bounds checks and defensive indexing in the Ray Query shader:
+** `shaders/ray_query.slang` (bounds checks for `geometryInfoCount` / `materialCount`)
+* Safe descriptor update patterns (so you don’t rely on robustness for correctness):
+** `renderer_rendering.cpp` (per-frame safe point)
+** `Descriptor_Indexing_UpdateAfterBind.adoc`
+
+== Takeaways
+
+* Robustness doesn’t replace good synchronization and lifetime rules; it complements them.
+* Null descriptors and “safe zero” reads make streaming and feature toggles less fragile.
+
+== Future work ideas
+
+If you want to stress-test robustness (without turning the engine into a debugging tool):
+
+* Add a development-only “fault injection” toggle that intentionally feeds out-of-range indices in a controlled shader path.
+* Add a small runtime report that prints whether `VK_EXT_robustness2` is enabled on the current device.
+* Add a unit-style GPU test scene that exercises missing textures / missing buffers while keeping VVL clean.
+
+== What to read next
+
+* `Synchronization_and_Streaming.adoc`
+* `Descriptor_Indexing_UpdateAfterBind.adoc`
+* `Ray_Query_Rendering.adoc`

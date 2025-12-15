@@ -1,0 +1,42 @@
+// Copyright (c) 2025. Holochip Inc
+
+= VK_EXT_shader_tile_image — fast access to tile data
+
+Some GPUs expose “tile” or “subpass” data paths that let shaders read from on‑chip color/depth without a round trip to memory. `VK_EXT_shader_tile_image` is a portable way to tap into that.
+
+In this sample we treat it as an optional optimization: the pipeline remains correct without it, and we only take a “fast path” when the device advertises support.
+
+== What problem it solves
+
+Post‑lighting texture reads from the just‑written color can be expensive. With tile image access, certain patterns become cheaper and more deterministic on supported hardware.
+
+== How we handle it in this sample
+
+* We enable the feature if present and expose a boolean you can check in code.
+* The renderer still uses clean Synchronization 2 barriers and ends dynamic rendering before formal layout transitions. That keeps the code understandable on devices that don’t support tile reads.
+
+== Guidance
+
+Use it as an optimization. Write code that’s correct everywhere, then add tile‑image fast paths when available.
+
+== Where to look in the code
+
+* Feature detection and enablement:
+** `renderer_core.cpp`
+* Dynamic rendering setup and attachment transitions (kept explicit for clarity):
+** `renderer_rendering.cpp`
+** `renderer_pipelines.cpp`
+
+== Future work ideas
+
+If you want to demonstrate tile-image usage more directly:
+
+* Add a small “local read” post effect that reads from the current color attachment and compares with a regular sampled path.
+* Add a device capability print (development-only) so students can see when the fast path is active.
+* Add a micro-benchmark scene and compare bandwidth on tile-based GPUs.
+
+== What to read next
+
+* `Dynamic_Rendering_Local_Read.adoc`
+* `Synchronization_2_Frame_Pacing.adoc`
+* `Rendering_Pipeline_Overview.adoc`

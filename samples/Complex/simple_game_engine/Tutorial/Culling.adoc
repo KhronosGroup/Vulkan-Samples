@@ -1,0 +1,48 @@
+// Copyright (c) 2025. Holochip Inc
+
+= Frustum Culling and Distance‑based LOD
+
+Culling is the simplest way to keep your GPU focused on what the camera can see. In this engine we keep it intentionally pragmatic: CPU frustum tests plus a tiny “distance/size LOD” that skips objects that would contribute only a handful of pixels.
+
+* CPU frustum culling against per‑mesh AABBs
+* A tiny distance/size LOD that skips very small objects (projected size threshold)
+
+== What we do
+
+1. Extract the camera frustum planes from `proj * view` once per frame.
+2. For each mesh instance, transform its local AABB to world space and test against the planes.
+3. If enabled, estimate projected pixel size and skip objects below a threshold (separate thresholds for opaque vs transparent).
+
+== Where to look in the code
+
+* Plane extraction and AABB tests:
+** `renderer_rendering.cpp` (helpers near the top of the file)
+* Per-frame culling application:
+** `renderer_rendering.cpp` (the render list building and per-pass filtering)
+* UI controls:
+** ImGui panel in `renderer_rendering.cpp` — “Frustum culling”, “Distance LOD”, and per-pass thresholds
+
+== Why it’s set up this way
+
+* AABBs are cheap to transform and test; doing this on the CPU avoids sending obviously invisible draws.
+* A projected‑size cutoff is a practical alternative to a full LOD system for large scenes.
+
+== Tuning tips
+
+* Start conservative (smaller thresholds), then increase until you can’t notice pop‑in while moving.
+* Transparent objects typically need a slightly higher threshold due to blending artifacts at tiny sizes.
+
+== Future work ideas
+
+If you want to push this further:
+
+* Add per-material or per-layer culling rules (e.g., keep signage readable longer).
+* Add hierarchical culling (BVH of AABBs) for very large scenes.
+* Add GPU occlusion culling (HZB) once the pipeline grows beyond “readable sample” scale.
+* Replace the projected-size heuristic with real mesh LODs (or meshlets).
+
+== What to read next
+
+* `Rendering_Pipeline_Overview.adoc`
+* `ForwardPlus_Rendering.adoc`
+* `Ray_Query_Rendering.adoc`

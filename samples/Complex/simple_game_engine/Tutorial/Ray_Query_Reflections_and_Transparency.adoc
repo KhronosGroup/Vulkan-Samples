@@ -1,0 +1,89 @@
+// Copyright (c) 2025. Holochip Inc
+
+== Ray Query Reflections and Transparency
+
+Ray queries make it straightforward to add reflection and refraction to a renderer without adopting a full ray tracing pipeline. In this engine, the Ray Query mode compute shader already computes primary visibility; we extend that shader with *secondary rays* to handle reflective and transmissive materials.
+
+This page explains the design in a way you can reuse in your own projects.
+
+=== Two toggles, one clear mental model
+
+Ray Query mode exposes two feature toggles:
+
+* *Reflections*: enables a reflection ray from the first hit.
+* *Transparency/Refraction*: enables a refraction ray for transmissive materials.
+
+There’s also a small quality knob:
+
+* *Max secondary bounces*: `0` disables secondary rays entirely; `1` enables a single bounce.
+
+The point of the bounce cap is to keep performance predictable while still demonstrating how ray queries can be layered into a physically-based shading model.
+
+=== Reflection rays (one bounce)
+
+At the first surface hit we have:
+
+* the outgoing view direction `V`
+* the surface normal `N`
+* material parameters (roughness, metallic, and Fresnel base reflectance)
+
+The reflection direction is the standard geometric reflection:
+
+`R = reflect(-V, N)`
+
+In the compute shader we trace a new ray from a small offset along the normal to avoid self-intersections:
+
+* origin: `P + N * eps`
+* direction: `R`
+
+If the reflection ray hits something, we shade that hit using the same PBR path as the primary ray. If it misses, we use a stable sky/background function.
+
+The final reflection contribution is weighted by Fresnel and reduced by roughness:
+
+* grazing angles reflect more
+* rough surfaces reflect less strongly
+
+This keeps the result intuitive and stable.
+
+=== Thin-glass refraction (one bounce)
+
+For transmissive materials we implement a “thin glass” model:
+
+* a refraction ray gives you the view *through* the surface
+* a reflection ray gives you the view *on* the surface
+* Fresnel blends between them
+
+We compute refraction using Snell’s law with a simple total internal reflection fallback.
+
+The refraction ray uses:
+
+* origin: `P + refrDir * eps` (offset along the refraction direction)
+* direction: `refrDir`
+
+The transmitted result is blended with reflection using Fresnel, and then mixed into the base surface color using the material’s transmission factor.
+
+=== Alpha-masked surfaces (foliage)
+
+Many real scenes use *alpha masking* for foliage and thin geometry. Alpha masking is different from regular blending:
+
+* the surface is either present or absent per pixel
+* the decision is driven by a baseColor alpha texture and an `alphaCutoff`
+
+In a traditional ray tracing pipeline, alpha masking is often implemented in an any-hit shader. With ray queries, we can implement the same idea by controlling which candidate intersections get committed.
+
+The approach is:
+
+1. Allow non-opaque candidates for alpha-masked instances.
+2. For each candidate triangle hit:
+   * compute the candidate UV
+   * sample baseColor alpha
+   * accept the candidate only when `alpha >= alphaCutoff`
+
+This produces correct visibility for masked geometry in primary rays, and it also keeps reflections/refractions consistent because they use the same traversal routine.
+
+=== Where to look in the code
+
+* Ray Query shader implementation:
+** `shaders/ray_query.slang`
+* Ray Query UI toggles and bounce cap:
+** `renderer_rendering.cpp`

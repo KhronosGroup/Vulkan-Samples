@@ -1,0 +1,41 @@
+// Copyright (c) 2025. Holochip Inc
+
+= Mipmaps and Level of Detail (LOD)
+
+Mipmaps reduce aliasing and bandwidth by sampling pre‑filtered versions of a texture. LOD is simply “which mip do we use right now?”.
+
+In this sample the key idea is: we want stable, good-looking texture sampling while assets are streaming in, without turning texture management into a giant subsystem.
+
+== What we do here
+
+* Use mipmapped textures when available (KTX2 transcodes can include mips).
+* For raw RGBA uploads, we cap auto‑generated mips to a small number to avoid large VRAM spikes.
+* Enable sampler anisotropy with a UI slider so you can see the trade‑offs quickly.
+
+== Where it lives in code
+
+* Sampler creation and anisotropy slider:
+** `renderer_resources.cpp` (sampler creation helpers)
+** ImGui panel in `renderer_rendering.cpp`
+* Upload path (staging → device image, then transition to `SHADER_READ_ONLY_OPTIMAL`):
+** `renderer_resources.cpp`
+** `resource_manager.cpp` / `scene_loading.cpp` (higher-level streaming/control flow)
+
+== Tips
+
+* Prefer compressed formats (BC/ASTC/ETC) with mips for big scenes.
+* Clamp the max anisotropy to what your device supports.
+
+== Future work ideas
+
+If you want to take this farther:
+
+* Add a per-material “mip bias” control (great for stylized looks and debugging shimmering).
+* Add texture streaming by mip level (load low mips first, then refine).
+* Add a small “texture residency” overlay (counts of textures by mip availability).
+
+== What to read next
+
+* `Descriptor_Indexing_UpdateAfterBind.adoc`
+* `Synchronization_and_Streaming.adoc`
+* `Ray_Query_Rendering.adoc`

@@ -1,0 +1,41 @@
+// Copyright (c) 2025. Holochip Inc
+
+= VK_KHR_dynamic_rendering_local_read — keeping color data in tile memory
+
+Dynamic Rendering lets you render without full render passes/subpasses. The `VK_KHR_dynamic_rendering_local_read` feature is a small but handy addition: it allows same‑pass reads from attachments via tile/local memory paths on hardware that supports it.
+
+== Why it matters
+
+Some post‑lighting effects and resolve‑like steps read the color you just wrote. With this feature, drivers can service those reads from fast on‑chip memory instead of round‑tripping to VRAM.
+
+== How we approach it
+
+* We enable the feature if present and keep codepaths compatible when it isn’t.
+* We still end a rendering instance before doing layout transitions. The feature does not allow arbitrary barrier misuse — regular Synchronization 2 rules apply.
+
+== Practical guidance
+
+* Treat this as an optimization, not a new API surface.
+* Keep stage/access masks precise. In this sample we keep transitions outside active rendering for clarity.
+
+== Where to look in the code
+
+* Feature detection and enablement:
+** `renderer_core.cpp` (device feature enable path)
+* Dynamic rendering setup + barriers:
+** `renderer_rendering.cpp`
+** `renderer_pipelines.cpp`
+
+== Future work ideas
+
+If you want to demonstrate local-read more directly:
+
+* Add a small “same-pass” effect that reads the current color attachment (e.g., a simple local contrast or edge highlight).
+* Add a debug HUD that prints whether the feature is enabled on the current device.
+* Compare performance with and without local-read on tile-based GPUs (mobile) using a fixed camera path.
+
+== What to read next
+
+* `Rendering_Pipeline_Overview.adoc`
+* `Synchronization_and_Streaming.adoc`
+* `Synchronization_2_Frame_Pacing.adoc`

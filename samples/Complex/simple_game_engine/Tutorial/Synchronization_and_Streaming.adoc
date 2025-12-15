@@ -1,0 +1,93 @@
+// Copyright (c) 2025. Holochip Inc
+
+= Synchronization and Streaming
+
+Modern Vulkan gives us powerful tools to keep the GPU busy while assets stream in. This engine uses a background uploader, a dedicated transfer queue, and Synchronization 2 to avoid stalls and flicker. Let’s walk through the moving parts and how they fit together.
+
+== The idea
+
+- File I/O and staging happen off the render thread.
+- GPU copies and layout transitions run on a transfer queue, not the graphics queue.
+- A timeline semaphore lets graphics wait for “the latest finished upload” without micro‑managing per‑resource fences.
+- We only update descriptors at a safe point (right after waiting for the in‑flight frame’s fence) so we never write into sets that the GPU is still using.
+
+This keeps the frame loop simple and responsive—even while large textures stream in.
+
+== The background uploader
+
+We enqueue texture jobs (transcode/IO → staging buffer → device image). A dedicated thread:
+
+1. Batches pending copies into a command buffer on the transfer queue.
+2. Records layout transitions from `TRANSFER_DST_OPTIMAL` to `SHADER_READ_ONLY_OPTIMAL` using Synchronization 2.
+3. Submits once, signaling a monotonically increasing timeline value.
+4. Notifies the renderer which textures are now “ready to sample.”
+
+The render submit includes a wait on the latest uploads timeline value, so textures are available by the time we draw.
+
+== The safe point for descriptor updates
+
+Vulkan won’t let us mutate a descriptor set that’s currently in use. The engine does this instead:
+
+* At the start of each frame, we wait for the fence associated with that frame‑in‑flight.
+* Now it’s safe to update this frame’s descriptor sets (they aren’t in use).
+* We refresh image bindings with the uploaded texture’s view/sampler at this point.
+
+As a result there’s no texture “flip‑flop” or flicker: once a real texture replaces a placeholder, it stays.
+
+== Synchronization 2 in practice
+
+Uploads path uses `vkCmdPipelineBarrier2` with clear, minimal scopes:
+
+* Staging → image copy: make the destination image `TRANSFER_DST_OPTIMAL`.
+* After the final copy: transition to `SHADER_READ_ONLY_OPTIMAL` (src stage = `eTransfer`, dst stage = `eFragmentShader`).
+* Ownership transfers only if the transfer and graphics queues use different families (most desktop drivers share families).
+
+On the graphics side, we keep attachment layout transitions outside of any dynamic render pass instance and also use `vkCmdPipelineBarrier2` for readability.
+
+== A typical texture’s journey
+
+1. Job enqueued with a file path.
+2. Background thread: load/transcode to staging, allocate device image, record copies.
+3. Submit to transfer queue; signal timeline.
+4. Renderer’s next frame begins; the per‑frame fence unblocks.
+5. Descriptor for this frame updates to point at the uploaded image (safe point).
+6. Draw: fragment shader samples the new texture without stalls.
+
+== Tips and pitfalls
+
+* Keep descriptor updates at the safe point. Avoid updating in‑use sets.
+* Use the transfer queue for bulk copies; keep the graphics queue focused on drawing.
+* Prefer Synchronization 2 for clarity (stage/access pairs are explicit, transitions stand out).
+* Batch uploads: the fewer submits, the lower the CPU overhead.
+
+That’s all it takes to make streaming feel “invisible” to the player—and tidy to maintain.
+
+== Where to look in the code
+
+* High-level scene load and job enqueue:
+** `scene_loading.cpp`
+** `resource_manager.cpp`
+* Texture/image creation + upload path:
+** `renderer_resources.cpp`
+* Transfer queue submission + synchronization helpers:
+** `renderer_utils.cpp`
+** `vulkan_device.cpp`
+* Frame “safe point” (per-frame fence wait) and descriptor refresh:
+** `renderer_rendering.cpp`
+* Descriptor update patterns (why we update at the safe point):
+** `Descriptor_Indexing_UpdateAfterBind.adoc`
+
+== Future work ideas
+
+If you want to push streaming further:
+
+* Stream by mip level (low mips first), then refine in the background.
+* Add a small streaming HUD (bytes queued, bytes uploaded, textures ready) behind a development build flag.
+* Add per-resource priorities (camera distance, importance tags) so the most noticeable assets arrive first.
+* Add “hot reload” for textures to validate descriptor lifetime rules under rapid churn.
+
+== What to read next
+
+* `Synchronization_2_Frame_Pacing.adoc`
+* `Descriptor_Indexing_UpdateAfterBind.adoc`
+* `Ray_Query_Rendering.adoc`

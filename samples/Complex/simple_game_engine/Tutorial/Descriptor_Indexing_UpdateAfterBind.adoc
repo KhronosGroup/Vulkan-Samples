@@ -1,0 +1,75 @@
+// Copyright (c) 2025. Holochip Inc
+
+= Descriptor Indexing and Stable Descriptor Updates
+
+Vulkan descriptors are powerful, but they’re also one of the easiest places to accidentally violate “frame in flight” lifetime rules.
+
+In this engine we use one simple rule:
+
+*Only update descriptors at a known safe point.*
+
+That rule keeps streaming stable, keeps validation clean, and (most importantly) keeps the code readable.
+
+== The safe point
+
+Each frame‑in‑flight has a fence. At the start of a new frame, we wait for that fence. Once it signals, the GPU is done with any work that referenced this frame’s descriptor sets. That’s the safe moment to update this frame’s sets.
+
+Why it matters: updating a set that’s still in use leads to invalid writes or so‑called “update‑after‑bind” violations unless you deliberately opt into those behaviors and structure your pipeline around them. The safe point pattern stays portable and clear.
+
+== What we update
+
+* Material textures that finished streaming.
+* The reflection texture binding (binding 10) for planar reflections.
+* Per‑frame buffers for Forward+ (tile headers/indices, lights SSBO) when resized.
+
+In Ray Query mode we also refresh the large texture table (the fixed-size sampler array) so that newly streamed textures become visible without rebuilding the pipeline.
+
+We refresh only the current frame’s sets at the safe point and leave other frames to update at their own turn. This prevents cross‑frame “flip‑flop” where a texture looks different on alternating frames.
+
+== Descriptor Indexing: when to use it
+
+Descriptor Indexing opens features such as variable‑sized arrays and update‑after‑bind. It’s powerful, but it shifts complexity to your synchronization and lifetime rules. In this sample we emphasize clarity:
+
+* We keep descriptor layouts simple and stable.
+* We update at the safe point rather than while a command buffer might still be pending.
+
+When we do use descriptor indexing features, it’s for one specific reason: large, non-uniformly indexed descriptor arrays (e.g., Ray Query’s texture table). In that case, correctness depends on:
+
+* enabling the descriptor indexing feature bits required by the GPU
+* marking bindings with the correct binding flags (when supported)
+* never caching stale Vulkan image/sampler handles across async streaming
+
+If your project needs truly dynamic descriptor arrays or frequent mid‑frame updates, Descriptor Indexing can be the right tool—just document the new invariants carefully.
+
+== Practical tips
+
+* Centralize descriptor updates; don’t scatter writes across the frame.
+* Use default textures for placeholders, then swap once—don’t bounce between real and default.
+* Prefer combined image samplers for samples aimed at teaching; split image/sampler only when you need the flexibility.
+
+== Where to look in the code
+
+* Frame safe point + per-frame descriptor refresh:
+** `renderer_rendering.cpp`
+* Descriptor set layouts (including update-after-bind flags when enabled):
+** `renderer_pipelines.cpp`
+* Device feature enable for descriptor indexing:
+** `renderer_core.cpp`
+* Streaming-safe Ray Query texture table rebuild:
+** `renderer_ray_query.cpp`
+
+== Future work ideas
+
+If you want to explore more advanced descriptor patterns:
+
+* Move to variable descriptor counts for texture tables (when device support is good enough for your targets).
+* Use separate image/sampler descriptors to share samplers across many textures.
+* Add a “descriptor stress test” mode (development-only) that rapidly streams textures to validate lifetime rules.
+
+== What to read next
+
+* `Synchronization_and_Streaming.adoc`
+* `Separate_Image_Sampler_Descriptors.adoc`
+* `Ray_Query_Rendering.adoc`
+
+This conservative approach avoids common pitfalls while keeping the code approachable.

@@ -1,0 +1,41 @@
+// Copyright (c) 2025. Holochip Inc
+
+= Push Constants — per‑object material properties
+
+Push constants are tiny pieces of data you can send to shaders without creating or updating buffers. They’re perfect for per‑draw material knobs.
+
+In this engine we use push constants for *values that change per draw call* (material factors and “is there a texture?” flags). Anything that changes less frequently (camera data, light lists, big arrays) stays in UBOs/SSBOs.
+
+== How we use them
+
+We pack the common PBR controls (base color factor, metallic/roughness, texture presence flags, emissive strength, transmission, IOR) into a single push constant block and update it before each draw.
+
+== Where to look
+
+* C++ push constant struct and update call:
+** `renderer.h` (`MaterialProperties`)
+** `renderer_rendering.cpp` (where we push per-draw material properties)
+* Shader push constant block:
+** `shaders/pbr.slang` (`[[vk::push_constant]]` block)
+* PBR helper functions used by the shader:
+** `shaders/pbr_utils.slang`
+** `shaders/lighting_utils.slang`
+
+== Guidelines
+
+* Keep the block small (Vulkan guarantees at least 128 bytes). This sample fits comfortably.
+* Use push constants for values that change every draw call. Use UBO/SSBO for larger, less‑frequent data.
+
+== Future work ideas
+
+If you want to extend this pattern:
+
+* Split “rarely changing per-material data” into a GPU material buffer and use push constants only for the per-draw index.
+* Add a second push constant block for per-draw debug visualizations (development-only) to keep it out of hot UBO paths.
+* Add a material override system (force roughness/metallic for entire scene) by layering a global UBO on top.
+
+== What to read next
+
+* `Rendering_Pipeline_Overview.adoc`
+* `Descriptor_Indexing_UpdateAfterBind.adoc`
+* `Ray_Query_Rendering.adoc`
