@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,7 +55,7 @@ bool HPPInstancing::prepare(const vkb::ApplicationOptions &options)
 		prepare_uniform_buffers();
 		vk::Device device     = get_device().get_handle();
 		descriptor_set_layout = create_descriptor_set_layout();
-		pipeline_layout       = device.createPipelineLayout({{}, descriptor_set_layout});
+		pipeline_layout       = device.createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &descriptor_set_layout});
 		descriptor_pool       = create_descriptor_pool();
 
 		// setup planet
@@ -86,7 +86,7 @@ bool HPPInstancing::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-void HPPInstancing::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPInstancing::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	auto       &requested_features = gpu.get_mutable_requested_features();
 	auto const &features           = gpu.get_features();
@@ -117,9 +117,12 @@ void HPPInstancing::build_command_buffers()
 
 	std::array<vk::ClearValue, 2> clear_values =
 	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.033f, 0.0f}})),
-	      vk::ClearDepthStencilValue(0.0f, 0)}};
+	      vk::ClearDepthStencilValue{0.0f, 0}}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -131,10 +134,10 @@ void HPPInstancing::build_command_buffers()
 
 		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
+		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
 		command_buffer.setViewport(0, viewport);
 
-		vk::Rect2D scissor({0, 0}, extent);
+		vk::Rect2D scissor{{0, 0}, extent};
 		command_buffer.setScissor(0, scissor);
 
 		vk::DeviceSize offset = 0;
@@ -195,8 +198,10 @@ vk::DescriptorPool HPPInstancing::create_descriptor_pool()
 {
 	// Example uses one ubo
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 2}, {vk::DescriptorType::eCombinedImageSampler, 2}}};
+	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info{.maxSets       = 2,
+	                                                                  .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
+	                                                                  .pPoolSizes    = pool_sizes.data()};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
 	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
@@ -206,17 +211,18 @@ vk::DescriptorSetLayout HPPInstancing::create_descriptor_set_layout()
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},                   // Binding 0 : Vertex shader uniform buffer
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};        // Binding 1 : Fragment shader combined sampler
 
-	return get_device().get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
+	return get_device().get_handle().createDescriptorSetLayout(
+	    {.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()), .pBindings = set_layout_bindings.data()});
 }
 
 vk::Pipeline HPPInstancing::create_planet_pipeline()
 {
 	// Planet rendering pipeline
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "planet.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("instancing", "planet.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "planet.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing", "planet.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
-	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription binding_description{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 
 	// Vertex attribute bindings
 	std::array<vk::VertexInputAttributeDescription, 3> attribute_descriptions = {
@@ -227,11 +233,13 @@ vk::Pipeline HPPInstancing::create_planet_pipeline()
 	     {2, 0, vk::Format::eR32G32Sfloat, 6 * sizeof(float)}}};         // Location 2: Texture coordinates
 
 	// Use all input bindings and attribute descriptions
-	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_description, attribute_descriptions);
+	vk::PipelineVertexInputStateCreateInfo input_state{.vertexBindingDescriptionCount   = 1,
+	                                                   .pVertexBindingDescriptions      = &binding_description,
+	                                                   .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
+	                                                   .pVertexAttributeDescriptions    = attribute_descriptions.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -258,8 +266,8 @@ vk::Pipeline HPPInstancing::create_planet_pipeline()
 
 vk::Pipeline HPPInstancing::create_rocks_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing", "instancing.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("instancing", "instancing.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing", "instancing.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("instancing", "instancing.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	// The instancing pipeline uses a vertex input state with two bindings
@@ -287,11 +295,13 @@ vk::Pipeline HPPInstancing::create_rocks_pipeline()
 	     {6, 1, vk::Format::eR32Sint, 7 * sizeof(float)}}};              // Location 6: Texture array layer index
 
 	// Use all input bindings and attribute descriptions
-	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_descriptions, attribute_descriptions);
+	vk::PipelineVertexInputStateCreateInfo input_state{.vertexBindingDescriptionCount   = static_cast<uint32_t>(binding_descriptions.size()),
+	                                                   .pVertexBindingDescriptions      = binding_descriptions.data(),
+	                                                   .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
+	                                                   .pVertexAttributeDescriptions    = attribute_descriptions.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -319,11 +329,11 @@ vk::Pipeline HPPInstancing::create_rocks_pipeline()
 vk::Pipeline HPPInstancing::create_starfield_pipeline()
 {
 	// Starfield rendering pipeline
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "starfield.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("instancing", "starfield.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing", "starfield.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing", "starfield.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
-	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription binding_description{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 
 	// Vertex attribute bindings
 	std::array<vk::VertexInputAttributeDescription, 3> attribute_descriptions = {
@@ -334,11 +344,13 @@ vk::Pipeline HPPInstancing::create_starfield_pipeline()
 	     {2, 0, vk::Format::eR32G32Sfloat, 6 * sizeof(float)}}};         // Location 2: Texture coordinates
 
 	// Use all input bindings and attribute descriptions
-	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_description, attribute_descriptions);
+	vk::PipelineVertexInputStateCreateInfo input_state{.vertexBindingDescriptionCount   = 1,
+	                                                   .pVertexBindingDescriptions      = &binding_description,
+	                                                   .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
+	                                                   .pVertexAttributeDescriptions    = attribute_descriptions.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -448,7 +460,7 @@ void HPPInstancing::prepare_instance_data()
 	// Copy to staging buffer
 	vk::CommandBuffer copy_command = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vk::BufferCopy copy_region(0, 0, instance_buffer.size);
+	vk::BufferCopy copy_region{.size = instance_buffer.size};
 	copy_command.copyBuffer(staging_buffer.get_handle(), instance_buffer.buffer->get_handle(), copy_region);
 
 	get_device().flush_command_buffer(copy_command, queue, true);
@@ -482,27 +494,41 @@ void HPPInstancing::update_uniform_buffer(float delta_time)
 
 void HPPInstancing::update_planet_descriptor_set()
 {
-	vk::DescriptorBufferInfo              buffer_descriptor(uniform_buffers.scene->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo              buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
 	vk::DescriptorImageInfo               image_descriptor{planet.texture.sampler,
                                              planet.texture.image->get_vk_image_view().get_handle(),
                                              descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
 	                                                                                       planet.texture.image->get_vk_image_view().get_format())};
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-	    {{planet.descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
-	     {planet.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = planet.descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
+	                                                                {.dstSet          = planet.descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &image_descriptor}}};        // Binding 1 : Color map
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPInstancing::update_rocks_descriptor_set()
 {
-	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffers.scene->get_handle(), 0, VK_WHOLE_SIZE);
-	vk::DescriptorImageInfo  image_descriptor(
-        rocks.texture.sampler,
-        rocks.texture.image->get_vk_image_view().get_handle(),
-        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, rocks.texture.image->get_vk_image_view().get_format()));
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-	    {{rocks.descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
-	     {rocks.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
+	vk::DescriptorBufferInfo              buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorImageInfo               image_descriptor{rocks.texture.sampler,
+                                             rocks.texture.image->get_vk_image_view().get_handle(),
+                                             descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                       rocks.texture.image->get_vk_image_view().get_format())};
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = rocks.descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
+	                                                                {.dstSet          = rocks.descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &image_descriptor}}};        // Binding 1 : Color map
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 

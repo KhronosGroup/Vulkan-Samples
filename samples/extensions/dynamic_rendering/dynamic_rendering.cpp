@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024, Holochip Corporation
+ * Copyright (c) 2021-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -89,14 +89,11 @@ bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void DynamicRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicRendering::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (enable_dynamic)
 	{
-		REQUEST_REQUIRED_FEATURE(gpu,
-		                         VkPhysicalDeviceDynamicRenderingFeaturesKHR,
-		                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
-		                         dynamicRendering);
+		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
 	}
 
 	if (gpu.get_features().samplerAnisotropy)
@@ -253,8 +250,8 @@ void DynamicRendering::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_rendering", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_rendering", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering", "gbuffer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering", "gbuffer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Create graphics pipeline for dynamic rendering
 	VkFormat color_rendering_format = get_render_context().get_format();

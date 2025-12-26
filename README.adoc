@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2024, Arm Limited and Contributors
+- Copyright (c) 2019-2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -52,11 +52,14 @@ endif::[]
 xref:samples/performance/README.adoc[Performance samples] show the recommended best practice together with real-time profiling information.
 They are more advanced but also contain a detailed tutorial with more in-detail explanations.
 
+=== Requirements
+
+The samples are written in C{pp} and require a compiler that supports at least C{pp}20. To run the samples, a device that supports at least Vulkan 1.1 or newer is required. Some samples might require a higher Vulkan version and/or support for certain extensions.
+
 === Goals
 
 * Create a collection of resources that demonstrate best-practice recommendations in Vulkan
 * Create tutorials that explain the implementation of best-practices and include performance analysis guides
-* Create a xref:framework/README.adoc[framework] that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
 
 == Samples
 

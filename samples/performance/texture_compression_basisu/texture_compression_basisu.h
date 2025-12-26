@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,7 +76,7 @@ class TextureCompressionBasisu : public ApiVulkanSample
 
 	TextureCompressionBasisu();
 	~TextureCompressionBasisu();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	bool         format_supported(VkFormat format);
 	void         get_available_target_formats();
 	void         transcode_texture(const std::string &input_file, ktx_transcode_fmt_e target_format);

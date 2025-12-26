@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2024, Sascha Willems
+- Copyright (c) 2024-2025, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -20,7 +20,17 @@
 
 == Shader languages
 
-This folder contains the textual shaders for the samples. All samples come with GLSL shaders and some optionally with HLSL shaders. For samples that support both shader language this is a good way to compare GLSL to HLSL syntax when targeting SPIR-V for Vulkan.
+This folder contains the textual shaders for the samples. All samples come with GLSL shaders and some optionally with Slang and HLSL shaders. For samples that support multiple shader languages, this is a good way to compare the syntax differences when targeting SPIR-V for Vulkan.
+
+== Compiling shaders
+
+The samples load offline compiled SPIR-V variants of the GLSL/Slang/HLSL shaders. If you have the appropriate compiler installed, e.g. via the LunarG VUlkan SDK, shaders will be automatically compiled when building the samples project.
+
+**Note for compiling Slang shaders**:  The minimum required version of the Slang compiler is `2025.16.1`. Older versions might have issues compiling shaders or may result in invalid SPIR-V. It's advised to use the latest version from link:https://github.com/shader-slang/slang/releases[here]. 
+
+== Selecting shading language
+
+To select a shading language, use the `--shading-language` argument followed by the shading language `glsl`, `slang` or `hlsl`. Samples default to `glsl`.
 
 == Further information
 
@@ -28,3 +38,4 @@ The xref:guide:ROOT:index.adoc[Vulkan Guide] contains further information on how
 
 * xref:guide::hlsl.adoc[HLSL in Vulkan]
 * xref:guide::high_level_shader_language_comparison.adoc[High level shading language comparison]
+* link:https://shader-slang.org/docs/[Slang shading language documentation]

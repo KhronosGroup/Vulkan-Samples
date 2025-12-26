@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Sascha Willems
+# Copyright (c) 2019-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -38,4 +38,11 @@ add_sample_with_tags(
         "instancing/hlsl/planet.vert.hlsl"
         "instancing/hlsl/planet.frag.hlsl"
         "instancing/hlsl/starfield.vert.hlsl"
-        "instancing/hlsl/starfield.frag.hlsl")
+        "instancing/hlsl/starfield.frag.hlsl"
+    SHADER_FILES_SLANG
+        "instancing/slang/instancing.vert.slang"
+        "instancing/slang/instancing.frag.slang"
+        "instancing/slang/planet.vert.slang"
+        "instancing/slang/planet.frag.slang"
+        "instancing/slang/starfield.vert.slang"
+        "instancing/slang/starfield.frag.slang")

@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Sascha Willems
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2025, Sascha Willems
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,7 +84,7 @@ bool HPPPushDescriptors::prepare(const vkb::ApplicationOptions &options)
 	return prepared;
 }
 
-void HPPPushDescriptors::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPPushDescriptors::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -99,19 +99,22 @@ void HPPPushDescriptors::build_command_buffers()
 
 	std::array<vk::ClearValue, 2> clear_values;
 	clear_values[0].color        = default_clear_color;
-	clear_values[1].depthStencil = vk::ClearDepthStencilValue(0.0f, 0);
+	clear_values[1].depthStencil = vk::ClearDepthStencilValue{0.0f, 0};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
 
-	vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
-	vk::Rect2D   scissor({0, 0}, extent);
+	vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
+	vk::Rect2D   scissor{{0, 0}, extent};
 
 	vk::Buffer vertex_buffer = models.cube->get_vertex_buffer("vertex_buffer").get_handle();
 	vk::Buffer index_buffer  = models.cube->get_index_buffer().get_handle();
 
 	vk::DeviceSize offset = 0;
 
-	vk::DescriptorBufferInfo scene_buffer_descriptor(uniform_buffers.scene->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo scene_buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -134,16 +137,16 @@ void HPPPushDescriptors::build_command_buffers()
 			// This allows a more dynamic approach without the need to create descriptor sets for each model
 			// Note: dstSet for each descriptor set write is left at nullptr as this is ignored when using push descriptors
 
-			vk::DescriptorBufferInfo cube_buffer_descriptor(cube.uniform_buffer->get_handle(), 0, VK_WHOLE_SIZE);
-			vk::DescriptorImageInfo  cube_image_descriptor(
-                cube.texture.sampler,
-                cube.texture.image->get_vk_image_view().get_handle(),
-                descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, cube.texture.image->get_vk_image_view().get_format()));
+			vk::DescriptorBufferInfo cube_buffer_descriptor{cube.uniform_buffer->get_handle(), 0, vk::WholeSize};
+			vk::DescriptorImageInfo  cube_image_descriptor{cube.texture.sampler,
+                                                          cube.texture.image->get_vk_image_view().get_handle(),
+                                                          descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+			                                                                               cube.texture.image->get_vk_image_view().get_format())};
 
 			std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
-			    {{nullptr, 0, 0, vk::DescriptorType::eUniformBuffer, {}, scene_buffer_descriptor},
-			     {nullptr, 1, 0, vk::DescriptorType::eUniformBuffer, {}, cube_buffer_descriptor},
-			     {nullptr, 2, 0, vk::DescriptorType::eCombinedImageSampler, cube_image_descriptor}}};
+			    {{.dstBinding = 0, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &scene_buffer_descriptor},
+			     {.dstBinding = 1, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &cube_buffer_descriptor},
+			     {.dstBinding = 2, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eCombinedImageSampler, .pImageInfo = &cube_image_descriptor}}};
 
 			command_buffer.pushDescriptorSetKHR(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, write_descriptor_sets);
 
@@ -192,28 +195,34 @@ void HPPPushDescriptors::create_descriptor_set_layout()
 	                                                                      {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 	                                                                      {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info(vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR, set_layout_bindings);
+	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info{.flags        = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR,
+	                                                                .bindingCount = static_cast<uint32_t>(set_layout_bindings.size()),
+	                                                                .pBindings    = set_layout_bindings.data()};
 	descriptor_set_layout = get_device().get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
 }
 
 void HPPPushDescriptors::create_pipeline()
 {
-	const std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("push_descriptors", "cube.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                      load_shader("push_descriptors", "cube.frag", vk::ShaderStageFlagBits::eFragment)};
+	const std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("push_descriptors", "cube.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                      load_shader("push_descriptors", "cube.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
-	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},           // Location 0: Position
-	                                                                               {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, normal)},        // Location 1 : Normal
-	                                                                               {2, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};             // Location 2: UV
-	vk::PipelineVertexInputStateCreateInfo             vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
+	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},           // Location 0: Position
+	     {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, normal)},        // Location 1 : Normal
+	     {2, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};             // Location 2: UV
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, true, true, vk::CompareOp::eGreater, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{
+	    .depthTestEnable = true, .depthWriteEnable = true, .depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
 	pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                 pipeline_cache,
@@ -253,7 +262,7 @@ void HPPPushDescriptors::create_uniform_buffers()
 
 void HPPPushDescriptors::create_pipeline_layout()
 {
-	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, descriptor_set_layout);
+	vk::PipelineLayoutCreateInfo pipeline_layout_create_info{.setLayoutCount = 1, .pSetLayouts = &descriptor_set_layout};
 	pipeline_layout = get_device().get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 

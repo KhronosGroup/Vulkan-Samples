@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024 Holochip Corporation
+/* Copyright (c) 2023-2025 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,7 +33,6 @@ MeshShading::MeshShading() :
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 
 MeshShading::~MeshShading()
@@ -46,11 +45,11 @@ MeshShading::~MeshShading()
 	}
 }
 
-void MeshShading::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MeshShading::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
 }
 
 /*
@@ -206,8 +205,8 @@ void MeshShading::prepare_pipelines()
 	// Load our SPIR-V shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("mesh_shading", "ms.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
-	shader_stages[1] = load_shader("mesh_shading", "ps.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("mesh_shading", "ms.mesh.spv", VK_SHADER_STAGE_MESH_BIT_EXT);
+	shader_stages[1] = load_shader("mesh_shading", "ps.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(

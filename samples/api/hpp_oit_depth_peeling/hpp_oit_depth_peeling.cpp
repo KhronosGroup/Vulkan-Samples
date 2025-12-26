@@ -1,5 +1,5 @@
-/* Copyright (c) 2024, Google
- * Copyright (c) 2024, NVIDIA
+/* Copyright (c) 2024-2025, Google
+ * Copyright (c) 2024-2025, NVIDIA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,7 +76,7 @@ bool HPPOITDepthPeeling::resize(const uint32_t width, const uint32_t height)
 	return HPPApiVulkanSample::resize(width, height);
 }
 
-void HPPOITDepthPeeling::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPOITDepthPeeling::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -93,11 +93,13 @@ void HPPOITDepthPeeling::build_command_buffers()
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
 	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-	                                               vk::ClearDepthStencilValue(0.0f, 0)}};
+	                                               vk::ClearDepthStencilValue{0.0f, 0}}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info({}, {}, {{0, 0}, extent}, clear_values);
-	vk::Viewport            viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
-	vk::Rect2D              scissor({0, 0}, extent);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
+	vk::Viewport            viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
+	vk::Rect2D              scissor{{0, 0}, extent};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -233,16 +235,16 @@ void HPPOITDepthPeeling::render(float delta_time)
 
 void HPPOITDepthPeeling::create_background_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("oit_depth_peeling/background.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("oit_depth_peeling/background.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
 	                                                                               {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state(false, {}, {}, {}, {}, {}, {}, vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags);
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags};
 
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, false, false, vk::CompareOp::eGreater, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{.depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
 	background.pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                            pipeline_cache,
@@ -267,34 +269,34 @@ void HPPOITDepthPeeling::create_combine_pass()
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment},
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	     {2, vk::DescriptorType::eCombinedImageSampler, kLayerMaxCount, vk::ShaderStageFlagBits::eFragment}}};
-	combinePass.descriptor_set_layout = device.createDescriptorSetLayout({{}, set_layout_bindings});
+	combinePass.descriptor_set_layout = device.createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()), .pBindings = set_layout_bindings.data()});
 
 	combinePass.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, combinePass.descriptor_set_layout);
 
-	combinePass.pipeline_layout = device.createPipelineLayout({{}, combinePass.descriptor_set_layout});
+	combinePass.pipeline_layout = device.createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &combinePass.descriptor_set_layout});
 
 	create_combine_pass_pipeline();
 }
 
 void HPPOITDepthPeeling::create_combine_pass_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("oit_depth_peeling/combine.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("oit_depth_peeling/combine.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
 	                                                                               {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state(true,
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{true,
 	                                                             vk::BlendFactor::eSrcAlpha,
 	                                                             vk::BlendFactor::eOneMinusSrcColor,
 	                                                             vk::BlendOp::eAdd,
 	                                                             vk::BlendFactor::eOne,
 	                                                             vk::BlendFactor::eZero,
 	                                                             vk::BlendOp::eAdd,
-	                                                             vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags);
+	                                                             vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags};
 
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, false, false, vk::CompareOp::eGreater, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{.depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
 	combinePass.pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                             pipeline_cache,
@@ -326,7 +328,9 @@ void HPPOITDepthPeeling::create_descriptor_pool()
 	const uint32_t                        num_gather_descriptor_sets             = 2;
 	const uint32_t                        num_combine_descriptor_sets            = 1;
 	const uint32_t                        num_descriptor_sets                    = num_gather_descriptor_sets + num_combine_descriptor_sets;
-	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info({}, num_descriptor_sets, pool_sizes);
+	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info{.maxSets       = num_descriptor_sets,
+	                                                                  .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
+	                                                                  .pPoolSizes    = pool_sizes.data()};
 
 	descriptor_pool = get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
@@ -337,7 +341,7 @@ void HPPOITDepthPeeling::create_gather_pass()
 	create_gather_pass_render_pass();
 	create_gather_pass_depth_descriptor_sets();
 	create_gather_pass_framebuffers(extent.width, extent.height);
-	gatherPass.pipeline_layout = get_device().get_handle().createPipelineLayout({{}, gatherPass.descriptor_set_layout});
+	gatherPass.pipeline_layout = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &gatherPass.descriptor_set_layout});
 	create_gather_pass_pipelines();
 }
 
@@ -355,13 +359,14 @@ void HPPOITDepthPeeling::create_gather_pass_descriptor_set_layout()
 	std::array<vk::DescriptorSetLayoutBinding, 2> set_layout_bindings = {
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment},
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-	gatherPass.descriptor_set_layout = get_device().get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
+	gatherPass.descriptor_set_layout = get_device().get_handle().createDescriptorSetLayout(
+	    {.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()), .pBindings = set_layout_bindings.data()});
 }
 
 void HPPOITDepthPeeling::create_gather_pass_framebuffers(const uint32_t width, const uint32_t height)
 {
 	vk::Device                device = get_device().get_handle();
-	vk::FramebufferCreateInfo framebuffer_create_info({}, {}, {}, width, height, 1);
+	vk::FramebufferCreateInfo framebuffer_create_info{.width = width, .height = height, .layers = 1};
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)
 	{
 		if (layers[i].gather_framebuffer)
@@ -379,17 +384,21 @@ void HPPOITDepthPeeling::create_gather_pass_pipelines()
 {
 	vk::Device device = get_device().get_handle();
 
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/gather.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("oit_depth_peeling/gather_first.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("oit_depth_peeling/gather.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("oit_depth_peeling/gather_first.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
 	                                                                               {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
-	vk::PipelineVertexInputStateCreateInfo             vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo             vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                                      .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                                      .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                                      .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state(false, {}, {}, {}, {}, {}, {}, vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags);
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags};
 
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, true, true, vk::CompareOp::eGreater, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{
+	    .depthTestEnable = true, .depthWriteEnable = true, .depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
 	gatherPass.first_pipeline = vkb::common::create_graphics_pipeline(device,
 	                                                                  pipeline_cache,
@@ -405,7 +414,7 @@ void HPPOITDepthPeeling::create_gather_pass_pipelines()
 	                                                                  gatherPass.pipeline_layout,
 	                                                                  gatherPass.render_pass);
 
-	shader_stages[1] = load_shader("oit_depth_peeling/gather.frag", vk::ShaderStageFlagBits::eFragment);
+	shader_stages[1] = load_shader("oit_depth_peeling/gather.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 	gatherPass.pipeline = vkb::common::create_graphics_pipeline(device,
 	                                                            pipeline_cache,
@@ -443,12 +452,19 @@ void HPPOITDepthPeeling::create_gather_pass_render_pass()
 	                                                                      vk::ImageLayout::eUndefined,
 	                                                                      vk::ImageLayout::eDepthStencilAttachmentOptimal}}};
 
-	vk::AttachmentReference color_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
-	vk::AttachmentReference depth_attachment_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	vk::AttachmentReference color_attachment_reference{0, vk::ImageLayout::eColorAttachmentOptimal};
+	vk::AttachmentReference depth_attachment_reference{1, vk::ImageLayout::eDepthStencilAttachmentOptimal};
 
-	vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_attachment_reference, {}, &depth_attachment_reference);
+	vk::SubpassDescription subpass{.pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
+	                               .colorAttachmentCount    = 1,
+	                               .pColorAttachments       = &color_attachment_reference,
+	                               .pDepthStencilAttachment = &depth_attachment_reference};
 
-	vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass);
+	vk::RenderPassCreateInfo render_pass_create_info{.attachmentCount = static_cast<uint32_t>(attachment_descriptions.size()),
+	                                                 .pAttachments    = attachment_descriptions.data(),
+	                                                 .subpassCount    = 1,
+	                                                 .pSubpasses      = &subpass};
+
 	gatherPass.render_pass = get_device().get_handle().createRenderPass(render_pass_create_info);
 }
 
@@ -508,21 +524,30 @@ void HPPOITDepthPeeling::update_descriptors()
 {
 	vk::Device device = get_device().get_handle();
 
-	vk::DescriptorBufferInfo scene_constants_descriptor(scene_constants->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo scene_constants_descriptor{scene_constants->get_handle(), 0, vk::WholeSize};
 
 	for (uint32_t i = 0; i < kDepthCount; ++i)
 	{
-		vk::DescriptorImageInfo depth_texture_descriptor(
-		    point_sampler, depths[(i + 1) % kDepthCount].image_view->get_handle(), vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+		vk::DescriptorImageInfo depth_texture_descriptor{point_sampler,
+		                                                 depths[(i + 1) % kDepthCount].image_view->get_handle(),
+		                                                 vk::ImageLayout::eDepthStencilReadOnlyOptimal};
 
-		std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-		    {{depths[i].gather_descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, scene_constants_descriptor},
-		     {depths[i].gather_descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, depth_texture_descriptor}}};
+		std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = depths[i].gather_descriptor_set,
+		                                                                 .dstBinding      = 0,
+		                                                                 .descriptorCount = 1,
+		                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+		                                                                 .pBufferInfo     = &scene_constants_descriptor},
+		                                                                {.dstSet          = depths[i].gather_descriptor_set,
+		                                                                 .dstBinding      = 1,
+		                                                                 .descriptorCount = 1,
+		                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+		                                                                 .pImageInfo      = &depth_texture_descriptor}}};
 		device.updateDescriptorSets(write_descriptor_sets, {});
 	}
 
-	vk::DescriptorImageInfo background_texture_descriptor(
-	    background.texture.sampler, background.texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal);
+	vk::DescriptorImageInfo background_texture_descriptor{background.texture.sampler,
+	                                                      background.texture.image->get_vk_image_view().get_handle(),
+	                                                      vk::ImageLayout::eShaderReadOnlyOptimal};
 
 	std::array<vk::DescriptorImageInfo, kLayerMaxCount> layer_texture_descriptor;
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)
@@ -532,10 +557,21 @@ void HPPOITDepthPeeling::update_descriptors()
 		layer_texture_descriptor[i].imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 	}
 
-	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
-	    {{combinePass.descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, scene_constants_descriptor},
-	     {combinePass.descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, background_texture_descriptor},
-	     {combinePass.descriptor_set, 2, {}, vk::DescriptorType::eCombinedImageSampler, layer_texture_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {{{.dstSet          = combinePass.descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &scene_constants_descriptor},
+	                                                                {.dstSet          = combinePass.descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &background_texture_descriptor},
+	                                                                {.dstSet          = combinePass.descriptor_set,
+	                                                                 .dstBinding      = 2,
+	                                                                 .descriptorCount = static_cast<uint32_t>(layer_texture_descriptor.size()),
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = layer_texture_descriptor.data()}}};
 
 	device.updateDescriptorSets(write_descriptor_sets, {});
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,12 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 /// Types of shader resources
 enum class ShaderResourceType
@@ -108,27 +113,7 @@ class ShaderVariant
   public:
 	ShaderVariant() = default;
 
-	ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes);
-
 	size_t get_id() const;
-
-	/**
-	 * @brief Add definitions to shader variant
-	 * @param definitions Vector of definitions to add to the variant
-	 */
-	void add_definitions(const std::vector<std::string> &definitions);
-
-	/**
-	 * @brief Adds a define macro to the shader
-	 * @param def String which should go to the right of a define directive
-	 */
-	void add_define(const std::string &def);
-
-	/**
-	 * @brief Adds an undef macro to the shader
-	 * @param undef String which should go to the right of an undef directive
-	 */
-	void add_undefine(const std::string &undef);
 
 	/**
 	 * @brief Specifies the size of a named runtime array for automatic reflection. If already specified, overrides the size.
@@ -140,10 +125,6 @@ class ShaderVariant
 
 	void set_runtime_array_sizes(const std::unordered_map<std::string, size_t> &sizes);
 
-	const std::string &get_preamble() const;
-
-	const std::vector<std::string> &get_processes() const;
-
 	const std::unordered_map<std::string, size_t> &get_runtime_array_sizes() const;
 
 	void clear();
@@ -151,13 +132,7 @@ class ShaderVariant
   private:
 	size_t id;
 
-	std::string preamble;
-
-	std::vector<std::string> processes;
-
 	std::unordered_map<std::string, size_t> runtime_array_sizes;
-
-	void update_id();
 };
 
 class ShaderSource
@@ -195,11 +170,11 @@ class ShaderSource
 class ShaderModule
 {
   public:
-	ShaderModule(Device &              device,
+	ShaderModule(vkb::core::DeviceC   &device,
 	             VkShaderStageFlagBits stage,
-	             const ShaderSource &  glsl_source,
-	             const std::string &   entry_point,
-	             const ShaderVariant & shader_variant);
+	             const ShaderSource   &shader_source,
+	             const std::string    &entry_point,
+	             const ShaderVariant  &shader_variant);
 
 	ShaderModule(const ShaderModule &) = delete;
 
@@ -216,8 +191,6 @@ class ShaderModule
 	const std::string &get_entry_point() const;
 
 	const std::vector<ShaderResource> &get_resources() const;
-
-	const std::string &get_info_log() const;
 
 	const std::vector<uint32_t> &get_binary() const;
 
@@ -239,7 +212,7 @@ class ShaderModule
 	void set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode);
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	/// Shader unique id
 	size_t id;
@@ -257,7 +230,5 @@ class ShaderModule
 	std::vector<uint32_t> spirv;
 
 	std::vector<ShaderResource> resources;
-
-	std::string info_log;
 };
 }        // namespace vkb

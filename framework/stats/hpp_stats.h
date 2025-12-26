@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,12 +17,17 @@
 
 #pragma once
 
-#include <stats/stats.h>
-
-#include <rendering/hpp_render_context.h>
+#include "stats/stats.h"
 
 namespace vkb
 {
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+class RenderContext;
+using RenderContextCpp = RenderContext<vkb::BindingType::Cpp>;
+}        // namespace rendering
+
 namespace stats
 {
 /**
@@ -41,18 +46,18 @@ class HPPStats : private vkb::Stats
 	using vkb::Stats::resize;
 	using vkb::Stats::update;
 
-	explicit HPPStats(vkb::rendering::HPPRenderContext &render_context, size_t buffer_size = 16) :
-	    vkb::Stats(reinterpret_cast<vkb::RenderContext &>(render_context), buffer_size)
+	explicit HPPStats(vkb::rendering::RenderContextCpp &render_context, size_t buffer_size = 16) :
+	    vkb::Stats(reinterpret_cast<vkb::rendering::RenderContextC &>(render_context), buffer_size)
 	{}
 
-	void begin_sampling(vkb::core::HPPCommandBuffer &cb)
+	void begin_sampling(vkb::core::CommandBufferCpp &cb)
 	{
-		vkb::Stats::begin_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
+		vkb::Stats::begin_sampling(reinterpret_cast<vkb::core::CommandBufferC &>(cb));
 	}
 
-	void end_sampling(vkb::core::HPPCommandBuffer &cb)
+	void end_sampling(vkb::core::CommandBufferCpp &cb)
 	{
-		vkb::Stats::end_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
+		vkb::Stats::end_sampling(reinterpret_cast<vkb::core::CommandBufferC &>(cb));
 	}
 };
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,7 +49,7 @@ TextureLoading::~TextureLoading()
 }
 
 // Enable physical device features required for this example
-void TextureLoading::request_gpu_features(vkb::PhysicalDevice &gpu)
+void TextureLoading::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -139,7 +139,8 @@ void TextureLoading::load_texture()
 		vkGetBufferMemoryRequirements(get_device().get_handle(), staging_buffer, &memory_requirements);
 		memory_allocate_info.allocationSize = memory_requirements.size;
 		// Get memory type index for a host visible buffer
-		memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		memory_allocate_info.memoryTypeIndex =
+		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &staging_memory));
 		VK_CHECK(vkBindBufferMemory(get_device().get_handle(), staging_buffer, staging_memory, 0));
 
@@ -185,7 +186,7 @@ void TextureLoading::load_texture()
 
 		vkGetImageMemoryRequirements(get_device().get_handle(), texture.image, &memory_requirements);
 		memory_allocate_info.allocationSize  = memory_requirements.size;
-		memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &texture.device_memory));
 		VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
 
@@ -288,7 +289,8 @@ void TextureLoading::load_texture()
 		// Set memory allocation size to required memory size
 		memory_allocate_info.allocationSize = memory_requirements.size;
 		// Get memory type that can be mapped to host memory
-		memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		memory_allocate_info.memoryTypeIndex =
+		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &mappable_memory));
 		VK_CHECK(vkBindImageMemory(get_device().get_handle(), mappable_image, mappable_memory, 0));
 
@@ -647,8 +649,8 @@ void TextureLoading::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
-	shader_stages[0] = load_shader("texture_loading", "texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("texture_loading", "texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("texture_loading", "texture.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("texture_loading", "texture.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {

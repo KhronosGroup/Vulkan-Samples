@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,8 +34,11 @@ SpecializationConstants::SpecializationConstants()
 	config.insert<vkb::IntSetting>(1, specialization_constants_enabled, 1);
 }
 
-SpecializationConstants::ForwardSubpassCustomLights::ForwardSubpassCustomLights(vkb::RenderContext &render_context,
-                                                                                vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene_, vkb::sg::Camera &camera) :
+SpecializationConstants::ForwardSubpassCustomLights::ForwardSubpassCustomLights(vkb::rendering::RenderContextC &render_context,
+                                                                                vkb::ShaderSource             &&vertex_shader,
+                                                                                vkb::ShaderSource             &&fragment_shader,
+                                                                                vkb::sg::Scene                 &scene_,
+                                                                                vkb::sg::Camera                &camera) :
     vkb::ForwardSubpass{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
 {
 }
@@ -69,19 +72,14 @@ void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
-			auto &variant = sub_mesh->get_mut_shader_variant();
-
-			// Same as Geometry except adds lighting definitions to sub mesh variants.
-			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(LIGHT_COUNT)});
-			variant.add_definitions(vkb::rendering::light_type_definitions);
-
+			auto &variant     = sub_mesh->get_mut_shader_variant();
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
 			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
 		}
 	}
 }
 
-void SpecializationConstants::render(vkb::CommandBuffer &command_buffer)
+void SpecializationConstants::render(vkb::core::CommandBufferC &command_buffer)
 {
 	// POI
 	//
@@ -105,8 +103,8 @@ void SpecializationConstants::render(vkb::CommandBuffer &command_buffer)
 std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specialization_renderpass()
 {
 	// Scene subpass
-	vkb::ShaderSource vert_shader{"base.vert"};
-	vkb::ShaderSource frag_shader{"specialization_constants/specialization_constants.frag"};
+	vkb::ShaderSource vert_shader{"base.vert.spv"};
+	vkb::ShaderSource frag_shader{"specialization_constants/specialization_constants.frag.spv"};
 	auto              scene_subpass =
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
@@ -122,8 +120,8 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specializat
 std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_renderpass()
 {
 	// Scene subpass
-	vkb::ShaderSource vert_shader{"base.vert"};
-	vkb::ShaderSource frag_shader{"specialization_constants/UBOs.frag"};
+	vkb::ShaderSource vert_shader{"base.vert.spv"};
+	vkb::ShaderSource frag_shader{"specialization_constants/UBOs.frag.spv"};
 	auto              scene_subpass =
 	    std::make_unique<ForwardSubpassCustomLights>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
@@ -136,7 +134,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_re
 	return standard_pipeline;
 }
 
-void SpecializationConstants::ForwardSubpassCustomLights::draw(vkb::CommandBuffer &command_buffer)
+void SpecializationConstants::ForwardSubpassCustomLights::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	// Override forward light subpass draw function to provide a custom number of lights
 	auto lights_buffer = allocate_custom_lights<CustomForwardLights>(command_buffer, scene.get_components<vkb::sg::Light>(), LIGHT_COUNT);

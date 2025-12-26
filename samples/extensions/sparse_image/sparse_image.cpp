@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,7 +72,7 @@ void SparseImage::create_sparse_bind_queue()
 
 	if (sparse_queue_family_index == 0xFF)
 	{
-		sparse_queue_family_index = get_device().get_queue_family_index(VK_QUEUE_SPARSE_BINDING_BIT);
+		sparse_queue_family_index = vkb::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_SPARSE_BINDING_BIT);
 	}
 	vkGetDeviceQueue(get_device().get_handle(), sparse_queue_family_index, 0U, &sparse_queue);
 }
@@ -148,8 +148,8 @@ void SparseImage::prepare_pipelines()
 
 	std::array<VkPipelineShaderStageCreateInfo, 2U> shader_stages{};
 
-	shader_stages[0] = load_shader("sparse_image", "sparse.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("sparse_image", "sparse.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("sparse_image", "sparse.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("sparse_image", "sparse.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(sample_pipeline_layout, render_pass);
 	pipeline_create_info.stageCount                   = vkb::to_u32(shader_stages.size());
@@ -1369,7 +1369,7 @@ void SparseImage::create_texture_sampler()
 /**
  * @brief Enable required GPU features.
  */
-void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
+void SparseImage::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().sparseBinding && gpu.get_features().sparseResidencyImage2D && gpu.get_features().shaderResourceResidency)
 	{
@@ -1507,9 +1507,10 @@ void SparseImage::create_sparse_texture_image()
 	reset_mip_table();
 
 	// Memory allocation required data
-	virtual_texture.memory_allocations.device               = get_device().get_handle();
-	virtual_texture.memory_allocations.page_size            = virtual_texture.page_size;
-	virtual_texture.memory_allocations.memory_type_index    = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	virtual_texture.memory_allocations.device    = get_device().get_handle();
+	virtual_texture.memory_allocations.page_size = virtual_texture.page_size;
+	virtual_texture.memory_allocations.memory_type_index =
+	    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	virtual_texture.memory_allocations.pages_per_allocation = PAGES_PER_ALLOC;
 
 	// Setting the constant data for memory page binding via vkQueueBindSparse()

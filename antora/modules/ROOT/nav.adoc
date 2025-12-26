@@ -1,6 +1,7 @@
 ////
-- Copyright (c) 2023-2024, Holochip Inc
-- Copyright (c) 2023-2024, Sascha Willems
+- Copyright (c) 2023-2025, Holochip Inc
+- Copyright (c) 2023-2025, Sascha Willems
+- Copyright (c) 2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -31,8 +32,8 @@
 *** xref:samples/api/hpp_hdr/README.adoc[HDR (Vulkan-Hpp)]
 ** xref:samples/api/hello_triangle/README.adoc[Hello Triangle]
 *** xref:samples/api/hpp_hello_triangle/README.adoc[Hello Triangle (Vulkan-Hpp)]
-** xref:samples/api/hlsl_shaders/README.adoc[HLSL Shaders]
-*** xref:samples/api/hpp_hlsl_shaders/README.adoc[HLSL Shaders (Vulkan-Hpp)]
+** xref:samples/api/hello_triangle_1_3/README.adoc[Hello Triangle 1.3]
+*** xref:samples/api/hpp_hello_triangle_1_3/README.adoc[Hello Triangle 1.3(Vulkan-Hpp)]
 ** xref:samples/api/instancing/README.adoc[Instancing]
 *** xref:samples/api/hpp_instancing/README.adoc[Instancing (Vulkan-Hpp)]
 ** xref:samples/api/separate_image_sampler/README.adoc[Separate image sampler]
@@ -62,6 +63,7 @@
 ** xref:samples/extensions/dynamic_rendering/README.adoc[Dynamic rendering]
 ** xref:samples/extensions/dynamic_rendering_local_read/README.adoc[Dynamic rendering local read]
 ** xref:samples/extensions/extended_dynamic_state2/README.adoc[Extended dynamic state2]
+** xref:samples/extensions/fragment_density_map/README.adoc[Fragment density map]
 ** xref:samples/extensions/fragment_shader_barycentric/README.adoc[Fragment shader barycentric]
 ** xref:samples/extensions/fragment_shading_rate/README.adoc[Fragment shading rate]
 ** xref:samples/extensions/fragment_shading_rate_dynamic/README.adoc[Fragment shading rate dynamic]
@@ -89,8 +91,11 @@
 ** xref:samples/extensions/shader_debugprintf/README.adoc[Shader Debug Printf]
 ** xref:samples/extensions/sparse_image/README.adoc[Sparse Image]
 ** xref:samples/extensions/synchronization_2/README.adoc[Synchronization 2]
+** xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph]
+*** xref:samples/extensions/tensor_and_data_graph/simple_tensor_and_data_graph/README.adoc[Simple Tensor and Data Graph]
 ** xref:samples/extensions/timeline_semaphore/README.adoc[Timeline semaphore]
 ** xref:samples/extensions/vertex_dynamic_state/README.adoc[Vertex dynamic state]
+** xref:samples/extensions/dynamic_multisample_rasterization/README.adoc[Dynamic multisample rasterization]
 * xref:samples/performance/README.adoc[Performance samples]
 ** xref:samples/performance/16bit_arithmetic/README.adoc[16bit arithmetic]
 ** xref:samples/performance/16bit_storage_input_output/README.adoc[16bit storage input output]
@@ -126,3 +131,4 @@
 ** xref:docs/build.adoc[Build guide]
 ** xref:docs/memory_limits.adoc[Memory limits]
 ** xref:docs/misc.adoc[Miscellaneous]
+* link:https://github.com/KhronosGroup/Vulkan-Samples[GitHub Repository, window=_blank]

@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, Holochip
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, Holochip
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,7 @@
  */
 
 #include "hpp_texture_compression_comparison.h"
-#include "scene_graph/components/hpp_image.h"
-#include "scene_graph/components/hpp_mesh.h"
-#include "scene_graph/components/material.h"
+#include "core/hpp_queue.h"
 
 namespace
 {
@@ -53,7 +51,7 @@ std::string get_sponza_texture_filename(const std::string &short_name)
 class HPPCompressedImage : public vkb::scene_graph::components::HPPImage
 {
   public:
-	HPPCompressedImage(vkb::core::HPPDevice                                  &device,
+	HPPCompressedImage(vkb::core::DeviceCpp                                  &device,
 	                   const std::string                                     &name,
 	                   std::vector<vkb::scene_graph::components::HPPMipmap> &&mipmaps,
 	                   vk::Format                                             format) :
@@ -84,10 +82,7 @@ HPPTextureCompressionComparison::HPPTextureCompressionComparison()
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc7SrgbBlock, KTX_TTF_BC7_RGBA, "KTX_TTF_BC7_RGBA", "BC7"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc3SrgbBlock, KTX_TTF_BC3_RGBA, "KTX_TTF_BC3_RGBA", "BC3"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionASTC_LDR, "", vk::Format::eAstc4x4SrgbBlock, KTX_TTF_ASTC_4x4_RGBA, "KTX_TTF_ASTC_4x4_RGBA", "ASTC 4x4"},
-	    {&vk::PhysicalDeviceFeatures::textureCompressionETC2, "", vk::Format::eEtc2R8G8B8A8SrgbBlock, KTX_TTF_ETC2_RGBA, "KTX_TTF_ETC2_RGBA", "ETC2"},
-	    {nullptr, VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, vk::Format::ePvrtc14BppSrgbBlockIMG, KTX_TTF_PVRTC1_4_RGBA, "KTX_TTF_PVRTC1_4_RGBA", "PVRTC1 4"}};
-
-	add_device_extension(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME, true);
+	    {&vk::PhysicalDeviceFeatures::textureCompressionETC2, "", vk::Format::eEtc2R8G8B8A8SrgbBlock, KTX_TTF_ETC2_RGBA, "KTX_TTF_ETC2_RGBA", "ETC2"}};
 }
 
 void HPPTextureCompressionComparison::draw_gui()
@@ -182,7 +177,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 
 	const auto vk_format = static_cast<vk::Format>(ktx_texture->vkFormat);
 
-	vk::Extent3D extent(ktx_texture->baseWidth, ktx_texture->baseHeight, 1);
+	vk::Extent3D extent{ktx_texture->baseWidth, ktx_texture->baseHeight, 1};
 
 	std::vector<vk::BufferImageCopy>                        buffer_copies;
 	std::unique_ptr<vkb::scene_graph::components::HPPImage> image_out;
@@ -190,7 +185,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 		std::vector<vkb::scene_graph::components::HPPMipmap> mip_maps;
 		for (uint32_t mip_level = 0; mip_level < ktx_texture->numLevels; ++mip_level)
 		{
-			vk::Extent3D mip_extent(extent.width >> mip_level, extent.height >> mip_level, 1);
+			vk::Extent3D mip_extent{extent.width >> mip_level, extent.height >> mip_level, 1};
 			if (!mip_extent.width || !mip_extent.height)
 			{
 				break;
@@ -199,7 +194,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 			ktx_size_t offset{0};
 			KTX_CHECK(ktxTexture_GetImageOffset((ktxTexture *) ktx_texture, mip_level, 0, 0, &offset));
 			vk::BufferImageCopy buffer_image_copy = {};
-			buffer_image_copy.imageSubresource    = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, mip_level, 0, 1);
+			buffer_image_copy.imageSubresource    = vk::ImageSubresourceLayers{vk::ImageAspectFlagBits::eColor, mip_level, 0, 1};
 			buffer_image_copy.imageExtent         = mip_extent;
 			buffer_image_copy.bufferOffset        = static_cast<uint32_t>(offset);
 			buffer_copies.push_back(buffer_image_copy);
@@ -216,7 +211,7 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 	auto &vkb_image = image_out->get_vk_image();
 	auto  image     = vkb_image.get_handle();
 
-	vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, static_cast<uint32_t>(buffer_copies.size()), 0, 1);
+	vk::ImageSubresourceRange subresource_range{vk::ImageAspectFlagBits::eColor, 0, static_cast<uint32_t>(buffer_copies.size()), 0, 1};
 
 	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
@@ -234,8 +229,8 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 
 void HPPTextureCompressionComparison::create_subpass()
 {
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
+	vkb::ShaderSource vert_shader("base.vert.spv");
+	vkb::ShaderSource frag_shader("base.frag.spv");
 	auto              scene_sub_pass = std::make_unique<vkb::rendering::subpasses::HPPForwardSubpass>(
         get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
@@ -248,7 +243,7 @@ void HPPTextureCompressionComparison::create_subpass()
 bool HPPTextureCompressionComparison::is_texture_format_supported(const HPPTextureCompressionData &tcd, vk::PhysicalDeviceFeatures const &device_features)
 {
 	const bool supported_by_feature   = tcd.feature_ptr && device_features.*tcd.feature_ptr;
-	const bool supported_by_extension = tcd.extension_name.length() && get_device().is_extension_supported(tcd.extension_name);
+	const bool supported_by_extension = tcd.extension_name.length() && get_device().get_gpu().is_extension_supported(tcd.extension_name);
 	const bool supported_by_default   = tcd.always_supported;
 
 	return supported_by_default || supported_by_feature || supported_by_extension;

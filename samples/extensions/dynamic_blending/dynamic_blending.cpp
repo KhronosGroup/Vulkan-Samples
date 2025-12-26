@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica
+/* Copyright (c) 2023-2025, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -147,36 +147,20 @@ void DynamicBlending::prepare_scene()
 	                                          {1.0f, 1.0f, 1.0f, 0.5f}}};
 }
 
-void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicBlending::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// We must have this or the sample isn't useful
 	REQUEST_REQUIRED_FEATURE(gpu,
 	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
 	                         extendedDynamicState3ColorBlendEnable);
 
 	// Only request the features that we support
-	REQUEST_OPTIONAL_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3ColorWriteMask);
-	REQUEST_OPTIONAL_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3ColorBlendEnable);
-	REQUEST_OPTIONAL_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3ColorBlendAdvanced);
-	REQUEST_OPTIONAL_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3ColorBlendEquation);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorWriteMask);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendAdvanced);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEquation);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT,
-	                         advancedBlendCoherentOperations);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT, advancedBlendCoherentOperations);
 }
 
 void DynamicBlending::prepare_uniform_buffers()
@@ -347,8 +331,8 @@ void DynamicBlending::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_blending", "blending.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_blending", "blending.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_blending", "blending.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_blending", "blending.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	graphics_create.pNext               = VK_NULL_HANDLE;

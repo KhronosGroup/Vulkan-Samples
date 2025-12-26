@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -243,10 +243,10 @@ void PatchControlPoints::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages{};
-	shader_stages[0] = load_shader("patch_control_points", "tess.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("patch_control_points", "tess.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[2] = load_shader("patch_control_points", "tess.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-	shader_stages[3] = load_shader("patch_control_points", "tess.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+	shader_stages[0] = load_shader("patch_control_points", "tess.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("patch_control_points", "tess.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[2] = load_shader("patch_control_points", "tess.tesc.spv", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	shader_stages[3] = load_shader("patch_control_points", "tess.tese.spv", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 
 	/* Use the pNext to point to the rendering create struct */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -544,26 +544,17 @@ void PatchControlPoints::create_descriptor_sets()
 }
 
 /**
- * @fn void PatchControlPoints::request_gpu_features(vkb::PhysicalDevice &gpu)
+ * @fn void PatchControlPoints::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
  * @brief Enabling features related to Vulkan extensions
  */
-void PatchControlPoints::request_gpu_features(vkb::PhysicalDevice &gpu)
+void PatchControlPoints::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
-	                         extendedDynamicState2);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
-	                         extendedDynamicState2PatchControlPoints);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2PatchControlPoints);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
-	                         extendedDynamicState);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
 
 	// Tessellation shader support is required for this example
 	auto &requested_features = gpu.get_mutable_requested_features();

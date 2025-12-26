@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +16,7 @@
  */
 
 #include "render_pipeline.h"
-
+#include "core/command_buffer.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
@@ -86,7 +86,7 @@ void RenderPipeline::set_clear_value(const std::vector<VkClearValue> &cv)
 	clear_value = cv;
 }
 
-void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents)
+void RenderPipeline::draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &render_target, VkSubpassContents contents)
 {
 	assert(!subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
@@ -113,11 +113,14 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 			command_buffer.next_subpass();
 		}
 
-		if (subpass->get_debug_name().empty())
+		if (contents != VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS)
 		{
-			subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+			if (subpass->get_debug_name().empty())
+			{
+				subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+			}
+			ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
 		}
-		ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
 
 		subpass->draw(command_buffer);
 	}

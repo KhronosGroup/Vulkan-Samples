@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,100 +20,25 @@
 #include "core/util/logging.hpp"
 #include "device.h"
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
 #include "spirv_reflection.h"
 
 namespace vkb
 {
-/**
- * @brief Pre-compiles project shader files to include header code
- * @param source The shader file
- * @returns A byte array of the final shader
- */
-inline std::vector<std::string> precompile_shader(const std::string &source)
+ShaderModule::ShaderModule(vkb::core::DeviceC   &device,
+                           VkShaderStageFlagBits stage,
+                           const ShaderSource   &shader_source,
+                           const std::string    &entry_point,
+                           const ShaderVariant  &shader_variant) :
+    device{device}, stage{stage}, entry_point{entry_point}
 {
-	std::vector<std::string> final_file;
+	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", shader_source.get_filename(), shader_variant.get_id(), entry_point);
 
-	auto lines = split(source, '\n');
+	// Shaders in binary SPIR-V format can be loaded directly
+	spirv = vkb::fs::read_shader_binary_u32(shader_source.get_filename());
 
-	for (auto &line : lines)
-	{
-		if (line.find("#include \"") == 0)
-		{
-			// Include paths are relative to the base shader directory
-			std::string include_path = line.substr(10);
-			size_t      last_quote   = include_path.find("\"");
-			if (!include_path.empty() && last_quote != std::string::npos)
-			{
-				include_path = include_path.substr(0, last_quote);
-			}
-
-			auto include_file = precompile_shader(fs::read_shader(include_path));
-			for (auto &include_file_line : include_file)
-			{
-				final_file.push_back(include_file_line);
-			}
-		}
-		else
-		{
-			final_file.push_back(line);
-		}
-	}
-
-	return final_file;
-}
-
-inline std::vector<uint8_t> convert_to_bytes(std::vector<std::string> &lines)
-{
-	std::vector<uint8_t> bytes;
-
-	for (auto &line : lines)
-	{
-		line += "\n";
-		std::vector<uint8_t> line_bytes(line.begin(), line.end());
-		bytes.insert(bytes.end(), line_bytes.begin(), line_bytes.end());
-	}
-
-	return bytes;
-}
-
-ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
-    device{device},
-    stage{stage},
-    entry_point{entry_point}
-{
-	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]",
-	                         glsl_source.get_filename(), shader_variant.get_id(), entry_point);
-
-	// Compiling from GLSL source requires the entry point
-	if (entry_point.empty())
-	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
-
-	auto &source = glsl_source.get_source();
-
-	// Check if application is passing in GLSL source code to compile to SPIR-V
-	if (source.empty())
-	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
-
-	// Precompile source into the final spirv bytecode
-	auto glsl_final_source = precompile_shader(source);
-
-	// Compile the GLSL source
-	GLSLCompiler glsl_compiler;
-
-	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
-	{
-		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
-		LOGE("{}", info_log);
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
+	// Reflection is used to dynamically create descriptor bindings
 
 	SPIRVReflection spirv_reflection;
-
 	// Reflect all shader resources
 	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{
@@ -133,8 +58,7 @@ ShaderModule::ShaderModule(ShaderModule &&other) :
     entry_point{other.entry_point},
     debug_name{other.debug_name},
     spirv{other.spirv},
-    resources{other.resources},
-    info_log{other.info_log}
+    resources{other.resources}
 {
 	other.stage = {};
 }
@@ -159,11 +83,6 @@ const std::vector<ShaderResource> &ShaderModule::get_resources() const
 	return resources;
 }
 
-const std::string &ShaderModule::get_info_log() const
-{
-	return info_log;
-}
-
 const std::vector<uint32_t> &ShaderModule::get_binary() const
 {
 	return spirv;
@@ -171,7 +90,7 @@ const std::vector<uint32_t> &ShaderModule::get_binary() const
 
 void ShaderModule::set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode)
 {
-	auto it = std::find_if(resources.begin(), resources.end(), [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
+	auto it = std::ranges::find_if(resources, [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
 
 	if (it != resources.end())
 	{
@@ -197,51 +116,9 @@ void ShaderModule::set_resource_mode(const std::string &resource_name, const Sha
 	}
 }
 
-ShaderVariant::ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes) :
-    preamble{std::move(preamble)},
-    processes{std::move(processes)}
-{
-	update_id();
-}
-
 size_t ShaderVariant::get_id() const
 {
 	return id;
-}
-
-void ShaderVariant::add_definitions(const std::vector<std::string> &definitions)
-{
-	for (auto &definition : definitions)
-	{
-		add_define(definition);
-	}
-}
-
-void ShaderVariant::add_define(const std::string &def)
-{
-	processes.push_back("D" + def);
-
-	std::string tmp_def = def;
-
-	// The "=" needs to turn into a space
-	size_t pos_equal = tmp_def.find_first_of("=");
-	if (pos_equal != std::string::npos)
-	{
-		tmp_def[pos_equal] = ' ';
-	}
-
-	preamble.append("#define " + tmp_def + "\n");
-
-	update_id();
-}
-
-void ShaderVariant::add_undefine(const std::string &undef)
-{
-	processes.push_back("U" + undef);
-
-	preamble.append("#undef " + undef + "\n");
-
-	update_id();
 }
 
 void ShaderVariant::add_runtime_array_size(const std::string &runtime_array_name, size_t size)
@@ -261,16 +138,6 @@ void ShaderVariant::set_runtime_array_sizes(const std::unordered_map<std::string
 	this->runtime_array_sizes = sizes;
 }
 
-const std::string &ShaderVariant::get_preamble() const
-{
-	return preamble;
-}
-
-const std::vector<std::string> &ShaderVariant::get_processes() const
-{
-	return processes;
-}
-
 const std::unordered_map<std::string, size_t> &ShaderVariant::get_runtime_array_sizes() const
 {
 	return runtime_array_sizes;
@@ -278,21 +145,13 @@ const std::unordered_map<std::string, size_t> &ShaderVariant::get_runtime_array_
 
 void ShaderVariant::clear()
 {
-	preamble.clear();
-	processes.clear();
 	runtime_array_sizes.clear();
-	update_id();
-}
-
-void ShaderVariant::update_id()
-{
-	std::hash<std::string> hasher{};
-	id = hasher(preamble);
+	id = 0;
 }
 
 ShaderSource::ShaderSource(const std::string &filename) :
     filename{filename},
-    source{fs::read_shader(filename)}
+    source{fs::read_text_file(filename)}
 {
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});

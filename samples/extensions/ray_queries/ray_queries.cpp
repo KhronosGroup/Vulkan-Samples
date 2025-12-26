@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, Holochip Corporation
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Holochip Corporation
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -96,20 +96,11 @@ RayQueries::~RayQueries()
 	}
 }
 
-void RayQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
+void RayQueries::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-	                         bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceAccelerationStructureFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
-	                         accelerationStructure);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceRayQueryFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR,
-	                         rayQuery);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayQueryFeaturesKHR, rayQuery);
 }
 
 void RayQueries::render(float delta_time)
@@ -184,6 +175,12 @@ bool RayQueries::prepare(const vkb::ApplicationOptions &options)
 	device_features.pNext = &acceleration_structure_features;
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
+	acceleration_structure_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+	VkPhysicalDeviceProperties2 device_properties{};
+	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	device_properties.pNext = &acceleration_structure_properties;
+	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
+
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
 	camera.set_rotation(glm::vec3(0.0f, 90.0f, 0.0f));
@@ -234,6 +231,7 @@ void RayQueries::create_top_level_acceleration_structure()
 	// Top Level AS with single instance
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
 	top_level_acceleration_structure->add_instance_geometry(instances_buffer, 1);
+	top_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	top_level_acceleration_structure->build(queue);
 }
 
@@ -279,10 +277,11 @@ void RayQueries::create_bottom_level_acceleration_structure()
 		                                                           get_buffer_device_address(vertex_buffer->get_handle()),
 		                                                           get_buffer_device_address(index_buffer->get_handle()));
 	}
+	bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
-void RayQueries::load_node(vkb::sg::Node &node)
+void RayQueries::load_node(vkb::scene_graph::NodeC &node)
 {
 	if (node.has_component<vkb::sg::Mesh>())
 	{
@@ -459,8 +458,8 @@ void RayQueries::prepare_pipelines()
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("ray_queries", "ray_shadow.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("ray_queries", "ray_shadow.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("ray_queries", "ray_shadow.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("ray_queries", "ray_shadow.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();

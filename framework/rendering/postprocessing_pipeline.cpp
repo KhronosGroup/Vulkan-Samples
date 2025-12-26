@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,12 +21,12 @@
 
 namespace vkb
 {
-PostProcessingPipeline::PostProcessingPipeline(RenderContext &render_context, ShaderSource triangle_vs) :
+PostProcessingPipeline::PostProcessingPipeline(vkb::rendering::RenderContextC &render_context, ShaderSource triangle_vs) :
     render_context{&render_context},
     triangle_vs{std::move(triangle_vs)}
 {}
 
-void PostProcessingPipeline::draw(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+void PostProcessingPipeline::draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)
 {
 	for (current_pass_index = 0; current_pass_index < passes.size(); current_pass_index++)
 	{

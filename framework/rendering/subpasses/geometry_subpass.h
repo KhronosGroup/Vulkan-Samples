@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,10 +25,16 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
+}        // namespace core
+
 namespace sg
 {
 class Scene;
-class Node;
 class Mesh;
 class SubMesh;
 class Camera;
@@ -72,7 +78,8 @@ class GeometrySubpass : public vkb::rendering::SubpassC
 	 * @param scene Scene to render on this subpass
 	 * @param camera Camera used to look at the scene
 	 */
-	GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
+	GeometrySubpass(
+	    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
 
 	virtual ~GeometrySubpass() = default;
 
@@ -81,7 +88,7 @@ class GeometrySubpass : public vkb::rendering::SubpassC
 	/**
 	 * @brief Record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) override;
+	virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 
 	/**
 	 * @brief Thread index to use for allocating resources
@@ -89,24 +96,25 @@ class GeometrySubpass : public vkb::rendering::SubpassC
 	void set_thread_index(uint32_t index);
 
   protected:
-	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index);
+	virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index);
 
-	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
+	void draw_submesh(vkb::core::CommandBufferC &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-	virtual void prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material);
+	virtual void prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer, VkFrontFace front_face, bool double_sided_material);
 
-	virtual PipelineLayout &prepare_pipeline_layout(CommandBuffer &command_buffer, const std::vector<ShaderModule *> &shader_modules);
+	virtual PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC         &command_buffer,
+	                                                const std::vector<ShaderModule *> &shader_modules);
 
-	virtual void prepare_push_constants(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+	virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, sg::SubMesh &sub_mesh);
 
-	virtual void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+	virtual void draw_submesh_command(vkb::core::CommandBufferC &command_buffer, sg::SubMesh &sub_mesh);
 
 	/**
 	 * @brief Sorts objects based on distance from camera and classifies them
 	 *        into opaque and transparent in the arrays provided
 	 */
-	void get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes,
-	                      std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes);
+	void get_sorted_nodes(std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &opaque_nodes,
+	                      std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &transparent_nodes);
 
 	sg::Camera &camera;
 

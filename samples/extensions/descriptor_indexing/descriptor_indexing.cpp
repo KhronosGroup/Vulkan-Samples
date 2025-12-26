@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,8 +32,8 @@ DescriptorIndexing::DescriptorIndexing()
 	// See: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2350.
 	add_device_extension(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
 
-#if defined(PLATFORM__MACOS) && TARGET_OS_OSX
-	// On macOS use layer setting to configure MoltenVK for using Metal argument buffers (needed for descriptor indexing)
+#if defined(PLATFORM__MACOS)
+	// On Apple use layer setting to enable MoltenVK's Metal argument buffers - needed for descriptor indexing/scaling
 	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
 	VkLayerSettingEXT layerSetting;
@@ -47,10 +47,6 @@ DescriptorIndexing::DescriptorIndexing()
 	layerSetting.pValues                         = &useMetalArgumentBuffers;
 
 	add_layer_setting(layerSetting);
-
-	// On macOS also set environment variable as fallback in case layer settings not available at runtime with older SDKs
-	// Will not work in batch mode, but is the best we can do short of using the deprecated MoltenVK private config API
-	setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "1", 1);
 #endif
 }
 
@@ -348,12 +344,12 @@ void DescriptorIndexing::create_pipelines()
 	info.pStages    = stages;
 	info.stageCount = 2;
 
-	stages[0] = load_shader("descriptor_indexing", "nonuniform-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	stages[1] = load_shader("descriptor_indexing", "nonuniform-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	stages[0] = load_shader("descriptor_indexing", "nonuniform-quads.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	stages[1] = load_shader("descriptor_indexing", "nonuniform-quads.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.non_uniform_indexing));
 
-	stages[0] = load_shader("descriptor_indexing", "update-after-bind-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	stages[1] = load_shader("descriptor_indexing", "update-after-bind-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	stages[0] = load_shader("descriptor_indexing", "update-after-bind-quads.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	stages[1] = load_shader("descriptor_indexing", "update-after-bind-quads.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.update_after_bind));
 }
 
@@ -383,7 +379,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 
 	vkGetImageMemoryRequirements(get_device().get_handle(), test_image.image, &memory_requirements);
 	memory_allocation_info.allocationSize  = memory_requirements.size;
-	memory_allocation_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &test_image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), test_image.image, test_image.memory, 0));
 
@@ -471,23 +467,24 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	staging_buffer.flush();
 	staging_buffer.unmap();
 
-	auto &cmd = get_device().request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	auto cmd = get_device().get_command_pool().request_command_buffer();
+	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	vkb::image_layout_transition(cmd.get_handle(), test_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vkb::image_layout_transition(cmd->get_handle(), test_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	VkBufferImageCopy copy_info{};
 	copy_info.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 	copy_info.imageExtent      = image_info.extent;
-	vkCmdCopyBufferToImage(cmd.get_handle(), staging_buffer.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
+	vkCmdCopyBufferToImage(cmd->get_handle(), staging_buffer.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
 
-	vkb::image_layout_transition(cmd.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vkb::image_layout_transition(cmd->get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	VK_CHECK(cmd.end());
+	cmd->end();
 
 	// Not very optimal, but it's the simplest solution.
-	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
-	get_device().get_suitable_graphics_queue().wait_idle();
+	auto const &graphicsQueue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	graphicsQueue.submit(*cmd, VK_NULL_HANDLE);
+	graphicsQueue.wait_idle();
 
 	return test_image;
 }
@@ -538,38 +535,20 @@ bool DescriptorIndexing::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DescriptorIndexing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	gpu.get_mutable_requested_features().shaderSampledImageArrayDynamicIndexing = VK_TRUE;
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         shaderSampledImageArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
 
 	// These are required to support the 4 descriptor binding flags we use in this sample.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingSampledImageUpdateAfterBind);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingPartiallyBound);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingUpdateUnusedWhilePending);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         descriptorBindingVariableDescriptorCount);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingSampledImageUpdateAfterBind);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingPartiallyBound);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingUpdateUnusedWhilePending);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
 
 	// Enables use of runtimeDescriptorArrays in SPIR-V shaders.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorIndexingFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
-	                         runtimeDescriptorArray);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
 
 	// There are lot of properties associated with descriptor_indexing, grab them here.
 	descriptor_indexing_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;

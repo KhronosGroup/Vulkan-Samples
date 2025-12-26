@@ -1,4 +1,5 @@
-# Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -50,7 +51,7 @@ target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
 if(VKB_ENABLE_PORTABILITY)
-	# When portability is enabled, must enable Vulkan beta extensions for access to VK_KHR_portability_subset
+    # When portability is enabled, must enable Vulkan beta extensions for access to VK_KHR_portability_subset
     target_compile_definitions(vulkan INTERFACE VK_ENABLE_BETA_EXTENSIONS)
 endif()
 
@@ -59,7 +60,7 @@ if(ANDROID)
 elseif(WIN32)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 elseif(APPLE)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
 elseif(UNIX)
     # Choose WSI based on VKB_WSI_SELECTION
     if (VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)
@@ -154,6 +155,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/vkformat_enum.h
     ${KTX_DIR}/lib/vkformat_str.c
     ${KTX_DIR}/lib/vkformat_typesize.c
+    ${KTX_DIR}/lib/vkformat_check_variant.c
     ${KTX_DIR}/lib/vk_funcs.c
     ${KTX_DIR}/lib/vk_funcs.h
     ${KTX_DIR}/lib/vkloader.c
@@ -228,55 +230,6 @@ target_include_directories(imgui SYSTEM PUBLIC ${IMGUI_DIR})
 
 set_target_properties(imgui PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
-# glslang
-option(ENABLE_SPVREMAPPER OFF)
-option(ENABLE_GLSLANG_BINARIES OFF)
-set(ENABLE_HLSL ON)
-option(ENABLE_OPT OFF)
-option(BUILD_TESTING OFF)
-option(BUILD_EXTERNAL OFF)
-if(IOS)
-    option(ENABLE_PCH OFF)
-endif ()
-
-add_subdirectory(glslang)
-
-if (TARGET GenericCodeGen)
-    set_target_properties(GenericCodeGen PROPERTIES FOLDER "ThirdParty")
-endif()
-if (TARGET MachineIndependent)
-    set_target_properties(MachineIndependent PROPERTIES FOLDER "ThirdParty")
-endif()
-if (TARGET HLSL)
-    set_target_properties(HLSL PROPERTIES FOLDER "ThirdParty")
-endif()
-
-
-if (NOT TARGET glslang-default-resource-limits)
-    add_library(glslang-default-resource-limits
-                glslang/StandAlone/ResourceLimits.cpp)
-
-    set_target_properties(glslang-default-resource-limits PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-
-    target_include_directories(glslang-default-resource-limits
-        SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
-endif()
-
-if(NOT MSVC)
-    target_compile_options(glslang PRIVATE
-        "-Wno-logical-op-parentheses"
-        "-Wno-unused-parameter")
-
-    target_compile_options(SPIRV PRIVATE
-        "-Wno-logical-op-parentheses"
-        "-Wno-unused-parameter")
-endif()
-
-set_target_properties(glslang PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(OGLCompiler PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(OSDependent PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-set_target_properties(SPIRV PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-
 # spirv-cross
 add_subdirectory(spirv-cross)
 
@@ -303,18 +256,33 @@ target_include_directories(stb SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb
 # Allow the user to specify the ASTC architecture explicitly if building for a platform
 # other than the host architecture (i.e. x86 on an x64 CPU)
 if (NOT (DEFINED ASTC_ARCH))
-    # On an x86_64 macbook, AVX2 is selected, but linking fails with this message,
-    # `ld: object file .../libastcdec-avx2-static.a was built for different x86_64 sub-type (8) than link command line (3)`
-    # so we fallback to native. If we're on an ARM based mac, there's no need for any SIMD extension, because they support
-    # ASTC_LDR natively, so this library won't even be used.
     if (APPLE)
-        set(ASTC_ARCH NATIVE)
+        # Always use NEON when host is arm64 or cross-compiling to iOS physical devices,
+        # otherwise look for supported vector instructions based on x86_64 host processor.
+        # Don't use AVX2 since it builds for x86_64h which does not match x86_64 project,
+        # and lastly fall back to NATIVE if no matches found.
+        if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "arm64" OR ${CMAKE_OSX_SYSROOT} STREQUAL "iphoneos")
+            set(ASTC_ARCH NEON)
+        else()
+            include( FindSSE41 )
+            include( FindSSE2 )
+            if (${SSE41_FOUND})
+                set(ASTC_ARCH SSE41)
+            elseif(${SSE2_FOUND})
+                set(ASTC_ARCH SSE2)
+            else()
+                set(ASTC_ARCH NATIVE)
+            endif()
+        endif()
     else()
         include( FindAVX2 )
+        include( FindSSE41 )
         include( FindSSE2 )
         include( FindNEON )
         if (${AVX2_FOUND})
             set(ASTC_ARCH AVX2)
+        elseif(${SSE41_FOUND})
+            set(ASTC_ARCH SSE41)
         elseif(${SSE2_FOUND})
             set(ASTC_ARCH SSE2)
         elseif(${NEON_FOUND})
@@ -327,6 +295,10 @@ endif()
 
 string(TOUPPER ${ASTC_ARCH} ASTC_ARCH)
 string(TOLOWER ${ASTC_ARCH} ASTC_ARCH_LOWER)
+# This is seemingly inconsistent, but the target library for SSE41 has a "." in its name
+if(${ASTC_ARCH_LOWER} STREQUAL "sse41")
+    set(ASTC_ARCH_LOWER "sse4.1")
+endif()
 
 set(ASTCENC_ISA_${ASTC_ARCH} ON)
 set(ASTCENC_CLI OFF)
@@ -338,21 +310,6 @@ set(ASTC_TARGET ${ASTC_RAW_TARGET} PARENT_SCOPE)
 
 # astc
 add_subdirectory(astc)
-
-# ASTC apparently tries to build for x86_64 even on Mac arm64 architectures,
-# but we can force it to build for the correct arch
-# Upstream bug: https://github.com/ARM-software/astc-encoder/issues/458
-if(IOS)
-	if(${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator")
-		# handle iOS Simulator case, which should always match CMAKE_HOST_SYSTEM_PROCESSOR
-		set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR})
-	else()
-		set(CMAKE_SYSTEM_PROCESSOR arm64)
-	endif()
-endif ()
-if (APPLE AND (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
-    set_target_properties(${ASTC_RAW_TARGET} PROPERTIES OSX_ARCHITECTURES "arm64")
-endif()
 
 # astc doesn't have separate directories for it's source code and public interface.  Additionally, it includes it's
 # own copy of STB. In order to avoid conflicts, we copy the only header we need to the build directory and alter the
@@ -393,7 +350,7 @@ if(NOT ANDROID AND NOT IOS)
         option(GLFW_INSTALL OFF)
         option(BUILD_SHARED_LIBS ON)
         if (VKB_WSI_SELECTION STREQUAL WAYLAND)
-            set(GLFW_USE_WAYLAND ON)
+            set(GLFW_BUILD_WAYLAND ON)
         endif()
 
         add_subdirectory(glfw)
@@ -414,38 +371,11 @@ set(SPDLOG_FMT_EXTERNAL ON)
 add_subdirectory(spdlog)
 set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
 
-# ctpl
-add_library(ctpl INTERFACE)
-set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
-target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
-target_include_directories(ctpl SYSTEM INTERFACE ${CTPL_DIR})
-
-# cli11
-set(CLI11_SANITIZERS OFF)
-set(CLI11_BUILD_DOCS OFF)
-set(CLI11_BUILD_TESTS OFF)
-set(CLI11_BUILD_EXAMPLES OFF)
-set(CLI11_BUILD_EXAMPLES_JSON OFF)
-set(CLI11_SINGLE_FILE_TESTS OFF)
-set(CLI11_INSTALL OFF)
-set(CLI11_FORCE_LIBCXX OFF)
-set(CLI11_CUDA_TESTS OFF)
-set(CLI11_CLANG_TIDY OFF)
-add_subdirectory(cli11)
-if (TARGET CLI11 AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-    set_property(TARGET CLI11 PROPERTY FOLDER "ThirdParty")
-endif()
-
 # OpenCL
 add_library(opencl INTERFACE)
 set(OPENCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl)
 target_sources(opencl INTERFACE ${OPENCL_INCLUDE_DIR}/CL/opencl.h)
 target_include_directories(opencl SYSTEM INTERFACE ${OPENCL_INCLUDE_DIR})
-
-# Catch2
-add_subdirectory(catch2)
-set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
-set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")
 
 # Tracy
 if (VKB_PROFILING)

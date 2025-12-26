@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,15 +17,10 @@
  */
 
 #include "batch_mode.h"
-
 #include "vulkan_sample.h"
-
-#include "platform/parser.h"
 
 namespace plugins
 {
-using BatchModeSampleIter = std::vector<apps::AppInfo *>::const_iterator;
-
 BatchMode::BatchMode() :
     BatchModeTags("Batch Mode",
                   "Run a collection of samples in sequence.",
@@ -32,57 +28,123 @@ BatchMode::BatchMode() :
                       vkb::Hook::OnUpdate,
                       vkb::Hook::OnAppError,
                   },
-                  {&batch_cmd})
+                  {{"batch", "Enable batch mode"}},
+                  {{"category", "Filter samples by categories"},
+                   {"duration", "The duration which a configuration should run for in seconds"},
+                   {"skip", "Skip a sample by id"},
+                   {"tag", "Filter samples by tags"},
+                   {"wrap-to-start", "Once all configurations have run wrap to the start"}})
 {
 }
 
-bool BatchMode::is_active(const vkb::CommandParser &parser)
+bool BatchMode::handle_command(std::deque<std::string> &arguments) const
 {
-	return parser.contains(&batch_cmd);
-}
-
-void BatchMode::init(const vkb::CommandParser &parser)
-{
-	if (parser.contains(&duration_flag))
+	assert(!arguments.empty());
+	if (arguments[0] == "batch")
 	{
-		sample_run_time_per_configuration = std::chrono::duration<float, vkb::Timer::Seconds>{parser.as<float>(&duration_flag)};
+		arguments.pop_front();
+		return true;
 	}
+	return false;
+}
 
-	if (parser.contains(&wrap_flag))
+bool BatchMode::handle_option(std::deque<std::string> &arguments)
+{
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "category")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"category\" is missing the actual category!");
+			return false;
+		}
+		std::string category = arguments[1];
+		if (std::ranges::any_of(categories, [&category](auto const &c) { return c == category; }))
+		{
+			LOGW("Option \"category\" lists category \"{}\" multiple times!", category)
+		}
+		else
+		{
+			categories.push_back(category);
+		}
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "duration")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"duration\" is missing the actual duration!");
+			return false;
+		}
+		duration = std::chrono::duration<float, vkb::Timer::Seconds>{std::stof(arguments[1])};
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "skip")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"skip\" is missing the sample_id to skip!");
+			return false;
+		}
+		std::string sample_id = arguments[1];
+		if (!skips.insert(sample_id).second)
+		{
+			LOGW("Option \"skip\" lists sample_id \"{}\" multiple times!", sample_id)
+		}
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "tag")
+	{
+		if (arguments.size() < 2)
+		{
+			LOGE("Option \"tag\" is missing the actual to tag!");
+			return false;
+		}
+		std::string tag = arguments[1];
+		if (std::ranges::any_of(tags, [&tag](auto const &t) { return t == tag; }))
+		{
+			LOGW("Option \"tag\" lists tag \"{}\" multiple times!", tag)
+		}
+		else
+		{
+			tags.push_back(tag);
+		}
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
+	}
+	else if (option == "wrap-to-start")
 	{
 		wrap_to_start = true;
-	}
 
-	std::vector<std::string> tags;
-	if (parser.contains(&tags_flag))
-	{
-		tags = parser.as<std::vector<std::string>>(&tags_flag);
+		arguments.pop_front();
+		return true;
 	}
+	return false;
+}
 
-	std::vector<std::string> categories;
-	if (parser.contains(&categories_flag))
-	{
-		categories = parser.as<std::vector<std::string>>(&categories_flag);
-	}
-
-	std::unordered_set<std::string> skips;
-	if (parser.contains(&skip_flag))
-	{
-		skips = parser.as<std::unordered_set<std::string>>(&skip_flag);
-	}
-
+void BatchMode::trigger_command()
+{
 	sample_list = apps::get_samples(categories, tags);
+
 	if (!skips.empty())
 	{
 		std::vector<apps::AppInfo *> filtered_list;
-		filtered_list.reserve(sample_list.size());
+		filtered_list.reserve(sample_list.size() - skips.size());
 
 		std::copy_if(
-		    sample_list.begin(), sample_list.end(),
-		    std::back_inserter(filtered_list),
-		    [&](const apps::AppInfo *app) {
-			    return skips.find(app->id) == skips.end();
-		    });
+		    sample_list.begin(), sample_list.end(), std::back_inserter(filtered_list), [&](const apps::AppInfo *app) { return !skips.count(app->id); });
 
 		if (filtered_list.size() != sample_list.size())
 		{
@@ -111,7 +173,7 @@ void BatchMode::on_update(float delta_time)
 	elapsed_time += delta_time;
 
 	// When the runtime for the current configuration is reached, advance to the next config or next sample
-	if (elapsed_time >= sample_run_time_per_configuration.count())
+	if (elapsed_time >= duration.count())
 	{
 		elapsed_time = 0.0f;
 

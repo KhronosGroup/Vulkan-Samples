@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Nintendo
+ * Copyright 2023-2025 Nintendo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class ShaderObject : public ApiVulkanSample
 		Shader(VkShaderStageFlagBits        stage,
 		       VkShaderStageFlags           next_stage,
 		       std::string                  name,
-		       const std::vector<uint8_t>  &vert_glsl_source,
+		       const std::vector<uint32_t> &vert_shader_source,
 		       const VkDescriptorSetLayout *pSetLayouts,
 		       const VkPushConstantRange   *pPushConstantRange);
 
@@ -128,13 +128,11 @@ class ShaderObject : public ApiVulkanSample
 	ShaderObject();
 	~ShaderObject() override;
 
-	const std::vector<const char *> get_validation_layers() override;
-
 	bool resize(const uint32_t width, const uint32_t height) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void setup_framebuffer() override;
 	void setup_render_pass() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;

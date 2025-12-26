@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +21,6 @@
 #include <fmt/format.h>
 
 #include "filesystem/legacy.h"
-#include "glsl_compiler.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
@@ -66,71 +65,6 @@ std::ostream &operator<<(std::ostream &os, const VkResult result)
 
 namespace vkb
 {
-namespace
-{
-VkShaderStageFlagBits find_shader_stage(const std::string &ext)
-{
-	if (ext == "vert")
-	{
-		return VK_SHADER_STAGE_VERTEX_BIT;
-	}
-	else if (ext == "frag")
-	{
-		return VK_SHADER_STAGE_FRAGMENT_BIT;
-	}
-	else if (ext == "comp")
-	{
-		return VK_SHADER_STAGE_COMPUTE_BIT;
-	}
-	else if (ext == "geom")
-	{
-		return VK_SHADER_STAGE_GEOMETRY_BIT;
-	}
-	else if (ext == "tesc")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-	}
-	else if (ext == "tese")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-	}
-	else if (ext == "rgen")
-	{
-		return VK_SHADER_STAGE_RAYGEN_BIT_KHR;
-	}
-	else if (ext == "rahit")
-	{
-		return VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
-	}
-	else if (ext == "rchit")
-	{
-		return VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
-	}
-	else if (ext == "rmiss")
-	{
-		return VK_SHADER_STAGE_MISS_BIT_KHR;
-	}
-	else if (ext == "rint")
-	{
-		return VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
-	}
-	else if (ext == "rcall")
-	{
-		return VK_SHADER_STAGE_CALLABLE_BIT_KHR;
-	}
-	else if (ext == "mesh")
-	{
-		return VK_SHADER_STAGE_MESH_BIT_EXT;
-	}
-	else if (ext == "task")
-	{
-		return VK_SHADER_STAGE_TASK_BIT_EXT;
-	}
-
-	throw std::runtime_error("File extension `" + ext + "` does not have a vulkan shader stage.");
-}
-}        // namespace
-
 bool is_depth_only_format(VkFormat format)
 {
 	return format == VK_FORMAT_D16_UNORM ||
@@ -397,39 +331,15 @@ int32_t get_bits_per_pixel(VkFormat format)
 	}
 }
 
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage)
 {
-	vkb::GLSLCompiler glsl_compiler;
+	auto spirv = vkb::fs::read_shader_binary_u32(filename);
+	return load_shader_from_vector(spirv, device);
+}
 
-	auto                  buffer = vkb::fs::read_shader_binary(filename);
-	std::vector<uint32_t> spirv;
-
-	if (vkb::ShaderSourceLanguage::GLSL == src_language)
-	{
-		std::string file_ext = filename;
-
-		// Extract extension name from the glsl shader file
-		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-		std::string info_log;
-
-		// Compile the GLSL source
-		if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
-		{
-			LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-			return VK_NULL_HANDLE;
-		}
-	}
-	else if (vkb::ShaderSourceLanguage::SPV == src_language)
-	{
-		spirv = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
-		                              reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
-	}
-	else
-	{
-		LOGE("The format is not supported");
-		return VK_NULL_HANDLE;
-	}
+VkShaderModule load_shader_from_vector(const std::vector<uint32_t> &spirv, VkDevice device)
+{
+	assert(spirv.size() != 0);
 
 	VkShaderModule           shader_module;
 	VkShaderModuleCreateInfo module_create_info{};
@@ -675,13 +585,11 @@ VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice gpu, VkSurfaceKHR surf
 	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, supported_surface_formats.data());
 
-	auto it = std::find_if(supported_surface_formats.begin(),
-	                       supported_surface_formats.end(),
-	                       [&preferred_formats](VkSurfaceFormatKHR surface_format) {
-		                       return std::any_of(preferred_formats.begin(),
-		                                          preferred_formats.end(),
-		                                          [&surface_format](VkFormat format) { return format == surface_format.format; });
-	                       });
+	auto it = std::ranges::find_if(supported_surface_formats,
+	                               [&preferred_formats](VkSurfaceFormatKHR surface_format) {
+		                               return std::ranges::any_of(preferred_formats,
+		                                                          [&surface_format](VkFormat format) { return format == surface_format.format; });
+	                               });
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
@@ -773,5 +681,45 @@ std::vector<VkClearValue> get_clear_value()
 	return clear_value;
 }
 }        // namespace gbuffer
+
+uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queue_family_properties, VkQueueFlagBits queue_flag)
+{
+	// Dedicated queue for compute
+	// Try to find a queue family index that supports compute but not graphics
+	if (queue_flag & VK_QUEUE_COMPUTE_BIT)
+	{
+		auto propertyIt = std::ranges::find_if(queue_family_properties,
+		                                       [queue_flag](const VkQueueFamilyProperties &property) { return (property.queueFlags & queue_flag) && !(property.queueFlags & VK_QUEUE_GRAPHICS_BIT); });
+		if (propertyIt != queue_family_properties.end())
+		{
+			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+		}
+	}
+
+	// Dedicated queue for transfer
+	// Try to find a queue family index that supports transfer but not graphics and compute
+	if (queue_flag & VK_QUEUE_TRANSFER_BIT)
+	{
+		auto propertyIt = std::ranges::find_if(queue_family_properties,
+		                                       [queue_flag](const VkQueueFamilyProperties &property) {
+			                                       return (property.queueFlags & queue_flag) && !(property.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
+			                                              !(property.queueFlags & VK_QUEUE_COMPUTE_BIT);
+		                                       });
+		if (propertyIt != queue_family_properties.end())
+		{
+			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+		}
+	}
+
+	// For other queue types or if no separate compute queue is present, return the first one to support the requested flags
+	auto propertyIt = std::ranges::find_if(
+	    queue_family_properties, [queue_flag](const VkQueueFamilyProperties &property) { return (property.queueFlags & queue_flag) == queue_flag; });
+	if (propertyIt != queue_family_properties.end())
+	{
+		return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+	}
+
+	throw std::runtime_error("Could not find a matching queue family index");
+}
 
 }        // namespace vkb

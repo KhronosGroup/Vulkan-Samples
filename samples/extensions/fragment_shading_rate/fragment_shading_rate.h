@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Sascha Willems
+/* Copyright (c) 2020-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,7 +84,7 @@ class FragmentShadingRate : public ApiVulkanSample
 
 	FragmentShadingRate();
 	~FragmentShadingRate();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         create_shading_rate_attachment();
 	void         invalidate_shading_rate_attachment();
 	void         setup_render_pass() override;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -252,8 +252,8 @@ void FragmentShaderBarycentric::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("fragment_shader_barycentric/skybox.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("fragment_shader_barycentric/skybox.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("fragment_shader_barycentric", "skybox.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("fragment_shader_barycentric", "skybox.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Use the pNext to point to the rendering create struct
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -275,8 +275,8 @@ void FragmentShaderBarycentric::create_pipeline()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipelines.skybox));
 
 	// Object pipeline
-	shader_stages[0] = load_shader("fragment_shader_barycentric/object.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("fragment_shader_barycentric/object.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("fragment_shader_barycentric", "object.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("fragment_shader_barycentric", "object.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Flip cull mode
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
@@ -383,15 +383,12 @@ void FragmentShaderBarycentric::on_update_ui_overlay(vkb::Drawer &drawer)
 }
 
 /**
- * @fn void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
+ * @fn void FragmentShaderBarycentric::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
  * @brief Enabling features related to Vulkan extensions
  */
-void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
+void FragmentShaderBarycentric::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR,
-	                         fragmentShaderBarycentric);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR, fragmentShaderBarycentric);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{

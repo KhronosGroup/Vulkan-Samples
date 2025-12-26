@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2025, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -356,27 +356,27 @@ void MobileNerf::load_shaders()
 	if (use_deferred)
 	{
 		// Loading first pass shaders
-		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_first_pass[1] = load_shader(
 		    combo_mode ?
-		        (using_original_nerf_models[0] ? "mobile_nerf/raster_combo.frag" : "mobile_nerf/raster_morpheus_combo.frag") :
-		        (using_original_nerf_models[0] ? "mobile_nerf/raster.frag" : "mobile_nerf/raster_morpheus.frag"),
+		        (using_original_nerf_models[0] ? "mobile_nerf/raster_combo.frag.spv" : "mobile_nerf/raster_morpheus_combo.frag.spv") :
+		        (using_original_nerf_models[0] ? "mobile_nerf/raster.frag.spv" : "mobile_nerf/raster_morpheus.frag.spv"),
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Loading second pass shaders
 		shader_stages_second_pass[0] = load_shader("mobile_nerf/quad.vert", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_second_pass[1] = load_shader(
 		    combo_mode ?
-		        (using_original_nerf_models[0] ? "mobile_nerf/mlp_combo.frag" : "mobile_nerf/mlp_morpheus_combo.frag") :
-		        (using_original_nerf_models[0] ? "mobile_nerf/mlp.frag" : "mobile_nerf/mlp_morpheus.frag"),
+		        (using_original_nerf_models[0] ? "mobile_nerf/mlp_combo.frag.spv" : "mobile_nerf/mlp_morpheus_combo.frag.spv") :
+		        (using_original_nerf_models[0] ? "mobile_nerf/mlp.frag.spv" : "mobile_nerf/mlp_morpheus.frag.spv"),
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 	else
 	{
 		// Loading one pass shaders
-		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages_first_pass[0] = load_shader("mobile_nerf/raster.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages_first_pass[1] = load_shader(
-		    using_original_nerf_models[0] ? "mobile_nerf/merged.frag" : "mobile_nerf/merged_morpheus.frag",
+		    using_original_nerf_models[0] ? "mobile_nerf/merged.frag.spv" : "mobile_nerf/merged_morpheus.frag.spv",
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 }
@@ -476,11 +476,11 @@ bool MobileNerf::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-void MobileNerf::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MobileNerf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, shaderUniformBufferArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, runtimeDescriptorArray);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, descriptorBindingVariableDescriptorCount);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderUniformBufferArrayNonUniformIndexing);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
 }
 
 void MobileNerf::render(float delta_time)
@@ -1292,10 +1292,11 @@ void MobileNerf::create_static_object_buffers(int model_index, int sub_model_ind
 	staging_index_buffer->update(model.indices);
 
 	// Copy over the data for each of the models
-	with_vkb_command_buffer([&](vkb::CommandBuffer &cmd) {
-		cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
-		cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
-	});
+	with_vkb_command_buffer(
+	    [&](vkb::core::CommandBufferC &cmd) {
+		    cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
+		    cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
+	    });
 
 	LOGI("Done Creating static object buffers");
 }
@@ -1552,9 +1553,7 @@ void MobileNerf::prepare_instance_data()
 	staging_instance_buffer->update(instance_data);
 
 	// now transfer over to the end buffer
-	with_vkb_command_buffer([&](vkb::CommandBuffer &cmd) {
-		cmd.copy_buffer(*staging_instance_buffer, *instance_buffer, staging_instance_buffer->get_size());
-	});
+	with_vkb_command_buffer([&](vkb::core::CommandBufferC &cmd) { cmd.copy_buffer(*staging_instance_buffer, *instance_buffer, staging_instance_buffer->get_size()); });
 }
 
 void MobileNerf::draw()

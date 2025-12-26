@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Arm Limited and Contributors
+# Copyright (c) 2023-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -25,6 +25,9 @@ add_sample(
     AUTHOR "<<Contributor>>"
     NAME "@SAMPLE_NAME@"
     DESCRIPTION "Sample description"
+    # Important note: Shaders are compiled offline via CMake, so all shaders
+    # used by this sample need to be put here
+    # The framework also supports HLSL (SHADER_FILES_HLSL) and Slang (SHADER_FILES_SLANG)
     SHADER_FILES_GLSL
         "triangle.vert"
         "triangle.frag")

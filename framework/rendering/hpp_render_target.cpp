@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,8 +16,10 @@
  */
 
 #include "rendering/hpp_render_target.h"
-
-#include "core/hpp_device.h"
+#include "common/hpp_vk_common.h"
+#include "core/device.h"
+#include "core/hpp_image_view.h"
+#include "core/physical_device.h"
 
 namespace vkb
 {
@@ -45,7 +47,7 @@ HPPRenderTarget::HPPRenderTarget(std::vector<core::HPPImage> &&images_) :
 	assert(!images.empty() && "Should specify at least 1 image");
 
 	// check that every image is 2D
-	auto it = std::find_if(images.begin(), images.end(), [](core::HPPImage const &image) { return image.get_type() != vk::ImageType::e2D; });
+	auto it = std::ranges::find_if(images, [](core::HPPImage const &image) { return image.get_type() != vk::ImageType::e2D; });
 	if (it != images.end())
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Image type is not 2D"};

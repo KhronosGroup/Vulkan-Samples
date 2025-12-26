@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -234,8 +234,8 @@ void DynamicLineRasterization::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_line_rasterization", "base.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_line_rasterization", "base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_line_rasterization", "base.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_line_rasterization", "base.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	graphics_create.pNext               = VK_NULL_HANDLE;
@@ -260,8 +260,8 @@ void DynamicLineRasterization::create_pipelines()
 	                                   VK_NULL_HANDLE,
 	                                   &pipelines.object));
 
-	shader_stages[0]                  = load_shader("dynamic_line_rasterization", "grid.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = load_shader("dynamic_line_rasterization", "grid.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                  = load_shader("dynamic_line_rasterization", "grid.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                  = load_shader("dynamic_line_rasterization", "grid.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	graphics_create.pStages           = shader_stages.data();
 	vertex_input_state                = vkb::initializers::pipeline_vertex_input_state_create_info();
 	graphics_create.pVertexInputState = &vertex_input_state;
@@ -427,47 +427,20 @@ void DynamicLineRasterization::build_command_buffers()
 	}
 }
 
-void DynamicLineRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicLineRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT, smoothLines);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceLineRasterizationFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT,
-	                         stippledSmoothLines);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceLineRasterizationFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT,
-	                         bresenhamLines);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceLineRasterizationFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT,
-	                         stippledBresenhamLines);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceLineRasterizationFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT,
-	                         rectangularLines);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceLineRasterizationFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT,
-	                         stippledRectangularLines);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, smoothLines);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledSmoothLines);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, bresenhamLines);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledBresenhamLines);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, rectangularLines);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledRectangularLines);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
-	                         extendedDynamicState);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3PolygonMode);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3LineRasterizationMode);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3LineStippleEnable);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3PolygonMode);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3LineRasterizationMode);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3LineStippleEnable);
 
 	{
 		auto &features            = gpu.get_mutable_requested_features();

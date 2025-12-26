@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #include "scene_graph/components/image/astc.h"
 
+#include <filesystem>
 #include <mutex>
 
 #include "common/error.h"
@@ -29,12 +30,21 @@
 #endif
 #include <astcenc.h>
 
+#include <filesystem/filesystem.hpp>
+
 #define MAGIC_FILE_CONSTANT 0x5CA1AB13
+#define ASTC_CACHE_DIRECTORY "cache/astc_to_bin"
+
+constexpr uint32_t ASTC_CACHE_HEADER_SIZE = 64;
+constexpr uint32_t ASTC_CACHE_SEED        = 1619;
 
 namespace vkb
 {
 namespace sg
 {
+
+using Path = std::filesystem::path;
+
 BlockDim to_blockdim(const VkFormat format)
 {
 	switch (format)
@@ -81,6 +91,45 @@ BlockDim to_blockdim(const VkFormat format)
 		case VK_FORMAT_ASTC_12x12_UNORM_BLOCK:
 		case VK_FORMAT_ASTC_12x12_SRGB_BLOCK:
 			return {12, 12, 1};
+		default:
+			throw std::runtime_error{"Invalid astc format"};
+	}
+}
+
+inline astcenc_profile to_profile(const VkFormat format)
+{
+	switch (format)
+	{
+		case VK_FORMAT_ASTC_4x4_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_5x4_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_5x5_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_6x5_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_6x6_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_8x5_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_8x6_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_8x8_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_10x5_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_10x6_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_10x8_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_10x10_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_12x10_UNORM_BLOCK:
+		case VK_FORMAT_ASTC_12x12_UNORM_BLOCK:
+			return ASTCENC_PRF_LDR;
+		case VK_FORMAT_ASTC_4x4_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_5x4_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_5x5_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_6x5_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_6x6_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_8x5_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_8x6_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_8x8_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_10x5_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_10x6_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_10x8_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_10x10_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_12x10_SRGB_BLOCK:
+		case VK_FORMAT_ASTC_12x12_SRGB_BLOCK:
+			return ASTCENC_PRF_LDR_SRGB;
 		default:
 			throw std::runtime_error{"Invalid astc format"};
 	}
@@ -164,18 +213,135 @@ Astc::Astc(const Image &image) :
 {
 	init();
 
+	auto fs = vkb::filesystem::get();
+
+	size_t key = ASTC_CACHE_SEED;
+	glm::detail::hash_combine(key, image.get_data_hash());
+
+	constexpr bool       use_cache                                 = true;
+	constexpr uint32_t   bytes_per_pixel                           = 4;
+	constexpr const char file_cache_header[ASTC_CACHE_HEADER_SIZE] = "ASTCConvertedDataV01";
+	const auto           profile                                   = to_profile(image.get_format());
+
+	auto can_load_from_file = [this, profile, fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, std::vector<uint8_t> &dst_data, uint32_t width, uint32_t height, uint32_t depth) {
+		if (!use_cache)
+		{
+			LOGD("Device does not support ASTC format and cache is disabled. ASTC image {} will be decoded.", get_name())
+			return false;
+		}
+		try
+		{
+			if (!fs->exists(path))
+			{
+				LOGW("Device does not support ASTC format and cache file {} does not exist. ASTC image {} will be decoded.", path.string(), get_name())
+				return false;
+			}
+			else
+			{
+				LOGD("Loading ASTC image {} from cache file {}", get_name(), path.string())
+			}
+			size_t offset = 0;
+
+			auto copy_from_file = [fs, path](void *dst, size_t *offset, size_t content_size) {
+				const auto bin_content = fs->read_chunk(path, *offset, content_size);
+				std::memcpy(dst, &bin_content[0], content_size);
+				*offset += content_size;
+			};
+
+			char header[ASTC_CACHE_HEADER_SIZE];
+			copy_from_file(&header, &offset, ASTC_CACHE_HEADER_SIZE);
+			if (std::strcmp(header, file_cache_header) != 0)
+			{
+				return false;
+			}
+
+			uint32_t file_width, file_height, file_depth;
+			copy_from_file(&file_width, &offset, sizeof(std::uint32_t));
+			copy_from_file(&file_height, &offset, sizeof(std::uint32_t));
+			copy_from_file(&file_depth, &offset, sizeof(std::uint32_t));
+
+			if (file_width != width || width == 0 ||
+			    file_height != height || height == 0 ||
+			    file_depth != depth || depth == 0)
+			{
+				return false;
+			}
+			else
+			{
+				set_width(width);
+				set_height(height);
+				set_depth(depth);
+				set_format(profile == ASTCENC_PRF_LDR_SRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM);
+			}
+
+			auto image_size = width * height * depth * bytes_per_pixel;
+			dst_data.resize(image_size);
+			copy_from_file(dst_data.data(), &offset, image_size);
+
+			return true;
+		}
+		catch (const std::runtime_error &e)
+		{
+			LOGE("ERROR loading file {} from cache. Error: <{}>", path.string(), e.what())
+			// file is truncated
+			return false;
+		}
+	};
+
+	auto save_to_file = [fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, uint8_t *dst_data, uint32_t width, uint32_t height, uint32_t depth) {
+		if (!use_cache)
+		{
+			return;
+		}
+		try
+		{
+			LOGI("Saving ASTC cache data to file: {}", path.string());
+
+			auto image_size = width * height * depth * bytes_per_pixel;
+
+			std::vector<uint8_t> astc_file_content;
+			astc_file_content.reserve(sizeof(file_cache_header) + (3 * sizeof(std::uint32_t)) + image_size);
+
+			auto append_to_file = [](std::vector<uint8_t> &dst_file, const std::uint8_t *content, size_t content_size) {
+				dst_file.insert(dst_file.end(), content, content + content_size);
+			};
+
+			append_to_file(astc_file_content, (uint8_t *) &file_cache_header, sizeof(file_cache_header));
+			append_to_file(astc_file_content, (uint8_t *) &width, sizeof(uint32_t));
+			append_to_file(astc_file_content, (uint8_t *) &height, sizeof(uint32_t));
+			append_to_file(astc_file_content, (uint8_t *) &depth, sizeof(uint32_t));
+			append_to_file(astc_file_content, (uint8_t *) dst_data, image_size);
+
+			fs->write_file(path, astc_file_content);
+		}
+		catch (const std::runtime_error &e)
+		{
+			LOGE("ERROR: saving to file: {}\nError<{}>", path.string(), e.what())
+		}
+	};
+
 	// Locate mip #0 in the KTX. This is the first one in the data array for KTX1s, but the last one in KTX2s!
-	auto mip_it = std::find_if(image.get_mipmaps().begin(), image.get_mipmaps().end(),
-	                           [](auto &mip) { return mip.level == 0; });
+	auto mip_it = std::ranges::find_if(image.get_mipmaps(),
+	                                   [](auto &mip) { return mip.level == 0; });
 	assert(mip_it != image.get_mipmaps().end() && "Mip #0 not found");
 
-	// When decoding ASTC on CPU (as it is the case in here), we don't decode all mips in the mip chain.
-	// Instead, we just decode mip #0 and re-generate the other LODs later (via image->generate_mipmaps()).
-	const auto     blockdim = to_blockdim(image.get_format());
-	const auto    &extent   = mip_it->extent;
-	auto           size     = extent.width * extent.height * extent.depth * 4;
-	const uint8_t *data_ptr = image.get_data().data() + mip_it->offset;
-	decode(blockdim, mip_it->extent, data_ptr, size);
+	const std::string path = fmt::format("{}/{}.bin", ASTC_CACHE_DIRECTORY, uint64_t(key));
+
+	if (!can_load_from_file(path, get_mut_data(), mip_it->extent.width, mip_it->extent.height, mip_it->extent.depth))
+	{
+		// When decoding ASTC on CPU (as it is the case in here), we don't decode all mips in the mip chain.
+		// Instead, we just decode mip #0 and re-generate the other LODs later (via image->generate_mipmaps()).
+		const auto     blockdim = to_blockdim(image.get_format());
+		const auto    &extent   = mip_it->extent;
+		auto           size     = extent.width * extent.height * extent.depth * 4;
+		const uint8_t *data_ptr = image.get_data().data() + mip_it->offset;
+
+		decode(blockdim, mip_it->extent, data_ptr, size);
+
+		save_to_file(path, get_mut_data().data(), mip_it->extent.width, mip_it->extent.height, mip_it->extent.depth);
+	}
+
+	update_hash(image.get_data_hash());
 }
 
 Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
@@ -207,6 +373,8 @@ Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
 	    /* depth  = */ static_cast<uint32_t>(header.zsize[0] + 256 * header.zsize[1] + 65536 * header.zsize[2])};
 
 	decode(blockdim, extent, data.data() + sizeof(AstcHeader), to_u32(data.size() - sizeof(AstcHeader)));
+
+	update_hash(get_data_hash());
 }
 
 }        // namespace sg

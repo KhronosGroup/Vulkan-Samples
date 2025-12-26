@@ -1,4 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +30,6 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "platform/application.h"
-#include "platform/parser.h"
 #include "platform/plugins/plugin.h"
 #include "platform/window.h"
 #include "rendering/render_context.h"
@@ -130,14 +130,12 @@ class Platform
 
 	void set_window_properties(const Window::OptionalProperties &properties);
 
-	void on_post_draw(RenderContext &context);
+	void on_post_draw(vkb::rendering::RenderContextC &context);
 
 	static const uint32_t MIN_WINDOW_WIDTH;
 	static const uint32_t MIN_WINDOW_HEIGHT;
 
   protected:
-	std::unique_ptr<CommandParser> parser;
-
 	std::vector<Plugin *> active_plugins;
 
 	std::unordered_map<Hook, std::vector<Plugin *>> hooks;
@@ -155,6 +153,8 @@ class Platform
 	 */
 	virtual void create_window(const Window::Properties &properties) = 0;
 
+	void register_hooks(Plugin *plugin);
+
 	void on_update(float delta_time);
 	void on_app_error(const std::string &app_id);
 	void on_app_start(const std::string &app_id);
@@ -170,16 +170,20 @@ class Platform
 	bool               focused{true};                  /* App is currently in focus at an operating system level */
 	bool               close_requested{false};         /* Close requested */
 
+  protected:
+	std::vector<Plugin *> plugins;
+
   private:
 	Timer timer;
 
 	const apps::AppInfo *requested_app{nullptr};
 
-	std::vector<Plugin *> plugins;
-
 	std::vector<std::string> arguments;
 
 	std::string last_error;
+
+	std::map<std::string, Plugin *> command_map;
+	std::map<std::string, Plugin *> option_map;
 };
 
 template <class T>

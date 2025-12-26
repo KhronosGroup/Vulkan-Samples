@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,6 @@
 
 #include <camera.h>
 #include <common/hpp_error.h>
-#include <hpp_gui.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
 
@@ -304,9 +303,8 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 	 * @brief Load a SPIR-V shader
 	 * @param file The file location of the shader relative to the shaders folder
 	 * @param stage The shader stage
-	 * @param src_language The shader language
 	 */
-	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL);
+	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage);
 
 	/**
 	 * @brief Load a SPIR-V shader based on current shader language selection

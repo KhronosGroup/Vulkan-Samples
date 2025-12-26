@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,7 +42,7 @@ TextureCompressionBasisu::~TextureCompressionBasisu()
 	}
 }
 
-void TextureCompressionBasisu::request_gpu_features(vkb::PhysicalDevice &gpu)
+void TextureCompressionBasisu::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -101,16 +101,6 @@ void TextureCompressionBasisu::get_available_target_formats()
 		{
 			available_target_formats.push_back(KTX_TTF_ETC2_RGBA);
 			available_target_formats_names.push_back("KTX_TTF_ETC2_RGBA");
-		}
-	}
-
-	// PowerVR texture compression support needs to be checked via an extension
-	if (get_device().is_extension_supported(VK_IMG_FORMAT_PVRTC_EXTENSION_NAME))
-	{
-		if (format_supported(VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG))
-		{
-			available_target_formats.push_back(KTX_TTF_PVRTC1_4_RGBA);
-			available_target_formats_names.push_back("KTX_TTF_PVRTC1_4_RGBA");
 		}
 	}
 
@@ -173,7 +163,8 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	VkMemoryRequirements memory_requirements  = {};
 	vkGetBufferMemoryRequirements(get_device().get_handle(), staging_buffer, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	memory_allocate_info.memoryTypeIndex =
+	    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &staging_memory));
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), staging_buffer, staging_memory, 0));
 
@@ -217,7 +208,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 
 	vkGetImageMemoryRequirements(get_device().get_handle(), texture.image, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &texture.device_memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
 
@@ -542,8 +533,8 @@ void TextureCompressionBasisu::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
-	shader_stages[0] = load_shader("texture_compression_basisu", "texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("texture_compression_basisu", "texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("texture_compression_basisu", "texture.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("texture_compression_basisu", "texture.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {

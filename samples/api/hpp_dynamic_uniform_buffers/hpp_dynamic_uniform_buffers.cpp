@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -91,7 +91,7 @@ bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 		generate_cube();
 		prepare_uniform_buffers();
 		descriptor_set_layout = create_descriptor_set_layout();
-		pipeline_layout       = get_device().get_handle().createPipelineLayout({{}, descriptor_set_layout});
+		pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &descriptor_set_layout});
 		pipeline              = create_pipeline();
 		descriptor_pool       = create_descriptor_pool();
 		descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, descriptor_set_layout);
@@ -115,9 +115,12 @@ void HPPDynamicUniformBuffers::build_command_buffers()
 {
 	vk::DeviceSize offset = 0;
 
-	std::array<vk::ClearValue, 2> clear_values = {default_clear_color, vk::ClearDepthStencilValue(0.0f, 0)};
+	std::array<vk::ClearValue, 2> clear_values = {default_clear_color, vk::ClearDepthStencilValue{0.0f, 0}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
 
 	for (size_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -171,7 +174,8 @@ vk::DescriptorPool HPPDynamicUniformBuffers::create_descriptor_pool()
 	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1},
 	                                                     {vk::DescriptorType::eUniformBufferDynamic, 1},
 	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
-	return get_device().get_handle().createDescriptorPool({{}, 2, pool_sizes});
+	return get_device().get_handle().createDescriptorPool(
+	    {.maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
 }
 
 vk::DescriptorSetLayout HPPDynamicUniformBuffers::create_descriptor_set_layout()
@@ -179,25 +183,27 @@ vk::DescriptorSetLayout HPPDynamicUniformBuffers::create_descriptor_set_layout()
 	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 	                                                           {1, vk::DescriptorType::eUniformBufferDynamic, 1, vk::ShaderStageFlagBits::eVertex},
 	                                                           {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-	return get_device().get_handle().createDescriptorSetLayout({{}, bindings});
+	return get_device().get_handle().createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(bindings.size()), .pBindings = bindings.data()});
 }
 
 vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
 {
 	// Load shaders
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers", "base.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("dynamic_uniform_buffers", "base.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers", "base.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("dynamic_uniform_buffers", "base.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(Vertex), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
 	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos)},            // Location 0 : Position
 	     {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)}}};        // Location 1 : Color
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -323,14 +329,21 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 
 void HPPDynamicUniformBuffers::update_descriptor_set()
 {
-	vk::DescriptorBufferInfo view_buffer_descriptor(uniform_buffers.view->get_handle(), 0, VK_WHOLE_SIZE);
-	vk::DescriptorBufferInfo dynamic_buffer_descriptor(uniform_buffers.dynamic->get_handle(), 0, dynamic_alignment);
+	vk::DescriptorBufferInfo view_buffer_descriptor{uniform_buffers.view->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorBufferInfo dynamic_buffer_descriptor{uniform_buffers.dynamic->get_handle(), 0, dynamic_alignment};
 
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-	    {// Binding 0 : Projection/View matrix uniform buffer
-	     {descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, view_buffer_descriptor},
-	     // Binding 1 : Instance matrix as dynamic uniform buffer
-	     {descriptor_set, 1, {}, vk::DescriptorType::eUniformBufferDynamic, {}, dynamic_buffer_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{// Binding 0 : Projection/View matrix uniform buffer
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &view_buffer_descriptor},
+	                                                                // Binding 1 : Instance matrix as dynamic uniform buffer
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBufferDynamic,
+	                                                                 .pBufferInfo     = &dynamic_buffer_descriptor}}};
 
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
@@ -361,7 +374,7 @@ void HPPDynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, b
 				auto index = x * dim * dim + y * dim + z;
 
 				// Aligned offset
-				auto model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
+				auto model_mat = reinterpret_cast<glm::mat4 *>((reinterpret_cast<uint64_t>(ubo_data_dynamic.model) + (index * dynamic_alignment)));
 
 				// Update rotations
 				rotations[index] += animation_timer * rotation_speeds[index];

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -119,7 +119,7 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 				continue;
 			}
 
-			auto node = std::make_unique<vkb::sg::Node>(-1, "Teapot");
+			auto node = std::make_unique<vkb::scene_graph::NodeC>(-1, "Teapot");
 			node->set_component(*teapot_mesh);
 			teapot_mesh->add_node(*node);
 
@@ -148,13 +148,13 @@ void KHR16BitStorageInputOutputSample::update_pipeline()
 	const std::string base_path = "16bit_storage_input_output/";
 	if (khr_16bit_storage_input_output_enabled && supports_16bit_storage)
 	{
-		vertex_path   = "16bit_storage_input_output_enabled.vert";
-		fragment_path = "16bit_storage_input_output_enabled.frag";
+		vertex_path   = "16bit_storage_input_output_enabled.vert.spv";
+		fragment_path = "16bit_storage_input_output_enabled.frag.spv";
 	}
 	else
 	{
-		vertex_path   = "16bit_storage_input_output_disabled.vert";
-		fragment_path = "16bit_storage_input_output_disabled.frag";
+		vertex_path   = "16bit_storage_input_output_disabled.vert.spv";
+		fragment_path = "16bit_storage_input_output_disabled.frag.spv";
 	}
 
 	vkb::ShaderSource vert_shader(base_path + vertex_path);
@@ -192,9 +192,9 @@ bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &op
 	return true;
 }
 
-void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::PhysicalDevice &gpu)
+void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, storageInputOutput16);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, storageInputOutput16);
 }
 
 void KHR16BitStorageInputOutputSample::update(float delta_time)

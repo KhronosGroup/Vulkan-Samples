@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2023-2024, Sascha Willems
+/* Copyright (c) 2023-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,7 @@
  */
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec2 inUV;
+layout (location = 1) in vec2 inUV;
 
 layout (set = 0, binding = 0) uniform UBOScene {
 	mat4 projection;

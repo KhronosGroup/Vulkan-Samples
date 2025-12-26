@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Google
+/* Copyright (c) 2023-2025, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -112,8 +112,12 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	/// Submission and present queue.
 	const vkb::Queue *queue = nullptr;
 
+	/// Allow enabling VK_EXT_surface_maintenance1 and VK_EXT_swapchain_maintenance1.
+	///
+	/// Can be set to false by setting environment variable `USE_MAINTENANCE1=no`
+	bool allow_maintenance1 = true;
 	/// Whether the VK_EXT_surface_maintenance1 and VK_EXT_swapchain_maintenance1 extensions are
-	/// to be used.
+	/// enabled.
 	bool has_maintenance1 = false;
 
 	/// Surface data.
@@ -168,7 +172,9 @@ class SwapchainRecreation : public vkb::VulkanSampleC
 	// User toggles.
 	bool recreate_swapchain_on_present_mode_change = false;
 
-	std::unique_ptr<vkb::Device> create_device(vkb::PhysicalDevice &gpu) override;
+	// from vkb::VulkanSample
+	void                                request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	std::unique_ptr<vkb::core::DeviceC> create_device(vkb::core::PhysicalDeviceC &gpu) override;
 
 	void get_queue();
 	void query_surface_format();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,8 @@
 #include <queue>
 #include <stdexcept>
 
+#include "core/command_buffer.h"
+#include "rendering/render_frame.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/sub_mesh.h"
@@ -40,7 +42,7 @@ std::string get_extension(const std::string &uri)
 	return uri.substr(dot_pos + 1);
 }
 
-void screenshot(RenderContext &render_context, const std::string &filename)
+void screenshot(vkb::rendering::RenderContextC &render_context, const std::string &filename)
 {
 	assert(render_context.get_format() == VK_FORMAT_R8G8B8A8_UNORM ||
 	       render_context.get_format() == VK_FORMAT_B8G8R8A8_UNORM ||
@@ -64,9 +66,9 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto &cmd_buf = render_context.get_device().request_command_buffer();
+	auto cmd_buf = render_context.get_device().get_command_pool().request_command_buffer();
 
-	cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	cmd_buf->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	// Enable destination buffer to be written to
 	{
@@ -76,7 +78,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		cmd_buf.buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
+		cmd_buf->buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Enable framebuffer image view to be read from
@@ -87,12 +89,12 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		cmd_buf.image_memory_barrier(src_image_view, memory_barrier);
+		cmd_buf->image_memory_barrier(src_image_view, memory_barrier);
 	}
 
 	// Check if framebuffer images are in a BGR format
 	auto bgr_formats = {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM};
-	bool swizzle     = std::find(bgr_formats.begin(), bgr_formats.end(), src_image_view.get_format()) != bgr_formats.end();
+	bool swizzle     = std::ranges::find(bgr_formats, src_image_view.get_format()) != bgr_formats.end();
 
 	// Copy framebuffer image memory
 	VkBufferImageCopy image_copy_region{};
@@ -104,7 +106,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	image_copy_region.imageExtent.height          = height;
 	image_copy_region.imageExtent.depth           = 1;
 
-	cmd_buf.copy_image_to_buffer(src_image_view.get_image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_buffer, {image_copy_region});
+	cmd_buf->copy_image_to_buffer(src_image_view.get_image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_buffer, {image_copy_region});
 
 	// Enable destination buffer to map memory
 	{
@@ -114,7 +116,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
 
-		cmd_buf.buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
+		cmd_buf->buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Revert back the framebuffer image view from transfer to present
@@ -125,12 +127,12 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		cmd_buf.image_memory_barrier(src_image_view, memory_barrier);
+		cmd_buf->image_memory_barrier(src_image_view, memory_barrier);
 	}
 
-	cmd_buf.end();
+	cmd_buf->end();
 
-	queue.submit(cmd_buf, frame.request_fence());
+	queue.submit(*cmd_buf, frame.get_fence_pool().request_fence());
 
 	queue.wait_idle();
 
@@ -213,10 +215,15 @@ std::string to_snake_case(const std::string &text)
 	return result.str();
 }
 
-sg::Light &add_light(sg::Scene &scene, sg::LightType type, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_light(sg::Scene                 &scene,
+                     sg::LightType              type,
+                     const glm::vec3           &position,
+                     const glm::quat           &rotation,
+                     const sg::LightProperties &props,
+                     vkb::scene_graph::NodeC   *parent_node)
 {
 	auto light_ptr = std::make_unique<sg::Light>("light");
-	auto node      = std::make_unique<sg::Node>(-1, "light node");
+	auto node      = std::make_unique<vkb::scene_graph::NodeC>(-1, "light node");
 
 	if (parent_node)
 	{
@@ -242,22 +249,22 @@ sg::Light &add_light(sg::Scene &scene, sg::LightType type, const glm::vec3 &posi
 	return light;
 }
 
-sg::Light &add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
 {
 	return add_light(scene, sg::LightType::Point, position, {}, props, parent_node);
 }
 
-sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
 {
 	return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
 }
 
-sg::Light &add_spot_light(sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+sg::Light &add_spot_light(sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
 {
 	return add_light(scene, sg::LightType::Spot, position, rotation, props, parent_node);
 }
 
-sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent)
+vkb::scene_graph::NodeC &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent)
 {
 	auto camera_node = scene.find_node(node_name);
 
@@ -285,6 +292,27 @@ sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExte
 	scene.add_component(std::move(free_camera_script), *camera_node);
 
 	return *camera_node;
+}
+
+size_t calculate_hash(const std::vector<uint8_t> &data)
+{
+	static_assert(sizeof(data[0]) == 1);
+	constexpr size_t chunk_size = sizeof(size_t) / sizeof(data[0]);
+	size_t           data_hash  = 0;
+	size_t           offset     = 0;
+
+	for (; offset + chunk_size < data.size(); offset += chunk_size)
+	{
+		glm::detail::hash_combine(data_hash, *reinterpret_cast<size_t const *>(&data[offset]));
+	}
+
+	if (offset < data.size())
+	{
+		size_t it = 0;
+		std::memcpy(&it, &data[offset], data.size() - offset);
+		glm::detail::hash_combine(data_hash, it);
+	}
+	return data_hash;
 }
 
 }        // namespace vkb

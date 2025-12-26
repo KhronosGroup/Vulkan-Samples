@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -103,6 +103,7 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType 
 	set_height(texture->baseHeight);
 	set_depth(texture->baseDepth);
 	set_layers(texture->numLayers);
+	update_hash();
 
 	bool cubemap = false;
 

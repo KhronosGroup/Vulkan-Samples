@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/vk_common.h"
+#include "core/debug.h"
 #include "vulkan_type_mapping.h"
 
 #include <utility>
@@ -26,24 +27,28 @@
 
 namespace vkb
 {
-class Device;
-
 namespace core
 {
-class HPPDevice;
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceC   = Device<vkb::BindingType::C>;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
 
-/// Inherit this for any Vulkan object with a handle of type `HPPHandle`.
+/// Inherit this for any Vulkan object with a handle of type `Handle`.
 ///
-/// This allows the derived class to store a Vulkan handle, and also a pointer to the parent vkb::core::Device.
+/// This allows the derived class to store a Vulkan handle, and also a pointer to the parent vkb::Device.
 /// It also allows to set a debug name for any Vulkan object.
 template <vkb::BindingType bindingType, typename Handle>
 class VulkanResource
 {
   public:
-	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
+	// we always want to store a vk::Handle as a resource, so we have to figure out that type, depending on the BindingType!
+	using ResourceType = typename vkb::VulkanTypeMapping<bindingType, Handle>::Type;
+
+  public:
 	using ObjectType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ObjectType, VkObjectType>::type;
 
-	VulkanResource(Handle handle = nullptr, DeviceType *device_ = nullptr);
+	VulkanResource(Handle handle = nullptr, Device<bindingType> *device_ = nullptr);
 
 	VulkanResource(const VulkanResource &)            = delete;
 	VulkanResource &operator=(const VulkanResource &) = delete;
@@ -53,29 +58,32 @@ class VulkanResource
 
 	virtual ~VulkanResource() = default;
 
-	const std::string &get_debug_name() const;
-	DeviceType        &get_device();
-	DeviceType const  &get_device() const;
-	Handle            &get_handle();
-	const Handle      &get_handle() const;
-	uint64_t           get_handle_u64() const;
-	ObjectType         get_object_type() const;
-	bool               has_device() const;
-	bool               has_handle() const;
-	void               set_debug_name(const std::string &name);
-	void               set_handle(Handle hdl);
+	const std::string                    &get_debug_name() const;
+	vkb::core::Device<bindingType>       &get_device();
+	vkb::core::Device<bindingType> const &get_device() const;
+	Handle                               &get_handle();
+	const Handle                         &get_handle() const;
+	uint64_t                              get_handle_u64() const;
+	ObjectType                            get_object_type() const;
+	ResourceType const                   &get_resource() const;
+	bool                                  has_device() const;
+	bool                                  has_handle() const;
+	void                                  set_debug_name(const std::string &name);
+	void                                  set_handle(Handle hdl);
 
   private:
-	// we always want to store a vk::Handle as a resource, so we have to figure out that type, depending on the BindingType!
-	using ResourceType = typename vkb::VulkanTypeMapping<bindingType, Handle>::Type;
-
-	std::string  debug_name;
-	HPPDevice   *device;
-	ResourceType handle;
+	std::string           debug_name;
+	vkb::core::DeviceCpp *device;
+	ResourceType          handle;
 };
 
+template <typename Handle>
+using VulkanResourceC = VulkanResource<vkb::BindingType::C, Handle>;
+template <typename Handle>
+using VulkanResourceCpp = VulkanResource<vkb::BindingType::Cpp, Handle>;
+
 template <vkb::BindingType bindingType, typename Handle>
-inline VulkanResource<bindingType, Handle>::VulkanResource(Handle handle_, DeviceType *device_) :
+inline VulkanResource<bindingType, Handle>::VulkanResource(Handle handle_, Device<bindingType> *device_) :
     handle{handle_}
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -84,7 +92,7 @@ inline VulkanResource<bindingType, Handle>::VulkanResource(Handle handle_, Devic
 	}
 	else
 	{
-		device = reinterpret_cast<vkb::core::HPPDevice *>(device_);
+		device = reinterpret_cast<vkb::core::DeviceCpp *>(device_);
 	}
 }
 
@@ -111,7 +119,7 @@ inline const std::string &VulkanResource<bindingType, Handle>::get_debug_name() 
 }
 
 template <vkb::BindingType bindingType, typename Handle>
-inline typename VulkanResource<bindingType, Handle>::DeviceType &VulkanResource<bindingType, Handle>::get_device()
+inline Device<bindingType> &VulkanResource<bindingType, Handle>::get_device()
 {
 	assert(device && "VKBDevice handle not set");
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -120,12 +128,12 @@ inline typename VulkanResource<bindingType, Handle>::DeviceType &VulkanResource<
 	}
 	else
 	{
-		return *reinterpret_cast<vkb::Device *>(device);
+		return *reinterpret_cast<vkb::core::DeviceC *>(device);
 	}
 }
 
 template <vkb::BindingType bindingType, typename Handle>
-inline typename VulkanResource<bindingType, Handle>::DeviceType const &VulkanResource<bindingType, Handle>::get_device() const
+inline Device<bindingType> const &VulkanResource<bindingType, Handle>::get_device() const
 {
 	assert(device && "VKBDevice handle not set");
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -134,7 +142,7 @@ inline typename VulkanResource<bindingType, Handle>::DeviceType const &VulkanRes
 	}
 	else
 	{
-		return *reinterpret_cast<vkb::Device const *>(device);
+		return *reinterpret_cast<vkb::core::DeviceC const *>(device);
 	}
 }
 
@@ -189,6 +197,12 @@ inline typename VulkanResource<bindingType, Handle>::ObjectType VulkanResource<b
 }
 
 template <vkb::BindingType bindingType, typename Handle>
+inline typename VulkanResource<bindingType, Handle>::ResourceType const &VulkanResource<bindingType, Handle>::get_resource() const
+{
+	return handle;
+}
+
+template <vkb::BindingType bindingType, typename Handle>
 inline bool VulkanResource<bindingType, Handle>::has_device() const
 {
 	return device != nullptr;
@@ -217,9 +231,5 @@ inline void VulkanResource<bindingType, Handle>::set_handle(Handle hdl)
 	handle = hdl;
 }
 
-template <typename Handle>
-using VulkanResourceC = VulkanResource<vkb::BindingType::C, Handle>;
-template <typename Handle>
-using VulkanResourceCpp = VulkanResource<vkb::BindingType::Cpp, Handle>;
 }        // namespace core
 }        // namespace vkb

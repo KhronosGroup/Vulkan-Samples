@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024 Holochip Corporation
+# Copyright (c) 2021-2025 Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -29,9 +29,17 @@ add_sample_with_tags(
         "ray_tracing_extended/glsl/raygen.rgen"
         "ray_tracing_extended/glsl/miss.rmiss"
         "ray_tracing_extended/glsl/closesthit.rchit"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.4"
     SHADER_FILES_HLSL
         "ray_tracing_extended/hlsl/raygen.rgen.hlsl"
         "ray_tracing_extended/hlsl/miss.rmiss.hlsl"
         "ray_tracing_extended/hlsl/closesthit.rchit.hlsl"
-    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_descriptor_indexing -fspv-extension=SPV_KHR_ray_query")
+    DXC_ADDITIONAL_ARGUMENTS
+        "-fspv-extension=SPV_EXT_descriptor_indexing -fspv-extension=SPV_KHR_ray_query"
+    SHADER_FILES_SLANG
+        "ray_tracing_extended/slang/raygen.rgen.slang"
+        "ray_tracing_extended/slang/miss.rmiss.slang"
+        "ray_tracing_extended/slang/closesthit.rchit.slang"
+    )
 

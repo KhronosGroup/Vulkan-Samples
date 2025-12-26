@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, Mobica Limited
+/* Copyright (c) 2022-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -215,8 +215,8 @@ void VertexDynamicState::create_pipeline()
 	        0);
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("vertex_dynamic_state", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("vertex_dynamic_state", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("vertex_dynamic_state", "gbuffer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("vertex_dynamic_state", "gbuffer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Create graphics pipeline for dynamic rendering */
 	VkFormat color_rendering_format = get_render_context().get_format();
@@ -445,14 +445,11 @@ void VertexDynamicState::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void VertexDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
+void VertexDynamicState::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT,
-	                         vertexInputDynamicState);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT, vertexInputDynamicState);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{

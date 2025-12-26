@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,9 +16,9 @@
  */
 
 #include "hpp_resource_cache.h"
+#include "core/device.h"
 #include <common/hpp_resource_caching.h>
 #include <core/hpp_descriptor_set.h>
-#include <core/hpp_device.h>
 #include <core/hpp_image_view.h>
 #include <core/hpp_pipeline_layout.h>
 
@@ -28,7 +28,7 @@ namespace
 {
 template <class T, class... A>
 T &request_resource(
-    vkb::core::HPPDevice &device, vkb::HPPResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
+    vkb::core::DeviceCpp &device, vkb::HPPResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
 {
 	std::lock_guard<std::mutex> guard(resource_mutex);
 
@@ -38,7 +38,7 @@ T &request_resource(
 }
 }        // namespace
 
-HPPResourceCache::HPPResourceCache(vkb::core::HPPDevice &device) :
+HPPResourceCache::HPPResourceCache(vkb::core::DeviceCpp &device) :
     device{device}
 {}
 
@@ -169,7 +169,12 @@ void HPPResourceCache::update_descriptor_sets(const std::vector<vkb::core::HPPIm
 						// Save struct for writing the update later
 						if (auto binding_info = descriptor_set.get_layout().get_layout_binding(binding))
 						{
-							vk::WriteDescriptorSet write_descriptor_set(descriptor_set.get_handle(), binding, array_element, binding_info->descriptorType, image_info);
+							vk::WriteDescriptorSet write_descriptor_set{.dstSet          = descriptor_set.get_handle(),
+							                                            .dstBinding      = binding,
+							                                            .dstArrayElement = array_element,
+							                                            .descriptorCount = 1,
+							                                            .descriptorType  = binding_info->descriptorType,
+							                                            .pImageInfo      = &image_info};
 							set_updates.push_back(write_descriptor_set);
 						}
 						else

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,9 @@
 #include "rendering/subpasses/geometry_subpass.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "core/command_buffer.h"
 #include "rendering/render_context.h"
+#include "resource_cache.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
@@ -30,7 +32,8 @@
 
 namespace vkb
 {
-GeometrySubpass::GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
+GeometrySubpass::GeometrySubpass(
+    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
     Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
     meshes{scene_.get_components<sg::Mesh>()},
     camera{camera},
@@ -53,7 +56,8 @@ void GeometrySubpass::prepare()
 	}
 }
 
-void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes, std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
+void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &opaque_nodes,
+                                       std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &transparent_nodes)
 {
 	auto camera_transform = camera.get_node()->get_transform().get_world_matrix();
 
@@ -85,10 +89,10 @@ void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *
 	}
 }
 
-void GeometrySubpass::draw(CommandBuffer &command_buffer)
+void GeometrySubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> opaque_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> transparent_nodes;
 
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
@@ -139,7 +143,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	}
 }
 
-void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
+void GeometrySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index)
 {
 	GlobalUniform global_uniform;
 
@@ -160,7 +164,7 @@ void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &no
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
+void GeometrySubpass::draw_submesh(vkb::core::CommandBufferC &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
 {
 	auto &device = command_buffer.get_device();
 
@@ -193,7 +197,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 		if (auto layout_binding = descriptor_set_layout.get_layout_binding(texture.first))
 		{
 			command_buffer.bind_image(texture.second->get_image()->get_vk_image_view(),
-			                          texture.second->get_sampler()->vk_sampler,
+			                          texture.second->get_sampler()->get_core_sampler(),
 			                          0, layout_binding->binding, 0);
 		}
 	}
@@ -246,7 +250,9 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 	draw_submesh_command(command_buffer, sub_mesh);
 }
 
-void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material)
+void GeometrySubpass::prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer,
+                                             VkFrontFace                front_face,
+                                             bool                       double_sided_material)
 {
 	RasterizationState rasterization_state = base_rasterization_state;
 	rasterization_state.front_face         = front_face;
@@ -263,7 +269,8 @@ void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFr
 	command_buffer.set_multisample_state(multisample_state);
 }
 
-PipelineLayout &GeometrySubpass::prepare_pipeline_layout(CommandBuffer &command_buffer, const std::vector<ShaderModule *> &shader_modules)
+PipelineLayout &GeometrySubpass::prepare_pipeline_layout(vkb::core::CommandBufferC         &command_buffer,
+                                                         const std::vector<ShaderModule *> &shader_modules)
 {
 	// Sets any specified resource modes
 	for (auto &shader_module : shader_modules)
@@ -277,7 +284,7 @@ PipelineLayout &GeometrySubpass::prepare_pipeline_layout(CommandBuffer &command_
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout(shader_modules);
 }
 
-void GeometrySubpass::prepare_push_constants(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void GeometrySubpass::prepare_push_constants(vkb::core::CommandBufferC &command_buffer, sg::SubMesh &sub_mesh)
 {
 	auto pbr_material = dynamic_cast<const sg::PBRMaterial *>(sub_mesh.get_material());
 
@@ -294,7 +301,7 @@ void GeometrySubpass::prepare_push_constants(CommandBuffer &command_buffer, sg::
 	}
 }
 
-void GeometrySubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void GeometrySubpass::draw_submesh_command(vkb::core::CommandBufferC &command_buffer, sg::SubMesh &sub_mesh)
 {
 	// Draw submesh indexed if indices exists
 	if (sub_mesh.vertex_indices != 0)

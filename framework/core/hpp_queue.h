@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,14 +17,20 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
-class HPPCommandBuffer;
-class HPPDevice;
+template <vkb::BindingType bindingType>
+class Device;
+using DeviceCpp = Device<vkb::BindingType::Cpp>;
+
+template <vkb::BindingType bindingType>
+class CommandBuffer;
+using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
 
 /**
  * @brief A wrapper class for vk::Queue
@@ -33,7 +39,7 @@ class HPPDevice;
 class HPPQueue
 {
   public:
-	HPPQueue(HPPDevice &device, uint32_t family_index, vk::QueueFamilyProperties properties, vk::Bool32 can_present, uint32_t index);
+	HPPQueue(vkb::core::DeviceCpp &device, uint32_t family_index, vk::QueueFamilyProperties const &properties, vk::Bool32 can_present, uint32_t index);
 
 	HPPQueue(const HPPQueue &) = default;
 
@@ -43,7 +49,7 @@ class HPPQueue
 
 	HPPQueue &operator=(HPPQueue &&) = delete;
 
-	const HPPDevice &get_device() const;
+	const vkb::core::DeviceCpp &get_device() const;
 
 	vk::Queue get_handle() const;
 
@@ -55,12 +61,12 @@ class HPPQueue
 
 	vk::Bool32 support_present() const;
 
-	void submit(const HPPCommandBuffer &command_buffer, vk::Fence fence) const;
+	void submit(const vkb::core::CommandBufferCpp &command_buffer, vk::Fence fence) const;
 
 	vk::Result present(const vk::PresentInfoKHR &present_infos) const;
 
   private:
-	HPPDevice &device;
+	vkb::core::DeviceCpp &device;
 
 	vk::Queue handle;
 

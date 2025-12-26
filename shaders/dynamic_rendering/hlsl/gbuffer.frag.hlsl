@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -91,7 +91,7 @@ FSOutput main(VSOutput input)
                 fresnel *= (1.0 - F0);
                 fresnel += F0;
 
-                float spec = (fresnel * geoAtt) / (NdotV * NdotL * 3.14);
+                float spec = max((fresnel * geoAtt) / (NdotV * NdotL * 3.14), 0.0);
 
                 color = textureEnvMap.Sample(samplerEnvMap, reflect(-wViewVec, wNormal));
 

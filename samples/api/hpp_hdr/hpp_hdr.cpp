@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,7 +69,7 @@ bool HPPHDR::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-void HPPHDR::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPHDR::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -93,14 +93,18 @@ void HPPHDR::build_command_buffers()
 			*/
 			std::array<vk::ClearValue, 3> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
 			                                               vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-			                                               vk::ClearDepthStencilValue(0.0f, 0)}};
-			vk::RenderPassBeginInfo       render_pass_begin_info(offscreen.render_pass, offscreen.framebuffer, {{0, 0}, offscreen.extent}, clear_values);
+			                                               vk::ClearDepthStencilValue{0.0f, 0}}};
+			vk::RenderPassBeginInfo       render_pass_begin_info{.renderPass      = offscreen.render_pass,
+			                                                     .framebuffer     = offscreen.framebuffer,
+			                                                     .renderArea      = {{0, 0}, offscreen.extent},
+			                                                     .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+			                                                     .pClearValues    = clear_values.data()};
 			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(offscreen.extent.width), static_cast<float>(offscreen.extent.height), 0.0f, 1.0f);
+			vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(offscreen.extent.width), static_cast<float>(offscreen.extent.height), 0.0f, 1.0f};
 			command_buffer.setViewport(0, viewport);
 
-			vk::Rect2D scissor({0, 0}, offscreen.extent);
+			vk::Rect2D scissor{{0, 0}, offscreen.extent};
 			command_buffer.setScissor(0, scissor);
 
 			// Skybox
@@ -126,13 +130,17 @@ void HPPHDR::build_command_buffers()
 		{
 			// Bloom filter
 			vk::ClearValue          clear_value(vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})));
-			vk::RenderPassBeginInfo render_pass_begin_info(filter_pass.render_pass, filter_pass.framebuffer, {{0, 0}, filter_pass.extent}, clear_value);
+			vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = filter_pass.render_pass,
+			                                               .framebuffer     = filter_pass.framebuffer,
+			                                               .renderArea      = {{0, 0}, filter_pass.extent},
+			                                               .clearValueCount = 1,
+			                                               .pClearValues    = &clear_value};
 			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(filter_pass.extent.width), static_cast<float>(filter_pass.extent.height), 0.0f, 1.0f);
+			vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(filter_pass.extent.width), static_cast<float>(filter_pass.extent.height), 0.0f, 1.0f};
 			command_buffer.setViewport(0, viewport);
 
-			vk::Rect2D scissor({0, 0}, filter_pass.extent);
+			vk::Rect2D scissor{{0, 0}, filter_pass.extent};
 			command_buffer.setScissor(0, scissor);
 
 			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, bloom.pipeline_layout, 0, bloom.descriptor_set, {});
@@ -152,14 +160,18 @@ void HPPHDR::build_command_buffers()
 		{
 			// Final composition
 			std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-			                                               vk::ClearDepthStencilValue(0.0f, 0)}};
-			vk::RenderPassBeginInfo       render_pass_begin_info(render_pass, framebuffers[i], {{0, 0}, extent}, clear_values);
+			                                               vk::ClearDepthStencilValue{0.0f, 0}}};
+			vk::RenderPassBeginInfo       render_pass_begin_info{.renderPass      = render_pass,
+			                                                     .framebuffer     = framebuffers[i],
+			                                                     .renderArea      = {{0, 0}, extent},
+			                                                     .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+			                                                     .pClearValues    = clear_values.data()};
 			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
+			vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
 			command_buffer.setViewport(0, viewport);
 
-			vk::Rect2D scissor({0, 0}, extent);
+			vk::Rect2D scissor{{0, 0}, extent};
 			command_buffer.setScissor(0, scissor);
 
 			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, composition.pipeline_layout, 0, composition.descriptor_set, {});
@@ -224,8 +236,9 @@ vk::DeviceMemory HPPHDR::allocate_memory(vk::Image image)
 {
 	vk::MemoryRequirements memory_requirements = get_device().get_handle().getImageMemoryRequirements(image);
 
-	vk::MemoryAllocateInfo memory_allocate_info(
-	    memory_requirements.size, get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
+	vk::MemoryAllocateInfo memory_allocate_info{.allocationSize  = memory_requirements.size,
+	                                            .memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
+	                                                                                                      vk::MemoryPropertyFlagBits::eDeviceLocal)};
 
 	return get_device().get_handle().allocateMemory(memory_allocate_info);
 }
@@ -244,30 +257,30 @@ HPPHDR::FramebufferAttachment HPPHDR::create_attachment(vk::Format format, vk::I
 vk::DescriptorPool HPPHDR::create_descriptor_pool()
 {
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}}};
-	return get_device().get_handle().createDescriptorPool({{}, 4, pool_sizes});
+	return get_device().get_handle().createDescriptorPool(
+	    {.maxSets = 4, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
 }
 
 vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "bloom.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr", "bloom.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "bloom.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "bloom.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
-	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
+	vk::SpecializationMapEntry specialization_map_entry{0, 0, sizeof(uint32_t)};
 
-	vk::SpecializationInfo specialization_info(1, &specialization_map_entry, sizeof(uint32_t), &direction);
+	vk::SpecializationInfo specialization_info{1, &specialization_map_entry, sizeof(uint32_t), &direction};
 	shader_stages[1].pSpecializationInfo = &specialization_info;
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.blendEnable         = true;
-	blend_attachment_state.colorBlendOp        = vk::BlendOp::eAdd;
-	blend_attachment_state.srcColorBlendFactor = vk::BlendFactor::eOne;
-	blend_attachment_state.dstColorBlendFactor = vk::BlendFactor::eOne;
-	blend_attachment_state.alphaBlendOp        = vk::BlendOp::eAdd;
-	blend_attachment_state.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
-	blend_attachment_state.dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.blendEnable         = true,
+	                                                             .srcColorBlendFactor = vk::BlendFactor::eOne,
+	                                                             .dstColorBlendFactor = vk::BlendFactor::eOne,
+	                                                             .colorBlendOp        = vk::BlendOp::eAdd,
+	                                                             .srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha,
+	                                                             .dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha,
+	                                                             .alphaBlendOp        = vk::BlendOp::eAdd,
+	                                                             .colorWriteMask      = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -293,12 +306,11 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 
 vk::Pipeline HPPHDR::create_composition_pipeline()
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "composition.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr", "composition.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "composition.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "composition.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -325,59 +337,60 @@ vk::Pipeline HPPHDR::create_composition_pipeline()
 vk::RenderPass HPPHDR::create_filter_render_pass()
 {
 	// Set up separate renderpass with references to the color and depth attachments
-	vk::AttachmentDescription attachment_description;
-	attachment_description.samples        = vk::SampleCountFlagBits::e1;
-	attachment_description.loadOp         = vk::AttachmentLoadOp::eClear;
-	attachment_description.storeOp        = vk::AttachmentStoreOp::eStore;
-	attachment_description.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-	attachment_description.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-	attachment_description.initialLayout  = vk::ImageLayout::eUndefined;
-	attachment_description.finalLayout    = vk::ImageLayout::eShaderReadOnlyOptimal;
-	attachment_description.format         = filter_pass.color.format;
+	vk::AttachmentDescription attachment_description{.format         = filter_pass.color.format,
+	                                                 .samples        = vk::SampleCountFlagBits::e1,
+	                                                 .loadOp         = vk::AttachmentLoadOp::eClear,
+	                                                 .storeOp        = vk::AttachmentStoreOp::eStore,
+	                                                 .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+	                                                 .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+	                                                 .initialLayout  = vk::ImageLayout::eUndefined,
+	                                                 .finalLayout    = vk::ImageLayout::eShaderReadOnlyOptimal};
 
-	vk::AttachmentReference color_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
-	vk::SubpassDescription  subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_reference);
+	vk::AttachmentReference color_reference{0, vk::ImageLayout::eColorAttachmentOptimal};
+	vk::SubpassDescription  subpass{.pipelineBindPoint = vk::PipelineBindPoint::eGraphics, .colorAttachmentCount = 1, .pColorAttachments = &color_reference};
 
 	return create_render_pass({attachment_description}, subpass);
 }
 
 vk::Image HPPHDR::create_image(vk::Format format, vk::ImageUsageFlagBits usage)
 {
-	vk::ImageCreateInfo image_create_info;
-	image_create_info.imageType   = vk::ImageType::e2D;
-	image_create_info.format      = format;
-	image_create_info.extent      = vk::Extent3D(offscreen.extent, 1);
-	image_create_info.mipLevels   = 1;
-	image_create_info.arrayLayers = 1;
-	image_create_info.samples     = vk::SampleCountFlagBits::e1;
-	image_create_info.tiling      = vk::ImageTiling::eOptimal;
-	image_create_info.usage       = usage | vk::ImageUsageFlagBits::eSampled;
+	vk::ImageCreateInfo image_create_info{.imageType   = vk::ImageType::e2D,
+	                                      .format      = format,
+	                                      .extent      = {offscreen.extent.width, offscreen.extent.height, 1},
+	                                      .mipLevels   = 1,
+	                                      .arrayLayers = 1,
+	                                      .samples     = vk::SampleCountFlagBits::e1,
+	                                      .tiling      = vk::ImageTiling::eOptimal,
+	                                      .usage       = usage | vk::ImageUsageFlagBits::eSampled};
 
 	return get_device().get_handle().createImage(image_create_info);
 }
 
 vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                             load_shader("hdr", "gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr", "gbuffer.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr", "gbuffer.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
-	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
+	vk::SpecializationMapEntry specialization_map_entry{0, 0, sizeof(uint32_t)};
 
 	// Set constant parameters via specialization constants
-	vk::SpecializationInfo specialization_info = vk::SpecializationInfo(1, &specialization_map_entry, sizeof(uint32_t), &shaderType);
-	shader_stages[0].pSpecializationInfo       = &specialization_info;
-	shader_stages[1].pSpecializationInfo       = &specialization_info;
+	vk::SpecializationInfo specialization_info{1, &specialization_map_entry, sizeof(uint32_t), &shaderType};
+	shader_stages[0].pSpecializationInfo = &specialization_info;
+	shader_stages[1].pSpecializationInfo = &specialization_info;
 
 	// Vertex bindings an attributes for model rendering
 	// Binding description
-	vk::VertexInputBindingDescription vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
 
 	// Attribute descriptions
 	std::vector<vk::VertexInputAttributeDescription> vertex_input_attributes = {{0, 0, vk::Format::eR32G32B32Sfloat, 0},
 	                                                                            {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)}};
 
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
 	std::vector<vk::PipelineColorBlendAttachmentState> blend_attachment_states(2);
 	blend_attachment_states[0].colorWriteMask =
@@ -433,9 +446,12 @@ vk::RenderPass HPPHDR::create_offscreen_render_pass()
 	std::array<vk::AttachmentReference, 2> color_references{{{0, vk::ImageLayout::eColorAttachmentOptimal},
 	                                                         {1, vk::ImageLayout::eColorAttachmentOptimal}}};
 
-	vk::AttachmentReference depth_reference(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	vk::AttachmentReference depth_reference{2, vk::ImageLayout::eDepthStencilAttachmentOptimal};
 
-	vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, nullptr, color_references, nullptr, &depth_reference);
+	vk::SubpassDescription subpass{.pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
+	                               .colorAttachmentCount    = static_cast<uint32_t>(color_references.size()),
+	                               .pColorAttachments       = color_references.data(),
+	                               .pDepthStencilAttachment = &depth_reference};
 
 	return create_render_pass(attachment_descriptions, subpass);
 }
@@ -466,7 +482,12 @@ vk::RenderPass HPPHDR::create_render_pass(std::vector<vk::AttachmentDescription>
 	subpass_dependencies[1].dstStageMask  = vk::PipelineStageFlagBits::eFragmentShader;
 	subpass_dependencies[1].dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
-	vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass_description, subpass_dependencies);
+	vk::RenderPassCreateInfo render_pass_create_info{.attachmentCount = static_cast<uint32_t>(attachment_descriptions.size()),
+	                                                 .pAttachments    = attachment_descriptions.data(),
+	                                                 .subpassCount    = 1,
+	                                                 .pSubpasses      = &subpass_description,
+	                                                 .dependencyCount = static_cast<uint32_t>(subpass_dependencies.size()),
+	                                                 .pDependencies   = subpass_dependencies.data()};
 
 	return get_device().get_handle().createRenderPass(render_pass_create_info);
 }
@@ -514,8 +535,8 @@ void HPPHDR::prepare_bloom()
 	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::Device device           = get_device().get_handle();
-	bloom.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
-	bloom.pipeline_layout       = device.createPipelineLayout({{}, bloom.descriptor_set_layout});
+	bloom.descriptor_set_layout = device.createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(bindings.size()), .pBindings = bindings.data()});
+	bloom.pipeline_layout       = device.createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &bloom.descriptor_set_layout});
 	bloom.pipelines[0]          = create_bloom_pipeline(1);
 	bloom.pipelines[1]          = create_bloom_pipeline(0);
 	bloom.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, bloom.descriptor_set_layout);
@@ -537,11 +558,12 @@ void HPPHDR::prepare_composition()
 	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	vk::Device device                 = get_device().get_handle();
-	composition.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
-	composition.pipeline_layout       = device.createPipelineLayout({{}, composition.descriptor_set_layout});
-	composition.pipeline              = create_composition_pipeline();
-	composition.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, composition.descriptor_set_layout);
+	vk::Device device = get_device().get_handle();
+	composition.descriptor_set_layout =
+	    device.createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(bindings.size()), .pBindings = bindings.data()});
+	composition.pipeline_layout = device.createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &composition.descriptor_set_layout});
+	composition.pipeline        = create_composition_pipeline();
+	composition.descriptor_set  = vkb::common::allocate_descriptor_set(device, descriptor_pool, composition.descriptor_set_layout);
 	update_composition_descriptor_set();
 }
 
@@ -552,8 +574,8 @@ void HPPHDR::prepare_models()
 	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::Device device            = get_device().get_handle();
-	models.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
-	models.pipeline_layout       = device.createPipelineLayout({{}, models.descriptor_set_layout});
+	models.descriptor_set_layout = device.createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(bindings.size()), .pBindings = bindings.data()});
+	models.pipeline_layout       = device.createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &models.descriptor_set_layout});
 
 	models.objects.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, models.descriptor_set_layout);
 	update_model_descriptor_set(models.objects.descriptor_set);
@@ -636,9 +658,16 @@ void HPPHDR::update_composition_descriptor_set()
 	std::array<vk::DescriptorImageInfo, 2> color_descriptors = {{{offscreen.sampler, offscreen.color[0].view, vk::ImageLayout::eShaderReadOnlyOptimal},
 	                                                             {offscreen.sampler, filter_pass.color.view, vk::ImageLayout::eShaderReadOnlyOptimal}}};
 
-	std::array<vk::WriteDescriptorSet, 2> sampler_write_descriptor_sets = {
-	    {{composition.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
-	     {composition.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
+	std::array<vk::WriteDescriptorSet, 2> sampler_write_descriptor_sets = {{{.dstSet          = composition.descriptor_set,
+	                                                                         .dstBinding      = 0,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                         .pImageInfo      = &color_descriptors[0]},
+	                                                                        {.dstSet          = composition.descriptor_set,
+	                                                                         .dstBinding      = 1,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                         .pImageInfo      = &color_descriptors[1]}}};
 
 	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
 }
@@ -648,28 +677,46 @@ void HPPHDR::update_bloom_descriptor_set()
 	std::array<vk::DescriptorImageInfo, 2> color_descriptors = {{{offscreen.sampler, offscreen.color[0].view, vk::ImageLayout::eShaderReadOnlyOptimal},
 	                                                             {offscreen.sampler, offscreen.color[1].view, vk::ImageLayout::eShaderReadOnlyOptimal}}};
 
-	std::array<vk::WriteDescriptorSet, 2> sampler_write_descriptor_sets = {
-	    {{bloom.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
-	     {bloom.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
+	std::array<vk::WriteDescriptorSet, 2> sampler_write_descriptor_sets = {{{.dstSet          = bloom.descriptor_set,
+	                                                                         .dstBinding      = 0,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                         .pImageInfo      = &color_descriptors[0]},
+	                                                                        {.dstSet          = bloom.descriptor_set,
+	                                                                         .dstBinding      = 1,
+	                                                                         .descriptorCount = 1,
+	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                         .pImageInfo      = &color_descriptors[1]}}};
 
 	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
 }
 
 void HPPHDR::update_model_descriptor_set(vk::DescriptorSet descriptor_set)
 {
-	vk::DescriptorBufferInfo matrix_buffer_descriptor(uniform_buffers.matrices->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo matrix_buffer_descriptor{uniform_buffers.matrices->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo environment_image_descriptor(
-	    textures.envmap.sampler,
-	    textures.envmap.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.envmap.image->get_vk_image_view().get_format()));
+	vk::DescriptorImageInfo environment_image_descriptor{textures.envmap.sampler,
+	                                                     textures.envmap.image->get_vk_image_view().get_handle(),
+	                                                     descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                     textures.envmap.image->get_vk_image_view().get_format())};
 
-	vk::DescriptorBufferInfo params_buffer_descriptor(uniform_buffers.params->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo params_buffer_descriptor{uniform_buffers.params->get_handle(), 0, vk::WholeSize};
 
-	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
-	    {{descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, matrix_buffer_descriptor},
-	     {descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, environment_image_descriptor},
-	     {descriptor_set, 2, 0, vk::DescriptorType::eUniformBuffer, {}, params_buffer_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {{{.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &matrix_buffer_descriptor},
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &environment_image_descriptor},
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 2,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &params_buffer_descriptor}}};
 
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }

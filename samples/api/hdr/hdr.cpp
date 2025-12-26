@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,7 +65,7 @@ HDR::~HDR()
 	}
 }
 
-void HDR::request_gpu_features(vkb::PhysicalDevice &gpu)
+void HDR::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -267,7 +267,7 @@ void HDR::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBu
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->mem, 0));
 
@@ -755,8 +755,8 @@ void HDR::prepare_pipelines()
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
 
 	// Final fullscreen composition pass pipeline
-	shader_stages[0]                  = load_shader("hdr", "composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = load_shader("hdr", "composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                  = load_shader("hdr", "composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                  = load_shader("hdr", "composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline_create_info.layout       = pipeline_layouts.composition;
 	pipeline_create_info.renderPass   = render_pass;
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
@@ -765,8 +765,8 @@ void HDR::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
 	// Bloom pass
-	shader_stages[0]                           = load_shader("hdr", "bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                           = load_shader("hdr", "bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                           = load_shader("hdr", "bloom.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                           = load_shader("hdr", "bloom.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	color_blend_state.pAttachments             = &blend_attachment_state;
 	blend_attachment_state.colorWriteMask      = 0xF;
 	blend_attachment_state.blendEnable         = VK_TRUE;
@@ -820,8 +820,8 @@ void HDR::prepare_pipelines()
 	color_blend_state.attachmentCount  = 2;
 	color_blend_state.pAttachments     = blend_attachment_states.data();
 
-	shader_stages[0] = load_shader("hdr", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("hdr", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("hdr", "gbuffer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("hdr", "gbuffer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,21 +60,15 @@ RayTracingPositionFetch::~RayTracingPositionFetch()
 	}
 }
 
-void RayTracingPositionFetch::request_gpu_features(vkb::PhysicalDevice &gpu)
+void RayTracingPositionFetch::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Features required for ray tracing
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, rayTracingPipeline);
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
 
 	// Sample sepcific feature
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR,
-	                         rayTracingPositionFetch);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR, rayTracingPositionFetch);
 }
 
 /*
@@ -103,7 +97,7 @@ void RayTracingPositionFetch::create_storage_image()
 	vkGetImageMemoryRequirements(get_device().get_handle(), storage_image.image, &memory_requirements);
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &storage_image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), storage_image.image, storage_image.memory, 0));
 
@@ -178,7 +172,7 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 			    VK_GEOMETRY_OPAQUE_BIT_KHR);
 		}
 	}
-
+	bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	// To access vertex positions from a shader, we need to set the VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR for the bottom level acceleration structure
 	VkBuildAccelerationStructureFlagsKHR acceleration_build_flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	bottom_level_acceleration_structure->build(queue, acceleration_build_flags, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
@@ -210,6 +204,7 @@ void RayTracingPositionFetch::create_top_level_acceleration_structure()
 
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
 	top_level_acceleration_structure->add_instance_geometry(instances_buffer, 1);
+	top_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	top_level_acceleration_structure->build(queue);
 }
 
@@ -252,9 +247,18 @@ void RayTracingPositionFetch::create_shader_binding_tables()
 
 	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+	                                                                                     .with_usage(sbt_buffer_usage_flags)
+	                                                                                     .with_vma_usage(sbt_memory_usage)
+	                                                                                     .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+                                                                                       .with_usage(sbt_buffer_usage_flags)
+                                                                                       .with_vma_usage(sbt_memory_usage)
+                                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+                                                                                      .with_usage(sbt_buffer_usage_flags)
+                                                                                      .with_vma_usage(sbt_memory_usage)
+                                                                                      .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
@@ -336,9 +340,6 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
-	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the glslang compiler
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
-
 	/*
 	    Setup ray tracing shader groups
 	    Each shader group points at the corresponding shader in the pipeline
@@ -346,7 +347,7 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
 	// Ray generation group
-	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
 	VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 	raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 	raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -357,7 +358,7 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 	shader_groups.push_back(raygen_group_ci);
 
 	// Ray miss group
-	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR));
 	VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 	miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 	miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -368,7 +369,7 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 	shader_groups.push_back(miss_group_ci);
 
 	// Ray closest hit group
-	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+	shader_stages.push_back(load_shader("ray_tracing_position_fetch", "closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
 	VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 	closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 	closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
@@ -476,8 +477,13 @@ void RayTracingPositionFetch::build_command_buffers()
 		// Prepare current swap chain image as transfer destination
 		vkb::image_layout_transition(draw_cmd_buffers[i],
 		                             get_render_context().get_swapchain().get_images()[i],
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             {},
+		                             VK_ACCESS_TRANSFER_WRITE_BIT,
 		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             subresource_range);
 
 		// Prepare ray tracing output image as transfer source
 		vkb::image_layout_transition(draw_cmd_buffers[i],
@@ -560,8 +566,12 @@ bool RayTracingPositionFetch::prepare(const vkb::ApplicationOptions &options)
 	// This sample renders the UI overlay on top of the ray tracing output, so we need to disable color attachment clears
 	update_render_pass_flags(RenderPassCreateFlags::ColorAttachmentLoad);
 
+	acceleration_structure_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+
 	// Get the ray tracing pipeline properties, which we'll need later on in the sample
 	ray_tracing_pipeline_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+	ray_tracing_pipeline_properties.pNext = &acceleration_structure_properties;
+
 	VkPhysicalDeviceProperties2 device_properties{};
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &ray_tracing_pipeline_properties;

@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Arm Limited and Contributors
+# Copyright (c) 2024-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Image Compression Control"
-    DESCRIPTION "Save memory footprint and bandwidth with visually lossless compression")
+    DESCRIPTION "Save memory footprint and bandwidth with visually lossless compression"
+    SHADER_FILES_GLSL
+        "postprocessing/postprocessing.vert"
+        "postprocessing/chromatic_aberration.frag")

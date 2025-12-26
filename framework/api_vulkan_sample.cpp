@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Sascha Willems
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Sascha Willems
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,9 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
 bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))
@@ -34,6 +37,10 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
+
+	// Update width and height from surface extent to reflect command line arguments
+	width  = get_render_context().get_surface_extent().width;
+	height = get_render_context().get_surface_extent().height;
 
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
@@ -55,7 +62,7 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info.signalSemaphoreCount = 1;
 	submit_info.pSignalSemaphores    = &semaphores.render_complete;
 
-	queue = get_device().get_suitable_graphics_queue().get_handle();
+	queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle();
 
 	create_swapchain_buffers();
 	create_command_pool();
@@ -66,9 +73,6 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	create_pipeline_cache();
 	setup_framebuffer();
 
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
-
 	prepare_gui();
 
 	return true;
@@ -78,8 +82,8 @@ void ApiVulkanSample::prepare_gui()
 {
 	create_gui(*window, nullptr, 15.0f, true);
 	get_gui().prepare(pipeline_cache, render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void ApiVulkanSample::update(float delta_time)
@@ -90,6 +94,7 @@ void ApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
+	assert(has_render_context());
 	render(delta_time);
 	camera.update(delta_time);
 	if (camera.moving())
@@ -424,12 +429,12 @@ void ApiVulkanSample::create_pipeline_cache()
 	VK_CHECK(vkCreatePipelineCache(get_device().get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
 }
 
-VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage)
 {
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file.c_str(), get_device().get_handle(), stage, src_language);
+	shader_stage.module                          = vkb::load_shader(file.c_str(), get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
@@ -438,27 +443,12 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 
 VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, VkShaderStageFlagBits stage)
 {
-	// Note: this can be reworked once offline compilation for GLSL shaders is added
-
-	// Default to GLSL
-	std::string               shader_folder{"glsl"};
-	std::string               shader_extension{""};
-	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
-
-	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
-	{
-		shader_folder = "hlsl";
-		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
-		src_language     = vkb::ShaderSourceLanguage::SPV;
-		shader_extension = ".spv";
-	}
-
-	std::string full_file_name = sample_folder_name + "/" + shader_folder + "/" + shader_filename + shader_extension;
+	std::string full_file_name = sample_folder_name + "/" + get_shader_folder() + "/" + shader_filename;
 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(full_file_name, get_device().get_handle(), stage, src_language);
+	shader_stage.module                          = vkb::load_shader(full_file_name, get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
@@ -543,7 +533,7 @@ void ApiVulkanSample::submit_frame()
 		present_info.pImageIndices    = &current_buffer;
 
 		VkDisplayPresentInfoKHR disp_present_info{};
-		if (get_device().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		if (get_device().get_gpu().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
 		    window->get_display_present_info(&disp_present_info, width, height))
 		{
 			// Add display present info if supported and wanted
@@ -678,7 +668,7 @@ void ApiVulkanSample::setup_depth_stencil()
 	VkMemoryAllocateInfo memory_allocation{};
 	memory_allocation.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocation.allocationSize  = memReqs.size;
-	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation.memoryTypeIndex = get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &depth_stencil.mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), depth_stencil.image, depth_stencil.mem, 0));
 
@@ -968,8 +958,10 @@ void ApiVulkanSample::handle_surface_changes()
 	                                                   get_render_context().get_swapchain().get_surface(),
 	                                                   &surface_properties));
 
-	if (surface_properties.currentExtent.width != get_render_context().get_surface_extent().width ||
-	    surface_properties.currentExtent.height != get_render_context().get_surface_extent().height)
+	if ((surface_properties.currentExtent.width != get_render_context().get_surface_extent().width ||
+	     surface_properties.currentExtent.height != get_render_context().get_surface_extent().height) &&
+	    (surface_properties.currentExtent.width != 0xFFFFFFFF &&
+	     surface_properties.currentExtent.height != 0xFFFFFFFF))
 	{
 		resize(surface_properties.currentExtent.width, surface_properties.currentExtent.height);
 	}
@@ -1344,13 +1336,13 @@ void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuff
 	get_device().flush_command_buffer(command_buffer, queue, true, signalSemaphore);
 }
 
-void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::CommandBuffer &command_buffer)> &f)
+void ApiVulkanSample::with_vkb_command_buffer(const std::function<void(vkb::core::CommandBufferC &command_buffer)> &f)
 {
-	auto &cmd = get_device().request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	f(cmd);
-	cmd.end();
+	auto cmd = get_device().get_command_pool().request_command_buffer();
+	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	f(*cmd);
+	cmd->end();
 	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	queue.submit(cmd, get_device().request_fence());
+	queue.submit(*cmd, get_device().get_fence_pool().request_fence());
 	get_device().get_fence_pool().wait();
 }

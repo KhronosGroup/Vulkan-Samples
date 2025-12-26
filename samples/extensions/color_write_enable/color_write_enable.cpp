@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -68,8 +68,8 @@ void ColorWriteEnable::prepare_gui()
 	create_gui(*window, nullptr, 15.0f, true);
 	get_gui().set_subpass(1);
 	get_gui().prepare(pipeline_cache, render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void ColorWriteEnable::prepare_pipelines()
@@ -118,8 +118,8 @@ void ColorWriteEnable::prepare_pipelines()
 		std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {};
 
 		// Vertex stage of the pipeline
-		shader_stages[0] = load_shader("color_write_enable", "triangle_separate_channels.vert", VK_SHADER_STAGE_VERTEX_BIT);
-		shader_stages[1] = load_shader("color_write_enable", "triangle_separate_channels.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shader_stages[0] = load_shader("color_write_enable", "triangle_separate_channels.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages[1] = load_shader("color_write_enable", "triangle_separate_channels.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// We need to specify the pipeline layout and the render pass description up front as well.
 		VkGraphicsPipelineCreateInfo pipe = vkb::initializers::pipeline_create_info(pipeline_layouts.color, render_pass);
@@ -147,8 +147,8 @@ void ColorWriteEnable::prepare_pipelines()
 		std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {};
 
 		// Vertex stage of the pipeline
-		shader_stages[0] = load_shader("color_write_enable", "composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-		shader_stages[1] = load_shader("color_write_enable", "composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shader_stages[0] = load_shader("color_write_enable", "composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages[1] = load_shader("color_write_enable", "composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Specify we will use triangle lists to draw geometry.
 		VkPipelineInputAssemblyStateCreateInfo input_assembly = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
@@ -211,7 +211,7 @@ void ColorWriteEnable::create_attachment(VkFormat format, FrameBufferAttachment 
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->mem, 0));
 
@@ -237,16 +237,25 @@ void ColorWriteEnable::create_attachments()
 	create_attachment(format, &attachments.blue);
 }
 
-void ColorWriteEnable::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceColorWriteEnableFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT,
-	                         colorWriteEnable);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceColorWriteEnableFeaturesEXT, colorWriteEnable);
 
+	if (gpu.get_features().independentBlend)
 	{
-		auto &features            = gpu.get_mutable_requested_features();
-		features.independentBlend = VK_TRUE;
+		gpu.get_mutable_requested_features().independentBlend = true;
+	}
+
+	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
+	{
+		if (gpu.get_features().shaderStorageImageReadWithoutFormat)
+		{
+			gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = true;
+		}
+		else
+		{
+			throw std::runtime_error("When using Slang shaders, this sample requires support for reading storage images without format (shaderStorageImageReadWithoutFormat)");
+		}
 	}
 }
 

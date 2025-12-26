@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024 Holochip Corporation
+# Copyright (c) 2023-2025 Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -28,7 +28,14 @@ add_sample_with_tags(
     SHADER_FILES_GLSL
         "mesh_shading/glsl/ms.mesh"
         "mesh_shading/glsl/ps.frag"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.4"
     SHADER_FILES_HLSL
         "mesh_shading/hlsl/ms.mesh.hlsl"
         "mesh_shading/hlsl/ps.frag.hlsl"
-    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_EXT_mesh_shader")
+    DXC_ADDITIONAL_ARGUMENTS
+        "-fspv-extension=SPV_EXT_mesh_shader"
+    SHADER_FILES_SLANG
+        "mesh_shading/slang/ms.mesh.slang"
+        "mesh_shading/slang/ps.frag.slang"
+    )

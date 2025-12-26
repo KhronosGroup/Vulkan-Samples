@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Sascha Willems
+# Copyright (c) 2019-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -29,10 +29,16 @@ add_sample_with_tags(
         "ray_tracing_basic/glsl/raygen.rgen"
         "ray_tracing_basic/glsl/miss.rmiss"
         "ray_tracing_basic/glsl/closesthit.rchit"
-   SHADER_FILES_HLSL
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.4"
+    SHADER_FILES_HLSL
         "ray_tracing_basic/hlsl/raygen.rgen.hlsl"
         "ray_tracing_basic/hlsl/miss.rmiss.hlsl"
         "ray_tracing_basic/hlsl/closesthit.rchit.hlsl"
     DXC_ADDITIONAL_ARGUMENTS
         "-fspv-extension=SPV_KHR_ray_query"
-)
+    SHADER_FILES_SLANG
+        "ray_tracing_basic/slang/raygen.rgen.slang"
+        "ray_tracing_basic/slang/miss.rmiss.slang"
+        "ray_tracing_basic/slang/closesthit.rchit.slang"
+    )

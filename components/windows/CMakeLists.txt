@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Thomas Atkinson
+# Copyright (c) 2023-2025, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,16 +23,6 @@ vkb__register_component(
         src/entrypoint.cpp
     LINK_LIBS
         vkb__core
-)
-
-vkb__register_tests(
-    NO_CATCH2
-    COMPONENT windows_platform
-    NAME windows_platform
-    SRC
-        tests/entrypoint.test.cpp
-    LINK_LIBS
-        vkb__windows_platform
 )
 
 # attach to core

@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Sascha Willems
+# Copyright (c) 2024-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -29,9 +29,16 @@ add_sample(
         "ray_tracing_position_fetch/glsl/closesthit.rchit"
         "ray_tracing_position_fetch/glsl/miss.rmiss"
         "ray_tracing_position_fetch/glsl/raygen.rgen"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.4"
     SHADER_FILES_HLSL
         "ray_tracing_position_fetch/hlsl/closesthit.rchit.hlsl"
         "ray_tracing_position_fetch/hlsl/miss.rmiss.hlsl"
         "ray_tracing_position_fetch/hlsl/raygen.rgen.hlsl"
-        DXC_ADDITIONAL_ARGUMENTS
-        "-fspv-extension=SPV_KHR_ray_query -fspv-extension=SPV_KHR_ray_tracing")
+    DXC_ADDITIONAL_ARGUMENTS
+        "-fspv-extension=SPV_KHR_ray_query -fspv-extension=SPV_KHR_ray_tracing"
+    SHADER_FILES_SLANG
+        "ray_tracing_position_fetch/slang/closesthit.rchit.slang"
+        "ray_tracing_position_fetch/slang/miss.rmiss.slang"
+        "ray_tracing_position_fetch/slang/raygen.rgen.slang"
+    )

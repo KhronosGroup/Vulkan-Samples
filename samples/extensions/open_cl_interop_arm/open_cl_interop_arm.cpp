@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -487,7 +487,7 @@ void OpenCLInteropArm::prepare_shared_resources()
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.pNext                = &export_memory_allocate_Info;
 	memory_allocate_info.allocationSize       = 0;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	VK_CHECK(vkAllocateMemory(device_handle, &memory_allocate_info, nullptr, &shared_texture.memory));
 	VK_CHECK(vkBindImageMemory(device_handle, shared_texture.image, shared_texture.memory, 0));
@@ -617,7 +617,7 @@ void OpenCLInteropArm::prepare_open_cl_resources()
 
 	cl_data->command_queue = clCreateCommandQueue(cl_data->context, cl_data->device_id, 0, &result);
 
-	std::string kernel_source      = vkb::fs::read_shader("open_cl_interop_arm/procedural_texture.cl");
+	std::string kernel_source      = vkb::fs::read_text_file("open_cl_interop_arm/procedural_texture.cl");
 	auto        kernel_source_data = kernel_source.c_str();
 	size_t      kernel_source_size = kernel_source.size();
 

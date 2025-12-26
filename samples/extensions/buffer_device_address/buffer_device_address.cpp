@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -109,7 +109,7 @@ void BufferDeviceAddress::create_compute_pipeline()
 {
 	pipelines.compute_pipeline_layout = create_pipeline_layout(false);
 	VkComputePipelineCreateInfo info  = vkb::initializers::compute_pipeline_create_info(pipelines.compute_pipeline_layout);
-	info.stage                        = load_shader("buffer_device_address/update_vbo.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	info.stage                        = load_shader("buffer_device_address", "update_vbo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_update_pipeline));
 }
 
@@ -155,8 +155,8 @@ void BufferDeviceAddress::create_graphics_pipeline()
 	info.pStages    = stages;
 	info.stageCount = 2;
 
-	stages[0] = load_shader("buffer_device_address/render.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	stages[1] = load_shader("buffer_device_address/render.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	stages[0] = load_shader("buffer_device_address", "render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	stages[1] = load_shader("buffer_device_address", "render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.bindless_vbo_pipeline));
 }
 
@@ -199,21 +199,22 @@ std::unique_ptr<vkb::core::BufferC> BufferDeviceAddress::create_index_buffer()
 	staging_buffer.flush();
 	staging_buffer.unmap();
 
-	auto &cmd = get_device().request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	cmd.copy_buffer(staging_buffer, *index_buffer, size);
+	auto cmd = get_device().get_command_pool().request_command_buffer();
+	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	cmd->copy_buffer(staging_buffer, *index_buffer, size);
 
 	vkb::BufferMemoryBarrier memory_barrier;
 	memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	memory_barrier.dst_access_mask = VK_ACCESS_INDEX_READ_BIT;
 	memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-	cmd.buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
-	VK_CHECK(cmd.end());
+	cmd->buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
+	cmd->end();
 
 	// Not very optimal, but it's the simplest solution.
-	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
-	get_device().get_suitable_graphics_queue().wait_idle();
+	auto const &graphicsQueue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	graphicsQueue.submit(*cmd, VK_NULL_HANDLE);
+	graphicsQueue.wait_idle();
 	return index_buffer;
 }
 
@@ -253,7 +254,7 @@ BufferDeviceAddress::TestBuffer BufferDeviceAddress::create_vbo_buffer()
 	memory_allocation_info.pNext = &flags_info;
 
 	memory_allocation_info.allocationSize  = memory_requirements.size;
-	memory_allocation_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &buffer.memory));
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), buffer.buffer, buffer.memory, 0));
 
@@ -290,7 +291,7 @@ BufferDeviceAddress::TestBuffer BufferDeviceAddress::create_pointer_buffer()
 	memory_allocation_info.pNext = &flags_info;
 
 	memory_allocation_info.allocationSize  = memory_requirements.size;
-	memory_allocation_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &buffer.memory));
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), buffer.buffer, buffer.memory, 0));
 
@@ -425,13 +426,10 @@ void BufferDeviceAddress::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
-void BufferDeviceAddress::request_gpu_features(vkb::PhysicalDevice &gpu)
+void BufferDeviceAddress::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Need to enable the bufferDeviceAddress feature.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR,
-	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
 }
 
 std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +21,7 @@
 
 namespace vkb
 {
-FencePool::FencePool(Device &device) :
+FencePool::FencePool(vkb::core::DeviceC &device) :
     device{device}
 {
 }
@@ -66,7 +66,7 @@ VkFence FencePool::request_fence()
 	return fences.back();
 }
 
-VkResult FencePool::wait(uint32_t timeout) const
+VkResult FencePool::wait(uint64_t timeout) const
 {
 	if (active_fence_count < 1 || fences.empty())
 	{

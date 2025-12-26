@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -95,9 +95,9 @@ void ExtendedDynamicState2::load_assets()
 {
 	load_scene("scenes/primitives/primitives.gltf");
 
-	std::vector<SceneNode>       scene_elements;
-	std::vector<vkb::sg::Node *> node_scene_list = {&(get_scene().get_root_node())};
-	vkb::sg::Node               *node            = nullptr;
+	std::vector<SceneNode>                 scene_elements;
+	std::vector<vkb::scene_graph::NodeC *> node_scene_list = {&(get_scene().get_root_node())};
+	vkb::scene_graph::NodeC               *node            = nullptr;
 
 	for (size_t list_it = 0; node_scene_list.size() > list_it; ++list_it)
 	{
@@ -170,18 +170,12 @@ void ExtendedDynamicState2::render(float delta_time)
  */
 void ExtendedDynamicState2::prepare_uniform_buffers()
 {
-	uniform_buffers.common      = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                                  sizeof(ubo_common),
-                                                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.baseline    = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                                    sizeof(ubo_baseline),
-                                                                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.tesselation = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                   sizeof(ubo_tess),
-	                                                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.common =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_common), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.baseline =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_baseline), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.tesselation =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_tess), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -302,8 +296,8 @@ void ExtendedDynamicState2::create_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages{};
-	shader_stages[0] = load_shader("extended_dynamic_state2/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("extended_dynamic_state2/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("extended_dynamic_state2", "baseline.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("extended_dynamic_state2", "baseline.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Use the pNext to point to the rendering create struct */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -366,8 +360,8 @@ void ExtendedDynamicState2::create_pipelines()
 
 	rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-	shader_stages[0] = load_shader("extended_dynamic_state2/background.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("extended_dynamic_state2/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("extended_dynamic_state2", "background.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("extended_dynamic_state2", "background.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
 	                                   pipeline_cache,
@@ -396,14 +390,10 @@ void ExtendedDynamicState2::create_pipelines()
 		rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
 	}
 
-	shader_stages[0]           = load_shader("extended_dynamic_state2/tess.vert",
-	                                         VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]           = load_shader("extended_dynamic_state2/tess.frag",
-	                                         VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[2]           = load_shader("extended_dynamic_state2/tess.tesc",
-	                                         VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-	shader_stages[3]           = load_shader("extended_dynamic_state2/tess.tese",
-	                                         VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+	shader_stages[0]           = load_shader("extended_dynamic_state2", "tess.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]           = load_shader("extended_dynamic_state2", "tess.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[2]           = load_shader("extended_dynamic_state2", "tess.tesc.spv", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	shader_stages[3]           = load_shader("extended_dynamic_state2", "tess.tese.spv", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 	graphics_create.stageCount = static_cast<uint32_t>(shader_stages.size());
 	graphics_create.pStages    = shader_stages.data();
 	/* Enable depth test and write */
@@ -511,6 +501,7 @@ void ExtendedDynamicState2::build_command_buffers()
 
 		/* Change topology to patch list and setting patch control points value */
 		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
+		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffer, VK_FALSE);
 		vkCmdSetPatchControlPointsEXT(draw_cmd_buffer, patch_control_points_triangle);
 
 		/* Drawing scene with objects using tessellation feature */
@@ -732,27 +723,19 @@ void ExtendedDynamicState2::create_descriptor_sets()
 }
 
 /**
- * @fn void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
+ * @fn void ExtendedDynamicState2::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
  * @brief Enabling features related to Vulkan extensions
  */
-void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ExtendedDynamicState2::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT, extendedDynamicState2);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
-	                         extendedDynamicState2PatchControlPoints);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2PatchControlPoints);
 
-	REQUEST_REQUIRED_FEATURE(
-	    gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT, extendedDynamicState);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT,
-	                         primitiveTopologyListRestart);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT, primitiveTopologyListRestart);
 
 	// Tessellation shader support is required for this example
 	auto &requested_features = gpu.get_mutable_requested_features();
@@ -1079,12 +1062,9 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 	constexpr float move_step  = 0.0005f;
 	static float    time_pass  = 0.0f;
 	time_pass += delta_time;
-	static auto &transform = std::find_if(scene_elements_baseline.begin(),
-	                                      scene_elements_baseline.end(),
-	                                      [](SceneNode const &scene_node) {
-		                                      return scene_node.node->get_name() == "Cube_1";
-	                                      })
-	                             ->node->get_transform();
+	static auto &transform =
+	    std::ranges::find_if(scene_elements_baseline, [](SceneNode const &scene_node) { return scene_node.node->get_name() == "Cube_1"; })
+	        ->node->get_transform();
 	static auto  translation = transform.get_translation();
 	static float difference  = 0.0f;
 	static bool  rising      = true;

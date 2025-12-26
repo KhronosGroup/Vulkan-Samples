@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Google
+/* Copyright (c) 2024-2025, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -106,7 +106,7 @@ void OITDepthPeeling::render(float delta_time)
 	update_scene_constants();
 }
 
-void OITDepthPeeling::request_gpu_features(vkb::PhysicalDevice &gpu)
+void OITDepthPeeling::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -513,12 +513,12 @@ void OITDepthPeeling::create_pipelines()
 			vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
 			vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
 
-			shader_stages[0] = load_shader("oit_depth_peeling/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
-			shader_stages[1] = load_shader("oit_depth_peeling/gather_first.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shader_stages[0] = load_shader("oit_depth_peeling/gather.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_depth_peeling/gather_first.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &gather_first_pipeline));
 
-			shader_stages[1] = load_shader("oit_depth_peeling/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shader_stages[1] = load_shader("oit_depth_peeling/gather.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 			VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &gather_pipeline));
 		}
 
@@ -534,8 +534,8 @@ void OITDepthPeeling::create_pipelines()
 		pipeline_create_info.renderPass = render_pass;
 
 		{
-			shader_stages[0] = load_shader("oit_depth_peeling/fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
-			shader_stages[1] = load_shader("oit_depth_peeling/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shader_stages[0] = load_shader("oit_depth_peeling/fullscreen.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_depth_peeling/background.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &background_pipeline));
 		}
@@ -549,8 +549,8 @@ void OITDepthPeeling::create_pipelines()
 			blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 			blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
 
-			shader_stages[0] = load_shader("oit_depth_peeling/fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
-			shader_stages[1] = load_shader("oit_depth_peeling/combine.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shader_stages[0] = load_shader("oit_depth_peeling/fullscreen.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_depth_peeling/combine.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &combine_pipeline));
 		}

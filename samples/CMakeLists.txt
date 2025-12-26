@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2019-2025, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -50,13 +50,13 @@ endforeach ()
 set(ORDER_LIST
     #API Samples
     "hello_triangle"
+    "hello_triangle_1_3"
     "dynamic_uniform_buffers"
     "texture_loading"
     "hdr"
     "instancing"
     "compute_nbody"
     "terrain_tessellation"
-    "hlsl"
     "oit_linked_lists"
     "oit_depth_peeling"
 
@@ -89,8 +89,10 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
+    "dynamic_multisample_rasterization"
     "sparse_image"
     "dynamic_primitive_clipping"
+    "simple_tensor_and_data_graph"
 
     #Performance Samples
     "swapchain_images"
@@ -119,26 +121,25 @@ set(ORDER_LIST
 
     #HPP API Samples
     "hpp_compute_nbody"
-	"hpp_dynamic_uniform_buffers"
-	"hpp_hdr"
+    "hpp_dynamic_uniform_buffers"
+    "hpp_hdr"
     "hpp_hello_triangle"
-	"hpp_hlsl_shaders"
-	"hpp_instancing"
-	"hpp_oit_depth_peeling"
-	"hpp_oit_linked_lists"
-	"hpp_separate_image_sampler"
-	"hpp_terrain_tessellation"
-	"hpp_texture_loading"
-	"hpp_texture_mipmap_generation"
-	
-	#HPP Extension Samples
-	"hpp_mesh_shading"
-	"hpp_push_descriptors"
-	
+    "hpp_instancing"
+    "hpp_oit_depth_peeling"
+    "hpp_oit_linked_lists"
+    "hpp_separate_image_sampler"
+    "hpp_terrain_tessellation"
+    "hpp_texture_loading"
+    "hpp_texture_mipmap_generation"
+    
+    #HPP Extension Samples
+    "hpp_mesh_shading"
+    "hpp_push_descriptors"
+    
     #HPP Performance Samples
     "hpp_pipeline_cache"
     "hpp_swapchain_images"
-	"hpp_texture_compression_comparison"
+    "hpp_texture_compression_comparison"
     
     #General Samples
     "mobile_nerf")

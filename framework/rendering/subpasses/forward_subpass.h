@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,7 +55,8 @@ class ForwardSubpass : public GeometrySubpass
 	 * @param scene Scene to render on this subpass
 	 * @param camera Camera used to look at the scene
 	 */
-	ForwardSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
+	ForwardSubpass(
+	    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
 
 	virtual ~ForwardSubpass() = default;
 
@@ -64,7 +65,7 @@ class ForwardSubpass : public GeometrySubpass
 	/**
 	 * @brief Record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) override;
+	virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 };
 
 }        // namespace vkb

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,9 +24,6 @@
 
 #include <hpp_api_vulkan_sample.h>
 
-// #include "api_vulkan_sample.h"
-// #include "glsl_compiler.h"
-
 class HPPMeshShading : public HPPApiVulkanSample
 {
   public:
@@ -38,7 +35,7 @@ class HPPMeshShading : public HPPApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from vkb::VulkanSample
-	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
 	void build_command_buffers() override;

@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Holochip Corporation
+# Copyright (c) 2023-2025, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -20,13 +20,16 @@ get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
 add_sample_with_tags(
-        ID ${FOLDER_NAME}
-        CATEGORY ${CATEGORY_NAME}
-        AUTHOR "Holochip Corporation"
-        NAME "Mesh Shader Culling"
-        DESCRIPTION "Demonstrate and showcase a sample application using mesh shader culling functionality"
-        SHADER_FILES_GLSL
+    ID ${FOLDER_NAME}
+    CATEGORY ${CATEGORY_NAME}
+    AUTHOR "Holochip Corporation"
+    NAME "Mesh Shader Culling"
+    DESCRIPTION "Demonstrate and showcase a sample application using mesh shader culling functionality"
+    SHADER_FILES_GLSL
         "mesh_shader_culling/mesh_shader_culling.task"
         "mesh_shader_culling/mesh_shader_culling.mesh"
         "mesh_shader_culling/mesh_shader_culling.frag"
-        "mesh_shader_culling/mesh_shader_shared.h")
+        "mesh_shader_culling/mesh_shader_shared.h"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.4"
+    )

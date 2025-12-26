@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Google
+/* Copyright (c) 2024-2025, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class OITDepthPeeling : public ApiVulkanSample
 	bool resize(const uint32_t width, const uint32_t height) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
@@ -93,12 +93,12 @@ class OITDepthPeeling : public ApiVulkanSample
 
 	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
 
-	VkPipelineLayout gather_pipeline_layout;
-	VkPipeline       gather_first_pipeline;
-	VkPipeline       gather_pipeline;
-	VkPipelineLayout combine_pipeline_layout;
-	VkPipeline       combine_pipeline;
-	VkPipeline       background_pipeline;
+	VkPipelineLayout gather_pipeline_layout  = VK_NULL_HANDLE;
+	VkPipeline       gather_first_pipeline   = VK_NULL_HANDLE;
+	VkPipeline       gather_pipeline         = VK_NULL_HANDLE;
+	VkPipelineLayout combine_pipeline_layout = VK_NULL_HANDLE;
+	VkPipeline       combine_pipeline        = VK_NULL_HANDLE;
+	VkPipeline       background_pipeline     = VK_NULL_HANDLE;
 
 	int32_t camera_auto_rotation = false;
 	float   background_grayscale = 0.3f;

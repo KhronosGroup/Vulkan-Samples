@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #include "hpp_swapchain_images.h"
 
 #include <common/hpp_utils.h>
-#include <hpp_gui.h>
 #include <rendering/subpasses/hpp_forward_subpass.h>
 
 HPPSwapchainImages::HPPSwapchainImages()
@@ -41,8 +40,8 @@ bool HPPSwapchainImages::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::common::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
+	vkb::ShaderSource vert_shader("base.vert.spv");
+	vkb::ShaderSource frag_shader("base.frag.spv");
 	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::HPPForwardSubpass>(
         get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 

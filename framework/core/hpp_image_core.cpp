@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
+#include "core/device.h"
 #include "core/hpp_image.h"
-
-#include "core/hpp_device.h"
+#include "core/hpp_image_view.h"
 
 namespace vkb
 {
@@ -44,17 +44,17 @@ inline vk::ImageType find_image_type(vk::Extent3D const &extent)
 namespace core
 {
 
-HPPImage HPPImageBuilder::build(HPPDevice &device) const
+HPPImage HPPImageBuilder::build(vkb::core::DeviceCpp &device) const
 {
 	return HPPImage(device, *this);
 }
 
-HPPImagePtr HPPImageBuilder::build_unique(HPPDevice &device) const
+HPPImagePtr HPPImageBuilder::build_unique(vkb::core::DeviceCpp &device) const
 {
 	return std::make_unique<HPPImage>(device, *this);
 }
 
-HPPImage::HPPImage(HPPDevice              &device,
+HPPImage::HPPImage(vkb::core::DeviceCpp   &device,
                    const vk::Extent3D     &extent,
                    vk::Format              format,
                    vk::ImageUsageFlags     image_usage,
@@ -78,10 +78,10 @@ HPPImage::HPPImage(HPPDevice              &device,
                  .with_queue_families(num_queue_families, queue_families)}
 {}
 
-HPPImage::HPPImage(HPPDevice &device, HPPImageBuilder const &builder) :
+HPPImage::HPPImage(vkb::core::DeviceCpp &device, HPPImageBuilder const &builder) :
     vkb::allocated::AllocatedCpp<vk::Image>{builder.get_allocation_create_info(), nullptr, &device}, create_info{builder.get_create_info()}
 {
-	get_handle()           = create_image(create_info.operator const VkImageCreateInfo &());
+	get_handle()           = create_image(create_info);
 	subresource.arrayLayer = create_info.arrayLayers;
 	subresource.mipLevel   = create_info.mipLevels;
 	if (!builder.get_debug_name().empty())
@@ -90,7 +90,7 @@ HPPImage::HPPImage(HPPDevice &device, HPPImageBuilder const &builder) :
 	}
 }
 
-HPPImage::HPPImage(HPPDevice              &device,
+HPPImage::HPPImage(vkb::core::DeviceCpp   &device,
                    vk::Image               handle,
                    const vk::Extent3D     &extent,
                    vk::Format              format,

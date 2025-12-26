@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,7 +61,7 @@ ComputeNBody::~ComputeNBody()
 	}
 }
 
-void ComputeNBody::request_gpu_features(vkb::PhysicalDevice &gpu)
+void ComputeNBody::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -477,8 +477,8 @@ void ComputeNBody::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
-	shader_stages[0] = load_shader("compute_nbody", "particle.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("compute_nbody", "particle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("compute_nbody", "particle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("compute_nbody", "particle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -603,7 +603,7 @@ void ComputeNBody::prepare_compute()
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);
 
 	// 1st pass - Particle movement calculations
-	compute_pipeline_create_info.stage = load_shader("compute_nbody", "particle_calculate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage = load_shader("compute_nbody", "particle_calculate.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 
 	// Set some shader parameters via specialization constants
 	struct SpecializationData
@@ -635,7 +635,7 @@ void ComputeNBody::prepare_compute()
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
 
 	// 2nd pass - Particle integration
-	compute_pipeline_create_info.stage = load_shader("compute_nbody", "particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage = load_shader("compute_nbody", "particle_integrate.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 
 	specialization_map_entries.clear();
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t)));
@@ -648,7 +648,7 @@ void ComputeNBody::prepare_compute()
 	// Separate command pool as queue family for compute may be different than graphics
 	VkCommandPoolCreateInfo command_pool_create_info = {};
 	command_pool_create_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_create_info.queueFamilyIndex        = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	command_pool_create_info.queueFamilyIndex        = vkb::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_COMPUTE_BIT);
 	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_create_info, nullptr, &compute.command_pool));
 
 	// Create a command buffer for compute operations
@@ -835,8 +835,9 @@ bool ComputeNBody::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	graphics.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
-	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	auto const &queue_family_properties = get_device().get_gpu().get_queue_family_properties();
+	graphics.queue_family_index         = vkb::get_queue_family_index(queue_family_properties, VK_QUEUE_GRAPHICS_BIT);
+	compute.queue_family_index          = vkb::get_queue_family_index(queue_family_properties, VK_QUEUE_COMPUTE_BIT);
 
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
 	work_group_size = std::min(static_cast<uint32_t>(256), get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);

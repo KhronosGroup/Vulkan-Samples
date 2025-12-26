@@ -1,5 +1,6 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
- * Copyright (c) 2021-2024, Sascha Willems
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
+ * Copyright (c) 2021-2025, Sascha Willems
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,26 +28,29 @@
 namespace plugins
 {
 FileLogger::FileLogger() :
-    FileLoggerTags("File Logger",
-                   "Enable log output to a file.",
-                   {}, {&log_file_flag})
+    FileLoggerTags("File Logger", "Enable log output to a file.", {}, {}, {{"log-file", "Write log messages to the given file name"}})
 {
 }
 
-bool FileLogger::is_active(const vkb::CommandParser &parser)
+bool FileLogger::handle_option(std::deque<std::string> &arguments)
 {
-	return parser.contains(&log_file_flag);
-}
-
-void FileLogger::init(const vkb::CommandParser &parser)
-{
-	if (parser.contains(&log_file_flag))
+	assert(!arguments.empty() && (arguments[0].substr(0, 2) == "--"));
+	std::string option = arguments[0].substr(2);
+	if (option == "log-file")
 	{
-		if (spdlog::default_logger())
+		if (arguments.size() < 2)
 		{
-			std::string log_file_name = parser.as<std::string>(&log_file_flag);
-			spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file_name, true));
+			LOGE("Option \"log-file\" is missing the actual log file name!");
+			return false;
 		}
+		std::string log_file = arguments[1];
+
+		spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file, true));
+
+		arguments.pop_front();
+		arguments.pop_front();
+		return true;
 	}
+	return false;
 }
 }        // namespace plugins

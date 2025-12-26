@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,8 +24,11 @@ namespace vkb
 constexpr uint32_t DEPTH_RESOLVE_BITMASK = 0x80000000;
 constexpr uint32_t ATTACHMENT_BITMASK    = 0x7FFFFFFF;
 
-PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass *parent, RenderContext &render_context, ShaderSource &&triangle_vs,
-                                             ShaderSource &&fs, ShaderVariant &&fs_variant) :
+PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass       *parent,
+                                             vkb::rendering::RenderContextC &render_context,
+                                             ShaderSource                  &&triangle_vs,
+                                             ShaderSource                  &&fs,
+                                             ShaderVariant                 &&fs_variant) :
     Subpass(render_context, std::move(triangle_vs), std::move(fs)),
     parent{parent},
     fs_variant{std::move(fs_variant)}
@@ -119,7 +122,7 @@ void PostProcessingSubpass::prepare()
 	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), fs_variant);
 }
 
-void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
+void PostProcessingSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	// Get shaders from cache
 	auto &resource_cache     = command_buffer.get_device().get_resource_cache();
@@ -194,7 +197,7 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 	draw_func(command_buffer, render_target);
 }
 
-void PostProcessingSubpass::default_draw_func(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &)
+void PostProcessingSubpass::default_draw_func(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &)
 {
 	command_buffer.draw(3, 1, 0, 0);
 }
@@ -250,14 +253,14 @@ void PostProcessingRenderPass::update_load_stores(
 	for (uint32_t j = 0; j < static_cast<uint32_t>(render_target.get_attachments().size()); j++)
 	{
 		const bool is_input   = input_attachments.find(j) != input_attachments.end();
-		const bool is_sampled = std::find_if(sampled_attachments.begin(), sampled_attachments.end(),
-		                                     [&render_target, j](auto &pair) {
-			                                     // NOTE: if RT not set, default is the currently-active one
-			                                     auto *sampled_rt = pair.first ? pair.first : &render_target;
-			                                     // unpack attachment
-			                                     uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
-			                                     return attachment == j && sampled_rt == &render_target;
-		                                     }) != sampled_attachments.end();
+		const bool is_sampled = std::ranges::find_if(sampled_attachments,
+		                                             [&render_target, j](auto &pair) {
+			                                             // NOTE: if RT not set, default is the currently-active one
+			                                             auto *sampled_rt = pair.first ? pair.first : &render_target;
+			                                             // unpack attachment
+			                                             uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
+			                                             return attachment == j && sampled_rt == &render_target;
+		                                             }) != sampled_attachments.end();
 		const bool is_output  = output_attachments.find(j) != output_attachments.end();
 
 		VkAttachmentLoadOp load;
@@ -330,12 +333,11 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 	}
 }
 
-void PostProcessingRenderPass::transition_attachments(
-    const AttachmentSet        &input_attachments,
-    const SampledAttachmentSet &sampled_attachments,
-    const AttachmentSet        &output_attachments,
-    CommandBuffer              &command_buffer,
-    RenderTarget               &fallback_render_target)
+void PostProcessingRenderPass::transition_attachments(const AttachmentSet        &input_attachments,
+                                                      const SampledAttachmentSet &sampled_attachments,
+                                                      const AttachmentSet        &output_attachments,
+                                                      vkb::core::CommandBufferC  &command_buffer,
+                                                      RenderTarget               &fallback_render_target)
 {
 	auto       &render_target = this->render_target ? *this->render_target : fallback_render_target;
 	const auto &views         = render_target.get_views();
@@ -457,7 +459,7 @@ void PostProcessingRenderPass::transition_attachments(
 	//       so we don't want to transition them to UNDEFINED layout here
 }
 
-void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, RenderTarget &fallback_render_target)
+void PostProcessingRenderPass::prepare_draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &fallback_render_target)
 {
 	// Collect all input, output, and sampled-from attachments from all subpasses (steps)
 	AttachmentSet        input_attachments, output_attachments;
@@ -501,7 +503,7 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 	                   fallback_render_target);
 }
 
-void PostProcessingRenderPass::draw(CommandBuffer &command_buffer, RenderTarget &default_render_target)
+void PostProcessingRenderPass::draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)
 {
 	prepare_draw(command_buffer, default_render_target);
 

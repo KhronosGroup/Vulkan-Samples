@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, Sascha Willems
+/* Copyright (c) 2022-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,6 @@
 #include "graphics_pipeline_library.h"
 
 #include "scene_graph/components/sub_mesh.h"
-#include <glsl_compiler.h>
 
 void GraphicsPipelineLibrary::pipeline_creation_threadfn()
 {
@@ -59,13 +58,10 @@ GraphicsPipelineLibrary::GraphicsPipelineLibrary()
 	add_device_extension(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
 }
 
-void GraphicsPipelineLibrary::request_gpu_features(vkb::PhysicalDevice &gpu)
+void GraphicsPipelineLibrary::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable extension features required by this sample
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT,
-	                         graphicsPipelineLibrary);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT, graphicsPipelineLibrary);
 }
 
 GraphicsPipelineLibrary::~GraphicsPipelineLibrary()
@@ -221,30 +217,7 @@ void GraphicsPipelineLibrary::setup_descriptor_sets()
 // Compiling shaders can be simplified with the new extension, so we only require code to generate the SPIR-V in this sample
 void GraphicsPipelineLibrary::load_shader(const std::string shader, VkShaderStageFlagBits shader_stage, std::vector<uint32_t> &spirv)
 {
-	switch (get_shading_language())
-	{
-		case vkb::ShadingLanguage::GLSL:
-		{
-			// The framework currently compiles GLSL shaders at runtime
-			// Note: this can be reworked once offline compilation for GLSL shaders is added
-			vkb::GLSLCompiler glsl_compiler;
-			auto              buffer = vkb::fs::read_shader_binary("graphics_pipeline_library/glsl/" + shader);
-			std::string       info_log;
-			if (!glsl_compiler.compile_to_spirv(shader_stage, buffer, "main", {}, spirv, info_log))
-			{
-				LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-				throw std::runtime_error{"Failed to compile shader"};
-			}
-			break;
-		}
-		case vkb::ShadingLanguage::HLSL:
-		{
-			// HLSL shaders are compiled offline, so we can simply load the SPIR-V from disk
-			auto buffer = vkb::fs::read_shader_binary("graphics_pipeline_library/hlsl/" + shader + ".spv");
-			spirv       = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
-			break;
-		}
-	}
+	spirv = vkb::fs::read_shader_binary_u32("graphics_pipeline_library/" + get_shader_folder() + "/" + shader);
 }
 
 // This function pre-built shared pipeline parts ("pipeline library")
@@ -307,7 +280,7 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 
 		// Using the pipeline library extension, we can skip the pipeline shader module creation and directly pass the shader code to the pipeline
 		std::vector<uint32_t> spirv;
-		load_shader("shared.vert", VK_SHADER_STAGE_VERTEX_BIT, spirv);
+		load_shader("shared.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, spirv);
 
 		VkShaderModuleCreateInfo shader_module_create_info{};
 		shader_module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -370,7 +343,7 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 
 	// Using the pipeline library extension, we can skip the pipeline shader module creation and directly pass the shader code to the pipeline
 	std::vector<uint32_t> spirv;
-	load_shader("uber.frag", VK_SHADER_STAGE_FRAGMENT_BIT, spirv);
+	load_shader("uber.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, spirv);
 
 	VkShaderModuleCreateInfo shader_module_create_info{};
 	shader_module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

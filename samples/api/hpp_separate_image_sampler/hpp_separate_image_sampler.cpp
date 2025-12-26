@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -94,7 +94,7 @@ bool HPPSeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
 }
 
 // Enable physical device features required for this example
-void HPPSeparateImageSampler::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPSeparateImageSampler::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -106,9 +106,12 @@ void HPPSeparateImageSampler::request_gpu_features(vkb::core::HPPPhysicalDevice 
 void HPPSeparateImageSampler::build_command_buffers()
 {
 	vk::CommandBufferBeginInfo    command_buffer_begin_info;
-	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue(0.0f, 0)}};
+	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue{0.0f, 0}}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .renderArea      = {{0, 0}, extent},
+	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+	                                               .pClearValues    = clear_values.data()};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -120,10 +123,10 @@ void HPPSeparateImageSampler::build_command_buffers()
 
 		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
+		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
 		command_buffer.setViewport(0, viewport);
 
-		vk::Rect2D scissor({0, 0}, extent);
+		vk::Rect2D scissor{{0, 0}, extent};
 		command_buffer.setScissor(0, scissor);
 
 		// Bind the uniform buffer and sampled image to set 0
@@ -179,7 +182,8 @@ vk::DescriptorSetLayout HPPSeparateImageSampler::create_base_descriptor_set_layo
 	    {1, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment}        // Binding 1 : Fragment shader sampled image
 	}};
 
-	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_bindings_buffer_and_image);
+	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info{.bindingCount = static_cast<uint32_t>(set_layout_bindings_buffer_and_image.size()),
+	                                                                .pBindings    = set_layout_bindings_buffer_and_image.data()};
 
 	return get_device().get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
 }
@@ -189,7 +193,9 @@ vk::DescriptorPool HPPSeparateImageSampler::create_descriptor_pool()
 	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
 	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eSampledImage, 1}, {vk::DescriptorType::eSampler, 2}}};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 3, pool_sizes);
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets       = 3,
+	                                                         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
+	                                                         .pPoolSizes    = pool_sizes.data()};
 
 	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
@@ -198,20 +204,22 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 {
 	// Load shaders
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("separate_image_sampler", "separate_image_sampler.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("separate_image_sampler", "separate_image_sampler.frag", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("separate_image_sampler", "separate_image_sampler.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("separate_image_sampler", "separate_image_sampler.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription                  input_binding{0, sizeof(VertexStructure), vk::VertexInputRate::eVertex};
 	std::array<vk::VertexInputAttributeDescription, 3> input_attributes = {
 	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, pos)},             // Location 0 : Position
-	     {1, 0, vk::Format::eR32G32Sfloat, offsetof(VertexStructure, uv)},                 // Location 1: Texture Coordinates
+	     {1, 0, vk::Format::eR32G32Sfloat, offsetof(VertexStructure, uv)},                 // Location 1 : Texture Coordinates
 	     {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, normal)}}};        // Location 2 : Normal
-	vk::PipelineVertexInputStateCreateInfo input_state({}, input_binding, input_attributes);
+	vk::PipelineVertexInputStateCreateInfo input_state{.vertexBindingDescriptionCount   = 1,
+	                                                   .pVertexBindingDescriptions      = &input_binding,
+	                                                   .vertexAttributeDescriptionCount = static_cast<uint32_t>(input_attributes.size()),
+	                                                   .pVertexAttributeDescriptions    = input_attributes.data()};
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -237,7 +245,9 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 
 vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<vk::DescriptorSetLayout> const &descriptor_set_layouts)
 {
-	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, descriptor_set_layouts);
+	vk::PipelineLayoutCreateInfo pipeline_layout_create_info{.setLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size()),
+	                                                         .pSetLayouts    = descriptor_set_layouts.data()};
+
 	return get_device().get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 
@@ -256,9 +266,9 @@ vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
 vk::DescriptorSetLayout HPPSeparateImageSampler::create_sampler_descriptor_set_layout()
 {
 	// Set layout for the samplers
-	vk::DescriptorSetLayoutBinding set_layout_binding_sampler(0, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment);
+	vk::DescriptorSetLayoutBinding set_layout_binding_sampler{0, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment};
 
-	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_binding_sampler);
+	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info{.bindingCount = 1, .pBindings = &set_layout_binding_sampler};
 
 	return get_device().get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
 }
@@ -326,18 +336,25 @@ void HPPSeparateImageSampler::prepare_uniform_buffers()
 
 void HPPSeparateImageSampler::update_base_descriptor_set()
 {
-	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffer_vs->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorBufferInfo buffer_descriptor{uniform_buffer_vs->get_handle(), 0, vk::WholeSize};
 
 	// Image info only references the image
-	vk::DescriptorImageInfo image_info({}, texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal);
+	vk::DescriptorImageInfo image_info{{}, texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal};
 
 	// Sampled image descriptor
-	vk::WriteDescriptorSet image_write_descriptor_set(base_descriptor_set, 1, 0, vk::DescriptorType::eSampledImage, image_info);
-
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{
-	    {base_descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
-	    image_write_descriptor_set                                                                     // Binding 1 : Fragment shader sampled image
-	}};
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
+	    {
+	        {.dstSet          = base_descriptor_set,
+	         .dstBinding      = 0,
+	         .descriptorCount = 1,
+	         .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	         .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
+	        {.dstSet          = base_descriptor_set,
+	         .dstBinding      = 1,
+	         .descriptorCount = 1,
+	         .descriptorType  = vk::DescriptorType::eSampledImage,
+	         .pImageInfo      = &image_info}        // Binding 1 : Fragment shader sampled image
+	    }};
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
@@ -346,9 +363,10 @@ void HPPSeparateImageSampler::update_sampler_descriptor_set(size_t index)
 	assert((index < samplers.size()) && (index < sampler_descriptor_sets.size()));
 
 	// Descriptor info only references the sampler
-	vk::DescriptorImageInfo sampler_info(samplers[index]);
+	vk::DescriptorImageInfo sampler_info{samplers[index]};
 
-	vk::WriteDescriptorSet sampler_write_descriptor_set(sampler_descriptor_sets[index], 0, 0, vk::DescriptorType::eSampler, sampler_info);
+	vk::WriteDescriptorSet sampler_write_descriptor_set{
+	    .dstSet = sampler_descriptor_sets[index], .dstBinding = 0, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eSampler, .pImageInfo = &sampler_info};
 
 	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_set, {});
 }

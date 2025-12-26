@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Sascha Willems
+/* Copyright (c) 2020-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -192,31 +192,15 @@ void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handl
 
 /*
  * This sample uses a modified version of the shader loading function that adds a tag to the shader
- * The tag includes the source GLSL that can then be displayed by a debugging application
  */
 VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string &file, VkShaderStageFlagBits stage)
 {
-	// Note: this can be reworked once offline compilation for GLSL shaders is added
-
-	// Default to GLSL
-	std::string               shader_folder{"glsl"};
-	std::string               shader_extension{""};
-	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
-
-	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
-	{
-		shader_folder = "hlsl";
-		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
-		src_language     = vkb::ShaderSourceLanguage::SPV;
-		shader_extension = ".spv";
-	}
-
-	std::string shader_file_name = "debug_utils/" + shader_folder + "/" + file;
+	std::string shader_file_name = "debug_utils/" + get_shader_folder() + "/" + file;
 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader((shader_file_name + shader_extension).c_str(), get_device().get_handle(), stage, src_language);
+	shader_stage.module                          = vkb::load_shader(shader_file_name, get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
@@ -232,14 +216,14 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 			shader_file_name = shader_file_name + ".hlsl";
 		}
 
-		std::vector<uint8_t> buffer = vkb::fs::read_shader_binary(shader_file_name);
+		auto buffer = vkb::fs::read_shader_binary_u32(shader_file_name);
 
 		// Pass the source GLSL shader code via an object tag
 		VkDebugUtilsObjectTagInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT};
 		info.objectType                   = VK_OBJECT_TYPE_SHADER_MODULE;
 		info.objectHandle                 = (uint64_t) shader_stage.module;
 		info.tagName                      = 1;
-		info.tagSize                      = buffer.size() * sizeof(uint8_t);
+		info.tagSize                      = buffer.size() * sizeof(uint32_t);
 		info.pTag                         = buffer.data();
 		vkSetDebugUtilsObjectTagEXT(get_device().get_handle(), &info);
 	}
@@ -299,7 +283,7 @@ void DebugUtils::debug_name_objects()
 	set_object_name(VK_OBJECT_TYPE_RENDER_PASS, (uint64_t) filter_pass.render_pass, "Bloom filter pass render pass");
 }
 
-void DebugUtils::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DebugUtils::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -536,7 +520,7 @@ void DebugUtils::create_attachment(VkFormat format, VkImageUsageFlagBits usage, 
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->mem, 0));
 
@@ -967,8 +951,8 @@ void DebugUtils::prepare_pipelines()
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
 
 	// Final fullscreen composition pass pipeline
-	shader_stages[0]                  = debug_load_shader("composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = debug_load_shader("composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                  = debug_load_shader("composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                  = debug_load_shader("composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline_create_info.layout       = pipeline_layouts.composition;
 	pipeline_create_info.renderPass   = render_pass;
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
@@ -977,8 +961,8 @@ void DebugUtils::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
 	// Bloom pass
-	shader_stages[0]                           = debug_load_shader("bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                           = debug_load_shader("bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                           = debug_load_shader("bloom.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                           = debug_load_shader("bloom.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	color_blend_state.pAttachments             = &blend_attachment_state;
 	blend_attachment_state.colorWriteMask      = 0xF;
 	blend_attachment_state.blendEnable         = VK_TRUE;
@@ -1036,8 +1020,8 @@ void DebugUtils::prepare_pipelines()
 	color_blend_state.attachmentCount  = 2;
 	color_blend_state.pAttachments     = blend_attachment_states.data();
 
-	shader_stages[0] = debug_load_shader("gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = debug_load_shader("gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = debug_load_shader("gbuffer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = debug_load_shader("gbuffer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Enable depth test and write

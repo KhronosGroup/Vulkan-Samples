@@ -1,0 +1,212 @@
+////
+ * Copyright (c) 2025, The Khronos Group
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+////
+= Hello Triangle with Vulkan 1.3 Features using Vulkan-Hpp
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_hello_triangle_1_3[Khronos Vulkan samples github repository].
+endif::[]
+
+NOTE: A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hello_triangle_1_3[Hello Triangle 1.3] that illustrates the usage of the C{pp} bindings of Vulkan provided by Vulkan-Hpp.
+
+This sample demonstrates how to render a simple triangle using Vulkan 1.3 core features. It modernizes the traditional "Hello Triangle" Vulkan sample by incorporating:
+
+- **Dynamic Rendering**
+- **Synchronization2**
+- **Extended Dynamic State**
+- **Vertex Buffers**
+
+## Overview
+
+The sample renders a colored triangle to the screen using Vulkan 1.3. It showcases how to:
+
+- Initialize Vulkan with Vulkan 1.3 features enabled.
+- Use dynamic rendering to simplify the rendering pipeline.
+- Employ the Synchronization2 API for improved synchronization.
+- Utilize extended dynamic states to reduce pipeline complexity.
+- Manage vertex data using vertex buffers instead of hard-coded vertices.
+
+## Key Features
+
+### 1. Dynamic Rendering
+
+**What is Dynamic Rendering?**
+
+Dynamic Rendering is a feature introduced in Vulkan 1.3 that allows rendering without pre-defined render passes and framebuffers. It simplifies the rendering process by enabling you to specify rendering states directly during command buffer recording.
+
+**How It's Used in the Sample:**
+
+- **No Render Passes or Framebuffers:** The sample does not create `vk::RenderPass` or `vk::Framebuffer` objects.
+- **`vk::CommandBuffer::beginRendering()` and `vk::CommandBuffer::endRendering()`:** These functions are used to begin and end rendering operations dynamically.
+- **Pipeline Creation:** Uses `vk::PipelineRenderingCreateInfo` during pipeline creation to specify rendering details.
+
+**Benefits:**
+
+- Simplifies code by reducing boilerplate associated with render passes and framebuffers.
+- Increases flexibility by allowing rendering to different attachments without recreating render passes.
+
+### 2. Synchronization2
+
+**What is Synchronization2?**
+
+Synchronization2 is an improved synchronization API introduced in Vulkan 1.3. It provides more granular control over synchronization primitives and simplifies the synchronization process.
+
+**How It's Used in the Sample:**
+
+- **`vk::CommandBuffer::pipelineBarrier2()`:** Replaces the older `vk::CommandBuffer::pipelineBarrier()` for more detailed synchronization.
+- **`vk::DependencyInfo` and `vk::ImageMemoryBarrier2`:** Used to specify precise memory dependencies and image layout transitions.
+
+**Example Usage:**
+
+```cpp
+vk::ImageMemoryBarrier2 image_barrier = {
+    // ... members ...
+};
+
+vk::DependencyInfo dependency_info = {
+    .imageMemoryBarrierCount = 1,
+    .pImageMemoryBarriers = &image_barrier,
+};
+
+cmd.pipelineBarrier2(dependency_info);
+```
+
+**Benefits:**
+
+- Provides more expressive and flexible synchronization.
+- Reduces the potential for synchronization errors.
+- Simplifies the specification of pipeline stages and access masks.
+
+### 3. Extended Dynamic State
+
+**What is Extended Dynamic State?**
+
+Extended Dynamic State allows more pipeline states to be set dynamically at command buffer recording time rather than during pipeline creation. This reduces the number of pipeline objects needed.
+
+**How It's Used in the Sample:**
+
+- **Dynamic States Enabled:** The sample enables dynamic states like `vk::DynamicState::eCullMode`, `vk::DynamicState::eFrontFace`, and `vk::DynamicState::ePrimitiveTopology`.
+- **Dynamic State Commands:** Uses `vk::CommandBuffer::setCullMode()`, `vk::CommandBuffer::setFrontFace()`, and `vk::CommandBuffer::setPrimitiveTopology()` to set these states dynamically.
+
+**Example Usage:**
+
+```cpp
+cmd.setCullMode(vk::DynamicState::eCullMode);
+cmd.setFrontFace(vk::FrontFace::eClockwise);
+cmd.setPrimitiveTopology(vk::PrimitiveTopology::eTriangleList);
+```
+
+**Benefits:**
+
+- Reduces the need to create multiple pipelines for different state configurations.
+- Enhances flexibility by allowing state changes without pipeline recreation.
+
+### 4. Vertex Buffers
+
+**What Changed?**
+
+Unlike the original sample, which used hard-coded vertices in the shader, this sample uses a vertex buffer to store vertex data.
+
+**How It's Used in the Sample:**
+
+- **Vertex Structure Defined:**
+
+```cpp
+  struct Vertex {
+      glm::vec2 position;
+      glm::vec3 color;
+  };
+```
+
+- **Vertex Data Stored in a Buffer:**
+
+```cpp
+  std::vector<Vertex> vertices = {
+      {{0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // Red Vertex
+      // ... other vertices ...
+  };
+```
+
+- **Buffer Creation and Memory Allocation:**
+
+```cpp
+  vk::BufferCreateInfo buffer_info = { /* ... */ };
+  vertex_buffer = device.createBuffer(buffer_info);
+
+  vk::MemoryAllocateInfo alloc_info = { /* ... */ };
+  vertex_buffer_memory = device.allocateMemory(alloc_info);
+```
+
+- **Binding the Vertex Buffer:**
+
+```cpp
+  cmd.bindVertexBuffers(0, vertex_buffer, offset);
+```
+
+**Benefits:**
+
+- **Flexibility:** Easier to modify vertex data without changing shaders.
+- **Performance:** Potentially better performance due to efficient memory usage.
+- **Scalability:** Simplifies rendering more complex geometries.
+
+## How the Sample Works
+
+1. **Initialization:**
+
+   - **Instance Creation:** Initializes a Vulkan instance with Vulkan 1.3 API version and required extensions.
+   - **Device Selection:** Chooses a physical device that supports Vulkan 1.3 and required features.
+   - **Logical Device Creation:** Creates a logical device with enabled Vulkan 1.3 features like dynamic rendering, synchronization2, and extended dynamic state.
+   - **Surface and Swapchain Creation:** Sets up the window surface and initializes the swapchain for presenting images.
+
+2. **Vertex Buffer Setup:**
+
+   - **Vertex Data Definition:** Defines vertices with positions and colors.
+   - **Buffer Creation:** Creates a buffer to store vertex data.
+   - **Memory Allocation:** Allocates memory for the buffer and maps the vertex data into it.
+
+3. **Pipeline Setup:**
+
+   - **Shader Modules:** Loads and compiles vertex and fragment shaders.
+   - **Pipeline Layout:** Creates a pipeline layout (empty in this case as no descriptors are used).
+   - **Dynamic States Specification:** Specifies which states will be dynamic.
+   - **Graphics Pipeline Creation:** Creates the graphics pipeline with dynamic rendering info and dynamic states enabled.
+
+4. **Rendering Loop:**
+
+   - **Acquire Swapchain Image:** Gets the next available image from the swapchain.
+   - **Command Buffer Recording:**
+
+     - **Begin Rendering:** Uses `vk::CommandBuffer::beginRendering()` with dynamic rendering info.
+     - **Set Dynamic States:** Sets viewport, scissor, cull mode, front face, and primitive topology dynamically.
+     - **Bind Pipeline and Vertex Buffer:** Binds the graphics pipeline and the vertex buffer.
+     - **Draw Call:** Issues a draw call to render the triangle.
+     - **End Rendering:** Uses `vk::CommandBuffer::endRendering()` to finish rendering.
+     - **Image Layout Transition:** Transitions the swapchain image layout for presentation using `vk::CommandBuffer::pipelineBarrier2()`.
+
+   - **Queue Submission:** Submits the command buffer to the graphics queue.
+   - **Present Image:** Presents the rendered image to the screen.
+
+5. **Cleanup:**
+
+   - **Resource Destruction:** Cleans up Vulkan resources like pipelines, buffers, and swapchain images upon application exit.
+
+## Dependencies and Requirements
+
+- **Vulkan SDK 1.3 or Later:** Ensure you have the Vulkan SDK that supports Vulkan 1.3.
+- **Hardware Support:** A GPU that supports Vulkan 1.3 features, including dynamic rendering, synchronization2, and extended dynamic state.
+- **GLM Library:** Used for vector and matrix operations.
+- **Shader Compiler:** GLSL shaders are compiled at runtime using a GLSL compiler.

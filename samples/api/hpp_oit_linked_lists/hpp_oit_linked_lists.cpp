@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA
+/* Copyright (c) 2023-2025, NVIDIA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,7 +75,7 @@ bool HPPOITLinkedLists::resize(const uint32_t width, const uint32_t height)
 	return HPPApiVulkanSample::resize(width, height);
 }
 
-void HPPOITLinkedLists::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+void HPPOITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	auto       &requested_features = gpu.get_mutable_requested_features();
 	auto const &features           = gpu.get_features();
@@ -100,15 +100,20 @@ void HPPOITLinkedLists::build_command_buffers()
 {
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
-	vk::RenderPassBeginInfo gather_render_pass_begin_info(gather_render_pass, gather_framebuffer, {{0, 0}, extent});
+	vk::RenderPassBeginInfo gather_render_pass_begin_info{.renderPass  = gather_render_pass,
+	                                                      .framebuffer = gather_framebuffer,
+	                                                      .renderArea  = {{0, 0}, extent}};
 
 	std::array<vk::ClearValue, 2> combine_clear_values =
 	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-	      vk::ClearDepthStencilValue(0.0f, 0)}};
-	vk::RenderPassBeginInfo combine_render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, combine_clear_values);
+	      vk::ClearDepthStencilValue{0.0f, 0}}};
+	vk::RenderPassBeginInfo combine_render_pass_begin_info{.renderPass      = render_pass,
+	                                                       .renderArea      = {{0, 0}, extent},
+	                                                       .clearValueCount = static_cast<uint32_t>(combine_clear_values.size()),
+	                                                       .pClearValues    = combine_clear_values.data()};
 
-	vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
-	vk::Rect2D   scissor({0, 0}, extent);
+	vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
+	vk::Rect2D   scissor{{0, 0}, extent};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -195,7 +200,7 @@ void HPPOITLinkedLists::clear_sized_resources()
 	{
 		command_buffer.fillBuffer(fragment_counter->get_handle(), 0, sizeof(glm::uint), 0);
 
-		vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+		vk::ImageSubresourceRange subresource_range{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
 		vkb::common::image_layout_transition(command_buffer,
 		                                     linked_list_head_image->get_handle(),
 		                                     vk::PipelineStageFlagBits::eBottomOfPipe,
@@ -212,7 +217,7 @@ void HPPOITLinkedLists::clear_sized_resources()
 	command_buffer.end();
 
 	{
-		vk::SubmitInfo submit_info({}, {}, command_buffer);
+		vk::SubmitInfo submit_info{.commandBufferCount = 1, .pCommandBuffers = &command_buffer};
 		queue.submit(submit_info);
 		queue.waitIdle();
 	}
@@ -235,7 +240,9 @@ vk::DescriptorPool HPPOITLinkedLists::create_descriptor_pool()
 	                                                     {vk::DescriptorType::eStorageBuffer, 2},
 	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 1, pool_sizes);
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets       = 1,
+	                                                         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
+	                                                         .pPoolSizes    = pool_sizes.data()};
 	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
@@ -248,7 +255,8 @@ vk::DescriptorSetLayout HPPOITLinkedLists::create_descriptor_set_layout()
 	     {3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment},
 	     {4, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment},
 	     {5, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-	return get_device().get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
+	return get_device().get_handle().createDescriptorSetLayout(
+	    {.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()), .pBindings = set_layout_bindings.data()});
 }
 
 void HPPOITLinkedLists::create_descriptors()
@@ -260,7 +268,7 @@ void HPPOITLinkedLists::create_descriptors()
 
 void HPPOITLinkedLists::create_fragment_resources(vk::Extent2D const &extent)
 {
-	const vk::Extent3D image_extent{extent, 1};
+	const vk::Extent3D image_extent{extent.width, extent.height, 1};
 	const vk::Format   image_format{vk::Format::eR32Uint};
 	linked_list_head_image      = std::make_unique<vkb::core::HPPImage>(get_device(),
                                                                    image_extent,
@@ -281,19 +289,18 @@ void HPPOITLinkedLists::create_fragment_resources(vk::Extent2D const &extent)
 
 void HPPOITLinkedLists::create_gather_pass_objects(vk::Extent2D const &extent)
 {
-	vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics);
-	gather_render_pass = get_device().get_handle().createRenderPass({{}, nullptr, subpass});
+	vk::SubpassDescription subpass{.pipelineBindPoint = vk::PipelineBindPoint::eGraphics};
+	gather_render_pass = get_device().get_handle().createRenderPass({.subpassCount = 1, .pSubpasses = &subpass});
 
 	gather_framebuffer = vkb::common::create_framebuffer(get_device().get_handle(), gather_render_pass, {}, extent);
 }
 
 void HPPOITLinkedLists::create_pipelines()
 {
-	pipeline_layout = get_device().get_handle().createPipelineLayout({{}, descriptor_set_layout});
+	pipeline_layout = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &descriptor_set_layout});
 
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
@@ -302,12 +309,15 @@ void HPPOITLinkedLists::create_pipelines()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	std::vector<vk::PipelineShaderStageCreateInfo> gather_shader_stages = {load_shader("oit_linked_lists/gather.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                       load_shader("oit_linked_lists/gather.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> gather_shader_stages = {load_shader("oit_linked_lists/gather.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                       load_shader("oit_linked_lists/gather.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
-	vk::VertexInputBindingDescription      gather_vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
-	vk::VertexInputAttributeDescription    gather_vertex_input_attribute(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos));
-	vk::PipelineVertexInputStateCreateInfo gather_vertex_input_state({}, gather_vertex_input_binding, gather_vertex_input_attribute);
+	vk::VertexInputBindingDescription      gather_vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
+	vk::VertexInputAttributeDescription    gather_vertex_input_attribute{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)};
+	vk::PipelineVertexInputStateCreateInfo gather_vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                                 .pVertexBindingDescriptions      = &gather_vertex_input_binding,
+	                                                                 .vertexAttributeDescriptionCount = 1,
+	                                                                 .pVertexAttributeDescriptions    = &gather_vertex_input_attribute};
 
 	gather_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                        pipeline_cache,
@@ -323,8 +333,8 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                        pipeline_layout,
 	                                                        gather_render_pass);
 
-	std::vector<vk::PipelineShaderStageCreateInfo> background_shader_stages = {load_shader("oit_linked_lists/fullscreen.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                           load_shader("oit_linked_lists/background.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> background_shader_stages = {load_shader("oit_linked_lists/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                           load_shader("oit_linked_lists/background.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 	vk::PipelineVertexInputStateCreateInfo         vertex_input_state;
 
 	background_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
@@ -341,10 +351,10 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                            pipeline_layout,
 	                                                            render_pass);
 
-	std::vector<vk::PipelineShaderStageCreateInfo> combine_shader_stages = {load_shader("oit_linked_lists/combine.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                        load_shader("oit_linked_lists/combine.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> combine_shader_stages = {load_shader("oit_linked_lists/combine.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                        load_shader("oit_linked_lists/combine.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
-	vk::PipelineColorBlendAttachmentState combine_blend_attachment_state(true,
+	vk::PipelineColorBlendAttachmentState combine_blend_attachment_state{true,
 	                                                                     vk::BlendFactor::eSrcAlpha,
 	                                                                     vk::BlendFactor::eOneMinusSrcAlpha,
 	                                                                     vk::BlendOp::eAdd,
@@ -352,7 +362,7 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                                     vk::BlendFactor::eZero,
 	                                                                     vk::BlendOp::eAdd,
 	                                                                     vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-	                                                                         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+	                                                                         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	combine_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                         pipeline_cache,
@@ -432,23 +442,46 @@ void HPPOITLinkedLists::load_assets()
 
 void HPPOITLinkedLists::update_descriptors()
 {
-	vk::DescriptorBufferInfo scene_constants_descriptor(scene_constants->get_handle(), 0, vk::WholeSize);
-	vk::DescriptorBufferInfo instance_data_descriptor(instance_data->get_handle(), 0, vk::WholeSize);
-	vk::DescriptorImageInfo  linked_list_head_image_view_descriptor(nullptr, linked_list_head_image_view->get_handle(), vk::ImageLayout::eGeneral);
-	vk::DescriptorBufferInfo fragment_buffer_descriptor(fragment_buffer->get_handle(), 0, vk::WholeSize);
-	vk::DescriptorBufferInfo fragment_counter_descriptor(fragment_counter->get_handle(), 0, vk::WholeSize);
-	vk::DescriptorImageInfo  background_texture_descriptor(
-        background_texture.sampler,
-        background_texture.image->get_vk_image_view().get_handle(),
-        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, background_texture.image->get_vk_image_view().get_format()));
+	vk::DescriptorBufferInfo scene_constants_descriptor{scene_constants->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorBufferInfo instance_data_descriptor{instance_data->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorImageInfo  linked_list_head_image_view_descriptor{nullptr, linked_list_head_image_view->get_handle(), vk::ImageLayout::eGeneral};
+	vk::DescriptorBufferInfo fragment_buffer_descriptor{fragment_buffer->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorBufferInfo fragment_counter_descriptor{fragment_counter->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorImageInfo  background_texture_descriptor{background_texture.sampler,
+                                                          background_texture.image->get_vk_image_view().get_handle(),
+                                                          descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                       background_texture.image->get_vk_image_view().get_format())};
 
-	std::array<vk::WriteDescriptorSet, 6> write_descriptor_sets = {
-	    {{descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, scene_constants_descriptor},
-	     {descriptor_set, 1, 0, vk::DescriptorType::eUniformBuffer, {}, instance_data_descriptor},
-	     {descriptor_set, 2, 0, vk::DescriptorType::eStorageImage, linked_list_head_image_view_descriptor},
-	     {descriptor_set, 3, 0, vk::DescriptorType::eStorageBuffer, {}, fragment_buffer_descriptor},
-	     {descriptor_set, 4, 0, vk::DescriptorType::eStorageBuffer, {}, fragment_counter_descriptor},
-	     {descriptor_set, 5, 0, vk::DescriptorType::eCombinedImageSampler, background_texture_descriptor}}};
+	std::array<vk::WriteDescriptorSet, 6> write_descriptor_sets = {{{.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 0,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &scene_constants_descriptor},
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 1,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	                                                                 .pBufferInfo     = &instance_data_descriptor},
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 2,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eStorageImage,
+	                                                                 .pImageInfo      = &linked_list_head_image_view_descriptor},
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 3,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eStorageBuffer,
+	                                                                 .pBufferInfo     = &fragment_buffer_descriptor},
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 4,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eStorageBuffer,
+	                                                                 .pBufferInfo     = &fragment_counter_descriptor},
+	                                                                {.dstSet          = descriptor_set,
+	                                                                 .dstBinding      = 5,
+	                                                                 .descriptorCount = 1,
+	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+	                                                                 .pImageInfo      = &background_texture_descriptor}}};
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 

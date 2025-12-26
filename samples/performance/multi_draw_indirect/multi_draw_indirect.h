@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Holochip Corporation
+/* Copyright (c) 2021-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -124,9 +124,11 @@ class MultiDrawIndirect : public ApiVulkanSample
 	VkDescriptorSet                     device_address_descriptor_set{VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::BufferC> device_address_buffer{nullptr};
 
-	std::vector<vkb::CommandBuffer> compute_command_buffers{};
-	const vkb::Queue               *compute_queue{nullptr};
-	std::vector<uint32_t>           queue_families;
+	std::vector<vkb::core::CommandBufferC> compute_command_buffers{};
+	const vkb::Queue                      *compute_queue{nullptr};
+	std::vector<uint32_t>                  queue_families;
+
+	std::shared_ptr<vkb::core::CommandBufferC> ui_overlay_command_buffer;
 
 	// CPU Draw Calls
 	void                                      cpu_cull();
@@ -134,7 +136,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC>       cpu_staging_buffer;
 	std::unique_ptr<vkb::core::BufferC>       indirect_call_buffer;
 
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void create_samplers();

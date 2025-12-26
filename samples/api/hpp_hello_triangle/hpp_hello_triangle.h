@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,6 +51,13 @@ class HPPHelloTriangle : public vkb::Application
 		vk::Semaphore     swapchain_release_semaphore;
 	};
 
+	/// Properties of the vertices used in this sample.
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec3 color;
+	};
+
   public:
 	HPPHelloTriangle();
 	virtual ~HPPHelloTriangle();
@@ -61,35 +68,40 @@ class HPPHelloTriangle : public vkb::Application
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 	virtual void update(float delta_time) override;
 
-	std::pair<vk::Result, uint32_t> acquire_next_image();
-	vk::Device                      create_device(const std::vector<const char *> &required_device_extensions);
-	vk::Pipeline                    create_graphics_pipeline();
-	vk::ImageView                   create_image_view(vk::Image image);
-	vk::Instance                    create_instance(std::vector<const char *> const &required_instance_extensions, std::vector<const char *> const &required_validation_layers);
-	vk::RenderPass                  create_render_pass();
-	vk::ShaderModule                create_shader_module(const char *path);
-	vk::SwapchainKHR                create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain);
-	void                            init_framebuffers();
-	void                            init_swapchain();
-	void                            render_triangle(uint32_t swapchain_index);
-	void                            select_physical_device_and_surface();
-	void                            teardown_framebuffers();
-	void                            teardown_per_frame(FrameData &per_frame_data);
+	std::pair<vk::Result, uint32_t>      acquire_next_image();
+	vk::Device                           create_device(const std::vector<const char *> &required_device_extensions);
+	vk::Pipeline                         create_graphics_pipeline();
+	vk::ImageView                        create_image_view(vk::Image image);
+	vk::Instance                         create_instance(std::vector<const char *> const &required_instance_extensions, std::vector<const char *> const &required_validation_layers);
+	vk::RenderPass                       create_render_pass();
+	vk::ShaderModule                     create_shader_module(std::string const &path);
+	vk::SwapchainKHR                     create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain);
+	std::pair<vk::Buffer, VmaAllocation> create_vertex_buffer();
+	VmaAllocator                         create_vma_allocator();
+	void                                 init_framebuffers();
+	void                                 init_swapchain();
+	void                                 render_triangle(uint32_t swapchain_index);
+	void                                 select_physical_device_and_surface();
+	void                                 teardown_framebuffers();
+	void                                 teardown_per_frame(FrameData &per_frame_data);
 
   private:
-	vk::Instance               instance;                     // The Vulkan instance.
-	vk::PhysicalDevice         gpu;                          // The Vulkan physical device.
-	vk::Device                 device;                       // The Vulkan device.
-	vk::Queue                  queue;                        // The Vulkan device queue.
-	SwapchainData              swapchain_data;               // The swapchain state.
-	vk::SurfaceKHR             surface;                      // The surface we will render to.
-	uint32_t                   graphics_queue_index;         // The queue family index where graphics work will be submitted.
-	vk::RenderPass             render_pass;                  // The renderpass description.
-	vk::PipelineLayout         pipeline_layout;              // The pipeline layout for resources.
-	vk::Pipeline               pipeline;                     // The graphics pipeline.
-	vk::DebugUtilsMessengerEXT debug_utils_messenger;        // The debug utils messenger.
-	std::vector<vk::Semaphore> recycled_semaphores;          // A set of semaphores that can be reused.
-	std::vector<FrameData>     per_frame_data;               // A set of per-frame data.
+	vk::Instance               instance;                                         // The Vulkan instance.
+	vk::PhysicalDevice         gpu;                                              // The Vulkan physical device.
+	vk::Device                 device;                                           // The Vulkan device.
+	vk::Queue                  queue;                                            // The Vulkan device queue.
+	SwapchainData              swapchain_data;                                   // The swapchain state.
+	vk::SurfaceKHR             surface;                                          // The surface we will render to.
+	uint32_t                   graphics_queue_index;                             // The queue family index where graphics work will be submitted.
+	vk::RenderPass             render_pass;                                      // The renderpass description.
+	vk::PipelineLayout         pipeline_layout;                                  // The pipeline layout for resources.
+	vk::Pipeline               pipeline;                                         // The graphics pipeline.
+	vk::DebugUtilsMessengerEXT debug_utils_messenger;                            // The debug utils messenger.
+	std::vector<vk::Semaphore> recycled_semaphores;                              // A set of semaphores that can be reused.
+	std::vector<FrameData>     per_frame_data;                                   // A set of per-frame data.
+	vk::Buffer                 vertex_buffer;                                    // The Vulkan buffer object that holds the vertex data for the triangle.
+	VmaAllocation              vertex_buffer_allocation = VK_NULL_HANDLE;        // Vulkan Memory Allocator (VMA) allocation info for the vertex buffer.
+	VmaAllocator               vma_allocator;                                    // The VMA allocator for memory management.
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;

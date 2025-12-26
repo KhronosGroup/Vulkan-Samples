@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Sascha Willems
+/* Copyright (c) 2020-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -48,14 +48,11 @@ FragmentShadingRate::~FragmentShadingRate()
 	}
 }
 
-void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
+void FragmentShadingRate::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable the shading rate attachment feature required by this sample
 	// These are passed to device creation via a pNext structure chain
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceFragmentShadingRateFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
-	                         attachmentFragmentShadingRate);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceFragmentShadingRateFeaturesKHR, attachmentFragmentShadingRate);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -104,7 +101,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	VkMemoryAllocateInfo memory_allocate_info{};
 	memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &shading_rate_image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), shading_rate_image.image, shading_rate_image.memory, 0));
 
@@ -632,8 +629,8 @@ void FragmentShadingRate::prepare_pipelines()
 	pipeline_create_info.renderPass = render_pass;
 
 	// Skysphere
-	shader_stages[0] = load_shader("fragment_shading_rate", "scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("fragment_shading_rate", "scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("fragment_shading_rate", "scene.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("fragment_shading_rate", "scene.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Objects

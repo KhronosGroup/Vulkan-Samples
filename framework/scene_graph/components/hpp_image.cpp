@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,7 +42,9 @@ HPPImage::HPPImage(const std::string &name, std::vector<uint8_t> &&d, std::vecto
     data{std::move(d)},
     format{vk::Format::eR8G8B8A8Unorm},
     mipmaps{std::move(m)}
-{}
+{
+	update_hash();
+}
 
 std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPImage::load(const std::string &name, const std::string &uri,
                                                                        ContentType content_type)
@@ -198,7 +200,7 @@ void HPPImage::coerce_format_to_srgb()
 	}
 }
 
-void HPPImage::create_vk_image(vkb::core::HPPDevice &device, vk::ImageViewType image_view_type, vk::ImageCreateFlags flags)
+void HPPImage::create_vk_image(vkb::core::DeviceCpp &device, vk::ImageViewType image_view_type, vk::ImageCreateFlags flags)
 {
 	assert(!vk_image && !vk_image_view && "Vulkan HPPImage already constructed");
 
@@ -244,7 +246,7 @@ void HPPImage::generate_mipmaps()
 		vkb::scene_graph::components::HPPMipmap next_mipmap{};
 		next_mipmap.level  = prev_mipmap.level + 1;
 		next_mipmap.offset = old_size;
-		next_mipmap.extent = vk::Extent3D(next_width, next_height, 1u);
+		next_mipmap.extent = vk::Extent3D{next_width, next_height, 1u};
 
 		// Fill next mipmap memory
 		stbir_resize_uint8(data.data() + prev_mipmap.offset, prev_mipmap.extent.width, prev_mipmap.extent.height, 0,
@@ -264,6 +266,15 @@ void HPPImage::generate_mipmaps()
 	}
 }
 
+void HPPImage::update_hash()
+{
+	data_hash = vkb::calculate_hash(data);
+}
+
+void HPPImage::update_hash(size_t hash)
+{
+	data_hash = hash;
+}
 const std::vector<uint8_t> &HPPImage::get_data() const
 {
 	return data;
@@ -327,6 +338,7 @@ void HPPImage::set_data(const uint8_t *raw_data, size_t size)
 {
 	assert(data.empty() && "HPPImage data already set");
 	data = {raw_data, raw_data + size};
+	update_hash();
 }
 
 void HPPImage::set_depth(const uint32_t depth)

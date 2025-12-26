@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,10 +43,10 @@ HostImageCopy::~HostImageCopy()
 }
 
 // Enable physical device features required for this example
-void HostImageCopy::request_gpu_features(vkb::PhysicalDevice &gpu)
+void HostImageCopy::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable host image copy feature (required for this sample to work)
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceHostImageCopyFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_FEATURES_EXT, hostImageCopy);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceHostImageCopyFeaturesEXT, hostImageCopy);
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -127,7 +127,7 @@ void HostImageCopy::load_texture()
 	VkMemoryRequirements memory_requirements  = {};
 	vkGetImageMemoryRequirements(get_device().get_handle(), texture.image, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &texture.device_memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
 
@@ -389,8 +389,8 @@ void HostImageCopy::prepare_pipelines()
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("texture_loading", "texture.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("texture_loading", "texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("texture_loading", "texture.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("texture_loading", "texture.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {

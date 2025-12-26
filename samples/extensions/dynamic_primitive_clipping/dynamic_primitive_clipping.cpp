@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Mobica Limited
+/* Copyright (c) 2024-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,7 +75,7 @@ bool DynamicPrimitiveClipping::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void DynamicPrimitiveClipping::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DynamicPrimitiveClipping::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// shaderClipDistance feature is required in order to gl_ClipDistance builtin shader variable to work.
 	if (gpu.get_features().shaderClipDistance)
@@ -88,14 +88,8 @@ void DynamicPrimitiveClipping::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 
 	// Features required by vkCmdSetDepthClipEnableEXT().
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDepthClipEnableFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT,
-	                         depthClipEnable);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
-	                         extendedDynamicState3DepthClipEnable);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDepthClipEnableFeaturesEXT, depthClipEnable);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3DepthClipEnable);
 }
 
 void DynamicPrimitiveClipping::build_command_buffers()
@@ -303,8 +297,8 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 
 	// Load shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("dynamic_primitive_clipping", "primitive_clipping.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_primitive_clipping", "primitive_clipping.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_primitive_clipping", "primitive_clipping.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_primitive_clipping", "primitive_clipping.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// We need to specify the pipeline layout and the render pass description up front as well.
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass);

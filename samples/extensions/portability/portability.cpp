@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2024, Holochip
+/* Copyright (c) 2022-2025, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,7 +76,7 @@ Portability::~Portability()
 	}
 }
 
-void Portability::request_gpu_features(vkb::PhysicalDevice &gpu)
+void Portability::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -277,7 +277,7 @@ void Portability::create_attachment(VkFormat format, VkImageUsageFlagBits usage,
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
 	vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->mem, 0));
 
@@ -708,8 +708,8 @@ void Portability::prepare_pipelines()
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
 
 	// Final fullscreen composition pass pipeline
-	shader_stages[0]                  = load_shader("debug_utils", "composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = load_shader("debug_utils", "composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                  = load_shader("debug_utils", "composition.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                  = load_shader("debug_utils", "composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline_create_info.layout       = pipeline_layouts.composition;
 	pipeline_create_info.renderPass   = render_pass;
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
@@ -718,8 +718,8 @@ void Portability::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
 	// Bloom pass
-	shader_stages[0]                           = load_shader("debug_utils", "bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                           = load_shader("debug_utils", "bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0]                           = load_shader("debug_utils", "bloom.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                           = load_shader("debug_utils", "bloom.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	color_blend_state.pAttachments             = &blend_attachment_state;
 	blend_attachment_state.colorWriteMask      = 0xF;
 	blend_attachment_state.blendEnable         = VK_TRUE;
@@ -777,8 +777,8 @@ void Portability::prepare_pipelines()
 	color_blend_state.attachmentCount  = 2;
 	color_blend_state.pAttachments     = blend_attachment_states.data();
 
-	shader_stages[0] = load_shader("debug_utils", "gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("debug_utils", "gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("debug_utils", "gbuffer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("debug_utils", "gbuffer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Enable depth test and write

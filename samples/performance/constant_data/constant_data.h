@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,7 +105,11 @@ class ConstantData : public vkb::VulkanSampleC
 	class ConstantDataSubpass : public vkb::ForwardSubpass
 	{
 	  public:
-		ConstantDataSubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		ConstantDataSubpass(vkb::rendering::RenderContextC &render_context,
+		                    vkb::ShaderSource             &&vertex_shader,
+		                    vkb::ShaderSource             &&fragment_shader,
+		                    vkb::sg::Scene                 &scene,
+		                    vkb::sg::Camera                &camera) :
 		    vkb::ForwardSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
@@ -122,24 +126,29 @@ class ConstantData : public vkb::VulkanSampleC
 	class PushConstantSubpass : public ConstantDataSubpass
 	{
 	  public:
-		PushConstantSubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		PushConstantSubpass(vkb::rendering::RenderContextC &render_context,
+		                    vkb::ShaderSource             &&vertex_shader,
+		                    vkb::ShaderSource             &&fragment_shader,
+		                    vkb::sg::Scene                 &scene,
+		                    vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
 		/**
 		 * @brief Updates the MVP uniform member variable to then be pushed into the shader
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
+		virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any dynamic shader module updates
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to push a custom data structure to the shader
 		 */
-		virtual void prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		// The MVP uniform data structure
 		MVPUniform mvp_uniform;
@@ -154,24 +163,29 @@ class ConstantData : public vkb::VulkanSampleC
 	class DescriptorSetSubpass : public ConstantDataSubpass
 	{
 	  public:
-		DescriptorSetSubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		DescriptorSetSubpass(vkb::rendering::RenderContextC &render_context,
+		                     vkb::ShaderSource             &&vertex_shader,
+		                     vkb::ShaderSource             &&fragment_shader,
+		                     vkb::sg::Scene                 &scene,
+		                     vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
 		/**
 		 * @brief Creates a buffer filled with the mvp data and binds it
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
+		virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index) override;
 
 		/**
 		 * @brief Dynamically retrieves the correct pipeline layout depending on the method of UBO
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any push constants
 		 */
-		virtual void prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		// The method by which the UBO subpass will operate
 		Method method;
@@ -186,31 +200,36 @@ class ConstantData : public vkb::VulkanSampleC
 	class BufferArraySubpass : public ConstantDataSubpass
 	{
 	  public:
-		BufferArraySubpass(vkb::RenderContext &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		BufferArraySubpass(vkb::rendering::RenderContextC &render_context,
+		                   vkb::ShaderSource             &&vertex_shader,
+		                   vkb::ShaderSource             &&fragment_shader,
+		                   vkb::sg::Scene                 &scene,
+		                   vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 
 		/**
 		 * @brief No-op, uniform data is sent upfront before the draw call
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
+		virtual void update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index) override;
 
 		/**
 		 * @brief Returns a default pipeline layout
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
+		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any push constants
 		 */
-		virtual void prepare_push_constants(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		/**
 		 * @brief Overridden to send an index
 		 */
-		virtual void draw_submesh_command(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
+		virtual void draw_submesh_command(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 
 		uint32_t instance_index{0};
 	};
@@ -240,9 +259,9 @@ class ConstantData : public vkb::VulkanSampleC
   private:
 	virtual void draw_gui() override;
 
-	virtual void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	virtual void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	/**
 	 * @brief Helper function to determine the constant data method that is selected and supported by the sample
@@ -260,6 +279,8 @@ class ConstantData : public vkb::VulkanSampleC
 
 	// The render pipeline designed for using a large shader storage buffer object that is instanced into to get the relevant MVP data
 	std::unique_ptr<vkb::RenderPipeline> buffer_array_render_pipeline{nullptr};
+
+	uint32_t max_push_constant_size{128};
 
 	// The samples constant data methods and their properties
 	std::unordered_map<Method, MethodProperties> methods = {

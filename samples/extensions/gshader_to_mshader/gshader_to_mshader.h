@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include "gltf_loader.h"
 
 class GshaderToMshader : public ApiVulkanSample
@@ -32,6 +31,7 @@ class GshaderToMshader : public ApiVulkanSample
 		glm::mat4 model;
 		glm::mat4 view;
 		glm::mat4 proj;
+		glm::mat4 normal;
 	};
 
 	std::array<UBOVS, 3> ubos;
@@ -56,7 +56,7 @@ class GshaderToMshader : public ApiVulkanSample
 	GshaderToMshader();
 	~GshaderToMshader();
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;

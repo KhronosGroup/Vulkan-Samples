@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,12 +21,17 @@
 
 namespace vkb
 {
+namespace core
+{
+template <vkb::BindingType bindingType>
 class Device;
+using DeviceC = Device<vkb::BindingType::C>;
+}        // namespace core
 
 class FencePool
 {
   public:
-	FencePool(Device &device);
+	FencePool(vkb::core::DeviceC &device);
 
 	FencePool(const FencePool &) = delete;
 
@@ -40,12 +45,12 @@ class FencePool
 
 	VkFence request_fence();
 
-	VkResult wait(uint32_t timeout = std::numeric_limits<uint32_t>::max()) const;
+	VkResult wait(uint64_t timeout = std::numeric_limits<uint64_t>::max()) const;
 
 	VkResult reset();
 
   private:
-	Device &device;
+	vkb::core::DeviceC &device;
 
 	std::vector<VkFence> fences;
 

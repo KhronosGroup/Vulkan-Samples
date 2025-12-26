@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 
 // Holds data for a scratch buffer used as a temporary storage during acceleration structure builds
 struct ScratchBuffer
@@ -83,7 +82,7 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
-	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void          request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
 	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
 	void          delete_scratch_buffer(ScratchBuffer &scratch_buffer);

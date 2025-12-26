@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -63,6 +63,6 @@ void main()
 
 	// Output the vertex position using debug printf
 	if (gl_VertexIndex == 0) {
-		debugPrintfEXT("Position = %v4f", outPos);
+		debugPrintfEXT("Position = %v3f", outPos);
 	}
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,15 @@
 #pragma once
 
 #include "semaphore_pool.h"
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
+namespace core
+{
+class HPPDevice;
+}
+
 /**
  * @brief facade class around vkb::SemaphorePool, providing a vulkan.hpp-based interface
  *
@@ -31,8 +37,8 @@ class HPPSemaphorePool : private vkb::SemaphorePool
   public:
 	using vkb::SemaphorePool::reset;
 
-	HPPSemaphorePool(vkb::core::HPPDevice &device) :
-	    vkb::SemaphorePool(reinterpret_cast<vkb::Device &>(device))
+	HPPSemaphorePool(vkb::core::DeviceCpp &device) :
+	    vkb::SemaphorePool(reinterpret_cast<vkb::core::DeviceC &>(device))
 	{}
 
 	void release_owned_semaphore(vk::Semaphore semaphore)

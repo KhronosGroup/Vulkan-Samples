@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,14 @@
 
 #pragma once
 
+#include "common/hpp_vk_common.h"
+#include "core/hpp_descriptor_set.h"
+#include "core/hpp_image_view.h"
+#include "core/hpp_render_pass.h"
+#include "core/hpp_shader_module.h"
+#include "hpp_resource_record.h"
+#include "rendering/hpp_render_target.h"
 #include "resource_caching.h"
-#include <core/hpp_device.h>
 #include <vulkan/vulkan_hash.hpp>
 
 namespace std
@@ -352,7 +358,7 @@ struct HPPRecordHelper<vkb::core::HPPGraphicsPipeline, A...>
 }        // namespace
 
 template <class T, class... A>
-T &request_resource(vkb::core::HPPDevice &device, vkb::HPPResourceRecord *recorder, std::unordered_map<size_t, T> &resources, A &...args)
+T &request_resource(vkb::core::DeviceCpp &device, vkb::HPPResourceRecord *recorder, std::unordered_map<size_t, T> &resources, A &...args)
 {
 	HPPRecordHelper<T, A...> record_helper;
 

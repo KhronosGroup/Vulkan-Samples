@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,12 +36,12 @@ class HPPDescriptorSet : private vkb::DescriptorSet
 	using vkb::DescriptorSet::apply_writes;
 	using vkb::DescriptorSet::update;
 
-	HPPDescriptorSet(vkb::core::HPPDevice                       &device,
+	HPPDescriptorSet(vkb::core::DeviceCpp                       &device,
 	                 const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
 	                 vkb::core::HPPDescriptorPool               &descriptor_pool,
 	                 const BindingMap<vk::DescriptorBufferInfo> &buffer_infos = {},
 	                 const BindingMap<vk::DescriptorImageInfo>  &image_infos  = {}) :
-	    vkb::DescriptorSet(reinterpret_cast<vkb::Device &>(device),
+	    vkb::DescriptorSet(reinterpret_cast<vkb::core::DeviceC &>(device),
 	                       reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout),
 	                       reinterpret_cast<vkb::DescriptorPool &>(descriptor_pool),
 	                       reinterpret_cast<BindingMap<VkDescriptorBufferInfo> const &>(buffer_infos),

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,8 +47,8 @@ struct HPPImageMemoryBarrier
 	vk::AccessFlags        dst_access_mask;
 	vk::ImageLayout        old_layout       = vk::ImageLayout::eUndefined;
 	vk::ImageLayout        new_layout       = vk::ImageLayout::eUndefined;
-	uint32_t               old_queue_family = VK_QUEUE_FAMILY_IGNORED;
-	uint32_t               new_queue_family = VK_QUEUE_FAMILY_IGNORED;
+	uint32_t               src_queue_family = VK_QUEUE_FAMILY_IGNORED;
+	uint32_t               dst_queue_family = VK_QUEUE_FAMILY_IGNORED;
 };
 
 struct HPPLoadStoreInfo
@@ -102,9 +102,9 @@ inline bool is_dynamic_buffer_descriptor_type(vk::DescriptorType descriptor_type
 	return vkb::is_dynamic_buffer_descriptor_type(static_cast<VkDescriptorType>(descriptor_type));
 }
 
-inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL)
+inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
 {
-	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage), src_language));
+	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
 }
 
 inline void image_layout_transition(vk::CommandBuffer command_buffer,
@@ -152,6 +152,26 @@ inline void image_layout_transition(vk::CommandBuffer                command_buf
 	                             static_cast<VkImageSubresourceRange const &>(subresource_range));
 }
 
+inline void make_filters_valid(vk::PhysicalDevice physical_device, vk::Format format, vk::Filter *filter, vk::SamplerMipmapMode *mipmapMode = nullptr)
+{
+	// Not all formats support linear filtering, so we need to adjust them if they don't
+	if (*filter == vk::Filter::eNearest && (mipmapMode == nullptr || *mipmapMode == vk::SamplerMipmapMode::eNearest))
+	{
+		return;        // These must already be valid
+	}
+
+	vk::FormatProperties properties = physical_device.getFormatProperties(format);
+
+	if (!(properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
+	{
+		*filter = vk::Filter::eNearest;
+		if (mipmapMode)
+		{
+			*mipmapMode = vk::SamplerMipmapMode::eNearest;
+		}
+	}
+}
+
 inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice             gpu,
                                                   vk::SurfaceKHR                 surface,
                                                   std::vector<vk::Format> const &preferred_formats = {
@@ -160,13 +180,11 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice            
 	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
 	assert(!supported_surface_formats.empty());
 
-	auto it = std::find_if(supported_surface_formats.begin(),
-	                       supported_surface_formats.end(),
-	                       [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
-		                       return std::any_of(preferred_formats.begin(),
-		                                          preferred_formats.end(),
-		                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
-	                       });
+	auto it = std::ranges::find_if(supported_surface_formats,
+	                               [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
+		                               return std::ranges::any_of(preferred_formats,
+		                                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
+	                               });
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
@@ -185,26 +203,41 @@ inline vk::Format choose_blendable_format(vk::PhysicalDevice gpu, const std::vec
 	throw std::runtime_error("No suitable blendable format could be determined");
 }
 
-// helper functions not backed by vk_common.h
-inline vk::CommandBuffer allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
+inline vk::ImageCompressionPropertiesEXT query_applied_compression(vk::Device device, vk::Image image)
 {
-	vk::CommandBufferAllocateInfo command_buffer_allocate_info(command_pool, level, 1);
+	vk::ImageSubresource2EXT image_subresource{
+	    .imageSubresource = {.aspectMask = vk::ImageAspectFlagBits::eColor, .mipLevel = 0, .arrayLayer = 0}};
+
+	auto imageSubresourceLayout = device.getImageSubresourceLayout2EXT<vk::SubresourceLayout2EXT, vk::ImageCompressionPropertiesEXT>(image, image_subresource);
+
+	return imageSubresourceLayout.get<vk::ImageCompressionPropertiesEXT>();
+}
+
+// helper functions not backed by vk_common.h
+inline vk::CommandBuffer
+    allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
+{
+	vk::CommandBufferAllocateInfo command_buffer_allocate_info{.commandPool = command_pool, .level = level, .commandBufferCount = 1};
 	return device.allocateCommandBuffers(command_buffer_allocate_info).front();
 }
 
 inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::DescriptorPool descriptor_pool, vk::DescriptorSetLayout descriptor_set_layout)
 {
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, 1, &descriptor_set_layout);
-#else
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, descriptor_set_layout);
-#endif
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info{.descriptorPool     = descriptor_pool,
+	                                                           .descriptorSetCount = 1,
+	                                                           .pSetLayouts        = &descriptor_set_layout};
 	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
 }
 
-inline vk::Framebuffer create_framebuffer(vk::Device device, vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
+inline vk::Framebuffer
+    create_framebuffer(vk::Device device, vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
 {
-	vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass, attachments, extent.width, extent.height, 1);
+	vk::FramebufferCreateInfo framebuffer_create_info{.renderPass      = render_pass,
+	                                                  .attachmentCount = static_cast<uint32_t>(attachments.size()),
+	                                                  .pAttachments    = attachments.data(),
+	                                                  .width           = extent.width,
+	                                                  .height          = extent.height,
+	                                                  .layers          = 1};
 	return device.createFramebuffer(framebuffer_create_info);
 }
 
@@ -222,42 +255,39 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
                                              vk::PipelineLayout                                        pipeline_layout,
                                              vk::RenderPass                                            render_pass)
 {
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, primitive_topology, false);
+	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state{.topology = primitive_topology};
 
-	vk::PipelineTessellationStateCreateInfo tessellation_state({}, patch_control_points);
+	vk::PipelineTessellationStateCreateInfo tessellation_state{.patchControlPoints = patch_control_points};
 
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
+	vk::PipelineViewportStateCreateInfo viewport_state{.viewportCount = 1, .scissorCount = 1};
 
-	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = polygon_mode;
-	rasterization_state.cullMode    = cull_mode;
-	rasterization_state.frontFace   = front_face;
-	rasterization_state.lineWidth   = 1.0f;
+	vk::PipelineRasterizationStateCreateInfo rasterization_state{
+	    .polygonMode = polygon_mode, .cullMode = cull_mode, .frontFace = front_face, .lineWidth = 1.0f};
 
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
+	vk::PipelineMultisampleStateCreateInfo multisample_state{.rasterizationSamples = vk::SampleCountFlagBits::e1};
 
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, false, {}, blend_attachment_states);
+	vk::PipelineColorBlendStateCreateInfo color_blend_state{.attachmentCount = static_cast<uint32_t>(blend_attachment_states.size()),
+	                                                        .pAttachments    = blend_attachment_states.data()};
 
 	std::array<vk::DynamicState, 2>    dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
+	vk::PipelineDynamicStateCreateInfo dynamic_state{.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size()),
+	                                                 .pDynamicStates    = dynamic_state_enables.data()};
 
 	// Final fullscreen composition pass pipeline
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &vertex_input_state,
-	                                                    &input_assembly_state,
-	                                                    &tessellation_state,
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layout,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
+	vk::GraphicsPipelineCreateInfo pipeline_create_info{.stageCount          = static_cast<uint32_t>(shader_stages.size()),
+	                                                    .pStages             = shader_stages.data(),
+	                                                    .pVertexInputState   = &vertex_input_state,
+	                                                    .pInputAssemblyState = &input_assembly_state,
+	                                                    .pTessellationState  = &tessellation_state,
+	                                                    .pViewportState      = &viewport_state,
+	                                                    .pRasterizationState = &rasterization_state,
+	                                                    .pMultisampleState   = &multisample_state,
+	                                                    .pDepthStencilState  = &depth_stencil_state,
+	                                                    .pColorBlendState    = &color_blend_state,
+	                                                    .pDynamicState       = &dynamic_state,
+	                                                    .layout              = pipeline_layout,
+	                                                    .renderPass          = render_pass,
+	                                                    .basePipelineIndex   = -1};
 
 	vk::Result   result;
 	vk::Pipeline pipeline;
@@ -276,24 +306,20 @@ inline vk::ImageView create_image_view(vk::Device           device,
                                        uint32_t             base_array_layer = 0,
                                        uint32_t             layer_count      = 1)
 {
-	vk::ImageViewCreateInfo image_view_create_info;
-	image_view_create_info.image                           = image;
-	image_view_create_info.viewType                        = view_type;
-	image_view_create_info.format                          = format;
-	image_view_create_info.subresourceRange.aspectMask     = aspect_mask;
-	image_view_create_info.subresourceRange.baseMipLevel   = base_mip_level;
-	image_view_create_info.subresourceRange.levelCount     = level_count;
-	image_view_create_info.subresourceRange.baseArrayLayer = base_array_layer;
-	image_view_create_info.subresourceRange.layerCount     = layer_count;
+	vk::ImageViewCreateInfo image_view_create_info{.image            = image,
+	                                               .viewType         = view_type,
+	                                               .format           = format,
+	                                               .subresourceRange = {.aspectMask     = aspect_mask,
+	                                                                    .baseMipLevel   = base_mip_level,
+	                                                                    .levelCount     = level_count,
+	                                                                    .baseArrayLayer = base_array_layer,
+	                                                                    .layerCount     = layer_count}};
 	return device.createImageView(image_view_create_info);
 }
 
 inline vk::QueryPool create_query_pool(vk::Device device, vk::QueryType query_type, uint32_t query_count, vk::QueryPipelineStatisticFlags pipeline_statistics = {})
 {
-	vk::QueryPoolCreateInfo query_pool_create_info;
-	query_pool_create_info.queryType          = query_type;
-	query_pool_create_info.queryCount         = query_count;
-	query_pool_create_info.pipelineStatistics = pipeline_statistics;
+	vk::QueryPoolCreateInfo query_pool_create_info{.queryType = query_type, .queryCount = query_count, .pipelineStatistics = pipeline_statistics};
 	return device.createQueryPool(query_pool_create_info);
 }
 
@@ -305,21 +331,18 @@ inline vk::Sampler create_sampler(vk::Device             device,
                                   float                  max_anisotropy,
                                   float                  max_LOD)
 {
-	vk::SamplerCreateInfo sampler_create_info({},
-	                                          mag_filter,
-	                                          min_filter,
-	                                          mipmap_mode,
-	                                          sampler_address_mode,
-	                                          sampler_address_mode,
-	                                          sampler_address_mode,
-	                                          0.0f,
-	                                          (1.0f < max_anisotropy),
-	                                          max_anisotropy,
-	                                          false,
-	                                          vk::CompareOp::eNever,
-	                                          0.0f,
-	                                          max_LOD,
-	                                          vk::BorderColor::eFloatOpaqueWhite);
+	vk::SamplerCreateInfo sampler_create_info{.magFilter        = mag_filter,
+	                                          .minFilter        = min_filter,
+	                                          .mipmapMode       = mipmap_mode,
+	                                          .addressModeU     = sampler_address_mode,
+	                                          .addressModeV     = sampler_address_mode,
+	                                          .addressModeW     = sampler_address_mode,
+	                                          .anisotropyEnable = (1.0f < max_anisotropy),
+	                                          .maxAnisotropy    = max_anisotropy,
+	                                          .compareOp        = vk::CompareOp::eNever,
+	                                          .minLod           = 0.0f,
+	                                          .maxLod           = max_LOD,
+	                                          .borderColor      = vk::BorderColor::eFloatOpaqueWhite};
 	return device.createSampler(sampler_create_info);
 }
 
@@ -373,7 +396,10 @@ inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage,
 inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::CommandBuffer> command_buffers, std::vector<vk::Semaphore> semaphores = {})
 {
 	// Submit command_buffer
-	vk::SubmitInfo submit_info(nullptr, {}, command_buffers, semaphores);
+	vk::SubmitInfo submit_info{.commandBufferCount   = static_cast<uint32_t>(command_buffers.size()),
+	                           .pCommandBuffers      = command_buffers.data(),
+	                           .signalSemaphoreCount = static_cast<uint32_t>(semaphores.size()),
+	                           .pSignalSemaphores    = semaphores.data()};
 
 	// Create fence to ensure that command_buffer has finished executing
 	vk::Fence fence = device.createFence({});
@@ -391,6 +417,46 @@ inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::
 
 	// Destroy the fence
 	device.destroyFence(fence);
+}
+
+inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> const &queue_family_properties, vk::QueueFlagBits queue_flag)
+{
+	// Dedicated queue for compute
+	// Try to find a queue family index that supports compute but not graphics
+	if (queue_flag & vk::QueueFlagBits::eCompute)
+	{
+		auto propertyIt = std::ranges::find_if(queue_family_properties,
+		                                       [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics); });
+		if (propertyIt != queue_family_properties.end())
+		{
+			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+		}
+	}
+
+	// Dedicated queue for transfer
+	// Try to find a queue family index that supports transfer but not graphics and compute
+	if (queue_flag & vk::QueueFlagBits::eTransfer)
+	{
+		auto propertyIt = std::ranges::find_if(queue_family_properties,
+		                                       [queue_flag](const vk::QueueFamilyProperties &property) {
+			                                       return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
+			                                              !(property.queueFlags & vk::QueueFlagBits::eCompute);
+		                                       });
+		if (propertyIt != queue_family_properties.end())
+		{
+			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+		}
+	}
+
+	// For other queue types or if no separate compute queue is present, return the first one to support the requested flags
+	auto propertyIt = std::ranges::find_if(
+	    queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) == queue_flag; });
+	if (propertyIt != queue_family_properties.end())
+	{
+		return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
+	}
+
+	throw std::runtime_error("Could not find a matching queue family index");
 }
 
 }        // namespace common

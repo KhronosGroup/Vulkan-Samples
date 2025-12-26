@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,8 +60,8 @@ bool AFBCSample::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
+	vkb::ShaderSource vert_shader("base.vert.spv");
+	vkb::ShaderSource frag_shader("base.frag.spv");
 	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
@@ -121,7 +121,7 @@ void AFBCSample::draw_gui()
 	    /* body = */ [this]() {
 		    ImGui::Checkbox("Enable AFBC", &afbc_enabled);
 
-		    if (get_device().is_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+		    if (get_device().is_extension_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
 		    {
 			    ImGui::SameLine();
 			    ImGui::Text("(%s)", vkb::image_compression_flags_to_string(get_render_context().get_swapchain().get_applied_compression()).c_str());

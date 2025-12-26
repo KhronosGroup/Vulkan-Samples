@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
+ * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,11 +26,11 @@ using StartTestTags = vkb::PluginBase<vkb::tags::Entrypoint>;
 
 /**
  * @brief Start Test
- * 
+ *
  * Start a given test. Used by system_test.py
- * 
+ *
  * Usage: vulkan_sample test bonza
- * 
+ *
  */
 class StartTest : public StartTestTags
 {
@@ -38,11 +39,6 @@ class StartTest : public StartTestTags
 
 	virtual ~StartTest() = default;
 
-	virtual bool is_active(const vkb::CommandParser &parser) override;
-
-	virtual void init(const vkb::CommandParser &parser) override;
-
-	vkb::PositionalCommand test_cmd    = {"test_id", "An ID of the test to run"};
-	vkb::SubCommand        test_subcmd = {"test", "Run a specific test", {&test_cmd}};
+	bool handle_command(std::deque<std::string> &arguments) const override;
 };
 }        // namespace plugins

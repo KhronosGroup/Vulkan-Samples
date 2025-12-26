@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,9 @@
 
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "core/command_buffer.h"
 #include "rendering/render_context.h"
+#include "resource_cache.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
@@ -32,7 +34,8 @@
 
 namespace vkb
 {
-ForwardSubpass::ForwardSubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
+ForwardSubpass::ForwardSubpass(
+    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
     GeometrySubpass{render_context, std::move(vertex_source), std::move(fragment_source), scene_, camera}
 {
 }
@@ -44,20 +47,14 @@ void ForwardSubpass::prepare()
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
-			auto &variant = sub_mesh->get_mut_shader_variant();
-
-			// Same as Geometry except adds lighting definitions to sub mesh variants.
-			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
-
-			variant.add_definitions(vkb::rendering::light_type_definitions);
-
+			auto &variant     = sub_mesh->get_mut_shader_variant();
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
 			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
 		}
 	}
 }
 
-void ForwardSubpass::draw(CommandBuffer &command_buffer)
+void ForwardSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	allocate_lights<ForwardLights>(scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);

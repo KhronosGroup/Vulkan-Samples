@@ -16,9 +16,6 @@
 [submodule "third_party/glfw"]
 	path = third_party/glfw
 	url = https://github.com/glfw/glfw
-[submodule "third_party/glslang"]
-	path = third_party/glslang
-	url = https://github.com/KhronosGroup/glslang
 [submodule "third_party/spirv-cross"]
 	path = third_party/spirv-cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross
@@ -37,9 +34,6 @@
 [submodule "third_party/astc"]
 	path = third_party/astc
 	url = https://github.com/ARM-software/astc-encoder
-[submodule "third_party/CTPL"]
-	path = third_party/CTPL
-	url = https://github.com/vit-vit/CTPL
 [submodule "third_party/vulkan"]
 	path = third_party/vulkan
 	url = https://github.com/KhronosGroup/Vulkan-Headers
@@ -47,15 +41,9 @@
 	path = assets
 	url = https://github.com/KhronosGroup/Vulkan-Samples-Assets
 	shallow = true
-[submodule "third_party/cli11"]
-	path = third_party/cli11
-	url = https://github.com/CLIUtils/CLI11.git
 [submodule "third_party/opencl"]
 	path = third_party/opencl
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
-[submodule "third_party/catch2"]
-	path = third_party/catch2
-	url = https://github.com/catchorg/Catch2.git
 [submodule "third_party/fmt"]
 	path = third_party/fmt
 	url = https://github.com/fmtlib/fmt

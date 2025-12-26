@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Corporation
+/* Copyright (c) 2023-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,8 +31,6 @@ MeshShaderCulling::MeshShaderCulling()
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-	// Targeting SPIR-V version
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 
 MeshShaderCulling::~MeshShaderCulling()
@@ -52,12 +50,12 @@ MeshShaderCulling::~MeshShaderCulling()
 	}
 }
 
-void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MeshShaderCulling::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Check whether the device supports task and mesh shaders
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShader);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, meshShaderQueries);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT, taskShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShaderQueries);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, taskShader);
 
 	// Pipeline statistics
 	auto &requested_features = gpu.get_mutable_requested_features();
@@ -227,9 +225,9 @@ void MeshShaderCulling::prepare_pipelines()
 	// Shader state
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};
 
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task", VK_SHADER_STAGE_TASK_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task.spv", VK_SHADER_STAGE_TASK_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh.spv", VK_SHADER_STAGE_MESH_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT));
 
 	pipeline_create_info.pVertexInputState   = nullptr;
 	pipeline_create_info.pInputAssemblyState = nullptr;
@@ -376,8 +374,9 @@ void MeshShaderCulling::setup_query_result_buffer()
 	// Results are saved in a host visible buffer for easy access by the application
 	VK_CHECK(vkCreateBuffer(get_device().get_handle(), &buffer_create_info, nullptr, &query_result.buffer));
 	vkGetBufferMemoryRequirements(get_device().get_handle(), query_result.buffer, &memory_requirements);
-	memory_allocation.allocationSize  = memory_requirements.size;
-	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	memory_allocation.allocationSize = memory_requirements.size;
+	memory_allocation.memoryTypeIndex =
+	    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &query_result.memory));
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), query_result.buffer, query_result.memory, 0));
 

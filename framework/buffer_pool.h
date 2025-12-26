@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
- * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
+ * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,9 @@
 
 #pragma once
 
+#include "common/helpers.h"
 #include "core/buffer.h"
 #include "core/device.h"
-#include "core/hpp_device.h"
 
 namespace vkb
 {
@@ -36,9 +36,9 @@ class BufferAllocation
 
   public:
 	BufferAllocation()                                    = default;
-	BufferAllocation(const BufferAllocation &)            = delete;
+	BufferAllocation(const BufferAllocation &)            = default;
 	BufferAllocation(BufferAllocation &&)                 = default;
-	BufferAllocation &operator=(const BufferAllocation &) = delete;
+	BufferAllocation &operator=(const BufferAllocation &) = default;
 	BufferAllocation &operator=(BufferAllocation &&)      = default;
 
 	BufferAllocation(vkb::core::Buffer<bindingType> &buffer, DeviceSizeType size, DeviceSizeType offset);
@@ -152,8 +152,6 @@ class BufferBlock
 	using BufferUsageFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferUsageFlags, VkBufferUsageFlags>::type;
 	using DeviceSizeType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
 
-	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
-
   public:
 	BufferBlock()                                  = delete;
 	BufferBlock(BufferBlock const &rhs)            = delete;
@@ -161,7 +159,7 @@ class BufferBlock
 	BufferBlock &operator=(BufferBlock const &rhs) = delete;
 	BufferBlock &operator=(BufferBlock &&rhs)      = default;
 
-	BufferBlock(DeviceType &device, DeviceSizeType size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage);
+	BufferBlock(vkb::core::Device<bindingType> &device, DeviceSizeType size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage);
 
 	/**
 	 * @return An usable view on a portion of the underlying buffer
@@ -196,7 +194,7 @@ using BufferBlockC   = BufferBlock<vkb::BindingType::C>;
 using BufferBlockCpp = BufferBlock<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-BufferBlock<bindingType>::BufferBlock(DeviceType &device, DeviceSizeType size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage) :
+BufferBlock<bindingType>::BufferBlock(vkb::core::Device<bindingType> &device, DeviceSizeType size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage) :
     buffer{device, size, usage, memory_usage}
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -307,17 +305,16 @@ class BufferPool
 	using BufferUsageFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferUsageFlags, VkBufferUsageFlags>::type;
 	using DeviceSizeType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
 
-	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDevice, vkb::Device>::type;
-
   public:
-	BufferPool(DeviceType &device, DeviceSizeType block_size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU);
+	BufferPool(
+	    vkb::core::Device<bindingType> &device, DeviceSizeType block_size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	BufferBlock<bindingType> &request_buffer_block(DeviceSizeType minimum_size, bool minimal = false);
 
 	void reset();
 
   private:
-	vkb::core::HPPDevice                        &device;
+	vkb::core::DeviceCpp                        &device;
 	std::vector<std::unique_ptr<BufferBlockCpp>> buffer_blocks;         /// List of blocks requested (need to be pointers in order to keep their address constant on vector resizing)
 	vk::DeviceSize                               block_size = 0;        /// Minimum size of the blocks
 	vk::BufferUsageFlags                         usage;
@@ -328,8 +325,11 @@ using BufferPoolC   = BufferPool<vkb::BindingType::C>;
 using BufferPoolCpp = BufferPool<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-BufferPool<bindingType>::BufferPool(DeviceType &device, DeviceSizeType block_size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage) :
-    device{reinterpret_cast<vkb::core::HPPDevice &>(device)}, block_size{block_size}, usage{usage}, memory_usage{memory_usage}
+BufferPool<bindingType>::BufferPool(vkb::core::Device<bindingType> &device,
+                                    DeviceSizeType                  block_size,
+                                    BufferUsageFlagsType            usage,
+                                    VmaMemoryUsage                  memory_usage) :
+    device{reinterpret_cast<vkb::core::DeviceCpp &>(device)}, block_size{block_size}, usage{usage}, memory_usage{memory_usage}
 {
 }
 
@@ -337,12 +337,10 @@ template <vkb::BindingType bindingType>
 BufferBlock<bindingType> &BufferPool<bindingType>::request_buffer_block(DeviceSizeType minimum_size, bool minimal)
 {
 	// Find a block in the range of the blocks which can fit the minimum size
-	auto it = minimal ? std::find_if(buffer_blocks.begin(),
-	                                 buffer_blocks.end(),
-	                                 [&minimum_size](auto const &buffer_block) { return (buffer_block->get_size() == minimum_size) && buffer_block->can_allocate(minimum_size); }) :
-	                    std::find_if(buffer_blocks.begin(),
-	                                 buffer_blocks.end(),
-	                                 [&minimum_size](auto const &buffer_block) { return buffer_block->can_allocate(minimum_size); });
+	auto it = minimal ? std::ranges::find_if(buffer_blocks,
+	                                         [&minimum_size](auto const &buffer_block) { return (buffer_block->get_size() == minimum_size) && buffer_block->can_allocate(minimum_size); }) :
+	                    std::ranges::find_if(buffer_blocks,
+	                                         [&minimum_size](auto const &buffer_block) { return buffer_block->can_allocate(minimum_size); });
 
 	if (it == buffer_blocks.end())
 	{

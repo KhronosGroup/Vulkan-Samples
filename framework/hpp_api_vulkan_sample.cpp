@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024, Arm Limited and Contributors
+/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +16,9 @@
  * limitations under the License.
  */
 
-#include <hpp_api_vulkan_sample.h>
-
-#include <common/hpp_vk_common.h>
-#include <hpp_gltf_loader.h>
+#include "hpp_api_vulkan_sample.h"
+#include "core/hpp_queue.h"
+#include "gui.h"
 
 // Instantiate the default dispatcher
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -32,6 +31,9 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	depth_format = vkb::common::get_suitable_depth_format(get_device().get_gpu().get_handle());
+
+	// Update extent from surface extent to reflect command line arguments
+	extent = get_render_context().get_surface_extent();
 
 	// Create synchronization objects
 	// Create a semaphore used to synchronize image presentation
@@ -50,7 +52,7 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	submit_info.setWaitSemaphores(semaphores.acquired_image_ready);
 	submit_info.setSignalSemaphores(semaphores.render_complete);
 
-	queue = get_device().get_suitable_graphics_queue().get_handle();
+	queue = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0).get_handle();
 
 	create_swapchain_buffers();
 	create_command_pool();
@@ -60,8 +62,6 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	setup_render_pass();
 	create_pipeline_cache();
 	setup_framebuffer();
-
-	extent = get_render_context().get_surface_extent();
 
 	prepare_gui();
 
@@ -73,8 +73,8 @@ void HPPApiVulkanSample::prepare_gui()
 	create_gui(*window, nullptr, 15.0f, true);
 	get_gui().prepare(pipeline_cache,
 	                  render_pass,
-	                  {static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex)),
-	                   static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.frag", vk::ShaderStageFlagBits::eFragment))});
+	                  {load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                   load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)});
 }
 
 void HPPApiVulkanSample::update(float delta_time)
@@ -85,6 +85,7 @@ void HPPApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
+	assert(has_render_context());
 	render(delta_time);
 	camera.update(delta_time);
 	if (camera.moving())
@@ -377,7 +378,7 @@ bool HPPApiVulkanSample::check_command_buffers()
 {
 	for (auto &command_buffer : draw_cmd_buffers)
 	{
-		if (command_buffer)
+		if (!command_buffer)
 		{
 			return false;
 		}
@@ -388,8 +389,9 @@ bool HPPApiVulkanSample::check_command_buffers()
 void HPPApiVulkanSample::create_command_buffers()
 {
 	// Create one command buffer for each swap chain image and reuse for rendering
-	vk::CommandBufferAllocateInfo allocate_info(
-	    cmd_pool, vk::CommandBufferLevel::ePrimary, static_cast<uint32_t>(get_render_context().get_render_frames().size()));
+	vk::CommandBufferAllocateInfo allocate_info{.commandPool        = cmd_pool,
+	                                            .level              = vk::CommandBufferLevel::ePrimary,
+	                                            .commandBufferCount = static_cast<uint32_t>(get_render_context().get_render_frames().size())};
 
 	draw_cmd_buffers = get_device().get_handle().allocateCommandBuffers(allocate_info);
 }
@@ -404,35 +406,20 @@ void HPPApiVulkanSample::create_pipeline_cache()
 	pipeline_cache = get_device().get_handle().createPipelineCache({});
 }
 
-vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
+vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage)
 {
-	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device().get_handle(), stage, src_language));
+	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device().get_handle(), stage));
 	assert(shader_modules.back());
-	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
+	return vk::PipelineShaderStageCreateInfo{.stage = stage, .module = shader_modules.back(), .pName = "main"};
 }
 
 vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage)
 {
-	// Note: this can be reworked once offline compilation for GLSL shaders is added
+	std::string full_file_name = sample_folder_name + "/" + get_shader_folder() + "/" + shader_filename;
 
-	// Default to GLSL
-	std::string               shader_folder{"glsl"};
-	std::string               shader_extension{""};
-	vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::GLSL;
-
-	if (get_shading_language() == vkb::ShadingLanguage::HLSL)
-	{
-		shader_folder = "hlsl";
-		// HLSL shaders are offline compiled to SPIR-V, so source is SPV
-		src_language     = vkb::ShaderSourceLanguage::SPV;
-		shader_extension = ".spv";
-	}
-
-	std::string full_file_name = sample_folder_name + "/" + shader_folder + "/" + shader_filename + shader_extension;
-
-	shader_modules.push_back(vkb::common::load_shader(full_file_name, get_device().get_handle(), stage, src_language));
+	shader_modules.push_back(vkb::common::load_shader(full_file_name, get_device().get_handle(), stage));
 	assert(shader_modules.back());
-	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
+	return vk::PipelineShaderStageCreateInfo{.stage = stage, .module = shader_modules.back(), .pName = "main"};
 }
 
 void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
@@ -464,8 +451,8 @@ void HPPApiVulkanSample::draw_ui(const vk::CommandBuffer command_buffer)
 {
 	if (has_gui())
 	{
-		command_buffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f));
-		command_buffer.setScissor(0, vk::Rect2D({0, 0}, extent));
+		command_buffer.setViewport(0, vk::Viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f});
+		command_buffer.setScissor(0, vk::Rect2D{{0, 0}, extent});
 
 		get_gui().draw(command_buffer);
 	}
@@ -502,7 +489,7 @@ void HPPApiVulkanSample::submit_frame()
 
 		vk::SwapchainKHR swapchain = get_render_context().get_swapchain().get_handle();
 
-		vk::PresentInfoKHR present_info({}, swapchain, current_buffer);
+		vk::PresentInfoKHR present_info{.swapchainCount = 1, .pSwapchains = &swapchain, .pImageIndices = &current_buffer};
 		// Check if a wait semaphore has been specified to wait for before presenting the image
 		if (semaphores.render_complete)
 		{
@@ -510,7 +497,7 @@ void HPPApiVulkanSample::submit_frame()
 		}
 
 		vk::DisplayPresentInfoKHR disp_present_info;
-		if (get_device().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		if (get_device().get_gpu().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
 		    window->get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(&disp_present_info), extent.width, extent.height))
 		{
 			// Add display present info if supported and wanted
@@ -603,7 +590,7 @@ void HPPApiVulkanSample::rebuild_command_buffers()
 void HPPApiVulkanSample::create_synchronization_primitives()
 {
 	// Wait fences to sync command buffer access
-	vk::FenceCreateInfo fence_create_info(vk::FenceCreateFlagBits::eSignaled);
+	vk::FenceCreateInfo fence_create_info{.flags = vk::FenceCreateFlagBits::eSignaled};
 	wait_fences.resize(draw_cmd_buffers.size());
 	for (auto &fence : wait_fences)
 	{
@@ -614,7 +601,7 @@ void HPPApiVulkanSample::create_synchronization_primitives()
 void HPPApiVulkanSample::create_command_pool()
 {
 	uint32_t                  queue_family_index = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
-	vk::CommandPoolCreateInfo command_pool_info({}, queue_family_index);
+	vk::CommandPoolCreateInfo command_pool_info{.queueFamilyIndex = queue_family_index};
 	cmd_pool = get_device().get_handle().createCommandPool(command_pool_info);
 }
 
@@ -645,8 +632,12 @@ void HPPApiVulkanSample::setup_framebuffer()
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[1] = depth_stencil.view;
 
-	vk::FramebufferCreateInfo framebuffer_create_info(
-	    {}, render_pass, attachments, get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1);
+	vk::FramebufferCreateInfo framebuffer_create_info{.renderPass      = render_pass,
+	                                                  .attachmentCount = static_cast<uint32_t>(attachments.size()),
+	                                                  .pAttachments    = attachments.data(),
+	                                                  .width           = get_render_context().get_surface_extent().width,
+	                                                  .height          = get_render_context().get_surface_extent().height,
+	                                                  .layers          = 1};
 
 	// Delete existing frame buffers
 	for (auto &framebuffer : framebuffers)
@@ -666,52 +657,62 @@ void HPPApiVulkanSample::setup_framebuffer()
 
 void HPPApiVulkanSample::setup_render_pass()
 {
-	std::array<vk::AttachmentDescription, 2> attachments;
-	// Color attachment
-	attachments[0].format         = get_render_context().get_format();
-	attachments[0].samples        = vk::SampleCountFlagBits::e1;
-	attachments[0].loadOp         = vk::AttachmentLoadOp::eClear;
-	attachments[0].storeOp        = vk::AttachmentStoreOp::eStore;
-	attachments[0].stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-	attachments[0].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-	attachments[0].initialLayout  = vk::ImageLayout::eUndefined;
-	attachments[0].finalLayout    = vk::ImageLayout::ePresentSrcKHR;
-	// Depth attachment
-	attachments[1].format         = depth_format;
-	attachments[1].samples        = vk::SampleCountFlagBits::e1;
-	attachments[1].loadOp         = vk::AttachmentLoadOp::eClear;
-	attachments[1].storeOp        = vk::AttachmentStoreOp::eDontCare;
-	attachments[1].stencilLoadOp  = vk::AttachmentLoadOp::eClear;
-	attachments[1].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-	attachments[1].initialLayout  = vk::ImageLayout::eUndefined;
-	attachments[1].finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	std::array<vk::AttachmentDescription, 2> attachments{{// Color attachment
+	                                                      {.format         = get_render_context().get_format(),
+	                                                       .samples        = vk::SampleCountFlagBits::e1,
+	                                                       .loadOp         = vk::AttachmentLoadOp::eClear,
+	                                                       .storeOp        = vk::AttachmentStoreOp::eStore,
+	                                                       .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+	                                                       .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+	                                                       .initialLayout  = vk::ImageLayout::eUndefined,
+	                                                       .finalLayout    = vk::ImageLayout::ePresentSrcKHR},
+	                                                      // Depth attachment
+	                                                      {.format         = depth_format,
+	                                                       .samples        = vk::SampleCountFlagBits::e1,
+	                                                       .loadOp         = vk::AttachmentLoadOp::eClear,
+	                                                       .storeOp        = vk::AttachmentStoreOp::eDontCare,
+	                                                       .stencilLoadOp  = vk::AttachmentLoadOp::eClear,
+	                                                       .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+	                                                       .initialLayout  = vk::ImageLayout::eUndefined,
+	                                                       .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal}}};
 
-	vk::AttachmentReference color_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+	vk::AttachmentReference color_reference{0, vk::ImageLayout::eColorAttachmentOptimal};
 
-	vk::AttachmentReference depth_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	vk::AttachmentReference depth_reference{1, vk::ImageLayout::eDepthStencilAttachmentOptimal};
 
-	vk::SubpassDescription subpass_description({}, vk::PipelineBindPoint::eGraphics, {}, color_reference, {}, &depth_reference);
+	vk::SubpassDescription subpass_description{.pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
+	                                           .colorAttachmentCount    = 1,
+	                                           .pColorAttachments       = &color_reference,
+	                                           .pDepthStencilAttachment = &depth_reference};
 
 	// Subpass dependencies for layout transitions
-	std::array<vk::SubpassDependency, 2> dependencies;
+	std::array<vk::SubpassDependency, 2> dependencies{{
+	    {.srcSubpass   = vk::SubpassExternal,
+	     .dstSubpass   = 0,
+	     .srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe,
+	     .dstStageMask =
+	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
+	     .srcAccessMask = vk::AccessFlagBits::eNoneKHR,
+	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
+	    {.srcSubpass = 0,
+	     .dstSubpass = vk::SubpassExternal,
+	     .srcStageMask =
+	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
+	     .dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe,
+	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
+	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
+	}};
 
-	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass      = 0;
-	dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
-	dependencies[0].srcAccessMask   = vk::AccessFlagBits::eNoneKHR;
-	dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-	dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
-
-	dependencies[1].srcSubpass      = 0;
-	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
-	dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-	dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
-	dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
-
-	vk::RenderPassCreateInfo render_pass_create_info({}, attachments, subpass_description, dependencies);
+	vk::RenderPassCreateInfo render_pass_create_info{.attachmentCount = static_cast<uint32_t>(attachments.size()),
+	                                                 .pAttachments    = attachments.data(),
+	                                                 .subpassCount    = 1,
+	                                                 .pSubpasses      = &subpass_description,
+	                                                 .dependencyCount = static_cast<uint32_t>(dependencies.size()),
+	                                                 .pDependencies   = dependencies.data()};
 
 	render_pass = get_device().get_handle().createRenderPass(render_pass_create_info);
 }
@@ -730,52 +731,62 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 		color_attachment_image_layout = vk::ImageLayout::ePresentSrcKHR;
 	}
 
-	std::array<vk::AttachmentDescription, 2> attachments = {};
-	// Color attachment
-	attachments[0].format         = get_render_context().get_format();
-	attachments[0].samples        = vk::SampleCountFlagBits::e1;
-	attachments[0].loadOp         = color_attachment_load_op;
-	attachments[0].storeOp        = vk::AttachmentStoreOp::eStore;
-	attachments[0].stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-	attachments[0].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-	attachments[0].initialLayout  = color_attachment_image_layout;
-	attachments[0].finalLayout    = vk::ImageLayout::ePresentSrcKHR;
-	// Depth attachment
-	attachments[1].format         = depth_format;
-	attachments[1].samples        = vk::SampleCountFlagBits::e1;
-	attachments[1].loadOp         = vk::AttachmentLoadOp::eClear;
-	attachments[1].storeOp        = vk::AttachmentStoreOp::eDontCare;
-	attachments[1].stencilLoadOp  = vk::AttachmentLoadOp::eClear;
-	attachments[1].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-	attachments[1].initialLayout  = vk::ImageLayout::eUndefined;
-	attachments[1].finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	std::array<vk::AttachmentDescription, 2> attachments = {{// Color attachment
+	                                                         {.format         = get_render_context().get_format(),
+	                                                          .samples        = vk::SampleCountFlagBits::e1,
+	                                                          .loadOp         = color_attachment_load_op,
+	                                                          .storeOp        = vk::AttachmentStoreOp::eStore,
+	                                                          .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+	                                                          .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+	                                                          .initialLayout  = color_attachment_image_layout,
+	                                                          .finalLayout    = vk::ImageLayout::ePresentSrcKHR},
+	                                                         // Depth attachment
+	                                                         {.format         = depth_format,
+	                                                          .samples        = vk::SampleCountFlagBits::e1,
+	                                                          .loadOp         = vk::AttachmentLoadOp::eClear,
+	                                                          .storeOp        = vk::AttachmentStoreOp::eDontCare,
+	                                                          .stencilLoadOp  = vk::AttachmentLoadOp::eClear,
+	                                                          .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+	                                                          .initialLayout  = vk::ImageLayout::eUndefined,
+	                                                          .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal}}};
 
-	vk::AttachmentReference color_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+	vk::AttachmentReference color_reference{0, vk::ImageLayout::eColorAttachmentOptimal};
 
-	vk::AttachmentReference depth_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	vk::AttachmentReference depth_reference{1, vk::ImageLayout::eDepthStencilAttachmentOptimal};
 
-	vk::SubpassDescription subpass_description({}, vk::PipelineBindPoint::eGraphics, {}, color_reference, {}, &depth_reference);
+	vk::SubpassDescription subpass_description{.pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
+	                                           .colorAttachmentCount    = 1,
+	                                           .pColorAttachments       = &color_reference,
+	                                           .pDepthStencilAttachment = &depth_reference};
 
 	// Subpass dependencies for layout transitions
-	std::array<vk::SubpassDependency, 2> dependencies;
+	std::array<vk::SubpassDependency, 2> dependencies{{
+	    {.srcSubpass   = vk::SubpassExternal,
+	     .dstSubpass   = 0,
+	     .srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe,
+	     .dstStageMask =
+	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
+	     .srcAccessMask = vk::AccessFlagBits::eNoneKHR,
+	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
+	    {.srcSubpass = 0,
+	     .dstSubpass = vk::SubpassExternal,
+	     .srcStageMask =
+	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
+	     .dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe,
+	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
+	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
+	}};
 
-	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass      = 0;
-	dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
-	dependencies[0].srcAccessMask   = vk::AccessFlagBits::eNoneKHR;
-	dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-	dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
-
-	dependencies[1].srcSubpass      = 0;
-	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
-	dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-	dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
-	dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
-
-	vk::RenderPassCreateInfo render_pass_create_info({}, attachments, subpass_description, dependencies);
+	vk::RenderPassCreateInfo render_pass_create_info{.attachmentCount = static_cast<uint32_t>(attachments.size()),
+	                                                 .pAttachments    = attachments.data(),
+	                                                 .subpassCount    = 1,
+	                                                 .pSubpasses      = &subpass_description,
+	                                                 .dependencyCount = static_cast<uint32_t>(dependencies.size()),
+	                                                 .pDependencies   = dependencies.data()};
 
 	render_pass = get_device().get_handle().createRenderPass(render_pass_create_info);
 }
@@ -842,7 +853,8 @@ void HPPApiVulkanSample::handle_surface_changes()
 	vk::SurfaceCapabilitiesKHR surface_properties =
 	    get_device().get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().get_swapchain().get_surface());
 
-	if (surface_properties.currentExtent != get_render_context().get_surface_extent())
+	if (surface_properties.currentExtent != get_render_context().get_surface_extent() &&
+	    surface_properties.currentExtent != vk::Extent2D{0xFFFFFFFF, 0xFFFFFFFF})
 	{
 		resize(surface_properties.currentExtent.width, surface_properties.currentExtent.height);
 	}
@@ -895,7 +907,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 		bufferCopyRegions.push_back(buffer_copy_region);
 	}
 
-	vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, vkb::to_u32(mipmaps.size()), 0, 1);
+	vk::ImageSubresourceRange subresource_range{vk::ImageAspectFlagBits::eColor, 0, vkb::to_u32(mipmaps.size()), 0, 1};
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
@@ -959,7 +971,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 		}
 	}
 
-	vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, vkb::to_u32(mipmaps.size()), 0, layers);
+	vk::ImageSubresourceRange subresource_range{vk::ImageAspectFlagBits::eColor, 0, vkb::to_u32(mipmaps.size()), 0, layers};
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
@@ -1023,7 +1035,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 		}
 	}
 
-	vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, vkb::to_u32(mipmaps.size()), 0, layers);
+	vk::ImageSubresourceRange subresource_range{vk::ImageAspectFlagBits::eColor, 0, vkb::to_u32(mipmaps.size()), 0, layers};
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy

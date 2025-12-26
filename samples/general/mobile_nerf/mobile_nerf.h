@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2025, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
 
 #include <json.hpp>
@@ -42,7 +41,7 @@ class MobileNerf : public ApiVulkanSample
   public:
 	MobileNerf();
 	~MobileNerf() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;

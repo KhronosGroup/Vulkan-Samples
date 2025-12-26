@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,7 +60,7 @@ DescriptorBufferBasic::~DescriptorBufferBasic()
 	}
 }
 
-void DescriptorBufferBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
+void DescriptorBufferBasic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -71,16 +71,10 @@ void DescriptorBufferBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	// Enable features required for this example
 
 	// We need device addresses for buffers in certain places
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
 
 	// We need to enable the descriptor buffer feature of the VK_EXT_descriptor_buffer extension
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceDescriptorBufferFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
-	                         descriptorBuffer);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorBufferFeaturesEXT, descriptorBuffer);
 }
 
 void DescriptorBufferBasic::build_command_buffers()
@@ -248,9 +242,8 @@ void DescriptorBufferBasic::prepare_pipelines()
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 1: Normal
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // Location 2: UV
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                     // Location 0: Position
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),        // Location 1: UV
 	};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
@@ -272,8 +265,8 @@ void DescriptorBufferBasic::prepare_pipelines()
 	pipeline_create_info.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("descriptor_buffer_basic", "cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("descriptor_buffer_basic", "cube.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("descriptor_buffer_basic", "cube.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("descriptor_buffer_basic", "cube.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();

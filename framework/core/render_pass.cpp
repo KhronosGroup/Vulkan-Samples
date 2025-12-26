@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 #include "render_pass.h"
 
 #include <numeric>
+#include <span>
 
 #include "device.h"
 #include "rendering/render_target.h"
@@ -244,23 +245,66 @@ void set_attachment_layouts(std::vector<T_SubpassDescription> &subpass_descripti
 	}
 }
 
-template <typename T>
-std::vector<T> get_subpass_dependencies(const size_t subpass_count)
+/**
+ * @brief Assuming there is only one depth attachment
+ */
+template <typename T_SubpassDescription, typename T_AttachmentDescription>
+bool is_depth_a_dependency(std::vector<T_SubpassDescription> &subpass_descriptions, std::vector<T_AttachmentDescription> &attachment_descriptions)
 {
-	std::vector<T> dependencies(subpass_count - 1);
+	// More than 1 subpass uses depth
+	if (std::ranges::count_if(subpass_descriptions,
+	                          [](auto const &subpass) {
+		                          return subpass.pDepthStencilAttachment != nullptr;
+	                          }) > 1)
+	{
+		return true;
+	}
+
+	// Otherwise check if any uses depth as an input
+	return std::ranges::any_of(
+	    subpass_descriptions,
+	    [&attachment_descriptions](auto const &subpass) {
+		    return std::ranges::any_of(
+		        std::span{subpass.pInputAttachments, subpass.inputAttachmentCount},
+		        [&attachment_descriptions](auto const &reference) {
+			        return vkb::is_depth_format(attachment_descriptions[reference.attachment].format);
+		        });
+	    });
+
+	return false;
+}
+
+template <typename T>
+std::vector<T> get_subpass_dependencies(const size_t subpass_count, bool depth_stencil_dependency)
+{
+	std::vector<T> dependencies{};
 
 	if (subpass_count > 1)
 	{
-		for (uint32_t i = 0; i < to_u32(dependencies.size()); ++i)
+		for (uint32_t subpass_id = 0; subpass_id < to_u32(subpass_count - 1); ++subpass_id)
 		{
-			// Transition input attachments from color attachment to shader read
-			dependencies[i].srcSubpass      = i;
-			dependencies[i].dstSubpass      = i + 1;
-			dependencies[i].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependencies[i].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			dependencies[i].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			dependencies[i].dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-			dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+			T color_dep{};
+			color_dep.srcSubpass      = subpass_id;
+			color_dep.dstSubpass      = subpass_id + 1;
+			color_dep.srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			color_dep.dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			color_dep.srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			color_dep.dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			color_dep.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+			dependencies.push_back(color_dep);
+
+			if (depth_stencil_dependency)
+			{
+				T depth_dep{};
+				depth_dep.srcSubpass      = subpass_id;
+				depth_dep.dstSubpass      = subpass_id + 1;
+				depth_dep.srcStageMask    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+				depth_dep.dstStageMask    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+				depth_dep.srcAccessMask   = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				depth_dep.dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				depth_dep.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+				dependencies.push_back(depth_dep);
+			}
 		}
 	}
 
@@ -282,6 +326,11 @@ T get_attachment_reference(const uint32_t attachment, const VkImageLayout layout
 template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
 void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
+	if (attachments.size() != load_store_infos.size())
+	{
+		LOGW("Render Pass creation: size of attachment list and load/store info list does not match: {} vs {}", attachments.size(), load_store_infos.size());
+	}
+
 	auto attachment_descriptions = get_attachment_descriptions<T_AttachmentDescription>(attachments, load_store_infos);
 
 	// Store attachments for every subpass
@@ -321,8 +370,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 		// Fill input attachments references
 		for (auto i_attachment : subpass.input_attachments)
 		{
-			auto default_layout = vkb::is_depth_format(attachment_descriptions[i_attachment].format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			auto initial_layout = attachments[i_attachment].initial_layout == VK_IMAGE_LAYOUT_UNDEFINED ? default_layout : attachments[i_attachment].initial_layout;
+			auto initial_layout = vkb::is_depth_format(attachments[i_attachment].format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			input_attachments[i].push_back(get_attachment_reference<T_AttachmentReference>(i_attachment, initial_layout));
 		}
 
@@ -438,7 +486,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 		color_output_count.push_back(to_u32(color_attachments[i].size()));
 	}
 
-	const auto &subpass_dependencies = get_subpass_dependencies<T_SubpassDependency>(subpass_count);
+	const auto &subpass_dependencies = get_subpass_dependencies<T_SubpassDependency>(subpass_count, is_depth_a_dependency(subpass_descriptions, attachment_descriptions));
 
 	T_RenderPassCreateInfo create_info{};
 	set_structure_type(create_info);
@@ -462,18 +510,22 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 	}
 }
 
-RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses) :
-    VulkanResource{VK_NULL_HANDLE, &device},
-    subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
+RenderPass::RenderPass(vkb::core::DeviceC               &device,
+                       const std::vector<Attachment>    &attachments,
+                       const std::vector<LoadStoreInfo> &load_store_infos,
+                       const std::vector<SubpassInfo>   &subpasses) :
+    VulkanResource{VK_NULL_HANDLE, &device}, subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
     color_output_count{}
 {
-	if (device.is_enabled(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME))
+	if (device.is_extension_enabled(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME))
 	{
-		create_renderpass<VkSubpassDescription2KHR, VkAttachmentDescription2KHR, VkAttachmentReference2KHR, VkSubpassDependency2KHR, VkRenderPassCreateInfo2KHR>(attachments, load_store_infos, subpasses);
+		create_renderpass<VkSubpassDescription2KHR, VkAttachmentDescription2KHR, VkAttachmentReference2KHR, VkSubpassDependency2KHR, VkRenderPassCreateInfo2KHR>(
+		    attachments, load_store_infos, subpasses);
 	}
 	else
 	{
-		create_renderpass<VkSubpassDescription, VkAttachmentDescription, VkAttachmentReference, VkSubpassDependency, VkRenderPassCreateInfo>(attachments, load_store_infos, subpasses);
+		create_renderpass<VkSubpassDescription, VkAttachmentDescription, VkAttachmentReference, VkSubpassDependency, VkRenderPassCreateInfo>(
+		    attachments, load_store_infos, subpasses);
 	}
 }
 
@@ -497,7 +549,7 @@ const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
 	return color_output_count[subpass_index];
 }
 
-const VkExtent2D RenderPass::get_render_area_granularity() const
+VkExtent2D RenderPass::get_render_area_granularity() const
 {
 	VkExtent2D render_area_granularity = {};
 	vkGetRenderAreaGranularity(get_device().get_handle(), get_handle(), &render_area_granularity);

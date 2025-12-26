@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,14 +18,14 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
 
 class RayTracingPositionFetch : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR    ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR   acceleration_structure_features{};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{};
 
 	std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure{nullptr};
 	std::unique_ptr<vkb::core::AccelerationStructure> top_level_acceleration_structure{nullptr};
@@ -64,7 +64,7 @@ class RayTracingPositionFetch : public ApiVulkanSample
 	RayTracingPositionFetch();
 	virtual ~RayTracingPositionFetch();
 
-	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         create_storage_image();
 	void         create_bottom_level_acceleration_structure();
 	void         create_top_level_acceleration_structure();

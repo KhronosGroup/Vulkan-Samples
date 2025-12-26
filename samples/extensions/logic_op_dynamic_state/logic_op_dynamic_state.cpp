@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Mobica Limited
+/* Copyright (c) 2023-2025, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -196,31 +196,19 @@ void LogicOpDynamicState::build_command_buffers()
 }
 
 /**
- * @fn void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
+ * @fn void LogicOpDynamicState::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
  * @brief Enabling features related to Vulkan extensions
  */
-void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
+void LogicOpDynamicState::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
-	                         extendedDynamicState2);
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState2FeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT,
-	                         extendedDynamicState2LogicOp);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2LogicOp);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
-	                         extendedDynamicState);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT,
-	                         primitiveTopologyListRestart);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT, primitiveTopologyListRestart);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -332,8 +320,8 @@ void LogicOpDynamicState::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("logic_op_dynamic_state", "baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("logic_op_dynamic_state", "baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("logic_op_dynamic_state", "baseline.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("logic_op_dynamic_state", "baseline.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	/* Use the pNext to point to the rendering create structure */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -386,8 +374,8 @@ void LogicOpDynamicState::create_pipeline()
 
 	rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-	shader_stages[0] = load_shader("logic_op_dynamic_state", "background.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("logic_op_dynamic_state", "background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("logic_op_dynamic_state", "background.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("logic_op_dynamic_state", "background.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.background));
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,6 +36,23 @@ LayoutTransitions::LayoutTransitions()
 
 	config.insert<vkb::IntSetting>(0, reinterpret_cast<int &>(layout_transition_type), LayoutTransitionType::UNDEFINED);
 	config.insert<vkb::IntSetting>(1, reinterpret_cast<int &>(layout_transition_type), LayoutTransitionType::LAST_LAYOUT);
+
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
+
+	VkLayerSettingEXT layerSetting;
+	layerSetting.pLayerName   = "MoltenVK";
+	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
+	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
+	layerSetting.valueCount   = 1;
+
+	// Make this static so layer setting reference remains valid after leaving constructor scope
+	static const int32_t useMetalArgumentBuffers = 0;
+	layerSetting.pValues                         = &useMetalArgumentBuffers;
+
+	add_layer_setting(layerSetting);
+#endif
 }
 
 bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
@@ -50,8 +67,8 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert"};
-	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag"};
+	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert.spv"};
+	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag.spv"};
 
 	std::unique_ptr<vkb::rendering::SubpassC> gbuffer_pass =
 	    std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
@@ -59,8 +76,8 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
 	gbuffer_pipeline.set_load_store(vkb::gbuffer::get_clear_store_all());
 
-	auto lighting_vs = vkb::ShaderSource{"deferred/lighting.vert"};
-	auto lighting_fs = vkb::ShaderSource{"deferred/lighting.frag"};
+	auto lighting_vs = vkb::ShaderSource{"deferred/lighting.vert.spv"};
+	auto lighting_fs = vkb::ShaderSource{"deferred/lighting.frag.spv"};
 
 	std::unique_ptr<vkb::rendering::SubpassC> lighting_subpass =
 	    std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, get_scene());
@@ -128,7 +145,7 @@ VkImageLayout LayoutTransitions::pick_old_layout(VkImageLayout last_layout)
 	           last_layout;
 }
 
-void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
 {
 	// POI
 	//

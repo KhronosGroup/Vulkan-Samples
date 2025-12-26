@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Mobica Limited
+# Copyright (c) 2023-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,10 +26,21 @@ add_sample(
     NAME "Geometry shader to mesh shader"
     DESCRIPTION "Sample shows migration from geometry shader pipeline to mesh shader one"
     SHADER_FILES_GLSL
-        "gshader_to_mshader/gshader_to_mshader.vert"
-        "gshader_to_mshader/gshader_to_mshader.frag"
-        "gshader_to_mshader/gshader_to_mshader.geom"
-        "gshader_to_mshader/gshader_to_mshader.mesh"
-        "gshader_to_mshader/gshader_to_mshader_base.frag"
-        "gshader_to_mshader/gshader_to_mshader_base.vert"
-        "gshader_to_mshader/gshader_to_mshader_mesh.frag")
+        "gshader_to_mshader/glsl/gshader_to_mshader.vert"
+        "gshader_to_mshader/glsl/gshader_to_mshader.frag"
+        "gshader_to_mshader/glsl/gshader_to_mshader.geom"
+        "gshader_to_mshader/glsl/gshader_to_mshader.mesh"
+        "gshader_to_mshader/glsl/gshader_to_mshader_base.frag"
+        "gshader_to_mshader/glsl/gshader_to_mshader_base.vert"
+        "gshader_to_mshader/glsl/gshader_to_mshader_mesh.frag"
+    GLSLC_ADDITIONAL_ARGUMENTS
+        "--target-spv=spv1.4"
+    SHADER_FILES_SLANG
+        "gshader_to_mshader/slang/gshader_to_mshader.vert.slang"
+        "gshader_to_mshader/slang/gshader_to_mshader.frag.slang"
+        "gshader_to_mshader/slang/gshader_to_mshader.geom.slang"
+        "gshader_to_mshader/slang/gshader_to_mshader.mesh.slang"
+        "gshader_to_mshader/slang/gshader_to_mshader_base.frag.slang"
+        "gshader_to_mshader/slang/gshader_to_mshader_base.vert.slang"
+        "gshader_to_mshader/slang/gshader_to_mshader_mesh.frag.slang"
+    )

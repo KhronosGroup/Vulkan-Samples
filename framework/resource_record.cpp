@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,15 +36,6 @@ inline void write_subpass_info(std::ostringstream &os, const std::vector<Subpass
 		write(os, item.output_attachments);
 	}
 }
-
-inline void write_processes(std::ostringstream &os, const std::vector<std::string> &value)
-{
-	write(os, value.size());
-	for (const std::string &item : value)
-	{
-		write(os, item);
-	}
-}
 }        // namespace
 
 void ResourceRecord::set_data(const std::vector<uint8_t> &data)
@@ -68,9 +59,7 @@ size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage, const
 {
 	shader_module_indices.push_back(shader_module_indices.size());
 
-	write(stream, ResourceType::ShaderModule, stage, glsl_source.get_source(), entry_point, shader_variant.get_preamble());
-
-	write_processes(stream, shader_variant.get_processes());
+	write(stream, ResourceType::ShaderModule, stage, glsl_source.get_source(), entry_point);
 
 	return shader_module_indices.back();
 }

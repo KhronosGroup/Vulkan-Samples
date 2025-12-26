@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -62,24 +62,15 @@ RaytracingBasic::~RaytracingBasic()
 	}
 }
 
-void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
+void RaytracingBasic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeatures,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-	                         bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceRayTracingPipelineFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
-	                         rayTracingPipeline);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
 
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceAccelerationStructureFeaturesKHR,
-	                         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
-	                         accelerationStructure);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
 }
 
 /*
@@ -108,7 +99,7 @@ void RaytracingBasic::create_storage_image()
 	vkGetImageMemoryRequirements(get_device().get_handle(), storage_image.image, &memory_requirements);
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &storage_image.memory));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), storage_image.image, storage_image.memory, 0));
 
@@ -172,7 +163,7 @@ ScratchBuffer RaytracingBasic::create_scratch_buffer(VkDeviceSize size)
 	memory_allocate_info.sType                = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memory_allocate_info.pNext                = &memory_allocate_flags_info;
 	memory_allocate_info.allocationSize       = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex      = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &scratch_buffer.memory));
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), scratch_buffer.handle, scratch_buffer.memory, 0));
 
@@ -592,9 +583,6 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
-	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the glslang compiler
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
-
 	/*
 	    Setup ray tracing shader groups
 	    Each shader group points at the corresponding shader in the pipeline
@@ -603,7 +591,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray generation group
 	{
-		shader_stages.push_back(load_shader("ray_tracing_basic", "raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+		shader_stages.push_back(load_shader("ray_tracing_basic", "raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -616,7 +604,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray miss group
 	{
-		shader_stages.push_back(load_shader("ray_tracing_basic", "miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+		shader_stages.push_back(load_shader("ray_tracing_basic", "miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 		miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -629,7 +617,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray closest hit group
 	{
-		shader_stages.push_back(load_shader("ray_tracing_basic", "closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+		shader_stages.push_back(load_shader("ray_tracing_basic", "closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
@@ -757,8 +745,13 @@ void RaytracingBasic::build_command_buffers()
 		// Prepare current swap chain image as transfer destination
 		vkb::image_layout_transition(draw_cmd_buffers[i],
 		                             get_render_context().get_swapchain().get_images()[i],
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             {},
+		                             VK_ACCESS_TRANSFER_WRITE_BIT,
 		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             subresource_range);
 
 		// Prepare ray tracing output image as transfer source
 		vkb::image_layout_transition(draw_cmd_buffers[i],

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Google
+/* Copyright (c) 2023-2025, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -105,7 +105,7 @@ void OITLinkedLists::render(float delta_time)
 	update_scene_constants();
 }
 
-void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
+void OITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	if (gpu.get_features().fragmentStoresAndAtomics)
 	{
@@ -422,8 +422,8 @@ void OITLinkedLists::create_pipelines()
 			vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
 			vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
 
-			shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
-			shader_stages[1] = load_shader("oit_linked_lists/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shader_stages[0] = load_shader("oit_linked_lists/gather.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_linked_lists/gather.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			pipeline_create_info.renderPass = gather_render_pass;
 
@@ -436,8 +436,8 @@ void OITLinkedLists::create_pipelines()
 			vertex_input_state.vertexAttributeDescriptionCount = 0;
 			vertex_input_state.pVertexAttributeDescriptions    = nullptr;
 
-			shader_stages[0] = load_shader("oit_linked_lists/fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
-			shader_stages[1] = load_shader("oit_linked_lists/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shader_stages[0] = load_shader("oit_linked_lists/fullscreen.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_linked_lists/background.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			pipeline_create_info.renderPass = render_pass;
 
@@ -458,8 +458,8 @@ void OITLinkedLists::create_pipelines()
 			blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 			blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
 
-			shader_stages[0] = load_shader("oit_linked_lists/combine.vert", VK_SHADER_STAGE_VERTEX_BIT);
-			shader_stages[1] = load_shader("oit_linked_lists/combine.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shader_stages[0] = load_shader("oit_linked_lists/combine.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_linked_lists/combine.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			pipeline_create_info.renderPass = render_pass;
 

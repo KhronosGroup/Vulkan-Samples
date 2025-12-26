@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Corporation
+/* Copyright (c) 2023-2025, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 	bool                         is_time_domain_init = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
 	std::vector<VkTimeDomainEXT> time_domains{};                     // this holds all time domains extracted from the current Instance
 	std::vector<uint64_t>        timestamps{};                       // timestamps vector
-	std::vector<uint64_t>        max_deviations{};                   // max deviations vector
+	uint64_t                     max_deviation = 0;                  // max deviation
 
 	struct
 	{
@@ -163,7 +163,7 @@ class CalibratedTimestamps : public ApiVulkanSample
   public:
 	CalibratedTimestamps();
 	~CalibratedTimestamps() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 	void create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);
 	void prepare_offscreen_buffer();
