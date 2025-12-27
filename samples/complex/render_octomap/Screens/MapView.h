@@ -20,33 +20,35 @@
 
 #include "api_vulkan_sample.h"
 
-class MapView {
-public:
+class MapView
+{
+  public:
 	// View states for different rendering modes
-	enum class ViewState {
-		Octomap,        // Default octomap rendering
-		GLTFRegular,    // Regular GLTF map
-		GLTFSplats      // Gaussian splats GLTF
+	enum class ViewState
+	{
+		Octomap,            // Default octomap rendering
+		GLTFRegular,        // Regular GLTF map
+		GLTFSplats          // Gaussian splats GLTF
 	};
 
 	MapView();
 	~MapView();
-	
+
 	glm::vec2 mapPos;
 	glm::vec2 mapSize;
-	
+
 	// Current view state
 	ViewState currentState = ViewState::Octomap;
-	
+
 	// Flag to indicate view state changed
 	bool stateChanged = false;
 
 	std::vector<VkWriteDescriptorSet> LoadAssets(ApiVulkanSample *base, const VkDescriptorSetAllocateInfo &allocInfo, VkQueue copyQueue);
 
 	bool DrawUI();
-	
-private:
+
+  private:
 	void DrawSidebar();
 };
 
-#endif //MAPVIEW_H
+#endif        // MAPVIEW_H

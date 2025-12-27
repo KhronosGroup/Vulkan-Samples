@@ -34,10 +34,10 @@ namespace sg
 
 /**
  * @brief Gaussian Splat rendering primitive data
- * 
+ *
  * Stores data for rendering 3D Gaussian Splats as defined by the
  * KHR_gaussian_splatting GLTF extension.
- * 
+ *
  * Each splat is an oriented 3D Gaussian defined by:
  * - Position (center point)
  * - Rotation (quaternion orientation)
@@ -53,8 +53,8 @@ class GaussianSplat : public Component
 	 */
 	enum class KernelType
 	{
-		Ellipse,    // Default elliptical kernel
-		Sphere      // Spherical kernel (isotropic)
+		Ellipse,        // Default elliptical kernel
+		Sphere          // Spherical kernel (isotropic)
 	};
 
 	/**
@@ -62,8 +62,8 @@ class GaussianSplat : public Component
 	 */
 	enum class ColorSpace
 	{
-		SRGB,       // BT.709-sRGB
-		Linear      // Linear RGB
+		SRGB,         // BT.709-sRGB
+		Linear        // Linear RGB
 	};
 
 	GaussianSplat(const std::string &name = {});
@@ -88,12 +88,12 @@ class GaussianSplat : public Component
 	ColorSpace color_space = ColorSpace::SRGB;
 
 	// GPU buffers for splat data
-	std::unique_ptr<vkb::core::BufferC> position_buffer;    // VEC3 positions
-	std::unique_ptr<vkb::core::BufferC> rotation_buffer;    // VEC4 quaternions
-	std::unique_ptr<vkb::core::BufferC> scale_buffer;       // VEC3 scales
-	std::unique_ptr<vkb::core::BufferC> opacity_buffer;     // SCALAR opacities
-	std::unique_ptr<vkb::core::BufferC> color_buffer;       // VEC3 colors (or SH coefficients)
-	std::unique_ptr<vkb::core::BufferC> sh_buffer;          // MAT3 spherical harmonics (if sh_degree > 0)
+	std::unique_ptr<vkb::core::BufferC> position_buffer;        // VEC3 positions
+	std::unique_ptr<vkb::core::BufferC> rotation_buffer;        // VEC4 quaternions
+	std::unique_ptr<vkb::core::BufferC> scale_buffer;           // VEC3 scales
+	std::unique_ptr<vkb::core::BufferC> opacity_buffer;         // SCALAR opacities
+	std::unique_ptr<vkb::core::BufferC> color_buffer;           // VEC3 colors (or SH coefficients)
+	std::unique_ptr<vkb::core::BufferC> sh_buffer;              // MAT3 spherical harmonics (if sh_degree > 0)
 
 	/**
 	 * @brief Get the total GPU memory used by this splat primitive
@@ -103,7 +103,10 @@ class GaussianSplat : public Component
 	/**
 	 * @brief Check if spherical harmonics data is available
 	 */
-	bool has_spherical_harmonics() const { return sh_degree > 0 && sh_buffer != nullptr; }
+	bool has_spherical_harmonics() const
+	{
+		return sh_degree > 0 && sh_buffer != nullptr;
+	}
 };
 
 }        // namespace sg

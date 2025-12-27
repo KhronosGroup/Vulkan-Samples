@@ -18,25 +18,28 @@
 #define RENDER_OCTOMAP_H
 
 #include "api_vulkan_sample.h"
+#include "scene_graph/node.h"
 #include <ImGUIUtil.h>
 #include <Screens/MapView.h>
-#include "scene_graph/node.h"
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <vector>
 
-namespace octomap {
-	class OcTree;
+namespace octomap
+{
+class OcTree;
 }
 
-namespace vkb {
-namespace sg {
-	class Scene;
-	class SubMesh;
-}
+namespace vkb
+{
+namespace sg
+{
+class Scene;
+class SubMesh;
+}        // namespace sg
 
-}
+}        // namespace vkb
 
 class render_octomap : public ApiVulkanSample
 {
@@ -104,19 +107,19 @@ class render_octomap : public ApiVulkanSample
 	std::vector<InstanceData>                          instances;
 
 	// View state management
-	MapView::ViewState                   currentViewState = MapView::ViewState::Octomap;
-	std::unique_ptr<vkb::sg::Scene>      gltfScene;
-	std::unique_ptr<vkb::sg::Scene>      splatsScene;
+	MapView::ViewState              currentViewState = MapView::ViewState::Octomap;
+	std::unique_ptr<vkb::sg::Scene> gltfScene;
+	std::unique_ptr<vkb::sg::Scene> splatsScene;
 
 	struct GltfNodeDraw
 	{
 		vkb::scene_graph::NodeC *node{nullptr};
 		vkb::sg::SubMesh        *sub_mesh{nullptr};
 	};
-	std::vector<GltfNodeDraw>            gltf_nodes;
+	std::vector<GltfNodeDraw> gltf_nodes;
 
-	VkPipelineLayout                     gltf_pipeline_layout{VK_NULL_HANDLE};
-	VkPipeline                           gltf_pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout gltf_pipeline_layout{VK_NULL_HANDLE};
+	VkPipeline       gltf_pipeline{VK_NULL_HANDLE};
 
 	// Gaussian splats rendering
 	struct SplatInstance
@@ -128,8 +131,8 @@ class render_octomap : public ApiVulkanSample
 		float color[3];
 		float _pad;
 	};
-	std::unique_ptr<vkb::core::BufferC>  splat_instance_buffer;
-	uint32_t                             splat_count{0};
+	std::unique_ptr<vkb::core::BufferC> splat_instance_buffer;
+	uint32_t                            splat_count{0};
 
 	struct
 	{
@@ -139,14 +142,14 @@ class render_octomap : public ApiVulkanSample
 		float     focalX;
 		float     focalY;
 	} splat_ubo;
-	std::unique_ptr<vkb::core::BufferC>  splat_uniform_buffer;
-	VkDescriptorPool                     splat_descriptor_pool{VK_NULL_HANDLE};
-	VkDescriptorSetLayout                splat_descriptor_set_layout{VK_NULL_HANDLE};
-	VkDescriptorSet                      splat_descriptor_set{VK_NULL_HANDLE};
-	VkPipelineLayout                     splat_pipeline_layout{VK_NULL_HANDLE};
-	VkPipeline                           splat_pipeline{VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> splat_uniform_buffer;
+	VkDescriptorPool                    splat_descriptor_pool{VK_NULL_HANDLE};
+	VkDescriptorSetLayout               splat_descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSet                     splat_descriptor_set{VK_NULL_HANDLE};
+	VkPipelineLayout                    splat_pipeline_layout{VK_NULL_HANDLE};
+	VkPipeline                          splat_pipeline{VK_NULL_HANDLE};
 };
 
 std::unique_ptr<vkb::Application> create_render_octomap();
 
-#endif //RENDER_OCTOMAP_H
+#endif        // RENDER_OCTOMAP_H
