@@ -1,6 +1,19 @@
-//
-// Created by Steven Winston on 4/14/24.
-//
+/* Copyright (c) 2024-2025, Holochip Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "ImGUIUtil.h"
 #include "GLFW/glfw3.h"
@@ -245,12 +258,12 @@ void ImGUIUtil::initResources(VkRenderPass renderPass, VkQueue copyQueue)
 	{
 		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(base->get_render_context().get_device(), uploadSize, fontData);
 
-    	auto &command_buffer = base->get_render_context().get_device().request_command_buffer();
+    	auto command_buffer = base->get_render_context().get_device().get_command_pool().request_command_buffer();
 
     	vkb::FencePool fence_pool{base->get_render_context().get_device()};
 
     	// Begin recording
-    	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
+    	command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 	    {
 			// Prepare for transfer
@@ -262,7 +275,7 @@ void ImGUIUtil::initResources(VkRenderPass renderPass, VkQueue copyQueue)
 			memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
 			memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-			command_buffer.image_memory_barrier(*font_image_view, memory_barrier);
+			command_buffer->image_memory_barrier(*font_image_view, memory_barrier);
 	    }
 
     	// Copy
@@ -271,7 +284,7 @@ void ImGUIUtil::initResources(VkRenderPass renderPass, VkQueue copyQueue)
     	buffer_copy_region.imageSubresource.aspectMask = font_image_view->get_subresource_range().aspectMask;
     	buffer_copy_region.imageExtent                 = font_image->get_extent();
 
-    	command_buffer.copy_buffer_to_image(stage_buffer, *font_image, {buffer_copy_region});
+    	command_buffer->copy_buffer_to_image(stage_buffer, *font_image, {buffer_copy_region});
 
 	    {
 			// Prepare for fragmen shader
@@ -283,13 +296,13 @@ void ImGUIUtil::initResources(VkRenderPass renderPass, VkQueue copyQueue)
 			memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-			command_buffer.image_memory_barrier(*font_image_view, memory_barrier);
+			command_buffer->image_memory_barrier(*font_image_view, memory_barrier);
 	    }
     	// End recording
-    	command_buffer.end();
+    	command_buffer->end();
     	auto &queue = base->get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-    	queue.submit(command_buffer, base->get_render_context().get_device().request_fence());
+    	queue.submit(*command_buffer, base->get_render_context().get_device().get_fence_pool().request_fence());
 
     	// Wait for the command buffer to finish its work before destroying the staging buffer
     	VK_CHECK(base->get_render_context().get_device().get_fence_pool().wait());
@@ -400,8 +413,8 @@ void ImGUIUtil::initResources(VkRenderPass renderPass, VkQueue copyQueue)
             vkb::initializers::pipeline_dynamic_state_create_info(dynamicStateEnables);
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages{
-    	base->load_shader("render_octomap", "imgui.vert", VK_SHADER_STAGE_VERTEX_BIT),
-    	base->load_shader("render_octomap", "imgui.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+    	base->load_shader("render_octomap", "imgui.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+    	base->load_shader("render_octomap", "imgui.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
     };
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = vkb::initializers::pipeline_create_info(pipelineLayout, renderPass);
@@ -442,38 +455,94 @@ void ImGUIUtil::initResources(VkRenderPass renderPass, VkQueue copyQueue)
 // Starts a new imGui frame and sets up windows and ui elements
 bool ImGUIUtil::newFrame(bool updateFrameGraph) {
     ImGui::NewFrame();
-    
-    {
-        ImGuiStyle &style = ImGui::GetStyle();
-        style.ChildRounding = 0.0f;
-        
-        
-        style.WindowPadding = ImVec2(15, 15); // Set window padding
-        style.FramePadding = ImVec2(5, 5); // Set padding within the widgets
-        style.ItemInnerSpacing = ImVec2(10, 10); // Set spacing between elements inside widgets
-        
-        ImGuiIO& io = ImGui::GetIO();
-        ImGui::SetNextWindowSize(io.DisplaySize);
-        ImGui::SetNextWindowPos(ImVec2(0,0));
-        
-        // NEW WINDOW //
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); // Remove padding
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0,0,0,0 });
-        ImGui::Begin(" ", nullptr,
-                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar |
-                     ImGuiWindowFlags_NoScrollWithMouse);
-        ImGui::PopStyleVar();
-        ImGui:: PopStyleColor();
-        
-        
-        MapsView.DrawUI();
-        // END WINDOW //
-        ImGui::End();
-    }
-    ImGui::EndFrame();
-    
-    // Render to generate draw buffers
-    ImGui::Render();
+
+	// Draw only the left sidebar as an interactive window.
+	// The map viewport area remains free for the camera to receive mouse input.
+	{
+		ImGuiStyle &style = ImGui::GetStyle();
+		style.ChildRounding  = 0.0f;
+		style.WindowRounding = 12.0f;
+		style.FrameRounding  = 12.0f;
+
+		ImGuiIO &io = ImGui::GetIO();
+
+		const float padding            = 20.0f;
+		const float sidebar_inner_width = 240.0f;
+		const float sidebar_width       = sidebar_inner_width + padding * 2.0f;
+		const float btn_w               = sidebar_inner_width;
+		const float btn_h               = 52.0f;
+		const float gap                 = 10.0f;
+
+		// Colors (same palette as MapView)
+		const ImVec4 sidebarColor      = ImVec4(0x41 / 255.0f, 0x40 / 255.0f, 0x42 / 255.0f, 1.0f);
+		const ImVec4 buttonColor       = ImVec4(0x00 / 255.0f, 0xF1 / 255.0f, 0xC6 / 255.0f, 1.0f);
+		const ImVec4 buttonActiveColor = ImVec4(0x00 / 255.0f, 0x94 / 255.0f, 0x81 / 255.0f, 1.0f);
+		const ImVec4 blackColor        = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+		ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(sidebar_width, io.DisplaySize.y), ImGuiCond_Always);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding, padding));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, sidebarColor);
+		ImGui::PushStyleColor(ImGuiCol_Text, blackColor);
+		ImGui::Begin("Sidebar##render_octomap", nullptr,
+		             ImGuiWindowFlags_NoTitleBar |
+		                 ImGuiWindowFlags_NoResize |
+		                 ImGuiWindowFlags_NoMove |
+		                 ImGuiWindowFlags_NoScrollbar |
+		                 ImGuiWindowFlags_NoScrollWithMouse |
+		                 ImGuiWindowFlags_NoSavedSettings);
+
+			auto sidebar_button = [&](const char *label, MapView::ViewState state, const char *id)
+		{
+			ImVec4 c = (MapsView.currentState == state) ? buttonActiveColor : buttonColor;
+			ImGui::PushStyleColor(ImGuiCol_Button, c);
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, c);
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, c);
+			ImGui::PushID(id);
+			bool pressed = ImGui::Button(label, ImVec2(btn_w, btn_h));
+			ImGui::PopID();
+			ImGui::PopStyleColor(3);
+			if (pressed)
+			{
+				MapsView.currentState = state;
+				MapsView.stateChanged = true;
+			}
+			ImGui::Dummy(ImVec2(0.0f, gap));
+		};
+
+		sidebar_button("OCTOMAP", MapView::ViewState::Octomap, "##btn_octomap");
+		sidebar_button("GLTF MAP", MapView::ViewState::GLTFRegular, "##btn_gltf");
+		sidebar_button("SPLATS", MapView::ViewState::GLTFSplats, "##btn_splats");
+
+		ImGui::End();
+		ImGui::PopStyleColor(2);
+		ImGui::PopStyleVar();
+
+		// Compute 3D viewport rectangle (right side)
+		MapsView.mapPos  = {sidebar_width, padding};
+		MapsView.mapSize = {io.DisplaySize.x - sidebar_width - padding, io.DisplaySize.y - padding * 2.0f};
+
+		// Draw a non-interactive semi-transparent map panel background.
+		ImGui::SetNextWindowPos(ImVec2(MapsView.mapPos.x, MapsView.mapPos.y), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(MapsView.mapSize.x, MapsView.mapSize.y), ImGuiCond_Always);
+		ImGui::SetNextWindowBgAlpha(0.35f);
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, sidebarColor);
+		ImGui::Begin("MapPanel##render_octomap", nullptr,
+		             ImGuiWindowFlags_NoTitleBar |
+		                 ImGuiWindowFlags_NoResize |
+		                 ImGuiWindowFlags_NoMove |
+		                 ImGuiWindowFlags_NoScrollbar |
+		                 ImGuiWindowFlags_NoScrollWithMouse |
+		                 ImGuiWindowFlags_NoSavedSettings |
+		                 ImGuiWindowFlags_NoInputs);
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+
+	ImGui::EndFrame();
+
+	// Render to generate draw buffers
+	ImGui::Render();
     if(needsUpdateBuffers) {
         needsUpdateBuffers = false;
         return true;
@@ -483,34 +552,44 @@ bool ImGUIUtil::newFrame(bool updateFrameGraph) {
 }
 
 // Update vertex and index buffer containing the imGui elements when required
-void ImGUIUtil::updateBuffers()
+// Returns true if buffers were recreated (requiring command buffer rebuild)
+bool ImGUIUtil::updateBuffers()
 {
     ImDrawData* imDrawData = ImGui::GetDrawData();
 
     if (!imDrawData)
-    	return;
+    	return false;
 
     // Note: Alignment is done inside buffer creation
     VkDeviceSize vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
     VkDeviceSize indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 
     if ((vertexBufferSize == 0) || (indexBufferSize == 0)) {
-        return;
+        return false;
     }
 
+    bool buffersRecreated = false;
+
     // Update buffers only if vertex or index count has been changed compared to current buffer size
-	if ((vertexBuffer->get_handle() == VK_NULL_HANDLE) || (vertexBufferSize != imDrawData->TotalVtxCount))
+	if ((vertexBuffer->get_handle() == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount))
     {
+    	// Wait for GPU to finish using the old buffer before destroying it
+    	vkDeviceWaitIdle(base->get_render_context().get_device().get_handle());
     	vertexBuffer.reset();
     	vertexBuffer = std::make_unique<vkb::core::BufferC>(base->get_render_context().get_device(), vertexBufferSize,
 															 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 															 VMA_MEMORY_USAGE_GPU_TO_CPU);
 		vertexCount = imDrawData->TotalVtxCount;
     	vertexBuffer->set_debug_name("GUI Util vertex buffer");
+    	buffersRecreated = true;
     }
 
 	if ((indexBuffer->get_handle() == VK_NULL_HANDLE) || (indexCount != imDrawData->TotalIdxCount))
 	{
+		// Wait for GPU to finish using the old buffer before destroying it
+		if (!buffersRecreated) {
+			vkDeviceWaitIdle(base->get_render_context().get_device().get_handle());
+		}
 		indexCount = imDrawData->TotalIdxCount;
 
 		indexBuffer.reset();
@@ -518,6 +597,7 @@ void ImGUIUtil::updateBuffers()
 															VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 															VMA_MEMORY_USAGE_GPU_TO_CPU);
 		indexBuffer->set_debug_name("GUI index buffer");
+		buffersRecreated = true;
 	}
 
     // Upload data
@@ -535,6 +615,8 @@ void ImGUIUtil::updateBuffers()
     // Flush to make writes visible to GPU
     vertexBuffer->flush();
     indexBuffer->flush();
+
+    return buffersRecreated;
 }
 
 void ImGUIUtil::drawFrame(VkCommandBuffer commandBuffer)

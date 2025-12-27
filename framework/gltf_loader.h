@@ -34,6 +34,7 @@
 #include "vulkan/vulkan.h"
 
 #define KHR_LIGHTS_PUNCTUAL_EXTENSION "KHR_lights_punctual"
+#define KHR_GAUSSIAN_SPLATTING_EXTENSION "KHR_gaussian_splatting"
 
 namespace vkb
 {

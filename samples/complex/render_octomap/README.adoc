@@ -1,3 +1,21 @@
+////
+- Copyright (c) 2025, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
 == Rendering an OctMap
 SLAM or Simultaneous Localization and Mapping is the main driving force behind modern robotics, AR. SLAM is a process which allows us to interact with the physical world.  The main step in Localization involves determining where the camera is at the present moment in relation to where it has been in the past.  The main idea is if you know where you were (a fix) and you know your momentum and direction, along with the time, you will be able to predict where you will be in the future.  This process is called Dead Reckoning.
 
@@ -22,5 +40,7 @@ https://www.holochip.com[Holochip] is an awardee on the U.S. Environmental Prote
 | image::./images/mapping.png[mapping]
 | image::./images/markers.png[markers]
 |===
+
+While Octomap rendering provides excellent representation of the real world map in an easy to navigate manner at a size that's practical for embedded devices to house very large maps.  Humans benefit from a more textured scene.  This is where capturing of gaussian splats is beneficial.  This sample demonstrates the same scene rendered as a GLTF and a GLTF with embedded guassian splats.  Please note how much smaller the octomap is to store and use.  Also, how much easier it is to view a guassian splat scene as a human to understand visually what objects are.
 
 For further details on this project contact mailto:info@holochip.com[]

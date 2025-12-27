@@ -158,6 +158,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/pbr_material.h
     scene_graph/components/sampler.h
     scene_graph/components/sub_mesh.h
+    scene_graph/components/gaussian_splat.h
     scene_graph/components/texture.h
     scene_graph/components/transform.h
     scene_graph/components/image/astc.h
@@ -179,6 +180,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/mesh.cpp
     scene_graph/components/pbr_material.cpp
     scene_graph/components/sub_mesh.cpp
+    scene_graph/components/gaussian_splat.cpp
     scene_graph/components/texture.cpp
     scene_graph/components/transform.cpp
     scene_graph/components/image/astc.cpp
