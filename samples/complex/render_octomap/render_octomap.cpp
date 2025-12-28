@@ -602,6 +602,17 @@ bool render_octomap::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
+void render_octomap::update_overlay(float delta_time, const std::function<void()> &additional_ui)
+{
+	// This sample uses a custom ImGUI implementation (ImGUIUtil)
+	// The GUI updates are handled in the render() function
+	// Call the additional_ui callback if provided
+	if (additional_ui)
+	{
+		additional_ui();
+	}
+}
+
 void render_octomap::render(float delta_time)
 {
 	if (!prepared)
