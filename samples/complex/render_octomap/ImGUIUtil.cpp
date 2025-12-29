@@ -669,7 +669,9 @@ bool ImGUIUtil::updateBuffers()
 	ImDrawData *imDrawData = ImGui::GetDrawData();
 
 	if (!imDrawData)
+	{
 		return false;
+	}
 
 	// Note: Alignment is done inside buffer creation
 	VkDeviceSize vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
@@ -714,8 +716,8 @@ bool ImGUIUtil::updateBuffers()
 	}
 
 	// Upload data
-	ImDrawVert *vtxDst = (ImDrawVert *) vertexBuffer->map();
-	ImDrawIdx  *idxDst = (ImDrawIdx *) indexBuffer->map();
+	ImDrawVert *vtxDst = reinterpret_cast<ImDrawVert *>(vertexBuffer->map());
+	ImDrawIdx  *idxDst = reinterpret_cast<ImDrawIdx *>(indexBuffer->map());
 
 	for (int n = 0; n < imDrawData->CmdListsCount; n++)
 	{
@@ -767,13 +769,13 @@ void ImGUIUtil::drawFrame(VkCommandBuffer commandBuffer)
 				VkRect2D         scissorRect;
 				scissorRect.offset.x      = glm::max(pcmd->ClipRect.x, 0.0f);
 				scissorRect.offset.y      = glm::max(pcmd->ClipRect.y, 0.0f);
-				scissorRect.extent.width  = (uint32_t) (pcmd->ClipRect.z - pcmd->ClipRect.x);
-				scissorRect.extent.height = (uint32_t) (pcmd->ClipRect.w - pcmd->ClipRect.y);
+				scissorRect.extent.width  = static_cast<uint32_t>(pcmd->ClipRect.z - pcmd->ClipRect.x);
+				scissorRect.extent.height = static_cast<uint32_t>(pcmd->ClipRect.w - pcmd->ClipRect.y);
 				vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect);
 
-				if (((void *) pcmd->TextureId) != nullptr)
+				if (static_cast<void *>(pcmd->TextureId) != nullptr)
 				{
-					VkDescriptorSet desc_set[1] = {(VkDescriptorSet) pcmd->TextureId};
+					VkDescriptorSet desc_set[1] = {static_cast<VkDescriptorSet>(pcmd->TextureId)};
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, desc_set, 0, nullptr);
 				}
 				else
@@ -821,9 +823,13 @@ void ImGUIUtil::handleKey(int key, int, int action, int)
 #if !(defined TARGET_OS_IPHONE) && !(defined __ANDROID__)
 	ImGuiIO &io = ImGui::GetIO();
 	if (action == GLFW_PRESS)
+	{
 		io.AddKeyEvent(Glfw_KeyToImGuiKey(key), true);
+	}
 	if (action == GLFW_RELEASE)
+	{
 		io.AddKeyEvent(Glfw_KeyToImGuiKey(key), false);
+	}
 
 	// Modifiers are not reliable across systems
 	io.KeyCtrl  = ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_LEFT_CONTROL)) || ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_RIGHT_CONTROL));
