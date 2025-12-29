@@ -29,7 +29,7 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
           git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
-          echo all="$(git diff --name-only --diff-filter=ACMRT $TARGET_BRANCH | grep -v -e .github -e third_party -e .in$ | xargs)" >> $GITHUB_OUTPUT
+          echo all="$(git diff --name-only --diff-filter=ACMRT $TARGET_BRANCH | grep -v -e .github -e third_party -e 'samples/complex/render_octomap/octomap' -e .in$ | xargs)" >> $GITHUB_OUTPUT
 
   doxygen:
     name: Doxygen Syntax Check

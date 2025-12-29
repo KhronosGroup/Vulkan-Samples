@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef ORB_SLAM3_IMGUI_H
-#define ORB_SLAM3_IMGUI_H
+#ifndef IMGUI_UTIL_H
+#define IMGUI_UTIL_H
 
 #include "api_vulkan_sample.h"
 #include "core/buffer.h"
@@ -100,4 +100,4 @@ class ImGUIUtil
 	static void charPressed(uint32_t key);
 };
 
-#endif        // ORB_SLAM3_IMGUI_H
+#endif        // IMGUI_UTIL_H
