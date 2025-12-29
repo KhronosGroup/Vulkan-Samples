@@ -92,13 +92,13 @@ void render_octomap::BuildCubes()
 			InstanceData instance;
 			instance.pos[0] = coords[0];
 			instance.pos[1] = coords[1];
- 		instance.pos[2] = coords[2];
- 		float h         = coords[2];
- 		if (m_zMin >= m_zMax)
- 		{
- 			h = 0.5f;
- 		}
- 		else
+			instance.pos[2] = coords[2];
+			float h         = coords[2];
+			if (m_zMin >= m_zMax)
+			{
+				h = 0.5f;
+			}
+			else
 			{
 				h = (1.0f - std::min(std::max((h - m_zMin) / (m_zMax - m_zMin), 0.0f), 1.0f)) * 0.8f;
 			}
@@ -113,13 +113,13 @@ void render_octomap::BuildCubes()
 			int   i;
 			float m, n, f;
 
- 		i = floor(h);
- 		f = h - static_cast<float>(i);
- 		if (!(i & 1))
- 		{
- 			f = 1 - f;        // if "i" is even
- 		}
- 		m = v * (1 - s);
+			i = floor(h);
+			f = h - static_cast<float>(i);
+			if (!(i & 1))
+			{
+				f = 1 - f;        // if "i" is even
+			}
+			m = v * (1 - s);
 			n = v * (1 - s * f);
 
 			switch (i)
