@@ -30,11 +30,11 @@
 class RaytracingInvocationReorder : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR          ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR         acceleration_structure_features{};
 	VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT invocation_reorder_properties_ext{};
 	VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV  invocation_reorder_properties_nv{};
-	bool                                                     using_nv_extension = false;
+	bool                                                     using_nv_extension     = false;
 	bool                                                     ser_enabled            = true;
 	bool                                                     coherence_hint_enabled = true;
 	bool                                                     ser_supported          = false;
@@ -143,20 +143,20 @@ class RaytracingInvocationReorder : public ApiVulkanSample
 
 	struct ModelBuffer
 	{
-		size_t                                   vertex_offset           = std::numeric_limits<size_t>::max();        // in bytes
-		size_t                                   index_offset            = std::numeric_limits<size_t>::max();        // in bytes
-		size_t                                   num_vertices            = std::numeric_limits<size_t>::max();
-		size_t                                   num_triangles           = std::numeric_limits<size_t>::max();
-		uint32_t                                 texture_index           = std::numeric_limits<uint32_t>::max();
-		std::unique_ptr<vkb::core::BufferC>      transform_matrix_buffer = nullptr;
-		VkAccelerationStructureBuildSizesInfoKHR buildSize;
-		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
-		VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
+		size_t                                            vertex_offset           = std::numeric_limits<size_t>::max();        // in bytes
+		size_t                                            index_offset            = std::numeric_limits<size_t>::max();        // in bytes
+		size_t                                            num_vertices            = std::numeric_limits<size_t>::max();
+		size_t                                            num_triangles           = std::numeric_limits<size_t>::max();
+		uint32_t                                          texture_index           = std::numeric_limits<uint32_t>::max();
+		std::unique_ptr<vkb::core::BufferC>               transform_matrix_buffer = nullptr;
+		VkAccelerationStructureBuildSizesInfoKHR          buildSize;
+		VkAccelerationStructureGeometryKHR                acceleration_structure_geometry;
+		VkAccelerationStructureBuildRangeInfoKHR          buildRangeInfo;
 		std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure = nullptr;
-		VkTransformMatrixKHR default_transform;
-		uint32_t             object_type = 0;
-		bool                 is_static   = true;
-		uint64_t             object_id   = 0;
+		VkTransformMatrixKHR                              default_transform;
+		uint32_t                                          object_type = 0;
+		bool                                              is_static   = true;
+		uint64_t                                          object_id   = 0;
 	};
 
 	struct SceneOptions
@@ -265,9 +265,6 @@ class RaytracingInvocationReorder : public ApiVulkanSample
 	void                 create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
 	VkTransformMatrixKHR calculate_rotation(glm::vec3 pt, float scale = 1.f, bool freeze_y = false);
 	void                 create_top_level_acceleration_structure(bool print_time = true);
-#ifndef USE_FRAMEWORK_ACCELERATION_STRUCTURE
-	void delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
-#endif
 
 	void create_scene();
 	void create_shader_binding_tables();

@@ -464,16 +464,16 @@ void RaytracingInvocationReorder::create_top_level_acceleration_structure(bool p
 	std::vector<VkAccelerationStructureInstanceKHR> instances;
 	auto                                            add_instance = [&](ModelBuffer &model_buffer, const VkTransformMatrixKHR &transform_matrix, uint32_t instance_index) {
         VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
-        acceleration_structure_instance.transform                              = transform_matrix;
-        acceleration_structure_instance.instanceCustomIndex                    = instance_index;
-        acceleration_structure_instance.mask                                   = 0xFF;
+        acceleration_structure_instance.transform           = transform_matrix;
+        acceleration_structure_instance.instanceCustomIndex = instance_index;
+        acceleration_structure_instance.mask                = 0xFF;
         // Use object_type to select the appropriate hit group shader
         // This creates shader divergence that SER can optimize by reordering threads
         // Hit group 0 = OBJECT_NORMAL, Hit group 1 = OBJECT_REFRACTION, Hit group 2 = OBJECT_FLAME
         acceleration_structure_instance.instanceShaderBindingTableRecordOffset = model_buffer.object_type;
         acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-		acceleration_structure_instance.accelerationStructureReference = model_buffer.bottom_level_acceleration_structure->get_device_address();
-		instances.emplace_back(acceleration_structure_instance);
+        acceleration_structure_instance.accelerationStructureReference         = model_buffer.bottom_level_acceleration_structure->get_device_address();
+        instances.emplace_back(acceleration_structure_instance);
 	};
 
 	for (size_t i = 0; i < raytracing_scene->model_buffers.size(); ++i)
@@ -632,7 +632,7 @@ void RaytracingInvocationReorder::create_shader_binding_tables()
 	const VmaMemoryUsage     sbt_memory_usage       = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	// Number of hit groups (one per object type for SER demonstration)
-	const uint32_t hit_group_count = 3;  // OBJECT_NORMAL, OBJECT_REFRACTION, OBJECT_FLAME
+	const uint32_t hit_group_count = 3;        // OBJECT_NORMAL, OBJECT_REFRACTION, OBJECT_FLAME
 
 	// Create binding table buffers for each shader type
 	// Hit shader binding table needs space for all 3 hit groups
@@ -686,8 +686,8 @@ void RaytracingInvocationReorder::create_descriptor_sets()
 	VkWriteDescriptorSetAccelerationStructureKHR descriptor_acceleration_structure_info{};
 	descriptor_acceleration_structure_info.sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 	descriptor_acceleration_structure_info.accelerationStructureCount = 1;
-	auto rhs                                                       = top_level_acceleration_structure->get_handle();
-	descriptor_acceleration_structure_info.pAccelerationStructures = &rhs;
+	auto rhs                                                          = top_level_acceleration_structure->get_handle();
+	descriptor_acceleration_structure_info.pAccelerationStructures    = &rhs;
 
 	VkWriteDescriptorSet acceleration_structure_write{};
 	acceleration_structure_write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1082,7 +1082,7 @@ void RaytracingInvocationReorder::build_command_buffers()
 		miss_shader_sbt_entry.size          = handle_size_aligned;
 
 		// Hit shader SBT entry - contains 3 hit groups (one per object type for SER)
-		const uint32_t hit_group_count = 3;  // OBJECT_NORMAL, OBJECT_REFRACTION, OBJECT_FLAME
+		const uint32_t                  hit_group_count = 3;        // OBJECT_NORMAL, OBJECT_REFRACTION, OBJECT_FLAME
 		VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{};
 		hit_shader_sbt_entry.deviceAddress = get_buffer_device_address(hit_shader_binding_table->get_handle());
 		hit_shader_sbt_entry.stride        = handle_size_aligned;
@@ -1098,8 +1098,8 @@ void RaytracingInvocationReorder::build_command_buffers()
 				VkBufferMemoryBarrier barrier = vkb::initializers::buffer_memory_barrier();
 				barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
 				barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-				barrier.buffer = model_buffer.bottom_level_acceleration_structure->get_buffer()->get_handle();
-				barrier.size   = model_buffer.bottom_level_acceleration_structure->get_buffer()->get_size();
+				barrier.buffer                = model_buffer.bottom_level_acceleration_structure->get_buffer()->get_handle();
+				barrier.size                  = model_buffer.bottom_level_acceleration_structure->get_buffer()->get_size();
 				barriers.push_back(barrier);
 			}
 		}
@@ -1188,19 +1188,19 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 	// Query SER properties to check if device supports reordering
 	VkPhysicalDeviceProperties2 device_properties_reorder{};
 	device_properties_reorder.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	
+
 	VkRayTracingInvocationReorderModeEXT reorder_hint;
 	if (using_nv_extension)
 	{
 		invocation_reorder_properties_nv.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV;
-		device_properties_reorder.pNext = &invocation_reorder_properties_nv;
+		device_properties_reorder.pNext        = &invocation_reorder_properties_nv;
 		vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties_reorder);
 		reorder_hint = invocation_reorder_properties_nv.rayTracingInvocationReorderReorderingHint;
 	}
 	else
 	{
 		invocation_reorder_properties_ext.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT;
-		device_properties_reorder.pNext = &invocation_reorder_properties_ext;
+		device_properties_reorder.pNext         = &invocation_reorder_properties_ext;
 		vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties_reorder);
 		reorder_hint = invocation_reorder_properties_ext.rayTracingInvocationReorderReorderingHint;
 	}
