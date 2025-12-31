@@ -78,7 +78,7 @@ RaytracingInvocationReorder::RaytracingInvocationReorder() :
 #ifdef VK_EXT_ray_tracing_invocation_reorder
 	add_device_extension(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, true);        // optional
 #endif
-	add_device_extension(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, true);         // optional
+	add_device_extension(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, true);        // optional
 
 	// Required by VK_KHR_acceleration_structure
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
@@ -152,7 +152,7 @@ void RaytracingInvocationReorder::request_gpu_features(vkb::core::PhysicalDevice
 	}
 	else
 #endif
-	if (gpu.is_extension_supported(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
+	    if (gpu.is_extension_supported(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
 	{
 		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV, rayTracingInvocationReorder);
 		using_nv_extension = true;
@@ -1423,7 +1423,7 @@ RaytracingInvocationReorder::RaytracingScene::RaytracingScene(vkb::core::DeviceC
 					VkDescriptorImageInfo imageInfo;
 					imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 					imageInfo.imageView   = image->get_vk_image_view().get_handle();
-					imageInfo.sampler     = baseTextureIter->second->get_sampler()->vk_sampler.get_handle();
+					imageInfo.sampler     = baseTextureIter->second->get_sampler()->get_core_sampler().get_handle();
 					imageInfos.push_back(imageInfo);
 				}
 

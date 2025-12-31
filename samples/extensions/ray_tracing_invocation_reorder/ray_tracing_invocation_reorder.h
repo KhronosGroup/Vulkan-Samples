@@ -30,16 +30,16 @@
 class RaytracingInvocationReorder : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR         ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR        acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
 #ifdef VK_EXT_ray_tracing_invocation_reorder
 	VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT invocation_reorder_properties_ext{};
 #endif
 	VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV invocation_reorder_properties_nv{};
-	bool                                                    using_nv_extension = false;
-	bool                                                     ser_enabled            = true;
-	bool                                                     coherence_hint_enabled = true;
-	bool                                                     ser_supported          = false;
+	bool                                                    using_nv_extension     = false;
+	bool                                                    ser_enabled            = true;
+	bool                                                    coherence_hint_enabled = true;
+	bool                                                    ser_supported          = false;
 
 	enum RenderMode : uint32_t
 	{
