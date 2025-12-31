@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2024, Sascha Willems
+# Copyright (c) 2020-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -31,4 +31,7 @@ add_sample_with_tags(
     SHADER_FILES_HLSL
         "fragment_shading_rate/hlsl/scene.vert.hlsl"
         "fragment_shading_rate/hlsl/scene.frag.hlsl"
-    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_fragment_shading_rate")
+    DXC_ADDITIONAL_ARGUMENTS "-fspv-extension=SPV_KHR_fragment_shading_rate"
+    SHADER_FILES_SLANG
+        "fragment_shading_rate/slang/scene.vert.slang"
+        "fragment_shading_rate/slang/scene.frag.slang")

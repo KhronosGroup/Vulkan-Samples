@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2024, Arm Limited and Contributors
+- Copyright (c) 2019-2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -29,7 +29,7 @@ Vulkan render-passes use attachments to describe input and output render targets
 This sample shows how loading and storing attachments might affect performance on mobile.
 
 During the creation of a render-pass, you can specify various color attachments and a depth-stencil attachment.
-Each of those is described by a https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentDescription.html[`VkAttachmentDescription`] struct, which contains attributes to specify the https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentLoadOp.html[load operation] (`loadOp`) and the https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentStoreOp.html[store operation] (`storeOp`).
+Each of those is described by a https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkAttachmentDescription.html[`VkAttachmentDescription`] struct, which contains attributes to specify the https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkAttachmentLoadOp.html[load operation] (`loadOp`) and the https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkAttachmentStoreOp.html[store operation] (`storeOp`).
 This sample lets you choose between different combinations of these operations at runtime.
 
 [,c]
@@ -139,7 +139,7 @@ A render area is optimal when it satisfies all of the following conditions:
 * Either the `extent.height` member in `renderArea` is a multiple of the vertical granularity or `offset.y` + `extent.height` is equal to the height of the framebuffer in the `VkRenderPassBeginInfo`.
 
 A non optimal render area may cause a negative impact to performance.
-More information on this is available https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetRenderAreaGranularity.html[here] and https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch07s04.html[here].
+More information on this is available https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkGetRenderAreaGranularity.html[here] and https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch07s04.html[here].
 
 == Best-practice summary
 
@@ -171,5 +171,5 @@ failing to follow this advice can result in significantly lower fragment shading
 
 *Debugging*
 
-* Review API usage of https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentDescription.html[attachments description].
-* Review API usage of https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCreateRenderPass.html[render pass creation], and any use of https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdClearColorImage.html[`vkCmdClearColorImage()`], https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdClearDepthStencilImage.html[`vkCmdClearDepthStencilImage()`] and https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdClearAttachments.html[`vkCmdClearAttachments()`].
+* Review API usage of https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkAttachmentDescription.html[attachments description].
+* Review API usage of https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkCreateRenderPass.html[render pass creation], and any use of https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkCmdClearColorImage.html[`vkCmdClearColorImage()`], https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkCmdClearDepthStencilImage.html[`vkCmdClearDepthStencilImage()`] and https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkCmdClearAttachments.html[`vkCmdClearAttachments()`].

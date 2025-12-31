@@ -306,7 +306,7 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * Present in this common base class in order to allow the internal state members to remain `private`
 	 * instead of `protected`, and because it (mostly) isolates interaction with the VMA to a single class
 	 */
-	[[nodiscard]] BufferType create_buffer(BufferCreateInfoType const &create_info);
+	[[nodiscard]] BufferType create_buffer(BufferCreateInfoType const &create_info, DeviceSizeType alignment);
 	/**
 	 * @brief Internal method to actually create the image, allocate the memory and bind them.
 	 * Should only be called from the `Image` derived class.
@@ -363,7 +363,7 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	void clear();
 
   private:
-	vk::Buffer create_buffer_impl(vk::BufferCreateInfo const &create_info);
+	vk::Buffer create_buffer_impl(vk::BufferCreateInfo const &create_info, DeviceSizeType alignment);
 	vk::Image  create_image_impl(vk::ImageCreateInfo const &create_info);
 
 	VmaAllocationCreateInfo allocation_create_info = {};
@@ -428,31 +428,46 @@ inline void Allocated<bindingType, HandleType>::clear()
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline typename Allocated<bindingType, HandleType>::BufferType Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info)
+inline typename Allocated<bindingType, HandleType>::BufferType Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info, DeviceSizeType alignment)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return create_buffer_impl(create_info);
+		return create_buffer_impl(create_info, alignment);
 	}
 	else
 	{
-		return static_cast<VkBuffer>(create_buffer_impl(reinterpret_cast<vk::BufferCreateInfo const &>(create_info)));
+		return static_cast<VkBuffer>(create_buffer_impl(reinterpret_cast<vk::BufferCreateInfo const &>(create_info), alignment));
 	}
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::BufferCreateInfo const &create_info)
+inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::BufferCreateInfo const &create_info, DeviceSizeType alignment)
 {
 	vk::Buffer        buffer = VK_NULL_HANDLE;
 	VmaAllocationInfo allocation_info{};
 
-	auto result = vmaCreateBuffer(
-	    get_memory_allocator(),
-	    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
-	    &allocation_create_info,
-	    reinterpret_cast<VkBuffer *>(&buffer),
-	    &allocation,
-	    &allocation_info);
+	auto result = VK_SUCCESS;
+	if (alignment == 0)
+	{
+		result = vmaCreateBuffer(
+		    get_memory_allocator(),
+		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		    &allocation_create_info,
+		    reinterpret_cast<VkBuffer *>(&buffer),
+		    &allocation,
+		    &allocation_info);
+	}
+	else
+	{
+		result = vmaCreateBufferWithAlignment(
+		    get_memory_allocator(),
+		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		    &allocation_create_info,
+		    alignment,
+		    reinterpret_cast<VkBuffer *>(&buffer),
+		    &allocation,
+		    &allocation_info);
+	}
 
 	if (result != VK_SUCCESS)
 	{

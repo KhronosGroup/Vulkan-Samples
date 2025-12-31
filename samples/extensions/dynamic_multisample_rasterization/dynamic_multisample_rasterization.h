@@ -35,8 +35,8 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 
 	struct SceneNode
 	{
-		vkb::sg::Node    *node;
-		vkb::sg::SubMesh *sub_mesh;
+		vkb::scene_graph::NodeC *node;
+		vkb::sg::SubMesh        *sub_mesh;
 	};
 	std::vector<SceneNode> scene_nodes_opaque;
 	std::vector<SceneNode> scene_nodes_opaque_flipped;

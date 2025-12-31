@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Sascha Willems
+# Copyright (c) 2019-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample_with_tags(
         "push_descriptors/glsl/cube.frag"
     SHADER_FILES_HLSL
         "push_descriptors/hlsl/cube.vert.hlsl"
-        "push_descriptors/hlsl/cube.frag.hlsl")
+        "push_descriptors/hlsl/cube.frag.hlsl"
+    SHADER_FILES_SLANG
+        "push_descriptors/slang/cube.vert.slang"
+        "push_descriptors/slang/cube.frag.slang")

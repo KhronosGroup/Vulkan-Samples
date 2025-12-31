@@ -334,7 +334,7 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 #endif
 
 	// Create a device with one queue
-	float                     queue_priority = 1.0f;
+	float                     queue_priority = 0.5f;
 	vk::DeviceQueueCreateInfo queue_info{.queueFamilyIndex = graphics_queue_index, .queueCount = 1, .pQueuePriorities = &queue_priority};
 	vk::DeviceCreateInfo      device_info{.queueCreateInfoCount    = 1,
 	                                      .pQueueCreateInfos       = &queue_info,

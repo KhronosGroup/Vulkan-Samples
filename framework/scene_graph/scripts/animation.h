@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,7 +55,7 @@ struct AnimationSampler
 
 struct AnimationChannel
 {
-	Node &node;
+	vkb::scene_graph::NodeC &node;
 
 	AnimationTarget target;
 
@@ -73,7 +73,7 @@ class Animation : public Script
 
 	void update_times(float start_time, float end_time);
 
-	void add_channel(Node &node, const AnimationTarget &target, const AnimationSampler &sampler);
+	void add_channel(vkb::scene_graph::NodeC &node, const AnimationTarget &target, const AnimationSampler &sampler);
 
   private:
 	std::vector<AnimationChannel> channels;
