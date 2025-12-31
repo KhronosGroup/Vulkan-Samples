@@ -113,9 +113,9 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 
 	struct SceneNode
 	{
-		std::string       name;
-		vkb::sg::Node    *node;
-		vkb::sg::SubMesh *sub_mesh;
+		std::string              name;
+		vkb::scene_graph::NodeC *node;
+		vkb::sg::SubMesh        *sub_mesh;
 	};
 	std::vector<SceneNode> scene_elements_baseline;
 	std::vector<SceneNode> scene_elements_tess;

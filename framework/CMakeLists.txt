@@ -142,7 +142,6 @@ set(SCENE_GRAPH_FILES
     scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
-    scene_graph/node.cpp
     scene_graph/scene.cpp
     scene_graph/script.cpp)
 
@@ -179,7 +178,6 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/material.cpp
     scene_graph/components/mesh.cpp
     scene_graph/components/pbr_material.cpp
-    scene_graph/components/sampler.cpp
     scene_graph/components/sub_mesh.cpp
     scene_graph/components/texture.cpp
     scene_graph/components/transform.cpp
