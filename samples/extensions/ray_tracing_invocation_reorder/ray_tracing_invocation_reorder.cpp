@@ -75,7 +75,9 @@ RaytracingInvocationReorder::RaytracingInvocationReorder() :
 	// Shader Execution Reordering extension - try EXT first, fallback to NV
 	// Note: We add the extension optimistically here. The actual availability check
 	// and feature request happens in request_gpu_features()
+#ifdef VK_EXT_ray_tracing_invocation_reorder
 	add_device_extension(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, true);        // optional
+#endif
 	add_device_extension(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, true);         // optional
 
 	// Required by VK_KHR_acceleration_structure
@@ -141,21 +143,24 @@ void RaytracingInvocationReorder::request_gpu_features(vkb::core::PhysicalDevice
 
 	// Enable Shader Execution Reordering feature - try EXT first, fallback to NV
 	// Check which extension is available
+#ifdef VK_EXT_ray_tracing_invocation_reorder
 	if (gpu.is_extension_supported(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
 	{
 		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT, rayTracingInvocationReorder);
 		using_nv_extension = false;
 		LOGI("Using VK_EXT_ray_tracing_invocation_reorder");
 	}
-	else if (gpu.is_extension_supported(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
+	else
+#endif
+	if (gpu.is_extension_supported(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
 	{
 		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV, rayTracingInvocationReorder);
 		using_nv_extension = true;
-		LOGI("Using VK_NV_ray_tracing_invocation_reorder as fallback");
+		LOGI("Using VK_NV_ray_tracing_invocation_reorder");
 	}
 	else
 	{
-		throw std::runtime_error("Neither VK_EXT_ray_tracing_invocation_reorder nor VK_NV_ray_tracing_invocation_reorder is supported");
+		throw std::runtime_error("Ray tracing invocation reorder extension is not supported");
 	}
 
 	if (gpu.get_features().samplerAnisotropy)
@@ -1189,7 +1194,7 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 	VkPhysicalDeviceProperties2 device_properties_reorder{};
 	device_properties_reorder.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
-	VkRayTracingInvocationReorderModeEXT reorder_hint;
+	VkRayTracingInvocationReorderModeNV reorder_hint;
 	if (using_nv_extension)
 	{
 		invocation_reorder_properties_nv.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV;
@@ -1197,6 +1202,7 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 		vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties_reorder);
 		reorder_hint = invocation_reorder_properties_nv.rayTracingInvocationReorderReorderingHint;
 	}
+#ifdef VK_EXT_ray_tracing_invocation_reorder
 	else
 	{
 		invocation_reorder_properties_ext.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT;
@@ -1204,9 +1210,10 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 		vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties_reorder);
 		reorder_hint = invocation_reorder_properties_ext.rayTracingInvocationReorderReorderingHint;
 	}
+#endif
 
 	// Check if device can actually reorder (not just provide hit objects)
-	ser_supported = (reorder_hint == VK_RAY_TRACING_INVOCATION_REORDER_MODE_REORDER_EXT);
+	ser_supported = (reorder_hint == VK_RAY_TRACING_INVOCATION_REORDER_MODE_REORDER_NV);
 	if (ser_supported)
 	{
 		LOGI("Shader Execution Reordering is supported and can reorder invocations");

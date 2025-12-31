@@ -237,11 +237,13 @@ struct HPPType<VkPhysicalDeviceRayTracingPipelineFeaturesKHR>
 	using Type = vk::PhysicalDeviceRayTracingPipelineFeaturesKHR;
 };
 
+#ifdef VK_EXT_ray_tracing_invocation_reorder
 template <>
 struct HPPType<VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT>
 {
 	using Type = vk::PhysicalDeviceRayTracingInvocationReorderFeaturesEXT;
 };
+#endif
 
 template <>
 struct HPPType<VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV>
