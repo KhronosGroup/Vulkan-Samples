@@ -18,11 +18,20 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
-layout(location = 0) rayPayloadInEXT vec3 hitValue;
+struct Payload
+{
+  vec4 color;
+  vec4 intersection; // {x, y, z, intersectionType}
+  vec4 normal; // {nx, ny, nz, distance}
+};
+
+layout(location = 0) rayPayloadInEXT Payload hitValue;
 
 void main()
 {
-	// Simple gradient background
-	vec3 skyColor = mix(vec3(0.3, 0.5, 0.8), vec3(0.1, 0.2, 0.4), gl_WorldRayDirectionEXT.y * 0.5 + 0.5);
-	hitValue = skyColor;
+    // Simple gradient background
+    vec3 skyColor = mix(vec3(0.3, 0.5, 0.8), vec3(0.1, 0.2, 0.4), gl_WorldRayDirectionEXT.y * 0.5 + 0.5);
+    hitValue.color = vec4(skyColor, 1.0);
+    hitValue.intersection.w = 100; // mark miss
+    hitValue.normal.w = 10000;     // large distance
 }
