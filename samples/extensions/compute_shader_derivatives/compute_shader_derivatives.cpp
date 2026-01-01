@@ -175,9 +175,9 @@ void ComputeShaderDerivatives::request_gpu_features(vkb::core::PhysicalDeviceC &
 	// Require quads derivative group (the sample shader uses layout(derivative_group_quadsNV/derivative_group_quads_khr))
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupQuads);
 	// Users may switch to the linear mode by changing the shader qualifier
-	
+
 	// Storage image read/write without format (required for storage images without explicit format qualifiers)
-	gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = VK_TRUE;
+	gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
 	gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
 }
 
@@ -335,7 +335,7 @@ void ComputeShaderDerivatives::create_graphics_pipeline()
 	color_blend_ci.pAttachments    = &blend_attachment;
 
 	// Dynamic state
-	VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	VkDynamicState                   dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_ci{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
 	dynamic_ci.dynamicStateCount = 2;
 	dynamic_ci.pDynamicStates    = dynamic_states;
@@ -435,7 +435,7 @@ void ComputeShaderDerivatives::render(float delta_time)
 
 	// Begin render pass to display the computed image and GUI
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};  // Clear to black (will be covered by image)
+	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};        // Clear to black (will be covered by image)
 	clear_values[1].depthStencil = {1.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -464,7 +464,7 @@ void ComputeShaderDerivatives::render(float delta_time)
 	// Render the computed image as a fullscreen quad
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_layout, 0, 1, &graphics_descriptor_set, 0, nullptr);
-	vkCmdDraw(cmd, 3, 1, 0, 0);  // Draw fullscreen triangle (3 vertices)
+	vkCmdDraw(cmd, 3, 1, 0, 0);        // Draw fullscreen triangle (3 vertices)
 
 	// Draw the GUI overlay on top
 	draw_ui(cmd);
@@ -501,7 +501,7 @@ void ComputeShaderDerivatives::on_update_ui_overlay(vkb::Drawer &drawer)
 		drawer.text("- Red/Yellow: Edges (high gradient magnitude)");
 		drawer.text("- Gradient magnitude = sqrt(dx^2 + dy^2)");
 		drawer.text("");
-		
+
 		drawer.text("This demonstrates edge detection using compute shader");
 		drawer.text("derivatives, useful for LOD selection, filtering, and");
 		drawer.text("spatial analysis in compute pipelines.");
