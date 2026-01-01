@@ -19,8 +19,8 @@
 struct VSInput
 {
     [[vk::location(0)]] float3 Pos : POSITION0;
-    [[vk::location(1)]] float2 UV : TEXCOORD0;
-    [[vk::location(2)]] int TexIndex : TEXCOORD1;
+    [[vk::location(1)]] float2 UV;
+    [[vk::location(2)]] int TexIndex;
 };
 
 struct UBO
@@ -28,20 +28,19 @@ struct UBO
     float4x4 projection;
     float4x4 view;
 };
-[[vk::binding(0, 0)]]
-ConstantBuffer<UBO> ubo : register(b0, space0);
+ConstantBuffer<UBO> ubo;
 
 struct VSOutput
 {
     float4 Pos : SV_POSITION;
-    [[vk::location(0)]] float2 UV : TEXCOORD0;
-    [[vk::location(1)]] nointerpolation int TexIndex : TEXCOORD1;
+    [[vk::location(0)]] float2 UV;
+    [[vk::location(1)]] nointerpolation int TexIndex;
 };
 
 [shader("vertex")]
 VSOutput main(VSInput input)
 {
-    VSOutput output = (VSOutput) 0;
+    VSOutput output;
     output.UV = input.UV;
     output.TexIndex = input.TexIndex;
     output.Pos = mul(ubo.projection, mul(ubo.view, float4(input.Pos.xyz, 1.0)));

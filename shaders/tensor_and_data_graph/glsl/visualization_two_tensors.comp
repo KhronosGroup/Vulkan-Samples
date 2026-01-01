@@ -1,0 +1,95 @@
+#version 460
+
+/* Copyright (c) 2024-2025, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Compute shader which reads from two tensors representing RGB images (input_tensor and output_tensor) 
+// and draws them to an output image.
+
+// Enable the extension that allows us to read from Tensors.
+#extension GL_ARM_tensors : enable
+
+// Our two input tensors, each being a 4-dimensional array of floats
+layout (set = 0, binding = 0) uniform tensorARM<float, 4> input_tensor;
+layout (set = 0, binding = 1) uniform tensorARM<float, 4> output_tensor;
+
+// Output image to write to
+layout(rgba8, set = 0, binding = 2) writeonly uniform image2D output_image;
+
+// Push constants to provide the size of the output image, so that we can position things correctly
+layout(push_constant) uniform push_constants
+{
+	ivec2 output_image_size;
+};
+
+// If the given pixel_coord is within the rectangle described by (left,top,width, height), then updates
+// `color` with data from the `input_tensor` at an interpolated location based on the position in the rectangle.
+void draw_input_tensor(inout vec4 color, ivec2 pixel_coord, int left, int top, int width, int height)
+{
+	if (pixel_coord.x >= left && pixel_coord.x < left + width && pixel_coord.y >= top && pixel_coord.y < top + height)
+	{
+		// Query the size of the tensor, in dimensions 2 (width) and 1 (height)
+		uint tensor_width = tensorSizeARM(input_tensor, 2);
+		uint tensor_height = tensorSizeARM(input_tensor, 1);
+		// Work out the location in the tensor to read from
+		uint[4] tensor_coords = { 0, 
+			uint(float(pixel_coord.y - top) / height * tensor_height), 
+			uint(float(pixel_coord.x - left) / width * tensor_width), 
+			0 };
+		// Read three values from the tensor, starting from this location and moving along the least-significant dimension.
+		// This gives us the red, green and blue values.
+		float[3] value;
+		tensorReadARM(input_tensor, tensor_coords, value);
+		color = vec4(value[0], value[1], value[2], 1.0f);		
+	}
+}
+
+// As above, but reads from the output_tensor.
+void draw_output_tensor(inout vec4 color, ivec2 pixel_coord, int left, int top, int width, int height)
+{
+	if (pixel_coord.x >= left && pixel_coord.x < left + width && pixel_coord.y >= top && pixel_coord.y < top + height)
+	{
+		uint tensor_width = tensorSizeARM(output_tensor, 2);
+		uint tensor_height = tensorSizeARM(output_tensor, 1);
+		uint[4] tensor_coords = { 0, 
+			uint(float(pixel_coord.y - top) / height * tensor_height), 
+			uint(float(pixel_coord.x - left) / width * tensor_width), 
+			0 };
+		float[3] value;
+		tensorReadARM(output_tensor, tensor_coords, value);
+		color = vec4(value[0], value[1], value[2], 1.0f);		
+	}
+}
+
+
+layout(local_size_x = 8, local_size_y = 8) in;
+void main() 
+{
+	ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
+	if (pixel_coord.x >= output_image_size.x || pixel_coord.y >= output_image_size.y)
+	{
+		return; // Out-of-bounds
+	}
+
+	vec4 out_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Position the input_tensor to the left of the middle, and the output_tensor to the right of the middle
+	draw_input_tensor(out_color, pixel_coord, output_image_size.x / 2 - 300, output_image_size.y / 2 - 100, 200, 200);
+	draw_output_tensor(out_color, pixel_coord, output_image_size.x / 2 + 100, output_image_size.y / 2 - 100, 200, 200);
+
+    imageStore(output_image, ivec2(pixel_coord), out_color);
+}

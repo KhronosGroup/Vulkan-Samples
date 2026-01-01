@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,8 +52,8 @@ float4 main([[vk::location(0)]] float2 inUV : TEXCOORD0) : SV_TARGET
 								0.0024499299678342};
 
 
-	const float blurScale = 0.003;
-	const float blurStrength = 1.0;
+	const float blurScale = 0.004;
+    const float blurStrength = 0.6;
 
 	float ar = 1.0;
 	// Aspect ratio for vertical blur pass

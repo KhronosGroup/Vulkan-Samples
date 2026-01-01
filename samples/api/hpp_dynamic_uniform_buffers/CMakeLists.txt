@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample_with_tags(
         "dynamic_uniform_buffers/glsl/base.frag"
     SHADER_FILES_HLSL
         "dynamic_uniform_buffers/hlsl/base.vert.hlsl"
-        "dynamic_uniform_buffers/hlsl/base.frag.hlsl")
+        "dynamic_uniform_buffers/hlsl/base.frag.hlsl"
+    SHADER_FILES_SLANG
+        "dynamic_uniform_buffers/slang/base.vert.slang"
+        "dynamic_uniform_buffers/slang/base.frag.slang")

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,12 +44,12 @@ glm::mat4 Camera::get_view()
 	return glm::inverse(transform.get_world_matrix());
 }
 
-void Camera::set_node(Node &n)
+void Camera::set_node(vkb::scene_graph::NodeC &n)
 {
 	node = &n;
 }
 
-Node *Camera::get_node()
+vkb::scene_graph::NodeC *Camera::get_node()
 {
 	return node;
 }

@@ -1,5 +1,6 @@
 /* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2024-2025, Bradley Austin Davis. All rights reserved.
+ * Copyright (c) 2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -182,6 +183,11 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	DeviceMemoryType get_memory() const;
 
 	/**
+	 * @brief Retrieves the offset into the raw Vulkan memory object (which can be retrieved from get_memory()).
+	 */
+	DeviceSizeType get_memory_offset() const;
+
+	/**
 	 * @brief Maps Vulkan memory if it isn't already mapped to a host visible address. Does nothing if the
 	 * allocation is already mapped (including persistently mapped allocations).
 	 * @return Pointer to host visible memory.
@@ -300,7 +306,7 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * Present in this common base class in order to allow the internal state members to remain `private`
 	 * instead of `protected`, and because it (mostly) isolates interaction with the VMA to a single class
 	 */
-	[[nodiscard]] BufferType create_buffer(BufferCreateInfoType const &create_info);
+	[[nodiscard]] BufferType create_buffer(BufferCreateInfoType const &create_info, DeviceSizeType alignment);
 	/**
 	 * @brief Internal method to actually create the image, allocate the memory and bind them.
 	 * Should only be called from the `Image` derived class.
@@ -309,6 +315,25 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * instead of `protected`, and because it (mostly) isolates interaction with the VMA to a single class
 	 */
 	[[nodiscard]] ImageType create_image(ImageCreateInfoType const &create_info);
+
+	/**
+	 * @brief Internal method to retrieve the VMA allocation owned by this object.
+	 *
+	 * This is needed for derived classes to handle some of the VMA allocation code themselves,
+	 * in particular for Tensor objects to be allocated, in tensor_and_data_graph_common.cpp.
+	 * Once Tensor objects are integrated into VMA, this code can be refactored and this function removed.
+	 */
+	VmaAllocation get_allocation() const;
+
+	/**
+	 * @brief Internal method to set the VMA allocation owned by this object.
+	 *
+	 * This is needed for derived classes to handle some of the VMA allocation code themselves,
+	 * in particular for Tensor objects to be allocated, in tensor_and_data_graph_common.cpp.
+	 * Once Tensor objects are integrated into VMA, this code can be refactored and this function removed.
+	 */
+	void set_allocation(VmaAllocation alloc);
+
 	/**
 	 * @brief The post_create method is called after the creation of a buffer or image to store the allocation info internally.  Derived classes
 	 * could in theory override this to ensure any post-allocation operations are performed, but the base class should always be called to ensure
@@ -338,7 +363,7 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	void clear();
 
   private:
-	vk::Buffer create_buffer_impl(vk::BufferCreateInfo const &create_info);
+	vk::Buffer create_buffer_impl(vk::BufferCreateInfo const &create_info, DeviceSizeType alignment);
 	vk::Image  create_image_impl(vk::ImageCreateInfo const &create_info);
 
 	VmaAllocationCreateInfo allocation_create_info = {};
@@ -403,31 +428,46 @@ inline void Allocated<bindingType, HandleType>::clear()
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline typename Allocated<bindingType, HandleType>::BufferType Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info)
+inline typename Allocated<bindingType, HandleType>::BufferType Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info, DeviceSizeType alignment)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return create_buffer_impl(create_info);
+		return create_buffer_impl(create_info, alignment);
 	}
 	else
 	{
-		return static_cast<VkBuffer>(create_buffer_impl(reinterpret_cast<vk::BufferCreateInfo const &>(create_info)));
+		return static_cast<VkBuffer>(create_buffer_impl(reinterpret_cast<vk::BufferCreateInfo const &>(create_info), alignment));
 	}
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::BufferCreateInfo const &create_info)
+inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::BufferCreateInfo const &create_info, DeviceSizeType alignment)
 {
 	vk::Buffer        buffer = VK_NULL_HANDLE;
 	VmaAllocationInfo allocation_info{};
 
-	auto result = vmaCreateBuffer(
-	    get_memory_allocator(),
-	    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
-	    &allocation_create_info,
-	    reinterpret_cast<VkBuffer *>(&buffer),
-	    &allocation,
-	    &allocation_info);
+	auto result = VK_SUCCESS;
+	if (alignment == 0)
+	{
+		result = vmaCreateBuffer(
+		    get_memory_allocator(),
+		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		    &allocation_create_info,
+		    reinterpret_cast<VkBuffer *>(&buffer),
+		    &allocation,
+		    &allocation_info);
+	}
+	else
+	{
+		result = vmaCreateBufferWithAlignment(
+		    get_memory_allocator(),
+		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		    &allocation_create_info,
+		    alignment,
+		    reinterpret_cast<VkBuffer *>(&buffer),
+		    &allocation,
+		    &allocation_info);
+	}
 
 	if (result != VK_SUCCESS)
 	{
@@ -564,6 +604,21 @@ inline typename Allocated<bindingType, HandleType>::DeviceMemoryType Allocated<b
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
+inline typename Allocated<bindingType, HandleType>::DeviceSizeType Allocated<bindingType, HandleType>::get_memory_offset() const
+{
+	VmaAllocationInfo alloc_info;
+	vmaGetAllocationInfo(get_memory_allocator(), allocation, &alloc_info);
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return static_cast<vk::DeviceSize>(alloc_info.offset);
+	}
+	else
+	{
+		return alloc_info.offset;
+	}
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
 inline uint8_t *Allocated<bindingType, HandleType>::map()
 {
 	if (!persistent && !mapped())
@@ -578,6 +633,18 @@ template <vkb::BindingType bindingType, typename HandleType>
 inline bool Allocated<bindingType, HandleType>::mapped() const
 {
 	return mapped_data != nullptr;
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
+inline VmaAllocation Allocated<bindingType, HandleType>::get_allocation() const
+{
+	return allocation;
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
+inline void Allocated<bindingType, HandleType>::set_allocation(VmaAllocation alloc)
+{
+	allocation = alloc;
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
