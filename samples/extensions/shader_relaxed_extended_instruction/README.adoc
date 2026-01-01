@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2025, Holochip Inc.
+- Copyright (c) 2026, Holochip Inc.
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -79,6 +79,29 @@ void main() {
     debugPrintfEXT("relaxed-ext-inst demo: gid = %u", gl_GlobalInvocationID.x);
 }
 ----
+
+== Slang shader variant and OpExtInstWithForwardRef
+
+This sample also includes a Slang shader variant that demonstrates the pattern intended to trigger `OpExtInstWithForwardRef` emission. The Slang shader uses a struct with a method that calls `printf`, which creates the structure that should produce circular dependencies in debug instructions when compiled with rich debug info (e.g., `NonSemantic.Shader.DebugInfo.100`).
+
+[source,slang]
+----
+struct A {
+    void foo(uint3 gid) {
+        printf("relaxed-ext-inst demo: gid = %u", gid.x);
+    }
+};
+
+[shader("compute")]
+[numthreads(1, 1, 1)]
+void main(uint3 gid : SV_DispatchThreadID)
+{
+    A a;
+    a.foo(gid);
+}
+----
+
+NOTE: As of Slang in Vulkan SDK 1.4.328, the compiler does not yet emit the rich debug info needed to trigger `OpExtInstWithForwardRef` emission. The shader is structured correctly and will emit `OpExtInstWithForwardRef` once Slang's debug info support is enhanced. The `OpExtInstWithForwardRef` instruction is specifically designed to handle forward references in extended instruction sets, which can occur when debug info creates circular dependencies (e.g., a class method referencing debug info that references the class).
 
 TIP: To actually see the `debugPrintfEXT` output, run with validation configured to capture debug printf (see the `shader_debugprintf` sample or use VK_EXT_layer_settings to enable `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT`). This sample registers an INFO‑severity `VkDebugUtilsMessengerEXT` so messages are visible when validation is active.
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Holochip Inc.
+/* Copyright (c) 2026, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -220,7 +220,7 @@ bool ShaderRelaxedExtendedInstruction::prepare(const vkb::ApplicationOptions &op
 		VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 		VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &pipeline_layout));
 
-		VkPipelineShaderStageCreateInfo stage = load_shader("shader_relaxed_extended_instruction/glsl/relaxed_demo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+		VkPipelineShaderStageCreateInfo stage = load_shader("shader_relaxed_extended_instruction/slang/relaxed_demo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 
 		VkComputePipelineCreateInfo compute_ci{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
 		compute_ci.stage  = stage;

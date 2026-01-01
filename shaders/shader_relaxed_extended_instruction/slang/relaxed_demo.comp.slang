@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2025, Holochip Inc.
+/* Copyright (c) 2026, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,18 +16,32 @@
  */
 
 // This shader demonstrates a non-semantic extended instruction via
-// GL_EXT_debug_printf. On SPIR-V this lowers to an OpExtInst in the
+// printf. On SPIR-V this lowers to an OpExtInst in the
 // NonSemantic.DebugPrintf instruction set, which interacts with
 // SPV_KHR_non_semantic_info. VK_KHR_shader_relaxed_extended_instruction
 // makes certain forward-reference cases in such extended instruction sets
 // legal in SPIR-V.
+//
+// By using a struct with a method that calls printf, we create the pattern
+// that should trigger circular dependencies in debug instructions, which
+// would emit OpExtInstWithForwardRef instructions when compiled with rich
+// debug info (e.g., NonSemantic.Shader.DebugInfo.100).
+//
+// Note: As of Slang in Vulkan SDK 1.4.328, the compiler does not yet emit
+// the rich debug info needed to trigger OpExtInstWithForwardRef. This shader
+// is structured correctly and will emit OpExtInstWithForwardRef once Slang's
+// debug info support is enhanced.
 
-#extension GL_EXT_debug_printf : enable
+struct A {
+    void foo(uint3 gid) {
+        printf("relaxed-ext-inst demo: gid = %u", gid.x);
+    }
+};
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-
-void main()
+[shader("compute")]
+[numthreads(1, 1, 1)]
+void main(uint3 gid : SV_DispatchThreadID)
 {
-    // If validation is configured to route debugPrintfEXT, this will be printed.
-    debugPrintfEXT("relaxed-ext-inst demo: gid = %u", gl_GlobalInvocationID.x);
+    A a;
+    a.foo(gid);
 }
