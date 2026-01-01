@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Holochip Inc
+/* Copyright (c) 2026, Holochip Inc
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +21,9 @@
 #include "common/vk_initializers.h"
 #include "core/device.h"
 #include "core/util/logging.hpp"
+#include <chrono>
 #include <cstdio>
+#include <fstream>
 
 PipelineBinary::PipelineBinary()
 {
@@ -79,6 +81,9 @@ bool PipelineBinary::prepare(const vkb::ApplicationOptions &options)
 	// Demonstrate querying a key and (optionally) getting a pipeline binary
 	demo_pipeline_key_and_binary();
 
+	// Check if a binary file exists from a previous run
+	check_binary_file_exists();
+
 	prepared = true;
 	return true;
 }
@@ -100,20 +105,37 @@ void PipelineBinary::render(float /*delta_time*/)
 		VkCommandBufferBeginInfo begin_info = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(cmd, &begin_info));
 
-		VkImageSubresourceRange subresource_range{};
-		subresource_range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		subresource_range.baseMipLevel   = 0;
-		subresource_range.levelCount     = 1;
-		subresource_range.baseArrayLayer = 0;
-		subresource_range.layerCount     = 1;
+		// Begin render pass to clear the screen and render the GUI
+		VkClearValue clear_values[2];
+		clear_values[0].color        = {{0.1f, 0.1f, 0.1f, 1.0f}};
+		clear_values[1].depthStencil = {1.0f, 0};
 
-		// Transition the acquired image from UNDEFINED to PRESENT for this frame.
-		vkb::image_layout_transition(cmd, swapchain_buffers[current_buffer].image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range);
+		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.renderPass               = render_pass;
+		render_pass_begin_info.framebuffer              = framebuffers[current_buffer];
+		render_pass_begin_info.renderArea.extent.width  = width;
+		render_pass_begin_info.renderArea.extent.height = height;
+		render_pass_begin_info.clearValueCount          = 2;
+		render_pass_begin_info.pClearValues             = clear_values;
+
+		vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Set viewport and scissor
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Draw the GUI overlay
+		draw_ui(cmd);
+
+		vkCmdEndRenderPass(cmd);
 
 		VK_CHECK(vkEndCommandBuffer(cmd));
 
-		// Wait at TOP_OF_PIPE so the command buffer executes only after the acquire semaphore is signaled.
-		VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		// Wait at COLOR_ATTACHMENT_OUTPUT so rendering happens after the acquire semaphore is signaled.
+		VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		VkSubmitInfo         submit_info{};
 		submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.waitSemaphoreCount   = 1;
@@ -251,31 +273,204 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 		return;
 	}
 
-	std::vector<uint8_t>   data(binary_size);
-	VkPipelineBinaryKeyKHR key2{VK_STRUCTURE_TYPE_PIPELINE_BINARY_KEY_KHR};
-	res = vkGetPipelineBinaryDataKHR(get_device().get_handle(), &binary_info, &key2, &binary_size, data.data());
+	binary_data_.resize(binary_size);
+	binary_key_ = {VK_STRUCTURE_TYPE_PIPELINE_BINARY_KEY_KHR};
+	res         = vkGetPipelineBinaryDataKHR(get_device().get_handle(), &binary_info, &binary_key_, &binary_size, binary_data_.data());
 	if (res == VK_SUCCESS)
 	{
-		LOGI("Retrieved pipeline binary of {} bytes; key size {} bytes", static_cast<uint32_t>(binary_size), key2.keySize);
+		binary_size_      = binary_size;
+		binary_available_ = true;
+		LOGI("Retrieved pipeline binary of {} bytes; key size {} bytes", static_cast<uint32_t>(binary_size), binary_key_.keySize);
 		char buf[160];
-		snprintf(buf, sizeof(buf), "Retrieved pipeline binary of %u bytes; key size %u bytes\n", static_cast<unsigned>(binary_size), static_cast<unsigned>(key2.keySize));
+		snprintf(buf, sizeof(buf), "Retrieved pipeline binary of %u bytes; key size %u bytes\n", static_cast<unsigned>(binary_size), static_cast<unsigned>(binary_key_.keySize));
 		log_text_ += buf;
 		// Print a short signature so we can see it changes between runs/devices
 		if (binary_size >= 4)
 		{
 			char sig[96];
-			snprintf(sig, sizeof(sig), "Binary signature: %u %u %u %u ...\n", data[0], data[1], data[2], data[3]);
+			snprintf(sig, sizeof(sig), "Binary signature: %u %u %u %u ...\n", binary_data_[0], binary_data_[1], binary_data_[2], binary_data_[3]);
 			log_text_ += sig;
-			LOGD("Binary signature: {} {} {} {} ...", data[0], data[1], data[2], data[3]);
+			LOGD("Binary signature: {} {} {} {} ...", binary_data_[0], binary_data_[1], binary_data_[2], binary_data_[3]);
 		}
 	}
 	else
 	{
+		binary_available_ = false;
 		LOGW("vkGetPipelineBinaryDataKHR failed ({}); data not available", static_cast<int>(res));
 		char buf[128];
 		snprintf(buf, sizeof(buf), "vkGetPipelineBinaryDataKHR failed (%d); data not available\n", static_cast<int>(res));
 		log_text_ += buf;
 	}
+}
+
+void PipelineBinary::recreate_pipeline_from_scratch()
+{
+	auto start = std::chrono::high_resolution_clock::now();
+
+	// Destroy existing pipeline
+	if (compute_pipeline != VK_NULL_HANDLE)
+	{
+		vkDestroyPipeline(get_device().get_handle(), compute_pipeline, nullptr);
+		compute_pipeline = VK_NULL_HANDLE;
+	}
+
+	// Recreate pipeline from scratch
+	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_ci_cache, nullptr, &compute_pipeline));
+
+	auto end             = std::chrono::high_resolution_clock::now();
+	last_create_time_ms_ = std::chrono::duration<float, std::milli>(end - start).count();
+	creation_count_++;
+
+	status_message_ = "Pipeline recreated from scratch";
+	LOGI("Pipeline recreated from scratch in {:.3f} ms", last_create_time_ms_);
+}
+
+void PipelineBinary::recreate_pipeline_from_binary()
+{
+	if (!binary_available_)
+	{
+		status_message_ = "Error: No binary available";
+		LOGW("Cannot recreate from binary: no binary available");
+		return;
+	}
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	// Destroy existing pipeline
+	if (compute_pipeline != VK_NULL_HANDLE)
+	{
+		vkDestroyPipeline(get_device().get_handle(), compute_pipeline, nullptr);
+		compute_pipeline = VK_NULL_HANDLE;
+	}
+
+	// Create pipeline from binary data
+	VkPipelineBinaryDataKHR binary_data_info{};
+	binary_data_info.dataSize = binary_size_;
+	binary_data_info.pData    = binary_data_.data();
+
+	VkPipelineBinaryKeysAndDataKHR keys_and_data{};
+	keys_and_data.binaryCount         = 1;
+	keys_and_data.pPipelineBinaryKeys = &binary_key_;
+	keys_and_data.pPipelineBinaryData = &binary_data_info;
+
+	VkPipelineBinaryCreateInfoKHR create_info{VK_STRUCTURE_TYPE_PIPELINE_BINARY_CREATE_INFO_KHR};
+	create_info.pKeysAndDataInfo = &keys_and_data;
+
+	VkPipelineBinaryKHR            temp_binary = VK_NULL_HANDLE;
+	VkPipelineBinaryHandlesInfoKHR handles{VK_STRUCTURE_TYPE_PIPELINE_BINARY_HANDLES_INFO_KHR};
+	handles.pipelineBinaryCount = 1;
+	handles.pPipelineBinaries   = &temp_binary;
+
+	VkResult res = vkCreatePipelineBinariesKHR(get_device().get_handle(), &create_info, nullptr, &handles);
+	if (res != VK_SUCCESS || temp_binary == VK_NULL_HANDLE)
+	{
+		status_message_ = "Error: Failed to create binary from data";
+		LOGW("Failed to create pipeline binary from data: {}", static_cast<int>(res));
+		return;
+	}
+
+	// Create pipeline using the binary
+	VkPipelineBinaryInfoKHR binary_info{VK_STRUCTURE_TYPE_PIPELINE_BINARY_INFO_KHR};
+	binary_info.binaryCount       = 1;
+	binary_info.pPipelineBinaries = &temp_binary;
+
+	VkComputePipelineCreateInfo ci = compute_ci_cache;
+	ci.pNext                       = &binary_info;
+
+	res = vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &ci, nullptr, &compute_pipeline);
+
+	vkDestroyPipelineBinaryKHR(get_device().get_handle(), temp_binary, nullptr);
+
+	auto end                    = std::chrono::high_resolution_clock::now();
+	last_binary_create_time_ms_ = std::chrono::duration<float, std::milli>(end - start).count();
+	binary_creation_count_++;
+
+	if (res == VK_SUCCESS)
+	{
+		status_message_ = "Pipeline recreated from binary";
+		LOGI("Pipeline recreated from binary in {:.3f} ms", last_binary_create_time_ms_);
+	}
+	else
+	{
+		status_message_ = "Error: Failed to create pipeline from binary";
+		LOGW("Failed to create pipeline from binary: {}", static_cast<int>(res));
+	}
+}
+
+void PipelineBinary::save_binary_to_file()
+{
+	if (!binary_available_)
+	{
+		status_message_ = "Error: No binary to save";
+		LOGW("Cannot save binary: no binary available");
+		return;
+	}
+
+	std::ofstream file(binary_file_path_, std::ios::binary);
+	if (!file)
+	{
+		status_message_ = "Error: Failed to open file for writing";
+		LOGW("Failed to open file for writing: {}", binary_file_path_);
+		return;
+	}
+
+	// Write key size and key data
+	file.write(reinterpret_cast<const char *>(&binary_key_.keySize), sizeof(binary_key_.keySize));
+	file.write(reinterpret_cast<const char *>(binary_key_.key), binary_key_.keySize);
+
+	// Write binary size and binary data
+	file.write(reinterpret_cast<const char *>(&binary_size_), sizeof(binary_size_));
+	file.write(reinterpret_cast<const char *>(binary_data_.data()), binary_size_);
+
+	file.close();
+
+	binary_file_exists_ = true;
+	status_message_     = "Binary saved to " + binary_file_path_;
+	LOGI("Binary saved to {}", binary_file_path_);
+}
+
+void PipelineBinary::load_binary_from_file()
+{
+	std::ifstream file(binary_file_path_, std::ios::binary);
+	if (!file)
+	{
+		status_message_ = "Error: Failed to open file for reading";
+		LOGW("Failed to open file for reading: {}", binary_file_path_);
+		return;
+	}
+
+	// Read key size and key data
+	uint32_t key_size = 0;
+	file.read(reinterpret_cast<char *>(&key_size), sizeof(key_size));
+	if (key_size > VK_MAX_PIPELINE_BINARY_KEY_SIZE_KHR)
+	{
+		status_message_ = "Error: Invalid key size in file";
+		LOGW("Invalid key size in file: {}", key_size);
+		file.close();
+		return;
+	}
+
+	binary_key_         = {VK_STRUCTURE_TYPE_PIPELINE_BINARY_KEY_KHR};
+	binary_key_.keySize = key_size;
+	file.read(reinterpret_cast<char *>(binary_key_.key), key_size);
+
+	// Read binary size and binary data
+	file.read(reinterpret_cast<char *>(&binary_size_), sizeof(binary_size_));
+	binary_data_.resize(binary_size_);
+	file.read(reinterpret_cast<char *>(binary_data_.data()), binary_size_);
+
+	file.close();
+
+	binary_available_ = true;
+	status_message_   = "Binary loaded from " + binary_file_path_;
+	LOGI("Binary loaded from {} ({} bytes)", binary_file_path_, binary_size_);
+}
+
+bool PipelineBinary::check_binary_file_exists()
+{
+	std::ifstream file(binary_file_path_);
+	binary_file_exists_ = file.good();
+	return binary_file_exists_;
 }
 
 void PipelineBinary::build_command_buffers()
@@ -300,7 +495,7 @@ void PipelineBinary::build_command_buffers()
 
 void PipelineBinary::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Pipeline binary"))
+	if (drawer.header("Pipeline Binary Info"))
 	{
 		if (!log_text_.empty())
 		{
@@ -309,6 +504,105 @@ void PipelineBinary::on_update_ui_overlay(vkb::Drawer &drawer)
 		else
 		{
 			drawer.text("Collecting pipeline binary info...");
+		}
+	}
+
+	if (drawer.header("Interactive Demo"))
+	{
+		// Status message
+		if (!status_message_.empty())
+		{
+			drawer.text("Status: %s", status_message_.c_str());
+		}
+
+		drawer.text("");        // Spacing
+
+		// Pipeline recreation buttons
+		if (drawer.button("Recreate Pipeline (from scratch)"))
+		{
+			recreate_pipeline_from_scratch();
+		}
+
+		if (binary_available_)
+		{
+			if (drawer.button("Recreate Pipeline (from binary)"))
+			{
+				recreate_pipeline_from_binary();
+			}
+		}
+		else
+		{
+			drawer.text("(Binary not available for recreation)");
+		}
+
+		drawer.text("");        // Spacing
+
+		// File operations
+		if (binary_available_)
+		{
+			if (drawer.button("Save Binary to File"))
+			{
+				save_binary_to_file();
+			}
+		}
+		else
+		{
+			drawer.text("(No binary to save)");
+		}
+
+		if (binary_file_exists_)
+		{
+			if (drawer.button("Load Binary from File"))
+			{
+				load_binary_from_file();
+			}
+			drawer.text("File: %s", binary_file_path_.c_str());
+		}
+		else
+		{
+			drawer.text("(No saved binary file found)");
+		}
+	}
+
+	if (drawer.header("Performance Statistics"))
+	{
+		// Display timing information
+		if (creation_count_ > 0)
+		{
+			drawer.text("Last creation from scratch: %.3f ms", last_create_time_ms_);
+			drawer.text("Total recreations from scratch: %d", creation_count_);
+		}
+		else
+		{
+			drawer.text("No recreations from scratch yet");
+		}
+
+		drawer.text("");        // Spacing
+
+		if (binary_creation_count_ > 0)
+		{
+			drawer.text("Last creation from binary: %.3f ms", last_binary_create_time_ms_);
+			drawer.text("Total recreations from binary: %d", binary_creation_count_);
+
+			// Calculate and display speedup if both methods have been used
+			if (creation_count_ > 0 && last_create_time_ms_ > 0.0f && last_binary_create_time_ms_ > 0.0f)
+			{
+				float speedup = last_create_time_ms_ / last_binary_create_time_ms_;
+				drawer.text("Speedup: %.2fx faster", speedup);
+			}
+		}
+		else
+		{
+			drawer.text("No recreations from binary yet");
+		}
+
+		drawer.text("");        // Spacing
+
+		// Binary information
+		if (binary_available_)
+		{
+			drawer.text("Binary size: %zu bytes", binary_size_);
+			drawer.text("Key size: %u bytes", binary_key_.keySize);
 		}
 	}
 }

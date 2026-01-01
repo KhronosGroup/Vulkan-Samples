@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Holochip Inc
+/* Copyright (c) 2026, Holochip Inc
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,8 +51,32 @@ class PipelineBinary : public ApiVulkanSample
 	// Aggregated UI log text shown in the overlay
 	std::string log_text_{};
 
+	// Binary data storage for save/load operations
+	std::vector<uint8_t>   binary_data_{};
+	VkPipelineBinaryKeyKHR binary_key_{VK_STRUCTURE_TYPE_PIPELINE_BINARY_KEY_KHR};
+	size_t                 binary_size_{0};
+
+	// Performance timing measurements (in milliseconds)
+	float last_create_time_ms_{0.0f};
+	float last_binary_create_time_ms_{0.0f};
+	int   creation_count_{0};
+	int   binary_creation_count_{0};
+
+	// File path for binary persistence
+	std::string binary_file_path_{"pipeline_binary.bin"};
+	std::string status_message_{};
+
+	// State flags
+	bool binary_available_{false};
+	bool binary_file_exists_{false};
+
 	// Internal helpers
 	void create_compute_pipeline();
+	void recreate_pipeline_from_scratch();
+	void recreate_pipeline_from_binary();
+	void save_binary_to_file();
+	void load_binary_from_file();
+	bool check_binary_file_exists();
 
 	// Demonstrations of VK_KHR_pipeline_binary
 	void log_pipeline_binary_support();
