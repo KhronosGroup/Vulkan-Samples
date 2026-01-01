@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, Mobica Limited
+# Copyright (c) 2022-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,8 @@ add_sample(
         "vertex_dynamic_state/glsl/gbuffer.frag"
     SHADER_FILES_HLSL
         "vertex_dynamic_state/hlsl/gbuffer.vert.hlsl"
-        "vertex_dynamic_state/hlsl/gbuffer.frag.hlsl")
+        "vertex_dynamic_state/hlsl/gbuffer.frag.hlsl"
+    SHADER_FILES_SLANG
+        "vertex_dynamic_state/slang/gbuffer.vert.slang"
+        "vertex_dynamic_state/slang/gbuffer.frag.slang")
+

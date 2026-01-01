@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2024, Arm Limited and Contributors
+- Copyright (c) 2019-2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -41,10 +41,10 @@ We can either bind per-material and per-object descriptor sets separately or col
 Either way, complex applications will have a large amount of descriptor sets that may need to change on the fly, for example due to textures being streamed in or out.
 
 The simplest approach to circumvent the issue is to have one or more ``VkDescriptorPool``s per frame, reset them at the beginning of the frame and allocate the required descriptor sets from it.
-This approach will consist of a https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkResetDescriptorPool.html[vkResetDescriptorPool()] call at the beginning, followed by a series of https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkAllocateDescriptorSets.html[vkAllocateDescriptorSets()] and https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkUpdateDescriptorSets.html[vkUpdateDescriptorSets()] to fill them with data.
+This approach will consist of a https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkResetDescriptorPool.html[vkResetDescriptorPool()] call at the beginning, followed by a series of https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkAllocateDescriptorSets.html[vkAllocateDescriptorSets()] and https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkUpdateDescriptorSets.html[vkUpdateDescriptorSets()] to fill them with data.
 
 The issue is that these calls can add a significant overhead to the CPU frame time, especially on mobile.
-In the worst cases, for example calling https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkUpdateDescriptorSets.html[vkUpdateDescriptorSets()] for each draw call, the time it takes to update descriptors can be longer than the time of the draws themselves.
+In the worst cases, for example calling https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkUpdateDescriptorSets.html[vkUpdateDescriptorSets()] for each draw call, the time it takes to update descriptors can be longer than the time of the draws themselves.
 
 image::./images/bonza_no_caching_multiple_buf.jpg[Basic descriptor set management]
 
@@ -57,7 +57,7 @@ Both these factors can significantly affect the results.
 == Caching descriptor sets
 
 A major way to reduce descriptor set updates is to re-use them as much as possible.
-Instead of calling https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkResetDescriptorPool.html[vkResetDescriptorPool()] every frame, the app will keep the `VkDescriptorSet` handles stored with some caching mechanism to access them.
+Instead of calling https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkResetDescriptorPool.html[vkResetDescriptorPool()] every frame, the app will keep the `VkDescriptorSet` handles stored with some caching mechanism to access them.
 
 The cache could be a hashmap with the contents of the descriptor set (images, buffers) as key.
 This approach is used in our framework by default.
@@ -83,7 +83,7 @@ GPU frame time does not change much and the app is still CPU bound, so the speed
 This system is reasonably easy to implement for a static scene, but it becomes harder when you need to delete descriptor sets.
 Complex engines may implement techniques to figure out which descriptor sets have not been accessed for a certain number of frames, so they can be removed from the map.
 
-This may correspond to calling https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkFreeDescriptorSets.html[vkFreeDescriptorSets()], but this solution poses another issue: in order to free individual descriptor sets the pool has to be created with the `VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT` flag.
+This may correspond to calling https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkFreeDescriptorSets.html[vkFreeDescriptorSets()], but this solution poses another issue: in order to free individual descriptor sets the pool has to be created with the `VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT` flag.
 Mobile implementations may use a simpler allocator if that flag is not set, relying on the fact that pool memory will only be recycled in block.
 
 It is possible to avoid using that flag by updating descriptor sets instead of deleting them.
@@ -110,7 +110,7 @@ This means that we will have many descriptor sets to create, since every object 
 Furthermore, we will have to update many buffers separately, meaning we cannot control their memory layout and we might lose some optimization opportunities with caching.
 
 We can address both problems by reverting the approach: instead of having a `VkBuffer` per object containing per-frame data, we will have a `VkBuffer` per frame containing per-object data.
-The buffer will be cleared at the beginning of the frame, then each object will record its data and will receive a dynamic offset to be used at https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdBindDescriptorSets.html[vkCmdBindDescriptorSets()] time.
+The buffer will be cleared at the beginning of the frame, then each object will record its data and will receive a dynamic offset to be used at https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkCmdBindDescriptorSets.html[vkCmdBindDescriptorSets()] time.
 
 With this approach we will need less descriptor sets, as more objects can share the same one: they will all reference the same `VkBuffer`, but at different dynamic offsets.
 Furthermore, we can control the memory layout within the buffer.
@@ -151,6 +151,6 @@ For this relatively simple scene stacking the two approaches does not provide a 
 
 *Debugging*
 
-* The time spent in https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkUpdateDescriptorSets.html[vkUpdateDescriptorSets()] can be checked with a CPU profiler.
+* The time spent in https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkUpdateDescriptorSets.html[vkUpdateDescriptorSets()] can be checked with a CPU profiler.
 In the worst cases it may be comparable or higher than the time spent performing the actual draw calls.
-* Monitor if there is contention on https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkAllocateDescriptorSets.html[vkAllocateDescriptorSets()], which will probably be a performance problem if it occurs.
+* Monitor if there is contention on https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkAllocateDescriptorSets.html[vkAllocateDescriptorSets()], which will probably be a performance problem if it occurs.

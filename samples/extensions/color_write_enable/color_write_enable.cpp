@@ -245,6 +245,18 @@ void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		gpu.get_mutable_requested_features().independentBlend = true;
 	}
+
+	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
+	{
+		if (gpu.get_features().shaderStorageImageReadWithoutFormat)
+		{
+			gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = true;
+		}
+		else
+		{
+			throw std::runtime_error("When using Slang shaders, this sample requires support for reading storage images without format (shaderStorageImageReadWithoutFormat)");
+		}
+	}
 }
 
 void ColorWriteEnable::setup_descriptor_pool()

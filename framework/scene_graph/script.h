@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,7 @@
 
 #include "platform/input_events.h"
 #include "scene_graph/component.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
@@ -55,14 +56,14 @@ class Script : public Component
 class NodeScript : public Script
 {
   public:
-	NodeScript(Node &node, const std::string &name = "");
+	NodeScript(vkb::scene_graph::NodeC &node, const std::string &name = "");
 
 	virtual ~NodeScript() = default;
 
-	Node &get_node();
+	vkb::scene_graph::NodeC &get_node();
 
   private:
-	Node &node;
+	vkb::scene_graph::NodeC &node;
 };
 }        // namespace sg
 }        // namespace vkb

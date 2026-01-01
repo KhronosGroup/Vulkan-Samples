@@ -419,7 +419,7 @@ void HPPHelloTriangleV13::init_device()
 	    enabled_features_chain = {{}, {.synchronization2 = true, .dynamicRendering = true}, {.extendedDynamicState = true}};
 
 	// Create the logical device
-	float queue_priority = 1.0f;
+	float queue_priority = 0.5f;
 
 	// Create one queue
 	vk::DeviceQueueCreateInfo queue_info{.queueFamilyIndex = static_cast<uint32_t>(context.graphics_queue_index),

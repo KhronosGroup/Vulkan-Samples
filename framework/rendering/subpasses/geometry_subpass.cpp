@@ -56,7 +56,8 @@ void GeometrySubpass::prepare()
 	}
 }
 
-void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes, std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
+void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &opaque_nodes,
+                                       std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> &transparent_nodes)
 {
 	auto camera_transform = camera.get_node()->get_transform().get_world_matrix();
 
@@ -90,8 +91,8 @@ void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *
 
 void GeometrySubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> opaque_nodes;
+	std::multimap<float, std::pair<vkb::scene_graph::NodeC *, sg::SubMesh *>> transparent_nodes;
 
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
@@ -142,7 +143,7 @@ void GeometrySubpass::draw(vkb::core::CommandBufferC &command_buffer)
 	}
 }
 
-void GeometrySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, sg::Node &node, size_t thread_index)
+void GeometrySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index)
 {
 	GlobalUniform global_uniform;
 
@@ -196,7 +197,7 @@ void GeometrySubpass::draw_submesh(vkb::core::CommandBufferC &command_buffer, sg
 		if (auto layout_binding = descriptor_set_layout.get_layout_binding(texture.first))
 		{
 			command_buffer.bind_image(texture.second->get_image()->get_vk_image_view(),
-			                          texture.second->get_sampler()->vk_sampler,
+			                          texture.second->get_sampler()->get_core_sampler(),
 			                          0, layout_binding->binding, 0);
 		}
 	}

@@ -802,8 +802,6 @@ void CalibratedTimestamps::get_time_domains()
 
 		// Resize time stamps vector
 		timestamps.resize(time_domain_count);
-		// Resize max deviations vector
-		max_deviations.resize(time_domain_count);
 	}
 
 	is_time_domain_init = ((result == VK_SUCCESS) && (time_domain_count > 0));
@@ -815,7 +813,7 @@ VkResult CalibratedTimestamps::get_timestamps()
 	if (is_time_domain_init)
 	{
 		// Get calibrated timestamps:
-		return vkGetCalibratedTimestampsEXT(get_device().get_handle(), static_cast<uint32_t>(time_domains.size()), timestamps_info.data(), timestamps.data(), max_deviations.data());
+		return vkGetCalibratedTimestampsEXT(get_device().get_handle(), static_cast<uint32_t>(time_domains.size()), timestamps_info.data(), timestamps.data(), &max_deviation);
 	}
 	return VK_ERROR_UNKNOWN;
 }

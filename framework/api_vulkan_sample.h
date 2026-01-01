@@ -1,4 +1,5 @@
 /* Copyright (c) 2019-2025, Sascha Willems
+ * Copyright (c) 2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -58,7 +59,7 @@ struct SwapchainBuffer
 struct Texture
 {
 	std::unique_ptr<vkb::sg::Image> image;
-	VkSampler                       sampler;
+	VkSampler                       sampler = VK_NULL_HANDLE;
 };
 
 /**
@@ -147,7 +148,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	std::vector<VkCommandBuffer> draw_cmd_buffers;
 
 	// Global render pass for frame buffer writes
-	VkRenderPass render_pass;
+	VkRenderPass render_pass = VK_NULL_HANDLE;
 
 	// List of available frame buffers (same as number of swap chain images)
 	std::vector<VkFramebuffer> framebuffers;

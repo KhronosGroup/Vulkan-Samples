@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Mobica Limited
+# Copyright (c) 2024-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample(
         "dynamic_primitive_clipping/glsl/primitive_clipping.frag"
     SHADER_FILES_HLSL
         "dynamic_primitive_clipping/hlsl/primitive_clipping.vert.hlsl"
-        "dynamic_primitive_clipping/hlsl/primitive_clipping.frag.hlsl")
+        "dynamic_primitive_clipping/hlsl/primitive_clipping.frag.hlsl"
+    SHADER_FILES_SLANG
+        "dynamic_primitive_clipping/slang/primitive_clipping.vert.slang"
+        "dynamic_primitive_clipping/slang/primitive_clipping.frag.slang")
