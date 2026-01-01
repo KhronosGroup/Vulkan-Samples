@@ -32,9 +32,9 @@ class ConditionalRendering : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::Scene> scene;
 	struct SceneNode
 	{
-		std::string       name;
-		vkb::sg::Node    *node;
-		vkb::sg::SubMesh *sub_mesh;
+		std::string              name;
+		vkb::scene_graph::NodeC *node;
+		vkb::sg::SubMesh        *sub_mesh;
 	};
 	std::vector<SceneNode> linear_scene_nodes;
 

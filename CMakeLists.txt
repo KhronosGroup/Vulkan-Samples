@@ -72,7 +72,7 @@ if(Vulkan_FOUND)
         message(STATUS "Couldn't find slang Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_slang_EXECUTABLE cmake variable. Slang shaders won't be compiled.")
     endif()
     # glsl compiler
-    if(NOT Vulkan_glslang_exe_FOUND)
+    if(NOT Vulkan_glslc_exe_FOUND)
         find_program(Vulkan_glslc_EXECUTABLE
                     NAMES glslc
                     HINTS
@@ -85,7 +85,21 @@ if(Vulkan_FOUND)
     else()
         message(STATUS "Couldn't find glslc Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_glslc_EXECUTABLE cmake variable. GLSL shaders won't be compiled.")
     endif()
-    # glsl compiler
+    # spvasm compiler
+    if(NOT Vulkan_spirvas_exe_FOUND)
+        find_program(Vulkan_spirvas_EXECUTABLE
+                    NAMES spirv-as
+                    HINTS
+                    "$ENV{VULKAN_SDK}/Bin"
+                    "$ENV{VULKAN_SDK}/bin"
+                    )
+    endif()
+    if(Vulkan_spirvas_EXECUTABLE)
+        message(STATUS "Found spirv-as Shader Compiler under ${Vulkan_spirvas_EXECUTABLE}")
+    else()
+        message(STATUS "Couldn't find spirv-as Shader Compiler executable, make sure it is present in Vulkan SDK or add it manually via Vulkan_spirvas_EXECUTABLE cmake variable. SPIR-V assembly shaders won't be compiled.")
+    endif()
+
 endif()
 
 # globally add VKB_DEBUG for the debug build

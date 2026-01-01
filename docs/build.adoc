@@ -105,6 +105,14 @@ Tracy is not currently enabled for Android builds. In the future, we may add sup
 
 *Default:* `OFF`
 
+=== VKB_SKIP_SLANG_SHADER_COMPILATION
+
+By default, Slang shaders are compiled if a Slang compiler is found on the system. In cases where this is undesirable, set this to `OFF` to disable Slang shader compilation.
+
+You can still select Slang as a shading language target for the samples since Slang shaders are included as precompiled SPIR-V files.
+
+*Default:* `OFF`
+
 == Quality Assurance
 
 We use a small set of tools to provide a level of quality to the project.
@@ -174,33 +182,14 @@ Please make sure, when running any sample, that you either:
 * Run Command Prompt or Visual Studio as administrator
 ____
 
-`Step 1.` The following command will generate the VS project
+`Step 1.` Generate the VS solution from the root of the repository
 
-----
-cmake -G "Visual Studio 15 2017 Win64" -S . -Bbuild/windows
-----
-
-(Prior to CMake v3.13)
-
-----
-cmake -G "Visual Studio 15 2017 Win64" . -Bbuild/windows
-----
-
-(New in CMake v3.14.
-Visual Studio 2019 must be installed)
-
-----
- cmake -G "Visual Studio 16 2019" -A x64 -S . -Bbuild/windows
-----
-
-(New in CMake v3.21.
-Visual Studio 2022 must be installed)
-
+(For other VS versions please refer to https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#id15[CMake Generators])
 ----
  cmake -G "Visual Studio 17 2022" -A x64 -S . -Bbuild/windows
 ----
 
-Open the *vulkan_samples.sln* VS project inside build/windows and build with Ctrl-Shift-B. To run Vulkan Samples, use Visual Studio's Debug Properties selection and set the Debugging Command Arguments to --help. Click the "Local Windows Debugger" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
+Open the *vulkan_samples.sln* or *vulkan_samples.slnx* VS solution inside *build/windows* and build with Ctrl-Shift-B. To run Vulkan Samples, use Visual Studio's Debug Properties selection and set the Debugging Command Arguments to --help. Click the "Local Windows Debugger" button and you should see the help output in the terminal. For convenience, the default setting is to run the hello_triangle sample; just edit that to your desired sample to run.
 
 Alternatively, for command line builds use the steps below:
 
@@ -210,10 +199,10 @@ Alternatively, for command line builds use the steps below:
 cmake --build build/windows --config Release --target vulkan_samples
 ----
 
-`Step 3.` Run the *Vulkan Samples* application
+`Step 3.` Run the *Vulkan Samples* application by specifying the name of the sample
 
 ----
-build\windows\app\bin\Release\AMD64\vulkan_samples.exe
+build\windows\app\bin\Release\AMD64\vulkan_samples.exe sample <sample_name>
 ----
 
 == Linux
@@ -388,7 +377,7 @@ ____
 It is highly recommended to install https://d.android.com/studio[Android Studio] to build, run and trace the sample project. Building via Android Studio requires at least Ladybug 2024.2.1.
 
 Android Studio uses the following plugins/tools to build samples:
- 
+
 * Android Gradle Plugin
 * CMake Plugin, which installs and uses Ninja
 * NDK

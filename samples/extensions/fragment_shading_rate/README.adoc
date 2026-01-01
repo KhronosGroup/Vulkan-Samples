@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2023, The Khronos Group
+- Copyright (c) 2019-2025, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -24,7 +24,7 @@ TIP: The source for this sample can be found in the https://github.com/KhronosGr
 endif::[]
 
 
-*Extension*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html[`VK_KHR_fragment_shading_rate`]
+*Extension*: https://www.khronos.org/registry/vulkan/specs/latest/man/html/VK_KHR_fragment_shading_rate.html[`VK_KHR_fragment_shading_rate`]
 
 Uses a special framebuffer attachment to control fragment shading rates for different framebuffer regions.
 This allows explicit control over the number of fragment shader invocations for each pixel covered by a fragment, which is e.g.

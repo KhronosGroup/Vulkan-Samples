@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2023, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,7 +33,7 @@ Animation::Animation(const Animation &other) :
 {
 }
 
-void Animation::add_channel(Node &node, const AnimationTarget &target, const AnimationSampler &sampler)
+void Animation::add_channel(vkb::scene_graph::NodeC &node, const AnimationTarget &target, const AnimationSampler &sampler)
 {
 	channels.push_back({node, target, sampler});
 }

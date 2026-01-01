@@ -68,7 +68,7 @@ class CommandPool : private vkb::core::CommandPoolBase
 	            uint32_t                                  queue_family_index,
 	            vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
 	            size_t                                    thread_index = 0,
-	            vkb::CommandBufferResetMode               reset_mode   = vkb::CommandBufferResetMode::ResetPool);
+	            vkb::CommandBufferResetMode               reset_mode   = vkb::CommandBufferResetMode::ResetIndividually);
 	CommandPool(CommandPool<bindingType> const &)            = delete;
 	CommandPool(CommandPool<bindingType> &&other)            = default;
 	CommandPool &operator=(CommandPool<bindingType> const &) = delete;

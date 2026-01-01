@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, Holochip
+# Copyright (c) 2022-2025, Holochip
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -38,4 +38,11 @@ add_sample(
         "debug_utils/hlsl/bloom.vert.hlsl"
         "debug_utils/hlsl/bloom.frag.hlsl"
         "debug_utils/hlsl/gbuffer.vert.hlsl"
-        "debug_utils/hlsl/gbuffer.frag.hlsl")
+        "debug_utils/hlsl/gbuffer.frag.hlsl"
+    SHADER_FILES_SLANG
+        "debug_utils/slang/composition.vert.slang"
+        "debug_utils/slang/composition.frag.slang"
+        "debug_utils/slang/bloom.vert.slang"
+        "debug_utils/slang/bloom.frag.slang"
+        "debug_utils/slang/gbuffer.vert.slang"
+        "debug_utils/slang/gbuffer.frag.slang")        

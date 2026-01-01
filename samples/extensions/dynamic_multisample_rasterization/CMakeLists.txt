@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Mobica Limited
+# Copyright (c) 2024-2025, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,5 +26,8 @@ add_sample(
     NAME "Dynamic Multisample Rasterization"
     DESCRIPTION "Demonstrate how to use dynamic multisample rasterization (MSAA) from VK_EXT_extended_dynamic_state3 extension"
     SHADER_FILES_GLSL
-        "dynamic_multisample_rasterization/model.vert"
-        "dynamic_multisample_rasterization/model.frag")
+        "dynamic_multisample_rasterization/glsl/model.vert"
+        "dynamic_multisample_rasterization/glsl/model.frag"
+    SHADER_FILES_SLANG
+        "dynamic_multisample_rasterization/slang/model.vert.slang"
+        "dynamic_multisample_rasterization/slang/model.frag.slang")
