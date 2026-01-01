@@ -1,4 +1,4 @@
-# Copyright 2022-2024 The Khronos Group Inc.
+# Copyright 2022-2025 The Khronos Group Inc.
 # SPDX-License-Identifier: Apache-2.0
 
 # Configure Vulkan Guide Antora tree with transformed markup files.
@@ -19,10 +19,10 @@ function(gatherAntoraAssets)
     set(IMAGES_DIR_SEARCH)
     foreach (DIR ${DIRS_TO_SEARCH})
         list(APPEND PAGES_DIR_SEARCH ${CMAKE_SOURCE_DIR}/${DIR}/*.adoc)
-        list(APPEND IMAGES_DIR_SEARCH ${CMAKE_SOURCE_DIR}/${DIR}/*.jpg ${CMAKE_SOURCE_DIR}/${DIR}/*.png ${CMAKE_SOURCE_DIR}/${DIR}/*.gif)
+        list(APPEND IMAGES_DIR_SEARCH ${CMAKE_SOURCE_DIR}/${DIR}/*.jpg ${CMAKE_SOURCE_DIR}/${DIR}/*.png ${CMAKE_SOURCE_DIR}/${DIR}/*.gif ${CMAKE_SOURCE_DIR}/*.svg)
     endforeach ()
     file(GLOB PAGES ${CMAKE_SOURCE_DIR}/*.adoc)
-    file(GLOB IMAGES ${CMAKE_SOURCE_DIR}/*.jpg ${CMAKE_SOURCE_DIR}/*.png ${CMAKE_SOURCE_DIR}/*.gif)
+    file(GLOB IMAGES ${CMAKE_SOURCE_DIR}/*.jpg ${CMAKE_SOURCE_DIR}/*.png ${CMAKE_SOURCE_DIR}/*.gif ${CMAKE_SOURCE_DIR}/*.svg)
     file(GLOB_RECURSE PAGES_R ${PAGES_DIR_SEARCH})
     file(GLOB_RECURSE IMAGES_R ${IMAGES_DIR_SEARCH})
 

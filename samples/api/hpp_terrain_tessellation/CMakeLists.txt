@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -38,4 +38,11 @@ add_sample_with_tags(
         "terrain_tessellation/hlsl/terrain.tesc.hlsl"
         "terrain_tessellation/hlsl/terrain.tese.hlsl"
         "terrain_tessellation/hlsl/skysphere.vert.hlsl"
-        "terrain_tessellation/hlsl/skysphere.frag.hlsl")
+        "terrain_tessellation/hlsl/skysphere.frag.hlsl"
+    SHADER_FILES_SLANG
+        "terrain_tessellation/slang/terrain.vert.slang"
+        "terrain_tessellation/slang/terrain.frag.slang"
+        "terrain_tessellation/slang/terrain.tesc.slang"
+        "terrain_tessellation/slang/terrain.tese.slang"
+        "terrain_tessellation/slang/skysphere.vert.slang"
+        "terrain_tessellation/slang/skysphere.frag.slang")

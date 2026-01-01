@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, Sascha Willems
+# Copyright (c) 2022-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,7 @@ add_sample(
         "graphics_pipeline_library/glsl/uber.frag"
     SHADER_FILES_HLSL
         "graphics_pipeline_library/hlsl/shared.vert.hlsl"
-        "graphics_pipeline_library/hlsl/uber.frag.hlsl")
+        "graphics_pipeline_library/hlsl/uber.frag.hlsl"
+    SHADER_FILES_SLANG
+        "graphics_pipeline_library/slang/shared.vert.slang"
+        "graphics_pipeline_library/slang/uber.frag.slang")

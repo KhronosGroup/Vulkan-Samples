@@ -43,7 +43,6 @@ float4 main(VSOutput input)
 
     // Save the sampled texture color before discarding.
     // This is to avoid implicit derivatives in non-uniform control flow.
-    // @todo: reversed depth
     float4 sampledColor = samplerTexture.Sample(input.UV);
 	if ((depth != 0.0) && (linearDepth(input.Pos.z) < depth))
 	{

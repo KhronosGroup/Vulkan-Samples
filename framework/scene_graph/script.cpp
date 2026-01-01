@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,13 +38,13 @@ void Script::resize(uint32_t /*width*/, uint32_t /*height*/)
 {
 }
 
-NodeScript::NodeScript(Node &node, const std::string &name) :
+NodeScript::NodeScript(vkb::scene_graph::NodeC &node, const std::string &name) :
     Script{name},
     node{node}
 {
 }
 
-Node &NodeScript::get_node()
+vkb::scene_graph::NodeC &NodeScript::get_node()
 {
 	return node;
 }

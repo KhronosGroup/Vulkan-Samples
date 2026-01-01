@@ -360,7 +360,7 @@ void HelloTriangleV13::init_device()
 	    .pNext = &enable_vulkan13_features};
 	// Create the logical device
 
-	float queue_priority = 1.0f;
+	float queue_priority = 0.5f;
 
 	// Create one queue
 	VkDeviceQueueCreateInfo queue_info{
