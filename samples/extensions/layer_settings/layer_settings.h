@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Holochip Inc.
+/* Copyright (c) 2026, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,10 +18,12 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include <functional>
 
-// A minimal sample demonstrating VK_EXT_layer_settings usage within this framework.
-// It configures the Khronos validation layer using add_layer_setting() before the Vulkan
-// instance is created, and then runs a no-op frame loop with correct WSI sync.
+// Interactive sample demonstrating VK_EXT_layer_settings usage with multiple
+// toggleable validation scenarios that trigger Best Practices warnings.
+// Each scenario demonstrates a common real-world mistake and displays validation
+// messages in the UI with visual feedback.
 class LayerSettingsSample : public ApiVulkanSample
 {
   public:
@@ -38,18 +40,70 @@ class LayerSettingsSample : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
-	// Records a per-frame minimal command buffer that transitions the acquired
-	// swapchain image to PRESENT so we can present without validation errors,
-	// and draws the UI to show validation messages.
+	// Validation scenario identifiers
+	enum class Scenario
+	{
+		WrongBufferFlags,
+		SuboptimalTransitions,
+		SmallAllocations,
+		Count
+	};
+
+	// Per-scenario state and statistics
+	struct ScenarioState
+	{
+		bool        enabled       = false;
+		uint32_t    warning_count = 0;
+		uint32_t    error_count   = 0;
+		std::string recent_messages;
+	};
+
+	// Records a per-frame command buffer with validation scenarios
 	void record_minimal_present_cmd(VkCommandBuffer cmd, uint32_t image_index);
 
-	// Aggregated validation output for GUI.
+	// Helper to execute one-time commands
+	void execute_one_time_commands(std::function<void(VkCommandBuffer)> commands);
+
+	// Setup functions for each scenario
+	void setup_wrong_buffer_flags_scenario();
+	void setup_suboptimal_transitions_scenario();
+	void setup_small_allocations_scenario();
+
+	// Cleanup functions for each scenario
+	void cleanup_wrong_buffer_flags_scenario();
+	void cleanup_suboptimal_transitions_scenario();
+	void cleanup_small_allocations_scenario();
+	void cleanup_scenarios();
+
+	// Render visual feedback for active scenarios
+	void render_scenario_visuals(VkCommandBuffer cmd);
+
+	// Aggregated validation output for GUI
 	std::string log_text_;
 
-	// Local debug messenger to capture Validation Layer messages at runtime.
+	// Per-scenario state tracking
+	std::array<ScenarioState, static_cast<size_t>(Scenario::Count)> scenario_states_;
+
+	// Resources for visual rendering
+	struct
+	{
+		VkBuffer                    vertex_buffer        = VK_NULL_HANDLE;
+		VkDeviceMemory              vertex_buffer_memory = VK_NULL_HANDLE;
+		VkBuffer                    wrong_usage_buffer   = VK_NULL_HANDLE;
+		VkDeviceMemory              wrong_usage_memory   = VK_NULL_HANDLE;
+		VkImage                     test_image           = VK_NULL_HANDLE;
+		VkDeviceMemory              test_image_memory    = VK_NULL_HANDLE;
+		VkImageView                 test_image_view      = VK_NULL_HANDLE;
+		VkPipeline                  simple_pipeline      = VK_NULL_HANDLE;
+		VkPipelineLayout            pipeline_layout      = VK_NULL_HANDLE;
+		std::vector<VkBuffer>       small_buffers;
+		std::vector<VkDeviceMemory> small_allocations;
+	} resources_;
+
+	// Local debug messenger to capture Validation Layer messages at runtime
 	VkDebugUtilsMessengerEXT debug_messenger_ = VK_NULL_HANDLE;
 
-	// Debug messenger callback.
+	// Debug messenger callback
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 	    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
 	    VkDebugUtilsMessageTypeFlagsEXT             messageTypes,

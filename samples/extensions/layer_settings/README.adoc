@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2025, Holochip Inc
+- Copyright (c) 2026, Holochip Inc
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -38,7 +38,32 @@ VK_EXT_layer_settings supersedes the older `VK_EXT_validation_features` and `VK_
 - Adds settings for the Khronos validation layer before the Vulkan instance is created:
   - Enables Best Practices checks.
   - Enables `debugPrintfEXT` support (so shader `debugPrintf` messages are emitted via validation).
-- Runs a minimal frame loop that presents without validation errors (uses a small per‑frame command buffer that transitions the swapchain image to `PRESENT`).
+- Provides an interactive UI with toggleable validation scenarios that demonstrate common mistakes:
+  - *Wrong Buffer Flags*: Creates a buffer with `TRANSFER_DST` usage but binds it as a vertex buffer (missing `VERTEX_BUFFER_BIT`).
+  - *Suboptimal Transitions*: Performs image layout transitions to `GENERAL` instead of more optimal layouts like `COLOR_ATTACHMENT_OPTIMAL`.
+  - *Many Small Allocations*: Creates numerous small memory allocations (512 bytes each) instead of suballocating from larger blocks.
+- Displays validation messages in real-time within the application UI, showing warning counts per scenario and total statistics.
+- Works on all platforms without requiring terminal access to see validation output.
+
+== How to use this sample
+
+When you run the sample, you'll see an interactive UI with checkboxes for each validation scenario:
+
+1. *Enable scenarios individually*: Check the boxes to activate specific Best Practices violations.
+2. *Observe validation messages*: Watch the "Recent Validation Messages" section populate with warnings as scenarios trigger.
+3. *Review statistics*: See warning counts per scenario and total counts at the bottom.
+4. *Learn from mistakes*: Each scenario demonstrates a real-world mistake that Best Practices validation catches.
+
+=== What each scenario teaches
+
+*Wrong Buffer Flags*::
+Demonstrates the importance of declaring correct usage flags at buffer creation time. Using a buffer without the appropriate usage bit (e.g., `VERTEX_BUFFER_BIT`) can lead to undefined behavior or performance issues on some implementations.
+
+*Suboptimal Transitions*::
+Shows why choosing the right image layout matters. Transitioning to `GENERAL` layout is legal but often suboptimal—specific layouts like `COLOR_ATTACHMENT_OPTIMAL` or `SHADER_READ_ONLY_OPTIMAL` enable better performance.
+
+*Many Small Allocations*::
+Demonstrates why suballocation is important. Creating hundreds of tiny memory allocations wastes resources and can hit driver limits. Use a memory allocator library (like VMA) or implement suballocation.
 
 == When to use it vs. alternatives
 - Prefer VK_EXT_layer_settings whenever you need to configure validation from within your app (development builds, samples, tools).
