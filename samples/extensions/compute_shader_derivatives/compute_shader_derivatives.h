@@ -34,28 +34,38 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
+	void create_storage_image();
 	void create_output_buffer_and_descriptors();
 	void create_compute_pipeline();
+	void create_graphics_pipeline();
 
-	// Pipeline objects
-	VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
+	// Image dimensions for visualization
+	static constexpr uint32_t image_width{512};
+	static constexpr uint32_t image_height{512};
+
+	// Compute pipeline objects
+	VkPipelineLayout compute_pipeline_layout{VK_NULL_HANDLE};
 	VkPipeline       compute_pipeline{VK_NULL_HANDLE};
 
-	// Descriptor objects
-	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
-	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
-	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	// Graphics pipeline objects (for displaying the image)
+	VkPipelineLayout graphics_pipeline_layout{VK_NULL_HANDLE};
+	VkPipeline       graphics_pipeline{VK_NULL_HANDLE};
 
-	// Result buffer (host-visible)
-	VkBuffer       result_buffer{VK_NULL_HANDLE};
-	VkDeviceMemory result_memory{VK_NULL_HANDLE};
-	uint32_t       result_count{16};         // 4x4 local size
-	uint32_t       result_stride{16};        // 3 floats (v,dx,dy) + padding -> 16 bytes
-	VkDeviceSize   result_size{result_stride * result_count};
-	bool           printed_once{false};
+	// Compute descriptor objects
+	VkDescriptorSetLayout compute_descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorPool      compute_descriptor_pool{VK_NULL_HANDLE};
+	VkDescriptorSet       compute_descriptor_set{VK_NULL_HANDLE};
 
-	// Cached log text to show in GUI
-	std::string log_text_;
+	// Graphics descriptor objects (for sampling the image)
+	VkDescriptorSetLayout graphics_descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorPool      graphics_descriptor_pool{VK_NULL_HANDLE};
+	VkDescriptorSet       graphics_descriptor_set{VK_NULL_HANDLE};
+
+	// Storage image for compute shader output
+	VkImage        storage_image{VK_NULL_HANDLE};
+	VkDeviceMemory storage_image_memory{VK_NULL_HANDLE};
+	VkImageView    storage_image_view{VK_NULL_HANDLE};
+	VkSampler      storage_image_sampler{VK_NULL_HANDLE};
 };
 
 std::unique_ptr<vkb::Application> create_compute_shader_derivatives();

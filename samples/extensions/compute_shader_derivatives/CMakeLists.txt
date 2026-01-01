@@ -27,4 +27,6 @@ add_sample(
     DESCRIPTION "Demonstrates VK_KHR_compute_shader_derivatives with a minimal compute dispatch using dFdx/dFdy in compute"
     SHADER_FILES_SLANG
         "compute_shader_derivatives/slang/derivatives.comp.slang"
+        "compute_shader_derivatives/slang/fullscreen.vert.slang"
+        "compute_shader_derivatives/slang/fullscreen.frag.slang"
     )
