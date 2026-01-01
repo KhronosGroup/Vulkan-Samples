@@ -1,4 +1,4 @@
-/* Copyright (c) 202, Holochip Inc.
+/* Copyright (c) 2026, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
