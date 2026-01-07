@@ -99,6 +99,10 @@ jobs:
         with:
           submodules: "recursive"
       - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+      - name: Install GCC 13 toolchain (libstdc++)
+        run: |
+          apt-get update
+          apt-get install -y g++-13
       - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF -Bbuild/clang
       - run: |
           /usr/bin/run-clang-tidy \
@@ -107,6 +111,7 @@ jobs:
             -header-filter=framework,samples,app \
             -checks=-*,google-*,-google-runtime-references \
             -extra-arg=-std=c++20 \
+            -extra-arg=--gcc-toolchain=/usr/lib/gcc/x86_64-linux-gnu/13 \
             -quiet \
             ${{ needs.changed-files.outputs.all }}
 
