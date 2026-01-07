@@ -248,10 +248,10 @@ void ComputeShaderDerivatives::create_compute_pipeline()
 	vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
 	// Load compute shader based on selected derivative group mode
-	const char *comp_path = use_quads_ ?
-	                        "compute_shader_derivatives/slang/derivatives_quad.comp.spv" :
-	                        "compute_shader_derivatives/slang/derivatives_linear.comp.spv";
-	VkPipelineShaderStageCreateInfo stage = load_shader(comp_path, VK_SHADER_STAGE_COMPUTE_BIT);
+	const char                     *comp_path = use_quads_ ?
+	                                                "compute_shader_derivatives/slang/derivatives_quad.comp.spv" :
+	                                                "compute_shader_derivatives/slang/derivatives_linear.comp.spv";
+	VkPipelineShaderStageCreateInfo stage     = load_shader(comp_path, VK_SHADER_STAGE_COMPUTE_BIT);
 
 	VkComputePipelineCreateInfo compute_ci{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
 	compute_ci.stage  = stage;
@@ -381,15 +381,15 @@ void ComputeShaderDerivatives::create_graphics_pipeline()
 
 bool ComputeShaderDerivatives::prepare(const vkb::ApplicationOptions &options)
 {
-    if (!ApiVulkanSample::prepare(options))
-    {
-        return false;
-    }
+	if (!ApiVulkanSample::prepare(options))
+	{
+		return false;
+	}
 
 	// Decide which derivative group to use at runtime based on enabled device features.
 	// Prefer Quads when available; otherwise, fall back to Linear.
 	VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR csd_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR};
-	VkPhysicalDeviceFeatures2                            features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+	VkPhysicalDeviceFeatures2                           features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
 	features2.pNext = &csd_features;
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &features2);
 	use_quads_ = (csd_features.computeDerivativeGroupQuads == VK_TRUE);
@@ -400,10 +400,10 @@ bool ComputeShaderDerivatives::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-    // Create resources in order: image, buffer, then pipelines
-    create_storage_image();
-    create_output_buffer_and_descriptors();
-    create_compute_pipeline();
+	// Create resources in order: image, buffer, then pipelines
+	create_storage_image();
+	create_output_buffer_and_descriptors();
+	create_compute_pipeline();
 	create_graphics_pipeline();
 
 	prepared = true;
