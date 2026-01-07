@@ -192,20 +192,19 @@ void PipelineBinary::log_pipeline_binary_support()
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &features2);
 	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &props2);
 
-	const char *pb = features.pipelineBinaries ? "true" : "false";
-	LOGI("VK_KHR_pipeline_binary supported feature: pipelineBinaries = {}", pb);
-	char buf[256];
-	snprintf(buf, sizeof(buf), "VK_KHR_pipeline_binary supported feature: pipelineBinaries = %s\n", pb);
-	log_text_ += buf;
+	std::string message = std::format("VK_KHR_pipeline_binary support: pipelineBinaries = {}", !!features.pipelineBinaries);
+	LOGI(message);
+	log_text_ += message + "\n";
 
-	const char *ic   = props.pipelineBinaryInternalCache ? "true" : "false";
-	const char *icc  = props.pipelineBinaryInternalCacheControl ? "true" : "false";
-	const char *pic  = props.pipelineBinaryPrefersInternalCache ? "true" : "false";
-	const char *pic2 = props.pipelineBinaryPrecompiledInternalCache ? "true" : "false";
-	const char *cd   = props.pipelineBinaryCompressedData ? "true" : "false";
-	LOGI("VK_KHR_pipeline_binary properties: internalCache={}, internalCacheControl={}, prefersInternalCache={}, precompiledInternalCache={}, compressedData={}", ic, icc, pic, pic2, cd);
-	snprintf(buf, sizeof(buf), "VK_KHR_pipeline_binary properties: internalCache=%s, internalCacheControl=%s, prefersInternalCache=%s, precompiledInternalCache=%s, compressedData=%s\n", ic, icc, pic, pic2, cd);
-	log_text_ += buf;
+	message = std::format(
+	    "VK_KHR_pipeline_binary properties: internalCache={}, internalCacheControl={}, prefersInternalCache={}, precompiledInternalCache={}, compressedData={}",
+	    !!props.pipelineBinaryInternalCache,
+	    !!props.pipelineBinaryInternalCacheControl,
+	    !!props.pipelineBinaryPrefersInternalCache,
+	    !!props.pipelineBinaryPrecompiledInternalCache,
+	    !!props.pipelineBinaryCompressedData);
+	LOGI(message);
+	log_text_ += message + "\n";
 }
 
 void PipelineBinary::demo_pipeline_key_and_binary()
@@ -222,18 +221,17 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	VkResult               res = vkGetPipelineKeyKHR(get_device().get_handle(), &pipeline_create_info_khr, &key);
 	if (res != VK_SUCCESS)
 	{
-		LOGW("vkGetPipelineKeyKHR failed ({}); skipping binary capture", static_cast<int>(res));
-		char buf[128];
-		snprintf(buf, sizeof(buf), "vkGetPipelineKeyKHR failed (%d); skipping binary capture\n", static_cast<int>(res));
-		log_text_ += buf;
+		std::string message = std::format("vkGetPipelineKeyKHR failed ({}); skipping binary capture", vk::to_string(static_cast<vk::Result>(res)));
+		LOGW(message);
+		log_text_ += message + "\n";
 		return;
 	}
 
 	LOGI("Got pipeline key ({} bytes)", key.keySize);
 	{
-		char buf[128];
-		snprintf(buf, sizeof(buf), "Got pipeline key (%u bytes)\n", static_cast<unsigned>(key.keySize));
-		log_text_ += buf;
+		std::string message = std::format("Got pipeline key ({} bytes)", key.keySize);
+		LOGI(message);
+		log_text_ += message + "\n";
 	}
 
 	// Create a pipeline binary handle from the pipeline creation parameters only
@@ -250,10 +248,10 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	res = vkCreatePipelineBinariesKHR(get_device().get_handle(), &create_info, nullptr, &handles);
 	if (res != VK_SUCCESS || pipeline_binary == VK_NULL_HANDLE)
 	{
-		LOGW("vkCreatePipelineBinariesKHR failed ({}); driver may not support capturing binaries in this context", static_cast<int>(res));
-		char buf[180];
-		snprintf(buf, sizeof(buf), "vkCreatePipelineBinariesKHR failed (%d); driver may not support capturing binaries in this context\n", static_cast<int>(res));
-		log_text_ += buf;
+		std::string message = std::format("vkCreatePipelineBinariesKHR failed ({}); driver may not support capturing binaries in this context",
+		                                  vk::to_string(static_cast<vk::Result>(res)));
+		LOGW(message);
+		log_text_ += message + "\n";
 		return;
 	}
 
@@ -266,10 +264,9 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	res = vkGetPipelineBinaryDataKHR(get_device().get_handle(), &binary_info, &size_query_key, &binary_size, nullptr);
 	if (res != VK_SUCCESS || binary_size == 0)
 	{
-		LOGW("vkGetPipelineBinaryDataKHR size query failed ({}); skipping data fetch", static_cast<int>(res));
-		char buf[160];
-		snprintf(buf, sizeof(buf), "vkGetPipelineBinaryDataKHR size query failed (%d); skipping data fetch\n", static_cast<int>(res));
-		log_text_ += buf;
+		std::string message = std::format("vkGetPipelineBinaryDataKHR size query failed ({}); skipping data fetch", vk::to_string(static_cast<vk::Result>(res)));
+		LOGW(message);
+		log_text_ += message + "\n";
 		return;
 	}
 
@@ -287,19 +284,18 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 		// Print a short signature so we can see it changes between runs/devices
 		if (binary_size >= 4)
 		{
-			char sig[96];
-			snprintf(sig, sizeof(sig), "Binary signature: %u %u %u %u ...\n", binary_data_[0], binary_data_[1], binary_data_[2], binary_data_[3]);
-			log_text_ += sig;
-			LOGD("Binary signature: {} {} {} {} ...", binary_data_[0], binary_data_[1], binary_data_[2], binary_data_[3]);
+			std::string message = std::format("Binary signature: {} {} {} {} ...", binary_data_[0], binary_data_[1], binary_data_[2], binary_data_[3]);
+			LOGD(message);
+			log_text_ += message + "\n";
 		}
 	}
 	else
 	{
 		binary_available_ = false;
 		LOGW("vkGetPipelineBinaryDataKHR failed ({}); data not available", static_cast<int>(res));
-		char buf[128];
-		snprintf(buf, sizeof(buf), "vkGetPipelineBinaryDataKHR failed (%d); data not available\n", static_cast<int>(res));
-		log_text_ += buf;
+		std::string message = std::format("vkGetPipelineBinaryDataKHR failed ({}); data not available", vk::to_string(static_cast<vk::Result>(res)));
+		LOGW(message);
+		log_text_ += message + "\n";
 	}
 }
 
