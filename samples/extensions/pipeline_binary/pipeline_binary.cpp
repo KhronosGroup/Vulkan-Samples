@@ -23,8 +23,8 @@
 #include "core/util/logging.hpp"
 #include <chrono>
 #include <cstdio>
-#include <fstream>
 #include <format>
+#include <fstream>
 
 PipelineBinary::PipelineBinary()
 {
