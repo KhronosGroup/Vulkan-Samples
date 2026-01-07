@@ -24,6 +24,10 @@ endif::[]
 
 This sample demonstrates VK_KHR_compute_shader_derivatives, which enables the use of derivative instructions (like dFdx/dFdy) inside compute shaders. Traditionally, derivatives are only available in fragment shaders, but this extension defines derivative groups in compute and how invocations are paired for derivative computations.
 
+// Screenshot of the sample output
+.Compute shader derivatives output
+image::shader_derivatives.png[align=center,alt="Compute shader derivatives output"]
+
 == What is it?
 - SPIR-V: The companion SPIR-V extension allows derivative instructions in the Compute execution model.
 - Vulkan: The device feature is exposed via `VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR` with two booleans:
