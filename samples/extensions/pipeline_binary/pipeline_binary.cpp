@@ -228,7 +228,6 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 		return;
 	}
 
-	LOGI("Got pipeline key ({} bytes)", key.keySize);
 	{
 		std::string message = std::format("Got pipeline key ({} bytes)", key.keySize);
 		LOGI(message);
