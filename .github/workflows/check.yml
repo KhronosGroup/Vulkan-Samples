@@ -102,7 +102,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libxcb1-dev
-      - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF -Bbuild/clang
+      - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF -DGLFW_BUILD_X11=OFF -Bbuild/clang
       - run: |
           (command -v run-clang-tidy-18 >/dev/null && RUN_TIDY=run-clang-tidy-18 || true); \
           (command -v run-clang-tidy-17 >/dev/null && RUN_TIDY=run-clang-tidy-17 || true); \
