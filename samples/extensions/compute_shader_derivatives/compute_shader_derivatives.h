@@ -39,6 +39,10 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 	void create_compute_pipeline();
 	void create_graphics_pipeline();
 
+	// Which derivative group mode the sample will use at runtime.
+	// Prefer quads when available; otherwise fall back to linear.
+	bool use_quads_{false};
+
 	// Image dimensions for visualization
 	static constexpr uint32_t image_width{512};
 	static constexpr uint32_t image_height{512};

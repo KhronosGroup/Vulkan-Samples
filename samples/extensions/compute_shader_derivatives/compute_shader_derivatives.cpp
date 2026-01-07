@@ -32,10 +32,12 @@ ComputeShaderDerivatives::ComputeShaderDerivatives()
 
 	// Needed for feature chaining
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	// Device extension providing the feature
+	// Device extension providing the feature (KHR is required)
 	add_device_extension(VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME);
-	// Toolchains may still emit SPV_NV_compute_shader_derivatives; enable NV extension if available to satisfy validation
-	add_device_extension(VK_NV_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME, /*optional*/ true);
+	// Note for developers/tooling:
+	// If your shader compiler/toolchain only emits SPV_NV_compute_shader_derivatives instead of SPV_KHR,
+	// please update to a newer Vulkan SDK, glslang, and SPIR-V Tools that support the KHR variant.
+	// This sample intentionally does not enable the NV extension and only targets VK_KHR_compute_shader_derivatives.
 	// Shader draw parameters (required for SV_VertexID in Slang-generated vertex shader SPIR-V)
 	add_device_extension(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME, /*optional*/ true);
 }
@@ -172,13 +174,28 @@ void ComputeShaderDerivatives::create_output_buffer_and_descriptors()
 
 void ComputeShaderDerivatives::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Require quads derivative group (the sample shader uses layout(derivative_group_quadsNV/derivative_group_quads_khr))
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupQuads);
-	// Users may switch to the linear mode by changing the shader qualifier
+	// Request both derivative group modes as OPTIONAL, prefer Quads if available at runtime.
+	// Some implementations only support computeDerivativeGroupLinear.
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupQuads);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupLinear);
 
 	// Storage image read/write without format (required for storage images without explicit format qualifiers)
-	gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
-	gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
+	if (gpu.get_features().shaderStorageImageReadWithoutFormat)
+	{
+		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("GPU does not support shaderStorageImageReadWithoutFormat feature, which is required for this sample.");
+	}
+	if (gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	{
+		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("GPU does not support shaderStorageImageWriteWithoutFormat feature, which is required for this sample.");
+	}
 }
 
 void ComputeShaderDerivatives::create_compute_pipeline()
@@ -230,8 +247,11 @@ void ComputeShaderDerivatives::create_compute_pipeline()
 
 	vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
-	// Load compute shader
-	VkPipelineShaderStageCreateInfo stage = load_shader("compute_shader_derivatives/slang/derivatives.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+	// Load compute shader based on selected derivative group mode
+	const char *comp_path = use_quads_ ?
+	                        "compute_shader_derivatives/slang/derivatives_quad.comp.spv" :
+	                        "compute_shader_derivatives/slang/derivatives_linear.comp.spv";
+	VkPipelineShaderStageCreateInfo stage = load_shader(comp_path, VK_SHADER_STAGE_COMPUTE_BIT);
 
 	VkComputePipelineCreateInfo compute_ci{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
 	compute_ci.stage  = stage;
@@ -361,15 +381,29 @@ void ComputeShaderDerivatives::create_graphics_pipeline()
 
 bool ComputeShaderDerivatives::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(options))
+    if (!ApiVulkanSample::prepare(options))
+    {
+        return false;
+    }
+
+	// Decide which derivative group to use at runtime based on enabled device features.
+	// Prefer Quads when available; otherwise, fall back to Linear.
+	VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR csd_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR};
+	VkPhysicalDeviceFeatures2                            features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+	features2.pNext = &csd_features;
+	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &features2);
+	use_quads_ = (csd_features.computeDerivativeGroupQuads == VK_TRUE);
+	if (!use_quads_ && csd_features.computeDerivativeGroupLinear != VK_TRUE)
 	{
+		// Neither mode is available: cannot run this sample.
+		LOGE("VK_KHR_compute_shader_derivatives present but neither quads nor linear derivative groups are reported as supported.");
 		return false;
 	}
 
-	// Create resources in order: image, buffer, then pipelines
-	create_storage_image();
-	create_output_buffer_and_descriptors();
-	create_compute_pipeline();
+    // Create resources in order: image, buffer, then pipelines
+    create_storage_image();
+    create_output_buffer_and_descriptors();
+    create_compute_pipeline();
 	create_graphics_pipeline();
 
 	prepared = true;

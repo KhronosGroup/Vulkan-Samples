@@ -15,18 +15,23 @@
  * limitations under the License.
  */
 
-// Compute shader demonstrating derivatives in compute with a practical use case.
-// This shader computes a procedural 2D function and uses derivatives to calculate
-// gradient magnitude - demonstrating edge detection and spatial analysis capabilities.
+// Compute shader demonstrating derivatives in compute (Linear mode).
+// Many implementations only support computeDerivativeGroupLinear.
+// Mapping 1D lanes to 2D coordinates for linear groups follows the DX SM 6.6 spec:
+// https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_Derivatives.html
+// Intuition: lanes are ordered linearly across the group; hardware derives a
+// consistent local 2D mapping to evaluate ddx/ddy even when quads aren't supported.
 // Note: ddx/ddy in compute require VK_KHR_compute_shader_derivatives at runtime.
+// Tooling note: If your toolchain emits SPV_NV_compute_shader_derivatives instead of SPV_KHR,
+// please update to a newer Vulkan SDK, glslang, and SPIR-V Tools that support the KHR variant.
 
 // Output image for gradient magnitude visualization
 [[vk::binding(0, 0)]] RWTexture2D<float4> gOutputImage : register(u0, space0);
 
-// 8x8 local size for efficient compute with proper derivative quad coverage
+// 8x8 local size; derivative groups are defined by implementation in Linear mode
 [shader("compute")]
 [numthreads(8, 8, 1)]
-[DerivativeGroupQuad]  // Enable quad-based derivative computation
+[DerivativeGroupLinear]  // Enable linear-based derivative computation
 void main(uint3 tid : SV_DispatchThreadID)
 {
     // Get image dimensions
@@ -39,37 +44,25 @@ void main(uint3 tid : SV_DispatchThreadID)
     // Normalized coordinates [0, 1]
     float2 uv = float2(tid.xy) / float2(dims - 1);
     
-    // Create an interesting procedural function: radial gradient with modulation
-    // This demonstrates a practical use case for derivatives in compute
+    // Procedural function (same as Quad variant) to produce identical output
     float2 center = float2(0.5, 0.5);
     float2 delta = uv - center;
     float dist = length(delta);
     
-    // Procedural function with spatial variation
     float value = sin(dist * 10.0) * 0.5 + 0.5;
     value *= (1.0 - smoothstep(0.0, 0.7, dist));
     
-    // Compute derivatives of the function - this is the key feature!
-    // These derivatives tell us how quickly the function changes spatially
+    // Derivatives of the function
     float dx = ddx(value);
     float dy = ddy(value);
     
-    // Gradient magnitude - useful for edge detection, LOD selection, and filtering
-    // High gradient = rapid spatial changes (edges)
     float gradientMag = sqrt(dx * dx + dy * dy);
-    
-    // Visualize gradient magnitude as edge detection
-    // Scale up the gradient for better visibility
     float edgeIntensity = saturate(gradientMag * 10.0);
     
-    // Create a color visualization:
-    // - Base pattern in blue channel
-    // - Edges (high gradient) in red/yellow
     float3 color;
-    color.r = edgeIntensity;                    // Red for edges
-    color.g = edgeIntensity * 0.5;              // Some yellow for strong edges
-    color.b = value * (1.0 - edgeIntensity);    // Blue for the base pattern
+    color.r = edgeIntensity;
+    color.g = edgeIntensity * 0.5;
+    color.b = value * (1.0 - edgeIntensity);
     
-    // Write visualization to output image
     gOutputImage[tid.xy] = float4(color, 1.0);
 }
