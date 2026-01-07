@@ -24,6 +24,7 @@
 #include <chrono>
 #include <cstdio>
 #include <fstream>
+#include <format>
 
 PipelineBinary::PipelineBinary()
 {
