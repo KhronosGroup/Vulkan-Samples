@@ -16,252 +16,224 @@
  */
 
 #include "ImGUIUtil.h"
-#include "GLFW/glfw3.h"
 #include "api_vulkan_sample.h"
-#include <algorithm>
+#include "platform/input_events.h"
 #include <cstdarg>
 
-ImGuiKey Glfw_KeyToImGuiKey(int keycode)
+// Map framework keycodes to ImGuiKey (platform-agnostic)
+static ImGuiKey KeyCodeToImGuiKey(vkb::KeyCode code)
 {
-	switch (keycode)
+	using vkb::KeyCode;
+	switch (code)
 	{
-		case GLFW_KEY_TAB:
+		case KeyCode::Tab:
 			return ImGuiKey_Tab;
-		case GLFW_KEY_LEFT:
+		case KeyCode::Left:
 			return ImGuiKey_LeftArrow;
-		case GLFW_KEY_RIGHT:
+		case KeyCode::Right:
 			return ImGuiKey_RightArrow;
-		case GLFW_KEY_UP:
+		case KeyCode::Up:
 			return ImGuiKey_UpArrow;
-		case GLFW_KEY_DOWN:
+		case KeyCode::Down:
 			return ImGuiKey_DownArrow;
-		case GLFW_KEY_PAGE_UP:
+		case KeyCode::PageUp:
 			return ImGuiKey_PageUp;
-		case GLFW_KEY_PAGE_DOWN:
+		case KeyCode::PageDown:
 			return ImGuiKey_PageDown;
-		case GLFW_KEY_HOME:
+		case KeyCode::Home:
 			return ImGuiKey_Home;
-		case GLFW_KEY_END:
+		case KeyCode::End:
 			return ImGuiKey_End;
-		case GLFW_KEY_INSERT:
+		case KeyCode::Insert:
 			return ImGuiKey_Insert;
-		case GLFW_KEY_DELETE:
+		case KeyCode::DelKey:
 			return ImGuiKey_Delete;
-		case GLFW_KEY_BACKSPACE:
+		case KeyCode::Backspace:
 			return ImGuiKey_Backspace;
-		case GLFW_KEY_SPACE:
+		case KeyCode::Space:
 			return ImGuiKey_Space;
-		case GLFW_KEY_ENTER:
+		case KeyCode::Enter:
 			return ImGuiKey_Enter;
-		case GLFW_KEY_ESCAPE:
+		case KeyCode::Escape:
 			return ImGuiKey_Escape;
-		case GLFW_KEY_APOSTROPHE:
+		case KeyCode::Apostrophe:
 			return ImGuiKey_Apostrophe;
-		case GLFW_KEY_COMMA:
+		case KeyCode::Comma:
 			return ImGuiKey_Comma;
-		case GLFW_KEY_MINUS:
+		case KeyCode::Minus:
 			return ImGuiKey_Minus;
-		case GLFW_KEY_PERIOD:
+		case KeyCode::Period:
 			return ImGuiKey_Period;
-		case GLFW_KEY_SLASH:
+		case KeyCode::Slash:
 			return ImGuiKey_Slash;
-		case GLFW_KEY_SEMICOLON:
+		case KeyCode::Semicolon:
 			return ImGuiKey_Semicolon;
-		case GLFW_KEY_EQUAL:
+		case KeyCode::Equal:
 			return ImGuiKey_Equal;
-		case GLFW_KEY_LEFT_BRACKET:
+		case KeyCode::LeftBracket:
 			return ImGuiKey_LeftBracket;
-		case GLFW_KEY_BACKSLASH:
+		case KeyCode::Backslash:
 			return ImGuiKey_Backslash;
-		case GLFW_KEY_RIGHT_BRACKET:
+		case KeyCode::RightBracket:
 			return ImGuiKey_RightBracket;
-		case GLFW_KEY_GRAVE_ACCENT:
+		case KeyCode::GraveAccent:
 			return ImGuiKey_GraveAccent;
-		case GLFW_KEY_CAPS_LOCK:
+		case KeyCode::CapsLock:
 			return ImGuiKey_CapsLock;
-		case GLFW_KEY_SCROLL_LOCK:
+		case KeyCode::ScrollLock:
 			return ImGuiKey_ScrollLock;
-		case GLFW_KEY_NUM_LOCK:
+		case KeyCode::NumLock:
 			return ImGuiKey_NumLock;
-		case GLFW_KEY_PRINT_SCREEN:
+		case KeyCode::PrintScreen:
 			return ImGuiKey_PrintScreen;
-		case GLFW_KEY_PAUSE:
+		case KeyCode::Pause:
 			return ImGuiKey_Pause;
-		case GLFW_KEY_KP_0:
+		case KeyCode::KP_0:
 			return ImGuiKey_Keypad0;
-		case GLFW_KEY_KP_1:
+		case KeyCode::KP_1:
 			return ImGuiKey_Keypad1;
-		case GLFW_KEY_KP_2:
+		case KeyCode::KP_2:
 			return ImGuiKey_Keypad2;
-		case GLFW_KEY_KP_3:
+		case KeyCode::KP_3:
 			return ImGuiKey_Keypad3;
-		case GLFW_KEY_KP_4:
+		case KeyCode::KP_4:
 			return ImGuiKey_Keypad4;
-		case GLFW_KEY_KP_5:
+		case KeyCode::KP_5:
 			return ImGuiKey_Keypad5;
-		case GLFW_KEY_KP_6:
+		case KeyCode::KP_6:
 			return ImGuiKey_Keypad6;
-		case GLFW_KEY_KP_7:
+		case KeyCode::KP_7:
 			return ImGuiKey_Keypad7;
-		case GLFW_KEY_KP_8:
+		case KeyCode::KP_8:
 			return ImGuiKey_Keypad8;
-		case GLFW_KEY_KP_9:
+		case KeyCode::KP_9:
 			return ImGuiKey_Keypad9;
-		case GLFW_KEY_KP_DECIMAL:
+		case KeyCode::KP_Decimal:
 			return ImGuiKey_KeypadDecimal;
-		case GLFW_KEY_KP_DIVIDE:
+		case KeyCode::KP_Divide:
 			return ImGuiKey_KeypadDivide;
-		case GLFW_KEY_KP_MULTIPLY:
+		case KeyCode::KP_Multiply:
 			return ImGuiKey_KeypadMultiply;
-		case GLFW_KEY_KP_SUBTRACT:
+		case KeyCode::KP_Subtract:
 			return ImGuiKey_KeypadSubtract;
-		case GLFW_KEY_KP_ADD:
+		case KeyCode::KP_Add:
 			return ImGuiKey_KeypadAdd;
-		case GLFW_KEY_KP_ENTER:
+		case KeyCode::KP_Enter:
 			return ImGuiKey_KeypadEnter;
-		case GLFW_KEY_KP_EQUAL:
+		case KeyCode::KP_Equal:
 			return ImGuiKey_KeypadEqual;
-		case GLFW_KEY_LEFT_SHIFT:
+		case KeyCode::LeftShift:
 			return ImGuiKey_LeftShift;
-		case GLFW_KEY_LEFT_CONTROL:
+		case KeyCode::LeftControl:
 			return ImGuiKey_LeftCtrl;
-		case GLFW_KEY_LEFT_ALT:
+		case KeyCode::LeftAlt:
 			return ImGuiKey_LeftAlt;
-		case GLFW_KEY_LEFT_SUPER:
-			return ImGuiKey_LeftSuper;
-		case GLFW_KEY_RIGHT_SHIFT:
+		case KeyCode::RightShift:
 			return ImGuiKey_RightShift;
-		case GLFW_KEY_RIGHT_CONTROL:
+		case KeyCode::RightControl:
 			return ImGuiKey_RightCtrl;
-		case GLFW_KEY_RIGHT_ALT:
+		case KeyCode::RightAlt:
 			return ImGuiKey_RightAlt;
-		case GLFW_KEY_RIGHT_SUPER:
-			return ImGuiKey_RightSuper;
-		case GLFW_KEY_MENU:
-			return ImGuiKey_Menu;
-		case GLFW_KEY_0:
-			return ImGuiKey_0;
-		case GLFW_KEY_1:
-			return ImGuiKey_1;
-		case GLFW_KEY_2:
-			return ImGuiKey_2;
-		case GLFW_KEY_3:
-			return ImGuiKey_3;
-		case GLFW_KEY_4:
-			return ImGuiKey_4;
-		case GLFW_KEY_5:
-			return ImGuiKey_5;
-		case GLFW_KEY_6:
-			return ImGuiKey_6;
-		case GLFW_KEY_7:
-			return ImGuiKey_7;
-		case GLFW_KEY_8:
-			return ImGuiKey_8;
-		case GLFW_KEY_9:
-			return ImGuiKey_9;
-		case GLFW_KEY_A:
-			return ImGuiKey_A;
-		case GLFW_KEY_B:
-			return ImGuiKey_B;
-		case GLFW_KEY_C:
-			return ImGuiKey_C;
-		case GLFW_KEY_D:
-			return ImGuiKey_D;
-		case GLFW_KEY_E:
-			return ImGuiKey_E;
-		case GLFW_KEY_F:
-			return ImGuiKey_F;
-		case GLFW_KEY_G:
-			return ImGuiKey_G;
-		case GLFW_KEY_H:
-			return ImGuiKey_H;
-		case GLFW_KEY_I:
-			return ImGuiKey_I;
-		case GLFW_KEY_J:
-			return ImGuiKey_J;
-		case GLFW_KEY_K:
-			return ImGuiKey_K;
-		case GLFW_KEY_L:
-			return ImGuiKey_L;
-		case GLFW_KEY_M:
-			return ImGuiKey_M;
-		case GLFW_KEY_N:
-			return ImGuiKey_N;
-		case GLFW_KEY_O:
-			return ImGuiKey_O;
-		case GLFW_KEY_P:
-			return ImGuiKey_P;
-		case GLFW_KEY_Q:
-			return ImGuiKey_Q;
-		case GLFW_KEY_R:
-			return ImGuiKey_R;
-		case GLFW_KEY_S:
-			return ImGuiKey_S;
-		case GLFW_KEY_T:
-			return ImGuiKey_T;
-		case GLFW_KEY_U:
-			return ImGuiKey_U;
-		case GLFW_KEY_V:
-			return ImGuiKey_V;
-		case GLFW_KEY_W:
-			return ImGuiKey_W;
-		case GLFW_KEY_X:
-			return ImGuiKey_X;
-		case GLFW_KEY_Y:
-			return ImGuiKey_Y;
-		case GLFW_KEY_Z:
-			return ImGuiKey_Z;
-		case GLFW_KEY_F1:
+		case KeyCode::F1:
 			return ImGuiKey_F1;
-		case GLFW_KEY_F2:
+		case KeyCode::F2:
 			return ImGuiKey_F2;
-		case GLFW_KEY_F3:
+		case KeyCode::F3:
 			return ImGuiKey_F3;
-		case GLFW_KEY_F4:
+		case KeyCode::F4:
 			return ImGuiKey_F4;
-		case GLFW_KEY_F5:
+		case KeyCode::F5:
 			return ImGuiKey_F5;
-		case GLFW_KEY_F6:
+		case KeyCode::F6:
 			return ImGuiKey_F6;
-		case GLFW_KEY_F7:
+		case KeyCode::F7:
 			return ImGuiKey_F7;
-		case GLFW_KEY_F8:
+		case KeyCode::F8:
 			return ImGuiKey_F8;
-		case GLFW_KEY_F9:
+		case KeyCode::F9:
 			return ImGuiKey_F9;
-		case GLFW_KEY_F10:
+		case KeyCode::F10:
 			return ImGuiKey_F10;
-		case GLFW_KEY_F11:
+		case KeyCode::F11:
 			return ImGuiKey_F11;
-		case GLFW_KEY_F12:
+		case KeyCode::F12:
 			return ImGuiKey_F12;
-		case GLFW_KEY_F13:
-			return ImGuiKey_F13;
-		case GLFW_KEY_F14:
-			return ImGuiKey_F14;
-		case GLFW_KEY_F15:
-			return ImGuiKey_F15;
-		case GLFW_KEY_F16:
-			return ImGuiKey_F16;
-		case GLFW_KEY_F17:
-			return ImGuiKey_F17;
-		case GLFW_KEY_F18:
-			return ImGuiKey_F18;
-		case GLFW_KEY_F19:
-			return ImGuiKey_F19;
-		case GLFW_KEY_F20:
-			return ImGuiKey_F20;
-		case GLFW_KEY_F21:
-			return ImGuiKey_F21;
-		case GLFW_KEY_F22:
-			return ImGuiKey_F22;
-		case GLFW_KEY_F23:
-			return ImGuiKey_F23;
-		case GLFW_KEY_F24:
-			return ImGuiKey_F24;
+		case KeyCode::_0:
+			return ImGuiKey_0;
+		case KeyCode::_1:
+			return ImGuiKey_1;
+		case KeyCode::_2:
+			return ImGuiKey_2;
+		case KeyCode::_3:
+			return ImGuiKey_3;
+		case KeyCode::_4:
+			return ImGuiKey_4;
+		case KeyCode::_5:
+			return ImGuiKey_5;
+		case KeyCode::_6:
+			return ImGuiKey_6;
+		case KeyCode::_7:
+			return ImGuiKey_7;
+		case KeyCode::_8:
+			return ImGuiKey_8;
+		case KeyCode::_9:
+			return ImGuiKey_9;
+		case KeyCode::A:
+			return ImGuiKey_A;
+		case KeyCode::B:
+			return ImGuiKey_B;
+		case KeyCode::C:
+			return ImGuiKey_C;
+		case KeyCode::D:
+			return ImGuiKey_D;
+		case KeyCode::E:
+			return ImGuiKey_E;
+		case KeyCode::F:
+			return ImGuiKey_F;
+		case KeyCode::G:
+			return ImGuiKey_G;
+		case KeyCode::H:
+			return ImGuiKey_H;
+		case KeyCode::I:
+			return ImGuiKey_I;
+		case KeyCode::J:
+			return ImGuiKey_J;
+		case KeyCode::K:
+			return ImGuiKey_K;
+		case KeyCode::L:
+			return ImGuiKey_L;
+		case KeyCode::M:
+			return ImGuiKey_M;
+		case KeyCode::N:
+			return ImGuiKey_N;
+		case KeyCode::O:
+			return ImGuiKey_O;
+		case KeyCode::P:
+			return ImGuiKey_P;
+		case KeyCode::Q:
+			return ImGuiKey_Q;
+		case KeyCode::R:
+			return ImGuiKey_R;
+		case KeyCode::S:
+			return ImGuiKey_S;
+		case KeyCode::T:
+			return ImGuiKey_T;
+		case KeyCode::U:
+			return ImGuiKey_U;
+		case KeyCode::V:
+			return ImGuiKey_V;
+		case KeyCode::W:
+			return ImGuiKey_W;
+		case KeyCode::X:
+			return ImGuiKey_X;
+		case KeyCode::Y:
+			return ImGuiKey_Y;
+		case KeyCode::Z:
+			return ImGuiKey_Z;
 		default:
-			return ImGuiKey_None;
+			break;
 	}
+	return ImGuiKey_None;
 }
 
 ImGUIUtil::ImGUIUtil(ApiVulkanSample *_base) :
@@ -818,25 +790,20 @@ void ImGUIUtil::TextColorAlign(int align, const ImVec4 &col, const char *text, .
 	va_end(vaList);
 }
 
-void ImGUIUtil::handleKey(int key, int, int action, int)
+void ImGUIUtil::handle_key_event(vkb::KeyCode code, vkb::KeyAction action)
 {
-#if !(defined TARGET_OS_IPHONE) && !(defined __ANDROID__)
-	ImGuiIO &io = ImGui::GetIO();
-	if (action == GLFW_PRESS)
+	ImGuiIO       &io        = ImGui::GetIO();
+	const ImGuiKey imgui_key = KeyCodeToImGuiKey(code);
+	if (imgui_key != ImGuiKey_None)
 	{
-		io.AddKeyEvent(Glfw_KeyToImGuiKey(key), true);
-	}
-	if (action == GLFW_RELEASE)
-	{
-		io.AddKeyEvent(Glfw_KeyToImGuiKey(key), false);
+		io.AddKeyEvent(imgui_key, action == vkb::KeyAction::Down || action == vkb::KeyAction::Repeat);
 	}
 
-	// Modifiers are not reliable across systems
-	io.KeyCtrl  = ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_LEFT_CONTROL)) || ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_RIGHT_CONTROL));
-	io.KeyShift = ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_LEFT_SHIFT)) || ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_RIGHT_SHIFT));
-	io.KeyAlt   = ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_LEFT_ALT)) || ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_RIGHT_ALT));
-	io.KeySuper = ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_LEFT_SUPER)) || ImGui::IsKeyPressed(Glfw_KeyToImGuiKey(GLFW_KEY_RIGHT_SUPER));
-#endif
+	// Update modifier states using ImGui keys
+	io.KeyCtrl  = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
+	io.KeyShift = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
+	io.KeyAlt   = ImGui::IsKeyDown(ImGuiKey_LeftAlt) || ImGui::IsKeyDown(ImGuiKey_RightAlt);
+	io.KeySuper = ImGui::IsKeyDown(ImGuiKey_LeftSuper) || ImGui::IsKeyDown(ImGuiKey_RightSuper);
 }
 
 bool ImGUIUtil::GetWantKeyCapture()

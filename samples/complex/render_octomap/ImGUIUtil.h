@@ -20,6 +20,7 @@
 
 #include "api_vulkan_sample.h"
 #include "core/buffer.h"
+#include "platform/input_events.h"
 
 #include "Screens/MapView.h"
 #include <imgui.h>
@@ -93,7 +94,8 @@ class ImGUIUtil
 	// Draw current imGui frame into a command buffer
 	void drawFrame(VkCommandBuffer commandBuffer);
 
-	static void handleKey(int key, int scancode, int action, int mode);
+	// Framework input path (platform-agnostic, incl. Direct-to-Display)
+	static void handle_key_event(vkb::KeyCode code, vkb::KeyAction action);
 
 	static bool GetWantKeyCapture();
 
