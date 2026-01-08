@@ -193,17 +193,17 @@ void PipelineBinary::log_pipeline_binary_support()
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &features2);
 	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &props2);
 
- std::string message = fmt::format("VK_KHR_pipeline_binary support: pipelineBinaries = {}", !!features.pipelineBinaries);
+	std::string message = fmt::format("VK_KHR_pipeline_binary support: pipelineBinaries = {}", !!features.pipelineBinaries);
 	LOGI(message);
 	log_text_ += message + "\n";
 
- message = fmt::format(
-     "VK_KHR_pipeline_binary properties: internalCache={}, internalCacheControl={}, prefersInternalCache={}, precompiledInternalCache={}, compressedData={}",
-     !!props.pipelineBinaryInternalCache,
-     !!props.pipelineBinaryInternalCacheControl,
-     !!props.pipelineBinaryPrefersInternalCache,
-     !!props.pipelineBinaryPrecompiledInternalCache,
-     !!props.pipelineBinaryCompressedData);
+	message = fmt::format(
+	    "VK_KHR_pipeline_binary properties: internalCache={}, internalCacheControl={}, prefersInternalCache={}, precompiledInternalCache={}, compressedData={}",
+	    !!props.pipelineBinaryInternalCache,
+	    !!props.pipelineBinaryInternalCacheControl,
+	    !!props.pipelineBinaryPrefersInternalCache,
+	    !!props.pipelineBinaryPrecompiledInternalCache,
+	    !!props.pipelineBinaryCompressedData);
 	LOGI(message);
 	log_text_ += message + "\n";
 }
@@ -222,14 +222,14 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	VkResult               res = vkGetPipelineKeyKHR(get_device().get_handle(), &pipeline_create_info_khr, &key);
 	if (res != VK_SUCCESS)
 	{
-  std::string message = fmt::format("vkGetPipelineKeyKHR failed ({}); skipping binary capture", vk::to_string(static_cast<vk::Result>(res)));
+		std::string message = fmt::format("vkGetPipelineKeyKHR failed ({}); skipping binary capture", vk::to_string(static_cast<vk::Result>(res)));
 		LOGW(message);
 		log_text_ += message + "\n";
 		return;
 	}
 
 	{
-  std::string message = fmt::format("Got pipeline key ({} bytes)", key.keySize);
+		std::string message = fmt::format("Got pipeline key ({} bytes)", key.keySize);
 		LOGI(message);
 		log_text_ += message + "\n";
 	}
@@ -248,8 +248,8 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	res = vkCreatePipelineBinariesKHR(get_device().get_handle(), &create_info, nullptr, &handles);
 	if (res != VK_SUCCESS || pipeline_binary == VK_NULL_HANDLE)
 	{
-  std::string message = fmt::format("vkCreatePipelineBinariesKHR failed ({}); driver may not support capturing binaries in this context",
-                                    vk::to_string(static_cast<vk::Result>(res)));
+		std::string message = fmt::format("vkCreatePipelineBinariesKHR failed ({}); driver may not support capturing binaries in this context",
+		                                  vk::to_string(static_cast<vk::Result>(res)));
 		LOGW(message);
 		log_text_ += message + "\n";
 		return;
@@ -264,7 +264,7 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	res = vkGetPipelineBinaryDataKHR(get_device().get_handle(), &binary_info, &size_query_key, &binary_size, nullptr);
 	if (res != VK_SUCCESS || binary_size == 0)
 	{
-  std::string message = fmt::format("vkGetPipelineBinaryDataKHR size query failed ({}); skipping data fetch", vk::to_string(static_cast<vk::Result>(res)));
+		std::string message = fmt::format("vkGetPipelineBinaryDataKHR size query failed ({}); skipping data fetch", vk::to_string(static_cast<vk::Result>(res)));
 		LOGW(message);
 		log_text_ += message + "\n";
 		return;
@@ -284,7 +284,7 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 		// Print a short signature so we can see it changes between runs/devices
 		if (binary_size >= 4)
 		{
-   std::string message = fmt::format("Binary signature: {} {} {} {} ...", binary_data_[0], binary_data_[1], binary_data_[2], binary_data_[3]);
+			std::string message = fmt::format("Binary signature: {} {} {} {} ...", binary_data_[0], binary_data_[1], binary_data_[2], binary_data_[3]);
 			LOGD(message);
 			log_text_ += message + "\n";
 		}
