@@ -24,23 +24,17 @@ add_sample_with_tags(
     AUTHOR "Holochip Inc."
     NAME "Ray tracing invocation reorder"
     DESCRIPTION "Demonstrates Shader Execution Reordering (SER) using VK_EXT_ray_tracing_invocation_reorder to reduce divergence"
-    # Note: We do not compile GLSL here because glslc may lack GL_EXT_shader_invocation_reorder.
-    # load_shader() will look under shaders/<sample>/glsl, so we copy Slang SPV there (see custom target below).
-    # Keep Slang shaders available for alternative toolchains
+        SHADER_FILES_GLSL
+        # Note: We do not compile GLSL here because glslc may lack GL_EXT_shader_invocation_reorder (current public SDK doesn't support it).
+#        "ray_tracing_invocation_reorder/glsl/raygen.rgen"
+#        "ray_tracing_invocation_reorder/glsl//miss.rmiss"
+#        "ray_tracing_invocation_reorder/glsl//closesthit_flame.rchit"
+#        "ray_tracing_invocation_reorder/glsl//closesthit_normal.rchit"
+#        "ray_tracing_invocation_reorder/glsl//closesthit_refraction.rchit"
     SHADER_FILES_SLANG
         "ray_tracing_invocation_reorder/slang/raygen.rgen.slang"
         "ray_tracing_invocation_reorder/slang/miss.rmiss.slang"
+        "ray_tracing_invocation_reorder/slang/closesthit_normal.rchit.slang"
+        "ray_tracing_invocation_reorder/slang/closesthit_refraction.rchit.slang"
+        "ray_tracing_invocation_reorder/slang/closesthit_flame.rchit.slang"
     )
-
-# Copy Slang-compiled SPIR-V to the GLSL directory so load_shader() can find them
-# This mirrors the pathing used by ray_tracing_extended (GLSL folder) while keeping Slang as the compiler.
-add_custom_target(${FOLDER_NAME}-copy-slang-to-glsl ALL
-    DEPENDS ${FOLDER_NAME}-SLANG
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/shaders/${FOLDER_NAME}/glsl
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${PROJECT_SOURCE_DIR}/shaders/${FOLDER_NAME}/slang/raygen.rgen.spv
-            ${PROJECT_SOURCE_DIR}/shaders/${FOLDER_NAME}/glsl/raygen.rgen.spv
-)
-
-# Also copy the GLSL SPIR-V from ray_tracing_extended to ensure shader parity
-# Do not reuse `ray_tracing_extended` SPIR-V. Keep local shader copies for this sample only.
