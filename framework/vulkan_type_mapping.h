@@ -1,5 +1,5 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2026, Arm Limited and Contributors
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -283,6 +283,12 @@ template <>
 struct HPPType<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR>
 {
 	using Type = vk::PhysicalDeviceTimelineSemaphoreFeaturesKHR;
+};
+
+template <>
+struct HPPType<VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR>
+{
+	using Type = vk::PhysicalDeviceComputeShaderDerivativesFeaturesKHR;
 };
 
 template <>
