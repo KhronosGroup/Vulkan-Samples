@@ -31,11 +31,11 @@ endif::[]
 
 This sample demonstrates *Shader Execution Reordering (SER)*, a powerful optimization technique for ray tracing that reduces performance issues caused by divergence. SER allows you to reorganize shader invocations across the GPU to group similar work together, significantly improving coherency and performance.
 
-The sample shows how to use the `VK_EXT_ray_tracing_invocation_reorder` extension with hit objects and the `reorderThreadEXT()` function to achieve performance improvements of 20-50% or more in ray tracing workloads.
+The sample shows how to use the `VK_EXT_ray_tracing_invocation_reorder` extension with hit objects and the `reorderThreadEXT()` / `ReorderThread()` functions to achieve performance improvements of 20–50% or more in ray tracing workloads.
 
-NOTE: This sample requires a recent Vulkan SDK (1.4.304.0 or later) with support for `GL_EXT_shader_invocation_reorder` in the shader compiler. The extension was finalized in late 2024 and may not be available in older SDK versions.
+IMPORTANT: glslc in current Vulkan SDKs does not yet support `GL_EXT_shader_invocation_reorder`. For this reason, this sample is authored and built with **Slang** by default. The GLSL source files are provided for reference only and are not compiled by the build system.
 
-TIP: This sample includes both GLSL and **Slang** shader implementations. If you experience SDK compatibility issues with GLSL shaders, the Slang shaders provide a fully functional alternative and are recommended for the best compatibility and ease of use.
+TIP: Prefer the provided **Slang** shaders for this sample. They compile to SPIR-V using the Slang compiler and expose SER via `HitObject` and `ReorderThread()` intrinsics. (GLSL usage is shown for completeness, but may not compile with glslc until support lands.)
 
 == The Divergence Problem
 
@@ -131,6 +131,18 @@ if (hitObjectIsHitEXT(hitObj))
 reorderThreadEXT(hitObj, hint, 8);  // Use 8 bits for the hint
 ----
 
+In Slang, the equivalent looks like this:
+
+[source,slang]
+----
+uint hint = 0;
+if (hitObj.IsHit())
+{
+    hint = hitObj.GetInstanceIndex();
+}
+ReorderThread(hitObj, hint, 8);
+----
+
 The GPU sorts invocations by:
 
 1. *Shader ID* (highest priority - which shader will execute)
@@ -204,7 +216,10 @@ bool canReorder = (serProperties.rayTracingInvocationReorderReorderingHint ==
 
 This sample demonstrates SER with an interactive comparison:
 
-* *Three material types* (metal, diffuse, glass) that create control flow divergence
+* *Three material types* that create control flow divergence:
+** Diffuse ("normal") textured surfaces
+** Refraction (glass, or smoke) surfaces
+** Flame/emissive particles
 * *Toggle SER on/off* to see the performance difference
 * *Coherence hints* based on instance ID (can be toggled)
 * *Real-time UI* showing whether the device supports reordering
@@ -215,7 +230,7 @@ The scene is intentionally designed to maximize divergence when SER is disabled,
 
 * Enable/disable SER dynamically via UI
 * Toggle coherence hints to see their impact
-* Compare traditional `traceRayEXT()` vs. hit objects + `reorderThreadEXT()`
+* Compare traditional `traceRayEXT()`/`TraceRay()` vs. hit objects + `reorderThreadEXT()`/`ReorderThread()`
 * Device capability detection and display
 
 == Enabling the Extension
@@ -232,12 +247,26 @@ REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingInvocationReorderFeature
                          rayTracingInvocationReorder);
 ----
 
-In GLSL shaders:
+In Slang shaders:
+
+[source,slang]
+----
+// Use HitObject + ReorderThread to enable SER
+HitObject hitObj = HitObject::TraceRay(topLevelAS, RAY_FLAG_NONE, 0xff, 0, 0, 0, ray, payload);
+// Optionally provide a coherence hint (e.g., instance index)
+uint hint = hitObj.IsHit() ? hitObj.GetInstanceIndex() : 0;
+ReorderThread(hitObj, hint, 8);
+HitObject::Invoke(topLevelAS, hitObj, payload);
+----
+
+If you use GLSL, enable the extension explicitly in your shader:
 
 [source,glsl]
 ----
 #extension GL_EXT_shader_invocation_reorder : enable
 ----
+
+NOTE: glslc in current public SDKs may not compile GLSL shaders using this extension yet; prefer Slang for now.
 
 == Performance Expectations
 
