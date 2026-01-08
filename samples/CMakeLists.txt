@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -75,6 +75,7 @@ set(ORDER_LIST
     "ray_tracing_basic"
     "ray_tracing_extended"
     "ray_tracing_reflection"
+    "ray_tracing_invocation_reorder"
     "timeline_semaphore"
     "shader_object"
     "shader_debugprintf"
