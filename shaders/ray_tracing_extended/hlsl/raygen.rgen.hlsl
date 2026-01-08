@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Sascha Willems
+/* Copyright (c) 2024-2025, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,7 @@
 #define RENDER_AO 6
 
 RaytracingAccelerationStructure rs : register(t0);
+[[vk::image_format("unknown")]]
 RWTexture2D<float4> image : register(u1);
 
 struct CameraProperties

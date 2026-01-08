@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024 Holochip Corporation
+/* Copyright (c) 2021-2025 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@
 #define RENDER_AO 6
 
 layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
-layout(binding = 1, set = 0, rgba8) uniform image2D image;
+layout(binding = 1, set = 0) uniform writeonly image2D image;
 layout(binding = 2, set = 0) uniform CameraProperties 
 {
 	mat4 viewInverse;
