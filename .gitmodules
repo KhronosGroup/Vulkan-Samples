@@ -50,3 +50,6 @@
 [submodule "third_party/tracy"]
 	path = third_party/tracy
 	url = https://github.com/wolfpld/tracy.git
+[submodule "samples/complex/render_octomap/octomap"]
+	path = samples/complex/render_octomap/octomap
+	url = https://github.com/OctoMap/octomap.git

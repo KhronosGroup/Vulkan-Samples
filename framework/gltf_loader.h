@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,6 +34,7 @@
 #include "vulkan/vulkan.h"
 
 #define KHR_LIGHTS_PUNCTUAL_EXTENSION "KHR_lights_punctual"
+#define KHR_GAUSSIAN_SPLATTING_EXTENSION "KHR_gaussian_splatting"
 
 namespace vkb
 {

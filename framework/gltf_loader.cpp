@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -400,7 +400,8 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 }        // namespace
 
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
-    {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
+    {KHR_LIGHTS_PUNCTUAL_EXTENSION, false},
+    {KHR_GAUSSIAN_SPLATTING_EXTENSION, false}};
 
 GLTFLoader::GLTFLoader(vkb::core::DeviceC &device) :
     device{device}
