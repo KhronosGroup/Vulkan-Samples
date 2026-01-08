@@ -36,12 +36,12 @@ VK_EXT_layer_settings supersedes the older `VK_EXT_validation_features` and `VK_
 
 - Enables the instance extension `VK_EXT_layer_settings` (optionally).
 - Adds settings for the Khronos validation layer before the Vulkan instance is created:
-  - Enables Best Practices checks.
-  - Enables `debugPrintfEXT` support (so shader `debugPrintf` messages are emitted via validation).
+** Enables Best Practices checks.
+** Enables `debugPrintfEXT` support (so shader `debugPrintf` messages are emitted via validation).
 - Provides an interactive UI with toggleable validation scenarios that demonstrate common mistakes:
-  - *Wrong Buffer Flags*: Creates a buffer with `TRANSFER_DST` usage but binds it as a vertex buffer (missing `VERTEX_BUFFER_BIT`).
-  - *Suboptimal Transitions*: Performs image layout transitions to `GENERAL` instead of more optimal layouts like `COLOR_ATTACHMENT_OPTIMAL`.
-  - *Many Small Allocations*: Creates numerous small memory allocations (512 bytes each) instead of suballocating from larger blocks.
+** *Wrong Buffer Flags*: Creates a buffer with `TRANSFER_DST` usage but binds it as a vertex buffer (missing `VERTEX_BUFFER_BIT`).
+** *Suboptimal Transitions*: Performs image layout transitions to `GENERAL` instead of more optimal layouts like `COLOR_ATTACHMENT_OPTIMAL`.
+** *Many Small Allocations*: Creates numerous small memory allocations (512 bytes each) instead of suballocating from larger blocks.
 - Displays validation messages in real-time within the application UI, showing warning counts per scenario and total statistics.
 - Works on all platforms without requiring terminal access to see validation output.
 
@@ -86,6 +86,7 @@ If you are integrating layer settings directly into your own Vulkan app, the flo
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <cstring>
+#include <ranges>
 
 static const char *kValidationLayer = "VK_LAYER_KHRONOS_validation";
 
@@ -96,12 +97,21 @@ bool layer_settings_supported()
     vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, nullptr);
     std::vector<VkExtensionProperties> exts(count);
     vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, exts.data());
-    for (auto &e : exts)
-    {
-        if (strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0)
-            return true;
-    }
-    return false;
+    return std::ranges::find_if(exts, [](auto const &e) {
+               return std::strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;
+           }) != exts.end();
+}
+
+// Helper to check if VK_EXT_validation_features is advertised by the validation layer
+bool validation_features_supported()
+{
+    uint32_t count = 0;
+    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, nullptr);
+    std::vector<VkExtensionProperties> exts(count);
+    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, exts.data());
+    return std::ranges::find_if(exts, [](auto const &e) {
+               return std::strcmp(e.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0;
+           }) != exts.end();
 }
 
 VkInstance create_instance_with_layer_settings()
@@ -137,7 +147,8 @@ VkInstance create_instance_with_layer_settings()
     ici.ppEnabledExtensionNames = instance_exts.data();
     ici.enabledExtensionCount   = static_cast<uint32_t>(instance_exts.size());
 
-    const bool has_layer_settings = layer_settings_supported();
+    const bool has_layer_settings      = layer_settings_supported();
+    const bool has_validation_features = validation_features_supported();
     if (has_layer_settings)
     {
         // You also need to add VK_EXT_layer_settings to the enabled instance extensions
@@ -146,7 +157,7 @@ VkInstance create_instance_with_layer_settings()
         ici.enabledExtensionCount   = static_cast<uint32_t>(instance_exts.size());
         ici.pNext                   = &layer_settings_ci;
     }
-    else
+    else if (has_validation_features)
     {
         // Fallback for older SDKs: use VK_EXT_validation_features
         static const VkValidationFeatureEnableEXT vfe[] = {
