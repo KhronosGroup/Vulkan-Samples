@@ -41,13 +41,13 @@ class LayerSettingsSample : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
- // Validation scenario identifiers
- enum class Scenario
- {
-     WrongBufferFlags,
-     SuboptimalTransitions,
-     SmallAllocations
- };
+	// Validation scenario identifiers
+	enum class Scenario
+	{
+		WrongBufferFlags,
+		SuboptimalTransitions,
+		SmallAllocations
+	};
 
 	// Per-scenario state and statistics
 	struct ScenarioState
@@ -81,12 +81,15 @@ class LayerSettingsSample : public ApiVulkanSample
 	// Aggregated validation output for GUI
 	std::string log_text_;
 
- // Per-scenario state tracking
- struct ScenarioHash
- {
-     size_t operator()(Scenario s) const noexcept { return static_cast<size_t>(s); }
- };
- std::unordered_map<Scenario, ScenarioState, ScenarioHash> scenario_states_;
+	// Per-scenario state tracking
+	struct ScenarioHash
+	{
+		size_t operator()(Scenario s) const noexcept
+		{
+			return static_cast<size_t>(s);
+		}
+	};
+	std::unordered_map<Scenario, ScenarioState, ScenarioHash> scenario_states_;
 
 	// Resources for visual rendering
 	struct

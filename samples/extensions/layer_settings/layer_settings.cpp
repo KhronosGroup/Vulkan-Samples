@@ -25,14 +25,14 @@
 
 LayerSettingsSample::~LayerSettingsSample()
 {
-    cleanup_scenarios();
+	cleanup_scenarios();
 
-    if (debug_messenger_ != VK_NULL_HANDLE && has_instance())
-    {
-        VkInstance instance = get_instance().get_handle();
-        vkDestroyDebugUtilsMessengerEXT(instance, debug_messenger_, nullptr);
-        debug_messenger_ = VK_NULL_HANDLE;
-    }
+	if (debug_messenger_ != VK_NULL_HANDLE && has_instance())
+	{
+		VkInstance instance = get_instance().get_handle();
+		vkDestroyDebugUtilsMessengerEXT(instance, debug_messenger_, nullptr);
+		debug_messenger_ = VK_NULL_HANDLE;
+	}
 }
 
 void LayerSettingsSample::cleanup_wrong_buffer_flags_scenario()
@@ -354,47 +354,47 @@ void LayerSettingsSample::setup_small_allocations_scenario()
 
 std::unique_ptr<vkb::core::InstanceC> LayerSettingsSample::create_instance()
 {
-    // Create the instance via base implementation first.
-    auto inst = ApiVulkanSample::create_instance();
+	// Create the instance via base implementation first.
+	auto inst = ApiVulkanSample::create_instance();
 
-    // Create our debug messenger as early as possible so we catch messages emitted
-    // during device creation and initial resource setup.
-    if (inst && inst->is_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-    {
-        VkDebugUtilsMessengerCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-        info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        info.pfnUserCallback = &LayerSettingsSample::debug_callback;
-        info.pUserData       = this;
+	// Create our debug messenger as early as possible so we catch messages emitted
+	// during device creation and initial resource setup.
+	if (inst && inst->is_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	{
+		VkDebugUtilsMessengerCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+		                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+		                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+		                   VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+		info.pfnUserCallback = &LayerSettingsSample::debug_callback;
+		info.pUserData       = this;
 
-        if (debug_messenger_ == VK_NULL_HANDLE)
-        {
-            VkResult res = vkCreateDebugUtilsMessengerEXT(inst->get_handle(), &info, nullptr, &debug_messenger_);
-            if (res != VK_SUCCESS)
-            {
-                LOGW("Failed to create local debug messenger (res=%d)", int(res));
-            }
-        }
-    }
+		if (debug_messenger_ == VK_NULL_HANDLE)
+		{
+			VkResult res = vkCreateDebugUtilsMessengerEXT(inst->get_handle(), &info, nullptr, &debug_messenger_);
+			if (res != VK_SUCCESS)
+			{
+				LOGW("Failed to create local debug messenger (res=%d)", int(res));
+			}
+		}
+	}
 
-    // Note: If VK_EXT_debug_utils is not enabled (e.g., disabled via CLI or platform
-    // constraints) or creation fails, the messenger will remain null and the sample
-    // will continue to run without collecting messages into the UI.
-    return inst;
+	// Note: If VK_EXT_debug_utils is not enabled (e.g., disabled via CLI or platform
+	// constraints) or creation fails, the messenger will remain null and the sample
+	// will continue to run without collecting messages into the UI.
+	return inst;
 }
 
 LayerSettingsSample::LayerSettingsSample()
 {
-    title = "Layer settings (VK_EXT_layer_settings)";
+	title = "Layer settings (VK_EXT_layer_settings)";
 
-    // Request VK_EXT_layer_settings as an optional instance extension so the
-    // framework enables it when available and consumes the layer settings below.
-    add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
+	// Request VK_EXT_layer_settings as an optional instance extension so the
+	// framework enables it when available and consumes the layer settings below.
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
 	// Configure the Khronos validation layer using layer settings. These settings are
 	// consumed by the validation layer at instance creation time.
@@ -417,11 +417,11 @@ LayerSettingsSample::LayerSettingsSample()
 		add_layer_setting(layer_setting);
 	}
 
- // 2) Optionally enable debug printf so shaders using debugPrintfEXT will print via VVL
- {
-     static const char *enables[] = {
-         "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT",
-     };
+	// 2) Optionally enable debug printf so shaders using debugPrintfEXT will print via VVL
+	{
+		static const char *enables[] = {
+		    "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT",
+		};
 
 		VkLayerSettingEXT layer_setting{};
 		layer_setting.pLayerName   = "VK_LAYER_KHRONOS_validation";
@@ -449,26 +449,26 @@ LayerSettingsSample::LayerSettingsSample()
 		layer_setting.pValues      = disables;
 		// Do not add this by default as it disables all validation. Leave as commented example.
 		// add_layer_setting(layer_setting);
-    }
+	}
 
-    // Initialize scenario state map so UI totals and logic have all keys even before toggling
-    scenario_states_.emplace(Scenario::WrongBufferFlags, ScenarioState{});
-    scenario_states_.emplace(Scenario::SuboptimalTransitions, ScenarioState{});
-    scenario_states_.emplace(Scenario::SmallAllocations, ScenarioState{});
+	// Initialize scenario state map so UI totals and logic have all keys even before toggling
+	scenario_states_.emplace(Scenario::WrongBufferFlags, ScenarioState{});
+	scenario_states_.emplace(Scenario::SuboptimalTransitions, ScenarioState{});
+	scenario_states_.emplace(Scenario::SmallAllocations, ScenarioState{});
 }
 
 bool LayerSettingsSample::prepare(const vkb::ApplicationOptions &options)
 {
-    if (!ApiVulkanSample::prepare(options))
-    {
-        return false;
-    }
+	if (!ApiVulkanSample::prepare(options))
+	{
+		return false;
+	}
 
-    // Build once; we record per-frame minimal CBs in render().
-    build_command_buffers();
+	// Build once; we record per-frame minimal CBs in render().
+	build_command_buffers();
 
-    prepared = true;
-    return true;
+	prepared = true;
+	return true;
 }
 
 void LayerSettingsSample::record_minimal_present_cmd(VkCommandBuffer cmd, uint32_t image_index)
@@ -544,103 +544,106 @@ VKAPI_ATTR VkBool32 VKAPI_CALL LayerSettingsSample::debug_callback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
     void                                       *pUserData)
 {
-    auto *self = reinterpret_cast<LayerSettingsSample *>(pUserData);
-    if (!self)
-    {
-        return VK_FALSE;
-    }
+	auto *self = reinterpret_cast<LayerSettingsSample *>(pUserData);
+	if (!self)
+	{
+		return VK_FALSE;
+	}
 
-    // Accept VALIDATION and PERFORMANCE messages (both are relevant for this demo)
-    if (!(messageTypes & (VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)))
-    {
-        return VK_FALSE;
-    }
+	// Accept VALIDATION and PERFORMANCE messages (both are relevant for this demo)
+	if (!(messageTypes & (VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)))
+	{
+		return VK_FALSE;
+	}
 
-    const char *sev = (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)   ? "ERROR" :
-                      (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) ? "WARNING" :
-                      (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)    ? "INFO" :
-                                                                                            "VERBOSE";
+	const char *sev = (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)   ? "ERROR" :
+	                  (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) ? "WARNING" :
+	                  (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)    ? "INFO" :
+	                                                                                        "VERBOSE";
 
-    std::string type_str;
-    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)      type_str += (type_str.empty() ? "GEN"  : "|GEN");
-    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)   type_str += (type_str.empty() ? "VAL"  : "|VAL");
-    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)  type_str += (type_str.empty() ? "PERF" : "|PERF");
+	std::string type_str;
+	if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+		type_str += (type_str.empty() ? "GEN" : "|GEN");
+	if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+		type_str += (type_str.empty() ? "VAL" : "|VAL");
+	if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+		type_str += (type_str.empty() ? "PERF" : "|PERF");
 
-    const char *msg_id = pCallbackData && pCallbackData->pMessageIdName ? pCallbackData->pMessageIdName : "";
-    const char *msg    = pCallbackData && pCallbackData->pMessage ? pCallbackData->pMessage : "";
+	const char *msg_id = pCallbackData && pCallbackData->pMessageIdName ? pCallbackData->pMessageIdName : "";
+	const char *msg    = pCallbackData && pCallbackData->pMessage ? pCallbackData->pMessage : "";
 
-    std::string line = std::format("[{}][{}] {}\n",
-                                   sev,
-                                   type_str.empty() ? std::string("-") : type_str,
-                                   pCallbackData && pCallbackData->pMessage ? pCallbackData->pMessage : "<no message>");
+	std::string line = std::format("[{}][{}] {}\n",
+	                               sev,
+	                               type_str.empty() ? std::string("-") : type_str,
+	                               pCallbackData && pCallbackData->pMessage ? pCallbackData->pMessage : "<no message>");
 
-    bool message_cached = false;
-    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-    {
-        if (strstr(msg_id, "vkCmdBindVertexBuffers") || strstr(msg, "VERTEX_BUFFER_BIT"))
-        {
-            auto &state = self->scenario_states_[Scenario::WrongBufferFlags];
-            state.error_count++;
-            if (state.enabled)
-            {
-                state.recent_messages.append(line);
-                message_cached = true;
-            }
-        }
-    }
-    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-    {
-        if (strstr(msg_id, "small-dedicated-allocation") || strstr(msg, "small-dedicated-allocation"))
-        {
-            if (strstr(msg_id, "vkBindBufferMemory") || strstr(msg, "vkBindBufferMemory"))
-            {
-                if (self->scenario_states_[Scenario::SmallAllocations].enabled)
-                {
-                    auto &state = self->scenario_states_[Scenario::SmallAllocations];
-                    state.warning_count++;
-                    state.recent_messages.append(line);
-                    message_cached = true;
-                }
-                if (self->scenario_states_[Scenario::WrongBufferFlags].enabled)
-                {
-                    auto &state = self->scenario_states_[Scenario::WrongBufferFlags];
-                    state.warning_count++;
-                    if (!message_cached)
-                    {
-                        state.recent_messages.append(line);
-                        message_cached = true;
-                    }
-                }
-            }
-            else if (strstr(msg_id, "vkBindImageMemory") || strstr(msg, "vkBindImageMemory"))
-            {
-                if (self->scenario_states_[Scenario::SuboptimalTransitions].enabled)
-                {
-                    auto &state = self->scenario_states_[Scenario::SuboptimalTransitions];
-                    state.warning_count++;
-                    state.recent_messages.append(line);
-                    message_cached = true;
-                }
-            }
-        }
-        else if (strstr(msg, "GENERAL") || strstr(msg, "layout"))
-        {
-            if (self->scenario_states_[Scenario::SuboptimalTransitions].enabled)
-            {
-                auto &state = self->scenario_states_[Scenario::SuboptimalTransitions];
-                state.warning_count++;
-                state.recent_messages.append(line);
-                message_cached = true;
-            }
-        }
-    }
+	bool message_cached = false;
+	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		if (strstr(msg_id, "vkCmdBindVertexBuffers") || strstr(msg, "VERTEX_BUFFER_BIT"))
+		{
+			auto &state = self->scenario_states_[Scenario::WrongBufferFlags];
+			state.error_count++;
+			if (state.enabled)
+			{
+				state.recent_messages.append(line);
+				message_cached = true;
+			}
+		}
+	}
+	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		if (strstr(msg_id, "small-dedicated-allocation") || strstr(msg, "small-dedicated-allocation"))
+		{
+			if (strstr(msg_id, "vkBindBufferMemory") || strstr(msg, "vkBindBufferMemory"))
+			{
+				if (self->scenario_states_[Scenario::SmallAllocations].enabled)
+				{
+					auto &state = self->scenario_states_[Scenario::SmallAllocations];
+					state.warning_count++;
+					state.recent_messages.append(line);
+					message_cached = true;
+				}
+				if (self->scenario_states_[Scenario::WrongBufferFlags].enabled)
+				{
+					auto &state = self->scenario_states_[Scenario::WrongBufferFlags];
+					state.warning_count++;
+					if (!message_cached)
+					{
+						state.recent_messages.append(line);
+						message_cached = true;
+					}
+				}
+			}
+			else if (strstr(msg_id, "vkBindImageMemory") || strstr(msg, "vkBindImageMemory"))
+			{
+				if (self->scenario_states_[Scenario::SuboptimalTransitions].enabled)
+				{
+					auto &state = self->scenario_states_[Scenario::SuboptimalTransitions];
+					state.warning_count++;
+					state.recent_messages.append(line);
+					message_cached = true;
+				}
+			}
+		}
+		else if (strstr(msg, "GENERAL") || strstr(msg, "layout"))
+		{
+			if (self->scenario_states_[Scenario::SuboptimalTransitions].enabled)
+			{
+				auto &state = self->scenario_states_[Scenario::SuboptimalTransitions];
+				state.warning_count++;
+				state.recent_messages.append(line);
+				message_cached = true;
+			}
+		}
+	}
 
-    self->log_text_.append(line);
-    if (self->log_text_.size() > 8 * 1024)
-    {
-        self->log_text_.erase(0, self->log_text_.size() - 8 * 1024);
-    }
-    return VK_FALSE;
+	self->log_text_.append(line);
+	if (self->log_text_.size() > 8 * 1024)
+	{
+		self->log_text_.erase(0, self->log_text_.size() - 8 * 1024);
+	}
+	return VK_FALSE;
 }
 
 void LayerSettingsSample::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -661,9 +664,9 @@ void LayerSettingsSample::on_update_ui_overlay(vkb::Drawer &drawer)
 		drawer.text("");
 
 		// Scenario toggles
-  if (drawer.checkbox("Wrong Buffer Flags", &scenario_states_[Scenario::WrongBufferFlags].enabled))
-  {
-      auto &state = scenario_states_[Scenario::WrongBufferFlags];
+		if (drawer.checkbox("Wrong Buffer Flags", &scenario_states_[Scenario::WrongBufferFlags].enabled))
+		{
+			auto &state = scenario_states_[Scenario::WrongBufferFlags];
 			if (state.enabled)
 			{
 				// Only setup if not already set up (first enable or after cleanup)
@@ -685,13 +688,13 @@ void LayerSettingsSample::on_update_ui_overlay(vkb::Drawer &drawer)
 			}
 		}
 		ImGui::SameLine();
-  drawer.text("  Warnings: %u | Errors: %u",
-              scenario_states_[Scenario::WrongBufferFlags].warning_count,
-              scenario_states_[Scenario::WrongBufferFlags].error_count);
+		drawer.text("  Warnings: %u | Errors: %u",
+		            scenario_states_[Scenario::WrongBufferFlags].warning_count,
+		            scenario_states_[Scenario::WrongBufferFlags].error_count);
 
-  if (drawer.checkbox("Suboptimal Transitions", &scenario_states_[Scenario::SuboptimalTransitions].enabled))
-  {
-      auto &state = scenario_states_[Scenario::SuboptimalTransitions];
+		if (drawer.checkbox("Suboptimal Transitions", &scenario_states_[Scenario::SuboptimalTransitions].enabled))
+		{
+			auto &state = scenario_states_[Scenario::SuboptimalTransitions];
 			if (state.enabled)
 			{
 				// Only setup if not already set up (first enable or after cleanup)
@@ -713,13 +716,13 @@ void LayerSettingsSample::on_update_ui_overlay(vkb::Drawer &drawer)
 			}
 		}
 		ImGui::SameLine();
-  drawer.text("  Warnings: %u | Errors: %u",
-              scenario_states_[Scenario::SuboptimalTransitions].warning_count,
-              scenario_states_[Scenario::SuboptimalTransitions].error_count);
+		drawer.text("  Warnings: %u | Errors: %u",
+		            scenario_states_[Scenario::SuboptimalTransitions].warning_count,
+		            scenario_states_[Scenario::SuboptimalTransitions].error_count);
 
-  if (drawer.checkbox("Many Small Allocations", &scenario_states_[Scenario::SmallAllocations].enabled))
-  {
-      auto &state = scenario_states_[Scenario::SmallAllocations];
+		if (drawer.checkbox("Many Small Allocations", &scenario_states_[Scenario::SmallAllocations].enabled))
+		{
+			auto &state = scenario_states_[Scenario::SmallAllocations];
 			if (state.enabled)
 			{
 				// Only setup if not already set up (first enable or after cleanup)
@@ -741,37 +744,37 @@ void LayerSettingsSample::on_update_ui_overlay(vkb::Drawer &drawer)
 			}
 		}
 		ImGui::SameLine();
-  drawer.text("  Warnings: %u | Errors: %u",
-              scenario_states_[Scenario::SmallAllocations].warning_count,
-              scenario_states_[Scenario::SmallAllocations].error_count);
+		drawer.text("  Warnings: %u | Errors: %u",
+		            scenario_states_[Scenario::SmallAllocations].warning_count,
+		            scenario_states_[Scenario::SmallAllocations].error_count);
 
 		drawer.text("");
 
 		// Check if all scenarios are disabled and clear log if so
-  bool any_enabled = false;
-  for (const auto &kv : scenario_states_)
-  {
-      const auto &state = kv.second;
-      if (state.enabled)
-      {
-          any_enabled = true;
-          break;
-      }
-  }
+		bool any_enabled = false;
+		for (const auto &kv : scenario_states_)
+		{
+			const auto &state = kv.second;
+			if (state.enabled)
+			{
+				any_enabled = true;
+				break;
+			}
+		}
 		if (!any_enabled)
 		{
 			log_text_.clear();
 		}
 
 		// Total statistics
-  uint32_t total_warnings = 0;
-  uint32_t total_errors   = 0;
-  for (const auto &kv : scenario_states_)
-  {
-      const auto &state = kv.second;
-      total_warnings += state.warning_count;
-      total_errors += state.error_count;
-  }
+		uint32_t total_warnings = 0;
+		uint32_t total_errors   = 0;
+		for (const auto &kv : scenario_states_)
+		{
+			const auto &state = kv.second;
+			total_warnings += state.warning_count;
+			total_errors += state.error_count;
+		}
 		drawer.text("Total Warnings: %u | Total Errors: %u", total_warnings, total_errors);
 
 		drawer.text("");
