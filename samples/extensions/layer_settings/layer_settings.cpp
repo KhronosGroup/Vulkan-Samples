@@ -21,7 +21,6 @@
 #include "common/vk_initializers.h"
 
 #include <array>
-#include <format>
 
 LayerSettingsSample::~LayerSettingsSample()
 {
@@ -572,7 +571,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL LayerSettingsSample::debug_callback(
 	const char *msg_id = pCallbackData && pCallbackData->pMessageIdName ? pCallbackData->pMessageIdName : "";
 	const char *msg    = pCallbackData && pCallbackData->pMessage ? pCallbackData->pMessage : "";
 
-	std::string line = std::format("[{}][{}] {}\n",
+	std::string line = fmt::format("[{}][{}] {}\n",
 	                               sev,
 	                               type_str.empty() ? std::string("-") : type_str,
 	                               pCallbackData && pCallbackData->pMessage ? pCallbackData->pMessage : "<no message>");
@@ -752,9 +751,9 @@ void LayerSettingsSample::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		// Check if all scenarios are disabled and clear log if so
 		bool any_enabled = false;
-		for (const auto &kv : scenario_states_)
+		for (const auto &scenario : scenario_states_)
 		{
-			const auto &state = kv.second;
+			const auto &state = scenario.second;
 			if (state.enabled)
 			{
 				any_enabled = true;
