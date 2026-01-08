@@ -30,8 +30,6 @@ DescriptorBufferBasic::DescriptorBufferBasic()
 {
 	title = "Descriptor buffers";
 
-	set_api_version(VK_API_VERSION_1_1);
-
 	// Enable extension required for descriptor buffers
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);

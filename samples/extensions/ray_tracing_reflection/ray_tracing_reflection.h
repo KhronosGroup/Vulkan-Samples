@@ -131,6 +131,9 @@ class RaytracingReflection : public ApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
+
+  protected:
+	uint32_t get_api_version() const override;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_ray_tracing_reflection();

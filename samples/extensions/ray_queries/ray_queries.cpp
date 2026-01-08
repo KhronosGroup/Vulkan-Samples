@@ -63,8 +63,6 @@ RayQueries::RayQueries()
 {
 	title = "Ray queries";
 
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
 	add_device_extension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 
 	// Ray tracing related extensions required by this sample

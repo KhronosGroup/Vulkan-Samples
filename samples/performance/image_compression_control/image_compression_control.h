@@ -50,6 +50,9 @@ class ImageCompressionControlSample : public vkb::VulkanSampleC
 
 	void draw_gui() override;
 
+  protected:
+	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+
   private:
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 

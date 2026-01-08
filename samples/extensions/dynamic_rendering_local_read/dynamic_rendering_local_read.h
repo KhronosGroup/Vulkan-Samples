@@ -35,6 +35,9 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
+  protected:
+	uint32_t get_api_version() const override;
+
   private:
 	struct Scenes
 	{
