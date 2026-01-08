@@ -1117,7 +1117,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	}
 
 #ifdef VKB_ENABLE_PORTABILITY
-	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
 	add_device_extension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, /*optional=*/true);
 #endif
 

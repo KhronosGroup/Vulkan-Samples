@@ -43,7 +43,7 @@ void MultithreadingRenderPasses::request_gpu_features(vkb::core::PhysicalDeviceC
 {
 #ifdef VKB_ENABLE_PORTABILITY
 	// Since shadowmap_sampler_create_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 #endif
 }
 
