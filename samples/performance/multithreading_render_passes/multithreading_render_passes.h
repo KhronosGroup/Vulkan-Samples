@@ -58,7 +58,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	/**
 	 * @brief This subpass is responsible for rendering a shadowmap
 	 */
-	class ShadowSubpass : public vkb::GeometrySubpass
+	class ShadowSubpass : public vkb::rendering::subpasses::GeometrySubpassC
 	{
 	  public:
 		ShadowSubpass(vkb::rendering::RenderContextC &render_context,
@@ -68,8 +68,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 		              vkb::sg::Camera                &camera);
 
 	  protected:
-		virtual void prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer, VkFrontFace front_face, bool double_sided_material)
-		    override;
+		virtual void prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer, VkFrontFace front_face, bool double_sided_material) override;
 
 		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
 		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;

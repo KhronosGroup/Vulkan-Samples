@@ -33,7 +33,7 @@ std::type_index Camera::get_type()
 	return typeid(Camera);
 }
 
-glm::mat4 Camera::get_view()
+glm::mat4 Camera::get_view() const
 {
 	if (!node)
 	{

@@ -44,7 +44,7 @@ struct alignas(16) ForwardLights
 /**
  * @brief This subpass is responsible for rendering a Scene
  */
-class ForwardSubpass : public GeometrySubpass
+class ForwardSubpass : public vkb::rendering::subpasses::GeometrySubpassC
 {
   public:
 	/**
