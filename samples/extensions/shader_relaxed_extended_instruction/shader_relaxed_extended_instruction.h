@@ -18,6 +18,8 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include <deque>
+#include <string>
 
 class ShaderRelaxedExtendedInstruction : public ApiVulkanSample
 {
@@ -29,6 +31,8 @@ class ShaderRelaxedExtendedInstruction : public ApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void append_message(const char *msg);
 
 	// Override instance creation to enable debugPrintf via layer settings or validation features fallback
 	std::unique_ptr<vkb::core::InstanceC> create_instance() override;
@@ -42,6 +46,13 @@ class ShaderRelaxedExtendedInstruction : public ApiVulkanSample
 
 	// Debug utils messenger to receive INFO-severity debugPrintf messages
 	VkDebugUtilsMessengerEXT debug_utils_messenger{VK_NULL_HANDLE};
+
+	// UI and message state
+	uint32_t                ui_value_              = 0;
+	uint32_t                last_dispatched_value_ = 0xFFFFFFFFu;
+	bool                    request_dispatch_once_ = false;
+	std::deque<std::string> last_messages_;
+	static constexpr size_t kMaxMessages_ = 3;
 };
 
 std::unique_ptr<vkb::Application> create_shader_relaxed_extended_instruction();

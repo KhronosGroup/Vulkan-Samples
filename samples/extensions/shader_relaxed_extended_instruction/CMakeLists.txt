@@ -19,15 +19,13 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-# Enable debug info for Slang shaders to trigger OpExtInstWithForwardRef emission
-set(SLANGC_ADDITIONAL_ARGUMENTS "-g3" "-O0")
-
 add_sample_with_tags(
         ID ${FOLDER_NAME}
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Holochip"
         NAME "Shader relaxed extended instruction"
         DESCRIPTION "Demonstrates enabling VK_KHR_shader_relaxed_extended_instruction and requesting its feature"
-       SHADER_FILES_SLANG
-            "shader_relaxed_extended_instruction/slang/relaxed_demo.comp.slang"
+        SHADER_FILES_HLSL
+            "shader_relaxed_extended_instruction/hlsl/relaxed_demo.comp.hlsl"
+        DXC_ADDITIONAL_ARGUMENTS "-fspv-target-env=vulkan1.3 -fspv-debug=vulkan-with-source -O3"
 )

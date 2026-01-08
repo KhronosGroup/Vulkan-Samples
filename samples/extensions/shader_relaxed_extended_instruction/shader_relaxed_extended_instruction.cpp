@@ -20,7 +20,7 @@
 #include "common/vk_common.h"
 #include "common/vk_initializers.h"
 
-// Minimal debug utils callback to print INFO severity messages (e.g., debugPrintfEXT)
+// Minimal debug utils callback to capture INFO severity messages (e.g., debugPrintfEXT)
 static VKAPI_ATTR VkBool32 VKAPI_CALL s_debug_utils_message_callback(
     VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT             messageType,
@@ -29,10 +29,10 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL s_debug_utils_message_callback(
 {
 	(void) messageSeverity;
 	(void) messageType;
-	(void) pUserData;
-	if (pCallbackData && pCallbackData->pMessage)
+	if (pCallbackData && pCallbackData->pMessage && pUserData)
 	{
-		LOGI("{}", pCallbackData->pMessage);
+		auto *self = reinterpret_cast<ShaderRelaxedExtendedInstruction *>(pUserData);
+		self->append_message(pCallbackData->pMessage);
 	}
 	return VK_FALSE;
 }
@@ -90,7 +90,33 @@ ShaderRelaxedExtendedInstruction::~ShaderRelaxedExtendedInstruction()
 
 void ShaderRelaxedExtendedInstruction::build_command_buffers()
 {
-	// Intentionally empty; this sample records per-frame in render().
+	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+
+	VkClearValue clear_values[2];
+	clear_values[0].color        = {{0.02f, 0.02f, 0.03f, 1.0f}};        // subtle dark background
+	clear_values[1].depthStencil = {1.0f, 0};
+
+	for (int32_t i = 0; i < static_cast<int32_t>(draw_cmd_buffers.size()); ++i)
+	{
+		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+
+		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.framebuffer              = framebuffers[i];
+		render_pass_begin_info.renderPass               = render_pass;
+		render_pass_begin_info.clearValueCount          = 2;
+		render_pass_begin_info.renderArea.extent.width  = width;
+		render_pass_begin_info.renderArea.extent.height = height;
+		render_pass_begin_info.pClearValues             = clear_values;
+
+		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Draw only the UI for this sample
+		draw_ui(draw_cmd_buffers[i]);
+
+		vkCmdEndRenderPass(draw_cmd_buffers[i]);
+
+		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+	}
 }
 
 void ShaderRelaxedExtendedInstruction::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
@@ -102,7 +128,8 @@ void ShaderRelaxedExtendedInstruction::request_gpu_features(vkb::core::PhysicalD
 std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_instance()
 {
 	LOGI("ShaderRelaxedExtendedInstruction::create_instance override invoked");
-	auto debugprintf_api_version = VK_API_VERSION_1_2;
+	// Use Vulkan 1.3 so validation uses SPIR-V 1.6 semantics, matching our DXC target
+	auto debugprintf_api_version = VK_API_VERSION_1_3;
 
 	// Enumerate layers to find VVL and its version
 	uint32_t layer_property_count = 0;
@@ -210,6 +237,7 @@ bool ShaderRelaxedExtendedInstruction::prepare(const vkb::ApplicationOptions &op
 		ci.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
 		ci.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
 		ci.pfnUserCallback = s_debug_utils_message_callback;
+		ci.pUserData       = this;
 		VK_CHECK(vkCreateDebugUtilsMessengerEXT(get_instance().get_handle(), &ci, nullptr, &debug_utils_messenger));
 	}
 
@@ -217,51 +245,32 @@ bool ShaderRelaxedExtendedInstruction::prepare(const vkb::ApplicationOptions &op
 	// extended instruction (debugPrintfEXT) to demonstrate interaction with
 	// VK_KHR_shader_non_semantic_info and the SPIR-V relaxed extended instruction rules.
 	{
+		VkPushConstantRange pc_range{};
+		pc_range.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+		pc_range.offset     = 0;
+		pc_range.size       = sizeof(uint32_t);
+
 		VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+		layout_info.pushConstantRangeCount = 1;
+		layout_info.pPushConstantRanges    = &pc_range;
 		VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &pipeline_layout));
 
-		VkPipelineShaderStageCreateInfo stage = load_shader("shader_relaxed_extended_instruction/slang/relaxed_demo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
+		VkPipelineShaderStageCreateInfo stage = load_shader("shader_relaxed_extended_instruction/hlsl/relaxed_demo.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 
 		VkComputePipelineCreateInfo compute_ci{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
 		compute_ci.stage  = stage;
 		compute_ci.layout = pipeline_layout;
 		VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_ci, nullptr, &compute_pipeline));
 	}
+	// Record the UI render pass command buffers now so they are valid for submission
+	build_command_buffers();
 
 	prepared = true;
 	return true;
 }
 
-void ShaderRelaxedExtendedInstruction::record_minimal_present_cmd(VkCommandBuffer cmd) const
-{
-	VkCommandBufferBeginInfo begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-	VK_CHECK(vkBeginCommandBuffer(cmd, &begin_info));
-
-	// Demonstrate a non-semantic extended instruction by dispatching the compute shader
-	// which calls debugPrintfEXT. If validation is configured to capture debug printf,
-	// you should see a message per dispatch.
-	if (compute_pipeline != VK_NULL_HANDLE)
-	{
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline);
-		vkCmdDispatch(cmd, 1, 1, 1);
-	}
-
-	// Transition the acquired swapchain image to PRESENT so validation is happy
-	VkImageSubresourceRange subresource_range{};
-	subresource_range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	subresource_range.baseMipLevel   = 0;
-	subresource_range.levelCount     = 1;
-	subresource_range.baseArrayLayer = 0;
-	subresource_range.layerCount     = 1;
-
-	vkb::image_layout_transition(cmd,
-	                             swapchain_buffers[current_buffer].image,
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-	                             subresource_range);
-
-	VK_CHECK(vkEndCommandBuffer(cmd));
-}
+void ShaderRelaxedExtendedInstruction::record_minimal_present_cmd(VkCommandBuffer) const
+{}
 
 void ShaderRelaxedExtendedInstruction::render(float)
 {
@@ -273,13 +282,24 @@ void ShaderRelaxedExtendedInstruction::render(float)
 	// Acquire next image
 	prepare_frame();
 
-	// Recreate and record a minimal command buffer for this frame
-	recreate_current_command_buffer();
-	auto &cmd = draw_cmd_buffers[current_buffer];
-	record_minimal_present_cmd(cmd);
+	// Conditionally run the compute dispatch if the UI value changed or if explicitly requested
+	const bool value_changed = (ui_value_ != last_dispatched_value_);
+	if ((value_changed || request_dispatch_once_) && compute_pipeline != VK_NULL_HANDLE)
+	{
+		request_dispatch_once_ = false;
+		last_dispatched_value_ = ui_value_;
+		auto push_value        = ui_value_;
 
-	// Submit with acquire->present synchronization
-	VkPipelineStageFlags wait_stages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		with_command_buffer([&](VkCommandBuffer command_buffer) {
+			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline);
+			vkCmdPushConstants(command_buffer, pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(uint32_t), &push_value);
+			vkCmdDispatch(command_buffer, 1, 1, 1);
+		});
+	}
+
+	// Submit pre-recorded UI render commands
+	auto                &cmd         = draw_cmd_buffers[current_buffer];
+	VkPipelineStageFlags wait_stages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	VkSubmitInfo         submit_info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
 	submit_info.waitSemaphoreCount   = 1;
 	submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
@@ -298,4 +318,49 @@ void ShaderRelaxedExtendedInstruction::render(float)
 std::unique_ptr<vkb::Application> create_shader_relaxed_extended_instruction()
 {
 	return std::make_unique<ShaderRelaxedExtendedInstruction>();
+}
+
+void ShaderRelaxedExtendedInstruction::append_message(const char *msg)
+{
+	if (!msg)
+		return;
+	last_messages_.emplace_back(msg);
+	while (last_messages_.size() > kMaxMessages_)
+	{
+		last_messages_.pop_front();
+	}
+}
+
+void ShaderRelaxedExtendedInstruction::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	if (drawer.header("VK_KHR_shader_relaxed_extended_instruction"))
+	{
+		const bool has_ext  = get_instance().is_enabled(VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME);
+		const bool has_info = get_instance().is_enabled(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+		drawer.text("Device extensions: relaxed_extended_instruction=%s, non_semantic_info=%s", has_ext ? "ON" : "OFF", has_info ? "ON" : "OFF");
+		drawer.text("This feature enables SPIR-V modules that use relaxed forward-refs in extended instruction sets (e.g., DebugPrintf).\nUseful when tools emit richer debug info that would otherwise be rejected.");
+
+		int32_t value_ui = static_cast<int32_t>(ui_value_);
+		if (drawer.slider_int("Value", &value_ui, 0, 1000))
+		{
+			ui_value_ = static_cast<uint32_t>(value_ui);
+		}
+		if (drawer.button("Dispatch once"))
+		{
+			request_dispatch_once_ = true;
+		}
+
+		drawer.text("Last messages (max %d):", static_cast<int>(kMaxMessages_));
+		if (last_messages_.empty())
+		{
+			drawer.text("<no messages yet>");
+		}
+		else
+		{
+			for (auto it = last_messages_.rbegin(); it != last_messages_.rend(); ++it)
+			{
+				drawer.text("%s", it->c_str());
+			}
+		}
+	}
 }

@@ -40,8 +40,15 @@ The feature is exposed via `VkPhysicalDeviceShaderRelaxedExtendedInstructionFeat
 == What this sample does
 - Enables device extensions: `VK_KHR_shader_relaxed_extended_instruction` and `VK_KHR_shader_non_semantic_info`.
 - Requests the feature via the framework’s feature‑chaining helper.
-- Builds a tiny compute pipeline whose shader calls `debugPrintfEXT` (a non‑semantic extended instruction).
-- Records a per‑frame command buffer that dispatches the compute shader once, then transitions the swapchain image to `PRESENT` and presents. This keeps WSI synchronization correct and demonstrates consumption of a shader module that contains non‑semantic extended instructions.
+- Builds a tiny compute pipeline whose shader calls `debugPrintfEXT` (a non‑semantic extended instruction) using a class method to demonstrate the relaxed forward‑reference pattern.
+- Renders a visible UI and background and only dispatches the compute shader on demand (or when a UI value changes). This avoids per‑frame logging spam while still demonstrating consumption of a module that contains non‑semantic extended instructions.
+
+== How to use it
+- The sample shows a small UI panel with:
+  * A `Value` slider (integer). Changing it triggers a one‑shot compute dispatch that prints the new value from the shader.
+  * A `Dispatch once` button to manually run a one‑shot dispatch.
+  * “Last messages” — the last 5 lines captured from `debugPrintf` via `VK_EXT_debug_utils`.
+- The shader prints only from thread `(0,0,0)` and only when you request a dispatch, so there is no per‑frame console spam.
 
 == Required Vulkan extensions and features
 - Device extensions (required by this sample):
@@ -69,39 +76,31 @@ void ShaderRelaxedExtendedInstruction::request_gpu_features(vkb::core::PhysicalD
 }
 ----
 
-Shader (GLSL) used by this sample:
-[source,glsl]
+Shader (HLSL, compiled with DXC) used by this sample:
+[source,hlsl]
 ----
-#version 450
-#extension GL_EXT_debug_printf : enable
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-void main() {
-    debugPrintfEXT("relaxed-ext-inst demo: gid = %u", gl_GlobalInvocationID.x);
-}
-----
+// RUN: %dxc %s -T cs_6_0 -spirv -fspv-target-env=vulkan1.3 -E main -fspv-debug=vulkan-with-source -O3
 
-== Slang shader variant and OpExtInstWithForwardRef
+struct PushConstants { uint value; };
+[[vk::push_constant]] PushConstants pc;
 
-This sample also includes a Slang shader variant that demonstrates the pattern intended to trigger `OpExtInstWithForwardRef` emission. The Slang shader uses a struct with a method that calls `printf`, which creates the structure that should produce circular dependencies in debug instructions when compiled with rich debug info (e.g., `NonSemantic.Shader.DebugInfo.100`).
-
-[source,slang]
-----
-struct A {
-    void foo(uint3 gid) {
-        printf("relaxed-ext-inst demo: gid = %u", gid.x);
-    }
+class A {
+  void foo(uint v) {
+    printf("relaxed-ext-inst demo: value = %u", v);
+  }
 };
 
-[shader("compute")]
 [numthreads(1, 1, 1)]
 void main(uint3 gid : SV_DispatchThreadID)
 {
-    A a;
-    a.foo(gid);
+  A a;
+  if (all(gid == uint3(0,0,0))) { a.foo(pc.value); }
 }
 ----
 
-NOTE: As of Slang in Vulkan SDK 1.4.328, the compiler does not yet emit the rich debug info needed to trigger `OpExtInstWithForwardRef` emission. The shader is structured correctly and will emit `OpExtInstWithForwardRef` once Slang's debug info support is enhanced. The `OpExtInstWithForwardRef` instruction is specifically designed to handle forward references in extended instruction sets, which can occur when debug info creates circular dependencies (e.g., a class method referencing debug info that references the class).
+== Why HLSL (DXC) instead of Slang or GLSL?
+
+At the time of writing, Slang and glslc in the Vulkan SDK does not emit the necessary debug information patterns that lead to `OpExtInstWithForwardRef` in SPIR-V for this demonstration. The HLSL/DXC path above does emit the required SPIR-V relaxed extended instruction sequence, so this sample uses HLSL for reliability.
 
 TIP: To actually see the `debugPrintfEXT` output, run with validation configured to capture debug printf (see the `shader_debugprintf` sample or use VK_EXT_layer_settings to enable `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT`). This sample registers an INFO‑severity `VkDebugUtilsMessengerEXT` so messages are visible when validation is active.
 
