@@ -1,0 +1,69 @@
+#version 460
+
+/* Copyright (c) 2025, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Compute shader which reads elements from one tensor (input_tensor) and writes them to 
+// to different locations in another tensor (output_tensor), to achieve a rotation effect.
+
+// Enable the extension that allows us to read from Tensors.
+#extension GL_ARM_tensors : enable
+
+// Input and output tensors, each a 4-dimensional array of floats
+layout (set = 0, binding = 0) uniform tensorARM<float, 4> input_tensor;
+layout (set = 0, binding = 1) writeonly uniform tensorARM<float, 4> output_tensor;
+
+// Push constant time variable, used to gradually increase the RGB values.
+layout(push_constant) uniform push_constants
+{
+	float time;
+};
+
+
+layout(local_size_x = 1, local_size_y = 1) in;
+void main()
+{
+    float[3] value;
+    uint pixel_coords[4] = uint[](0, gl_GlobalInvocationID.y, gl_GlobalInvocationID.x, 0);
+
+    // Get image dimensions
+    uint width = gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+    uint height = gl_NumWorkGroups.y * gl_WorkGroupSize.y;
+
+    // Center coordinates
+    float cx = float(width) / 2.0;
+    float cy = float(height) / 2.0;
+    float x = float(gl_GlobalInvocationID.x) - cx;
+    float y = float(gl_GlobalInvocationID.y) - cy;
+
+    // Dynamic rotation angle based on time
+    float angle = time;
+    float rot_x = x * cos(angle) - y * sin(angle);
+    float rot_y = x * sin(angle) + y * cos(angle);
+
+    // Map back to input coordinates
+    int src_x = int(round(rot_x + cx));
+    int src_y = int(round(rot_y + cy));
+
+    // Clamp to valid range
+    src_x = clamp(src_x, 0, int(width) - 1);
+    src_y = clamp(src_y, 0, int(height) - 1);
+
+    uint rotated_coords[4] = uint[](0, uint(src_y), uint(src_x), 0);
+    tensorReadARM(input_tensor, rotated_coords, value);
+    tensorWriteARM(output_tensor, pixel_coords, value);
+}
