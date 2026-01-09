@@ -335,8 +335,9 @@ void ShaderRelaxedExtendedInstruction::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("VK_KHR_shader_relaxed_extended_instruction"))
 	{
-		const bool has_ext  = get_instance().is_enabled(VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME);
-		const bool has_info = get_instance().is_enabled(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+		// These are DEVICE extensions; check on the logical device, not the instance.
+		const bool has_ext  = get_device().is_extension_enabled(VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME);
+		const bool has_info = get_device().is_extension_enabled(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 		drawer.text("Device extensions: relaxed_extended_instruction=%s, non_semantic_info=%s", has_ext ? "ON" : "OFF", has_info ? "ON" : "OFF");
 		drawer.text("This feature enables SPIR-V modules that use relaxed forward-refs in extended instruction sets (e.g., DebugPrintf).\nUseful when tools emit richer debug info that would otherwise be rejected.");
 
