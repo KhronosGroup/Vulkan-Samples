@@ -89,7 +89,6 @@ jobs:
 
   clang_tidy:
     name: Clang Tidy Check
-    container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
     runs-on: ubuntu-latest
     needs: changed-files
     continue-on-error: true # we currently don't track clang-tidy warnings as errors. in the future this will change
@@ -99,9 +98,24 @@ jobs:
         with:
           submodules: "recursive"
       - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
-      - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF -Bbuild/clang
+      - name: Install XCB headers (for CMake configure)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb1-dev
+      - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF -DGLFW_BUILD_X11=OFF -Bbuild/clang
       - run: |
-          /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }}
+          (command -v run-clang-tidy-18 >/dev/null && RUN_TIDY=run-clang-tidy-18 || true); \
+          (command -v run-clang-tidy-17 >/dev/null && RUN_TIDY=run-clang-tidy-17 || true); \
+          (command -v run-clang-tidy >/dev/null && RUN_TIDY=run-clang-tidy || true); \
+          echo "Using ${RUN_TIDY:-run-clang-tidy}"; \
+          ${RUN_TIDY:-run-clang-tidy} \
+            -j $(($(nproc)/2+1)) \
+            -p build/clang \
+            -header-filter=framework,samples,app \
+            -checks=-*,google-*,-google-runtime-references \
+            -extra-arg=-std=c++20 \
+            -quiet \
+            ${{ needs.changed-files.outputs.all }}
 
   pre-commit:
     name: Pre-Commit Checks
