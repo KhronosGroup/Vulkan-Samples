@@ -88,6 +88,17 @@ void SwapchainRecreation::query_compatible_present_modes(VkPresentModeKHR presen
 	compatible_modes.resize(modes.presentModeCount);
 	modes.pPresentModes = compatible_modes.data();
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilities2KHR(get_gpu_handle(), &surface_info, &surface_caps));
+
+	// Filter out modes that require extensions/features we did not enable.
+	// Specifically: VK_PRESENT_MODE_FIFO_LATEST_READY_KHR/EXT must only be used when the
+	// corresponding extension and feature are enabled. This sample does not explicitly
+	// enable them, so avoid advertising these modes as compatible.
+	compatible_modes.erase(std::remove_if(compatible_modes.begin(),
+	                                      compatible_modes.end(),
+	                                      [](VkPresentModeKHR m) {
+		                                      return m == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR || m == VK_PRESENT_MODE_FIFO_LATEST_READY_EXT;
+	                                      }),
+	                      compatible_modes.end());
 }
 
 void SwapchainRecreation::adjust_desired_present_mode()

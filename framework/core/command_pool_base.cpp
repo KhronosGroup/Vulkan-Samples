@@ -62,6 +62,9 @@ CommandPoolBase::CommandPoolBase(CommandPoolBase &&other) :
 	other.handle = nullptr;
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+__attribute__((no_sanitize("vptr")))
+#endif
 CommandPoolBase::~CommandPoolBase()
 {
 	// clear command buffers before destroying the command pool

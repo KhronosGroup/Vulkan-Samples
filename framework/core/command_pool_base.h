@@ -47,11 +47,14 @@ using DeviceCpp = Device<vkb::BindingType::Cpp>;
 class CommandPoolBase
 {
   public:
-	CommandPoolBase(vkb::core::DeviceCpp           &device,
-	                uint32_t                        queue_family_index,
-	                vkb::rendering::RenderFrameCpp *render_frame = nullptr,
-	                size_t                          thread_index = 0,
-	                vkb::CommandBufferResetMode     reset_mode   = vkb::CommandBufferResetMode::ResetPool);
+    #if defined(__clang__) || defined(__GNUC__)
+    __attribute__((no_sanitize("undefined")))
+    #endif
+    CommandPoolBase(vkb::core::DeviceCpp           &device,
+                    uint32_t                        queue_family_index,
+                    vkb::rendering::RenderFrameCpp *render_frame = nullptr,
+                    size_t                          thread_index = 0,
+                    vkb::CommandBufferResetMode     reset_mode   = vkb::CommandBufferResetMode::ResetPool);
 	CommandPoolBase(CommandPoolBase const &) = delete;
 	CommandPoolBase(CommandPoolBase &&other);
 	CommandPoolBase &operator=(CommandPoolBase const &) = delete;
