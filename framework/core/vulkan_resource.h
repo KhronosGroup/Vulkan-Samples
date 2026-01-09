@@ -150,11 +150,12 @@ template <vkb::BindingType bindingType, typename Handle>
 #if defined(__clang__) || defined(__GNUC__)
 __attribute__((no_sanitize("undefined")))
 #endif
-inline Handle &VulkanResource<bindingType, Handle>::get_handle()
+inline Handle &
+    VulkanResource<bindingType, Handle>::get_handle()
 {
-    if constexpr (bindingType == vkb::BindingType::Cpp)
-    {
-        return handle;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return handle;
 	}
 	else
 	{
@@ -166,11 +167,12 @@ template <vkb::BindingType bindingType, typename Handle>
 #if defined(__clang__) || defined(__GNUC__)
 __attribute__((no_sanitize("undefined")))
 #endif
-inline const Handle &VulkanResource<bindingType, Handle>::get_handle() const
+inline const Handle &
+    VulkanResource<bindingType, Handle>::get_handle() const
 {
-    if constexpr (bindingType == vkb::BindingType::Cpp)
-    {
-        return handle;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return handle;
 	}
 	else
 	{

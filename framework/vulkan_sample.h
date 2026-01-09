@@ -344,9 +344,9 @@ class VulkanSample : public vkb::Application
 	// Custom deleter for the device unique_ptr that deletes the correct dynamic type
 	struct DeviceDeleter
 	{
-	#if defined(__clang__) || defined(__GNUC__)
+#if defined(__clang__) || defined(__GNUC__)
 		__attribute__((no_sanitize("vptr")))
-	#endif
+#endif
 		void operator()(vkb::core::DeviceCpp *p) const noexcept
 		{
 			if (!p)
@@ -576,8 +576,8 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
-	vk::PresentModeKHR               present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR>  present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
+	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
@@ -708,7 +708,8 @@ template <vkb::BindingType bindingType>
 #if defined(__clang__) || defined(__GNUC__)
 __attribute__((no_sanitize("vptr", "undefined")))
 #endif
-inline void VulkanSample<bindingType>::finish()
+inline void
+    VulkanSample<bindingType>::finish()
 {
 	Parent::finish();
 
@@ -1051,7 +1052,8 @@ template <vkb::BindingType bindingType>
 #if defined(__clang__) || defined(__GNUC__)
 __attribute__((no_sanitize("vptr")))
 #endif
-inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options)
+inline bool
+    VulkanSample<bindingType>::prepare(const ApplicationOptions &options)
 {
 	if (!Parent::prepare(options))
 	{

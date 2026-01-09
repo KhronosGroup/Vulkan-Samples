@@ -98,7 +98,7 @@ void SwapchainRecreation::query_compatible_present_modes(VkPresentModeKHR presen
 	                                      [](VkPresentModeKHR m) {
 		                                      return m == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR || m == VK_PRESENT_MODE_FIFO_LATEST_READY_EXT;
 	                                      }),
-	                      compatible_modes.end());
+	                       compatible_modes.end());
 }
 
 void SwapchainRecreation::adjust_desired_present_mode()
