@@ -293,7 +293,7 @@ void PipelineBinary::demo_pipeline_key_and_binary()
 	{
 		binary_available_ = false;
 		LOGW("vkGetPipelineBinaryDataKHR failed ({}); data not available", static_cast<int>(res));
-		std::string message = std::format("vkGetPipelineBinaryDataKHR failed ({}); data not available", vk::to_string(static_cast<vk::Result>(res)));
+		std::string message = fmt::format("vkGetPipelineBinaryDataKHR failed ({}); data not available", vk::to_string(static_cast<vk::Result>(res)));
 		LOGW(message);
 		log_text_ += message + "\n";
 	}
