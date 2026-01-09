@@ -56,7 +56,7 @@ jobs:
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_v2:
-    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+    name: "Build v2 Components ${{ matrix.platform }} in ${{ matrix.build_type }}"
     strategy:
       matrix:
         platform: [windows, ubuntu]
