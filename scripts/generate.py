@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2023, Thomas Atkinson
+# Copyright 2023-2026, Thomas Atkinson
 #
 # SPDX-License-Identifier: Apache-2.0
 #
