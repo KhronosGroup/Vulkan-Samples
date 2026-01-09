@@ -29,11 +29,13 @@ Helps to generate new files for the project.
 
 All flags are optional.
 Setting --name is advised.
-If --output-dir is not set, the sample will be generated in the samples directory filed under the specified category.
+
+If `--output-dir` is not set, the sample will be generated in the `samples` directory under the specified category.
+After generation, entries are automatically added to Antora navigation and to the category README. You can optionally provide a one-line description for the category README using `--readme-description`; otherwise, you'll be prompted interactively (a placeholder will be used if left empty).
 
 [,bash]
 ----
-./scripts/generate.py sample --name <SampleName> --category <category> --output-dir <output_dir>
+./scripts/generate.py sample --name <SampleName> --category <category> [--output-dir <output_dir>] [--readme-description "One-line description"]
 ----
 
 Running the above line will generate the following files:
@@ -60,7 +62,7 @@ API samples can be generated using the following command:
 
 [,bash]
 ----
-./scripts/generate.py sample_api --name <SampleName> --category <category> --output-dir <output_dir>
+./scripts/generate.py sample_api --name <SampleName> --category <category> [--output-dir <output_dir>] [--readme-description "One-line description"]
 ----
 
 Running the above line will generate the following files:
@@ -79,6 +81,15 @@ A new class will also be generated
 class SampleName :public ApiVulkanSample {
 ...
 };
+----
+
+=== Generate Vulkan-Hpp Sample
+
+If a Vulkan-Hpp template is available, you can generate a Vulkan-Hpp based sample. If the `sample_hpp` CMake template is not present, the script will fall back to `sample_api` and continue with a warning.
+
+[,bash]
+----
+./scripts/generate.py sample_hpp --name <SampleName> --category <category> [--output-dir <output_dir>] [--readme-description "One-line description"]
 ----
 
 === Generate Android Project
