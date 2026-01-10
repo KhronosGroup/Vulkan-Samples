@@ -197,6 +197,7 @@ endif()
     endif()
 
     # HLSL compilation via DXC
+    # Only build HLSL shaders when their sources change. Avoid touching source tree unnecessarily.
     if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
         set(OUTPUT_FILES "")
         set(HLSL_TARGET_NAME ${PROJECT_NAME}-HLSL)
@@ -241,9 +242,11 @@ endif()
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
                 COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${DXC_PROFILE} -E main ${TARGET_DXC_ADDITIONAL_ARGUMENTS} ${SHADER_FILE_HLSL} -Fo ${OUTPUT_FILE}
-                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
-                MAIN_DEPENDENCY ${SHADER_FILE_HLSL}
+                # Only update checked-in shader binaries if contents differ to prevent needless timestamp churn
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OUTPUT_FILE} ${directory}
+                DEPENDS ${SHADER_FILE_HLSL}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                VERBATIM
             )
             list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
@@ -282,9 +285,10 @@ endif()
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
                 COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -matrix-layout-column-major -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
-                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
-                MAIN_DEPENDENCY ${SHADER_FILE_SLANG}
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OUTPUT_FILE} ${directory}
+                DEPENDS ${SHADER_FILE_SLANG}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                VERBATIM
             )
             list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
@@ -328,9 +332,10 @@ endif()
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
                 COMMAND ${COMPILE_COMMAND}
-                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
-                MAIN_DEPENDENCY ${SHADER_FILE_GLSL}
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OUTPUT_FILE} ${directory}
+                DEPENDS ${SHADER_FILE_GLSL}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                VERBATIM
             )
             list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
@@ -357,9 +362,10 @@ endif()
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
                 COMMAND ${Vulkan_spirvas_EXECUTABLE} ${SHADER_FILE_SPVASM} -o ${OUTPUT_FILE} ${TARGET_SPVASM_ADDITIONAL_ARGUMENTS}
-                COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
-                MAIN_DEPENDENCY ${SHADER_FILE_SPVASM}
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OUTPUT_FILE} ${directory}
+                DEPENDS ${SHADER_FILE_SPVASM}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                VERBATIM
             )
             list(APPEND OUTPUT_FILES ${OUTPUT_FILE})
             set_source_files_properties(${OUTPUT_FILE} PROPERTIES
