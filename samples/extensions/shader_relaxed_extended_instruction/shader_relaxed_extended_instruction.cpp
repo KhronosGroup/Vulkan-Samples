@@ -43,25 +43,22 @@ ShaderRelaxedExtendedInstruction::ShaderRelaxedExtendedInstruction()
 
 	// Instance prerequisite for feature chaining and layer settings (optional)
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
 
 	// Device extensions used by this demo
 	add_device_extension(VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME);
 	// Non-semantic info is the SPIR-V mechanism for non-semantic extended instruction sets
 	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 
-	// Optionally, enable debug printf so shaders using debugPrintfEXT will print via VVL
+	// Enable debug printf so shaders using debugPrintfEXT will print via VVL
 	{
-		static const char *enables[] = {
-		    "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT",
-		};
+		static const VkBool32 printf_enable = VK_TRUE;
 
 		VkLayerSettingEXT layer_setting{};
 		layer_setting.pLayerName   = "VK_LAYER_KHRONOS_validation";
-		layer_setting.pSettingName = "enables";
-		layer_setting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
-		layer_setting.valueCount   = static_cast<uint32_t>(std::size(enables));
-		layer_setting.pValues      = enables;
+		layer_setting.pSettingName = "printf_enable";
+		layer_setting.type         = VK_LAYER_SETTING_TYPE_BOOL32_EXT;
+		layer_setting.valueCount   = 1;
+		layer_setting.pValues      = &printf_enable;
 		add_layer_setting(layer_setting);
 	}
 }
@@ -142,25 +139,26 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
         return strcmp(p.layerName, validation_layer_name) == 0;
     });
 
-	if (vvl_properties != layer_properties.end())
-	{
-		// Does VVL advertise VK_EXT_layer_settings?
-		uint32_t vvl_extension_count = 0;
-		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &vvl_extension_count, nullptr));
-		std::vector<VkExtensionProperties> vvl_instance_extensions(vvl_extension_count);
-		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &vvl_extension_count, vvl_instance_extensions.data()));
+ const bool validation_layer_available = (vvl_properties != layer_properties.end());
+ if (validation_layer_available)
+ {
+     // Does VVL advertise VK_EXT_layer_settings?
+     uint32_t vvl_extension_count = 0;
+     VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &vvl_extension_count, nullptr));
+     std::vector<VkExtensionProperties> vvl_instance_extensions(vvl_extension_count);
+     VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &vvl_extension_count, vvl_instance_extensions.data()));
 
-		bool has_layer_settings = std::ranges::any_of(vvl_instance_extensions, [](const VkExtensionProperties &e) {
-			return strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;
-		});
+     bool has_layer_settings = std::ranges::any_of(vvl_instance_extensions, [](const VkExtensionProperties &e) {
+         return strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;
+     });
 
-		if (has_layer_settings)
-		{
-			set_api_version(debugprintf_api_version);
-			// Use the base implementation which will chain our pre-added layer settings
-			return VulkanSample::create_instance();
-		}
-	}
+     if (has_layer_settings)
+     {
+         set_api_version(debugprintf_api_version);
+         // Use the base implementation which will chain our pre-added layer settings
+         return VulkanSample::create_instance();
+     }
+ }
 
 	// Fallback: use VK_EXT_validation_features to enable debugPrintf without layer settings
 	std::vector<const char *> enabled_extensions;
@@ -187,15 +185,19 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
 	}
 #endif
 
-	// Enable validation features to activate debugPrintf
-	enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+ // Enable validation features to activate debugPrintf (works when validation layer is present)
+ enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 
 	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
 	app_info.pApplicationName = "Shader relaxed extended instruction";
 	app_info.pEngineName      = "Vulkan Samples";
 	app_info.apiVersion       = debugprintf_api_version;
 
-	std::vector<const char *> validation_layers = {validation_layer_name};
+ std::vector<const char *> validation_layers;
+ if (validation_layer_available)
+ {
+     validation_layers.push_back(validation_layer_name);
+ }
 
 	std::vector<VkValidationFeatureEnableEXT> validation_feature_enables = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
 	VkValidationFeaturesEXT                   validation_features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
@@ -206,8 +208,8 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
 	instance_create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	instance_create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
 	instance_create_info.pApplicationInfo        = &app_info;
-	instance_create_info.ppEnabledLayerNames     = validation_layers.data();
-	instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
+ instance_create_info.ppEnabledLayerNames     = validation_layers.empty() ? nullptr : validation_layers.data();
+ instance_create_info.enabledLayerCount       = static_cast<uint32_t>(validation_layers.size());
 #if (defined(VKB_ENABLE_PORTABILITY))
 	if (portability_enumeration_available)
 	{

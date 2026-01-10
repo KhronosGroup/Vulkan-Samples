@@ -57,6 +57,8 @@ The feature is exposed via `VkPhysicalDeviceShaderRelaxedExtendedInstructionFeat
 - Instance extension for feature chaining: `VK_KHR_get_physical_device_properties2` (the framework enables this; the sample requests it explicitly).
 - Device feature (required): `VkPhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR::shaderRelaxedExtendedInstruction = VK_TRUE`
 
+NOTE: This sample relies on the Vulkan Validation Layers (VVL) to capture and display `debugPrintfEXT` output from the non‑semantic instruction set. Ensure that VVL is enabled when running the sample. Debug builds of Vulkan‑Samples automatically enable validation; on Release builds you may need to enable validation explicitly via your environment or runtime settings.
+
 Code excerpt:
 [source,cpp]
 ----
