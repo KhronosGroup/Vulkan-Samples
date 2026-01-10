@@ -1,6 +1,6 @@
 ////
-- Copyright (c) 2023-2025, Holochip Inc
-- Copyright (c) 2023-2025, Sascha Willems
+- Copyright (c) 2023-2026, Holochip Inc
+- Copyright (c) 2023-2026, Sascha Willems
 - Copyright (c) 2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
@@ -89,6 +89,7 @@
 ** xref:samples/extensions/ray_tracing_position_fetch/README.adoc[Ray tracing position fetch]
 ** xref:samples/extensions/shader_object/README.adoc[Shader Object]
 ** xref:samples/extensions/shader_debugprintf/README.adoc[Shader Debug Printf]
+** xref:samples/extensions/shader_relaxed_extended_instruction/README.adoc[Shader relaxed extended instruction]
 ** xref:samples/extensions/sparse_image/README.adoc[Sparse Image]
 ** xref:samples/extensions/synchronization_2/README.adoc[Synchronization 2]
 ** xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph]

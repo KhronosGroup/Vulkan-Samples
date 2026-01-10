@@ -1,7 +1,7 @@
 #[[
- Copyright (c) 2019-2025, Arm Limited and Contributors
- Copyright (c) 2024-2025, Mobica Limited
- Copyright (c) 2024-2025, Sascha Willems
+ Copyright (c) 2019-2026, Arm Limited and Contributors
+ Copyright (c) 2024-2026, Mobica Limited
+ Copyright (c) 2024-2026, Sascha Willems
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -281,7 +281,7 @@ endif()
             set(SLANG_ENTRY_POINT "main")
             add_custom_command(
                 OUTPUT ${OUTPUT_FILE}
-                COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -matrix-layout-column-major -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT}
+                COMMAND ${Vulkan_slang_EXECUTABLE} ${SHADER_FILE_SLANG} -profile ${SLANG_PROFILE} -matrix-layout-column-major -target spirv -o ${OUTPUT_FILE} -entry ${SLANG_ENTRY_POINT} ${TARGET_SLANGC_ADDITIONAL_ARGUMENTS}
                 COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_FILE} ${directory}
                 MAIN_DEPENDENCY ${SHADER_FILE_SLANG}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
