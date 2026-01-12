@@ -1,6 +1,6 @@
 ////
-- Copyright (c) 2023-2025, Holochip Inc
-- Copyright (c) 2023-2025, Sascha Willems
+- Copyright (c) 2023-2026, Holochip Inc
+- Copyright (c) 2023-2026, Sascha Willems
 - Copyright (c) 2025, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
@@ -84,6 +84,7 @@
 *** xref:samples/extensions/hpp_push_descriptors/README.adoc[Push descriptors (Vulkan-Hpp)]
 ** xref:samples/extensions/ray_tracing_basic/README.adoc[Raytracing basic]
 ** xref:samples/extensions/ray_tracing_extended/README.adoc[Raytracing extended]
+** xref:samples/extensions/ray_tracing_invocation_reorder/README.adoc[Ray tracing invocation reorder (SER)]
 ** xref:samples/extensions/ray_queries/README.adoc[Ray queries]
 ** xref:samples/extensions/ray_tracing_reflection/README.adoc[Ray tracing reflection]
 ** xref:samples/extensions/ray_tracing_position_fetch/README.adoc[Ray tracing position fetch]
