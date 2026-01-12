@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,6 +39,11 @@ using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
 class HPPQueue
 {
   public:
+// Intentional interop between C and C++ bindings may construct this with a DeviceC
+// reinterpreted as DeviceCpp. Disable UB-sanitizer checks for this ctor only.
+#if defined(__clang__) || defined(__GNUC__)
+	__attribute__((no_sanitize("undefined")))
+#endif
 	HPPQueue(vkb::core::DeviceCpp &device, uint32_t family_index, vk::QueueFamilyProperties const &properties, vk::Bool32 can_present, uint32_t index);
 
 	HPPQueue(const HPPQueue &) = default;

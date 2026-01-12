@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,6 +47,9 @@ using DeviceCpp = Device<vkb::BindingType::Cpp>;
 class CommandPoolBase
 {
   public:
+#if defined(__clang__) || defined(__GNUC__)
+	__attribute__((no_sanitize("undefined")))
+#endif
 	CommandPoolBase(vkb::core::DeviceCpp           &device,
 	                uint32_t                        queue_family_index,
 	                vkb::rendering::RenderFrameCpp *render_frame = nullptr,

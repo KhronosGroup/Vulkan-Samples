@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -341,6 +341,28 @@ class VulkanSample : public vkb::Application
 	/// PRIVATE INTERFACE
 	/// </summary>
   private:
+	// Custom deleter for the device unique_ptr that deletes the correct dynamic type
+	struct DeviceDeleter
+	{
+#if defined(__clang__) || defined(__GNUC__)
+		__attribute__((no_sanitize("vptr")))
+#endif
+		void operator()(vkb::core::DeviceCpp *p) const noexcept
+		{
+			if (!p)
+			{
+				return;
+			}
+			if constexpr (bindingType == vkb::BindingType::Cpp)
+			{
+				delete p;
+			}
+			else
+			{
+				delete reinterpret_cast<vkb::core::DeviceC *>(p);
+			}
+		}
+	};
 	void        create_render_context_impl(const std::vector<vk::SurfaceFormatKHR> &surface_priority_list);
 	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
 	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
@@ -387,7 +409,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief The Vulkan device
 	 */
-	std::unique_ptr<vkb::core::DeviceCpp> device;
+	std::unique_ptr<vkb::core::DeviceCpp, DeviceDeleter> device;
 
 	/**
 	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
@@ -454,6 +476,9 @@ using VulkanSampleCpp = VulkanSample<vkb::BindingType::Cpp>;
 // Member function definitions
 
 template <vkb::BindingType bindingType>
+#if defined(__clang__) || defined(__GNUC__)
+__attribute__((no_sanitize("vptr", "undefined")))
+#endif
 inline VulkanSample<bindingType>::~VulkanSample()
 {
 	if (device)
@@ -551,8 +576,8 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
-	vk::PresentModeKHR               present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR>  present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
+	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
@@ -680,7 +705,11 @@ inline void VulkanSample<bindingType>::draw_renderpass_impl(vkb::core::CommandBu
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::finish()
+#if defined(__clang__) || defined(__GNUC__)
+__attribute__((no_sanitize("vptr", "undefined")))
+#endif
+inline void
+    VulkanSample<bindingType>::finish()
 {
 	Parent::finish();
 
@@ -1020,7 +1049,11 @@ inline void VulkanSample<bindingType>::load_scene(const std::string &path)
 }
 
 template <vkb::BindingType bindingType>
-inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options)
+#if defined(__clang__) || defined(__GNUC__)
+__attribute__((no_sanitize("vptr")))
+#endif
+inline bool
+    VulkanSample<bindingType>::prepare(const ApplicationOptions &options)
 {
 	if (!Parent::prepare(options))
 	{
@@ -1150,7 +1183,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		device = create_device(gpu);
+		device.reset(create_device(gpu).release());
 	}
 	else
 	{
@@ -1163,7 +1196,12 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	create_render_context();
 	prepare_render_context();
 
-	stats = std::make_unique<vkb::stats::HPPStats>(*render_context);
+	// Some samples (e.g., low-level WSI/control samples) do not use the high-level RenderContext.
+	// Only create stats if a RenderContext is available.
+	if (render_context)
+	{
+		stats = std::make_unique<vkb::stats::HPPStats>(*render_context);
+	}
 
 	// Start the sample in the first GUI configuration
 	configuration.reset();

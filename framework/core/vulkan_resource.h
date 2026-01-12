@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -147,7 +147,11 @@ inline Device<bindingType> const &VulkanResource<bindingType, Handle>::get_devic
 }
 
 template <vkb::BindingType bindingType, typename Handle>
-inline Handle &VulkanResource<bindingType, Handle>::get_handle()
+#if defined(__clang__) || defined(__GNUC__)
+__attribute__((no_sanitize("undefined")))
+#endif
+inline Handle &
+    VulkanResource<bindingType, Handle>::get_handle()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -160,7 +164,11 @@ inline Handle &VulkanResource<bindingType, Handle>::get_handle()
 }
 
 template <vkb::BindingType bindingType, typename Handle>
-inline const Handle &VulkanResource<bindingType, Handle>::get_handle() const
+#if defined(__clang__) || defined(__GNUC__)
+__attribute__((no_sanitize("undefined")))
+#endif
+inline const Handle &
+    VulkanResource<bindingType, Handle>::get_handle() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
