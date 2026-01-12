@@ -104,7 +104,8 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag.spv"};
 
-	auto gbuffer_pass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto gbuffer_pass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
+	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 	gbuffer_pass->set_output_attachments({1, 2, 3});
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
 	gbuffer_pipeline.set_load_store(vkb::gbuffer::get_clear_store_all());

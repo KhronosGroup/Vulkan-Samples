@@ -68,7 +68,7 @@ bool SpecializationConstants::prepare(const vkb::ApplicationOptions &options)
 void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 {
 	auto &device = get_render_context().get_device();
-	for (auto &mesh : meshes)
+	for (auto &mesh : get_meshes())
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
@@ -137,10 +137,10 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_re
 void SpecializationConstants::ForwardSubpassCustomLights::draw(vkb::core::CommandBufferC &command_buffer)
 {
 	// Override forward light subpass draw function to provide a custom number of lights
-	auto lights_buffer = allocate_custom_lights<CustomForwardLights>(command_buffer, scene.get_components<vkb::sg::Light>(), LIGHT_COUNT);
+	auto lights_buffer = allocate_custom_lights<CustomForwardLights>(command_buffer, get_scene().get_components<vkb::sg::Light>(), LIGHT_COUNT);
 	command_buffer.bind_buffer(lights_buffer.get_buffer(), lights_buffer.get_offset(), lights_buffer.get_size(), 0, 4, 0);
 
-	vkb::GeometrySubpass::draw(command_buffer);
+	vkb::rendering::subpasses::GeometrySubpassC::draw(command_buffer);
 }
 
 void SpecializationConstants::draw_gui()
