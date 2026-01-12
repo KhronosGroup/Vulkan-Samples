@@ -274,6 +274,12 @@ struct HPPType<VkPhysicalDeviceTensorFeaturesARM>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceDataGraphFeaturesARM>
+{
+	using Type = vk::PhysicalDeviceDataGraphFeaturesARM;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR>
 {
 	using Type = vk::PhysicalDeviceTimelineSemaphoreFeaturesKHR;
