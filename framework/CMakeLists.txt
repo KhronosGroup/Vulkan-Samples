@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 # Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -157,6 +157,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/pbr_material.h
     scene_graph/components/sampler.h
     scene_graph/components/sub_mesh.h
+    scene_graph/components/gaussian_splat.h
     scene_graph/components/texture.h
     scene_graph/components/transform.h
     scene_graph/components/image/astc.h
@@ -178,6 +179,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/mesh.cpp
     scene_graph/components/pbr_material.cpp
     scene_graph/components/sub_mesh.cpp
+    scene_graph/components/gaussian_splat.cpp
     scene_graph/components/texture.cpp
     scene_graph/components/transform.cpp
     scene_graph/components/image/astc.cpp
