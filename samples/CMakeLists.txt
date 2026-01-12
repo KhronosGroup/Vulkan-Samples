@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -93,6 +93,7 @@ set(ORDER_LIST
     "sparse_image"
     "dynamic_primitive_clipping"
     "simple_tensor_and_data_graph"
+    "graph_constants"
 
     #Performance Samples
     "swapchain_images"
