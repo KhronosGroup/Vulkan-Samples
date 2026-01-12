@@ -226,6 +226,12 @@ Demonstrate how to use vertex input bindings and attribute descriptions dynamica
 
 Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
 
+=== xref:./{extension_samplespath}layer_settings/README.adoc[Layer Settings]
+
+*Extension*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_layer_settings[`VK_EXT_layer_settings`]
+
+Demonstrate how to use VK_EXT_layer_settings to fine tune the settings of layers such as Validation Layers programmatically.
+
 === xref:./{extension_samplespath}logic_op_dynamic_state/README.adoc[Logic operations dynamic state]
 
 *Extension*: https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_extended_dynamic_state2.html[`VK_EXT_extended_dynamic_state2`]
