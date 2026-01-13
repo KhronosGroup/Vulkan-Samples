@@ -264,6 +264,12 @@ struct HPPType<VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR>
+{
+	using Type = vk::PhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceScalarBlockLayoutFeaturesEXT>
 {
 	using Type = vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT;

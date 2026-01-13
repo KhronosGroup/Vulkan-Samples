@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2025, Arm Limited and Contributors
+- Copyright (c) 2026, Arm Limited and Contributors
 - Copyright (c) 2021-2026, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
@@ -225,6 +225,12 @@ Demonstrate how to use vertex input bindings and attribute descriptions dynamica
 *Extension*: https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_extended_dynamic_state2.html[`VK_EXT_extended_dynamic_state2`]
 
 Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
+
+=== xref:./{extension_samplespath}shader_relaxed_extended_instruction/README.adoc[Shader Relaxed Extended Instruction]
+
+*Extension*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_shader_relaxed_extended_instruction[`VK_KHR_shader_relaxed_extended_instruction`]
+
+Demonstrate how to use VK_KHR_shader_relaxed_extended_instruction for usage of forward references on non-semantic instruction when required.
 
 === xref:./{extension_samplespath}logic_op_dynamic_state/README.adoc[Logic operations dynamic state]
 
