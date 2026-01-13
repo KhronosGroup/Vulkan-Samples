@@ -53,7 +53,7 @@ Subpasses::Subpasses()
 
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
+	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional=*/true);
 
 	VkLayerSettingEXT layerSetting;
 	layerSetting.pLayerName   = "MoltenVK";
@@ -62,8 +62,8 @@ Subpasses::Subpasses()
 	layerSetting.valueCount   = 1;
 
 	// Make this static so layer setting reference remains valid after leaving constructor scope
-	static const int32_t useMetalArgumentBuffers = 0;
-	layerSetting.pValues                         = &useMetalArgumentBuffers;
+	static const int32_t disableMetalArgumentBuffers = 0;
+	layerSetting.pValues                             = &disableMetalArgumentBuffers;
 
 	add_layer_setting(layerSetting);
 #endif
@@ -303,7 +303,8 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
-	auto scene_subpass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
+	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -335,7 +336,8 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
-	auto scene_subpass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
+	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});

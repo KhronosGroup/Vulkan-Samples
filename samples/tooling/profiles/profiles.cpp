@@ -47,13 +47,18 @@ Profiles::~Profiles()
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
 		for (auto &tex : textures)
+		{
+			vkDestroyImageView(get_device().get_handle(), tex.image_view, nullptr);
+			vkDestroyImage(get_device().get_handle(), tex.image, nullptr);
 			vkFreeMemory(get_device().get_handle(), tex.memory, nullptr);
+		}
 
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), base_descriptor_set_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), sampler_descriptor_set_layout, nullptr);
+		vkDestroySampler(get_device().get_handle(), sampler, nullptr);
 	}
 }
 
@@ -91,6 +96,14 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalD
 
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
+	if (gpu.is_extension_supported(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+	{
+		enabled_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+	}
+#endif
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 	create_info.pNext                   = gpu.get_extension_feature_chain();
@@ -153,39 +166,21 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 	VkInstanceCreateInfo create_info{};
 
 #if (defined(VKB_ENABLE_PORTABILITY))
+	enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
+	// Enumerate all instance extensions for the loader + driver to determine if VK_KHR_portability_enumeration is available
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
 	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
-	// If VK_KHR_portability_enumeration is available at runtime, enable the extension and flag for instance creation
+	// If VK_KHR_portability_enumeration is available in the implementation, then we must enable the extension
 	if (std::ranges::any_of(available_instance_extensions,
 	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	}
-#endif
-
-#if defined(PLATFORM__MACOS)
-	// On Apple use layer setting to enable MoltenVK's Metal argument buffers - needed for descriptor indexing/scaling
-	enabled_extensions.push_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
-
-	VkLayerSettingEXT layerSetting{};
-	layerSetting.pLayerName   = "MoltenVK";
-	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
-	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
-	layerSetting.valueCount   = 1;
-
-	const int32_t useMetalArgumentBuffers = 1;
-	layerSetting.pValues                  = &useMetalArgumentBuffers;
-
-	VkLayerSettingsCreateInfoEXT layerSettingsCreateInfo{};
-	layerSettingsCreateInfo.sType        = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
-	layerSettingsCreateInfo.settingCount = 1;
-	layerSettingsCreateInfo.pSettings    = &layerSetting;
-
-	create_info.pNext = &layerSettingsCreateInfo;
 #endif
 
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -464,6 +459,7 @@ void Profiles::setup_descriptor_pool()
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
 	        3);
+	descriptor_pool_create_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -501,6 +497,7 @@ void Profiles::setup_descriptor_set_layout()
 	        static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
+	descriptor_layout_create_info.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &base_descriptor_set_layout));
 
 	// Set layout for the samplers
@@ -513,6 +510,7 @@ void Profiles::setup_descriptor_set_layout()
 	        static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
+	descriptor_layout_create_info.pNext        = nullptr;
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &sampler_descriptor_set_layout));
 
 	// Pipeline layout

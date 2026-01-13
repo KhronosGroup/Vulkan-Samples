@@ -149,6 +149,17 @@ void RaytracingExtended::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}
+
+	// Using this removes the need to explicitly force an image format inside the shader
+	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	{
+		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
+		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("Requested required feature shaderStorageImageReadWithoutFormat or shaderStorageImageWriteWithoutFormat is not supported");
+	}
 }
 
 /*

@@ -43,9 +43,9 @@ class Camera : public Component
 
 	virtual std::type_index get_type() override;
 
-	virtual glm::mat4 get_projection() = 0;
+	virtual glm::mat4 get_projection() const = 0;
 
-	glm::mat4 get_view();
+	glm::mat4 get_view() const;
 
 	void set_node(vkb::scene_graph::NodeC &node);
 
