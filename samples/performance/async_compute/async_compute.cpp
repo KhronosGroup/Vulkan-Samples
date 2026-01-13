@@ -42,7 +42,7 @@ void AsyncComputeSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 #ifdef VKB_ENABLE_PORTABILITY
 	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 #endif
 }
 
@@ -831,7 +831,9 @@ AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderConte
     vkb::ForwardSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 {
 	// PCF, so need depth bias to avoid (most) shadow acne.
-	base_rasterization_state.depth_bias_enable = VK_TRUE;
+	auto rasterization_state              = get_rasterization_state();
+	rasterization_state.depth_bias_enable = true;
+	set_rasterization_state(rasterization_state);
 }
 
 void AsyncComputeSample::DepthMapSubpass::draw(vkb::core::CommandBufferC &command_buffer)
@@ -863,7 +865,7 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::core::CommandBufferC
 
 	auto &render_frame = get_render_context().get_active_frame();
 
-	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4), thread_index);
+	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4), get_thread_index());
 
 	allocation.update(shadow_matrix);
 
