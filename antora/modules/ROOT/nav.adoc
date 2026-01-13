@@ -84,6 +84,7 @@
 *** xref:samples/extensions/hpp_push_descriptors/README.adoc[Push descriptors (Vulkan-Hpp)]
 ** xref:samples/extensions/ray_tracing_basic/README.adoc[Raytracing basic]
 ** xref:samples/extensions/ray_tracing_extended/README.adoc[Raytracing extended]
+** xref:samples/extensions/ray_tracing_invocation_reorder/README.adoc[Ray tracing invocation reorder (SER)]
 ** xref:samples/extensions/ray_queries/README.adoc[Ray queries]
 ** xref:samples/extensions/ray_tracing_reflection/README.adoc[Ray tracing reflection]
 ** xref:samples/extensions/ray_tracing_position_fetch/README.adoc[Ray tracing position fetch]
