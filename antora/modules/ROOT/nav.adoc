@@ -79,6 +79,7 @@
 ** xref:samples/extensions/open_cl_interop/README.adoc[OpenCL interop]
 ** xref:samples/extensions/open_cl_interop_arm/README.adoc[OpenCL interop (Arm)]
 ** xref:samples/extensions/open_gl_interop/README.adoc[OpenGL interop]
+** xref:samples/extensions/pipeline_binary/README.adoc[Pipeline Binary]
 ** xref:samples/extensions/portability/README.adoc[Portability]
 ** xref:samples/extensions/push_descriptors/README.adoc[Push descriptors]
 *** xref:samples/extensions/hpp_push_descriptors/README.adoc[Push descriptors (Vulkan-Hpp)]

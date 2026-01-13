@@ -1,0 +1,116 @@
+////
+- Copyright (c) 2026, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/pipeline_binary[Khronos Vulkan samples github repository].
+endif::[]
+
+= Pipeline binary (VK_KHR_pipeline_binary)
+:description: Interactive demonstration of pipeline binary capture, persistence, and performance benefits.
+
+== Overview
+VK_KHR_pipeline_binary lets you explicitly capture and reuse driver-produced pipeline binaries. Instead of relying only on opaque pipeline caches, you can:
+
+- Compute a portable pipeline key up front for a given set of creation parameters.
+- Ask the driver to give you an implementation-specific binary for that key.
+- Persist that binary and reuse it on the same driver/device to avoid runtime compilation hitches.
+
+This sample provides an interactive demonstration of the complete pipeline binary workflow. It creates a compute pipeline, captures its binary, and allows you to:
+
+- Recreate pipelines from scratch or from cached binaries with performance timing
+- Save binaries to disk and load them back
+- Compare creation times to see the performance benefits
+- Observe the speedup gained from using pre-compiled binaries
+
+== Why and when to use it
+Pipeline caches are useful, but they are intentionally opaque and not keyed by a structure you can compute deterministically. Pipeline binaries add:
+
+- Deterministic cache management (you can compute the key before creating a pipeline).
+- Cross-process or install-time pre-warming strategies.
+- A clear, explicit handle (VkPipelineBinaryKHR) you can store and manage.
+
+They complement other techniques:
+
+- VK_EXT_graphics_pipeline_library reduces link-time work, but doesn’t hand you the final binary for persistence.
+- VK_EXT_shader_object changes the binding model, not binary persistence.
+
+== How it works (TL;DR)
+. Prepare the same creation info you’d pass to vkCreate*Pipelines (compute or graphics).
+. Wrap it in VkPipelineCreateInfoKHR.
+. vkGetPipelineKeyKHR(device, &VkPipelineCreateInfoKHR, &VkPipelineBinaryKeyKHR) → portable key.
+. vkCreatePipelineBinariesKHR(device, &VkPipelineBinaryCreateInfoKHR, …) → VkPipelineBinaryKHR handle.
+. vkGetPipelineBinaryDataKHR(device, &VkPipelineBinaryDataInfoKHR, …) → query size, then fetch bytes.
+. Store bytes together with device/vendor/driver identifiers and the key.
+
+== Required Vulkan extensions and features
+To use feature chaining like the other samples, this sample enables the following and requests the needed feature explicitly:
+
+- Instance: `VK_KHR_get_physical_device_properties2` — required by the framework to chain extension feature structs during device creation.
+- Device: `VK_KHR_pipeline_binary` — the extension demonstrated here.
+- Device: `VK_KHR_maintenance5` — defines the `VkPipelineCreateFlags2` flag space that includes CAPTURE_DATA (not required for this sample’s path, but commonly expected by validation).
+- Device: `VK_KHR_dynamic_rendering`, `VK_KHR_depth_stencil_resolve`, `VK_KHR_create_renderpass2` — commonly used by the framework/WSI paths; enabled to avoid spurious present-time validation issues.
+
+Note: This sample uses the `pPipelineCreateInfo` path when creating pipeline binaries, so it does not require creating a live pipeline with `CAPTURE_DATA` set.
+
+== Interactive UI Features
+The sample provides an interactive GUI with three main sections:
+
+=== Pipeline Binary Info
+Displays initial information about pipeline binary support, properties, and the captured binary details including key size and binary signature.
+
+=== Interactive Demo
+Provides buttons to interact with the pipeline binary system:
+
+- **Recreate Pipeline (from scratch)**: Destroys and recreates the pipeline using normal creation, measuring the time taken.
+- **Recreate Pipeline (from binary)**: Recreates the pipeline using the cached binary data, demonstrating faster creation.
+- **Save Binary to File**: Persists the binary and its key to disk (`pipeline_binary.bin`).
+- **Load Binary from File**: Loads a previously saved binary from disk, enabling cross-session reuse.
+
+=== Performance Statistics
+Shows timing measurements and performance comparisons:
+
+- Creation time from scratch (in milliseconds)
+- Creation time from binary (in milliseconds)
+- Speedup factor (how much faster binary creation is)
+- Total recreation counts for each method
+- Binary size and key size information
+
+== Walkthrough of the code
+- log_pipeline_binary_support() uses vkGetPhysicalDeviceFeatures2/properties2 to show what the driver supports and prefers regarding internal caches and compression.
+- demo_pipeline_key_and_binary():
+  * Reuses the cached compute pipeline creation info and wraps it in VkPipelineCreateInfoKHR.
+  * Calls vkGetPipelineKeyKHR to compute the key.
+  * Calls vkCreatePipelineBinariesKHR with pPipelineCreateInfo set (and pipeline/pKeysAndDataInfo null) to get a VkPipelineBinaryKHR.
+  * Calls vkGetPipelineBinaryDataKHR twice to first query size, then fetch bytes (requires a valid VkPipelineBinaryKeyKHR pointer on both calls).
+  * Stores the binary data and key in member variables for later reuse.
+- recreate_pipeline_from_scratch(): Destroys and recreates the pipeline normally, measuring creation time with high-resolution timing.
+- recreate_pipeline_from_binary(): Creates a pipeline from the cached binary data using VkPipelineBinaryKeysAndDataKHR, demonstrating the reuse path and measuring performance.
+- save_binary_to_file() / load_binary_from_file(): Demonstrate persistence by writing/reading the key and binary data to/from disk.
+- on_update_ui_overlay(): Provides the interactive GUI with buttons and real-time statistics display.
+
+== Best practices and caveats
+- Treat captured binaries as opaque and device/driver-specific; don’t assume portability across vendors or driver revisions.
+- Record identity metadata (vendor ID, device ID, driver version, pipeline key) so you can invalidate stale entries.
+- Some drivers may prefer or enforce internal caches; honor properties like pipelineBinaryPrefersInternalCache.
+- Not all implementations will return data; some may return zero bytes. Handle that gracefully.
+- Any change in creation parameters changes the key and the resulting binary.
+
+== References
+- VK_KHR_pipeline_binary specification: xref:https://docs.vulkan.org/spec/latest/chapters/pipelines.html#pipelines-binaries[pipeline binaries]
+- Related samples: xref:../graphics_pipeline_library/README.adoc[graphics_pipeline_library], xref:../pipeline_cache/README.adoc[pipeline_cache]
+- Khronos Blog: xref:https://www.khronos.org/blog/bringing-explicit-pipeline-caching-control-to-vulkan[Bringing explicit pipeline caching control]  <- this blog includes graphs and explanation which could help with understanding how this works.

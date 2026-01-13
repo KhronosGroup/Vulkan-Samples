@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2026, Arm Limited and Contributors
  * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -345,6 +345,12 @@ template <>
 struct HPPType<VkSampler>
 {
 	using Type = vk::Sampler;
+};
+
+template <>
+struct HPPType<VkPhysicalDevicePipelineBinaryFeaturesKHR>
+{
+	using Type = vk::PhysicalDevicePipelineBinaryFeaturesKHR;
 };
 
 template <>
