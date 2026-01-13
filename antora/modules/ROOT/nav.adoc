@@ -1,7 +1,7 @@
 ////
 - Copyright (c) 2023-2026, Holochip Inc
 - Copyright (c) 2023-2026, Sascha Willems
-- Copyright (c) 2025, Arm Limited and Contributors
+- Copyright (c) 2026, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -54,6 +54,7 @@
 ** xref:samples/extensions/buffer_device_address/README.adoc[Buffer device address]
 ** xref:samples/extensions/calibrated_timestamps/README.adoc[Calibrated timestamps]
 ** xref:samples/extensions/conditional_rendering/README.adoc[Conditional rendering]
+** xref:samples/extensions/compute_shader_derivatives/README.adoc[Compute shader derivatives]
 ** xref:samples/extensions/conservative_rasterization/README.adoc[Conservative rasterization]
 ** xref:samples/extensions/debug_utils/README.adoc[Debug utils]
 ** xref:samples/extensions/descriptor_buffer_basic/README.adoc[Descriptor buffer basic]
