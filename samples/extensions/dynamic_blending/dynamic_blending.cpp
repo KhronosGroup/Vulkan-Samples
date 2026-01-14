@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Mobica
+/* Copyright (c) 2023-2026, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
