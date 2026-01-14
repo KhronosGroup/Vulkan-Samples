@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2025-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,7 +52,6 @@ void FragmentDensityMap::destroy_pipeline(FragmentDensityMap::PipelineData &pipe
 FragmentDensityMap::FragmentDensityMap()
 {
 	title = "Fragment Density Map";
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME);

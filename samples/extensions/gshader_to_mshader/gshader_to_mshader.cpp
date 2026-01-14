@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Mobica Limited
+/* Copyright (c) 2024-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +21,6 @@ GshaderToMshader::GshaderToMshader()
 {
 	title = "task_mesh_migration";
 
-	set_api_version(VK_API_VERSION_1_1);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);

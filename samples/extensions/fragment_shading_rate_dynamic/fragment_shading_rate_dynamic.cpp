@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Holochip
+/* Copyright (c) 2021-2026, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,6 @@ FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
 	(void) ubo_scene.skysphere_modelview;        // this is used in the shader
 
 	// Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
@@ -1108,7 +1107,7 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 
 	const auto enabled_instance_extensions = get_instance().get_extensions();
 	debug_utils_supported =
-	    std::ranges::find_if(enabled_instance_extensions, [](const char *ext) { return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; }) !=
+	    std::ranges::find_if(enabled_instance_extensions, [](std::string const &ext) { return ext == VK_EXT_DEBUG_UTILS_EXTENSION_NAME; }) !=
 	    enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;

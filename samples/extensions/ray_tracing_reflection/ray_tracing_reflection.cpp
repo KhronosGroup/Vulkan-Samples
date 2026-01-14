@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2026, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,6 @@ RaytracingReflection::RaytracingReflection()
 {
 	title = "Hardware accelerated ray tracing";
 
-	set_api_version(VK_API_VERSION_1_2);
-
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
@@ -122,6 +120,11 @@ RaytracingReflection::~RaytracingReflection()
 
 		ubo.reset();
 	}
+}
+
+uint32_t RaytracingReflection::get_api_version() const
+{
+	return VK_API_VERSION_1_2;
 }
 
 /*

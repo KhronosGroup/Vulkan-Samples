@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,6 @@ ConstantData::ConstantData()
 	}
 
 	// Request sample-specific extensions as optional
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, true);
 	add_device_extension(VK_KHR_MAINTENANCE3_EXTENSION_NAME, true);
 	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME, true);
 }

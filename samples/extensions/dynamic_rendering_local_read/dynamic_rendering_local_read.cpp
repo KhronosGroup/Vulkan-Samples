@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,8 +31,6 @@ DynamicRenderingLocalRead::DynamicRenderingLocalRead()
 	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 256.f, 0.1f);
 
 #if defined(USE_DYNAMIC_RENDERING)
-	set_api_version(VK_API_VERSION_1_2);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
 	// To simplify barrier setup used for dynamic rendering, we use sync2
@@ -69,6 +67,11 @@ DynamicRenderingLocalRead::~DynamicRenderingLocalRead()
 		}
 		vkDestroySampler(get_device().get_handle(), textures.transparent_glass.sampler, nullptr);
 	}
+}
+
+uint32_t DynamicRenderingLocalRead::get_api_version() const
+{
+	return VK_API_VERSION_1_2;
 }
 
 void DynamicRenderingLocalRead::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

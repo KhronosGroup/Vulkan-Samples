@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Holochip Corporation
+/* Copyright (c) 2021-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,7 +59,6 @@ struct CopyBuffer
 
 MultiDrawIndirect::MultiDrawIndirect()
 {
-	set_api_version(VK_API_VERSION_1_2);
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, true /* optional */);
 }
 
@@ -91,6 +90,11 @@ MultiDrawIndirect::~MultiDrawIndirect()
 		cpu_staging_buffer.reset();
 		indirect_call_buffer.reset();
 	}
+}
+
+uint32_t MultiDrawIndirect::get_api_version() const
+{
+	return VK_API_VERSION_1_2;
 }
 
 void MultiDrawIndirect::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

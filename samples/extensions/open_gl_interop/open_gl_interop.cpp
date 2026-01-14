@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2025, Bradley Austin Davis
- * Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Bradley Austin Davis
+ * Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -117,9 +117,6 @@ OpenGLInterop::OpenGLInterop()
 {
 	zoom  = -2.5f;
 	title = "Interoperability with OpenGL";
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
@@ -318,6 +315,13 @@ void OpenGLInterop::generate_quad()
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
+}
+
+void OpenGLInterop::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME]    = vkb::RequestMode::Required;
 }
 
 void OpenGLInterop::setup_descriptor_pool()

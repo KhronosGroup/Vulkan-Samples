@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Google
+/* Copyright (c) 2023-2026, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -896,8 +896,6 @@ SwapchainRecreation::SwapchainRecreation()
 	if ((use_maintenance1 == nullptr) || (strcmp(use_maintenance1, "no") != 0))
 	{
 		// Request sample-specific extensions as optional
-		add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME, true);
-		add_instance_extension(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME, true);
 		add_device_extension(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME, true);
 	}
 	else
@@ -978,6 +976,16 @@ void SwapchainRecreation::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	if (allow_maintenance1)
 	{
 		REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT, swapchainMaintenance1);
+	}
+}
+
+void SwapchainRecreation::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
+	if (allow_maintenance1)
+	{
+		requested_extensions[VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME] = vkb::RequestMode::Optional;
+		requested_extensions[VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME]      = vkb::RequestMode::Optional;
 	}
 }
 
