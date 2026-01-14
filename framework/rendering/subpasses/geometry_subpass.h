@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -147,6 +147,9 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	virtual void                prepare_pipeline_state(vkb::core::CommandBuffer<bindingType> &command_buffer, FrontFaceType front_face, bool double_sided_material);
 	virtual void                prepare_push_constants(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
 	virtual void                update_uniform(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::scene_graph::Node<bindingType> &node, size_t thread_index);
+
+  protected:
+	std::vector<vkb::scene_graph::components::HPPMesh *> const &get_meshes_impl() const;
 
   private:
 	void                          draw_impl(vkb::core::CommandBufferCpp &command_buffer);
@@ -318,18 +321,18 @@ template <vkb::BindingType bindingType>
 inline void GeometrySubpass<bindingType>::draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh)
 {
 	// Draw submesh indexed if indices exists
-	if (sub_mesh.vertex_indices != 0)
+	if (sub_mesh.get_vertex_indices() != 0)
 	{
 		// Bind index buffer of submesh
-		command_buffer.bind_index_buffer(*sub_mesh.index_buffer, sub_mesh.index_offset, sub_mesh.index_type);
+		command_buffer.bind_index_buffer(sub_mesh.get_index_buffer(), sub_mesh.get_index_offset(), sub_mesh.get_index_type());
 
 		// Draw submesh using indexed data
-		command_buffer.draw_indexed(sub_mesh.vertex_indices, 1, 0, 0, 0);
+		command_buffer.draw_indexed(sub_mesh.get_vertex_indices(), 1, 0, 0, 0);
 	}
 	else
 	{
 		// Draw submesh using vertices only
-		command_buffer.draw(sub_mesh.vertices_count, 1, 0, 0);
+		command_buffer.draw(sub_mesh.get_vertices_count(), 1, 0, 0);
 	}
 }
 
@@ -344,11 +347,11 @@ inline std::vector<typename GeometrySubpass<bindingType>::MeshType *> const &Geo
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return meshes;
+		return get_meshes_impl();
 	}
 	else
 	{
-		return reinterpret_cast<std::vector<vkb::sg::Mesh *> const &>(meshes);
+		return reinterpret_cast<std::vector<vkb::sg::Mesh *> const &>(get_meshes_impl());
 	}
 }
 
@@ -481,6 +484,12 @@ inline vkb::core::HPPPipelineLayout &
 	}
 
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout(shader_modules);
+}
+
+template <vkb::BindingType bindingType>
+inline std::vector<vkb::scene_graph::components::HPPMesh *> const &GeometrySubpass<bindingType>::get_meshes_impl() const
+{
+	return meshes;
 }
 
 template <vkb::BindingType bindingType>

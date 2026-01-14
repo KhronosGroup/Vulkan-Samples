@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -153,7 +153,7 @@ void HPPInstancing::build_command_buffers()
 		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, planet.pipeline);
 		command_buffer.bindVertexBuffers(0, planet.mesh->get_vertex_buffer("vertex_buffer").get_handle(), offset);
 		command_buffer.bindIndexBuffer(planet.mesh->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
-		command_buffer.drawIndexed(planet.mesh->vertex_indices, 1, 0, 0, 0);
+		command_buffer.drawIndexed(planet.mesh->get_vertex_indices(), 1, 0, 0, 0);
 
 		// Instanced rocks
 		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, rocks.descriptor_set, {});
@@ -164,7 +164,7 @@ void HPPInstancing::build_command_buffers()
 		command_buffer.bindVertexBuffers(1, instance_buffer.buffer->get_handle(), offset);
 		command_buffer.bindIndexBuffer(rocks.mesh->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
 		// Render instances
-		command_buffer.drawIndexed(rocks.mesh->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
+		command_buffer.drawIndexed(rocks.mesh->get_vertex_indices(), INSTANCE_COUNT, 0, 0, 0);
 
 		draw_ui(command_buffer);
 
