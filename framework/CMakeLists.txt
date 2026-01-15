@@ -1,5 +1,5 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
-# Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2019-2026, Arm Limited and Contributors
+# Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -127,9 +127,7 @@ set(RENDERING_SUBPASSES_FILES
     rendering/subpasses/forward_subpass.h
     rendering/subpasses/lighting_subpass.h
     rendering/subpasses/geometry_subpass.h
-    rendering/subpasses/hpp_forward_subpass.h
     # Source files
-    rendering/subpasses/forward_subpass.cpp
     rendering/subpasses/lighting_subpass.cpp)
 
 set(SCENE_GRAPH_FILES

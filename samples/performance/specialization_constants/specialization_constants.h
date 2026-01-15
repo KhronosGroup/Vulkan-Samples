@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,7 +49,7 @@ class SpecializationConstants : public vkb::VulkanSampleC
 	 * @brief This subpass is responsible for rendering a Scene
 	 *		  It implements a custom draw function which passes a custom light count
 	 */
-	class ForwardSubpassCustomLights : public vkb::ForwardSubpass
+	class ForwardSubpassCustomLights : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
 		ForwardSubpassCustomLights(vkb::rendering::RenderContextC &render_context,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -450,7 +450,7 @@ MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderConte
                                                      std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets) :
     shadowmap_camera{shadowmap_camera},
     shadow_render_targets{shadow_render_targets},
-    vkb::ForwardSubpass{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
+    vkb::rendering::subpasses::ForwardSubpassC{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
 {
 }
 

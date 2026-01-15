@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,7 +69,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 
 	vkb::ShaderSource scene_vs("base.vert.spv");
 	vkb::ShaderSource scene_fs("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
+	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
 	scene_subpass->set_output_attachments({static_cast<int>(Attachments::Color)});
 
 	// Forward rendering pass
