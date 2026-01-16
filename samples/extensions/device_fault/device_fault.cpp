@@ -348,7 +348,7 @@ std::unique_ptr<vkb::core::BufferC> DeviceFault::create_index_buffer()
 
 void DeviceFault::create_vbo_buffers()
 {
-    test_buffers.resize(640);
+    test_buffers.resize(64);
     for (auto &buffer : test_buffers)
     {
         buffer = create_vbo_buffer();
