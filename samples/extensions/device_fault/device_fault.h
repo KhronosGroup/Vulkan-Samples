@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,7 +38,7 @@ private:
     VkPipelineLayout create_pipeline_layout(bool graphics);
     void             create_compute_pipeline();
     void             create_graphics_pipeline();
-    void             check_device_fault(VkResult result);
+    void             check_device_fault();
     void update_pointer_buffer(VkCommandBuffer cmd);
     void update_meshlets(VkCommandBuffer cmd);
 
