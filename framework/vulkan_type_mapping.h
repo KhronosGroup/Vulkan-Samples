@@ -98,6 +98,18 @@ struct HPPType<VkPhysicalDeviceBufferDeviceAddressFeatures>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceFaultFeaturesEXT>
+{
+    using Type = vk::PhysicalDeviceFaultFeaturesEXT;
+};
+
+template <>
+struct HPPType<VkPhysicalDeviceAddressBindingReportFeaturesEXT>
+{
+    using Type = vk::PhysicalDeviceAddressBindingReportFeaturesEXT;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceColorWriteEnableFeaturesEXT>
 {
 	using Type = vk::PhysicalDeviceColorWriteEnableFeaturesEXT;
