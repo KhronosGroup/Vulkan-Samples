@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -77,13 +77,9 @@ void DeviceFault::on_update_ui_overlay(vkb::Drawer &drawer)
     }
 }
 
-void DeviceFault::check_device_fault(VkResult result)
+void DeviceFault::check_device_fault()
 {
     VkDevice vk_device = get_device().get_handle();
-
-    if (result != VK_ERROR_DEVICE_LOST) {
-        return;
-    }
 
     // First query just the counts
     VkDeviceFaultCountsEXT faultCount = { VK_STRUCTURE_TYPE_DEVICE_FAULT_COUNTS_EXT };
@@ -112,7 +108,6 @@ void DeviceFault::check_device_fault(VkResult result)
 
         // Log the description and address info if it was able to catch the fault.
         if (faultResult == VK_SUCCESS) {
-
             // Some vendors may provide additional information
             LOGE("Vendor Fault Description: {}", faultInfo.pVendorInfos ? faultInfo.pVendorInfos->description : "No Vendor Information available.")
             // Log each address info
@@ -353,7 +348,7 @@ std::unique_ptr<vkb::core::BufferC> DeviceFault::create_index_buffer()
 
 void DeviceFault::create_vbo_buffers()
 {
-    test_buffers.resize(64);
+    test_buffers.resize(640);
     for (auto &buffer : test_buffers)
     {
         buffer = create_vbo_buffer();
@@ -434,7 +429,6 @@ DeviceFault::TestBuffer DeviceFault::create_pointer_buffer()
     set_memory_debug_label("Allocating Pointer Buffer ");
     VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &buffer.memory));
 
-    // DONE: LOGI("PointerBuffer::BindMemory::Binding");
     set_memory_debug_label("Binding Pointer Buffer ");
     VK_CHECK(vkBindBufferMemory(get_device().get_handle(), buffer.buffer, buffer.memory, 0));
 
@@ -581,13 +575,10 @@ void DeviceFault::render(float delta_time)
     {
         ApiVulkanSample::submit_frame();
     }
-    catch (std::exception const &e)
+    catch (std::runtime_error const &e)
     {
-        vk::DeviceLostError const *device_lost_error = reinterpret_cast<vk::DeviceLostError const *>(&e);
-        if (device_lost_error)
-        {
-            check_device_fault(VK_ERROR_DEVICE_LOST);
-        }
+        check_device_fault();
+        std::rethrow_exception(std::current_exception());
     }
 
 }
