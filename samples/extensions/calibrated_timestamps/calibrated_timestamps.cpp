@@ -29,6 +29,10 @@ std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 			return "clock monotonic raw time domain";
 		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
 			return "query performance time domain";
+		case VK_TIME_DOMAIN_SWAPCHAIN_LOCAL_EXT:
+			return "swapchain local time domain";
+		case VK_TIME_DOMAIN_PRESENT_STAGE_LOCAL_EXT:
+			return "present stage local time domain";
 		default:
 			return "unknown time domain";
 	}
@@ -778,16 +782,23 @@ void CalibratedTimestamps::get_time_domains()
 
 	if (result == VK_SUCCESS)
 	{
-		// Resize time domains vector:
-		time_domains.resize(time_domain_count);
+		std::vector<VkTimeDomainEXT> all_time_domains(time_domain_count);
 		// Update time_domain vector:
-		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
-	}
+		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, all_time_domains.data());
 
-	if (time_domain_count > 0)
-	{
-		for (VkTimeDomainEXT time_domain : time_domains)
+		time_domains.clear();
+		timestamps_info.clear();
+
+		for (VkTimeDomainEXT time_domain : all_time_domains)
 		{
+			// Skip swapchain specific time domains as they require extra setup (VK_EXT_present_timing and pNext)
+			if (time_domain == VK_TIME_DOMAIN_SWAPCHAIN_LOCAL_EXT || time_domain == VK_TIME_DOMAIN_PRESENT_STAGE_LOCAL_EXT)
+			{
+				continue;
+			}
+
+			time_domains.push_back(time_domain);
+
 			// Initialize in-scope time stamp info variable:
 			VkCalibratedTimestampInfoEXT timestamp_info{};
 
@@ -801,10 +812,10 @@ void CalibratedTimestamps::get_time_domains()
 		}
 
 		// Resize time stamps vector
-		timestamps.resize(time_domain_count);
+		timestamps.resize(time_domains.size());
 	}
 
-	is_time_domain_init = ((result == VK_SUCCESS) && (time_domain_count > 0));
+	is_time_domain_init = ((result == VK_SUCCESS) && (!time_domains.empty()));
 }
 
 VkResult CalibratedTimestamps::get_timestamps()
