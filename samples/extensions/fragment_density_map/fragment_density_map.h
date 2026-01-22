@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2025-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,28 +17,26 @@
 
 #pragma once
 
-#include "api_vulkan_sample.h"
+#include "gltf_api_vulkan_sample.h"
 #include <vulkan/vulkan_core.h>
 
-class FragmentDensityMap : public ApiVulkanSample
+class FragmentDensityMap : public GLTFApiVulkanSample
 {
   public:
 	FragmentDensityMap();
 	~FragmentDensityMap() override;
 
-	void prepare_pipelines();
+	void prepare_pipelines() override;
 
 	// Override basic framework functionality
 	void build_command_buffers() override;
 	void render(float delta_time) override;
-	bool resize(const uint32_t width, const uint32_t height) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void setup_render_pass() override;
 	void setup_framebuffer() override;
-	void setup_color();
+	void setup_color() override;
 	void setup_depth_stencil() override;
-	void setup_samplers();
-	void prepare_gui() override;
+	void setup_samplers() override;
 
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
@@ -46,36 +44,15 @@ class FragmentDensityMap : public ApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:
-	struct PipelineData
+	struct ConfigOptionsFDM
 	{
-		VkPipeline            pipeline{VK_NULL_HANDLE};
-		VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
-		VkDescriptorSetLayout set_layout{VK_NULL_HANDLE};
-	};
-
-	struct SubmeshData
-	{
-		const vkb::sg::SubMesh             *submesh;
-		glm::mat4                           world_matrix;
-		std::unique_ptr<vkb::core::BufferC> vertex_ubo;
-		vkb::sg::Texture                   *base_color_texture;
-	};
-
-	struct ConfigOptions
-	{
-		bool operator==(const ConfigOptions &) const = default;
+		bool operator==(const ConfigOptionsFDM &) const = default;
 		bool enable_fdm{true};
 		bool update_fdm{true};
 		bool debug_fdm{false};
 		bool show_stats{false};
 		bool generate_fdm_compute{false};
 		bool show_fdm{false};
-	};
-
-	struct UBOVS
-	{
-		glm::mat4 projection;
-		glm::mat4 modelview;
 	};
 
 	struct FDMUBO
@@ -85,11 +62,10 @@ class FragmentDensityMap : public ApiVulkanSample
 		glm::vec4 circle_radius{glm::vec4(0.0f)};
 	};
 
-	struct
+	struct SamplersFDM
 	{
 		VkSampler subsampled_nearest{VK_NULL_HANDLE};
-		VkSampler nearest{VK_NULL_HANDLE};
-	} samplers{};
+	} samplersFDM{};
 
 	struct
 	{
@@ -114,42 +90,16 @@ class FragmentDensityMap : public ApiVulkanSample
 		VkExtent3D                          extend{};
 	} fdm{};
 
-	struct
-	{
-		ImageData        image{};
-		VkExtent2D       extend{};
-		VkFramebuffer    framebuffer{VK_NULL_HANDLE};
-		VkDescriptorPool descriptor_pool{VK_NULL_HANDLE};
+	ConfigOptionsFDM current_options_fdm;
+	ConfigOptionsFDM last_options_fdm;
 
-		PipelineData sky_pipeline{};
+	void reset_gpu_data() override;
+	void update_extents() override;
+	void update_uniform_buffer(float delta_time) override;
+	void setup_additional_descriptor_pool() override;
+	void setup_descriptor_set_layout_present() override;
+	void setup_descriptor_set_present() override;
 
-		struct
-		{
-			PipelineData                 pipeline{};
-			std::vector<VkDescriptorSet> descriptor_sets;
-		} meshes;
-	} main_pass{};
-
-	struct
-	{
-		PipelineData pipeline{};
-
-		VkRenderPass    render_pass = VK_NULL_HANDLE;
-		VkDescriptorSet set{VK_NULL_HANDLE};
-	} present{};
-
-	vkb::DebugUtilsExtDebugUtils debug_utils;
-
-	std::unique_ptr<vkb::sg::Scene> sg_scene;
-
-	std::vector<SubmeshData> scene_data;
-
-	ConfigOptions current_options;
-	ConfigOptions last_options;
-
-	uint32_t frame_idx{0};
-
-	void reset_fdm_gpu_data();
 	void setup_fragment_density_map();
 
 	void write_density_map(VkCommandBuffer cmd_buffer);
@@ -157,33 +107,15 @@ class FragmentDensityMap : public ApiVulkanSample
 	bool is_generate_fdm_compute();
 	bool is_fdm_supported();
 	bool is_fdm_enabled();
+	bool is_show_stats() override;
 	bool is_update_fdm_enabled();
 	bool is_show_fdm_enabled();
-	bool is_show_stats();
 	bool is_debug_fdm_enabled();
 
-	void update_extents();
-
-	void load_assets();
-
-	void update_uniform_buffer(float delta_time);
-
-	void prepare_uniform_buffers_main_pass();
-	void setup_descriptor_pool_main_pass();
-	void setup_descriptor_set_layout_main_pass();
-	void setup_descriptor_set_main_pass();
-
 	void prepare_uniform_buffers_fdm();
-	void setup_additional_descriptor_pool();
 
 	void setup_descriptor_set_layout_fdm();
 	void setup_descriptor_set_fdm();
-
-	void setup_descriptor_set_layout_present();
-	void setup_descriptor_set_present();
-
-	void destroy_pipeline(PipelineData &pipeline_data);
-	void destroy_image(ApiVulkanSample::ImageData &image_data);
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_fragment_density_map();

@@ -1,5 +1,6 @@
 ////
-- Copyright (c) 2023-2025, Sascha Willems
+- Copyright (c) 2023-2026, Sascha Willems
+- Copyright (c) 2026, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -46,6 +47,12 @@ See link:./vulkan_sample.h[vulkan_sample.h] and link:./vulkan_sample.cpp[vulkan_
 This base class uses less abstraction, letting you work more explicitly with the api.
 
 See link:./api_vulkan_sample.h[api_vulkan_sample.h] and link:./api_vulkan_sample.cpp[api_vulkan_sample.cpp].
+
+=== GLTF API sample base class
+
+This base class is built on top of the API sample base class, with the addition of GLTF scene-loading functionalities. 
+
+See link:./gltf_api_vulkan_sample.h[gltf_api_vulkan_sample.h] and link:./gltf_api_vulkan_sample.cpp[gltf_api_vulkan_sample.cpp].
 
 === Support for Vulkan-Hpp
 
