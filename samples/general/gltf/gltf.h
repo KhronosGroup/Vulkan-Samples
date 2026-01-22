@@ -33,7 +33,7 @@ class GLTF : public GLTFApiVulkanSample
 	void prepare_pipelines() override;
 	void setup_framebuffer() override;
 	void reset_gpu_data() override;
-	void setup_additional_descriptor_pool() override;	
+	void setup_additional_descriptor_pool() override;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_gltf();

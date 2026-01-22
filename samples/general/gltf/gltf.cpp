@@ -66,7 +66,7 @@ void GLTF::prepare_pipelines()
 	        VK_CULL_MODE_BACK_BIT,
 	        VK_FRONT_FACE_CLOCKWISE,
 	        0);
-	
+
 	VkPipelineColorBlendAttachmentState blend_attachment_state =
 	    vkb::initializers::pipeline_color_blend_attachment_state(
 	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,

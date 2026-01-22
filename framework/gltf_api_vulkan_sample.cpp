@@ -103,11 +103,9 @@ void GLTFApiVulkanSample::setup_samplers()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &samplers.nearest));
 }
 
-void GLTFApiVulkanSample::prepare_pipelines() 
-{}
+void GLTFApiVulkanSample::prepare_pipelines() {}
 
-void GLTFApiVulkanSample::build_command_buffers() 
-{}
+void GLTFApiVulkanSample::build_command_buffers() {}
 
 bool GLTFApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 {
@@ -155,11 +153,9 @@ bool GLTFApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 	return true;
 }
 
-void GLTFApiVulkanSample::reset_gpu_data()
-{}
+void GLTFApiVulkanSample::reset_gpu_data() {}
 
-void GLTFApiVulkanSample::render(float delta_time)
-{}
+void GLTFApiVulkanSample::render(float delta_time) {}
 
 void GLTFApiVulkanSample::load_assets()
 {
@@ -228,8 +224,7 @@ void GLTFApiVulkanSample::setup_descriptor_pool_main_pass()
 	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(main_pass.descriptor_pool), "Main pass descriptor pool");
 }
 
-void GLTFApiVulkanSample::setup_additional_descriptor_pool()
-{}
+void GLTFApiVulkanSample::setup_additional_descriptor_pool() {}
 
 void GLTFApiVulkanSample::setup_descriptor_set_layout_main_pass()
 {
@@ -428,11 +423,9 @@ void GLTFApiVulkanSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 }
 
-void GLTFApiVulkanSample::setup_render_pass()
-{}
+void GLTFApiVulkanSample::setup_render_pass() {}
 
-void GLTFApiVulkanSample::setup_framebuffer()
-{}
+void GLTFApiVulkanSample::setup_framebuffer() {}
 
 void GLTFApiVulkanSample::update_extents()
 {
