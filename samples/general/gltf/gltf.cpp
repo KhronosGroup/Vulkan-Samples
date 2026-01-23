@@ -230,7 +230,7 @@ void GLTF::build_command_buffers()
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VkCommandBuffer cmd_buffer = draw_cmd_buffers[i];
-		std::string     debug_name = std::format("Draw command buffer {}", i);
+		std::string     debug_name = fmt::format("Draw command buffer {}", i);
 		debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_COMMAND_BUFFER, get_object_handle(cmd_buffer), debug_name.c_str());
 
 		VK_CHECK(vkBeginCommandBuffer(cmd_buffer, &command_buffer_begin_info));
@@ -623,11 +623,11 @@ void GLTF::setup_framebuffer()
 		{
 			framebuffer_create_info.pAttachments = &swapchain_buffers[i].view;
 			VK_CHECK(vkCreateFramebuffer(device_handle, &framebuffer_create_info, nullptr, &framebuffers[i]));
-			std::string object_debug_name{std::format("Swapchain Framebuffer {}", i)};
+			std::string object_debug_name{fmt::format("Swapchain Framebuffer {}", i)};
 			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_FRAMEBUFFER, get_object_handle(framebuffers[i]), object_debug_name.c_str());
-			object_debug_name = std::format("Swapchain Image {}", i);
+			object_debug_name = fmt::format("Swapchain Image {}", i);
 			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE, get_object_handle(swapchain_buffers[i].image), object_debug_name.c_str());
-			object_debug_name = std::format("Swapchain Image View {}", i);
+			object_debug_name = fmt::format("Swapchain Image View {}", i);
 			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE_VIEW, get_object_handle(swapchain_buffers[i].view), object_debug_name.c_str());
 		}
 	}
