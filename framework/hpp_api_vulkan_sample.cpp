@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1085,7 +1085,7 @@ void HPPApiVulkanSample::draw_model(std::unique_ptr<vkb::scene_graph::components
 
 	command_buffer.bindVertexBuffers(0, vertex_buffer.get_handle(), offset);
 	command_buffer.bindIndexBuffer(index_buffer.get_handle(), 0, model->get_index_type());
-	command_buffer.drawIndexed(model->vertex_indices, instance_count, 0, 0, 0);
+	command_buffer.drawIndexed(model->get_vertex_indices(), instance_count, 0, 0, 0);
 }
 
 void HPPApiVulkanSample::with_command_buffer(const std::function<void(vk::CommandBuffer command_buffer)> &f, vk::Semaphore signalSemaphore)
