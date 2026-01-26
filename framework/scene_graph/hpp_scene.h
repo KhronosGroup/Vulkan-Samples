@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,8 +38,12 @@ class HPPScene : private vkb::sg::Scene
 	template <class T>
 	std::vector<T *> get_components() const
 	{
-		if constexpr (std::is_same<T, vkb::sg::Animation>::value || std::is_same<T, vkb::sg::Camera>::value || std::is_same<T, vkb::sg::Script>::value ||
-		              std::is_same<T, vkb::sg::SubMesh>::value || std::is_same<T, vkb::sg::Texture>::value)
+		if constexpr (std::is_same<T, vkb::sg::Animation>::value ||
+		              std::is_same<T, vkb::sg::Camera>::value ||
+		              std::is_same<T, vkb::sg::Light>::value ||
+		              std::is_same<T, vkb::sg::Script>::value ||
+		              std::is_same<T, vkb::sg::SubMesh>::value ||
+		              std::is_same<T, vkb::sg::Texture>::value)
 		{
 			return vkb::sg::Scene::get_components<T>();
 		}
@@ -58,8 +62,12 @@ class HPPScene : private vkb::sg::Scene
 	template <class T>
 	bool has_component() const
 	{
-		if constexpr (std::is_same<T, vkb::sg::Animation>::value || std::is_same<T, vkb::sg::Camera>::value || std::is_same<T, vkb::sg::Script>::value ||
-		              std::is_same<T, vkb::sg::SubMesh>::value || std::is_same<T, vkb::sg::Texture>::value)
+		if constexpr (std::is_same<T, vkb::sg::Animation>::value ||
+		              std::is_same<T, vkb::sg::Camera>::value ||
+		              std::is_same<T, vkb::sg::Light>::value ||
+		              std::is_same<T, vkb::sg::Script>::value ||
+		              std::is_same<T, vkb::sg::SubMesh>::value ||
+		              std::is_same<T, vkb::sg::Texture>::value)
 		{
 			return vkb::sg::Scene::has_component(typeid(T));
 		}

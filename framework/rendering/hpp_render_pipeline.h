@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include <rendering/render_pipeline.h>
-
-#include <rendering/subpasses/hpp_forward_subpass.h>
+#include "rendering/render_pipeline.h"
+#include "rendering/subpasses/forward_subpass.h"
 
 namespace vkb
 {
@@ -33,9 +32,9 @@ namespace rendering
 class HPPRenderPipeline : private vkb::RenderPipeline
 {
   public:
-	void add_subpass(std::unique_ptr<vkb::rendering::subpasses::HPPForwardSubpass> &&subpass)
+	void add_subpass(std::unique_ptr<vkb::rendering::subpasses::ForwardSubpassCpp> &&subpass)
 	{
-		vkb::RenderPipeline::add_subpass(std::move(subpass));
+		vkb::RenderPipeline::add_subpass(std::unique_ptr<vkb::rendering::subpasses::ForwardSubpassC>(reinterpret_cast<vkb::rendering::subpasses::ForwardSubpassC *>(subpass.release())));
 	}
 
 	void draw(vkb::core::CommandBufferCpp     &command_buffer,

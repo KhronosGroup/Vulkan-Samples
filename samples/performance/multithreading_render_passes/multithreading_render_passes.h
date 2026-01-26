@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Arm Limited and Contributors
+/* Copyright (c) 2023-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -80,7 +80,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	 * @brief This subpass is responsible for rendering a Scene
 	 *		  It implements a custom draw function which passes shadowmap and light matrix
 	 */
-	class MainSubpass : public vkb::ForwardSubpass
+	class MainSubpass : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
 		MainSubpass(vkb::rendering::RenderContextC                  &render_context,
