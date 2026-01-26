@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2025, Arm Limited and Contributors
+- Copyright (c) 2025-2026, Arm Limited and Contributors
 - Copyright (c) 2021-2026, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
@@ -312,6 +312,9 @@ Demonstrate how to build data graph pipelines and execute neural networks:
 
 * xref:./{extension_samplespath}tensor_and_data_graph/simple_tensor_and_data_graph/README.adoc[simple_tensor_and_data_graph]
 - Explains how to set up and execute a simple neural network using a data graph pipeline.
+
+* xref:./{extension_samplespath}tensor_and_data_graph/compute_shaders_with_tensors/README.adoc[compute_shaders_with_tensors]
+- Explains how compute shaders can be used to write input tensors and read output tensors from a simple convolutional neural network.
 
 === xref:./{extension_samplespath}ray_tracing_invocation_reorder/README.adoc[Ray Tracing Invocation Reorder]
 

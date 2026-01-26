@@ -1,7 +1,7 @@
 ////
 - Copyright (c) 2023-2026, Holochip Inc
 - Copyright (c) 2023-2026, Sascha Willems
-- Copyright (c) 2025, Arm Limited and Contributors
+- Copyright (c) 2025-2026, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -94,6 +94,7 @@
 ** xref:samples/extensions/synchronization_2/README.adoc[Synchronization 2]
 ** xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph]
 *** xref:samples/extensions/tensor_and_data_graph/simple_tensor_and_data_graph/README.adoc[Simple Tensor and Data Graph]
+*** xref:samples/extensions/tensor_and_data_graph/compute_shaders_with_tensors/README.adoc[Compute shaders with tensors]
 ** xref:samples/extensions/timeline_semaphore/README.adoc[Timeline semaphore]
 ** xref:samples/extensions/vertex_dynamic_state/README.adoc[Vertex dynamic state]
 ** xref:samples/extensions/dynamic_multisample_rasterization/README.adoc[Dynamic multisample rasterization]

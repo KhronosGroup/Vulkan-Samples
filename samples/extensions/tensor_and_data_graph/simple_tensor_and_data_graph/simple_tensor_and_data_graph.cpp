@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -54,14 +54,11 @@ void SimpleTensorAndDataGraph::request_gpu_features(vkb::core::PhysicalDeviceC &
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, shaderInt8);
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan13Features, synchronization2);
 
-	// TODO: Re-enable this feature once the emulation layer advertises it
-	// REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, tensors);
-
 	// Enable the features for tensors and data graphs which we intend to use.
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, tensors);
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, shaderTensorAccess);
-
-	// TODO: Re-enable this feature once the emulation layer advertises it
-	// REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraphShaderModule);
 
 	// Update-after-bind is required for the emulation layer
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, descriptorBindingUniformBufferUpdateAfterBind);
@@ -141,7 +138,7 @@ void SimpleTensorAndDataGraph::prepare_input_tensor()
 	input_tensor = std::make_unique<Tensor>(get_device(),
 	                                        TensorBuilder(dimensions)
 	                                            .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
-	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM)
+	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
 	                                            .with_format(VK_FORMAT_R32_SFLOAT)
 	                                            .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
 	// Upload fixed initial data - smoothly varying colors over the square

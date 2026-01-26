@@ -1,0 +1,41 @@
+// Copyright (c) 2025-2026, Arm Limited and Contributors
+digraph D {
+
+    {
+        rank=same;
+        weights[shape=ellipse]
+        biases[shape=ellipse]
+    }
+    {
+        rank=same;
+        preprocessing[shape=box]
+        input_tensor[shape=ellipse]
+        data_graph_pipeline[shape=box]
+        output_tensor[shape=ellipse]
+        postprocessing[shape=box]
+        postprocessed_tensor[shape=ellipse]
+    }
+    {
+        rank=same;
+        swapchain[shape=ellipse]
+
+        visualization_pipeline[shape=box]
+        output_image[shape=ellipse]
+        blit[shape=box]
+    }
+
+    preprocessing -> input_tensor
+ 	input_tensor -> data_graph_pipeline
+    data_graph_pipeline -> output_tensor
+    output_tensor -> postprocessing
+    postprocessing -> postprocessed_tensor
+
+    weights -> data_graph_pipeline
+    biases -> data_graph_pipeline
+
+    input_tensor -> visualization_pipeline
+    output_tensor -> visualization_pipeline
+    postprocessed_tensor -> visualization_pipeline
+    visualization_pipeline -> output_image -> blit -> swapchain
+
+}
