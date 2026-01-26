@@ -1,0 +1,290 @@
+////
+- Copyright (c) 2025-2026, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+= Shader Execution Reordering (SER) for Ray Tracing
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/ray_tracing_invocation_reorder[Khronos Vulkan samples github repository].
+endif::[]
+
+*Extensions*: https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_ray_tracing_invocation_reorder.html[`VK_EXT_ray_tracing_invocation_reorder`]
+
+*GLSL Extensions*: https://github.com/KhronosGroup/GLSL/blob/master/extensions/ext/GLSL_EXT_shader_invocation_reorder.txt[`GL_EXT_shader_invocation_reorder`]
+
+== Overview
+
+This sample demonstrates *Shader Execution Reordering (SER)*, a powerful optimization technique for ray tracing that reduces performance issues caused by divergence. SER allows you to reorganize shader invocations across the GPU to group similar work together, significantly improving coherency and performance.
+
+The sample shows how to use the `VK_EXT_ray_tracing_invocation_reorder` extension with hit objects and the `reorderThreadEXT()` / `ReorderThread()` functions to achieve performance improvements of 20–50% or more in ray tracing workloads.
+
+IMPORTANT: glslc in current Vulkan SDKs does not yet support `GL_EXT_shader_invocation_reorder`. For this reason, this sample is authored and built with **Slang** by default. The GLSL source files are provided for reference only and are not compiled by the build system.
+
+TIP: Prefer the provided **Slang** shaders for this sample. They compile to SPIR-V using the Slang compiler and expose SER via `HitObject` and `ReorderThread()` intrinsics. (GLSL usage is shown for completeness, but may not compile with glslc until support lands.)
+
+== The Divergence Problem
+
+Ray tracing faces two major performance challenges:
+
+=== Control Flow Divergence
+
+GPUs execute shader code in parallel on groups of invocations (subgroups, typically 32 or 64 threads). When invocations in the same subgroup take different code paths—such as invoking different shaders or executing different branches—the GPU must serialize execution, with active invocations waiting for inactive ones to finish.
+
+In ray tracing, this commonly occurs when:
+
+* Adjacent rays hit different objects and invoke different closest-hit shaders
+* Some rays miss while others hit geometry
+* Rays terminate at different bounce depths
+
+=== Data Divergence
+
+When rays become incoherent, they access scattered memory locations for geometry data, textures, and acceleration structures. This leads to:
+
+* Poor cache utilization
+* Increased memory bandwidth requirements
+* Stalls waiting for memory subsystems
+
+== How Shader Execution Reordering Helps
+
+SER addresses these issues by introducing *hit objects* that separate ray traversal from shader invocation, allowing the GPU to pause execution and reorder invocations:
+
+[source,glsl]
+----
+// Traditional approach: traverse and invoke shaders in one call
+traceRayEXT(topLevelAS, rayFlags, cullMask, sbtOffset, sbtStride, 
+            missIndex, rayOrigin, rayTMin, rayDirection, rayTMax, payloadIndex);
+
+// SER approach: separate traversal from shader invocation
+hitObjectEXT hitObj;
+hitObjectRecordEmptyEXT(hitObj);
+
+// Step 1: Traverse acceleration structure
+hitObjectTraceRayEXT(hitObj, topLevelAS, rayFlags, cullMask,
+                     sbtOffset, sbtStride, missIndex,
+                     rayOrigin, rayTMin, rayDirection, rayTMax, payloadIndex);
+
+// Step 2: Reorder invocations for better coherency
+reorderThreadEXT(hitObj);
+
+// Step 3: Invoke the miss or closest-hit shader
+hitObjectExecuteShaderEXT(hitObj, payloadIndex);
+----
+
+The same concepts apply in **Slang** with HLSL-style syntax:
+
+[source,slang]
+----
+// Traditional approach: traverse and invoke shaders in one call
+TraceRay(topLevelAS, RAY_FLAG_NONE, 0xff, 0, 0, 0, ray, payload);
+
+// SER approach: separate traversal from shader invocation
+RayDesc ray;
+ray.Origin = origin.xyz;
+ray.Direction = direction.xyz;
+ray.TMin = tmin;
+ray.TMax = tmax;
+
+// Step 1: Trace ray and store hit information in hit object
+HitObject hitObj = HitObject::TraceRay(topLevelAS, RAY_FLAG_NONE, 0xff, 
+                                       0, 0, 0, ray, payload);
+
+// Step 2: Reorder invocations for better coherency
+ReorderThread(hitObj);
+
+// Step 3: Execute the miss or closest-hit shader
+HitObject::Invoke(topLevelAS, hitObj, payload);
+----
+
+By calling `reorderThreadEXT()` (GLSL) or `ReorderThread()` (Slang), the GPU can:
+
+* Group invocations that will execute the same shader
+* Organize invocations accessing similar data
+* Reduce overall divergence and improve cache efficiency
+
+== Using Coherence Hints
+
+For even better performance, you can provide hints to guide the reordering:
+
+[source,glsl]
+----
+// Reorder with a coherence hint
+uint hint = 0;
+if (hitObjectIsHitEXT(hitObj))
+{
+    hint = hitObjectGetInstanceIdEXT(hitObj);
+}
+reorderThreadEXT(hitObj, hint, 8);  // Use 8 bits for the hint
+----
+
+In Slang, the equivalent looks like this:
+
+[source,slang]
+----
+uint hint = 0;
+if (hitObj.IsHit())
+{
+    hint = hitObj.GetInstanceIndex();
+}
+ReorderThread(hitObj, hint, 8);
+----
+
+The GPU sorts invocations by:
+
+1. *Shader ID* (highest priority - which shader will execute)
+2. *Your hint* (middle priority - custom application-specific data)
+3. *Implementation-specific data* (lowest priority)
+
+Good coherence hints include:
+
+* Material IDs or flags that affect control flow
+* Texture binding indices for similar data access
+* Early-exit conditions (e.g., path length, Russian Roulette)
+
+== Hit Objects Without Reordering
+
+Even if you don't need reordering, hit objects provide valuable functionality:
+
+* *Shadow/AO rays*: Skip shader invocation entirely with `hitObjectIsHitEXT()` or `hitObjectIsMissEXT()`
+* *Flexible payloads*: Use different payload types for traversal vs. shader invocation
+* *Direct hit access*: Query hit information (positions, normals, matrices) at the ray generation level
+
+== Best Practices
+
+=== When to Use SER
+
+SER provides the biggest benefits when you have:
+
+* *Path tracing* with multiple bounces and material diversity
+* *Multiple closest-hit shaders* representing different materials
+* *Secondary, scattered rays* (e.g., rough reflections)
+* *Stochastic effects* creating natural divergence
+
+SER may not help as much with:
+
+* Highly coherent primary rays
+* Simple shaders with minimal divergence
+* Single übershaders with minimal branching
+
+=== Minimizing Live State
+
+When `reorderThreadEXT()` is called, the GPU must save and restore the invocation's local variables (live state). To maximize performance:
+
+* Avoid keeping variables live across the `reorderThreadEXT()` call
+* Use smaller data types (FP16 instead of FP32 where appropriate)
+* Pack flags and enums into bit fields
+* Audit your ray payloads to remove unnecessary fields
+
+=== Device Support
+
+The extension has backwards-compatibility built in:
+
+* On devices with hardware SER support, `reorderThreadEXT()` actively reorders invocations
+* On older devices, `reorderThreadEXT()` becomes a no-op, but hit objects still work
+* Query `VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT` to check support:
+
+[source,cpp]
+----
+VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT serProperties{};
+serProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT;
+
+VkPhysicalDeviceProperties2 deviceProperties{};
+deviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+deviceProperties.pNext = &serProperties;
+
+vkGetPhysicalDeviceProperties2(physicalDevice, &deviceProperties);
+
+bool canReorder = (serProperties.rayTracingInvocationReorderReorderingHint == 
+                   VK_RAY_TRACING_INVOCATION_REORDER_MODE_REORDER_EXT);
+----
+
+== This Sample
+
+This sample demonstrates SER with an interactive comparison:
+
+* *Three material types* that create control flow divergence:
+** Diffuse ("normal") textured surfaces
+** Refraction (glass, or smoke) surfaces
+** Flame/emissive particles
+* *Toggle SER on/off* to see the performance difference
+* *Coherence hints* based on instance ID (can be toggled)
+* *Real-time UI* showing whether the device supports reordering
+
+The scene is intentionally designed to maximize divergence when SER is disabled, showing the benefits of reordering when enabled.
+
+=== Key Features
+
+* Enable/disable SER dynamically via UI
+* Toggle coherence hints to see their impact
+* Compare traditional `traceRayEXT()`/`TraceRay()` vs. hit objects + `reorderThreadEXT()`/`ReorderThread()`
+* Device capability detection and display
+
+== Enabling the Extension
+
+To use SER in your application:
+
+[source,cpp]
+----
+// Enable the extension
+add_device_extension(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
+
+// Request the feature
+REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT, 
+                         rayTracingInvocationReorder);
+----
+
+In Slang shaders:
+
+[source,slang]
+----
+// Use HitObject + ReorderThread to enable SER
+HitObject hitObj = HitObject::TraceRay(topLevelAS, RAY_FLAG_NONE, 0xff, 0, 0, 0, ray, payload);
+// Optionally provide a coherence hint (e.g., instance index)
+uint hint = hitObj.IsHit() ? hitObj.GetInstanceIndex() : 0;
+ReorderThread(hitObj, hint, 8);
+HitObject::Invoke(topLevelAS, hitObj, payload);
+----
+
+If you use GLSL, enable the extension explicitly in your shader:
+
+[source,glsl]
+----
+#extension GL_EXT_shader_invocation_reorder : enable
+----
+
+NOTE: glslc in current public SDKs may not compile GLSL shaders using this extension yet; prefer Slang for now.
+
+== Performance Expectations
+
+Real-world applications have seen:
+
+* *11-24%* improvement in path tracing (with live state optimization)
+* *40-50%* in synthetic benchmarks with high divergence
+* *30-40%* when combined with other optimizations (e.g., Opacity Micromaps)
+
+The actual gain depends on:
+
+* Scene complexity and material diversity
+* Amount of control flow and data divergence
+* Quality of coherence hints
+* Live state size
+
+== Resources
+
+* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_ray_tracing_invocation_reorder.html[VK_EXT_ray_tracing_invocation_reorder specification]
+* https://github.com/KhronosGroup/GLSL/blob/master/extensions/ext/GLSL_EXT_shader_invocation_reorder.txt[GL_EXT_shader_invocation_reorder specification]
+* https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#shader-execution-reordering[DirectX Shader Execution Reordering documentation]

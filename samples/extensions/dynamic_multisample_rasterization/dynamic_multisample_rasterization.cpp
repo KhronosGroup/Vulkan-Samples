@@ -363,7 +363,7 @@ void DynamicMultisampleRasterization::load_assets()
 		VkDescriptorImageInfo imageInfo;
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView   = image->get_vk_image_view().get_handle();
-		imageInfo.sampler     = texture->get_sampler()->vk_sampler.get_handle();
+		imageInfo.sampler     = texture->get_sampler()->get_core_sampler().get_handle();
 
 		image_infos.push_back(imageInfo);
 		name_to_texture_id.emplace(name, static_cast<int32_t>(image_infos.size()) - 1);
@@ -661,8 +661,8 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	shader_stages[0] = load_shader("dynamic_multisample_rasterization/model.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_multisample_rasterization/model.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_multisample_rasterization", "model.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_multisample_rasterization", "model.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Add a pipeline for the opaque counterclockwise faces
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline_opaque));

@@ -47,7 +47,7 @@ namespace
 /**
  * @brief Helper function to fill the contents of the MVPUniform struct with the transform of the node and the camera view-projection matrix.
  */
-inline MVPUniform fill_mvp(vkb::sg::Node &node, vkb::sg::Camera &camera)
+inline MVPUniform fill_mvp(vkb::scene_graph::NodeC &node, vkb::sg::Camera const &camera)
 {
 	MVPUniform mvp;
 
@@ -292,7 +292,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 	// Build all shader variance upfront
 	auto &device = get_render_context().get_device();
 
-	for (auto &mesh : meshes)
+	for (auto &mesh : get_meshes())
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
@@ -304,10 +304,10 @@ void ConstantData::ConstantDataSubpass::prepare()
 }
 
 void ConstantData::PushConstantSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                       vkb::sg::Node             &node,
+                                                       vkb::scene_graph::NodeC   &node,
                                                        size_t                     thread_index)
 {
-	mvp_uniform = fill_mvp(node, camera);
+	mvp_uniform = fill_mvp(node, get_camera());
 }
 
 vkb::PipelineLayout &ConstantData::PushConstantSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
@@ -341,7 +341,7 @@ void ConstantData::PushConstantSubpass::prepare_push_constants(vkb::core::Comman
 }
 
 void ConstantData::DescriptorSetSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                        vkb::sg::Node             &node,
+                                                        vkb::scene_graph::NodeC   &node,
                                                         size_t                     thread_index)
 {
 	MVPUniform mvp;
@@ -352,7 +352,7 @@ void ConstantData::DescriptorSetSubpass::update_uniform(vkb::core::CommandBuffer
 
 	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(MVPUniform), thread_index);
 
-	mvp = fill_mvp(node, camera);
+	mvp = fill_mvp(node, get_camera());
 
 	// Ensure the container doesn't hold more bytes than are needed
 	auto data = vkb::to_bytes(mvp);
@@ -405,13 +405,13 @@ void ConstantData::BufferArraySubpass::draw(vkb::core::CommandBufferC &command_b
 	std::vector<MVPUniform> uniforms;
 
 	// Update with all mvp scene data
-	for (auto &mesh : meshes)
+	for (auto &mesh : get_meshes())
 	{
 		for (auto &node : mesh->get_nodes())
 		{
 			for (auto &submesh : mesh->get_submeshes())
 			{
-				uniforms.push_back(fill_mvp(*node, camera));
+				uniforms.push_back(fill_mvp(*node, get_camera()));
 			}
 		}
 	}
@@ -434,14 +434,14 @@ void ConstantData::BufferArraySubpass::draw(vkb::core::CommandBufferC &command_b
 	// Reset the instance index back to 0 for each draw call
 	instance_index = 0;
 
-	allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
+	allocate_lights<vkb::ForwardLights>(get_scene().get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
 	GeometrySubpass::draw(command_buffer);
 }
 
 void ConstantData::BufferArraySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                      vkb::sg::Node             &node,
+                                                      vkb::scene_graph::NodeC   &node,
                                                       size_t                     thread_index)
 {
 	/**

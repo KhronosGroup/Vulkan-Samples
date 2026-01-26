@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Sascha Willems
+# Copyright (c) 2019-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -36,4 +36,10 @@ add_sample_with_tags(
         "conservative_rasterization/hlsl/fullscreen.frag.hlsl"        
         "conservative_rasterization/hlsl/triangle.vert.hlsl"
         "conservative_rasterization/hlsl/triangle.frag.hlsl"
-        "conservative_rasterization/hlsl/triangleoverlay.frag.hlsl")
+        "conservative_rasterization/hlsl/triangleoverlay.frag.hlsl"
+    SHADER_FILES_SLANG
+        "conservative_rasterization/slang/fullscreen.vert.slang"
+        "conservative_rasterization/slang/fullscreen.frag.slang"        
+        "conservative_rasterization/slang/triangle.vert.slang"
+        "conservative_rasterization/slang/triangle.frag.slang"
+        "conservative_rasterization/slang/triangleoverlay.frag.slang")

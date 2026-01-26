@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, Sascha Willems
+# Copyright (c) 2023-2025, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -40,5 +40,8 @@ if (NOT APPLE)
             open_cl_interop/procedural_texture.cl
         SHADER_FILES_HLSL
             open_cl_interop/hlsl/texture_display.vert.hlsl
-            open_cl_interop/hlsl/texture_display.frag.hlsl)
+            open_cl_interop/hlsl/texture_display.frag.hlsl
+        SHADER_FILES_SLANG
+            open_cl_interop/slang/texture_display.vert.slang
+            open_cl_interop/slang/texture_display.frag.slang)
 endif()

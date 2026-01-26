@@ -43,7 +43,7 @@ ForwardSubpass::ForwardSubpass(
 void ForwardSubpass::prepare()
 {
 	auto &device = get_render_context().get_device();
-	for (auto &mesh : meshes)
+	for (auto &mesh : get_meshes())
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
@@ -56,7 +56,7 @@ void ForwardSubpass::prepare()
 
 void ForwardSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
-	allocate_lights<ForwardLights>(scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
+	allocate_lights<ForwardLights>(get_scene().get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
 	GeometrySubpass::draw(command_buffer);
