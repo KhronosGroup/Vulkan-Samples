@@ -94,6 +94,7 @@ set(ORDER_LIST
     "sparse_image"
     "dynamic_primitive_clipping"
     "simple_tensor_and_data_graph"
+    "graph_constants"
     "compute_shaders_with_tensors"
 
     #Performance Samples

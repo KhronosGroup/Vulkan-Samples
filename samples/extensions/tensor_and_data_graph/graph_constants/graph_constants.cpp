@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2026, Arm Limited and Contributors
+/* Copyright (c) 2025-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-#include "simple_tensor_and_data_graph.h"
+#include "graph_constants.h"
 
 #include <gui.h>
+#include <iomanip>
+#include <sstream>
 
-SimpleTensorAndDataGraph::SimpleTensorAndDataGraph()
+GraphConstants::GraphConstants()
 {
 	set_api_version(VK_API_VERSION_1_3);        // Required by the emulation layers
 
@@ -31,7 +33,7 @@ SimpleTensorAndDataGraph::SimpleTensorAndDataGraph()
 	add_device_extension("VK_KHR_deferred_host_operations");
 }
 
-SimpleTensorAndDataGraph::~SimpleTensorAndDataGraph()
+GraphConstants::~GraphConstants()
 {
 	if (data_graph_pipeline_descriptor_set != VK_NULL_HANDLE)
 	{
@@ -49,7 +51,7 @@ SimpleTensorAndDataGraph::~SimpleTensorAndDataGraph()
 /**
  * @brief Overridden to declare that we require some physical device features to be enabled.
  */
-void SimpleTensorAndDataGraph::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
+void GraphConstants::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, shaderInt8);
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan13Features, synchronization2);
@@ -77,7 +79,7 @@ void SimpleTensorAndDataGraph::request_gpu_features(vkb::core::PhysicalDeviceC &
 /**
  * @brief Overridden to create and set up Vulkan resources.
  */
-bool SimpleTensorAndDataGraph::prepare(const vkb::ApplicationOptions &options)
+bool GraphConstants::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))
 	{
@@ -93,6 +95,8 @@ bool SimpleTensorAndDataGraph::prepare(const vkb::ApplicationOptions &options)
 	// Create Vulkan resources
 	prepare_descriptor_pool();
 	prepare_input_tensor();
+	prepare_weights_tensor();
+	prepare_bias_tensor();
 	prepare_output_tensor();
 	prepare_output_image(get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height);
 	prepare_data_graph_pipeline();
@@ -112,7 +116,7 @@ bool SimpleTensorAndDataGraph::prepare(const vkb::ApplicationOptions &options)
  * Creates a descriptor pool which can be used to allocate descriptors for tensor and image bindings.
  * Note we can't use vkb::DescriptorPool because it doesn't know about tensors.
  */
-void SimpleTensorAndDataGraph::prepare_descriptor_pool()
+void GraphConstants::prepare_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> descriptor_pool_sizes = {
 	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10},        // Fairly arbitrary counts
@@ -132,11 +136,11 @@ void SimpleTensorAndDataGraph::prepare_descriptor_pool()
  * Creates the Tensor used as input to the neural network and fills it with some initial data.
  * Also creates a Tensor View (analogous to an Image View).
  */
-void SimpleTensorAndDataGraph::prepare_input_tensor()
+void GraphConstants::prepare_input_tensor()
 {
 	// Tensors are often four-dimensional, representing batch size, height, width and channels.
-	// In this case we are going to represent a small RGB image, so have a batch size of 1, a width and height of 10 and 3 channels.
-	std::vector<int64_t> dimensions = {1, 10, 10, 3};
+	// In this case we are going to represent a small RGB image, so have a batch size of 1, a width and height of 20 and 3 channels.
+	std::vector<int64_t> dimensions = {1, 20, 20, 3};
 	// Create tensor and back it with memory. Set linear tiling flags and host-visible VMA flags so the backing memory can updated from the CPU.
 	input_tensor = std::make_unique<Tensor>(get_device(),
 	                                        TensorBuilder(dimensions)
@@ -144,15 +148,19 @@ void SimpleTensorAndDataGraph::prepare_input_tensor()
 	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
 	                                            .with_format(VK_FORMAT_R32_SFLOAT)
 	                                            .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
-	// Upload fixed initial data - smoothly varying colors over the square
+
+	// Upload fixed initial data - White square (12 x 12 pixels) with a blue background.
 	std::vector<glm::fvec3> input_tensor_data;
+	int                     offset       = 4;
+	int                     right_offset = dimensions[1] - offset;
+
 	for (int y = 0; y < dimensions[1]; ++y)
 	{
-		float v = y / float(dimensions[1]);
 		for (int x = 0; x < dimensions[2]; ++x)
 		{
-			float u = x / float(dimensions[2]);
-			input_tensor_data.push_back(glm::fvec3{u, 1 - u, v});
+			// Fill initially with blue color otherwise, overwrite with white color if position is within the square.
+			auto color = ((offset <= y) && (y < right_offset) && (offset <= x) && (x < right_offset)) ? glm::fvec3(1.0f, 1.0f, 1.0f) : glm::fvec3(0.0f, 0.0f, 1.0f);
+			input_tensor_data.push_back(color);
 		}
 	}
 	input_tensor->update(input_tensor_data);
@@ -161,26 +169,129 @@ void SimpleTensorAndDataGraph::prepare_input_tensor()
 }
 
 /*
+ * Creates the constant weights tensor used in the convolution operator.
+ */
+void GraphConstants::prepare_weights_tensor()
+{
+	// Create a pointer which stores everything needed for a constant tensor.
+	// This will ensure the memory stays in scope.
+	weights_constant_tensor = std::make_unique<PipelineConstantTensor<float>>();
+
+	// For the weights they are expected in a [OC,KH,KW,IC] shape.
+	// OC = Output channels
+	// KH = Kernel height
+	// KW = Kernel width
+	// IC = Input channels
+	weights_constant_tensor->dimensions = {3, 3, 3, 3};
+
+	// Set the constant data for the weights.
+	// This is the kernel that will be multiplied against the input to produce the output.
+	weights_constant_tensor->constant_data.resize(3 * 3 * 3 * 3);
+	MultidimensionalArrayView<float> array_view(
+	    weights_constant_tensor->constant_data.data(), weights_constant_tensor->dimensions);
+	for (int i = 0; i < 3; ++i)
+	{
+		// First row of the 3x3 kernel
+		array_view[{i, 0, 0, i}] = 0;
+		array_view[{i, 0, 1, i}] = -0.5;
+		array_view[{i, 0, 2, i}] = 0;
+
+		// Middle row of the 3x3 kernel
+		array_view[{i, 1, 0, i}] = -0.5;
+		array_view[{i, 1, 1, i}] = 2.0;
+		array_view[{i, 1, 2, i}] = -0.5;
+
+		// Last row of the 3x3 kernel
+		array_view[{i, 2, 0, i}] = 0;
+		array_view[{i, 2, 1, i}] = -0.5;
+		array_view[{i, 2, 2, i}] = 0;
+	}
+
+	// Set up the VkTensorDescriptionARM and pass the dimensions.
+	weights_constant_tensor->tensor_description =
+	    {
+	        VK_STRUCTURE_TYPE_TENSOR_DESCRIPTION_ARM,
+	        nullptr,
+	        VK_TENSOR_TILING_LINEAR_ARM,
+	        VK_FORMAT_R32_SFLOAT,
+	        4,        // dimensions
+	        weights_constant_tensor->dimensions.data(),
+	        nullptr,        // pStrides
+	        VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM};
+
+	// Set up the VkDataGraphPipelineConstantARM and pass the VkTensorDescriptionARM and constant data.
+	// Also set the id, which should match the SPIR-V module.
+	weights_constant_tensor->pipeline_constant =
+	    {
+	        VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
+	        &weights_constant_tensor->tensor_description,
+	        0,                                                   // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
+	        weights_constant_tensor->constant_data.data()        // Host pointer to raw data
+	    };
+}
+
+/*
+ * Creates the constant bias tensor used in the convolution operator.
+ */
+void GraphConstants::prepare_bias_tensor()
+{
+	// Create a pointer which stores everything needed for a constant tensor.
+	// This will ensure the memory stays in scope.
+	bias_constant_tensor = std::make_unique<PipelineConstantTensor<float>>();
+
+	// Bias dimensions should match number of output channels.
+	bias_constant_tensor->dimensions = {3};
+
+	// Set the constant data for the bias.
+	// This will be applied to all outputs for each channel.
+	// We are using 0 here, so the output won't change.
+	bias_constant_tensor->constant_data = {0, 0, 0};
+
+	// Set up the VkTensorDescriptionARM and pass the dimensions.
+	bias_constant_tensor->tensor_description =
+	    {
+	        VK_STRUCTURE_TYPE_TENSOR_DESCRIPTION_ARM,
+	        nullptr,
+	        VK_TENSOR_TILING_LINEAR_ARM,
+	        VK_FORMAT_R32_SFLOAT,
+	        1,        // dimensions
+	        bias_constant_tensor->dimensions.data(),
+	        nullptr,        // pStrides
+	        VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM};
+
+	// Set up the VkDataGraphPipelineConstantARM and pass the VkTensorDescriptionARM and constant data.
+	// Also set the id, which should match the SPIR-V module.
+	bias_constant_tensor->pipeline_constant =
+	    {
+	        VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
+	        &bias_constant_tensor->tensor_description,
+	        1,                                                // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
+	        bias_constant_tensor->constant_data.data()        // Host pointer to raw data
+	    };
+}
+
+/*
  * Creates the Tensor used as output from the neural network.
  * Also creates a Tensor View (analogous to an Image View).
  */
-void SimpleTensorAndDataGraph::prepare_output_tensor()
+void GraphConstants::prepare_output_tensor()
 {
-	// The output of the network is half the width and height of the input, but still RGB.
-	std::vector<int64_t> dimensions = {1, 5, 5, 3};
-	// Create tensor and back it with memory
-	output_tensor      = std::make_unique<Tensor>(get_device(),
+	// The output shape of the network is determined by the kernel size (3 x 3),
+	// strides (2, 2), dilation (1, 1) and padding (0, 0, 0, 0).
+	std::vector<int64_t> dimensions = {1, 20, 20, 3};
+	output_tensor                   = std::make_unique<Tensor>(get_device(),
                                              TensorBuilder(dimensions)
                                                  .with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM | VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM)
                                                  .with_format(VK_FORMAT_R32_SFLOAT));
+
 	output_tensor_view = std::make_unique<TensorView>(*output_tensor);
 }
 
 /*
  * Creates the Image used to visualize the two tensors, which is then blitted to the Swapchain.
- * Also creates a Image View.
+ * Also creates an Image View.
  */
-void SimpleTensorAndDataGraph::prepare_output_image(uint32_t width, uint32_t height)
+void GraphConstants::prepare_output_image(uint32_t width, uint32_t height)
 {
 	output_image      = std::make_unique<vkb::core::Image>(get_device(),
                                                       vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
@@ -192,17 +303,17 @@ void SimpleTensorAndDataGraph::prepare_output_image(uint32_t width, uint32_t hei
 /*
  * Creates the Pipeline Layout, a Data Graph Pipeline and a Data Graph Pipeline Session used to run the neural network.
  */
-void SimpleTensorAndDataGraph::prepare_data_graph_pipeline()
+void GraphConstants::prepare_data_graph_pipeline()
 {
 	// Create the Pipeline Layout. This is equivalent to the pipeline layout for compute or data graph pipelines, describing what bind points are available.
-	// The neural network has its input tensor on binding 0 and its output tensor at binding 1.
+	// The neural network has its input tensor at binding 0 and its output tensor at binding 1.
 	//
 	// In order to create the layout, we just need to know which binding slots are tensors - no further details needed yet.
 	std::set<uint32_t> tensor_bindings = {0, 1};
 	data_graph_pipeline_layout         = std::make_unique<DataGraphPipelineLayout>(get_device(), tensor_bindings);
 
 	// Create a Pipeline from the layout. This is equivalent to a graphics or compute pipeline and contains a shader module which describes the
-	// neural network to execute (see `pooling.spvasm` for the SPIR-V code). It also requires the description (shape etc.) of the tensors that will
+	// neural network to execute (see `conv2d.spvasm` for the SPIR-V code). It also requires the description (shape etc.) of the tensors that will
 	// be bound to the pipeline.
 	std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> tensor_descriptions;
 	// All bindings are in set 0
@@ -213,13 +324,19 @@ void SimpleTensorAndDataGraph::prepare_data_graph_pipeline()
 	        // Binding 1 is the output tensor
 	        {1, &output_tensor->get_description()}};
 
-	VkShaderModule shader_module = vkb::load_shader("tensor_and_data_graph/simple_tensor_and_data_graph/spirv/pooling.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
+	// Add weights and bias constant tensors, which were prepared and stored earlier.
+	std::vector<VkDataGraphPipelineConstantARM *> data_graph_pipeline_constants;
+	data_graph_pipeline_constants.push_back(&weights_constant_tensor->pipeline_constant);
+	data_graph_pipeline_constants.push_back(&bias_constant_tensor->pipeline_constant);
+
+	VkShaderModule shader_module = vkb::load_shader("tensor_and_data_graph/spirv/conv2d.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
 
 	data_graph_pipeline = std::make_unique<DataGraphPipeline>(get_device(),
 	                                                          data_graph_pipeline_layout->get_handle(),
 	                                                          shader_module,
 	                                                          "main",
-	                                                          tensor_descriptions);
+	                                                          tensor_descriptions,
+	                                                          data_graph_pipeline_constants);
 
 	// Create a Pipeline Session for the Pipeline. Unlike compute and graphics pipelines, data graph pipelines require
 	// additional state to be stored (e.g. for intermediate results). This is stored separately to the pipeline itself in
@@ -232,7 +349,7 @@ void SimpleTensorAndDataGraph::prepare_data_graph_pipeline()
 /*
  * Allocates and fills in a Descriptor Set to provide bindings to the Data Graph Pipeline.
  */
-void SimpleTensorAndDataGraph::prepare_data_graph_pipeline_descriptor_set()
+void GraphConstants::prepare_data_graph_pipeline_descriptor_set()
 {
 	// Allocate descriptor set using the layout of the Data Graph Pipeline
 	VkDescriptorSetAllocateInfo alloc_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -255,7 +372,7 @@ void SimpleTensorAndDataGraph::prepare_data_graph_pipeline_descriptor_set()
  * Creates the Pipeline Layout and a Compute Pipeline used to run the compute shader which copies input and
  * output tensors to an image, so we can see their contents on the screen.
  */
-void SimpleTensorAndDataGraph::prepare_visualization_pipeline()
+void GraphConstants::prepare_visualization_pipeline()
 {
 	// Load the compute shader
 	vkb::ShaderModule &visualization_comp =
@@ -272,7 +389,7 @@ void SimpleTensorAndDataGraph::prepare_visualization_pipeline()
 /*
  * Allocates and fills in a Descriptor Set to provide bindings to the visualization Compute Pipeline.
  */
-void SimpleTensorAndDataGraph::prepare_visualization_pipeline_descriptor_set()
+void GraphConstants::prepare_visualization_pipeline_descriptor_set()
 {
 	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than allocating a new one)
 	if (visualization_pipeline_descriptor_set == VK_NULL_HANDLE)
@@ -303,7 +420,7 @@ void SimpleTensorAndDataGraph::prepare_visualization_pipeline_descriptor_set()
 /**
  * @brief Overridden to recreate the output_image when the window is resized.
  */
-bool SimpleTensorAndDataGraph::resize(uint32_t width, uint32_t height)
+bool GraphConstants::resize(uint32_t width, uint32_t height)
 {
 	// Can't destroy the old image until any outstanding commands are completed
 	get_device().wait_idle();
@@ -320,7 +437,7 @@ bool SimpleTensorAndDataGraph::resize(uint32_t width, uint32_t height)
 /**
  * @brief Overridden to do the main rendering on each frame - dispatch our neural network inference and visualize the results.
  */
-void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target)
+void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target)
 {
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());
@@ -328,7 +445,7 @@ void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &comman
 	                        0, 1, &data_graph_pipeline_descriptor_set, 0, nullptr);
 	vkCmdDispatchDataGraphARM(command_buffer.get_handle(), data_graph_pipeline_session->get_handle(), VK_NULL_HANDLE);
 
-	// Barrier for `output_tensor` (written to by the graph pipeline above, and read from by the visualization compute shader below)
+	// Barrier for `output_tensor` (written to by the data graph pipeline above, and read from by the visualization compute shader below)
 	VkTensorMemoryBarrierARM tensor_barrier = {VK_STRUCTURE_TYPE_TENSOR_MEMORY_BARRIER_ARM};
 	tensor_barrier.tensor                   = output_tensor->get_handle();
 	tensor_barrier.srcStageMask             = VK_PIPELINE_STAGE_2_DATA_GRAPH_BIT_ARM;
@@ -381,23 +498,107 @@ void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &comman
 /**
  * @brief Overridden to show labels for visualized input and output tensors.
  */
-void SimpleTensorAndDataGraph::draw_gui()
+void GraphConstants::draw_gui()
 {
 	float cx = get_render_context().get_surface_extent().width * 0.5f;
 	float cy = get_render_context().get_surface_extent().height * 0.5f;
 
 	ImDrawList *draw_list = ImGui::GetForegroundDrawList();
-	draw_list->AddText(ImVec2(cx - 300, cy + 100), IM_COL32_WHITE, "Input tensor");
-	draw_list->AddText(ImVec2(cx + 100, cy + 100), IM_COL32_WHITE, "Output tensor");
+	draw_list->AddText(ImVec2(cx - 300, cy + 110), IM_COL32_WHITE, "Input tensor");
+	draw_list->AddText(ImVec2(cx + 100, cy + 110), IM_COL32_WHITE, "Output tensor");
 
-	draw_list->AddLine(ImVec2(cx - 25, cy), ImVec2(cx - 5, cy), IM_COL32_WHITE, 5.0f);
-	ImGui::RenderArrowPointingAt(draw_list, ImVec2(cx + 25.0f, cy),
+	// Draw input shape
+	auto  input_desc       = input_tensor->get_description();
+	auto *input_dims_array = input_tensor->get_description().pDimensions;
+
+	std::string input_dims_str = "Shape: (";
+	for (auto i = 0; i < input_desc.dimensionCount; ++i)
+	{
+		input_dims_str += std::to_string(input_dims_array[i]);
+		if (i != input_desc.dimensionCount - 1)
+		{
+			input_dims_str += ", ";
+		}
+	}
+	input_dims_str += ")";
+	draw_list->AddText(ImVec2(cx - 300, cy - 140), IM_COL32_WHITE, input_dims_str.c_str());
+
+	// Draw output shape
+	auto  output_desc       = output_tensor->get_description();
+	auto *output_dims_array = output_tensor->get_description().pDimensions;
+
+	std::string output_dims_str = "Shape: (";
+	for (auto i = 0; i < output_desc.dimensionCount; ++i)
+	{
+		output_dims_str += std::to_string(output_dims_array[i]);
+		if (i != output_desc.dimensionCount - 1)
+		{
+			output_dims_str += ", ";
+		}
+	}
+	output_dims_str += ")";
+	draw_list->AddText(ImVec2(cx + 100, cy - 140), IM_COL32_WHITE, output_dims_str.c_str());
+
+	// Draw arrow between input and output.
+	draw_list->AddLine(ImVec2(cx - 60, cy), ImVec2(cx + 30, cy), IM_COL32_WHITE, 5.0f);
+	ImGui::RenderArrowPointingAt(draw_list, ImVec2(cx + 60.0f, cy),
 	                             ImVec2(30.0f, 10.0f), ImGuiDir_Right, IM_COL32_WHITE);
-	ImVec2 text_size = ImGui::CalcTextSize("Pooling");
-	draw_list->AddText(ImVec2(cx - text_size.x / 2, cy + 20), IM_COL32_WHITE, "Pooling");
+	ImVec2 text_size = ImGui::CalcTextSize("Conv2d");
+	draw_list->AddText(ImVec2(cx - text_size.x / 2, cy + 20), IM_COL32_WHITE, "Conv2d");
+
+	// Draw simple table for weights
+	ImVec2 weights_size = ImGui::CalcTextSize("Weights");
+	draw_list->AddText(ImVec2(cx - weights_size.x / 2, cy - 280), IM_COL32_WHITE, "Weights");
+
+	auto weights_data = weights_constant_tensor->constant_data;
+
+	// Only print 9 values - the kernel for one channel. This could be improved.
+	int   row_num     = 3;
+	int   col_num     = 3;
+	float start_pixel = 240;
+	for (int i = 0; i < row_num; ++i)
+	{
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(1);
+		for (int j = 0; j < col_num; ++j)
+		{
+			uint64_t index = i * (3 * 3) + j * col_num;
+			ss << weights_data[index];
+
+			if (j != col_num - 1)
+			{
+				ss << ", ";
+			}
+		}
+		draw_list->AddText(ImVec2(cx - ImGui::CalcTextSize(ss.str().c_str()).x / 2, cy - start_pixel), IM_COL32_WHITE, ss.str().c_str());
+		start_pixel -= 30;
+	}
+	draw_list->AddText(ImVec2(cx - 7, cy - start_pixel - 10), IM_COL32_WHITE, "...");
+
+	// Draw line and arrow
+	draw_list->AddLine(ImVec2(cx, cy - 110), ImVec2(cx, cy - 80), IM_COL32_WHITE, 5.0f);
+	ImGui::RenderArrowPointingAt(draw_list, ImVec2(cx, cy - 50),
+	                             ImVec2(10.0f, 30.0f), ImGuiDir_Down, IM_COL32_WHITE);
+
+	// Draw table for Bias
+	ImVec2 bias_size = ImGui::CalcTextSize("Biases");
+	draw_list->AddText(ImVec2(cx - bias_size.x / 2, cy + 200), IM_COL32_WHITE, "Biases");
+
+	auto bias_data = bias_constant_tensor->constant_data;
+
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(1) << bias_data[0] << ", " << bias_data[1] << ", " << bias_data[2];
+
+	ImVec2 bias_table_row_size = ImGui::CalcTextSize(ss.str().c_str());
+	draw_list->AddText(ImVec2(cx - bias_table_row_size.x / 2, cy + 160), IM_COL32_WHITE, ss.str().c_str());
+
+	// Draw line and arrow
+	draw_list->AddLine(ImVec2(cx, cy + 140), ImVec2(cx, cy + 110), IM_COL32_WHITE, 5.0f);
+	ImGui::RenderArrowPointingAt(draw_list, ImVec2(cx, cy + 80),
+	                             ImVec2(10.0f, 30.0f), ImGuiDir_Up, IM_COL32_WHITE);
 }
 
-std::unique_ptr<SimpleTensorAndDataGraph> create_simple_tensor_and_data_graph()
+std::unique_ptr<GraphConstants> create_graph_constants()
 {
-	return std::make_unique<SimpleTensorAndDataGraph>();
+	return std::make_unique<GraphConstants>();
 }
