@@ -791,8 +791,10 @@ void CalibratedTimestamps::get_time_domains()
 
 		for (VkTimeDomainEXT time_domain : all_time_domains)
 		{
-			// Skip swapchain specific time domains as they require extra setup (VK_EXT_present_timing and pNext)
-			if (time_domain == VK_TIME_DOMAIN_SWAPCHAIN_LOCAL_EXT || time_domain == VK_TIME_DOMAIN_PRESENT_STAGE_LOCAL_EXT)
+			if (time_domain != VK_TIME_DOMAIN_DEVICE_EXT &&
+			    time_domain != VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT &&
+			    time_domain != VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT &&
+			    time_domain != VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT)
 			{
 				continue;
 			}
