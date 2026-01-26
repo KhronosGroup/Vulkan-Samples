@@ -75,6 +75,7 @@ set(ORDER_LIST
     "ray_tracing_basic"
     "ray_tracing_extended"
     "ray_tracing_reflection"
+    "ray_tracing_invocation_reorder"
     "timeline_semaphore"
     "shader_object"
     "shader_debugprintf"

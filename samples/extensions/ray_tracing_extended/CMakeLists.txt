@@ -37,5 +37,9 @@ add_sample_with_tags(
         "ray_tracing_extended/hlsl/closesthit.rchit.hlsl"
     DXC_ADDITIONAL_ARGUMENTS
         "-fspv-extension=SPV_EXT_descriptor_indexing -fspv-extension=SPV_KHR_ray_query"
+    SHADER_FILES_SLANG
+        "ray_tracing_extended/slang/raygen.rgen.slang"
+        "ray_tracing_extended/slang/miss.rmiss.slang"
+        "ray_tracing_extended/slang/closesthit.rchit.slang"
     )
 

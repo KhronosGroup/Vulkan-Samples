@@ -122,7 +122,7 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins_)
 			return ExitCode::Help;
 		}
 		auto optionIt = option_map.find(argumentDeque[0].substr(2));
-		if (commandIt == command_map.end())
+		if (optionIt == option_map.end())
 		{
 			LOGE("Option \"{}\" is unknown!", argumentDeque[0]);
 			return ExitCode::Help;

@@ -29,8 +29,9 @@
 class RaytracingExtended : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR    ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR   acceleration_structure_features{};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{};
 
 	enum RenderMode : uint32_t
 	{

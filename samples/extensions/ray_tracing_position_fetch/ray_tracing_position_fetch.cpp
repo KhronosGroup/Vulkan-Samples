@@ -69,6 +69,17 @@ void RayTracingPositionFetch::request_gpu_features(vkb::core::PhysicalDeviceC &g
 
 	// Sample sepcific feature
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR, rayTracingPositionFetch);
+
+	// Using this removes the need to explicitly force an image format inside the shader
+	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	{
+		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
+		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("Requested required feature shaderStorageImageReadWithoutFormat or shaderStorageImageWriteWithoutFormat is not supported");
+	}
 }
 
 /*
@@ -172,7 +183,7 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 			    VK_GEOMETRY_OPAQUE_BIT_KHR);
 		}
 	}
-
+	bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	// To access vertex positions from a shader, we need to set the VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR for the bottom level acceleration structure
 	VkBuildAccelerationStructureFlagsKHR acceleration_build_flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	bottom_level_acceleration_structure->build(queue, acceleration_build_flags, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
@@ -204,6 +215,7 @@ void RayTracingPositionFetch::create_top_level_acceleration_structure()
 
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
 	top_level_acceleration_structure->add_instance_geometry(instances_buffer, 1);
+	top_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	top_level_acceleration_structure->build(queue);
 }
 
@@ -246,9 +258,18 @@ void RayTracingPositionFetch::create_shader_binding_tables()
 
 	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+	                                                                                     .with_usage(sbt_buffer_usage_flags)
+	                                                                                     .with_vma_usage(sbt_memory_usage)
+	                                                                                     .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+                                                                                       .with_usage(sbt_buffer_usage_flags)
+                                                                                       .with_vma_usage(sbt_memory_usage)
+                                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+                                                                                      .with_usage(sbt_buffer_usage_flags)
+                                                                                      .with_vma_usage(sbt_memory_usage)
+                                                                                      .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
@@ -556,8 +577,12 @@ bool RayTracingPositionFetch::prepare(const vkb::ApplicationOptions &options)
 	// This sample renders the UI overlay on top of the ray tracing output, so we need to disable color attachment clears
 	update_render_pass_flags(RenderPassCreateFlags::ColorAttachmentLoad);
 
+	acceleration_structure_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+
 	// Get the ray tracing pipeline properties, which we'll need later on in the sample
 	ray_tracing_pipeline_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+	ray_tracing_pipeline_properties.pNext = &acceleration_structure_properties;
+
 	VkPhysicalDeviceProperties2 device_properties{};
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &ray_tracing_pipeline_properties;

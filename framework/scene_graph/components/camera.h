@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,6 +28,7 @@
 
 #include "common/helpers.h"
 #include "scene_graph/component.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
@@ -42,20 +43,20 @@ class Camera : public Component
 
 	virtual std::type_index get_type() override;
 
-	virtual glm::mat4 get_projection() = 0;
+	virtual glm::mat4 get_projection() const = 0;
 
-	glm::mat4 get_view();
+	glm::mat4 get_view() const;
 
-	void set_node(Node &node);
+	void set_node(vkb::scene_graph::NodeC &node);
 
-	Node *get_node();
+	vkb::scene_graph::NodeC *get_node();
 
 	const glm::mat4 get_pre_rotation();
 
 	void set_pre_rotation(const glm::mat4 &pre_rotation);
 
   private:
-	Node *node{nullptr};
+	vkb::scene_graph::NodeC *node{nullptr};
 
 	glm::mat4 pre_rotation{1.0f};
 };

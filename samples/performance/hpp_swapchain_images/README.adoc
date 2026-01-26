@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2022-2024, The Khronos Group
+- Copyright (c) 2022-2025, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -37,11 +37,11 @@ This sample analyzes the available options and their performance implications.
 == Choosing a number of images
 
 The control over the number of swapchain images is shared between the application and the platform.
-The application can ask for a minimum number of images by setting the `minImageCount` parameter in https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCreateSwapchainKHR.html[vk::Device::createSwapchainKHR].
-The exact number of images created can then be polled via https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetSwapchainImagesKHR.html[vk::Device::getSwapchainImagesKHR].
+The application can ask for a minimum number of images by setting the `minImageCount` parameter in https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkCreateSwapchainKHR.html[vk::Device::createSwapchainKHR].
+The exact number of images created can then be polled via https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkGetSwapchainImagesKHR.html[vk::Device::getSwapchainImagesKHR].
 
-In order to properly set the `minImageCount` parameter, the application should get the surface capabilities of the physical device via https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceCapabilitiesKHR.html[vk::PhysicalDevice::getSurfaceCapabilitiesKHR].
-The https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSurfaceCapabilitiesKHR.html[vk::SurfaceCapabilitiesKHR] structure has the `minImageCount` and `maxImageCount` parameters, which set the boundaries for the image count that can be safely requested.
+In order to properly set the `minImageCount` parameter, the application should get the surface capabilities of the physical device via https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkGetPhysicalDeviceSurfaceCapabilitiesKHR.html[vk::PhysicalDevice::getSurfaceCapabilitiesKHR].
+The https://www.khronos.org/registry/vulkan/specs/latest/man/html/VkSurfaceCapabilitiesKHR.html[vk::SurfaceCapabilitiesKHR] structure has the `minImageCount` and `maxImageCount` parameters, which set the boundaries for the image count that can be safely requested.
 
 As a rule of thumb on mobile, `+pSurfaceCapabilities->minImageCount+` is usually 2, while `+pSurfaceCapabilities->maxImageCount+` is large enough to not pose any problem with common applications (though it is still good practice to check its value).
 
@@ -55,7 +55,7 @@ We will discuss present modes in the next section.
 
 == Choosing a present mode
 
-The available present modes can be queried via https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfacePresentModesKHR.html[vk::PhysicalDevice::getSurfacePresentModesKHR].
+The available present modes can be queried via https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkGetPhysicalDeviceSurfacePresentModesKHR.html[vk::PhysicalDevice::getSurfacePresentModesKHR].
 
 There are several presentation modes in Vulkan, but mobile GPUs do not support the ones in which the image is directly presented to the screen (immediate mode).
 The only ones which satisfy Android's VSync requirement are `vk::PresentModeKHR::eFifo` and  `vk::PresentModeKHR::eMailbox`.
@@ -131,7 +131,7 @@ After the marker we switch to double buffering and we confirm what we predicted 
 
 *Do*
 
-* Ensure that the value of `minImageCount` is within the valid range from https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceCapabilitiesKHR.html[vk::PhysicalDevice::getSurfaceCapabilitiesKHR] (between `minImageCount` and `maxImageCount`).
+* Ensure that the value of `minImageCount` is within the valid range from https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkGetPhysicalDeviceSurfaceCapabilitiesKHR.html[vk::PhysicalDevice::getSurfaceCapabilitiesKHR] (between `minImageCount` and `maxImageCount`).
 * Use `vk::PresentModeKHR::eFifo` to avoid unnecessary CPU and GPU load.
 * Use triple buffering to maximize performance.
 
@@ -148,5 +148,5 @@ If you want to cap framerate to 30 FPS to save power, this can be achieved on th
 
 *Debugging*
 
-* It is possible to check how many images are created via https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetSwapchainImagesKHR.html[vk::Device::getSwapchainImagesKHR].
+* It is possible to check how many images are created via https://www.khronos.org/registry/vulkan/specs/latest/man/html/vkGetSwapchainImagesKHR.html[vk::Device::getSwapchainImagesKHR].
 If only 2 images are being created, `minImageCount` should be increased to 3, if the physical device allows for it (it normally does).

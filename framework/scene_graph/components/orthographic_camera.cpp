@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Arm Limited and Contributors
+/* Copyright (c) 2023-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -98,7 +98,7 @@ float OrthographicCamera::get_far_plane() const
 	return far_plane;
 }
 
-glm::mat4 OrthographicCamera::get_projection()
+glm::mat4 OrthographicCamera::get_projection() const
 {
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	return glm::ortho(left, right, bottom, top, far_plane, near_plane);
