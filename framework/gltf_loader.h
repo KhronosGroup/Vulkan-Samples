@@ -27,6 +27,7 @@
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 #include <tiny_gltf.h>
 
+#include "scene_graph/components/sampler.h"
 #include "scene_graph/node.h"
 #include "timer.h"
 
@@ -102,13 +103,13 @@ class GLTFLoader
 
 	virtual std::unique_ptr<sg::Image> parse_image(tinygltf::Image &gltf_image) const;
 
-	virtual std::unique_ptr<sg::Sampler> parse_sampler(const tinygltf::Sampler &gltf_sampler) const;
+	virtual std::unique_ptr<vkb::scene_graph::components::SamplerC> parse_sampler(const tinygltf::Sampler &gltf_sampler) const;
 
 	virtual std::unique_ptr<sg::Texture> parse_texture(const tinygltf::Texture &gltf_texture) const;
 
 	virtual std::unique_ptr<sg::PBRMaterial> create_default_material();
 
-	virtual std::unique_ptr<sg::Sampler> create_default_sampler(int filter);
+	virtual std::unique_ptr<vkb::scene_graph::components::SamplerC> create_default_sampler(int filter);
 
 	virtual std::unique_ptr<sg::Camera> create_default_camera();
 

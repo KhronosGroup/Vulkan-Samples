@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2025-2026, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,20 +15,23 @@
  * limitations under the License.
  */
 
-#include "sampler.h"
+#version 460
+#extension GL_EXT_ray_tracing : enable
 
-namespace vkb
+struct Payload
 {
-namespace sg
-{
-Sampler::Sampler(const std::string &name, core::Sampler &&vk_sampler) :
-    Component{name},
-    vk_sampler{std::move(vk_sampler)}
-{}
+  vec4 color;
+  vec4 intersection; // {x, y, z, intersectionType}
+  vec4 normal; // {nx, ny, nz, distance}
+};
 
-std::type_index Sampler::get_type()
+layout(location = 0) rayPayloadInEXT Payload hitValue;
+
+void main()
 {
-	return typeid(Sampler);
+    // Simple gradient background
+    vec3 skyColor = mix(vec3(0.3, 0.5, 0.8), vec3(0.1, 0.2, 0.4), gl_WorldRayDirectionEXT.y * 0.5 + 0.5);
+    hitValue.color = vec4(skyColor, 1.0);
+    hitValue.intersection.w = 100; // mark miss
+    hitValue.normal.w = 10000;     // large distance
 }
-}        // namespace sg
-}        // namespace vkb

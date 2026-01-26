@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,7 +60,7 @@ class OrthographicCamera : public Camera
 
 	float get_far_plane() const;
 
-	virtual glm::mat4 get_projection() override;
+	virtual glm::mat4 get_projection() const override;
 
   private:
 	float left{-1.0f};

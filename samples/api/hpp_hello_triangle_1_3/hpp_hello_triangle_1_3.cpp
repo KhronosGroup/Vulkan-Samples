@@ -386,7 +386,7 @@ void HPPHelloTriangleV13::init_device()
 	}
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
 	if (std::ranges::any_of(device_extensions,
 	                        [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
 	{
@@ -419,7 +419,7 @@ void HPPHelloTriangleV13::init_device()
 	    enabled_features_chain = {{}, {.synchronization2 = true, .dynamicRendering = true}, {.extendedDynamicState = true}};
 
 	// Create the logical device
-	float queue_priority = 1.0f;
+	float queue_priority = 0.5f;
 
 	// Create one queue
 	vk::DeviceQueueCreateInfo queue_info{.queueFamilyIndex = static_cast<uint32_t>(context.graphics_queue_index),
