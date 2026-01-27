@@ -145,7 +145,8 @@ class Portability : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
-  protected:
+  private:
+	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
 	void     request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 };

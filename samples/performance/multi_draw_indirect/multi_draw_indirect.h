@@ -151,7 +151,8 @@ class MultiDrawIndirect : public ApiVulkanSample
 	bool m_supports_first_instance = false;
 	bool m_supports_buffer_device  = false;
 
-  protected:
+  private:
+	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
 };
 

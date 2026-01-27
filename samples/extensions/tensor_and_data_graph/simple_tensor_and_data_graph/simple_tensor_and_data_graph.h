@@ -60,7 +60,8 @@ class SimpleTensorAndDataGraph : public vkb::VulkanSampleC
 
 	void draw_gui() override;
 
-  protected:
+  private:
+	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
 
   private:

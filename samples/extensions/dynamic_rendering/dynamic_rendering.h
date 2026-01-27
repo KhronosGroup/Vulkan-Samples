@@ -34,7 +34,8 @@ class DynamicRendering : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
-  protected:
+  private:
+	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
 
   private:

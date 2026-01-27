@@ -132,7 +132,8 @@ class RaytracingReflection : public ApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 
-  protected:
+  private:
+	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
 };
 

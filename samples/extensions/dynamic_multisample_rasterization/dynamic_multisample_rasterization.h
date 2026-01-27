@@ -126,7 +126,8 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	void         destroy_image_data(ImageData &image_data);
 	void         attachments_setup(std::vector<VkRenderingAttachmentInfoKHR> &attachments, std::vector<VkClearValue> &clear_values);
 
-  protected:
+  private:
+	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
 };
 

@@ -23,8 +23,6 @@
 
 GraphConstants::GraphConstants()
 {
-	set_api_version(VK_API_VERSION_1_3);        // Required by the emulation layers
-
 	// Declare that we need the data graph and tensor extensions
 	add_device_extension("VK_ARM_tensors");
 	add_device_extension("VK_ARM_data_graph");
@@ -46,6 +44,12 @@ GraphConstants::~GraphConstants()
 
 	// Make sure resources created in the render pipeline are destroyed before the Device gets destroyed.
 	set_render_pipeline(nullptr);
+}
+
+uint32_t GraphConstants::get_api_version() const
+{
+	// Required by the emulation layers
+	return VK_API_VERSION_1_3;
 }
 
 /**

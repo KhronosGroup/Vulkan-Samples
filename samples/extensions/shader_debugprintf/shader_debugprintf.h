@@ -99,7 +99,8 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-  protected:
+  private:
+	// from vkb::VulkanSample
 	virtual uint32_t get_api_version() const override;
 	virtual void     request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;
 };
