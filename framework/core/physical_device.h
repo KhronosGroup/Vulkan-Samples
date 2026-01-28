@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
- * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
+ * Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,7 @@
 #pragma once
 
 #include "core/instance.h"
-#include "vulkan_type_mapping.h"
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
@@ -220,7 +220,7 @@ inline FeatureType &PhysicalDevice<bindingType>::add_extension_features()
 	}
 	else
 	{
-		return static_cast<FeatureType &>(add_extension_features_impl<typename vkb::detail::HPPType<FeatureType>::Type>());
+		return static_cast<FeatureType &>(add_extension_features_impl<typename vk::CppType<FeatureType>::Type>());
 	}
 }
 
@@ -311,7 +311,7 @@ inline FeatureType PhysicalDevice<bindingType>::get_extension_features()
 	}
 	else
 	{
-		return static_cast<FeatureType>(get_extension_features_impl<typename vkb::detail::HPPType<FeatureType>::Type>());
+		return static_cast<FeatureType>(get_extension_features_impl<typename vk::CppType<FeatureType>::Type>());
 	}
 }
 
@@ -510,8 +510,8 @@ inline void
 	}
 	else
 	{
-		request_required_feature_impl<typename vkb::detail::HPPType<Feature>::Type>(
-		    reinterpret_cast<vk::Bool32 vkb::detail::HPPType<Feature>::Type::*>(flag), featureName, flagName);
+		request_required_feature_impl<typename vk::CppType<Feature>::Type>(
+		    reinterpret_cast<vk::Bool32 vk::CppType<Feature>::Type::*>(flag), featureName, flagName);
 	}
 }
 
