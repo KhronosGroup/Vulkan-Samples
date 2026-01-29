@@ -1,0 +1,29 @@
+// Copyright (c) 2026, Arm Limited and Contributors
+digraph D {
+
+    {
+        rank=same;
+        scene_rendering[shape=box]
+        scene_render_target[shape=ellipse]
+        output_image[shape=ellipse]
+        blit[shape=box]
+        swapchain[shape=ellipse]
+    }
+    {
+        rank=same;
+        input_tensor[shape=ellipse]
+        data_graph_pipeline[shape=box]
+        output_tensor[shape=ellipse]
+   }
+
+    scene_rendering -> scene_render_target
+    scene_render_target -> input_tensor [arrowhead=none, style=dashed, penwidth=5]
+
+    input_tensor -> data_graph_pipeline
+    data_graph_pipeline -> output_tensor
+
+    output_tensor -> output_image[arrowhead=none, style=dashed, penwidth=5]
+    output_image -> blit
+    blit -> swapchain
+
+}
