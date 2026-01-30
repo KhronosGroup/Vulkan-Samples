@@ -34,10 +34,7 @@ class GLTFApiVulkanSample : public ApiVulkanSample
 	~GLTFApiVulkanSample() override;
 
 	// Override basic framework functionality
-	void build_command_buffers() override;
-	void render(float delta_time) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
-	bool prepare(const vkb::ApplicationOptions &options) override;
 	void setup_render_pass() override;
 	void setup_framebuffer() override;
 	void prepare_gui() override;
@@ -108,8 +105,6 @@ class GLTFApiVulkanSample : public ApiVulkanSample
 
 	vkb::DebugUtilsExtDebugUtils debug_utils;
 
-	const std::string scene_file = "scenes/bonza/Bonza.gltf";
-
 	std::unique_ptr<vkb::sg::Scene> sg_scene;
 
 	std::vector<SubmeshData> scene_data;
@@ -125,7 +120,7 @@ class GLTFApiVulkanSample : public ApiVulkanSample
 
 	virtual void update_extents();
 
-	virtual void load_assets();
+	virtual void load_assets(const std::string &scene_file = "scenes/bonza/Bonza.gltf");
 
 	virtual void update_uniform_buffer(float delta_time);
 

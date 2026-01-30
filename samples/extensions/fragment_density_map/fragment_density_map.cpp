@@ -21,9 +21,6 @@
 FragmentDensityMap::FragmentDensityMap()
 {
 	title = "Fragment Density Map";
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME);
 }
 
@@ -32,6 +29,16 @@ FragmentDensityMap::~FragmentDensityMap()
 	if (has_device())
 	{
 		VkDevice device_handle = get_device().get_handle();
+
+		vkDestroyPipeline(device_handle, present.pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+		vkDestroyPipeline(device_handle, main_pass.sky_pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+		vkDestroyPipeline(device_handle, main_pass.meshes.pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+
+		vkDestroyRenderPass(device_handle, present.render_pass, nullptr);
+		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
 
 		destroy_pipeline(fdm.generate.pipeline);
 
@@ -48,7 +55,7 @@ FragmentDensityMap::~FragmentDensityMap()
 
 bool FragmentDensityMap::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(options))
+	if (!GLTFApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

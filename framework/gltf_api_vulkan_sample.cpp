@@ -57,23 +57,25 @@ GLTFApiVulkanSample::~GLTFApiVulkanSample()
 		VkDevice device_handle = get_device().get_handle();
 		vkDestroyDescriptorPool(device_handle, main_pass.descriptor_pool, nullptr);
 
-		destroy_pipeline(present.pipeline);
-		destroy_pipeline(main_pass.sky_pipeline);
-		destroy_pipeline(main_pass.meshes.pipeline);
+		vkDestroyPipelineLayout(device_handle, present.pipeline.pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device_handle, present.pipeline.set_layout, nullptr);
+		present.pipeline.pipeline_layout = VK_NULL_HANDLE;
+		present.pipeline.set_layout      = VK_NULL_HANDLE;
 
-		vkDestroyRenderPass(device_handle, present.render_pass, nullptr);
+		vkDestroyPipelineLayout(device_handle, main_pass.sky_pipeline.pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device_handle, main_pass.sky_pipeline.set_layout, nullptr);
+		main_pass.sky_pipeline.pipeline_layout = VK_NULL_HANDLE;
+		main_pass.sky_pipeline.set_layout      = VK_NULL_HANDLE;
+
+		vkDestroyPipelineLayout(device_handle, main_pass.meshes.pipeline.pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device_handle, main_pass.meshes.pipeline.set_layout, nullptr);
+		main_pass.meshes.pipeline.pipeline_layout = VK_NULL_HANDLE;
+		main_pass.meshes.pipeline.set_layout      = VK_NULL_HANDLE;
 
 		destroy_image(main_pass.image);
 
 		vkDestroySampler(device_handle, samplers.nearest, nullptr);
-
-		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
 	}
-}
-
-bool GLTFApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
-{
-	return false;
 }
 
 void GLTFApiVulkanSample::setup_samplers()
@@ -104,9 +106,6 @@ void GLTFApiVulkanSample::setup_samplers()
 }
 
 void GLTFApiVulkanSample::prepare_pipelines()
-{}
-
-void GLTFApiVulkanSample::build_command_buffers()
 {}
 
 bool GLTFApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
@@ -156,12 +155,12 @@ bool GLTFApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 }
 
 void GLTFApiVulkanSample::reset_gpu_data()
-{}
+{
+	setup_additional_descriptor_pool();
+	prepare_pipelines();
+}
 
-void GLTFApiVulkanSample::render(float delta_time)
-{}
-
-void GLTFApiVulkanSample::load_assets()
+void GLTFApiVulkanSample::load_assets(const std::string &scene_file)
 {
 	vkb::GLTFLoader loader{get_device()};
 	sg_scene = loader.read_scene_from_file(scene_file);
@@ -562,9 +561,12 @@ void GLTFApiVulkanSample::prepare_gui()
 	                          config);
 
 	create_gui(*window, &get_stats(), 15.0f, true);
-	get_gui().prepare(pipeline_cache, present.render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	if (present.render_pass != nullptr)
+	{
+		get_gui().prepare(pipeline_cache, present.render_pass,
+		                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+		                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	}
 }
 
 void GLTFApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
