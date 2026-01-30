@@ -44,7 +44,6 @@ void GLTFApiVulkanSample::destroy_pipeline(GLTFApiVulkanSample::PipelineData &pi
 
 GLTFApiVulkanSample::GLTFApiVulkanSample()
 {
-	title = "GLTFApiVulkanSample";
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
