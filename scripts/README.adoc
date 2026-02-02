@@ -1,5 +1,6 @@
 ////
-- Copyright (c) 2023, Thomas Atkinson
+- Copyright (c) 2023-2026, Thomas Atkinson
+- Copyright (c) 2026, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -77,6 +78,34 @@ A new class will also be generated
 [,cpp]
 ----
 class SampleName :public ApiVulkanSample {
+...
+};
+----
+
+
+=== Generate GLTF API Sample
+
+API samples that require GLTF forward-rendering functionalities can be generated using the following command:
+
+[,bash]
+----
+./scripts/generate.py sample_api_gltf --name <SampleName> --category <category> --output-dir <output_dir>
+----
+
+Running the above line will generate the following files:
+
+[,bash]
+----
+samples/category/my_sample/CMakeLists.txt
+samples/category/my_sample/sample_name.cpp
+samples/category/my_sample/sample_name.h
+----
+
+A new class will also be generated
+
+[,cpp]
+----
+class SampleName :public GLTFApiVulkanSample {
 ...
 };
 ----

@@ -68,6 +68,7 @@
 ** xref:samples/extensions/fragment_shading_rate/README.adoc[Fragment shading rate]
 ** xref:samples/extensions/fragment_shading_rate_dynamic/README.adoc[Fragment shading rate dynamic]
 ** xref:samples/extensions/full_screen_exclusive/README.adoc[Full screen exclusive]
+** xref:samples/extensions/gltf/README.adoc[GLTF]
 ** xref:samples/extensions/graphics_pipeline_library/README.adoc[Graphics pipeline library]
 ** xref:samples/extensions/gshader_to_mshader/README.adoc[Geometry shader to mesh shader]
 ** xref:samples/extensions/host_image_copy/README.adoc[Host image copy]

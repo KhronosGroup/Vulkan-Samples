@@ -1,5 +1,5 @@
-#version 320 es
-/* Copyright (c) 2025, Arm Limited and Contributors
+#version 450
+/* Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,25 +16,10 @@
  * limitations under the License.
  */
 
-layout(location = 0) in vec3 i_position;
-layout(location = 1) in vec3 i_normal;
-layout(location = 2) in vec2 i_texcoord_0;
+layout(location = 0) out vec3 outUVW;
 
-layout(set = 0, binding = 0) uniform GlobalUniform
+void main()
 {
-	mat4 projection;
-	mat4 modelview;
-}
-global_uniform;
-
-layout(location = 0) out vec2 o_uv;
-layout(location = 1) out vec3 o_normal;
-
-void main(void)
-{
-	o_uv = i_texcoord_0;
-
-	o_normal = mat3(global_uniform.modelview) * i_normal;
-
-	gl_Position = global_uniform.projection * global_uniform.modelview * vec4(i_position, 1.0);
+	outUVW      = vec3((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(outUVW.st * 2.0f - 1.0f, 0.0f, 1.0f);
 }

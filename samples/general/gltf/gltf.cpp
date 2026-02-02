@@ -1,0 +1,650 @@
+/* Copyright (c) 2026, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "gltf.h"
+
+GLTF::GLTF()
+{
+	title = "GLTF";
+}
+
+GLTF::~GLTF()
+{
+	if (has_device())
+	{
+		VkDevice device_handle = get_device().get_handle();
+
+		vkDestroyPipeline(device_handle, present.pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+		vkDestroyPipeline(device_handle, main_pass.sky_pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+		vkDestroyPipeline(device_handle, main_pass.meshes.pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+
+		vkDestroyRenderPass(device_handle, present.render_pass, nullptr);
+		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
+	}
+}
+
+bool GLTF::prepare(const vkb::ApplicationOptions &options)
+{
+	if (!GLTFApiVulkanSample::prepare(options))
+	{
+		return false;
+	}
+
+	last_options = current_options;
+
+	setup_samplers();
+	load_assets();
+
+	setup_descriptor_pool_main_pass();
+	prepare_uniform_buffers_main_pass();
+	setup_descriptor_set_layout_main_pass();
+	setup_descriptor_set_main_pass();
+
+	reset_gpu_data();
+
+	prepared = true;
+	return true;
+}
+
+void GLTF::prepare_pipelines()
+{
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(
+	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	        0,
+	        VK_FALSE);
+
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(
+	        VK_POLYGON_MODE_FILL,
+	        VK_CULL_MODE_BACK_BIT,
+	        VK_FRONT_FACE_CLOCKWISE,
+	        0);
+
+	VkPipelineColorBlendAttachmentState blend_attachment_state =
+	    vkb::initializers::pipeline_color_blend_attachment_state(
+	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+	        VK_FALSE);
+
+	VkPipelineColorBlendStateCreateInfo color_blend_state =
+	    vkb::initializers::pipeline_color_blend_state_create_info(
+	        1,
+	        &blend_attachment_state);
+
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(
+	        VK_TRUE,
+	        VK_TRUE,
+	        VK_COMPARE_OP_GREATER);
+
+	VkPipelineViewportStateCreateInfo viewport_state =
+	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+
+	VkPipelineMultisampleStateCreateInfo multisample_state =
+	    vkb::initializers::pipeline_multisample_state_create_info(
+	        VK_SAMPLE_COUNT_1_BIT,
+	        0);
+
+	// Specify that these states will be dynamic, i.e. not part of pipeline state object.
+	std::array<VkDynamicState, 2> dynamic_state_enables{
+	    VK_DYNAMIC_STATE_VIEWPORT,
+	    VK_DYNAMIC_STATE_SCISSOR};
+
+	VkPipelineDynamicStateCreateInfo dynamic_state =
+	    vkb::initializers::pipeline_dynamic_state_create_info(
+	        dynamic_state_enables.data(),
+	        vkb::to_u32(dynamic_state_enables.size()),
+	        0);
+
+	VkDevice device_handle = get_device().get_handle();
+	// Load our SPIR-V shaders.
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+
+	VkGraphicsPipelineCreateInfo pipeline_create_info =
+	    vkb::initializers::pipeline_create_info(
+	        main_pass.meshes.pipeline.pipeline_layout,
+	        render_pass,
+	        0);
+
+	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+	pipeline_create_info.pRasterizationState = &rasterization_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.stageCount          = vkb::to_u32(shader_stages.size());
+	pipeline_create_info.pStages             = shader_stages.data();
+	pipeline_create_info.pVertexInputState   = &vertex_input_state;
+
+	// Generic Gbuffer mesh pipeline
+	{
+		std::array<VkVertexInputBindingDescription, 3> binding_descriptions = {
+		    // Binding point 0: Mesh vertex layout description at per-vertex rate
+		    vkb::initializers::vertex_input_binding_description(0, 3 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX),
+		    vkb::initializers::vertex_input_binding_description(1, 3 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX),
+		    vkb::initializers::vertex_input_binding_description(2, 2 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX)};
+
+		std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions = {
+		    // Per-vertex attributes
+		    // These are advanced for each vertex fetched by the vertex shader
+		    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Location 0: Position
+		    vkb::initializers::vertex_input_attribute_description(1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Location 1: Normal
+		    vkb::initializers::vertex_input_attribute_description(2, 2, VK_FORMAT_R32G32_SFLOAT, 0),           // Location 2: Texture coordinates
+		    // Per-Instance attributes
+		    // These are fetched for each instance rendered
+		};
+		vertex_input_state.pVertexBindingDescriptions      = binding_descriptions.data();
+		vertex_input_state.pVertexAttributeDescriptions    = attribute_descriptions.data();
+		vertex_input_state.vertexBindingDescriptionCount   = vkb::to_u32(binding_descriptions.size());
+		vertex_input_state.vertexAttributeDescriptionCount = vkb::to_u32(attribute_descriptions.size());
+
+		shader_stages[0] = load_shader("gltf/forward.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages[1] = load_shader(
+		    "gltf/forward.frag.spv",
+		    VK_SHADER_STAGE_FRAGMENT_BIT);
+
+		pipeline_create_info.layout     = main_pass.meshes.pipeline.pipeline_layout;
+		pipeline_create_info.renderPass = render_pass;
+		vkDestroyPipeline(device_handle, main_pass.meshes.pipeline.pipeline, nullptr);
+		VK_CHECK(vkCreateGraphicsPipelines(device_handle, pipeline_cache, 1, &pipeline_create_info, nullptr, &main_pass.meshes.pipeline.pipeline));
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(main_pass.meshes.pipeline.pipeline), "Submeshes Pipeline");
+	}
+
+	VkPipelineShaderStageCreateInfo quad_uvw_shader_stage = load_shader("gltf/quad_uvw.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	VkPipelineShaderStageCreateInfo quad_uv_shader_stage  = load_shader("gltf/quad_uv.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+
+	// Sky Gbuffer pipeline
+	{
+		pipeline_create_info.renderPass      = render_pass;
+		pipeline_create_info.layout          = main_pass.sky_pipeline.pipeline_layout;
+		rasterization_state.cullMode         = VK_CULL_MODE_NONE;
+		depth_stencil_state.depthWriteEnable = VK_FALSE;
+		depth_stencil_state.depthTestEnable  = VK_FALSE;
+		shader_stages[0]                     = quad_uvw_shader_stage;
+		shader_stages[1]                     = load_shader(
+            "gltf/sky.frag.spv",
+            VK_SHADER_STAGE_FRAGMENT_BIT);
+
+		// The vertex shader generates a full-screen quad procedurally.
+		// No vertex buffers are required because the vertex positions are computed in the shader itself.
+		vertex_input_state.vertexBindingDescriptionCount   = 0;
+		vertex_input_state.vertexAttributeDescriptionCount = 0;
+		vertex_input_state.pVertexBindingDescriptions      = nullptr;
+		vertex_input_state.pVertexAttributeDescriptions    = nullptr;
+
+		vkDestroyPipeline(device_handle, main_pass.sky_pipeline.pipeline, nullptr);
+		VK_CHECK(vkCreateGraphicsPipelines(device_handle, pipeline_cache, 1, &pipeline_create_info, nullptr, &main_pass.sky_pipeline.pipeline));
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(main_pass.sky_pipeline.pipeline), "Starfield Sky Pipeline");
+	}
+
+	// Present and UI pipeline
+	{
+		// Vertex stage of the pipeline
+		shader_stages[0] = quad_uv_shader_stage;
+		shader_stages[1] = load_shader("gltf/texture.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+		depth_stencil_state.depthWriteEnable = VK_FALSE;
+		depth_stencil_state.depthTestEnable  = VK_FALSE;
+		rasterization_state.cullMode         = VK_CULL_MODE_NONE;
+
+		pipeline_create_info.layout     = present.pipeline.pipeline_layout;
+		pipeline_create_info.renderPass = present.render_pass;
+
+		vkDestroyPipeline(device_handle, present.pipeline.pipeline, nullptr);
+		VK_CHECK(vkCreateGraphicsPipelines(device_handle, pipeline_cache, 1, &pipeline_create_info, nullptr, &present.pipeline.pipeline));
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(present.pipeline.pipeline), "Present Pipeline");
+	}
+}
+
+void GLTF::build_command_buffers()
+{
+	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+
+	std::array<VkClearValue, 2> clear_values{
+	    VkClearValue{.color = {{0.0f, 0.0f, 0.0f, 0.0f}}},        // Color output.
+	    VkClearValue{.depthStencil = {0.0f, 0}},                  // Depth stencil output.
+	};
+
+	// Begin the render pass.
+	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
+	render_pass_begin_info.clearValueCount       = vkb::to_u32(clear_values.size());
+	render_pass_begin_info.pClearValues          = clear_values.data();
+
+	assert((main_pass.extend.height > 0) && (main_pass.extend.width > 0));
+	VkRect2D   main_scissor  = vkb::initializers::rect2D(main_pass.extend.width, main_pass.extend.height, 0, 0);
+	VkViewport main_viewport = vkb::initializers::viewport(static_cast<float>(main_scissor.extent.width), static_cast<float>(main_scissor.extent.height), 0.0f, 1.0f);
+
+	VkRect2D   present_scissor  = vkb::initializers::rect2D(get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 0, 0);
+	VkViewport present_viewport = vkb::initializers::viewport(static_cast<float>(present_scissor.extent.width), static_cast<float>(present_scissor.extent.height), 0.0f, 1.0f);
+
+	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	{
+		VkCommandBuffer cmd_buffer = draw_cmd_buffers[i];
+		std::string     debug_name = fmt::format("Draw command buffer {}", i);
+		debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_COMMAND_BUFFER, get_object_handle(cmd_buffer), debug_name.c_str());
+
+		VK_CHECK(vkBeginCommandBuffer(cmd_buffer, &command_buffer_begin_info));
+
+		// Main pass (forward).
+		{
+			debug_utils.cmd_begin_label(cmd_buffer, "Gbuffer", glm::vec4());
+
+			render_pass_begin_info.clearValueCount   = vkb::to_u32(clear_values.size());
+			render_pass_begin_info.renderPass        = render_pass;
+			render_pass_begin_info.framebuffer       = main_pass.framebuffer;
+			render_pass_begin_info.renderArea.extent = main_scissor.extent;
+
+			vkCmdBeginRenderPass(cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+			vkCmdSetViewport(cmd_buffer, 0, 1, &main_viewport);
+
+			vkCmdSetScissor(cmd_buffer, 0, 1, &main_scissor);
+
+			// Sky
+			{
+				debug_utils.cmd_begin_label(cmd_buffer, "Sky", glm::vec4());
+				vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, main_pass.sky_pipeline.pipeline);
+				vkCmdDraw(cmd_buffer, 3, 1, 0, 0);
+				debug_utils.cmd_end_label(cmd_buffer);
+			}
+
+			// Main pass glTF-submeshes.
+			{
+				assert(scene_data.size() == main_pass.meshes.descriptor_sets.size());
+				vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, main_pass.meshes.pipeline.pipeline);
+				for (uint32_t mesh_idx = 0; mesh_idx < scene_data.size(); ++mesh_idx)
+				{
+					auto &mesh_data = scene_data[mesh_idx];
+
+					debug_utils.cmd_begin_label(cmd_buffer, mesh_data.submesh->get_name().c_str(), glm::vec4());
+
+					vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, main_pass.meshes.pipeline.pipeline_layout, 0, 1, &main_pass.meshes.descriptor_sets[mesh_idx], 0, NULL);
+
+					auto                   &vertex_buffer  = mesh_data.submesh->vertex_buffers.at("position");
+					auto                   &normal_buffer  = mesh_data.submesh->vertex_buffers.at("normal");
+					auto                   &uv_buffer      = mesh_data.submesh->vertex_buffers.at("texcoord_0");
+					std::array<VkBuffer, 3> vertex_buffers = {
+					    vertex_buffer.get_handle(),
+					    normal_buffer.get_handle(),
+					    uv_buffer.get_handle()};
+					std::array<VkDeviceSize, 3> vertex_offsets = {0, 0, 0};
+
+					vkCmdBindVertexBuffers(cmd_buffer, 0,
+					                       vkb::to_u32(vertex_buffers.size()),
+					                       vertex_buffers.data(),
+					                       vertex_offsets.data());
+					vkCmdBindIndexBuffer(cmd_buffer,
+					                     mesh_data.submesh->index_buffer->get_handle(),
+					                     mesh_data.submesh->index_offset,
+					                     mesh_data.submesh->index_type);
+					vkCmdDrawIndexed(cmd_buffer,
+					                 mesh_data.submesh->vertex_indices,
+					                 1, 0, 0, 0);
+
+					debug_utils.cmd_end_label(cmd_buffer);
+				}
+			}
+			vkCmdEndRenderPass(cmd_buffer);
+			debug_utils.cmd_end_label(cmd_buffer);
+		}
+
+		// Present + UI.
+		{
+			debug_utils.cmd_begin_label(cmd_buffer, "Present+UI", glm::vec4());
+
+			render_pass_begin_info.renderArea.extent = present_scissor.extent;
+			render_pass_begin_info.renderPass        = present.render_pass;
+			render_pass_begin_info.framebuffer       = framebuffers[i];
+			render_pass_begin_info.clearValueCount   = 1;
+			// Copy to swap chain.
+			{
+				debug_utils.cmd_begin_label(cmd_buffer, "Copy", glm::vec4());
+				vkCmdBeginRenderPass(cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+				vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, present.pipeline.pipeline);
+				vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, present.pipeline.pipeline_layout, 0, 1, &present.set, 0, nullptr);
+
+				vkCmdSetViewport(cmd_buffer, 0, 1, &present_viewport);
+				vkCmdSetScissor(cmd_buffer, 0, 1, &present_scissor);
+				vkCmdDraw(cmd_buffer, 3, 1, 0, 0);
+				debug_utils.cmd_end_label(cmd_buffer);
+			}
+			// UI
+			if (has_gui())
+			{
+				debug_utils.cmd_begin_label(cmd_buffer, "UI", glm::vec4());
+				get_gui().draw(cmd_buffer);
+				debug_utils.cmd_end_label(cmd_buffer);
+			}
+
+			vkCmdEndRenderPass(cmd_buffer);
+			debug_utils.cmd_end_label(cmd_buffer);
+		}
+		VK_CHECK(vkEndCommandBuffer(cmd_buffer));
+	}
+}
+
+void GLTF::reset_gpu_data()
+{
+	vkResetCommandPool(get_device().get_handle(), cmd_pool, 0);
+
+	last_options = current_options;
+	setup_additional_descriptor_pool();
+
+	setup_depth_stencil();
+	setup_render_pass();
+	setup_framebuffer();
+
+	setup_descriptor_set_layout_present();
+	setup_descriptor_set_present();
+	prepare_pipelines();
+
+	build_command_buffers();
+}
+
+void GLTF::render(float delta_time)
+{
+	if (!prepared)
+	{
+		return;
+	}
+	// Recreate resources if options changed
+	if (last_options != current_options)
+	{
+		prepared = false;
+		get_device().wait_idle();
+		reset_gpu_data();
+		get_device().wait_idle();
+		prepared = true;
+	}
+
+	// Submit current command buffer
+	{
+		ApiVulkanSample::prepare_frame();
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+		ApiVulkanSample::submit_frame();
+	}
+
+	if (!paused || camera.updated)
+	{
+		update_uniform_buffer(delta_time);
+	}
+	if (has_gui() && is_show_stats())
+	{
+		update_stats(delta_time);
+	}
+}
+
+void GLTF::setup_additional_descriptor_pool()
+{
+	vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
+	const uint32_t max_sets = 1;        // present
+
+	// Descriptor pool sizes: uniform buffers for submeshes, combined image samplers for textures
+	std::array<VkDescriptorPoolSize, 2> pool_sizes =
+	    {
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
+	    };
+
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	    vkb::initializers::descriptor_pool_create_info(
+	        vkb::to_u32(pool_sizes.size()),
+	        pool_sizes.data(), max_sets);
+
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(descriptor_pool), "Extra descriptor pool");
+}
+
+void GLTF::setup_render_pass()
+{
+	setup_color();
+
+	VkImageLayout density_map_initial_layout = VK_IMAGE_LAYOUT_GENERAL;
+
+	VkDevice device_handle = get_device().get_handle();
+	// Main render pass (forward render).
+	{
+		std::array<VkAttachmentDescription2, 2> attachments{
+		    // Colour attachment.
+		    VkAttachmentDescription2{
+		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		        .pNext          = nullptr,
+		        .flags          = 0,
+		        .format         = get_render_context().get_format(),
+		        .samples        = VK_SAMPLE_COUNT_1_BIT,
+		        .loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		        .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		        .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+		        .finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+		    // Depth attachment.
+		    VkAttachmentDescription2{
+		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		        .pNext          = nullptr,
+		        .flags          = 0,
+		        .format         = depth_format,
+		        .samples        = VK_SAMPLE_COUNT_1_BIT,
+		        .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		        .storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		        .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+		        .finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL}};
+
+		VkAttachmentReference2 colour_attachment_ref{
+		    .sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
+		    .pNext      = nullptr,
+		    .attachment = 0,
+		    .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
+
+		VkAttachmentReference2 depth_reference = {
+		    .sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
+		    .pNext      = nullptr,
+		    .attachment = 1,
+		    .layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		    .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT};
+
+		VkSubpassDescription2 subpass{
+		    .sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
+		    .pNext                   = nullptr,
+		    .flags                   = 0,
+		    .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		    .viewMask                = 0u,
+		    .inputAttachmentCount    = 0,
+		    .pInputAttachments       = nullptr,
+		    .colorAttachmentCount    = 1,
+		    .pColorAttachments       = &colour_attachment_ref,
+		    .pResolveAttachments     = nullptr,
+		    .pDepthStencilAttachment = &depth_reference,
+		    .preserveAttachmentCount = 0,
+		    .pPreserveAttachments    = nullptr};
+
+		VkSubpassDependency2 dependency{
+		    .sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
+		    .pNext           = nullptr,
+		    .srcSubpass      = 0,
+		    .dstSubpass      = VK_SUBPASS_EXTERNAL,
+		    .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		    .dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		    .srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		    .dstAccessMask   = VK_ACCESS_SHADER_READ_BIT,
+		    .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+		    .viewOffset      = 0};
+
+		VkRenderPassCreateInfo2 render_pass_info{
+		    .sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,
+		    .pNext                   = nullptr,
+		    .flags                   = 0,
+		    .attachmentCount         = vkb::to_u32(attachments.size()),
+		    .pAttachments            = attachments.data(),
+		    .subpassCount            = 1,
+		    .pSubpasses              = &subpass,
+		    .dependencyCount         = 1,
+		    .pDependencies           = &dependency,
+		    .correlatedViewMaskCount = 0,
+		    .pCorrelatedViewMasks    = nullptr,
+		};
+
+		vkDestroyRenderPass(device_handle, render_pass, nullptr);
+		VK_CHECK(vkCreateRenderPass2KHR(device_handle, &render_pass_info, nullptr, &render_pass));
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_RENDER_PASS, get_object_handle(render_pass), "Main Renderpass (Forward rendering)");
+	}
+
+	// Present
+	{
+		std::array<VkAttachmentDescription2, 1> attachments{
+		    VkAttachmentDescription2{
+		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		        .pNext          = nullptr,
+		        .flags          = 0,
+		        .format         = get_render_context().get_format(),
+		        .samples        = VK_SAMPLE_COUNT_1_BIT,
+		        .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		        .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		        .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+		        .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR}};
+
+		VkAttachmentReference2 attachment_ref{
+		    .sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
+		    .pNext      = nullptr,
+		    .attachment = 0,
+		    .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
+
+		VkSubpassDescription2 subpass{
+		    .sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
+		    .pNext                   = nullptr,
+		    .flags                   = 0,
+		    .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		    .viewMask                = 0,
+		    .inputAttachmentCount    = 0,
+		    .pInputAttachments       = nullptr,
+		    .colorAttachmentCount    = 1,
+		    .pColorAttachments       = &attachment_ref,
+		    .pResolveAttachments     = nullptr,
+		    .pDepthStencilAttachment = nullptr,
+		    .preserveAttachmentCount = 0,
+		    .pPreserveAttachments    = nullptr};
+
+		VkSubpassDependency2 dependency{
+		    .sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
+		    .pNext           = nullptr,
+		    .srcSubpass      = VK_SUBPASS_EXTERNAL,
+		    .dstSubpass      = 0,
+		    .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		    .dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		    .srcAccessMask   = 0,
+		    .dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		    .dependencyFlags = 0,
+		    .viewOffset      = 0};
+
+		VkRenderPassCreateInfo2 render_pass_info{
+		    .sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,
+		    .pNext                   = nullptr,
+		    .flags                   = 0,
+		    .attachmentCount         = vkb::to_u32(attachments.size()),
+		    .pAttachments            = attachments.data(),
+		    .subpassCount            = 1,
+		    .pSubpasses              = &subpass,
+		    .dependencyCount         = 1,
+		    .pDependencies           = &dependency,
+		    .correlatedViewMaskCount = 0,
+		    .pCorrelatedViewMasks    = nullptr};
+
+		vkDestroyRenderPass(device_handle, present.render_pass, nullptr);
+		VK_CHECK(vkCreateRenderPass2KHR(device_handle, &render_pass_info, nullptr, &present.render_pass));
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_RENDER_PASS, get_object_handle(present.render_pass), "Present Renderpass");
+	}
+}
+void GLTF::setup_framebuffer()
+{
+	VkDevice device_handle = get_device().get_handle();
+
+	// Main pass framebuffer.
+	{
+		std::array<VkImageView, 2> attachments{
+		    main_pass.image.view,
+		    depth_stencil.view,
+		};
+		VkFramebufferCreateInfo framebuffer_create_info{
+		    .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+		    .pNext           = nullptr,
+		    .renderPass      = render_pass,
+		    .attachmentCount = (vkb::to_u32(attachments.size())),
+		    .pAttachments    = attachments.data(),
+		    .width           = main_pass.extend.width,
+		    .height          = main_pass.extend.height,
+		    .layers          = 1};
+
+		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
+		VK_CHECK(vkCreateFramebuffer(device_handle, &framebuffer_create_info, nullptr, &main_pass.framebuffer));
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_FRAMEBUFFER, get_object_handle(main_pass.framebuffer), "Gbuffer Framebuffer");
+	}
+
+	// Present framebuffer.
+	{
+		// Delete existing framebuffers.
+		if (!framebuffers.empty())
+		{
+			for (auto &framebuffer : framebuffers)
+			{
+				vkDestroyFramebuffer(device_handle, framebuffer, nullptr);
+			}
+		}
+
+		VkFramebufferCreateInfo framebuffer_create_info{
+		    .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+		    .pNext           = nullptr,
+		    .renderPass      = present.render_pass,
+		    .attachmentCount = 1,
+		    .width           = get_render_context().get_surface_extent().width,
+		    .height          = get_render_context().get_surface_extent().height,
+		    .layers          = 1};
+
+		// Create frame buffers for every swap chain image
+		framebuffers.resize(get_render_context().get_render_frames().size());
+		for (uint32_t i = 0; i < framebuffers.size(); i++)
+		{
+			framebuffer_create_info.pAttachments = &swapchain_buffers[i].view;
+			VK_CHECK(vkCreateFramebuffer(device_handle, &framebuffer_create_info, nullptr, &framebuffers[i]));
+			std::string object_debug_name{fmt::format("Swapchain Framebuffer {}", i)};
+			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_FRAMEBUFFER, get_object_handle(framebuffers[i]), object_debug_name.c_str());
+			object_debug_name = fmt::format("Swapchain Image {}", i);
+			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE, get_object_handle(swapchain_buffers[i].image), object_debug_name.c_str());
+			object_debug_name = fmt::format("Swapchain Image View {}", i);
+			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE_VIEW, get_object_handle(swapchain_buffers[i].view), object_debug_name.c_str());
+		}
+	}
+}
+
+std::unique_ptr<vkb::VulkanSampleC> create_gltf()
+{
+	return std::make_unique<GLTF>();
+}

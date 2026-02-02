@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2025-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,45 +16,11 @@
  */
 
 #include "fragment_density_map.h"
-#include "api_vulkan_sample.h"
-#include <string>
 #include <vulkan/vulkan_core.h>
-
-template <typename THandle>
-static uint64_t get_object_handle(THandle object)
-{
-	using UintHandle = typename std::conditional<sizeof(THandle) == sizeof(uint32_t), uint32_t, uint64_t>::type;
-	return static_cast<uint64_t>(reinterpret_cast<UintHandle>(object));
-}
-
-void FragmentDensityMap::destroy_image(ApiVulkanSample::ImageData &image_data)
-{
-	VkDevice device_handle = get_device().get_handle();
-	vkDestroyImageView(device_handle, image_data.view, nullptr);
-	vkDestroyImage(device_handle, image_data.image, nullptr);
-	vkFreeMemory(device_handle, image_data.mem, nullptr);
-	image_data.view  = VK_NULL_HANDLE;
-	image_data.image = VK_NULL_HANDLE;
-	image_data.mem   = VK_NULL_HANDLE;
-}
-
-void FragmentDensityMap::destroy_pipeline(FragmentDensityMap::PipelineData &pipeline_data)
-{
-	VkDevice device_handle = get_device().get_handle();
-	vkDestroyPipeline(device_handle, pipeline_data.pipeline, nullptr);
-	vkDestroyPipelineLayout(device_handle, pipeline_data.pipeline_layout, nullptr);
-	vkDestroyDescriptorSetLayout(device_handle, pipeline_data.set_layout, nullptr);
-	pipeline_data.pipeline        = VK_NULL_HANDLE;
-	pipeline_data.pipeline_layout = VK_NULL_HANDLE;
-	pipeline_data.set_layout      = VK_NULL_HANDLE;
-}
 
 FragmentDensityMap::FragmentDensityMap()
 {
 	title = "Fragment Density Map";
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME);
 }
 
@@ -63,35 +29,38 @@ FragmentDensityMap::~FragmentDensityMap()
 	if (has_device())
 	{
 		VkDevice device_handle = get_device().get_handle();
-		vkDestroyDescriptorPool(device_handle, main_pass.descriptor_pool, nullptr);
 
-		destroy_pipeline(present.pipeline);
-		destroy_pipeline(main_pass.sky_pipeline);
-		destroy_pipeline(main_pass.meshes.pipeline);
-		destroy_pipeline(fdm.generate.pipeline);
+		vkDestroyPipeline(device_handle, present.pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+		vkDestroyPipeline(device_handle, main_pass.sky_pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
+		vkDestroyPipeline(device_handle, main_pass.meshes.pipeline.pipeline, nullptr);
+		present.pipeline.pipeline = VK_NULL_HANDLE;
 
 		vkDestroyRenderPass(device_handle, present.render_pass, nullptr);
+		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
+
+		destroy_pipeline(fdm.generate.pipeline);
+
 		vkDestroyRenderPass(device_handle, fdm.generate.render_pass, nullptr);
 
-		destroy_image(main_pass.image);
 		destroy_image(fdm.image);
 
 		vkDestroySampler(device_handle, samplers.nearest, nullptr);
-		vkDestroySampler(device_handle, samplers.subsampled_nearest, nullptr);
+		vkDestroySampler(device_handle, samplersFDM.subsampled_nearest, nullptr);
 
-		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
 		vkDestroyFramebuffer(device_handle, fdm.generate.framebuffer, nullptr);
 	}
 }
 
 bool FragmentDensityMap::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(options))
+	if (!GLTFApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
 
-	last_options = current_options;
+	last_options_fdm = current_options_fdm;
 
 	setup_samplers();
 	load_assets();
@@ -101,7 +70,7 @@ bool FragmentDensityMap::prepare(const vkb::ApplicationOptions &options)
 	setup_descriptor_set_layout_main_pass();
 	setup_descriptor_set_main_pass();
 
-	reset_fdm_gpu_data();
+	reset_gpu_data();
 
 	prepared = true;
 	return true;
@@ -111,7 +80,7 @@ void FragmentDensityMap::setup_samplers()
 {
 	// Samplers are not affected by configuration settings.
 	// They are created once and reused across all configurations.
-	assert(samplers.subsampled_nearest == VK_NULL_HANDLE);
+	assert(samplersFDM.subsampled_nearest == VK_NULL_HANDLE);
 	assert(samplers.nearest == VK_NULL_HANDLE);
 
 	// The sample needs to create a sampler using the subsampled flag to interact with the FDM attachments.
@@ -139,7 +108,7 @@ void FragmentDensityMap::setup_samplers()
 	if (is_fdm_supported())
 	{
 		sampler_create_info.flags = VK_SAMPLER_CREATE_SUBSAMPLED_BIT_EXT;
-		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &samplers.subsampled_nearest));
+		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &samplersFDM.subsampled_nearest));
 	}
 }
 
@@ -235,9 +204,9 @@ void FragmentDensityMap::prepare_pipelines()
 		vertex_input_state.vertexBindingDescriptionCount   = binding_descriptions.size();
 		vertex_input_state.vertexAttributeDescriptionCount = attribute_descriptions.size();
 
-		shader_stages[0] = load_shader("fragment_density_map/forward.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shader_stages[0] = load_shader("gltf/forward.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 		shader_stages[1] = load_shader(
-		    is_debug_fdm_enabled() ? "fragment_density_map/forward_debug.frag.spv" : "fragment_density_map/forward.frag.spv",
+		    is_debug_fdm_enabled() ? "fragment_density_map/forward_debug.frag.spv" : "gltf/forward.frag.spv",
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		pipeline_create_info.layout     = main_pass.meshes.pipeline.pipeline_layout;
@@ -247,8 +216,8 @@ void FragmentDensityMap::prepare_pipelines()
 		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(main_pass.meshes.pipeline.pipeline), "Submeshes Pipeline");
 	}
 
-	VkPipelineShaderStageCreateInfo quad_uvw_shader_stage = load_shader("fragment_density_map/quad_uvw.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	VkPipelineShaderStageCreateInfo quad_uv_shader_stage  = load_shader("fragment_density_map/quad_uv.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	VkPipelineShaderStageCreateInfo quad_uvw_shader_stage = load_shader("gltf/quad_uvw.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	VkPipelineShaderStageCreateInfo quad_uv_shader_stage  = load_shader("gltf/quad_uv.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 
 	// Sky pipeline.
 	{
@@ -259,7 +228,7 @@ void FragmentDensityMap::prepare_pipelines()
 		depth_stencil_state.depthTestEnable  = VK_FALSE;
 		shader_stages[0]                     = quad_uvw_shader_stage;
 		shader_stages[1]                     = load_shader(
-            is_debug_fdm_enabled() ? "fragment_density_map/sky_debug.frag.spv" : "fragment_density_map/sky.frag.spv",
+            is_debug_fdm_enabled() ? "fragment_density_map/sky_debug.frag.spv" : "gltf/sky.frag.spv",
 		    VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// The vertex shader generates a full-screen quad procedurally.
@@ -278,7 +247,7 @@ void FragmentDensityMap::prepare_pipelines()
 	{
 		// Vertex stage of the pipeline.
 		shader_stages[0] = quad_uv_shader_stage;
-		shader_stages[1] = load_shader("fragment_density_map/texture.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shader_stages[1] = load_shader("gltf/texture.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		depth_stencil_state.depthWriteEnable = VK_FALSE;
 		depth_stencil_state.depthTestEnable  = VK_FALSE;
@@ -487,58 +456,11 @@ void FragmentDensityMap::build_command_buffers()
 	}
 }
 
-bool FragmentDensityMap::resize(const uint32_t _width, const uint32_t _height)
-{
-	// This sample needs to modify ApiVulkanSample::resize to handle the FDM.
-	if (!prepared)
-	{
-		return false;
-	}
-
-	get_render_context().handle_surface_changes();
-
-	// Don't recreate the swapchain if the dimensions haven't changed.
-	if (width == get_render_context().get_surface_extent().width && height == get_render_context().get_surface_extent().height)
-	{
-		return false;
-	}
-
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
-
-	prepared = false;
-
-	// Ensure all operations on the device have been finished before destroying resources.
-	get_device().wait_idle();
-
-	create_swapchain_buffers();
-
-	reset_fdm_gpu_data();
-
-	if ((width > 0u) && (height > 0u))
-	{
-		if (has_gui())
-		{
-			get_gui().resize(width, height);
-		}
-	}
-
-	rebuild_command_buffers();
-
-	get_device().wait_idle();
-
-	// Notify derived class.
-	view_changed();
-
-	prepared = true;
-	return true;
-}
-
-void FragmentDensityMap::reset_fdm_gpu_data()
+void FragmentDensityMap::reset_gpu_data()
 {
 	vkResetCommandPool(get_device().get_handle(), cmd_pool, 0);
 
-	last_options = current_options;
+	last_options_fdm = current_options_fdm;
 	setup_additional_descriptor_pool();
 	prepare_uniform_buffers_fdm();
 
@@ -572,11 +494,11 @@ void FragmentDensityMap::render(float delta_time)
 		return;
 	}
 	// Recreate resources if options changed.
-	if (last_options != current_options)
+	if (last_options_fdm != current_options_fdm)
 	{
 		prepared = false;
 		get_device().wait_idle();
-		reset_fdm_gpu_data();
+		reset_gpu_data();
 		get_device().wait_idle();
 		prepared = true;
 	}
@@ -600,73 +522,6 @@ void FragmentDensityMap::render(float delta_time)
 	}
 }
 
-void FragmentDensityMap::load_assets()
-{
-	vkb::GLTFLoader loader{get_device()};
-	sg_scene = loader.read_scene_from_file("scenes/bonza/Bonza.gltf");
-	assert(sg_scene);
-
-	camera.type              = vkb::CameraType::FirstPerson;
-	const float aspect_ratio = 1.0f;        // dummy value. Reset by update_extents.
-	camera.set_perspective(50.0f, aspect_ratio, 4000.0f, 1.0f);
-	camera.set_rotation(glm::vec3(230.0f, 101.0f, -5.0f));
-	camera.set_translation(glm::vec3(115.0f, -390.0f, 18.0f));
-	camera.translation_speed = 100.0f;
-
-	// Store all data from glTF scene nodes in a vector.
-	for (auto &mesh : sg_scene->get_components<vkb::sg::Mesh>())
-	{
-		for (auto &node : mesh->get_nodes())
-		{
-			for (auto &submesh : mesh->get_submeshes())
-			{
-				const vkb::sg::Material *mesh_material = submesh->get_material();
-				if (mesh_material)
-				{
-					bool        negative_scale   = glm::any(glm::lessThanEqual(node->get_transform().get_scale(), glm::vec3(0.0f)));
-					const auto &color_texture_it = mesh_material->textures.find("base_color_texture");
-					// Cull double-sided/transparent/negatively-scaled/non-textured meshes.
-					if (!negative_scale &&
-					    !mesh_material->double_sided &&
-					    mesh_material->alpha_mode == vkb::sg::AlphaMode::Opaque &&
-					    color_texture_it != mesh_material->textures.end())
-					{
-						SubmeshData &mesh_data = scene_data.emplace_back(std::move(SubmeshData{
-						    .submesh            = submesh,
-						    .world_matrix       = node->get_transform().get_world_matrix(),
-						    .base_color_texture = color_texture_it->second}));
-					}
-					else
-					{
-						LOGI("Ignoring glTF mesh <{}>", submesh->get_name());
-					}
-				}
-			}
-		}
-	}
-	assert(!scene_data.empty());
-}
-
-void FragmentDensityMap::setup_descriptor_pool_main_pass()
-{
-	assert(main_pass.descriptor_pool == VK_NULL_HANDLE);
-	const uint32_t max_sets = vkb::to_u32(scene_data.size());
-
-	std::array<VkDescriptorPoolSize, 2> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, vkb::to_u32(scene_data.size())),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, vkb::to_u32(scene_data.size())),
-	    };
-
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        vkb::to_u32(pool_sizes.size()),
-	        pool_sizes.data(), max_sets);
-
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &main_pass.descriptor_pool));
-	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(main_pass.descriptor_pool), "Main pass descriptor pool");
-}
-
 void FragmentDensityMap::setup_additional_descriptor_pool()
 {
 	vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
@@ -686,69 +541,6 @@ void FragmentDensityMap::setup_additional_descriptor_pool()
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(descriptor_pool), "Additional Descriptor Pool");
-}
-
-void FragmentDensityMap::setup_descriptor_set_layout_main_pass()
-{
-	VkDevice                        device_handle = get_device().get_handle();
-	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info;
-	VkPipelineLayoutCreateInfo      pipeline_layout_create_info;
-
-	// Main pass glTF-submesh.
-	{
-		std::array<VkDescriptorSetLayoutBinding, 2> set_layout_bindings =
-		    {
-		        // Binding 0 : Vertex shader uniform buffer.
-		        vkb::initializers::descriptor_set_layout_binding(
-		            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		            VK_SHADER_STAGE_VERTEX_BIT,
-		            0),
-		        // Binding 1 : Fragment shader combined sampler.
-		        vkb::initializers::descriptor_set_layout_binding(
-		            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		            VK_SHADER_STAGE_FRAGMENT_BIT,
-		            1),
-		    };
-
-		descriptor_layout_create_info =
-		    vkb::initializers::descriptor_set_layout_create_info(
-		        set_layout_bindings.data(),
-		        vkb::to_u32(set_layout_bindings.size()));
-
-		pipeline_layout_create_info =
-		    vkb::initializers::pipeline_layout_create_info(
-		        &main_pass.meshes.pipeline.set_layout, 1);
-
-		assert(main_pass.meshes.pipeline.set_layout == VK_NULL_HANDLE);
-		VK_CHECK(vkCreateDescriptorSetLayout(device_handle, &descriptor_layout_create_info, nullptr, &main_pass.meshes.pipeline.set_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-		                           get_object_handle(main_pass.meshes.pipeline.set_layout), "Submeshes Descriptor Set Layout");
-
-		assert(main_pass.meshes.pipeline.pipeline_layout == VK_NULL_HANDLE);
-		VK_CHECK(vkCreatePipelineLayout(device_handle, &pipeline_layout_create_info, nullptr, &main_pass.meshes.pipeline.pipeline_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-		                           get_object_handle(main_pass.meshes.pipeline.pipeline_layout), "Submeshes Pipeline Layout");
-	}
-
-	// Sky
-	{
-		descriptor_layout_create_info =
-		    vkb::initializers::descriptor_set_layout_create_info(nullptr, 0);
-
-		pipeline_layout_create_info =
-		    vkb::initializers::pipeline_layout_create_info(
-		        &main_pass.sky_pipeline.set_layout, 1);
-
-		assert(main_pass.sky_pipeline.set_layout == VK_NULL_HANDLE);
-		VK_CHECK(vkCreateDescriptorSetLayout(device_handle, &descriptor_layout_create_info, nullptr, &main_pass.sky_pipeline.set_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-		                           get_object_handle(main_pass.sky_pipeline.set_layout), "Sky Descriptor Set Layout");
-
-		assert(main_pass.sky_pipeline.pipeline_layout == VK_NULL_HANDLE);
-		VK_CHECK(vkCreatePipelineLayout(device_handle, &pipeline_layout_create_info, nullptr, &main_pass.sky_pipeline.pipeline_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-		                           get_object_handle(main_pass.sky_pipeline.pipeline_layout), "Sky Pipeline Layout");
-	}
 }
 
 void FragmentDensityMap::setup_descriptor_set_layout_fdm()
@@ -830,7 +622,7 @@ void FragmentDensityMap::setup_descriptor_set_layout_present()
 	    vkb::initializers::pipeline_layout_create_info(
 	        &present.pipeline.set_layout, 1);
 
-	set_layout_bindings[0].pImmutableSamplers = (is_fdm_enabled() && !is_show_fdm_enabled()) ? &samplers.subsampled_nearest : &samplers.nearest;
+	set_layout_bindings[0].pImmutableSamplers = (is_fdm_enabled() && !is_show_fdm_enabled()) ? &samplersFDM.subsampled_nearest : &samplers.nearest;
 
 	vkDestroyDescriptorSetLayout(device_handle, present.pipeline.set_layout, nullptr);
 	VK_CHECK(vkCreateDescriptorSetLayout(device_handle, &descriptor_layout_create_info, nullptr, &present.pipeline.set_layout));
@@ -839,36 +631,6 @@ void FragmentDensityMap::setup_descriptor_set_layout_present()
 	vkDestroyPipelineLayout(device_handle, present.pipeline.pipeline_layout, nullptr);
 	VK_CHECK(vkCreatePipelineLayout(device_handle, &pipeline_layout_create_info, nullptr, &present.pipeline.pipeline_layout));
 	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT, get_object_handle(present.pipeline.pipeline_layout), "Present Pipeline Layout");
-}
-
-void FragmentDensityMap::setup_descriptor_set_main_pass()
-{
-	VkDevice device_handle = get_device().get_handle();
-	assert(main_pass.meshes.descriptor_sets.empty());
-	main_pass.meshes.descriptor_sets.resize(scene_data.size(), VK_NULL_HANDLE);
-	for (uint32_t i = 0; i < scene_data.size(); ++i)
-	{
-		auto &mesh_data       = scene_data[i];
-		auto &mesh_descriptor = main_pass.meshes.descriptor_sets[i];
-
-		VkDescriptorSetAllocateInfo descriptor_set_alloc_info = vkb::initializers::descriptor_set_allocate_info(main_pass.descriptor_pool, &main_pass.meshes.pipeline.set_layout, 1);
-		VK_CHECK(vkAllocateDescriptorSets(device_handle, &descriptor_set_alloc_info, &mesh_descriptor));
-
-		std::string debug_name = fmt::format("Descriptor Set glTF submesh-{} <{}>", i, mesh_data.submesh->get_name());
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET, get_object_handle(mesh_descriptor), debug_name.c_str());
-
-		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*mesh_data.vertex_ubo);
-		VkDescriptorImageInfo  image_descriptor  = vkb::initializers::descriptor_image_info(
-            mesh_data.base_color_texture->get_sampler()->get_core_sampler().get_handle(),
-            mesh_data.base_color_texture->get_image()->get_vk_image_view().get_handle(),
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		std::array<VkWriteDescriptorSet, 2> write_descriptor_sets =
-		    {
-		        vkb::initializers::write_descriptor_set(mesh_descriptor, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer.
-		        vkb::initializers::write_descriptor_set(mesh_descriptor, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map.
-		    };
-		vkUpdateDescriptorSets(device_handle, vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
-	}
 }
 
 void FragmentDensityMap::setup_descriptor_set_fdm()
@@ -907,23 +669,13 @@ void FragmentDensityMap::setup_descriptor_set_present()
 	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET, get_object_handle(present.set), "Descriptor set Present");
 
 	VkDescriptorImageInfo image_descriptor = vkb::initializers::descriptor_image_info(
-	    (is_fdm_enabled() && !is_show_fdm_enabled()) ? samplers.subsampled_nearest : samplers.nearest,
+	    (is_fdm_enabled() && !is_show_fdm_enabled()) ? samplersFDM.subsampled_nearest : samplers.nearest,
 	    is_show_fdm_enabled() ? fdm.image.view : main_pass.image.view,
 	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	std::array<VkWriteDescriptorSet, 1> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(
 	        present.set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &image_descriptor)};
 	vkUpdateDescriptorSets(device_handle, vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-}
-
-void FragmentDensityMap::prepare_uniform_buffers_main_pass()
-{
-	// Create uniform buffers for each glTF-submesh.
-	for (auto &mesh_data : scene_data)
-	{
-		mesh_data.vertex_ubo = std::make_unique<vkb::core::BufferC>(
-		    get_device(), sizeof(UBOVS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	}
 }
 
 void FragmentDensityMap::prepare_uniform_buffers_fdm()
@@ -936,17 +688,7 @@ void FragmentDensityMap::prepare_uniform_buffers_fdm()
 
 void FragmentDensityMap::update_uniform_buffer(float delta_time)
 {
-	// Main pass glTF-submeshes UBO.
-	{
-		UBOVS ubo_vs{
-		    .projection = camera.matrices.perspective};
-
-		for (auto &mesh_data : scene_data)
-		{
-			ubo_vs.modelview = camera.matrices.view * mesh_data.world_matrix;
-			mesh_data.vertex_ubo->convert_and_update(ubo_vs);
-		}
-	}
+	GLTFApiVulkanSample::update_uniform_buffer(delta_time);
 
 	// Generate FDM UBO.
 	{
@@ -986,28 +728,7 @@ void FragmentDensityMap::update_uniform_buffer(float delta_time)
 
 void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	VulkanSample::request_gpu_features(gpu);
-	auto &requested_features = gpu.get_mutable_requested_features();
-
-	// Enable anisotropic filtering if supported.
-	if (gpu.get_features().samplerAnisotropy)
-	{
-		requested_features.samplerAnisotropy = VK_TRUE;
-	}
-
-	// Enable texture compression.
-	if (gpu.get_features().textureCompressionBC)
-	{
-		requested_features.textureCompressionBC = VK_TRUE;
-	}
-	else if (gpu.get_features().textureCompressionASTC_LDR)
-	{
-		requested_features.textureCompressionASTC_LDR = VK_TRUE;
-	}
-	else if (gpu.get_features().textureCompressionETC2)
-	{
-		requested_features.textureCompressionETC2 = VK_TRUE;
-	}
+	GLTFApiVulkanSample::request_gpu_features(gpu);
 
 	// Check for FDM support and configure options.
 	available_options.supports_fdm = false;
@@ -1028,7 +749,7 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 			if (!available_options.supports_dynamic_fdm)
 			{
 				LOGW("Dynamic FDM is not supported. The FDM cannot be updated.");
-				current_options.update_fdm = false;
+				current_options_fdm.update_fdm = false;
 			}
 
 			auto &requested_extension_features                     = gpu.add_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>();
@@ -1043,7 +764,7 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 	if (!available_options.supports_fdm)
 	{
-		current_options.enable_fdm = false;
+		current_options_fdm.enable_fdm = false;
 		LOGE("Fragment density map is not supported");
 	}
 	else
@@ -1067,7 +788,7 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.height,
 		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.height);
 	}
-	last_options = current_options;
+	last_options_fdm = current_options_fdm;
 }
 
 void FragmentDensityMap::write_density_map(VkCommandBuffer cmd_buffer)
@@ -1520,7 +1241,6 @@ void FragmentDensityMap::setup_depth_stencil()
 
 	// Create depth stencil image.
 	{
-		// This sample needs to add the subsampled flag so we cannot use the framework function.
 		VkImageCreateInfo image_create_info{
 		    .sType     = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 		    .flags     = is_fdm_enabled() ? VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT : 0u,
@@ -1630,32 +1350,32 @@ bool FragmentDensityMap::is_fdm_supported()
 
 bool FragmentDensityMap::is_generate_fdm_compute()
 {
-	return is_fdm_enabled() && last_options.generate_fdm_compute;
+	return is_fdm_enabled() && last_options_fdm.generate_fdm_compute;
 }
 
 bool FragmentDensityMap::is_show_fdm_enabled()
 {
-	return is_fdm_enabled() && last_options.show_fdm;
+	return is_fdm_enabled() && last_options_fdm.show_fdm;
 }
 
 bool FragmentDensityMap::is_show_stats()
 {
-	return has_gui() && last_options.show_stats;
+	return has_gui() && last_options_fdm.show_stats;
 }
 
 bool FragmentDensityMap::is_debug_fdm_enabled()
 {
-	return is_fdm_enabled() && last_options.debug_fdm;
+	return is_fdm_enabled() && last_options_fdm.debug_fdm;
 }
 
 bool FragmentDensityMap::is_update_fdm_enabled()
 {
-	return is_fdm_enabled() && last_options.update_fdm && available_options.supports_dynamic_fdm;
+	return is_fdm_enabled() && last_options_fdm.update_fdm && available_options.supports_dynamic_fdm;
 }
 
 bool FragmentDensityMap::is_fdm_enabled()
 {
-	return last_options.enable_fdm && is_fdm_supported();
+	return last_options_fdm.enable_fdm && is_fdm_supported();
 }
 
 void FragmentDensityMap::setup_fragment_density_map()
@@ -1734,41 +1454,24 @@ void FragmentDensityMap::setup_fragment_density_map()
 	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE_VIEW, get_object_handle(fdm.image.view), "FDM Image View");
 }
 
-void FragmentDensityMap::prepare_gui()
-{
-	vkb::CounterSamplingConfig config{
-	    .mode  = vkb::CounterSamplingMode::Continuous,
-	    .speed = 0.1f};
-	get_stats().request_stats({
-	                              vkb::StatIndex::frame_times,
-	                              vkb::StatIndex::gpu_cycles,
-	                          },
-	                          config);
-
-	create_gui(*window, &get_stats(), 15.0f, true);
-	get_gui().prepare(pipeline_cache, present.render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
-}
-
 void FragmentDensityMap::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (is_fdm_supported())
 	{
-		drawer.checkbox("Enable FDM", reinterpret_cast<bool *>(&current_options.enable_fdm));
+		drawer.checkbox("Enable FDM", reinterpret_cast<bool *>(&current_options_fdm.enable_fdm));
 		if (is_fdm_enabled())
 		{
 			if (available_options.supports_dynamic_fdm)
 			{
-				drawer.checkbox("Update FDM each frame", reinterpret_cast<bool *>(&current_options.update_fdm));
+				drawer.checkbox("Update FDM each frame", reinterpret_cast<bool *>(&current_options_fdm.update_fdm));
 			}
 			else
 			{
 				drawer.text("Dynamic FDM is not supported");
 			}
-			drawer.checkbox("Generate FDM with compute", reinterpret_cast<bool *>(&current_options.generate_fdm_compute));
-			drawer.checkbox("Show FDM", reinterpret_cast<bool *>(&current_options.show_fdm));
-			drawer.checkbox("Debug FDM", reinterpret_cast<bool *>(&current_options.debug_fdm));
+			drawer.checkbox("Generate FDM with compute", reinterpret_cast<bool *>(&current_options_fdm.generate_fdm_compute));
+			drawer.checkbox("Show FDM", reinterpret_cast<bool *>(&current_options_fdm.show_fdm));
+			drawer.checkbox("Debug FDM", reinterpret_cast<bool *>(&current_options_fdm.debug_fdm));
 		}
 	}
 	else
@@ -1777,7 +1480,7 @@ void FragmentDensityMap::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 	if (has_gui())
 	{
-		drawer.checkbox("Show stats", &current_options.show_stats);
+		drawer.checkbox("Show stats", &current_options_fdm.show_stats);
 		if (is_show_stats())
 		{
 			get_gui().show_stats(get_stats());

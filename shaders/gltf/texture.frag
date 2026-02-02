@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +16,12 @@
  * limitations under the License.
  */
 
-layout(location = 0) out vec3 outUVW;
+layout(location = 0) in vec2 in_uv;
+layout(binding = 0) uniform sampler2D subsampled_image;
+
+layout(location = 0) out vec4 frag_colour;
 
 void main()
 {
-	outUVW      = vec3((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2, gl_VertexIndex & 2);
-	gl_Position = vec4(outUVW.st * 2.0f - 1.0f, 0.0f, 1.0f);
+	frag_colour = texture(subsampled_image, in_uv);
 }
