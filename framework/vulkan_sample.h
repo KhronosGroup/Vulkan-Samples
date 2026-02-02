@@ -1285,6 +1285,10 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 		requested_extensions[surface_extension] = vkb::RequestMode::Required;
 	}
 
+	// We're going to use VK_KHR_swapchain on device creation, which requires VK_KHR_surface on instance creation
+	// Just in case the windowing system didn't already request it...
+	requested_extensions[VK_KHR_SURFACE_EXTENSION_NAME] = vkb::RequestMode::Required;
+
 #if defined(VKB_VULKAN_DEBUG) || defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	requested_extensions[VK_EXT_DEBUG_UTILS_EXTENSION_NAME] = vkb::RequestMode::Required;
 #endif
