@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025 Holochip Corporation
+/* Copyright (c) 2023-2026 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,9 +27,7 @@ MeshShading::MeshShading() :
 {
 	title = "Mesh shading";
 
-	// vk_mesh_ext requires Vulkan 1.1 and device properties 2.  SPIR-V must also be set to at least 1.4.
-	set_api_version(VK_API_VERSION_1_1);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	// vk_mesh_ext requires device properties 2.  SPIR-V must also be set to at least 1.4.
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);

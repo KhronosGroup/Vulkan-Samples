@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025, Holochip Corporation
+ * Copyright (c) 2021-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,9 +23,6 @@ DynamicRendering::DynamicRendering() :
 {
 	title = "Dynamic Rendering";
 
-	// Dynamic Rendering is a Vulkan 1.2 extension
-	set_api_version(VK_API_VERSION_1_2);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
 
@@ -45,6 +42,12 @@ DynamicRendering::~DynamicRendering()
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
 		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
 	}
+}
+
+uint32_t DynamicRendering::get_api_version() const
+{
+	// Dynamic Rendering is a Vulkan 1.2 extension
+	return VK_API_VERSION_1_2;
 }
 
 bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)

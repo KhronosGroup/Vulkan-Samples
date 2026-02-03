@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,7 +38,6 @@ TimelineSemaphore::TimelineSemaphore()
 	title = "Timeline Semaphore";
 
 	add_device_extension(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 }
 
 TimelineSemaphore::~TimelineSemaphore()

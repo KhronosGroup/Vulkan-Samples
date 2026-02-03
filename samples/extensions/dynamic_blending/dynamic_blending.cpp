@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Mobica
+/* Copyright (c) 2023-2026, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,6 @@
 
 DynamicBlending::DynamicBlending()
 {
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 	add_device_extension(VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME);
 

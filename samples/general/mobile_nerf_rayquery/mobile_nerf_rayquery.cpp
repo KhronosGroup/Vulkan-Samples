@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2026, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,8 +75,6 @@ void camera_set_look_at(vkb::Camera &camera, const glm::vec3 pos, const glm::vec
 MobileNerfRayQuery::MobileNerfRayQuery()
 {
 	title = "Mobile Nerf Ray Query";
-
-	set_api_version(VK_API_VERSION_1_1);
 
 	// Required by VK_KHR_acceleration_structure
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);

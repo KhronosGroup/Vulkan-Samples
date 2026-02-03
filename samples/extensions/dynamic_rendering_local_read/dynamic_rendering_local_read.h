@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,6 +34,10 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+
+  private:
+	// from vkb::VulkanSample
+	uint32_t get_api_version() const override;
 
   private:
 	struct Scenes

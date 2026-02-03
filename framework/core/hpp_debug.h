@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -148,5 +148,65 @@ class HPPScopedDebugLabel final
 	vk::CommandBuffer               command_buffer;
 };
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
+                                                                       vk::DebugUtilsMessageTypeFlagsEXT             message_type,
+                                                                       vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
+                                                                       void                                         *user_data)
+{
+	// Log debug message
+	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
+	{
+		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+	}
+	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
+	{
+		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+	}
+	return false;
+}
+
+inline vk::DebugUtilsMessengerCreateInfoEXT getDefaultDebugUtilsMessengerCreateInfoEXT()
+{
+	return vk::DebugUtilsMessengerCreateInfoEXT{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	                                            .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	                                            .pfnUserCallback = debug_utils_messenger_callback};
+}
+
+inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT flags,
+                                                       vk::DebugReportObjectTypeEXT /*type*/,
+                                                       uint64_t /*object*/,
+                                                       size_t /*location*/,
+                                                       int32_t /*message_code*/,
+                                                       char const *layer_prefix,
+                                                       char const *message,
+                                                       void * /*user_data*/)
+{
+	if (flags & vk::DebugReportFlagBitsEXT::eError)
+	{
+		LOGE("{}: {}", layer_prefix, message);
+	}
+	else if (flags & vk::DebugReportFlagBitsEXT::eWarning)
+	{
+		LOGW("{}: {}", layer_prefix, message);
+	}
+	else if (flags & vk::DebugReportFlagBitsEXT::ePerformanceWarning)
+	{
+		LOGW("{}: {}", layer_prefix, message);
+	}
+	else
+	{
+		LOGI("{}: {}", layer_prefix, message);
+	}
+	return false;
+}
+
+inline vk::DebugReportCallbackCreateInfoEXT getDefaultDebugReportCallbackCreateInfoEXT()
+{
+	return vk::DebugReportCallbackCreateInfoEXT{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+	                                            .pfnCallback = debug_callback};
+}
+
+#endif
 }        // namespace core
 }        // namespace vkb

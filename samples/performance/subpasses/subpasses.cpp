@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,8 +53,6 @@ Subpasses::Subpasses()
 
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional=*/true);
-
 	VkLayerSettingEXT layerSetting;
 	layerSetting.pLayerName   = "MoltenVK";
 	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
@@ -184,6 +182,15 @@ bool Subpasses::prepare(const vkb::ApplicationOptions &options)
 
 	return true;
 }
+
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+void Subpasses::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
+	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+#endif
 
 void Subpasses::update(float delta_time)
 {
