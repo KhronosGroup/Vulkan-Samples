@@ -18,6 +18,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include "vulkan/vulkan_to_string.hpp"
 #include <memory>
 #include <vector>
 
