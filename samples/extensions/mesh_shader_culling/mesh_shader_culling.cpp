@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Holochip Corporation
+/* Copyright (c) 2023-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,9 +23,6 @@
 MeshShaderCulling::MeshShaderCulling()
 {
 	title = "Mesh shader culling";
-
-	// Configure application version
-	set_api_version(VK_API_VERSION_1_1);
 
 	// Adding device extensions
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, Sascha Willems
+/* Copyright (c) 2022-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,7 +53,6 @@ GraphicsPipelineLibrary::GraphicsPipelineLibrary()
 	title = "Graphics pipeline library";
 
 	// Graphics pipeline library related extensions required by this sample
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
 	add_device_extension(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
 }

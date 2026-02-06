@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,7 +43,9 @@ class HPPSubMesh : private vkb::sg::SubMesh
 {
   public:
 	using vkb::sg::Component::get_name;
-	using vkb::sg::SubMesh::vertex_indices;
+	using vkb::sg::SubMesh::get_index_offset;
+	using vkb::sg::SubMesh::get_vertex_indices;
+	using vkb::sg::SubMesh::get_vertices_count;
 
 	bool get_attribute(const std::string &name, HPPVertexAttribute &attribute) const
 	{
@@ -52,17 +54,22 @@ class HPPSubMesh : private vkb::sg::SubMesh
 
 	vkb::core::BufferCpp const &get_index_buffer() const
 	{
-		return reinterpret_cast<vkb::core::BufferCpp const &>(*vkb::sg::SubMesh::index_buffer);
+		return reinterpret_cast<vkb::core::BufferCpp const &>(vkb::sg::SubMesh::get_index_buffer());
 	}
 
 	vk::IndexType get_index_type() const
 	{
-		return static_cast<vk::IndexType>(vkb::sg::SubMesh::index_type);
+		return static_cast<vk::IndexType>(vkb::sg::SubMesh::get_index_type());
 	}
 
 	const HPPMaterial *get_material() const
 	{
 		return reinterpret_cast<vkb::scene_graph::components::HPPMaterial const *>(vkb::sg::SubMesh::get_material());
+	}
+
+	vkb::core::HPPShaderVariant &get_mut_shader_variant()
+	{
+		return reinterpret_cast<vkb::core::HPPShaderVariant &>(vkb::sg::SubMesh::get_mut_shader_variant());
 	}
 
 	const vkb::core::HPPShaderVariant &get_shader_variant() const

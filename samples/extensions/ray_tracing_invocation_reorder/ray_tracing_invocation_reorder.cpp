@@ -65,8 +65,7 @@ RaytracingInvocationReorder::RaytracingInvocationReorder() :
 {
 	title = "Ray tracing with extended features";
 
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
+	// SPIRV 1.4 requires Vulkan 1.1, which is the standard of our framework
 
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);

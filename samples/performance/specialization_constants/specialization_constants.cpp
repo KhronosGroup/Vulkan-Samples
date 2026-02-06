@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,7 +39,7 @@ SpecializationConstants::ForwardSubpassCustomLights::ForwardSubpassCustomLights(
                                                                                 vkb::ShaderSource             &&fragment_shader,
                                                                                 vkb::sg::Scene                 &scene_,
                                                                                 vkb::sg::Camera                &camera) :
-    vkb::ForwardSubpass{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
+    vkb::rendering::subpasses::ForwardSubpassC{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
 {
 }
 

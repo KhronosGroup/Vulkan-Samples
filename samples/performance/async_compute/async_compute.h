@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -81,7 +81,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 	bool        double_buffer_hdr_frames{false};
 	unsigned    forward_render_target_index{};
 
-	struct DepthMapSubpass : vkb::ForwardSubpass
+	struct DepthMapSubpass : vkb::rendering::subpasses::ForwardSubpassC
 	{
 		DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
 		                vkb::ShaderSource             &&vertex_shader,
@@ -91,7 +91,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 	};
 
-	struct ShadowMapForwardSubpass : vkb::ForwardSubpass
+	struct ShadowMapForwardSubpass : vkb::rendering::subpasses::ForwardSubpassC
 	{
 		ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
 		                        vkb::ShaderSource             &&vertex_shader,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,6 +41,11 @@
 
 namespace vkb
 {
+inline bool contains(std::vector<std::string> const &range, char const *value)
+{
+	return std::ranges::find_if(range, [value](std::string const &range_value) { return range_value == value; }) != range.end();
+}
+
 template <typename T>
 inline void read(std::istringstream &is, T &value)
 {
