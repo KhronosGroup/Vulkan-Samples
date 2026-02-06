@@ -112,7 +112,7 @@ void DeviceFault::check_device_fault()
             LOGE("Vendor Fault Description: {}", faultInfo.pVendorInfos ? faultInfo.pVendorInfos->description : "No Vendor Information available.")
             // Log each address info
             for (uint32_t i = 0; i < faultCount.addressInfoCount; i++) {
-                LOGE("Fault Address Info Address Type: {}", std::to_string(addressInfos[i].addressType));
+                LOGE("Fault Address Info Address Type: {}", vk::to_string(static_cast<vk::DeviceFaultAddressTypeEXT>(addressInfos[i].addressType)));
 				LOGE("Fault Address Info Reported Address -> Decimal: {} | Hex: 0x{:X}", addressInfos[i].reportedAddress, static_cast<uint64_t>(addressInfos[i].reportedAddress));
             }
         }
