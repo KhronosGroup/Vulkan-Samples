@@ -114,7 +114,7 @@ VkResult faultResult = vkGetDeviceFaultInfoEXT(vk_device, &faultCount, &faultInf
         LOGE("Vendor Fault Description: {}", faultInfo.pVendorInfos ? faultInfo.pVendorInfos->description : "No Vendor Information available.")
         // Log each address info with decimal and hexadecimal representations
         for (uint32_t i = 0; i < faultCount.addressInfoCount; i++) {
-            LOGE("Fault Address Info Address Type: {}", std::to_string(addressInfos[i].addressType));
+            LOGE("Fault Address Info Address Type: {}", vk::to_string(static_cast<vk::DeviceFaultAddressTypeEXT>(addressInfos[i].addressType)));
             LOGE("Fault Address Info Reported Address -> Decimal: {} | Hex: 0x{:X}", addressInfos[i].reportedAddress, static_cast<uint64_t>(addressInfos[i].reportedAddress));
         }
     }
@@ -224,15 +224,15 @@ Concrete out-of-bounds example:
 In our setup, a compute shader writes directly into a Shader Storage Buffer Object (SSBO) via buffer device addresses.
 We are using VK_EXT_device_binding_report extension in this sample to report our memory allocation and binding addresses as shown below:
 
-image::./images/binding_address.png[DeviceFault]
+image::./images/binding_address_info.png[DeviceFault]
 
-One of the SSBO's was bound at `0x5FF96F900 (decimal 412,206,731,264)` with a size of `2048 bytes`.
+One of the SSBO's was bound at `0x5FF96E4000 (decimal 412,206,645,248)` with a size of `2048 bytes`.
 We deliberately issued a store to `positions.positions[1,000,000]`, where `Position` is a `std430` array of `vec2` so each element is `8 bytes`.
 The shader therefore targets `base + index * 8 = base + 8,000,000 bytes (hex 0x007A1200)`.
 
-image::./images/fault_address.png[DeviceFault]
+image::./images/failed_logcat_output.png[DeviceFault]
 
-The device fault report shows `0x55F9E9A200 (decimal 412,214,731,264)`, and the difference from the bound base is exactly `8,000,000 bytes`.
+The device fault report shows `0x5ff9e85200 (decimal 412,214,645,248)`, and the difference from the bound base is exactly `8,000,000 bytes`.
 There is no rounding in this report. Just straightforward pointer arithmetic making it trivial to correlate the fault with the offending SSBO and confirm the write was ``~7.63 MiB` past a `2 KiB` allocation.
 
 Keep that in mind that there are no guarantees around the granularity of the fault addresses (and no guarantee that an out of bounds access generates a fault at all!), so this will vary across vendors.
