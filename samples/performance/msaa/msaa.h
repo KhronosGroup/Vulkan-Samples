@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Arm Limited and Contributors
+/* Copyright (c) 2023-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -86,7 +86,7 @@ class MSAASample : public vkb::VulkanSampleC
 	 * @brief Scene pipeline
 	 *        Render and light the scene (optionally using MSAA)
 	 */
-	std::unique_ptr<vkb::RenderPipeline> scene_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> scene_pipeline{};
 
 	/**
 	 * @brief Postprocessing pipeline

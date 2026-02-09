@@ -286,7 +286,7 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	forward_render_pipeline.set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
 	                                        {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
 
-	auto blit_render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto blit_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	blit_render_pipeline->add_subpass(std::move(composite_scene_subpass));
 	blit_render_pipeline->set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
 	                                      {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});

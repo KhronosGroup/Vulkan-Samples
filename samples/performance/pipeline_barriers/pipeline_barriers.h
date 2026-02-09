@@ -55,9 +55,9 @@ class PipelineBarriers : public vkb::VulkanSampleC
 
 	virtual void draw_gui() override;
 
-	vkb::RenderPipeline gbuffer_pipeline;
+	vkb::rendering::RenderPipelineC gbuffer_pipeline;
 
-	vkb::RenderPipeline lighting_pipeline;
+	vkb::rendering::RenderPipelineC lighting_pipeline;
 
 	DependencyType dependency_type{DependencyType::BOTTOM_TO_TOP};
 };
