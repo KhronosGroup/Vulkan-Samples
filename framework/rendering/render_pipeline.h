@@ -196,11 +196,15 @@ void RenderPipeline<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &com
 			command_buffer.next_subpass();
 		}
 
-		if (subpass->get_debug_name().empty())
+		if (contents != vk::SubpassContents::eSecondaryCommandBuffers)
 		{
-			subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+			if (subpass->get_debug_name().empty())
+			{
+				subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+			}
+			ScopedDebugLabel subpass_debug_label{reinterpret_cast<vkb::core::CommandBufferC const &>(command_buffer), subpass->get_debug_name().c_str()};
 		}
-		ScopedDebugLabel subpass_debug_label{reinterpret_cast<vkb::core::CommandBufferC const &>(command_buffer), subpass->get_debug_name().c_str()};
+
 		subpass->draw(command_buffer);
 	}
 }
@@ -227,7 +231,7 @@ const std::vector<typename RenderPipeline<bindingType>::LoadStoreInfoType> &Rend
 	}
 	else
 	{
-		return reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(clear_value);
+		return reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store);
 	}
 }
 
