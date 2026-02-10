@@ -305,9 +305,6 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 
 	create_gui(*window, &get_stats());
 
-	// Store the start time to calculate rotation
-	start_time = std::chrono::system_clock::now();
-
 	auto &threshold_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
 	                                                                                 vkb::ShaderSource("async_compute/threshold.comp.spv"));
 	auto &blur_up_module   = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
@@ -752,7 +749,8 @@ void AsyncComputeSample::update(float delta_time)
 
 	composite_subpass->set_texture(&get_current_forward_render_target().get_views()[0], blur_chain_views[1].get(), linear_sampler.get());        // blur_chain[1] and color_targets[0] will be used by the present queue
 
-	float rotation_factor = std::chrono::duration<float>(std::chrono::system_clock::now() - start_time).count();
+	elapsed_time += delta_time;
+	float rotation_factor = elapsed_time;
 
 	glm::quat orientation;
 

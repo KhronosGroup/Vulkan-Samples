@@ -47,7 +47,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	virtual void draw_gui() override;
 
-	std::chrono::system_clock::time_point start_time;
+	float elapsed_time{0.0f};
 
 	void        render_shadow_pass();
 	VkSemaphore render_forward_offscreen_pass(VkSemaphore hdr_wait_semaphore);
