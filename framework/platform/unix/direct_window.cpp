@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -242,22 +242,6 @@ DirectWindow::~DirectWindow()
 	}
 }
 
-VkSurfaceKHR DirectWindow::create_surface(vkb::core::InstanceC &instance)
-{
-	return create_surface(instance.get_handle(), instance.get_first_gpu().get_handle());
-}
-
-// Local structure for holding display candidate information
-struct Candidate
-{
-	VkDisplayKHR                  display;
-	VkDisplayPropertiesKHR        display_props;
-	VkDisplayModePropertiesKHR    mode;
-	VkDisplayPlaneCapabilitiesKHR caps;
-	uint32_t                      plane_index;
-	uint32_t                      stack_index;
-};
-
 // Helper template to get a vector of properties using the Vulkan idiom of
 // querying size, then querying data
 template <typename T, typename F, typename... Targs>
@@ -274,6 +258,22 @@ static std::vector<T> get_props(F func, Targs... args)
 	}
 	return result;
 }
+
+VkSurfaceKHR DirectWindow::create_surface(vkb::core::InstanceC &instance)
+{
+	return create_surface(instance.get_handle(), get_props<VkPhysicalDevice>(vkEnumeratePhysicalDevices, instance.get_handle()).front());
+}
+
+// Local structure for holding display candidate information
+struct Candidate
+{
+	VkDisplayKHR                  display;
+	VkDisplayPropertiesKHR        display_props;
+	VkDisplayModePropertiesKHR    mode;
+	VkDisplayPlaneCapabilitiesKHR caps;
+	uint32_t                      plane_index;
+	uint32_t                      stack_index;
+};
 
 // Find all valid display candidates in the system
 static std::vector<Candidate> find_display_candidates(VkPhysicalDevice phys_dev, Window::Mode window_mode)

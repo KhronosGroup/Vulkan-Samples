@@ -141,9 +141,10 @@ class VulkanSample : public vkb::Application
 	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
-	using InstanceCreateFlagsType     = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
 	using Extent2DType                = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using InstanceCreateFlagsType     = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
 	using LayerSettingType            = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
+	using PhysicalDeviceType          = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
 	using SurfaceFormatType           = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
 	using SurfaceType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 	using ValidationFeatureEnableType = typename std::conditional<bindingType == BindingType::Cpp, vk::ValidationFeatureEnableEXT, VkValidationFeatureEnableEXT>::type;
@@ -178,6 +179,8 @@ class VulkanSample : public vkb::Application
 	 * @brief Override this to customise the creation of the render_context
 	 */
 	virtual void create_render_context();
+
+	virtual size_t determine_physical_device_score(PhysicalDeviceType const &gpu) const;
 
 	/**
 	 * @brief Prepares the render target and draws to it, calling draw_renderpass
@@ -283,6 +286,8 @@ class VulkanSample : public vkb::Application
 	 */
 	bool prepare(const ApplicationOptions &options) override;
 
+	void select_physical_device();
+
 	/**
 	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
 	 * Very specific feature which is used by async compute samples.
@@ -329,6 +334,7 @@ class VulkanSample : public vkb::Application
 	/// </summary>
   private:
 	void        create_render_context_impl(const std::vector<vk::SurfaceFormatKHR> &surface_priority_list);
+	size_t      determine_physical_device_score_impl(vk::PhysicalDevice const &gpu) const;
 	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
 	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
 	void        render_impl(vkb::core::CommandBufferCpp &command_buffer);
@@ -350,6 +356,11 @@ class VulkanSample : public vkb::Application
 	 * @brief The Vulkan instance
 	 */
 	std::unique_ptr<vkb::core::InstanceCpp> instance;
+
+	/**
+	 * @brief The physical device selected for this sample
+	 */
+	std::unique_ptr<vkb::core::PhysicalDeviceCpp> physical_device;
 
 	/**
 	 * @brief The Vulkan device
@@ -401,6 +412,12 @@ class VulkanSample : public vkb::Application
 	bool high_priority_graphics_queue{false};
 
 	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
+
+  public:
+	/**
+	 * @brief Can be set from the GPU selection plugin to explicitly select a GPU instead
+	 */
+	inline static uint32_t selected_gpu_index = ~0;
 };
 
 using VulkanSampleC   = VulkanSample<vkb::BindingType::C>;
@@ -512,6 +529,36 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 
 	render_context =
 	    std::make_unique<vkb::rendering::RenderContextCpp>(*device, surface, *window, present_mode, present_mode_priority_list, surface_priority_list);
+}
+
+template <vkb::BindingType bindingType>
+inline size_t VulkanSample<bindingType>::determine_physical_device_score(PhysicalDeviceType const &gpu) const
+{
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return determine_physical_device_score_impl(gpu);
+	}
+	else
+	{
+		return determine_physical_device_score_impl(reinterpret_cast<vk::PhysicalDevice const &>(gpu));
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline size_t VulkanSample<bindingType>::determine_physical_device_score_impl(vk::PhysicalDevice const &gpu) const
+{
+	// Prefer discrete GPUs that support presenting to our surface, as they are most likely to provide good performance for rendering and presenting.
+	auto supports_surface = [this, &gpu]() {
+		for (uint32_t queue_idx = 0; queue_idx < gpu.getQueueFamilyProperties().size(); ++queue_idx)
+		{
+			if (gpu.getSurfaceSupportKHR(queue_idx, surface))
+			{
+				return true;
+			}
+		}
+		return false;
+	};
+	return (gpu.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu) && supports_surface() ? 1000 : 1;
 }
 
 template <vkb::BindingType bindingType>
@@ -1140,13 +1187,14 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		throw std::runtime_error("Failed to create window surface.");
 	}
 
-	auto &gpu = instance->get_suitable_gpu(surface, headless);
-	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
+	select_physical_device();
+
+	physical_device->set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
-	if (gpu.get_features().textureCompressionASTC_LDR)
+	if (physical_device->get_features().textureCompressionASTC_LDR)
 	{
-		gpu.get_mutable_requested_features().textureCompressionASTC_LDR = true;
+		physical_device->get_mutable_requested_features().textureCompressionASTC_LDR = true;
 	}
 
 	// Creating vulkan device, specifying the swapchain extension always
@@ -1177,7 +1225,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 #ifdef VKB_VULKAN_DEBUG
 	if (!debug_utils)
 	{
-		std::vector<vk::ExtensionProperties> available_device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
+		std::vector<vk::ExtensionProperties> available_device_extensions = physical_device->get_handle().enumerateDeviceExtensionProperties();
 		auto                                 debugExtensionIt =
 		    std::ranges::find_if(available_device_extensions,
 		                         [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
@@ -1203,11 +1251,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		device = create_device(gpu);
+		device = create_device(*physical_device);
 	}
 	else
 	{
-		device.reset(reinterpret_cast<vkb::core::DeviceCpp *>(create_device(reinterpret_cast<vkb::core::PhysicalDeviceC &>(gpu)).release()));
+		device.reset(reinterpret_cast<vkb::core::DeviceCpp *>(create_device(reinterpret_cast<vkb::core::PhysicalDeviceC &>(*physical_device)).release()));
 	}
 
 	// initialize C++-Bindings default dispatcher, optional third step
@@ -1404,6 +1452,50 @@ inline bool VulkanSample<bindingType>::resize(uint32_t width, uint32_t height)
 		stats->resize(width);
 	}
 	return true;
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::select_physical_device()
+{
+	assert(instance && "Instance must be created before selecting a physical device");
+
+	std::vector<vk::PhysicalDevice> physical_devices = instance->get_handle().enumeratePhysicalDevices();
+	if (physical_devices.empty())
+	{
+		throw std::runtime_error("Couldn't find a physical device that supports Vulkan.");
+	}
+
+	// A GPU can be explicitly selected via the command line (see plugins/gpu_selection.cpp), this overrides the below GPU selection algorithm
+	auto physical_devices_it = physical_devices.begin();
+	if (selected_gpu_index != ~0)
+	{
+		LOGI("Explicitly selecting GPU {}", selected_gpu_index);
+		if (selected_gpu_index > physical_devices.size() - 1)
+		{
+			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
+		}
+		physical_devices_it = physical_devices.begin() + selected_gpu_index;
+	}
+	else
+	{
+		std::vector<size_t> gpu_scores;
+		gpu_scores.reserve(physical_devices.size());
+		for (auto const &physical_device : physical_devices)
+		{
+			if constexpr (bindingType == BindingType::Cpp)
+			{
+				gpu_scores.push_back(determine_physical_device_score(physical_device));
+			}
+			else
+			{
+				gpu_scores.push_back(determine_physical_device_score(reinterpret_cast<VkPhysicalDevice const &>(physical_device)));
+			}
+		}
+		auto max_score_it   = std::ranges::max_element(gpu_scores);
+		physical_devices_it = physical_devices.begin() + std::distance(gpu_scores.begin(), max_score_it);
+	}
+
+	physical_device = std::make_unique<vkb::core::PhysicalDeviceCpp>(*instance, *physical_devices_it);
 }
 
 template <vkb::BindingType bindingType>

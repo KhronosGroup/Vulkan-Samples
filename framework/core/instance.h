@@ -60,11 +60,6 @@ class Instance
 
   public:
 	/**
-	 * @brief Can be set from the GPU selection plugin to explicitly select a GPU instead
-	 */
-	inline static uint32_t selected_gpu_index = ~0;
-
-	/**
 	 * @brief Initializes the connection to Vulkan
 	 * @param application_name The name of the application
 	 * @param api_version The Vulkan API version that the instance will be using
@@ -112,21 +107,7 @@ class Instance
 
 	const std::vector<std::string> &get_extensions();
 
-	/**
-	 * @brief Tries to find the first available discrete GPU
-	 * @returns A valid physical device
-	 */
-	PhysicalDevice<bindingType> &get_first_gpu();
-
 	InstanceType get_handle() const;
-
-	/**
-	 * @brief Tries to find the first available discrete GPU that can render to the given surface
-	 * @param surface to test against
-	 * @param headless_surface Is surface created with VK_EXT_headless_surface
-	 * @returns A valid physical device
-	 */
-	PhysicalDevice<bindingType> &get_suitable_gpu(SurfaceType surface, bool headless_surface);
 
 	/**
 	 * @brief Checks if the given extension is enabled in the InstanceType
@@ -135,15 +116,8 @@ class Instance
 	bool is_enabled(char const *extension) const;
 
   private:
-	/**
-	 * @brief Queries the instance for the physical devices on the machine
-	 */
-	void query_gpus();
-
-  private:
-	std::vector<std::string>                                   enabled_extensions;        // The enabled extensions
-	std::vector<std::unique_ptr<vkb::core::PhysicalDeviceCpp>> gpus;                      // The physical devices found on the machine
-	vk::Instance                                               handle;                    // The Vulkan instance
+	std::vector<std::string> enabled_extensions;        // The enabled extensions
+	vk::Instance             handle;                    // The Vulkan instance
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	vk::DebugReportCallbackEXT debug_report_callback;        // The debug report callback
@@ -349,8 +323,6 @@ inline Instance<bindingType>::Instance(std::string const                        
 		debug_report_callback = handle.createDebugReportCallbackEXT(vkb::core::getDefaultDebugReportCallbackCreateInfoEXT());
 	}
 #endif
-
-	query_gpus();
 }
 
 template <vkb::BindingType bindingType>
@@ -374,15 +346,6 @@ inline Instance<bindingType>::Instance(vk::Instance instance, const std::vector<
 	for (auto extension : externally_enabled_extensions)
 	{
 		enabled_extensions.push_back(extension);
-	}
-
-	if (handle)
-	{
-		query_gpus();
-	}
-	else
-	{
-		throw std::runtime_error("Instance not valid");
 	}
 }
 
@@ -420,28 +383,6 @@ inline Instance<bindingType>::~Instance()
 #endif
 
 template <vkb::BindingType bindingType>
-inline PhysicalDevice<bindingType> &Instance<bindingType>::get_first_gpu()
-{
-	assert(!gpus.empty() && "No physical devices were found on the system.");
-
-	// Find a discrete GPU
-	auto gpuIt = std::ranges::find_if(gpus, [](auto const &gpu) { return gpu->get_properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu; });
-	if (gpuIt == gpus.end())
-	{
-		LOGW("Couldn't find a discrete physical device, picking default GPU");
-		gpuIt = gpus.begin();
-	}
-	if constexpr (bindingType == BindingType::Cpp)
-	{
-		return **gpuIt;
-	}
-	else
-	{
-		return reinterpret_cast<vkb::core::PhysicalDeviceC &>(**gpuIt);
-	}
-}
-
-template <vkb::BindingType bindingType>
 inline typename Instance<bindingType>::InstanceType Instance<bindingType>::get_handle() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -456,100 +397,10 @@ inline typename Instance<bindingType>::InstanceType Instance<bindingType>::get_h
 }
 
 template <vkb::BindingType bindingType>
-inline PhysicalDevice<bindingType> &Instance<bindingType>::get_suitable_gpu(SurfaceType surface, bool headless_surface)
-{
-	assert(!gpus.empty() && "No physical devices were found on the system.");
-
-	// A GPU can be explicitly selected via the command line (see plugins/gpu_selection.cpp), this overrides the below GPU selection algorithm
-	auto gpuIt = gpus.begin();
-	if (selected_gpu_index != ~0)
-	{
-		LOGI("Explicitly selecting GPU {}", selected_gpu_index);
-		if (selected_gpu_index > gpus.size() - 1)
-		{
-			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
-		}
-		gpuIt = gpus.begin() + selected_gpu_index;
-	}
-	else
-	{
-		if (headless_surface)
-		{
-			LOGW("Using headless surface with multiple GPUs. Considered explicitly selecting the target GPU.")
-		}
-
-		// Find a discrete GPU
-#if 0
-		gpuIt = std::ranges::find_if(gpus,
-		                             [&surface](auto const &gpu) {
-			                             return (gpu->get_properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu) &&
-			                                    std::ranges::any_of(std::views::iota(size_t(0), gpu->get_queue_family_properties().size()),
-			                                                        [&gpu, &surface](auto const &queue_idx) {
-				                                                        return gpu->get_handle().getSurfaceSupportKHR(static_cast<uint32_t>(queue_idx), surface);
-			                                                        });
-		                             });
-#else
-		gpuIt = std::ranges::find_if(gpus,
-		                             [&surface](auto const &gpu) {
-			                             auto gpu_supports_surface = [&gpu, &surface]() {
-				                             for (uint32_t queue_idx = 0; queue_idx < gpu->get_queue_family_properties().size(); ++queue_idx)
-				                             {
-					                             if (gpu->get_handle().getSurfaceSupportKHR(queue_idx, surface))
-					                             {
-						                             return true;
-					                             }
-				                             }
-				                             return false;
-			                             };
-			                             return (gpu->get_properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu) && gpu_supports_surface();
-		                             });
-#endif
-		if (gpuIt == gpus.end())
-		{
-			LOGW("Couldn't find a discrete physical device that supports the surface, picking default GPU");
-			gpuIt = gpus.begin();
-		}
-	}
-
-	if constexpr (bindingType == BindingType::Cpp)
-	{
-		return **gpuIt;
-	}
-	else
-	{
-		return reinterpret_cast<vkb::core::PhysicalDeviceC &>(**gpuIt);
-	}
-}
-
-template <vkb::BindingType bindingType>
 inline bool Instance<bindingType>::is_enabled(char const *extension) const
 {
 	return std::ranges::find_if(enabled_extensions, [extension](std::string const &enabled_extension) { return enabled_extension == extension; }) !=
 	       enabled_extensions.end();
-}
-
-template <vkb::BindingType bindingType>
-inline void Instance<bindingType>::query_gpus()
-{
-	// Querying valid physical devices on the machine
-	std::vector<vk::PhysicalDevice> physical_devices = handle.enumeratePhysicalDevices();
-	if (physical_devices.empty())
-	{
-		throw std::runtime_error("Couldn't find a physical device that supports Vulkan.");
-	}
-
-	// Create gpus wrapper objects from the vk::PhysicalDevice's
-	for (auto &physical_device : physical_devices)
-	{
-		if constexpr (bindingType == BindingType::Cpp)
-		{
-			gpus.push_back(std::make_unique<vkb::core::PhysicalDeviceCpp>(*this, physical_device));
-		}
-		else
-		{
-			gpus.push_back(std::make_unique<vkb::core::PhysicalDeviceCpp>(*reinterpret_cast<vkb::core::InstanceCpp *>(this), physical_device));
-		}
-	}
 }
 
 template <vkb::BindingType bindingType>

@@ -1,5 +1,5 @@
-/* Copyright (c) 2023-2025, Sascha Willems
- * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, Sascha Willems
+ * Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 
 #include "gpu_selection.h"
 #include "core/instance.h"
+#include "vulkan_sample.h"
 
 #include <algorithm>
 
@@ -45,8 +46,8 @@ bool GpuSelection::handle_option(std::deque<std::string> &arguments)
 		}
 		uint32_t gpu_index = static_cast<uint32_t>(std::stoul(arguments[1]));
 
-		vkb::core::InstanceC::selected_gpu_index   = gpu_index;
-		vkb::core::InstanceCpp::selected_gpu_index = gpu_index;
+		vkb::VulkanSampleC::selected_gpu_index   = gpu_index;
+		vkb::VulkanSampleCpp::selected_gpu_index = gpu_index;
 
 		arguments.pop_front();
 		arguments.pop_front();
