@@ -1,5 +1,5 @@
-/* Copyright (c) 2022-2025, Sascha Willems
- * Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2022-2026, Sascha Willems
+ * Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -253,8 +253,7 @@ void Profiles::generate_textures()
 		VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view, nullptr, &textures[i].image_view));
 
 		// Generate a random texture
-		std::random_device                   rnd_device;
-		std::default_random_engine           rnd_engine(rnd_device());
+		std::default_random_engine           rnd_engine(lock_simulation_speed ? static_cast<unsigned>(i) : std::random_device{}());
 		std::uniform_int_distribution<short> rnd_dist(0, 255);
 		const size_t                         buffer_size = dim * dim * 4;
 		uint8_t                             *buffer      = staging_buffer.map();
@@ -311,8 +310,7 @@ void Profiles::generate_cubes()
 	std::vector<uint32_t>        indices;
 
 	// Generate random per-face texture indices
-	std::random_device                     rndDevice;
-	std::default_random_engine             rndEngine(rndDevice());
+	std::default_random_engine             rndEngine(lock_simulation_speed ? 0u : std::random_device{}());
 	std::uniform_int_distribution<int32_t> rndDist(0, static_cast<uint32_t>(textures.size()) - 1);
 
 	// Generate cubes with random per-face texture indices
