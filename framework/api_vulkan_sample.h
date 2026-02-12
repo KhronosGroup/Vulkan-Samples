@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Sascha Willems
- * Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Sascha Willems
+ * Copyright (c) 2025-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -149,6 +149,12 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 
 	// Global render pass for frame buffer writes
 	VkRenderPass render_pass = VK_NULL_HANDLE;
+
+	// Returns true if using dynamic rendering
+	bool uses_dynamic_rendering() const
+	{
+		return render_pass == VK_NULL_HANDLE;
+	}
 
 	// List of available frame buffers (same as number of swap chain images)
 	std::vector<VkFramebuffer> framebuffers;
@@ -370,6 +376,16 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	 * @param command_buffer A valid command buffer that is ready to be recorded to
 	 */
 	void draw_ui(const VkCommandBuffer command_buffer);
+
+	/**
+	 * @brief Draw UI for dynamic rendering mode
+	 * @param command_buffer A valid command buffer (after ending your main rendering pass)
+	 * @param swapchain_image_index The swapchain image index to render onto
+	 *
+	 * This method starts its own rendering pass, draws the UI, and ends the pass.
+	 * Call this after ending your main rendering pass (vkCmdEndRenderingKHR).
+	 */
+	void draw_ui(const VkCommandBuffer command_buffer, uint32_t swapchain_image_index);
 
 	/**
 	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and

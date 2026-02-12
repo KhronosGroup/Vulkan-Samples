@@ -1,4 +1,5 @@
 /* Copyright (c) 2024-2026, Sascha Willems
+ * Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -320,12 +321,19 @@ void DynamicRenderingLocalRead::setup_render_pass()
 
 void DynamicRenderingLocalRead::prepare_gui()
 {
-#if !defined(USE_DYNAMIC_RENDERING)
 	create_gui(*window, nullptr, 15.0f, true);
+
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
+	    load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
+
+#if defined(USE_DYNAMIC_RENDERING)
+	vk::Format color_format = static_cast<vk::Format>(get_render_context().get_swapchain().get_format());
+	vk::Format depth_fmt    = static_cast<vk::Format>(depth_format);
+	get_gui().prepare(pipeline_cache, color_format, depth_fmt, shader_stages);
+#else
 	get_gui().set_subpass(2);
-	get_gui().prepare(pipeline_cache, render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	get_gui().prepare(pipeline_cache, render_pass, shader_stages);
 #endif
 }
 
@@ -943,10 +951,11 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
 		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
 
-		// @todo: UI is disabled for now, required some fixup in the framework to make it work properly with dynamic rendering local reads
-		// draw_ui(draw_cmd_buffers[i]);
-
+		// End main rendering
 		vkCmdEndRenderingKHR(cmd);
+
+		// Draw UI
+		draw_ui(draw_cmd_buffers[i], i);
 
 		/*
 		    Dynamic rendering end
