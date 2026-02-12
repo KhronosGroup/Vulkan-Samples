@@ -84,8 +84,7 @@ void ApiVulkanSample::prepare_gui()
 
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
 	    load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-	};
+	    load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	if (uses_dynamic_rendering())
 	{

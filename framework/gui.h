@@ -1,5 +1,5 @@
 /* Copyright (c) 2018-2026, Arm Limited and Contributors
- * Copyright (c) 2019-2025, Sascha Willems
+ * Copyright (c) 2019-2026, Sascha Willems
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -1199,8 +1199,7 @@ inline void Gui<bindingType>::prepare_impl(vk::PipelineCache                    
 	    .colorAttachmentCount    = 1,
 	    .pColorAttachmentFormats = &color_format,
 	    .depthAttachmentFormat   = depth_format,
-	    .stencilAttachmentFormat = vk::Format::eUndefined
-	};
+	    .stencilAttachmentFormat = vk::Format::eUndefined};
 
 	vk::GraphicsPipelineCreateInfo pipeline_create_info = {.pNext               = &pipeline_rendering_info,
 	                                                       .stageCount          = static_cast<uint32_t>(shader_stages.size()),
