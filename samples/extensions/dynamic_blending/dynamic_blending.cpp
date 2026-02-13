@@ -153,11 +153,15 @@ void DynamicBlending::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
 	                         extendedDynamicState3ColorBlendEnable);
 
-	// Only request the features that we support
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorWriteMask);
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendAdvanced);
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEquation);
+	// Only request the features that we support, and record which ones are available
+	eds_feature_support.extendedDynamicState3ColorWriteMask =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorWriteMask);
+	eds_feature_support.extendedDynamicState3ColorBlendEnable =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
+	eds_feature_support.extendedDynamicState3ColorBlendAdvanced =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendAdvanced);
+	eds_feature_support.extendedDynamicState3ColorBlendEquation =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEquation);
 
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT, advancedBlendCoherentOperations);
 }
