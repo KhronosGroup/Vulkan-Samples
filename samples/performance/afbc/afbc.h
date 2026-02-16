@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ class AFBCSample : public vkb::VulkanSampleC
 
 	bool afbc_enabled{false};
 
-	std::chrono::system_clock::time_point start_time;
+	float elapsed_time{0.0f};
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_afbc();

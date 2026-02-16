@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -264,7 +264,7 @@ void Synchronization2::prepare_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(num_particles);
 
-	std::default_random_engine      rnd_engine(window->get_window_mode() == vkb::Window::Mode::Headless ? 0 : static_cast<unsigned>(time(nullptr)));
+	std::default_random_engine      rnd_engine((lock_simulation_speed || window->get_window_mode() == vkb::Window::Mode::Headless) ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
