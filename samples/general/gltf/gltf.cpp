@@ -31,9 +31,9 @@ GLTF::~GLTF()
 		vkDestroyPipeline(device_handle, present.pipeline.pipeline, nullptr);
 		present.pipeline.pipeline = VK_NULL_HANDLE;
 		vkDestroyPipeline(device_handle, main_pass.sky_pipeline.pipeline, nullptr);
-		present.pipeline.pipeline = VK_NULL_HANDLE;
+		main_pass.sky_pipeline.pipeline = VK_NULL_HANDLE;
 		vkDestroyPipeline(device_handle, main_pass.meshes.pipeline.pipeline, nullptr);
-		present.pipeline.pipeline = VK_NULL_HANDLE;
+		main_pass.meshes.pipeline.pipeline = VK_NULL_HANDLE;
 
 		vkDestroyRenderPass(device_handle, present.render_pass, nullptr);
 		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
@@ -57,7 +57,7 @@ bool GLTF::prepare(const vkb::ApplicationOptions &options)
 	setup_descriptor_set_layout_main_pass();
 	setup_descriptor_set_main_pass();
 
-	reset_gpu_data();
+	recreate_swapchain_resources();
 
 	prepared = true;
 	return true;
@@ -344,7 +344,7 @@ void GLTF::build_command_buffers()
 	}
 }
 
-void GLTF::reset_gpu_data()
+void GLTF::recreate_swapchain_resources()
 {
 	vkResetCommandPool(get_device().get_handle(), cmd_pool, 0);
 
@@ -373,7 +373,7 @@ void GLTF::render(float delta_time)
 	{
 		prepared = false;
 		get_device().wait_idle();
-		reset_gpu_data();
+		recreate_swapchain_resources();
 		get_device().wait_idle();
 		prepared = true;
 	}

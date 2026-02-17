@@ -41,7 +41,6 @@ class GLTFApiVulkanSample : public ApiVulkanSample
 
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
-	virtual void prepare_pipelines();
 	virtual void setup_color();
 	virtual void setup_depth_stencil() override;
 	virtual void setup_samplers();
@@ -115,7 +114,7 @@ class GLTFApiVulkanSample : public ApiVulkanSample
 	uint32_t frame_idx{0};
 
 	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
-	virtual void reset_gpu_data();
+	virtual void recreate_swapchain_resources();
 	virtual bool is_show_stats();
 
 	virtual void update_extents();
@@ -126,7 +125,6 @@ class GLTFApiVulkanSample : public ApiVulkanSample
 
 	virtual void prepare_uniform_buffers_main_pass();
 	virtual void setup_descriptor_pool_main_pass();
-	virtual void setup_additional_descriptor_pool();
 
 	virtual void setup_descriptor_set_layout_main_pass();
 	virtual void setup_descriptor_set_main_pass();

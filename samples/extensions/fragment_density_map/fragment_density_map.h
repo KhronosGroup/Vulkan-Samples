@@ -26,7 +26,7 @@ class FragmentDensityMap : public GLTFApiVulkanSample
 	FragmentDensityMap();
 	~FragmentDensityMap() override;
 
-	void prepare_pipelines() override;
+	void prepare_pipelines();
 
 	// Override basic framework functionality
 	void build_command_buffers() override;
@@ -93,10 +93,10 @@ class FragmentDensityMap : public GLTFApiVulkanSample
 	ConfigOptionsFDM current_options_fdm;
 	ConfigOptionsFDM last_options_fdm;
 
-	void reset_gpu_data() override;
+	void recreate_swapchain_resources() override;
 	void update_extents() override;
 	void update_uniform_buffer(float delta_time) override;
-	void setup_additional_descriptor_pool() override;
+	void setup_additional_descriptor_pool();
 	void setup_descriptor_set_layout_present() override;
 	void setup_descriptor_set_present() override;
 

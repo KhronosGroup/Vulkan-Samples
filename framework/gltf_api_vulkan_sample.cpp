@@ -55,6 +55,7 @@ GLTFApiVulkanSample::~GLTFApiVulkanSample()
 	{
 		VkDevice device_handle = get_device().get_handle();
 		vkDestroyDescriptorPool(device_handle, main_pass.descriptor_pool, nullptr);
+		main_pass.descriptor_pool = VK_NULL_HANDLE;
 
 		vkDestroyPipelineLayout(device_handle, present.pipeline.pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(device_handle, present.pipeline.set_layout, nullptr);
@@ -104,9 +105,6 @@ void GLTFApiVulkanSample::setup_samplers()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &samplers.nearest));
 }
 
-void GLTFApiVulkanSample::prepare_pipelines()
-{}
-
 bool GLTFApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 {
 	if (!prepared)
@@ -132,7 +130,7 @@ bool GLTFApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 
 	create_swapchain_buffers();
 
-	reset_gpu_data();
+	recreate_swapchain_resources();
 
 	if ((width > 0u) && (height > 0u))
 	{
@@ -153,10 +151,8 @@ bool GLTFApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 	return true;
 }
 
-void GLTFApiVulkanSample::reset_gpu_data()
+void GLTFApiVulkanSample::recreate_swapchain_resources()
 {
-	setup_additional_descriptor_pool();
-	prepare_pipelines();
 }
 
 void GLTFApiVulkanSample::load_assets(const std::string &scene_file)
@@ -225,9 +221,6 @@ void GLTFApiVulkanSample::setup_descriptor_pool_main_pass()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &main_pass.descriptor_pool));
 	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(main_pass.descriptor_pool), "Main pass descriptor pool");
 }
-
-void GLTFApiVulkanSample::setup_additional_descriptor_pool()
-{}
 
 void GLTFApiVulkanSample::setup_descriptor_set_layout_main_pass()
 {

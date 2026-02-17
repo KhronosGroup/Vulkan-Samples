@@ -30,10 +30,10 @@ class GLTF : public GLTFApiVulkanSample
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void setup_render_pass() override;
-	void prepare_pipelines() override;
+	void prepare_pipelines();
 	void setup_framebuffer() override;
-	void reset_gpu_data() override;
-	void setup_additional_descriptor_pool() override;
+	void recreate_swapchain_resources() override;
+	void setup_additional_descriptor_pool();
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_gltf();
