@@ -254,6 +254,16 @@ void DynamicMultisampleRasterization::build_command_buffers()
 		                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
 		                             depth_range);
 
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             color_attachment.image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             range);
+
 		vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
 		vkCmdSetRasterizationSamplesEXT(draw_cmd_buffers[i], sample_count);        // VK_EXT_extended_dynamic_state3
 
