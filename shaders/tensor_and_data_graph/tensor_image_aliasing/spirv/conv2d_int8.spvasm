@@ -1,0 +1,120 @@
+; Copyright (c) 2024-2026, Arm Limited and Contributors
+;
+; SPDX-License-Identifier: Apache-2.0
+;
+; Licensed under the Apache License, Version 2.0 the "License";
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+
+; A simple neural network with a conv2d layer, expressed in SPIR-V assembly.
+
+                                     ; Boilerplate
+                                     OpCapability Int8
+                                     OpCapability Int16
+                                     OpCapability Shader
+                                     OpCapability TensorsARM
+                                     OpCapability GraphARM
+                                     OpExtension "SPV_ARM_tensors"
+                                     OpExtension "SPV_ARM_graph"
+
+                                     ; Import TOSA instructions for neural network operations
+                             %tosa = OpExtInstImport "TOSA.001000.1"
+
+                                     ; More boilerplate
+                                     OpMemoryModel Logical GLSL450
+
+                                     ; Descriptor set interface
+                                     OpDecorate %input_tensor_ptr DescriptorSet 0
+                                     OpDecorate %input_tensor_ptr Binding 0
+                                     OpDecorate %output_tensor_ptr DescriptorSet 0
+                                     OpDecorate %output_tensor_ptr Binding 1
+
+                                     ; Types and constants
+                             %bool = OpTypeBool
+                            %false = OpConstantFalse %bool
+                             %true = OpConstantTrue %bool
+                             %uint = OpTypeInt 32 0
+                            %uint8 = OpTypeInt 8 0
+                           %uint16 = OpTypeInt 16 0
+                           %uint_0 = OpConstant %uint 0
+                           %uint_1 = OpConstant %uint 1
+                           %uint_2 = OpConstant %uint 2
+                           %uint_3 = OpConstant %uint 3
+                           %uint_4 = OpConstant %uint 4
+                           %height = OpConstant %uint 720
+                            %width = OpConstant %uint 1280
+                    %uint_array_l1 = OpTypeArray %uint %uint_1
+                    %uint_array_l4 = OpTypeArray %uint %uint_4
+                  %uint_array_l1_1 = OpConstantComposite %uint_array_l1 %uint_1
+                  %uint_array_l1_2 = OpConstantComposite %uint_array_l1 %uint_2
+                  %uint_array_l1_4 = OpConstantComposite %uint_array_l1 %uint_4
+            %uint_array_l4_4_3_3_4 = OpConstantComposite %uint_array_l4 %uint_4 %uint_3 %uint_3 %uint_4
+            %uint_array_l4_1_h_w_4 = OpConstantComposite %uint_array_l4 %uint_1 %height %width %uint_4
+                %uint_tensor_r1_s1 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_1
+                %uint_tensor_r1_s2 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_2
+                %uint_tensor_r1_s4 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_4
+               %uint8_tensor_r1_s1 = OpTypeTensorARM %uint8 %uint_1 %uint_array_l1_1
+        %uint8_tensor_r4_s_4_3_3_4 = OpTypeTensorARM %uint8 %uint_4 %uint_array_l4_4_3_3_4
+        %uint8_tensor_r4_s_1_h_w_4 = OpTypeTensorARM %uint8 %uint_4 %uint_array_l4_1_h_w_4
+       %uint16_tensor_r4_s_1_h_w_4 = OpTypeTensorARM %uint16 %uint_4 %uint_array_l4_1_h_w_4
+         %uint_tensor_r4_s_1_h_w_4 = OpTypeTensorARM %uint %uint_4 %uint_array_l4_1_h_w_4
+    %ptr_uint8_tensor_r4_s_1_h_w_4 = OpTypePointer UniformConstant %uint8_tensor_r4_s_1_h_w_4
+
+                                     ; Parameters for first rescale layer
+          %rescale0_input_unsigned = OpConstantTrue %bool
+         %rescale0_output_unsigned = OpConstantFalse %bool
+        %rescale0_multiplier_value = OpConstant %uint 4
+              %rescale0_multiplier = OpConstantComposite %uint_tensor_r1_s1 %rescale0_multiplier_value
+             %rescale0_shift_value = OpConstant %uint8 2
+                   %rescale0_shift = OpConstantComposite %uint8_tensor_r1_s1 %rescale0_shift_value
+  %rescale0_input_zero_point_value = OpConstant %uint8 0
+        %rescale0_input_zero_point = OpConstantComposite %uint8_tensor_r1_s1 %rescale0_input_zero_point_value
+ %rescale0_output_zero_point_value = OpConstant %uint8 128
+       %rescale0_output_zero_point = OpConstantComposite %uint8_tensor_r1_s1 %rescale0_output_zero_point_value
+
+                                     ; Parameters for conv2d layer
+                         %conv_pad = OpConstantComposite %uint_tensor_r1_s4 %uint_1 %uint_1 %uint_1 %uint_1
+                      %conv_stride = OpConstantComposite %uint_tensor_r1_s2 %uint_1 %uint_1
+                    %conv_dilation = OpConstantComposite %uint_tensor_r1_s2 %uint_1 %uint_1
+                     %conv_weights = OpGraphConstantARM %uint8_tensor_r4_s_4_3_3_4 0
+                        %conv_bias = OpConstantComposite %uint_tensor_r1_s4 %uint_0 %uint_0 %uint_0 %uint_0
+      %conv_input_zero_point_value = OpConstant %uint8 128
+            %conv_input_zero_point = OpConstantComposite %uint8_tensor_r1_s1 %conv_input_zero_point_value
+    %conv_weights_zero_point_value = OpConstant %uint8 0
+          %conv_weights_zero_point = OpConstantComposite %uint8_tensor_r1_s1 %conv_weights_zero_point_value
+
+                                     ; Parameters for second rescale layer
+          %rescale1_input_unsigned = OpConstantFalse %bool
+         %rescale1_output_unsigned = OpConstantTrue %bool
+        %rescale1_multiplier_value = OpConstant %uint 4
+              %rescale1_multiplier = OpConstantComposite %uint_tensor_r1_s1 %rescale1_multiplier_value
+             %rescale1_shift_value = OpConstant %uint8 2
+                   %rescale1_shift = OpConstantComposite %uint8_tensor_r1_s1 %rescale1_shift_value
+  %rescale1_input_zero_point_value = OpConstant %uint 0
+        %rescale1_input_zero_point = OpConstantComposite %uint_tensor_r1_s1 %rescale1_input_zero_point_value
+ %rescale1_output_zero_point_value = OpConstant %uint8 0
+       %rescale1_output_zero_point = OpConstantComposite %uint8_tensor_r1_s1 %rescale1_output_zero_point_value
+
+                                     ; Graph type and interface variables
+                       %graph_type = OpTypeGraphARM 1 %uint8_tensor_r4_s_1_h_w_4 %uint8_tensor_r4_s_1_h_w_4
+                 %input_tensor_ptr = OpVariable %ptr_uint8_tensor_r4_s_1_h_w_4 UniformConstant
+                %output_tensor_ptr = OpVariable %ptr_uint8_tensor_r4_s_1_h_w_4 UniformConstant
+
+                                     ; Neural network layers defined as a graph
+                                     OpGraphEntryPointARM %graph "main" %input_tensor_ptr %output_tensor_ptr
+                            %graph = OpGraphARM %graph_type
+                               %in = OpGraphInputARM %uint8_tensor_r4_s_1_h_w_4 %uint_0
+                        %in_signed = OpExtInst %uint8_tensor_r4_s_1_h_w_4 %tosa RESCALE %true %uint_0 %false %rescale0_input_unsigned %rescale0_output_unsigned %in %rescale0_multiplier %rescale0_shift %rescale0_input_zero_point %rescale0_output_zero_point
+                       %out_signed = OpExtInst %uint_tensor_r4_s_1_h_w_4 %tosa CONV2D %conv_pad %conv_stride %conv_dilation %uint_1 %false %in_signed %conv_weights %conv_bias %conv_input_zero_point %conv_weights_zero_point
+                     %out_signed16 = OpExtInst %uint16_tensor_r4_s_1_h_w_4 %tosa CAST %out_signed
+                     %out_unsigned = OpExtInst %uint8_tensor_r4_s_1_h_w_4 %tosa RESCALE %true %uint_0 %false %rescale1_input_unsigned %rescale1_output_unsigned %out_signed16 %rescale1_multiplier %rescale1_shift %rescale1_input_zero_point %rescale1_output_zero_point
+                                     OpGraphSetOutputARM %out_unsigned %uint_0
+                                     OpGraphEndARM

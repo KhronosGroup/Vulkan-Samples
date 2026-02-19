@@ -50,3 +50,9 @@
 [submodule "third_party/tracy"]
 	path = third_party/tracy
 	url = https://github.com/wolfpld/tracy.git
+[submodule "third_party/flatbuffers"]
+	path = third_party/flatbuffers
+	url = https://github.com/google/flatbuffers
+[submodule "third_party/ai-ml-sdk-vgf-library"]
+	path = third_party/ai-ml-sdk-vgf-library
+	url = https://github.com/arm/ai-ml-sdk-vgf-library
