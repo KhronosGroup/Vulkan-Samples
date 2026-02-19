@@ -1,4 +1,5 @@
 /* Copyright (c) 2024-2026, Sascha Willems
+ * Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,6 +73,11 @@ DynamicRenderingLocalRead::~DynamicRenderingLocalRead()
 uint32_t DynamicRenderingLocalRead::get_api_version() const
 {
 	return VK_API_VERSION_1_2;
+}
+
+uint32_t DynamicRenderingLocalRead::get_gui_subpass() const
+{
+	return 2;
 }
 
 void DynamicRenderingLocalRead::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
@@ -315,17 +321,6 @@ void DynamicRenderingLocalRead::setup_render_pass()
 	render_pass_ci.pDependencies          = dependencies.data();
 
 	VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_ci, nullptr, &render_pass));
-#endif
-}
-
-void DynamicRenderingLocalRead::prepare_gui()
-{
-#if !defined(USE_DYNAMIC_RENDERING)
-	create_gui(*window, nullptr, 15.0f, true);
-	get_gui().set_subpass(2);
-	get_gui().prepare(pipeline_cache, render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
 #endif
 }
 
@@ -943,10 +938,11 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
 		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
 
-		// @todo: UI is disabled for now, required some fixup in the framework to make it work properly with dynamic rendering local reads
-		// draw_ui(draw_cmd_buffers[i]);
-
+		// End main rendering
 		vkCmdEndRenderingKHR(cmd);
+
+		// Draw UI
+		draw_ui(draw_cmd_buffers[i], i);
 
 		/*
 		    Dynamic rendering end
