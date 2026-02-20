@@ -58,8 +58,8 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 	void                                               prepare_render_targets();
 	std::unique_ptr<vkb::RenderTarget>                 forward_render_targets[2];
 	std::unique_ptr<vkb::RenderTarget>                 shadow_render_target;
-	vkb::RenderPipeline                                shadow_render_pipeline;
-	vkb::RenderPipeline                                forward_render_pipeline;
+	vkb::rendering::RenderPipelineC                    shadow_render_pipeline;
+	vkb::rendering::RenderPipelineC                    forward_render_pipeline;
 	std::unique_ptr<vkb::core::Sampler>                comparison_sampler;
 	std::unique_ptr<vkb::core::Sampler>                linear_sampler;
 	std::vector<std::unique_ptr<vkb::core::Image>>     blur_chain;

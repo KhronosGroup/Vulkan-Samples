@@ -112,13 +112,13 @@ class SpecializationConstants : public vkb::VulkanSampleC
 
 	virtual void render(vkb::core::CommandBufferC &command_buffer) override;
 
-	std::unique_ptr<vkb::RenderPipeline> create_specialization_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_specialization_renderpass();
 
-	std::unique_ptr<vkb::RenderPipeline> create_standard_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_standard_renderpass();
 
-	std::unique_ptr<vkb::RenderPipeline> specialization_constants_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> specialization_constants_pipeline{};
 
-	std::unique_ptr<vkb::RenderPipeline> standard_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> standard_pipeline{};
 
 	int specialization_constants_enabled{0};
 };

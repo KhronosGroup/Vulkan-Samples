@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -254,24 +254,14 @@ struct hash<vkb::rendering::HPPRenderTarget>
 {
 	size_t operator()(const vkb::rendering::HPPRenderTarget &render_target) const
 	{
-		size_t result = 0;
-		vkb::hash_combine(result, render_target.get_extent());
-		for (auto const &view : render_target.get_views())
+		std::size_t result = 0;
+
+		for (auto &view : render_target.get_views())
 		{
-			vkb::hash_combine(result, view);
+			vkb::hash_combine(result, view.get_handle());
+			vkb::hash_combine(result, view.get_image().get_handle());
 		}
-		for (auto const &attachment : render_target.get_attachments())
-		{
-			vkb::hash_combine(result, attachment);
-		}
-		for (auto const &input : render_target.get_input_attachments())
-		{
-			vkb::hash_combine(result, input);
-		}
-		for (auto const &output : render_target.get_output_attachments())
-		{
-			vkb::hash_combine(result, output);
-		}
+
 		return result;
 	}
 };
