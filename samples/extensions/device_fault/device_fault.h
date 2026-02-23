@@ -87,6 +87,9 @@ private:
     uint32_t                              descriptor_offset{};
     float                                 accumulated_time{};
     uint32_t                              num_indices_per_mesh{};
+
+protected:
+    void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 };
 
 std::unique_ptr<ApiVulkanSample> create_device_fault();
