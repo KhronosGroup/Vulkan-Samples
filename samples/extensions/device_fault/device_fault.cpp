@@ -22,16 +22,11 @@ DeviceFault::DeviceFault()
     title = "Device Fault";
 
     // Need to enable buffer device address extension.
-    add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    // add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
     add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 
     // Provides support for VkAllocateMemoryFlagsInfo. Otherwise, core in Vulkan 1.1.
     add_device_extension(VK_KHR_DEVICE_GROUP_EXTENSION_NAME);
-    // Required by VK_KHR_device_group.
-    add_instance_extension(VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME);
-
-    // Debug utils extension
-    add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
     // Provides additional info when VK_DEVICE_LOST error happens.
     add_device_extension(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
@@ -306,8 +301,7 @@ std::unique_ptr<vkb::core::BufferC> DeviceFault::create_index_buffer()
     constexpr size_t size = mesh_num_indices * sizeof(uint16_t);
 
     // Build a simple subdivided quad mesh. We can tweak the vertices later in compute to create a simple cloth-y/wave-like effect.
-
-    auto index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+    auto index_buffer_ = std::make_unique<vkb::core::BufferC>(get_device(),
                                                              size,
                                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                                              VMA_MEMORY_USAGE_GPU_ONLY);
@@ -330,20 +324,20 @@ std::unique_ptr<vkb::core::BufferC> DeviceFault::create_index_buffer()
 
     auto cmd = get_device().get_command_pool().request_command_buffer();
     cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    cmd->copy_buffer(staging_buffer, *index_buffer, size);
+    cmd->copy_buffer(staging_buffer, *index_buffer_, size);
 
     vkb::BufferMemoryBarrier memory_barrier;
     memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
     memory_barrier.dst_access_mask = VK_ACCESS_INDEX_READ_BIT;
     memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
     memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-    cmd->buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
+    cmd->buffer_memory_barrier(*index_buffer_, 0, VK_WHOLE_SIZE, memory_barrier);
     cmd->end();
 
     auto const &graphicsQueue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
     graphicsQueue.submit(*cmd, VK_NULL_HANDLE);
     graphicsQueue.wait_idle();
-    return index_buffer;
+    return index_buffer_;
 }
 
 void DeviceFault::create_vbo_buffers()
@@ -600,6 +594,14 @@ void DeviceFault::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
     REQUEST_OPTIONAL_FEATURE(gpu,
                              VkPhysicalDeviceAddressBindingReportFeaturesEXT,
                              reportAddressBinding);
+}
+
+void DeviceFault::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+    ApiVulkanSample::request_instance_extensions(requested_extensions);
+    requested_extensions[VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+    requested_extensions[VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME] = vkb::RequestMode::Required;
+    requested_extensions[VK_EXT_DEBUG_UTILS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 std::unique_ptr<ApiVulkanSample> create_device_fault()
