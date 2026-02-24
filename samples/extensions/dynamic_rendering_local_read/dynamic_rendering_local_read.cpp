@@ -443,8 +443,7 @@ void DynamicRenderingLocalRead::prepare_buffers()
 
 void DynamicRenderingLocalRead::update_lights_buffer()
 {
-	std::random_device                    rnd_device;
-	std::default_random_engine            rnd_gen(rnd_device());
+	std::default_random_engine            rnd_gen(lock_simulation_speed ? 0 : std::random_device{}());
 	std::uniform_real_distribution<float> rnd_dist(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> rnd_col(0.0f, 0.5f);
 
