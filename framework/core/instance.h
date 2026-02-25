@@ -19,35 +19,17 @@
 #pragma once
 
 #include "common/helpers.h"
-#include "common/vk_common.h"
-#include "core/hpp_debug.h"
-#include <ranges>
-#include <unordered_set>
 #include <vulkan/vulkan.hpp>
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-#	define USE_VALIDATION_LAYERS
-#endif
-
-#if defined(USE_VALIDATION_LAYERS) && \
-    (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
-#	define USE_VALIDATION_LAYER_FEATURES
-#endif
 
 namespace vkb
 {
 namespace core
 {
-template <vkb::BindingType bindingType>
-class PhysicalDevice;
-using PhysicalDeviceC   = PhysicalDevice<vkb::BindingType::C>;
-using PhysicalDeviceCpp = PhysicalDevice<vkb::BindingType::Cpp>;
-
 /**
  * @brief A wrapper class for InstanceType
  *
- * This class is responsible for initializing the dispatcher, enumerating over all available extensions and validation layers
- * enabling them if they exist, setting up debug messaging and querying all the physical devices existing on the machine.
+ * This class is responsible for checking the API version, checking for required and optional extensions and layers, creating the Vulkan
+ * instance and initializing the default dispatcher.
  */
 template <vkb::BindingType bindingType>
 class Instance
@@ -55,8 +37,6 @@ class Instance
   public:
 	using InstanceCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
 	using InstanceType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Instance, VkInstance>::type;
-	using LayerSettingType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
-	using SurfaceType             = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
   public:
 	/**
@@ -70,11 +50,11 @@ class Instance
 	 * @throws runtime_error if a required layer or extension is not available
 	 */
 	Instance(
-	    std::string const                                                                               &application_name,
-	    uint32_t                                                                                         api_version          = VK_API_VERSION_1_1,
-	    std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_layers     = {},
-	    std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_extensions = {},
-	    std::function<void *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext =
+	    std::string const                                                                                     &application_name,
+	    uint32_t                                                                                               api_version          = VK_API_VERSION_1_1,
+	    std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_layers     = {},
+	    std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_extensions = {},
+	    std::function<void const *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext =
 	        [](std::vector<std::string> const &, std::vector<std::string> const &) { return nullptr; },
 	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const &get_create_flags =
 	        [](std::vector<std::string> const &) {
@@ -88,14 +68,8 @@ class Instance
 		        }
 	        });
 
-	/**
-	 * @brief Queries the GPUs of a InstanceType that is already created
-	 * @param instance A valid InstanceType
-	 * @param externally_enabled_extensions List of extensions that have been enabled, used for following checks e.g. during device creation
-	 * @param needsToInitializeDispatcher If the sample uses the C-bindings and some "non-standard" initialization, the dispatcher needs to be initialized
-	 */
-	Instance(vk::Instance instance, const std::vector<const char *> &externally_enabled_extensions = {}, bool needsToInitializeDispatcher = false);
-	Instance(VkInstance instance, const std::vector<const char *> &externally_enabled_extensions = {});
+	Instance(vk::Instance instance, std::vector<char const *> const &externally_enabled_extensions = {}, bool needsToInitializeDispatcher = false);
+	Instance(VkInstance instance, std::vector<char const *> const &externally_enabled_extensions = {});
 
 	Instance(Instance const &) = delete;
 	Instance(Instance &&)      = delete;
@@ -105,7 +79,7 @@ class Instance
 	Instance &operator=(Instance const &) = delete;
 	Instance &operator=(Instance &&)      = delete;
 
-	const std::vector<std::string> &get_extensions();
+	std::vector<std::string> const &get_enabled_extensions();
 
 	InstanceType get_handle() const;
 
@@ -113,29 +87,16 @@ class Instance
 	 * @brief Checks if the given extension is enabled in the InstanceType
 	 * @param extension An extension to check
 	 */
-	bool is_enabled(char const *extension) const;
+	bool is_extension_enabled(char const *extension) const;
 
   private:
 	std::vector<std::string> enabled_extensions;        // The enabled extensions
 	vk::Instance             handle;                    // The Vulkan instance
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	vk::DebugReportCallbackEXT debug_report_callback;        // The debug report callback
-	vk::DebugUtilsMessengerEXT debug_utils_messenger;        // Debug utils messenger callback for VK_EXT_Debug_Utils
-#endif
 };
 
 using InstanceC   = Instance<vkb::BindingType::C>;
 using InstanceCpp = Instance<vkb::BindingType::Cpp>;
-}        // namespace core
-}        // namespace vkb
 
-#include "core/physical_device.h"
-
-namespace vkb
-{
-namespace core
-{
 namespace
 {
 inline bool enable_extension(std::string const                          &requested_extension,
@@ -184,39 +145,15 @@ inline bool
 
 	return is_available;
 }
-
-inline bool validate_layers(std::vector<char const *> const &required, std::vector<vk::LayerProperties> const &available)
-{
-	for (auto layer : required)
-	{
-		bool found = false;
-		for (auto &available_layer : available)
-		{
-			if (strcmp(available_layer.layerName, layer) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			LOGE("Validation Layer {} not found", layer);
-			return false;
-		}
-	}
-
-	return true;
-}
 }        // namespace
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(std::string const                                                                               &application_name,
-                                       uint32_t                                                                                         api_version,
-                                       std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_layers,
-                                       std::unordered_map<std::string, vkb::RequestMode> const                                         &requested_extensions,
-                                       std::function<void *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext,
-                                       std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const                  &get_create_flags)
+inline Instance<bindingType>::Instance(std::string const                                                                                     &application_name,
+                                       uint32_t                                                                                               api_version,
+                                       std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_layers,
+                                       std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_extensions,
+                                       std::function<void const *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext,
+                                       std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const                        &get_create_flags)
 {
 	// check API version
 	LOGI("Requesting Vulkan API version {}.{}", VK_VERSION_MAJOR(api_version), VK_VERSION_MINOR(api_version));
@@ -266,7 +203,7 @@ inline Instance<bindingType>::Instance(std::string const                        
 
 	if (contains(enabled_layers, "VK_LAYER_KHRONOS_validation"))
 	{
-		const std::string                    validation_layer_name               = "VK_LAYER_KHRONOS_validation";
+		std::string const                    validation_layer_name               = "VK_LAYER_KHRONOS_validation";
 		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(validation_layer_name);
 		available_extensions.insert(available_extensions.end(),
 		                            available_layer_instance_extensions.begin(),
@@ -288,7 +225,7 @@ inline Instance<bindingType>::Instance(std::string const                        
 			}
 		}
 	}
-	std::vector<const char *> enabled_extensions_cstr;
+	std::vector<char const *> enabled_extensions_cstr;
 	for (auto &extension : enabled_extensions)
 	{
 		enabled_extensions_cstr.push_back(extension.c_str());
@@ -312,21 +249,10 @@ inline Instance<bindingType>::Instance(std::string const                        
 
 	// Need to load volk for all the not-yet Vulkan-Hpp calls
 	volkLoadInstance(handle);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	if (contains(enabled_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-	{
-		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(vkb::core::getDefaultDebugUtilsMessengerCreateInfoEXT());
-	}
-	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
-	{
-		debug_report_callback = handle.createDebugReportCallbackEXT(vkb::core::getDefaultDebugReportCallbackCreateInfoEXT());
-	}
-#endif
 }
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(vk::Instance instance, const std::vector<const char *> &externally_enabled_extensions, bool needsToInitializeDispatcher) :
+inline Instance<bindingType>::Instance(vk::Instance instance, std::vector<char const *> const &externally_enabled_extensions, bool needsToInitializeDispatcher) :
     handle{instance}
 {
 	if (needsToInitializeDispatcher)
@@ -350,37 +276,18 @@ inline Instance<bindingType>::Instance(vk::Instance instance, const std::vector<
 }
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(VkInstance instance, const std::vector<const char *> &externally_enabled_extensions) :
+inline Instance<bindingType>::Instance(VkInstance instance, std::vector<char const *> const &externally_enabled_extensions) :
     Instance<bindingType>(static_cast<vk::Instance>(instance), externally_enabled_extensions, true)
 {}
 
 template <vkb::BindingType bindingType>
 inline Instance<bindingType>::~Instance()
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	if (debug_utils_messenger)
-	{
-		handle.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
-	}
-	if (debug_report_callback)
-	{
-		handle.destroyDebugReportCallbackEXT(debug_report_callback);
-	}
-#endif
-
 	if (handle)
 	{
 		handle.destroy();
 	}
 }
-
-#if defined(USE_VALIDATION_LAYERS)
-#	undef USE_VALIDATION_LAYERS
-#endif
-
-#if defined(USE_VALIDATION_LAYER_FEATURES)
-#	undef USE_VALIDATION_LAYER_FEATURES
-#endif
 
 template <vkb::BindingType bindingType>
 inline typename Instance<bindingType>::InstanceType Instance<bindingType>::get_handle() const
@@ -393,18 +300,16 @@ inline typename Instance<bindingType>::InstanceType Instance<bindingType>::get_h
 	{
 		return static_cast<VkInstance>(handle);
 	}
-	return handle;
 }
 
 template <vkb::BindingType bindingType>
-inline bool Instance<bindingType>::is_enabled(char const *extension) const
+inline bool Instance<bindingType>::is_extension_enabled(char const *extension) const
 {
-	return std::ranges::find_if(enabled_extensions, [extension](std::string const &enabled_extension) { return enabled_extension == extension; }) !=
-	       enabled_extensions.end();
+	return std::ranges::any_of(enabled_extensions, [extension](std::string const &enabled_extension) { return enabled_extension == extension; });
 }
 
 template <vkb::BindingType bindingType>
-inline std::vector<std::string> const &Instance<bindingType>::get_extensions()
+inline std::vector<std::string> const &Instance<bindingType>::get_enabled_extensions()
 {
 	return enabled_extensions;
 }
