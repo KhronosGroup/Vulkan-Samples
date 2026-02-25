@@ -1105,7 +1105,7 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	const auto enabled_instance_extensions = get_instance().get_extensions();
+	const auto enabled_instance_extensions = get_instance().get_enabled_extensions();
 	debug_utils_supported =
 	    std::ranges::find_if(enabled_instance_extensions, [](std::string const &ext) { return ext == VK_EXT_DEBUG_UTILS_EXTENSION_NAME; }) !=
 	    enabled_instance_extensions.cend();
