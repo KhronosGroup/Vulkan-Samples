@@ -232,6 +232,12 @@ struct HPPType<VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT>
+{
+	using Type = vk::PhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceRayQueryFeaturesKHR>
 {
 	using Type = vk::PhysicalDeviceRayQueryFeaturesKHR;
