@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,8 +27,6 @@ HPPMeshShading::HPPMeshShading()
 	title = "Mesh shading";
 
 	// VK_EXT_mesh_shader depends on VK_KHR_spirv_1_4, which in turn depends on Vulkan 1.1 and VK_KHR_shader_float_controls
-	set_api_version(VK_API_VERSION_1_1);
-
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);

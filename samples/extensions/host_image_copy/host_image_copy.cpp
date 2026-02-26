@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,6 @@ HostImageCopy::HostImageCopy()
 	rotation = {-25.0f, 45.0f, 0.0f};
 
 	// Enable required extensions
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME);

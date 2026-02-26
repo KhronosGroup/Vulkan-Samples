@@ -1,6 +1,6 @@
 /*
- * Copyright 2023-2025 Nintendo
- * Copyright 2023-2025, Sascha Willems
+ * Copyright 2023-2026 Nintendo
+ * Copyright 2023-2026, Sascha Willems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,6 @@ ShaderObject::ShaderObject()
 {
 	title = "Shader Object";
 	rng   = std::default_random_engine(12345);        // Use a fixed seed, makes random deterministic.
-
-	// Show that shader object is usable with Vulkan 1.1 + Dynamic Rendering
-	set_api_version(VK_API_VERSION_1_1);
-
-	add_instance_layer("VK_LAYER_KHRONOS_shader_object");
 
 	// Enable the Shader Object extension
 	add_device_extension(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
@@ -378,6 +373,12 @@ void ShaderObject::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 			supported_output_formats.push_back(format);
 		}
 	}
+}
+
+void ShaderObject::request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const
+{
+	ApiVulkanSample::request_layers(requested_layers);
+	requested_layers["VK_LAYER_KHRONOS_shader_object"] = vkb::RequestMode::Required;
 }
 
 void ShaderObject::load_assets()

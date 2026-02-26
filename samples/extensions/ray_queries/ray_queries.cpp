@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, Holochip Corporation
- * Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Holochip Corporation
+ * Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -63,8 +63,6 @@ RayQueries::RayQueries()
 {
 	title = "Ray queries";
 
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
 	add_device_extension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 
 	// Ray tracing related extensions required by this sample

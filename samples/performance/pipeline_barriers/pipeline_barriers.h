@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,10 @@ class PipelineBarriers : public vkb::VulkanSampleC
 
 	virtual ~PipelineBarriers() = default;
 
-	virtual bool prepare(const vkb::ApplicationOptions &options) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+#endif
 
   private:
 	enum DependencyType : int

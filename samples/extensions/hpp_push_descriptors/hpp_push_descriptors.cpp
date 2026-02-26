@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Sascha Willems
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Sascha Willems
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,6 @@ HPPPushDescriptors::HPPPushDescriptors()
 	title = "Push descriptors";
 
 	// Enable extension required for push descriptors
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
 }
 

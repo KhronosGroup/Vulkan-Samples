@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,9 +31,6 @@
 ConservativeRasterization::ConservativeRasterization()
 {
 	title = "Conservative rasterization";
-
-	// Reading device properties of conservative rasterization requires VK_KHR_get_physical_device_properties2 to be enabled
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 	// Enable extension required for conservative rasterization
 	add_device_extension(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME);

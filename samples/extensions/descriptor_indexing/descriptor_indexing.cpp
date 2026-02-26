@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,6 @@ DescriptorIndexing::DescriptorIndexing()
 {
 	title = "Descriptor indexing";
 
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
 
@@ -525,6 +524,24 @@ void DescriptorIndexing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	device_properties.pNext = &descriptor_indexing_properties;
 	vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);
 }
+
+#if defined(PLATFORM__MACOS)
+void DescriptorIndexing::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	// On Apple use layer setting to enable MoltenVK's Metal argument buffers - needed for descriptor indexing/scaling
+	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+
+void DescriptorIndexing::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const
+{
+	// Make this static so layer setting reference remains valid after leaving the current scope
+	static const int32_t useMetalArgumentBuffers = 1;
+
+	ApiVulkanSample::request_layer_settings(requested_layer_settings);
+	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &useMetalArgumentBuffers});
+}
+#endif
 
 std::unique_ptr<vkb::VulkanSampleC> create_descriptor_indexing()
 {

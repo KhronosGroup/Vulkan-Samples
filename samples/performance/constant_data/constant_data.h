@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ class ConstantData : public vkb::VulkanSampleC
 	/**
 	 * @brief The base subpass to help prepare the shader variants and store the push constant limit
 	 */
-	class ConstantDataSubpass : public vkb::ForwardSubpass
+	class ConstantDataSubpass : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
 		ConstantDataSubpass(vkb::rendering::RenderContextC &render_context,
@@ -110,7 +110,7 @@ class ConstantData : public vkb::VulkanSampleC
 		                    vkb::ShaderSource             &&fragment_shader,
 		                    vkb::sg::Scene                 &scene,
 		                    vkb::sg::Camera                &camera) :
-		    vkb::ForwardSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
+		    vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
 		virtual void prepare() override;

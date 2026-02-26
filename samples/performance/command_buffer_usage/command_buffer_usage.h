@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -141,7 +141,7 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 	 *        into multiple secondary command buffers, optionally
 	 *        in different threads
 	 */
-	class ForwardSubpassSecondary : public vkb::ForwardSubpass
+	class ForwardSubpassSecondary : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
 		ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,

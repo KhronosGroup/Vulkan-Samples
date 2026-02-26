@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,8 +51,6 @@ OpenCLInteropArm::OpenCLInteropArm()
 	add_device_extension(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
 	add_device_extension(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
 	add_device_extension(VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
@@ -137,6 +135,12 @@ void OpenCLInteropArm::render(float delta_time)
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, rendering_finished_fence));
 
 	ApiVulkanSample::submit_frame();
+}
+
+void OpenCLInteropArm::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void OpenCLInteropArm::view_changed()
