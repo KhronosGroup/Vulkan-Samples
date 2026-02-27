@@ -33,8 +33,11 @@ DescriptorHeap::~DescriptorHeap()
 {
 	if (has_device())
 	{
+		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		textures = {};
 		cube.reset();
+		descriptor_heap_resources.reset();
+		descriptor_heap_samplers.reset();
 	}
 }
 
@@ -96,7 +99,7 @@ void DescriptorHeap::load_assets()
 	textures[1] = load_texture("textures/crate02_color_height_rgba.ktx", vkb::sg::Image::Color);
 }
 
-inline VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
+inline static VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
 {
 	return (value + alignment - 1) & ~(alignment - 1);
 }
@@ -525,7 +528,7 @@ void DescriptorHeap::build_command_buffer()
 
 	vkCmdEndRenderingKHR(draw_cmd_buffer);
 
-	// draw_ui(draw_cmd_buffer, current_buffer);
+	draw_ui(draw_cmd_buffer, current_buffer);
 
 	vkb::image_layout_transition(draw_cmd_buffer,
 	                             swapchain_buffers[current_buffer].image,

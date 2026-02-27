@@ -58,11 +58,6 @@ class DescriptorHeap : public ApiVulkanSample
 
 	std::unique_ptr<vkb::sg::SubMesh> cube;
 
-	struct Models
-	{
-		std::unique_ptr<vkb::sg::SubMesh> cube;
-	} models;
-
 	// Size and offset values for heap objects
 	VkDeviceSize buffer_heap_offset{0};
 	VkDeviceSize buffer_descriptor_size{0};
