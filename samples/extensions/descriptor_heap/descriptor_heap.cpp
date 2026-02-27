@@ -149,16 +149,18 @@ void DescriptorHeap::create_descriptor_heaps()
 	// There are two descriptor heap types: One that can store resources (buffers, images) and one that can store samplers
 	// We create heaps with a fixed size that's guaranteed to fit in the few descriptors we use
 	const VkDeviceSize heap_buffer_size = aligned_size(2048 + descriptor_heap_properties.minResourceHeapReservedRange, descriptor_heap_properties.resourceHeapAlignment);
-	descriptor_heap_resources           = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                           heap_buffer_size,
-	                                                                           VK_BUFFER_USAGE_DESCRIPTOR_HEAP_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	descriptor_heap_resources = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                 heap_buffer_size,
+	                                                                 VK_BUFFER_USAGE_DESCRIPTOR_HEAP_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	const VkDeviceSize heap_sampler_size = aligned_size(2048 + descriptor_heap_properties.minSamplerHeapReservedRange, descriptor_heap_properties.samplerHeapAlignment);
-	descriptor_heap_samplers             = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                            heap_buffer_size,
-	                                                                            VK_BUFFER_USAGE_DESCRIPTOR_HEAP_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	descriptor_heap_samplers = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                heap_buffer_size,
+	                                                                VK_BUFFER_USAGE_DESCRIPTOR_HEAP_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Sampler heap
 	// We need to calculate some aligned offsets, heaps and strides to make sure we properly accress the descriptors
