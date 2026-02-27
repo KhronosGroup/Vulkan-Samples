@@ -31,8 +31,11 @@ class DescriptorHeap : public ApiVulkanSample
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
+	bool animate = true;
+
 	std::array<Texture, 2>   textures;
 	std::array<glm::vec3, 2> rotations;
 
@@ -53,6 +56,11 @@ class DescriptorHeap : public ApiVulkanSample
 
 	std::unique_ptr<vkb::sg::SubMesh> cube;
 
+	struct Models
+	{
+		std::unique_ptr<vkb::sg::SubMesh> cube;
+	} models;
+
 	// Size and offset values for heap objects
 	VkDeviceSize buffer_heap_offset{0};
 	VkDeviceSize buffer_descriptor_size{0};
@@ -69,7 +77,7 @@ class DescriptorHeap : public ApiVulkanSample
 
 	void load_assets();
 	void prepare_uniform_buffers();
-	void update_uniform_buffers();
+	void update_uniform_buffers(float delta_time);
 	void create_descriptor_heaps();
 	void create_pipeline();
 	void draw();
