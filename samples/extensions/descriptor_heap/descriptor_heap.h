@@ -29,7 +29,9 @@ class DescriptorHeap : public ApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void render(float delta_time) override;
+	void create_command_pool() override;
 	void build_command_buffers() override;
+	void build_command_buffer();
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
@@ -80,7 +82,7 @@ class DescriptorHeap : public ApiVulkanSample
 	void update_uniform_buffers(float delta_time);
 	void create_descriptor_heaps();
 	void create_pipeline();
-	void draw();
+	void draw(float delta_time);
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_descriptor_heap();

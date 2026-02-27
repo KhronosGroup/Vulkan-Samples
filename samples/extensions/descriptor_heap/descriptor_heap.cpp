@@ -392,9 +392,11 @@ void DescriptorHeap::create_pipeline()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &pipeline_create_info, VK_NULL_HANDLE, &pipeline));
 }
 
-void DescriptorHeap::draw()
+void DescriptorHeap::draw(float delta_time)
 {
 	ApiVulkanSample::prepare_frame();
+	update_uniform_buffers(delta_time);
+	build_command_buffer();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
@@ -403,130 +405,135 @@ void DescriptorHeap::draw()
 
 void DescriptorHeap::build_command_buffers()
 {
+	// This sample doesn't use prebuilt command buffers
+}
+
+void DescriptorHeap::build_command_buffer()
+{
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	std::array<VkClearValue, 2> clear_values{};
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	auto command_begin = vkb::initializers::command_buffer_begin_info();
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
+
+	VkImageSubresourceRange range{};
+	range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	range.baseMipLevel   = 0;
+	range.levelCount     = VK_REMAINING_MIP_LEVELS;
+	range.baseArrayLayer = 0;
+	range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+
+	VkImageSubresourceRange depth_range{range};
+	depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+	vkb::image_layout_transition(draw_cmd_buffer,
+	                             swapchain_buffers[current_buffer].image,
+	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                             0,
+	                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+	                             range);
+
+	vkb::image_layout_transition(draw_cmd_buffer,
+	                             depth_stencil.image,
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+	                             depth_range);
+
+	VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
+	color_attachment_info.imageView                    = swapchain_buffers[current_buffer].view;
+	color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+	color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
+	color_attachment_info.clearValue                   = clear_values[0];
+
+	VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
+	depth_attachment_info.imageView                    = depth_stencil.view;
+	depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+	depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+	depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depth_attachment_info.clearValue                   = clear_values[1];
+
+	auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
+	auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
+	render_info.layerCount       = 1;
+	render_info.pDepthAttachment = &depth_attachment_info;
+	if (!vkb::is_depth_only_format(depth_format))
 	{
-		auto command_begin = vkb::initializers::command_buffer_begin_info();
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_begin));
-
-		VkImageSubresourceRange range{};
-		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.baseMipLevel   = 0;
-		range.levelCount     = VK_REMAINING_MIP_LEVELS;
-		range.baseArrayLayer = 0;
-		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-
-		VkImageSubresourceRange depth_range{range};
-		depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             swapchain_buffers[i].image,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             0,
-		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		                             range);
-
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             depth_stencil.image,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-		                             depth_range);
-
-		VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
-		color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
-		color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-		color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
-		color_attachment_info.clearValue                   = clear_values[0];
-
-		VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
-		depth_attachment_info.imageView                    = depth_stencil.view;
-		depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-		depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-		depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depth_attachment_info.clearValue                   = clear_values[1];
-
-		auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
-		auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
-		render_info.layerCount       = 1;
-		render_info.pDepthAttachment = &depth_attachment_info;
-		if (!vkb::is_depth_only_format(depth_format))
-		{
-			render_info.pStencilAttachment = &depth_attachment_info;
-		}
-
-		vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
-
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-		// Pass options as push data
-		struct PushData
-		{
-			int32_t samplerIndex;
-			int32_t frameIndex;
-		} pushData = {
-		    .samplerIndex = selected_sampler,
-		    // .frameIndex   = static_cast<int32_t>(currentBuffer),
-		};
-		VkPushDataInfoEXT pushDataInfo{
-		    .sType = VK_STRUCTURE_TYPE_PUSH_DATA_INFO_EXT,
-		    .data  = {.address = &pushData, .size = sizeof(PushData)}};
-		vkCmdPushDataEXT(draw_cmd_buffers[i], &pushDataInfo);
-
-		// Bind the heap containing resources (buffers and images)
-		VkBindHeapInfoEXT bind_heap_info_res{
-		    .sType = VK_STRUCTURE_TYPE_BIND_HEAP_INFO_EXT,
-		    .heapRange{
-		        .address = descriptor_heap_resources->get_device_address(),
-		        .size    = descriptor_heap_resources->get_size()},
-		    .reservedRangeSize = descriptor_heap_properties.minResourceHeapReservedRange,
-		};
-		vkCmdBindResourceHeapEXT(draw_cmd_buffers[i], &bind_heap_info_res);
-
-		// Bind the heap containing samplers
-		VkBindHeapInfoEXT bind_heap_info_samplers{
-		    .sType = VK_STRUCTURE_TYPE_BIND_HEAP_INFO_EXT,
-		    .heapRange{
-		        .address = descriptor_heap_samplers->get_device_address(),
-		        .size    = descriptor_heap_samplers->get_size()},
-		    .reservedRangeSize = descriptor_heap_properties.minSamplerHeapReservedRange};
-		vkCmdBindSamplerHeapEXT(draw_cmd_buffers[i], &bind_heap_info_samplers);
-
-		VkDeviceSize offsets[1] = {0};
-
-		const auto &vertex_buffer = cube->vertex_buffers.at("vertex_buffer");
-		auto       &index_buffer  = cube->index_buffer;
-
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer.get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, cube->index_type);
-		vkCmdDrawIndexed(draw_cmd_buffers[i], cube->vertex_indices, 2, 0, 0, 0);
-
-		vkCmdEndRenderingKHR(draw_cmd_buffers[i]);
-
-		draw_ui(draw_cmd_buffers[i], i);
-
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             swapchain_buffers[i].image,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		                             range);
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+		render_info.pStencilAttachment = &depth_attachment_info;
 	}
+
+	vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
+
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
+
+	VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
+
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+	// Pass options as push data
+	struct PushData
+	{
+		int32_t samplerIndex;
+		int32_t frameIndex;
+	} pushData = {
+	    .samplerIndex = selected_sampler,
+	    // .frameIndex   = static_cast<int32_t>(currentBuffer),
+	};
+	VkPushDataInfoEXT pushDataInfo{
+	    .sType = VK_STRUCTURE_TYPE_PUSH_DATA_INFO_EXT,
+	    .data  = {.address = &pushData, .size = sizeof(PushData)}};
+	vkCmdPushDataEXT(draw_cmd_buffer, &pushDataInfo);
+
+	// Bind the heap containing resources (buffers and images)
+	VkBindHeapInfoEXT bind_heap_info_res{
+	    .sType = VK_STRUCTURE_TYPE_BIND_HEAP_INFO_EXT,
+	    .heapRange{
+	        .address = descriptor_heap_resources->get_device_address(),
+	        .size    = descriptor_heap_resources->get_size()},
+	    .reservedRangeSize = descriptor_heap_properties.minResourceHeapReservedRange,
+	};
+	vkCmdBindResourceHeapEXT(draw_cmd_buffer, &bind_heap_info_res);
+
+	// Bind the heap containing samplers
+	VkBindHeapInfoEXT bind_heap_info_samplers{
+	    .sType = VK_STRUCTURE_TYPE_BIND_HEAP_INFO_EXT,
+	    .heapRange{
+	        .address = descriptor_heap_samplers->get_device_address(),
+	        .size    = descriptor_heap_samplers->get_size()},
+	    .reservedRangeSize = descriptor_heap_properties.minSamplerHeapReservedRange};
+	vkCmdBindSamplerHeapEXT(draw_cmd_buffer, &bind_heap_info_samplers);
+
+	VkDeviceSize offsets[1] = {0};
+
+	const auto &vertex_buffer = cube->vertex_buffers.at("vertex_buffer");
+	auto       &index_buffer  = cube->index_buffer;
+
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, vertex_buffer.get(), offsets);
+	vkCmdBindIndexBuffer(draw_cmd_buffer, index_buffer->get_handle(), 0, cube->index_type);
+	vkCmdDrawIndexed(draw_cmd_buffer, cube->vertex_indices, 2, 0, 0, 0);
+
+	vkCmdEndRenderingKHR(draw_cmd_buffer);
+
+	// draw_ui(draw_cmd_buffer, current_buffer);
+
+	vkb::image_layout_transition(draw_cmd_buffer,
+	                             swapchain_buffers[current_buffer].image,
+	                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+	                             range);
+
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 void DescriptorHeap::render(float delta_time)
@@ -535,8 +542,16 @@ void DescriptorHeap::render(float delta_time)
 	{
 		return;
 	}
-	update_uniform_buffers(delta_time);
-	draw();
+	draw(delta_time);
+}
+
+void DescriptorHeap::create_command_pool()
+{
+	VkCommandPoolCreateInfo command_pool_info{
+	    .sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+	    .flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+	    .queueFamilyIndex = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index()};
+	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_info, nullptr, &cmd_pool));
 }
 
 std::unique_ptr<vkb::VulkanSampleC> create_descriptor_heap()
