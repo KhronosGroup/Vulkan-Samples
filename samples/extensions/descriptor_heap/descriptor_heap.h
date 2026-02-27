@@ -48,9 +48,9 @@ class DescriptorHeap : public ApiVulkanSample
 
 	// @todo: fif
 	VkPhysicalDeviceDescriptorHeapPropertiesEXT descriptor_heap_properties{};
-	std::unique_ptr<vkb::core::BufferC> descriptor_heap_resources;
-	std::unique_ptr<vkb::core::BufferC> descriptor_heap_samplers;
-	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
+	std::unique_ptr<vkb::core::BufferC>         descriptor_heap_resources;
+	std::unique_ptr<vkb::core::BufferC>         descriptor_heap_samplers;
+	std::unique_ptr<vkb::core::BufferC>         uniform_buffer;
 
 	int32_t selected_sampler{0};
 
