@@ -122,6 +122,12 @@ struct HPPType<VkPhysicalDeviceDescriptorBufferFeaturesEXT>
 };
 
 template <>
+struct HPPType<VkPhysicalDeviceDescriptorHeapFeaturesEXT>
+{
+	using Type = vk::PhysicalDeviceDescriptorHeapFeaturesEXT;
+};
+
+template <>
 struct HPPType<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>
 {
 	using Type = vk::PhysicalDeviceDescriptorIndexingFeaturesEXT;
