@@ -40,8 +40,12 @@ class DescriptorHeap : public ApiVulkanSample
   private:
 	bool animate = true;
 
-	std::array<Texture, 2>   textures;
-	std::array<glm::vec3, 2> rotations;
+	struct Cube
+	{
+		Texture texture;
+		glm::vec3 rotation;
+	};
+	std::array<Cube, 2> cubes;
 
 	struct UniformData
 	{

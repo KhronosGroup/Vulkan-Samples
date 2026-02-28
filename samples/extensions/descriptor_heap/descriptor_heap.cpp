@@ -107,9 +107,9 @@ uint32_t DescriptorHeap::get_api_version() const
 
 void DescriptorHeap::load_assets()
 {
-	cube        = load_model("scenes/textured_unit_cube.gltf");
-	textures[0] = load_texture("textures/crate01_color_height_rgba.ktx", vkb::sg::Image::Color);
-	textures[1] = load_texture("textures/crate02_color_height_rgba.ktx", vkb::sg::Image::Color);
+	cube             = load_model("scenes/textured_unit_cube.gltf");
+	cubes[0].texture = load_texture("textures/crate01_color_height_rgba.ktx", vkb::sg::Image::Color);
+	cubes[1].texture = load_texture("textures/crate02_color_height_rgba.ktx", vkb::sg::Image::Color);
 }
 
 inline static VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
@@ -130,15 +130,15 @@ void DescriptorHeap::update_uniform_buffers(float delta_time)
 {
 	if (animate)
 	{
-		rotations[0].x += 2.5f * delta_time;
-		if (rotations[0].x > 360.0f)
+		cubes[0].rotation.x += 2.5f * delta_time;
+		if (cubes[0].rotation.x > 360.0f)
 		{
-			rotations[0].x -= 360.0f;
+			cubes[0].rotation.x -= 360.0f;
 		}
-		rotations[1].y += 2.0f * delta_time;
-		if (rotations[1].y > 360.0f)
+		cubes[1].rotation.y += 2.0f * delta_time;
+		if (cubes[1].rotation.y > 360.0f)
 		{
-			rotations[1].y -= 360.0f;
+			cubes[1].rotation.y -= 360.0f;
 		}
 	}
 
@@ -146,12 +146,12 @@ void DescriptorHeap::update_uniform_buffers(float delta_time)
 	uniform_data.view_matrix       = camera.matrices.view;
 
 	std::array<glm::vec3, 2> positions = {glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(1.5f, 0.5f, 0.0f)};
-	for (auto i = 0; i < rotations.size(); i++)
+	for (auto i = 0; i < cubes.size(); i++)
 	{
 		glm::mat4 cubeMat            = glm::translate(glm::mat4(1.0f), positions[i]);
-		cubeMat                      = glm::rotate(cubeMat, glm::radians(rotations[i].x), glm::vec3(1.0f, 0.0f, 0.0f));
-		cubeMat                      = glm::rotate(cubeMat, glm::radians(rotations[i].y), glm::vec3(0.0f, 1.0f, 0.0f));
-		cubeMat                      = glm::rotate(cubeMat, glm::radians(rotations[i].z), glm::vec3(0.0f, 0.0f, 1.0f));
+		cubeMat                      = glm::rotate(cubeMat, glm::radians(cubes[i].rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		cubeMat                      = glm::rotate(cubeMat, glm::radians(cubes[i].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		cubeMat                      = glm::rotate(cubeMat, glm::radians(cubes[i].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 		uniform_data.model_matrix[i] = cubeMat;
 	}
 
@@ -202,7 +202,7 @@ void DescriptorHeap::create_descriptor_heaps()
 	        .addressModeV  = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 	        .addressModeW  = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 	        .maxAnisotropy = 16.0f,
-	        .maxLod        = (float) textures[0].image.get()->get_mipmaps().size(),
+	        .maxLod        = (float) cubes[0].texture.image.get()->get_mipmaps().size(),
 	    },
 	    VkSamplerCreateInfo{
 	        .sType         = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -213,7 +213,7 @@ void DescriptorHeap::create_descriptor_heaps()
 	        .addressModeV  = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 	        .addressModeW  = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 	        .maxAnisotropy = 16.0f,
-	        .maxLod        = (float) textures[0].image.get()->get_mipmaps().size(),
+	        .maxLod        = (float) cubes[1].texture.image.get()->get_mipmaps().size(),
 	    }};
 
 	for (auto i = 0; i < static_cast<uint32_t>(sampler_create_infos.size()); i++)
@@ -232,7 +232,7 @@ void DescriptorHeap::create_descriptor_heaps()
 	image_descriptor_size = aligned_size(descriptor_heap_properties.imageDescriptorSize, descriptor_heap_properties.imageDescriptorAlignment);
 
 	// @todo: fif
-	auto                                     vector_size{rotations.size() + uniform_buffers.size()};
+	auto                                     vector_size{cubes.size() + uniform_buffers.size()};
 	std::vector<VkHostAddressRangeEXT>       host_address_ranges_resources(vector_size);
 	std::vector<VkResourceDescriptorInfoEXT> resource_descriptor_infos(vector_size);
 
@@ -260,14 +260,14 @@ void DescriptorHeap::create_descriptor_heaps()
 	std::array<VkImageDescriptorInfoEXT, 2> imageDescriptorInfo{};
 
 	// @offset
-	for (auto i = 0; i < rotations.size(); i++)
+	for (auto i = 0; i < cubes.size(); i++)
 	{
 		imageViewCreateInfos[i] = {
 		    .sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-		    .image            = textures[i].image->get_vk_image().get_handle(),
+		    .image            = cubes[i].texture.image->get_vk_image().get_handle(),
 		    .viewType         = VK_IMAGE_VIEW_TYPE_2D,
-		    .format           = textures[i].image->get_format(),
-		    .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = static_cast<uint32_t>(textures[i].image->get_mipmaps().size()), .baseArrayLayer = 0, .layerCount = 1},
+		    .format           = cubes[i].texture.image->get_format(),
+		    .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = static_cast<uint32_t>(cubes[i].texture.image->get_mipmaps().size()), .baseArrayLayer = 0, .layerCount = 1},
 		};
 
 		imageDescriptorInfo[i] = {
