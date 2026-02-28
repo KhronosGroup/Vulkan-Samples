@@ -42,7 +42,7 @@ class DescriptorHeap : public ApiVulkanSample
 
 	struct Cube
 	{
-		Texture texture;
+		Texture   texture;
 		glm::vec3 rotation;
 	};
 	std::array<Cube, 2> cubes;
