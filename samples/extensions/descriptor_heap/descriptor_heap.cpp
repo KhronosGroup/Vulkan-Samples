@@ -82,6 +82,16 @@ void DescriptorHeap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 }
 
+void DescriptorHeap::setup_render_pass()
+{
+	// We use dynamic rendering, so we skip render pass setup
+}
+
+void DescriptorHeap::setup_framebuffer()
+{
+	// We use dynamic rendering, so we skip framebuffer setup
+}
+
 void DescriptorHeap::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.combo_box("Sampler type", &selected_sampler, sampler_names))
