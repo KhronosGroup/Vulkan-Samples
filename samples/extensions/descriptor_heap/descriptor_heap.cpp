@@ -24,7 +24,6 @@ DescriptorHeap::DescriptorHeap()
 
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
 	add_device_extension(VK_EXT_DESCRIPTOR_HEAP_EXTENSION_NAME);
 }
