@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2025, Bradley Austin Davis. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2025-2026, Bradley Austin Davis. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -103,11 +103,11 @@ class BuilderBase
 
   private:
 	// we always want to store a vk::CreateInfo, so we have to figure out that type, depending on the BindingType!
-	using HPPCreateInfoType = typename vkb::VulkanTypeMapping<bindingType, CreateInfoType>::Type;
+	using CreateInfoTypeCpp = typename vkb::VulkanTypeMapping<bindingType, CreateInfoType>::Type;
 
   protected:
 	VmaAllocationCreateInfo alloc_create_info = {};
-	HPPCreateInfoType       create_info       = {};
+	CreateInfoTypeCpp       create_info       = {};
 	std::string             debug_name        = {};
 };
 
@@ -118,7 +118,7 @@ using BuilderBaseCpp = BuilderBase<vkb::BindingType::Cpp, BuilderType, CreateInf
 
 template <vkb::BindingType bindingType, typename BuilderType, typename CreateInfoType>
 inline BuilderBase<bindingType, BuilderType, CreateInfoType>::BuilderBase(const CreateInfoType &create_info_) :
-    create_info{reinterpret_cast<HPPCreateInfoType const &>(create_info_)}
+    create_info{reinterpret_cast<CreateInfoTypeCpp const &>(create_info_)}
 {
 	alloc_create_info.usage = VMA_MEMORY_USAGE_AUTO;
 };
@@ -138,7 +138,7 @@ inline CreateInfoType const &BuilderBase<bindingType, BuilderType, CreateInfoTyp
 	}
 	else
 	{
-		return *reinterpret_cast<typename HPPCreateInfoType::NativeType const *>(&create_info);
+		return *reinterpret_cast<typename CreateInfoTypeCpp::NativeType const *>(&create_info);
 	}
 }
 
@@ -151,7 +151,7 @@ inline CreateInfoType &BuilderBase<bindingType, BuilderType, CreateInfoType>::ge
 	}
 	else
 	{
-		return *reinterpret_cast<typename HPPCreateInfoType::NativeType *>(&create_info);
+		return *reinterpret_cast<typename CreateInfoTypeCpp::NativeType *>(&create_info);
 	}
 }
 
