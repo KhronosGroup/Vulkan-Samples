@@ -161,9 +161,10 @@ void DescriptorHeap::update_uniform_buffers(float delta_time)
 void DescriptorHeap::create_descriptor_heaps()
 {
 	// Descriptor heaps have varying offset, size and alignment requirements, so we store it's properties for later user
-	VkPhysicalDeviceProperties2 deviceProps2{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
 	descriptor_heap_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_PROPERTIES_EXT;
-	deviceProps2.pNext               = &descriptor_heap_properties;
+	VkPhysicalDeviceProperties2 deviceProps2{
+	    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+	    .pNext = &descriptor_heap_properties};
 	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &deviceProps2);
 
 	// There are two descriptor heap types: One that can store resources (buffers, images) and one that can store samplers
@@ -231,7 +232,6 @@ void DescriptorHeap::create_descriptor_heaps()
 	image_heap_offset     = aligned_size(buffer_descriptor_size, descriptor_heap_properties.imageDescriptorAlignment);
 	image_descriptor_size = aligned_size(descriptor_heap_properties.imageDescriptorSize, descriptor_heap_properties.imageDescriptorAlignment);
 
-	// @todo: fif
 	auto                                     vector_size{cubes.size() + uniform_buffers.size()};
 	std::vector<VkHostAddressRangeEXT>       host_address_ranges_resources(vector_size);
 	std::vector<VkResourceDescriptorInfoEXT> resource_descriptor_infos(vector_size);
@@ -309,8 +309,8 @@ void DescriptorHeap::create_pipeline()
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                     // Location 0: Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),        // Location 1: UV
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)),
 	};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
@@ -440,12 +440,12 @@ void DescriptorHeap::build_command_buffer()
 	auto command_begin = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
-	VkImageSubresourceRange range{};
-	range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	range.baseMipLevel   = 0;
-	range.levelCount     = VK_REMAINING_MIP_LEVELS;
-	range.baseArrayLayer = 0;
-	range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+	VkImageSubresourceRange range{
+	    .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+	    .baseMipLevel   = 0,
+	    .levelCount     = VK_REMAINING_MIP_LEVELS,
+	    .baseArrayLayer = 0,
+	    .layerCount     = VK_REMAINING_ARRAY_LAYERS};
 
 	VkImageSubresourceRange depth_range{range};
 	depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -466,21 +466,23 @@ void DescriptorHeap::build_command_buffer()
 	                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
 	                             depth_range);
 
-	VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
-	color_attachment_info.imageView                    = swapchain_buffers[current_buffer].view;
-	color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-	color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
-	color_attachment_info.clearValue                   = clear_values[0];
+	VkRenderingAttachmentInfoKHR color_attachment_info{
+	    .sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+	    .imageView   = swapchain_buffers[current_buffer].view,
+	    .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+	    .resolveMode = VK_RESOLVE_MODE_NONE,
+	    .loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR,
+	    .storeOp     = VK_ATTACHMENT_STORE_OP_STORE,
+	    .clearValue  = clear_values[0]};
 
-	VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
-	depth_attachment_info.imageView                    = depth_stencil.view;
-	depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-	depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-	depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depth_attachment_info.clearValue                   = clear_values[1];
+	VkRenderingAttachmentInfoKHR depth_attachment_info{
+	    .sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+	    .imageView   = depth_stencil.view,
+	    .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+	    .resolveMode = VK_RESOLVE_MODE_NONE,
+	    .loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR,
+	    .storeOp     = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+	    .clearValue  = clear_values[1]};
 
 	auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
 	auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
