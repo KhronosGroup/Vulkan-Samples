@@ -92,8 +92,7 @@ void DescriptorHeap::on_update_ui_overlay(vkb::Drawer &drawer)
 
 uint32_t DescriptorHeap::get_api_version() const
 {
-	// @todo: 1.3, add note that it's not required per se
-	return VK_API_VERSION_1_3;
+	return VK_API_VERSION_1_2;
 }
 
 void DescriptorHeap::load_assets()
@@ -110,7 +109,11 @@ inline static VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignme
 
 void DescriptorHeap::prepare_uniform_buffers()
 {
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(UniformData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.resize(draw_cmd_buffers.size());
+	for (auto &uniform_buffer : uniform_buffers)
+	{
+		uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(UniformData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void DescriptorHeap::update_uniform_buffers(float delta_time)
@@ -142,7 +145,7 @@ void DescriptorHeap::update_uniform_buffers(float delta_time)
 		uniform_data.model_matrix[i] = cubeMat;
 	}
 
-	uniform_buffer->convert_and_update(uniform_data);
+	uniform_buffers[current_buffer]->convert_and_update(uniform_data);
 }
 
 void DescriptorHeap::create_descriptor_heaps()
@@ -219,22 +222,22 @@ void DescriptorHeap::create_descriptor_heaps()
 	image_descriptor_size = aligned_size(descriptor_heap_properties.imageDescriptorSize, descriptor_heap_properties.imageDescriptorAlignment);
 
 	// @todo: fif
-	auto                                     vector_size{3};        // @todo: proper calculation/explanation
+	auto                                     vector_size{rotations.size() + uniform_buffers.size()};
 	std::vector<VkHostAddressRangeEXT>       host_address_ranges_resources(vector_size);
 	std::vector<VkResourceDescriptorInfoEXT> resource_descriptor_infos(vector_size);
 
 	size_t heapResIndex{0};
 
 	// Buffer
-	std::array<VkDeviceAddressRangeEXT, 1> deviceAddressRangesUniformBuffer{};
-	for (auto i = 0; i < 1; i++)
+	std::vector<VkDeviceAddressRangeEXT> device_address_ranges_uniform_buffer(uniform_buffers.size());
+	for (auto i = 0; i < uniform_buffers.size(); i++)
 	{
-		deviceAddressRangesUniformBuffer[i]     = {.address = uniform_buffer->get_device_address(), .size = uniform_buffer->get_size()};
+		device_address_ranges_uniform_buffer[i] = {.address = uniform_buffers[i]->get_device_address(), .size = uniform_buffers[i]->get_size()};
 		resource_descriptor_infos[heapResIndex] = {
 		    .sType = VK_STRUCTURE_TYPE_RESOURCE_DESCRIPTOR_INFO_EXT,
 		    .type  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		    .data  = {
-		         .pAddressRange = &deviceAddressRangesUniformBuffer[i]}};
+		         .pAddressRange = &device_address_ranges_uniform_buffer[i]}};
 		host_address_ranges_resources[heapResIndex] = {
 		    .address = (uint8_t *) (descriptor_heap_resources->get_data()) + buffer_descriptor_size * i,
 		    .size    = buffer_descriptor_size};

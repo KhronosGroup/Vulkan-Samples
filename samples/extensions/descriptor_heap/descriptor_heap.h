@@ -48,11 +48,10 @@ class DescriptorHeap : public ApiVulkanSample
 		glm::mat4 model_matrix[2];
 	} uniform_data;
 
-	// @todo: fif
-	VkPhysicalDeviceDescriptorHeapPropertiesEXT descriptor_heap_properties{};
-	std::unique_ptr<vkb::core::BufferC>         descriptor_heap_resources;
-	std::unique_ptr<vkb::core::BufferC>         descriptor_heap_samplers;
-	std::unique_ptr<vkb::core::BufferC>         uniform_buffer;
+	VkPhysicalDeviceDescriptorHeapPropertiesEXT      descriptor_heap_properties{};
+	std::unique_ptr<vkb::core::BufferC>              descriptor_heap_resources;
+	std::unique_ptr<vkb::core::BufferC>              descriptor_heap_samplers;
+	std::vector<std::unique_ptr<vkb::core::BufferC>> uniform_buffers;
 
 	int32_t selected_sampler{0};
 
