@@ -34,10 +34,10 @@ DescriptorHeap::~DescriptorHeap()
 	if (has_device())
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
-		for (auto &texture : textures)
+		for (auto &cube : cubes)
 		{
-			texture.image.reset();
-			vkDestroySampler(get_device().get_handle(), texture.sampler, nullptr);
+			cube.texture.image.reset();
+			vkDestroySampler(get_device().get_handle(), cube.texture.sampler, nullptr);
 		}
 		cube.reset();
 		descriptor_heap_resources.reset();
