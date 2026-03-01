@@ -100,7 +100,7 @@ void SpecializationConstants::render(vkb::core::CommandBufferC &command_buffer)
 	}
 }
 
-std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specialization_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> SpecializationConstants::create_specialization_renderpass()
 {
 	// Scene subpass
 	vkb::ShaderSource vert_shader{"base.vert.spv"};
@@ -112,12 +112,12 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_specializat
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
-	auto specialization_constants_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
+	auto specialization_constants_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(scene_subpasses));
 
 	return specialization_constants_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> SpecializationConstants::create_standard_renderpass()
 {
 	// Scene subpass
 	vkb::ShaderSource vert_shader{"base.vert.spv"};
@@ -129,7 +129,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_re
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
-	auto standard_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
+	auto standard_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(scene_subpasses));
 
 	return standard_pipeline;
 }

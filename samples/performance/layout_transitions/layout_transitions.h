@@ -56,9 +56,9 @@ class LayoutTransitions : public vkb::VulkanSampleC
 
 	VkImageLayout pick_old_layout(VkImageLayout last_layout);
 
-	vkb::RenderPipeline gbuffer_pipeline;
+	vkb::rendering::RenderPipelineC gbuffer_pipeline;
 
-	vkb::RenderPipeline lighting_pipeline;
+	vkb::rendering::RenderPipelineC lighting_pipeline;
 
 	LayoutTransitionType layout_transition_type{LayoutTransitionType::UNDEFINED};
 };

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -316,7 +316,7 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	BarrierInfo get_src_barrier_info() const override;
 	BarrierInfo get_dst_barrier_info() const override;
 
-	RenderPipeline                     pipeline{};
+	vkb::rendering::RenderPipelineC    pipeline{};
 	std::unique_ptr<core::Sampler>     default_sampler{};
 	std::unique_ptr<core::Sampler>     default_sampler_nearest{};
 	RenderTarget                      *draw_render_target{nullptr};
