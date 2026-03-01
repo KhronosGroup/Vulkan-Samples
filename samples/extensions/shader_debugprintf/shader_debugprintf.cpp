@@ -118,6 +118,13 @@ void ShaderDebugPrintf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 }
 
+void ShaderDebugPrintf::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	// MoltenVK requires VK_EXT_layer_settings enabled to use layer settings, but set as optional to support other platforms/drivers
+	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+
 void ShaderDebugPrintf::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const
 {
 	// Make this static so layer setting reference remains valid after leaving the current scope
