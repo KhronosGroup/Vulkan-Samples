@@ -1343,7 +1343,8 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 #endif
 
 #if defined(VKB_ENABLE_PORTABILITY)
-	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Required;
+	// VK_KHR_portability_enumeration must be optional to support MoltenVK standalone on macOS and iOS Simulator
+	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Optional;
 #endif
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
