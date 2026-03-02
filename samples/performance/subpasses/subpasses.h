@@ -36,6 +36,7 @@ class Subpasses : public vkb::VulkanSampleC
 	bool prepare(const vkb::ApplicationOptions &options) override;
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+	void request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const override;
 #endif
 
 	void update(float delta_time) override;

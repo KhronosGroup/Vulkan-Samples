@@ -781,15 +781,15 @@ inline void *VulkanSample<bindingType>::get_instance_create_info_extensions(std:
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	if (contains(enabled_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		static vk::DebugReportCallbackCreateInfoEXT debug_report_create_info = vkb::core::getDefaultDebugReportCallbackCreateInfoEXT();
-		debug_report_create_info.pNext                                       = pNext;
-		pNext                                                                = &debug_report_create_info;
-	}
-	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
-	{
 		static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vkb::core::getDefaultDebugUtilsMessengerCreateInfoEXT();
 		debug_utils_create_info.pNext                                       = pNext;
 		pNext                                                               = &debug_utils_create_info;
+	}
+	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+	{
+		static vk::DebugReportCallbackCreateInfoEXT debug_report_create_info = vkb::core::getDefaultDebugReportCallbackCreateInfoEXT();
+		debug_report_create_info.pNext                                       = pNext;
+		pNext                                                                = &debug_report_create_info;
 	}
 #endif
 
@@ -799,6 +799,8 @@ inline void *VulkanSample<bindingType>::get_instance_create_info_extensions(std:
 		request_layer_settings(requested_layer_settings);
 
 		static std::vector<vk::LayerSettingEXT> enabled_layer_settings;
+		// since enabled_layer_settings is static, clear on every get_instance_create_info_extensions() call to support batch mode
+		enabled_layer_settings.clear();
 		for (auto const &layer_setting : requested_layer_settings)
 		{
 			enable_layer_setting(layer_setting, enabled_layers, enabled_layer_settings);
@@ -1342,7 +1344,8 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 #endif
 
 #if defined(VKB_ENABLE_PORTABILITY)
-	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Required;
+	// VK_KHR_portability_enumeration must be optional to support MoltenVK standalone on macOS and iOS Simulator
+	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Optional;
 #endif
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
