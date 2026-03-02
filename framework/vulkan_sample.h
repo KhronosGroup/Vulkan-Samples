@@ -20,6 +20,7 @@
 
 #include "common/hpp_utils.h"
 #include "core/debug.h"
+#include "core/hpp_debug.h"
 #include "gui.h"
 #include "hpp_gltf_loader.h"
 #include "platform/application.h"
@@ -141,13 +142,15 @@ class VulkanSample : public vkb::Application
 	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
-	using Extent2DType                = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
-	using InstanceCreateFlagsType     = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
-	using LayerSettingType            = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
-	using PhysicalDeviceType          = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
-	using SurfaceFormatType           = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
-	using SurfaceType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
-	using ValidationFeatureEnableType = typename std::conditional<bindingType == BindingType::Cpp, vk::ValidationFeatureEnableEXT, VkValidationFeatureEnableEXT>::type;
+	using Extent2DType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using DebugReportCallbackCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugReportCallbackCreateInfoEXT, VkDebugReportCallbackCreateInfoEXT>::type;
+	using DebugUtilsMessengerCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugUtilsMessengerCreateInfoEXT, VkDebugUtilsMessengerCreateInfoEXT>::type;
+	using InstanceCreateFlagsType           = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
+	using LayerSettingType                  = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
+	using PhysicalDeviceType                = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
+	using SurfaceFormatType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
+	using SurfaceType                       = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using ValidationFeatureEnableType       = typename std::conditional<bindingType == BindingType::Cpp, vk::ValidationFeatureEnableEXT, VkValidationFeatureEnableEXT>::type;
 
 	Configuration                                    &get_configuration();
 	vkb::rendering::RenderContext<bindingType>       &get_render_context();
@@ -201,9 +204,11 @@ class VulkanSample : public vkb::Application
 	 */
 	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target);
 
-	virtual uint32_t                get_api_version() const;
-	virtual InstanceCreateFlagsType get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
-	virtual void                   *get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) const;
+	virtual uint32_t                                 get_api_version() const;
+	virtual DebugReportCallbackCreateInfoType const *get_debug_report_callback_create_info() const;
+	virtual DebugUtilsMessengerCreateInfoType const *get_debug_utils_messenger_create_info() const;
+	virtual InstanceCreateFlagsType                  get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
+	virtual void const                              *get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) const;
 
 	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -357,6 +362,9 @@ class VulkanSample : public vkb::Application
 	 */
 	std::unique_ptr<vkb::core::InstanceCpp> instance;
 
+	vk::DebugReportCallbackEXT debug_report_callback;
+	vk::DebugUtilsMessengerEXT debug_utils_messenger;
+
 	/**
 	 * @brief The physical device selected for this sample
 	 */
@@ -442,6 +450,14 @@ inline VulkanSample<bindingType>::~VulkanSample()
 	if (surface)
 	{
 		instance->get_handle().destroySurfaceKHR(surface);
+	}
+	if (debug_utils_messenger)
+	{
+		instance->get_handle().destroyDebugUtilsMessengerEXT(debug_utils_messenger);
+	}
+	if (debug_report_callback)
+	{
+		instance->get_handle().destroyDebugReportCallbackEXT(debug_report_callback);
 	}
 
 	instance.reset();
@@ -752,6 +768,45 @@ inline bool enable_layer_setting(VkLayerSettingEXT const          &requested_lay
 }
 
 template <vkb::BindingType bindingType>
+inline typename VulkanSample<bindingType>::DebugReportCallbackCreateInfoType const *VulkanSample<bindingType>::get_debug_report_callback_create_info() const
+{
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	static vk::DebugReportCallbackCreateInfoEXT debug_report_callback_createInfo{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+	                                                                             .pfnCallback = vkb::core::debug_callback};
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return &debug_report_callback_createInfo;
+	}
+	else
+	{
+		return reinterpret_cast<VkDebugReportCallbackCreateInfoEXT *>(&debug_report_callback_createInfo);
+	}
+#else
+	return nullptr;
+#endif
+}
+
+template <vkb::BindingType bindingType>
+inline typename VulkanSample<bindingType>::DebugUtilsMessengerCreateInfoType const *VulkanSample<bindingType>::get_debug_utils_messenger_create_info() const
+{
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	                                                                              .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	                                                                              .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return &debug_utils_messenger_create_info;
+	}
+	else
+	{
+		return reinterpret_cast<VkDebugUtilsMessengerCreateInfoEXT *>(&debug_utils_messenger_create_info);
+	}
+#else
+	return nullptr;
+#endif
+}
+
+template <vkb::BindingType bindingType>
 inline typename VulkanSample<bindingType>::InstanceCreateFlagsType VulkanSample<bindingType>::get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const
 {
 	vk::InstanceCreateFlags flags;
@@ -773,25 +828,19 @@ inline typename VulkanSample<bindingType>::InstanceCreateFlagsType VulkanSample<
 }
 
 template <vkb::BindingType bindingType>
-inline void *VulkanSample<bindingType>::get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers,
-                                                                            std::vector<std::string> const &enabled_extensions) const
+inline void const *VulkanSample<bindingType>::get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers,
+                                                                                  std::vector<std::string> const &enabled_extensions) const
 {
-	void *pNext = nullptr;
+	void const *pNext = nullptr;
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	if (contains(enabled_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		static vk::DebugReportCallbackCreateInfoEXT debug_report_create_info = vkb::core::getDefaultDebugReportCallbackCreateInfoEXT();
-		debug_report_create_info.pNext                                       = pNext;
-		pNext                                                                = &debug_report_create_info;
+		pNext = get_debug_utils_messenger_create_info();
 	}
 	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 	{
-		static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vkb::core::getDefaultDebugUtilsMessengerCreateInfoEXT();
-		debug_utils_create_info.pNext                                       = pNext;
-		pNext                                                               = &debug_utils_create_info;
+		pNext = get_debug_report_callback_create_info();
 	}
-#endif
 
 	if (contains(enabled_extensions, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME))
 	{
@@ -1180,6 +1229,38 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		instance.reset(reinterpret_cast<vkb::core::InstanceCpp *>(create_instance().release()));
 	}
 
+	// initialize debug utils or report callback based on enabled extensions, if any
+	if (instance->is_extension_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	{
+		auto const *debug_utils_messenger_create_info = get_debug_utils_messenger_create_info();
+		if (debug_utils_messenger_create_info)
+		{
+			if constexpr (bindingType == BindingType::Cpp)
+			{
+				debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(*debug_utils_messenger_create_info);
+			}
+			else
+			{
+				debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(*reinterpret_cast<vk::DebugUtilsMessengerCreateInfoEXT const *>(debug_utils_messenger_create_info));
+			}
+		}
+	}
+	else if (instance->is_extension_enabled(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+	{
+		auto const *debug_report_callback_create_info = get_debug_report_callback_create_info();
+		if (debug_report_callback_create_info)
+		{
+			if constexpr (bindingType == BindingType::Cpp)
+			{
+				debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(*debug_report_callback_create_info);
+			}
+			else
+			{
+				debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(*reinterpret_cast<vk::DebugReportCallbackCreateInfoEXT const *>(debug_report_callback_create_info));
+			}
+		}
+	}
+
 	// Getting a valid vulkan surface from the platform
 	surface = static_cast<vk::SurfaceKHR>(window->create_surface(reinterpret_cast<vkb::core::InstanceC &>(*instance)));
 	if (!surface)
@@ -1202,7 +1283,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-		if (instance->is_enabled(VK_KHR_DISPLAY_EXTENSION_NAME))
+		if (instance->is_extension_enabled(VK_KHR_DISPLAY_EXTENSION_NAME))
 		{
 			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
 		}

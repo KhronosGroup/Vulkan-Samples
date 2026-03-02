@@ -62,11 +62,6 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 	}
-
-	if (has_instance())
-	{
-		vkDestroyDebugUtilsMessengerEXT(get_instance().get_handle(), debug_utils_messenger, nullptr);
-	}
 }
 
 uint32_t ShaderDebugPrintf::get_api_version() const
@@ -440,13 +435,6 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	// Register debug utils callback here so it works with both override and layer settings
-	VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-	debug_utils_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-	debug_utils_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-	debug_utils_messenger_create_info.pfnUserCallback = debug_utils_message_callback;
-	VK_CHECK(vkCreateDebugUtilsMessengerEXT(get_instance().get_handle(), &debug_utils_messenger_create_info, nullptr, &debug_utils_messenger));
-
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -6.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
@@ -463,6 +451,17 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	build_command_buffers();
 	prepared = true;
 	return true;
+}
+
+VkDebugUtilsMessengerCreateInfoEXT const *ShaderDebugPrintf::get_debug_utils_messenger_create_info() const
+{
+	// Register a sample specific debug utils callback in addition to the one registered by the base class
+	static VkDebugUtilsMessengerCreateInfoEXT local_debug_utils_messenger_create_info{.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+	                                                                                  .pNext           = ApiVulkanSample::get_debug_utils_messenger_create_info(),
+	                                                                                  .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT,
+	                                                                                  .messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT,
+	                                                                                  .pfnUserCallback = debug_utils_message_callback};
+	return &local_debug_utils_messenger_create_info;
 }
 
 void ShaderDebugPrintf::render(float delta_time)
