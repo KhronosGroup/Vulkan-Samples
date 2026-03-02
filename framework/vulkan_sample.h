@@ -799,6 +799,7 @@ inline void *VulkanSample<bindingType>::get_instance_create_info_extensions(std:
 		request_layer_settings(requested_layer_settings);
 
 		static std::vector<vk::LayerSettingEXT> enabled_layer_settings;
+		// since enabled_layer_settings is static, clear on every get_instance_create_info_extensions() call to support batch mode
 		enabled_layer_settings.clear();
 		for (auto const &layer_setting : requested_layer_settings)
 		{

@@ -121,7 +121,7 @@ void ShaderDebugPrintf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 void ShaderDebugPrintf::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	ApiVulkanSample::request_instance_extensions(requested_extensions);
-	// MoltenVK requires VK_EXT_layer_settings enabled to use layer settings, but set as optional to support other platforms/drivers
+	// Vulkan Samples framework requires VK_EXT_layer_settings extension to use layer settings for configuring the Validation Layer
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
