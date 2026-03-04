@@ -29,8 +29,8 @@
 
 #ifdef _WIN32
 // On Windows, we need to enable some security settings to allow api interop
-// The spec states: For handles of the following types: VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT The implementation must ensure the access rights allow read and write access to the memory.
-// This class sets up the structures required for tis
+// The spec states: For handles of the following types: VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT The implementation must ensure the access rights allow
+// read and write access to the memory. This class sets up the structures required for tis
 class WinSecurityAttributes
 {
   private:
@@ -207,7 +207,8 @@ void OpenCLInterop::render(float delta_time)
 
 	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
 	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
-	CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
+	CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0,
+	                                nullptr, nullptr));
 
 	// Release the image (resource) to Vulkan
 	CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
@@ -278,12 +279,10 @@ void OpenCLInterop::build_command_buffers()
 
 void OpenCLInterop::generate_quad()
 {
-	std::vector<VertexStructure> vertices =
-	    {
-	        {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
+	std::vector<VertexStructure> vertices = {{{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	                                         {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	                                         {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+	                                         {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
 
 	std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
 	index_count                   = static_cast<uint32_t>(indices.size());
@@ -294,15 +293,11 @@ void OpenCLInterop::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
@@ -310,14 +305,11 @@ void OpenCLInterop::generate_quad()
 
 void OpenCLInterop::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	std::vector<VkDescriptorPoolSize> pool_sizes = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	                                                vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()),
-	                                                                                                        pool_sizes.data(),
-	                                                                                                        2);
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -330,7 +322,8 @@ void OpenCLInterop::setup_descriptor_set_layout()
 	    // Binding 1 : Fragment shader image sampler
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
-	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), vkb::to_u32(set_layout_bindings.size()));
+	VkDescriptorSetLayoutCreateInfo descriptor_layout =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), vkb::to_u32(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
@@ -361,52 +354,27 @@ void OpenCLInterop::setup_descriptor_set()
 void OpenCLInterop::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        vkb::to_u32(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), vkb::to_u32(dynamic_state_enables.size()), 0);
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
@@ -416,8 +384,7 @@ void OpenCLInterop::prepare_pipelines()
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-	    vkb::initializers::vertex_input_binding_description(0, sizeof(VertexStructure),
-	                                                        VK_VERTEX_INPUT_RATE_VERTEX),
+	    vkb::initializers::vertex_input_binding_description(0, sizeof(VertexStructure), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStructure, pos)),
@@ -449,10 +416,7 @@ void OpenCLInterop::prepare_pipelines()
 void OpenCLInterop::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         sizeof(ubo_vs),
-	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -544,7 +508,7 @@ void OpenCLInterop::prepare_shared_image()
 	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
 	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.extent            = {shared_image.width, shared_image.height, 1};
-	image_create_info.usage             = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	image_create_info.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	VkExternalMemoryImageCreateInfo external_memory_image_info{};
 	external_memory_image_info.sType       = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
@@ -613,14 +577,8 @@ void OpenCLInterop::prepare_shared_image()
 	image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
 	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	vkCmdPipelineBarrier(
-	    copy_command,
-	    VK_PIPELINE_STAGE_TRANSFER_BIT,
-	    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-	    0,
-	    0, nullptr,
-	    0, nullptr,
-	    1, &image_memory_barrier);
+	vkCmdPipelineBarrier(copy_command, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+	                     &image_memory_barrier);
 
 	get_device().flush_command_buffer(copy_command, queue, true);
 
@@ -655,13 +613,8 @@ void OpenCLInterop::prepare_shared_image()
 	cl_img_desc.buffer            = nullptr;
 
 	int cl_result;
-	opencl_objects.image = clCreateImageWithProperties(opencl_objects.context,
-	                                                   mem_properties.data(),
-	                                                   CL_MEM_READ_WRITE,
-	                                                   &cl_img_fmt,
-	                                                   &cl_img_desc,
-	                                                   NULL,
-	                                                   &cl_result);
+	opencl_objects.image =
+	    clCreateImageWithProperties(opencl_objects.context, mem_properties.data(), CL_MEM_READ_WRITE, &cl_img_fmt, &cl_img_desc, NULL, &cl_result);
 	CL_CHECK(cl_result);
 }
 
@@ -758,12 +711,10 @@ void OpenCLInterop::prepare_opencl_resources()
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &physical_device_properties_2);
 
 	// We also need to make sure the OpenCL platform/device supports all the extensions required in this sample
-	std::vector<std::string> required_extensions{
-	    // Platform independent OpenCL extensions for interop and for getting the device
-	    "cl_khr_external_memory",
-	    "cl_khr_external_semaphore",
-	    // Extension required to read the uuid of a device (see below for more information on why this is required)
-	    "cl_khr_device_uuid"};
+	std::vector<std::string> required_extensions{// Platform independent OpenCL extensions for interop and for getting the device
+	                                             "cl_khr_external_memory", "cl_khr_external_semaphore",
+	                                             // Extension required to read the uuid of a device (see below for more information on why this is required)
+	                                             "cl_khr_device_uuid"};
 	// Platform specific OpenCL extensions for interop
 #if defined(_WIN32)
 	required_extensions.push_back("cl_khr_external_memory_win32");

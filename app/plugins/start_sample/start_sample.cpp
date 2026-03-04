@@ -23,14 +23,11 @@
 namespace plugins
 {
 StartSample::StartSample() :
-    StartSampleTags("StartSample",
-                    "A collection of flags to samples and apps.",
-                    {},
+    StartSampleTags("StartSample", "A collection of flags to samples and apps.", {},
                     {{"sample", "Run a specific sample"},
                      {"samples", "List available samples with descriptions"},
                      {"samples-oneline", "List available samples, one per line"}})
-{
-}
+{}
 
 void StartSample::launch_sample(apps::SampleInfo const *sample) const
 {

@@ -97,61 +97,39 @@ void DynamicBlending::initialize_operator_names()
 void DynamicBlending::prepare_scene()
 {
 	vertices = {
-	    {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}},
-	    {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f}},
-	    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+	    {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}},  {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f}},  {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},  {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-	    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}},
-	    {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}},
-	    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f}},
-	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}},
+	    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}}, {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}}, {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f}}, {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}},
 	};
 
-	std::vector<uint32_t> indices = {
-	    6, 5, 4, 4, 7, 6,
-	    0, 1, 2, 2, 3, 0};
+	std::vector<uint32_t> indices = {6, 5, 4, 4, 7, 6, 0, 1, 2, 2, 3, 0};
 
 	index_count = static_cast<uint32_t>(indices.size());
 
 	vertex_buffer_size     = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
 	auto index_buffer_size = indices.size() * sizeof(uint32_t);
 
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_GPU_TO_CPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 
 	face_preferences[0].index_offset      = 0;
 	face_preferences[0].index_count       = index_count / 2;
 	face_preferences[0].color_bit_enabled = {true, true, true, true};
-	face_preferences[0].color             = {{{1.0f, 0.0f, 0.0f, 1.0f},
-	                                          {0.0f, 1.0f, 0.0f, 1.0f},
-	                                          {0.0f, 0.0f, 1.0f, 1.0f},
-	                                          {0.0f, 0.0f, 0.0f, 1.0f}}};
+	face_preferences[0].color             = {{{1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}}};
 
 	face_preferences[1].index_offset      = index_count / 2;
 	face_preferences[1].index_count       = index_count / 2;
 	face_preferences[1].color_bit_enabled = {true, true, true, true};
-	face_preferences[1].color             = {{{0.0f, 1.0f, 1.0f, 0.5f},
-	                                          {1.0f, 0.0f, 1.0f, 0.5f},
-	                                          {1.0f, 1.0f, 0.0f, 0.5f},
-	                                          {1.0f, 1.0f, 1.0f, 0.5f}}};
+	face_preferences[1].color             = {{{0.0f, 1.0f, 1.0f, 0.5f}, {1.0f, 0.0f, 1.0f, 0.5f}, {1.0f, 1.0f, 0.0f, 0.5f}, {1.0f, 1.0f, 1.0f, 0.5f}}};
 }
 
 void DynamicBlending::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// We must have this or the sample isn't useful
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         extendedDynamicState3ColorBlendEnable);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
 
 	// Only request the features that we support, and record which ones are available
 	eds_feature_support.extendedDynamicState3ColorWriteMask =
@@ -203,10 +181,7 @@ void DynamicBlending::setup_descriptor_pool()
 	};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        static_cast<uint32_t>(pool_sizes.size()));
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), static_cast<uint32_t>(pool_sizes.size()));
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -242,45 +217,26 @@ void DynamicBlending::create_descriptor_set()
 void DynamicBlending::create_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-	        VK_TRUE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_TRUE);
 
 	VkPipelineColorBlendAdvancedStateCreateInfoEXT blendAdvancedEXT{};
 	blendAdvancedEXT.sType        = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_ADVANCED_STATE_CREATE_INFO_EXT;
 	blendAdvancedEXT.blendOverlap = VK_BLEND_OVERLAP_UNCORRELATED_EXT;
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
 	    VK_DYNAMIC_STATE_VIEWPORT,
@@ -314,10 +270,7 @@ void DynamicBlending::create_pipelines()
 	}
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
@@ -353,12 +306,7 @@ void DynamicBlending::create_pipelines()
 	graphics_create.pStages             = shader_stages.data();
 	graphics_create.layout              = pipeline_layout;
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
-	                                   pipeline_cache,
-	                                   1,
-	                                   &graphics_create,
-	                                   VK_NULL_HANDLE,
-	                                   &pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline));
 }
 
 void DynamicBlending::update_pipeline()
@@ -495,10 +443,8 @@ void DynamicBlending::build_command_buffer_for_plane(VkCommandBuffer &command_bu
 	if (eds_feature_support.extendedDynamicState3ColorWriteMask)
 	{
 		std::array<VkColorComponentFlags, 1> color_bit = {
-		    (preferences.color_bit_enabled[0] ? VK_COLOR_COMPONENT_R_BIT : 0u) |
-		    (preferences.color_bit_enabled[1] ? VK_COLOR_COMPONENT_G_BIT : 0u) |
-		    (preferences.color_bit_enabled[2] ? VK_COLOR_COMPONENT_B_BIT : 0u) |
-		    (preferences.color_bit_enabled[3] ? VK_COLOR_COMPONENT_A_BIT : 0u)};
+		    (preferences.color_bit_enabled[0] ? VK_COLOR_COMPONENT_R_BIT : 0u) | (preferences.color_bit_enabled[1] ? VK_COLOR_COMPONENT_G_BIT : 0u) |
+		    (preferences.color_bit_enabled[2] ? VK_COLOR_COMPONENT_B_BIT : 0u) | (preferences.color_bit_enabled[3] ? VK_COLOR_COMPONENT_A_BIT : 0u)};
 		vkCmdSetColorWriteMaskEXT(command_buffer, 0, 1, color_bit.data());
 	}
 	vkCmdDrawIndexed(command_buffer, preferences.index_count, 1, preferences.index_offset, 0, 0);
@@ -616,12 +562,16 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 					if (drawer.header("BlendEquationEXT"))
 					{
 						add_combo_with_button("Color operator", current_blend_color_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
-						add_combo_with_button("SrcColorBlendFactor", current_src_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
-						add_combo_with_button("DstColorBlendFactor", current_dst_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
+						add_combo_with_button("SrcColorBlendFactor", current_src_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						                      blend_factor_names);
+						add_combo_with_button("DstColorBlendFactor", current_dst_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						                      blend_factor_names);
 
 						add_combo_with_button("Alpha operator", current_blend_alpha_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
-						add_combo_with_button("SrcAlphaBlendFactor", current_src_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
-						add_combo_with_button("DstAlphaBlendFactor", current_dst_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
+						add_combo_with_button("SrcAlphaBlendFactor", current_src_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						                      blend_factor_names);
+						add_combo_with_button("DstAlphaBlendFactor", current_dst_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						                      blend_factor_names);
 					}
 				}
 				break;
@@ -630,7 +580,8 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 				{
 					if (drawer.header("BlendAdvancedEXT"))
 					{
-						add_combo_with_button("Operator", current_advanced_blend_operator_index, VK_BLEND_OP_ZERO_EXT, VK_BLEND_OP_BLUE_EXT, advanced_blend_operator.names);
+						add_combo_with_button("Operator", current_advanced_blend_operator_index, VK_BLEND_OP_ZERO_EXT, VK_BLEND_OP_BLUE_EXT,
+						                      advanced_blend_operator.names);
 						if (drawer.checkbox("Src premultiplied", &src_premultiplied))
 						{
 							update_color_uniform();

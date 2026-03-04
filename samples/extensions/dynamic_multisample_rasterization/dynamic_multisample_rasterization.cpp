@@ -96,17 +96,12 @@ void DynamicMultisampleRasterization::prepare_supported_sample_count_list()
 
 	// All possible sample counts are listed here from most to least preferred as default
 	// On Mali GPUs 4X MSAA is recommended as best performance/quality trade-off
-	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT, VK_SAMPLE_COUNT_8_BIT,
-	                                             VK_SAMPLE_COUNT_16_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_64_BIT,
-	                                             VK_SAMPLE_COUNT_1_BIT};
+	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT,  VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_16_BIT,
+	                                             VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_1_BIT};
 
-	std::copy_if(counts.begin(),
-	             counts.end(),
-	             std::back_inserter(supported_sample_count_list),
+	std::copy_if(counts.begin(), counts.end(), std::back_inserter(supported_sample_count_list),
 	             [&supported_by_depth_and_color](auto count) { return supported_by_depth_and_color & count; });
-	std::transform(supported_sample_count_list.begin(),
-	               supported_sample_count_list.end(),
-	               std::back_inserter(gui_settings.sample_counts),
+	std::transform(supported_sample_count_list.begin(), supported_sample_count_list.end(), std::back_inserter(gui_settings.sample_counts),
 	               [](auto count) { return to_string(count); });
 	if (!supported_sample_count_list.empty())
 	{
@@ -238,20 +233,11 @@ void DynamicMultisampleRasterization::build_command_buffers()
 		render_info.layerCount       = 1;
 		render_info.pDepthAttachment = &attachments[1];
 
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             swapchain_buffers[i].image,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             0,
-		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		                             range);
+		vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
 
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             depth_stencil.image,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+		vkb::image_layout_transition(draw_cmd_buffers[i], depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
 		                             depth_range);
 
 		vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
@@ -305,10 +291,7 @@ void DynamicMultisampleRasterization::build_command_buffers()
 
 		vkCmdEndRenderingKHR(draw_cmd_buffers[i]);
 
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             swapchain_buffers[i].image,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		                             range);
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
@@ -389,7 +372,8 @@ void DynamicMultisampleRasterization::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, static_cast<uint32_t>(image_infos.size())),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,
+	                                                     static_cast<uint32_t>(image_infos.size())),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -397,10 +381,7 @@ void DynamicMultisampleRasterization::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	// Pass scene node information via push constants
 	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(push_const_block), 0);
@@ -412,11 +393,7 @@ void DynamicMultisampleRasterization::setup_descriptor_set_layout()
 
 void DynamicMultisampleRasterization::setup_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
@@ -554,25 +531,13 @@ void DynamicMultisampleRasterization::setup_depth_stencil()
 void DynamicMultisampleRasterization::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        VK_COLOR_COMPONENT_R_BIT |
-	            VK_COLOR_COMPONENT_G_BIT |
-	            VK_COLOR_COMPONENT_B_BIT |
-	            VK_COLOR_COMPONENT_A_BIT,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
 
 	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
 	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -581,42 +546,25 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
 	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,        // disable multisampling during configuration
-	        0);
+	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT,        // disable multisampling during configuration
+	                                                              0);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	    VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT /* VK_EXT_extended_dynamic_state3 */
+	    VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT /* VK_EXT_extended_dynamic_state3 */
 	};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        VK_NULL_HANDLE,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, VK_NULL_HANDLE, 0);
 
 	// Create graphics pipeline for dynamic rendering
 	VkFormat color_rendering_format = get_render_context().get_format();
@@ -687,9 +635,8 @@ void DynamicMultisampleRasterization::prepare_pipelines()
 void DynamicMultisampleRasterization::prepare_gui_pipeline()
 {
 	// Descriptor pool
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
-	VkDescriptorPoolCreateInfo descriptorPoolInfo = vkb::initializers::descriptor_pool_create_info(pool_sizes, 2);
+	std::vector<VkDescriptorPoolSize> pool_sizes         = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	VkDescriptorPoolCreateInfo        descriptorPoolInfo = vkb::initializers::descriptor_pool_create_info(pool_sizes, 2);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool_gui));
 
 	// Descriptor set layout
@@ -702,10 +649,8 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 	// Descriptor set
 	VkDescriptorSetAllocateInfo descriptor_allocation = vkb::initializers::descriptor_set_allocate_info(descriptor_pool_gui, &descriptor_set_layout_gui, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_allocation, &descriptor_set_gui));
-	VkDescriptorImageInfo font_descriptor = vkb::initializers::descriptor_image_info(
-	    get_gui().get_sampler(),
-	    get_gui().get_font_image_view(),
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	VkDescriptorImageInfo font_descriptor =
+	    vkb::initializers::descriptor_image_info(get_gui().get_sampler(), get_gui().get_font_image_view(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_set_gui, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &font_descriptor)};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
@@ -728,25 +673,19 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_ALWAYS);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	    VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT /* VK_EXT_extended_dynamic_state3 */
+	    VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT /* VK_EXT_extended_dynamic_state3 */
 	};
-	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
+	VkPipelineDynamicStateCreateInfo dynamic_state = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
 
 	std::vector<vkb::ShaderModule *> shader_modules;
 
@@ -817,10 +756,7 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 void DynamicMultisampleRasterization::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                      sizeof(uniform_data),
-	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(uniform_data), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

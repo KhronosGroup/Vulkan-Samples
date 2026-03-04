@@ -22,11 +22,8 @@
 namespace vkb
 {
 AndroidWindow::AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, const Window::Properties &properties) :
-    Window(properties),
-    handle{window},
-    platform{platform}
-{
-}
+    Window(properties), handle{window}, platform{platform}
+{}
 
 VkSurfaceKHR AndroidWindow::create_surface(vkb::core::InstanceC &instance)
 {

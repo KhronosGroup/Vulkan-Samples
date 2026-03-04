@@ -64,14 +64,14 @@ void TextureLoading::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
     Vulkan offers two types of image tiling (memory layout):
 
     Linear tiled images:
-        These are stored as is and can be copied directly to. But due to the linear nature they're not a good match for GPUs and format and feature support is very limited.
-        It's not advised to use linear tiled images for anything else than copying from host to GPU if buffer copies are not an option.
-        Linear tiling is thus only implemented for learning purposes, one should always prefer optimal tiled image.
+        These are stored as is and can be copied directly to. But due to the linear nature they're not a good match for GPUs and format and feature support is
+   very limited. It's not advised to use linear tiled images for anything else than copying from host to GPU if buffer copies are not an option. Linear tiling
+   is thus only implemented for learning purposes, one should always prefer optimal tiled image.
 
     Optimal tiled images:
-        These are stored in an implementation specific layout matching the capability of the hardware. They usually support more formats and features and are much faster.
-        Optimal tiled images are stored on the device and not accessible by the host. So they can't be written directly to (like liner tiled images) and always require
-        some sort of data copy, either from a buffer or	a linear tiled image.
+        These are stored in an implementation specific layout matching the capability of the hardware. They usually support more formats and features and are
+   much faster. Optimal tiled images are stored on the device and not accessible by the host. So they can't be written directly to (like liner tiled images) and
+   always require some sort of data copy, either from a buffer or	a linear tiled image.
 
     In Short: Always use optimal tiled images for rendering.
 */
@@ -139,8 +139,8 @@ void TextureLoading::load_texture()
 		vkGetBufferMemoryRequirements(get_device().get_handle(), staging_buffer, &memory_requirements);
 		memory_allocate_info.allocationSize = memory_requirements.size;
 		// Get memory type index for a host visible buffer
-		memory_allocate_info.memoryTypeIndex =
-		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(
+		    memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &staging_memory));
 		VK_CHECK(vkBindBufferMemory(get_device().get_handle(), staging_buffer, staging_memory, 0));
 
@@ -218,23 +218,11 @@ void TextureLoading::load_texture()
 		// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
 		// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
 		// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
-		vkCmdPipelineBarrier(
-		    copy_command,
-		    VK_PIPELINE_STAGE_HOST_BIT,
-		    VK_PIPELINE_STAGE_TRANSFER_BIT,
-		    0,
-		    0, nullptr,
-		    0, nullptr,
-		    1, &image_memory_barrier);
+		vkCmdPipelineBarrier(copy_command, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 
 		// Copy mip levels from staging buffer
-		vkCmdCopyBufferToImage(
-		    copy_command,
-		    staging_buffer,
-		    texture.image,
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		    static_cast<uint32_t>(buffer_copy_regions.size()),
-		    buffer_copy_regions.data());
+		vkCmdCopyBufferToImage(copy_command, staging_buffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                       static_cast<uint32_t>(buffer_copy_regions.size()), buffer_copy_regions.data());
 
 		// Once the data has been uploaded we transfer to the texture image to the shader read layout, so it can be sampled from
 		image_memory_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -245,14 +233,8 @@ void TextureLoading::load_texture()
 		// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
 		// Source pipeline stage stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
 		// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-		vkCmdPipelineBarrier(
-		    copy_command,
-		    VK_PIPELINE_STAGE_TRANSFER_BIT,
-		    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-		    0,
-		    0, nullptr,
-		    0, nullptr,
-		    1, &image_memory_barrier);
+		vkCmdPipelineBarrier(copy_command, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+		                     &image_memory_barrier);
 
 		// Store current layout for later reuse
 		texture.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -289,8 +271,8 @@ void TextureLoading::load_texture()
 		// Set memory allocation size to required memory size
 		memory_allocate_info.allocationSize = memory_requirements.size;
 		// Get memory type that can be mapped to host memory
-		memory_allocate_info.memoryTypeIndex =
-		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		memory_allocate_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(
+		    memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &mappable_memory));
 		VK_CHECK(vkBindImageMemory(get_device().get_handle(), mappable_image, mappable_memory, 0));
 
@@ -330,14 +312,8 @@ void TextureLoading::load_texture()
 		// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
 		// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
 		// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-		vkCmdPipelineBarrier(
-		    copy_command,
-		    VK_PIPELINE_STAGE_HOST_BIT,
-		    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-		    0,
-		    0, nullptr,
-		    0, nullptr,
-		    1, &image_memory_barrier);
+		vkCmdPipelineBarrier(copy_command, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+		                     &image_memory_barrier);
 
 		get_device().flush_command_buffer(copy_command, queue, true);
 	}
@@ -352,8 +328,8 @@ void TextureLoading::load_texture()
 
 	// Create a texture sampler
 	// In Vulkan textures are accessed by samplers
-	// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different settings
-	// Note: Similar to the samplers available with OpenGL 3.3
+	// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different
+	// settings Note: Similar to the samplers available with OpenGL 3.3
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
 	sampler.magFilter           = filter;
 	sampler.minFilter           = filter;
@@ -480,12 +456,10 @@ void TextureLoading::draw()
 void TextureLoading::generate_quad()
 {
 	// Setup vertices for a single uv-mapped quad made from two triangles
-	std::vector<TextureLoadingVertexStructure> vertices =
-	    {
-	        {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
+	std::vector<TextureLoadingVertexStructure> vertices = {{{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	                                                       {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	                                                       {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+	                                                       {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
 
 	// Setup indices
 	std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
@@ -497,15 +471,11 @@ void TextureLoading::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
@@ -514,57 +484,36 @@ void TextureLoading::generate_quad()
 void TextureLoading::setup_descriptor_pool()
 {
 	// Example uses one ubo and one image sampler
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	std::vector<VkDescriptorPoolSize> pool_sizes = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	                                                vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void TextureLoading::setup_descriptor_set_layout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            VK_SHADER_STAGE_VERTEX_BIT,
-	            0),
-	        // Binding 1 : Fragment shader image sampler
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	            VK_SHADER_STAGE_FRAGMENT_BIT,
-	            1)};
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+	    // Binding 0 : Vertex shader uniform buffer
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    // Binding 1 : Fragment shader image sampler
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
 void TextureLoading::setup_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
@@ -572,26 +521,22 @@ void TextureLoading::setup_descriptor_set()
 
 	// Setup a descriptor image info for the current texture to be used as a combined image sampler
 	VkDescriptorImageInfo image_descriptor;
-	image_descriptor.imageView   = texture.view;                // The image's view (images are never directly accessed by the shader, but rather through views defining subresources)
+	image_descriptor.imageView =
+	    texture.view;        // The image's view (images are never directly accessed by the shader, but rather through views defining subresources)
 	image_descriptor.sampler     = texture.sampler;             // The sampler (Telling the pipeline how to sample the texture, including repeat, border, etc.)
 	image_descriptor.imageLayout = texture.image_layout;        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            0,
-	            &buffer_descriptor),
-	        // Binding 1 : Fragment shader texture sampler
-	        //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
-	            1,                                                // Shader binding point 1
-	            &image_descriptor)                                // Pointer to the descriptor image for our texture
-	    };
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    // Binding 0 : Vertex shader uniform buffer
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),
+	    // Binding 1 : Fragment shader texture sampler
+	    //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_set,
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
+	        1,                                                // Shader binding point 1
+	        &image_descriptor)                                // Pointer to the descriptor image for our texture
+	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
@@ -599,52 +544,27 @@ void TextureLoading::setup_descriptor_set()
 void TextureLoading::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
@@ -667,11 +587,7 @@ void TextureLoading::prepare_pipelines()
 	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -691,10 +607,7 @@ void TextureLoading::prepare_pipelines()
 void TextureLoading::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         sizeof(ubo_vs),
-	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

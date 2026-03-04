@@ -22,11 +22,8 @@ namespace vkb
 {
 namespace core
 {
-vkb::core::CommandPoolBase::CommandPoolBase(vkb::core::DeviceCpp           &device_,
-                                            uint32_t                        queue_family_index,
-                                            vkb::rendering::RenderFrameCpp *render_frame_,
-                                            size_t                          thread_index,
-                                            vkb::CommandBufferResetMode     reset_mode) :
+vkb::core::CommandPoolBase::CommandPoolBase(vkb::core::DeviceCpp &device_, uint32_t queue_family_index, vkb::rendering::RenderFrameCpp *render_frame_,
+                                            size_t thread_index, vkb::CommandBufferResetMode reset_mode) :
     device{device_}, render_frame{render_frame_}, thread_index{thread_index}, reset_mode{reset_mode}
 {
 	vk::CommandPoolCreateFlags flags;

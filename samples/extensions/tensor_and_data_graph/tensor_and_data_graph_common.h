@@ -38,10 +38,8 @@ struct MultidimensionalArrayView
 	T                   *data;
 	std::vector<int64_t> dimensions;
 
-	MultidimensionalArrayView(T *data, const std::vector<int64_t> &dimensions) :
-	    data(data), dimensions(dimensions)
-	{
-	}
+	MultidimensionalArrayView(T *data, const std::vector<int64_t> &dimensions) : data(data), dimensions(dimensions)
+	{}
 
 	T &operator[](std::initializer_list<int64_t> indices)
 	{
@@ -64,50 +62,36 @@ struct MultidimensionalArrayView
 /*
  ** @brief Helper function to write a series of image and tensor bindings to a descriptor set. Does not support descriptor arrays.
  */
-void write_descriptor_set(VkDevice                                                 device,
-                          VkDescriptorSet                                          set,
-                          const std::map<uint32_t, VkDescriptorImageInfo>         &image_bindings,
+void write_descriptor_set(VkDevice device, VkDescriptorSet set, const std::map<uint32_t, VkDescriptorImageInfo> &image_bindings,
                           const std::map<uint32_t, VkWriteDescriptorSetTensorARM> &tensor_bindings);
 
 /*
  * @brief Creates a Tensor resource and backs it with memory. Analogous to vmaCreateImage/Buffer.
  * @detail When finished, destroy the tensor and its memory using vmaDestroyTensor.
  */
-VkResult vmaCreateTensor(VkDevice                       device,
-                         VmaAllocator                   allocator,
-                         const VkTensorCreateInfoARM   *pTensorCreateInfo,
-                         const VmaAllocationCreateInfo *pAllocationCreateInfo,
-                         VkTensorARM                   *pTensor,
-                         VmaAllocation                 *pAllocation,
-                         VmaAllocationInfo             *pAllocationInfo);
+VkResult vmaCreateTensor(VkDevice device, VmaAllocator allocator, const VkTensorCreateInfoARM *pTensorCreateInfo,
+                         const VmaAllocationCreateInfo *pAllocationCreateInfo, VkTensorARM *pTensor, VmaAllocation *pAllocation,
+                         VmaAllocationInfo *pAllocationInfo);
 
 /*
  ** @brief Destroys a Tensor resource and its backing memory, which were created from vmaCreateTensor. Analogous to vmaDestroyImage/Buffer.
  */
-void vmaDestroyTensor(VkDevice      device,
-                      VmaAllocator  allocator,
-                      VkTensorARM   tensor,
-                      VmaAllocation allocation);
+void vmaDestroyTensor(VkDevice device, VmaAllocator allocator, VkTensorARM tensor, VmaAllocation allocation);
 
 /*
  * @brief Creates a VkDataGraphPipelineSessionARM resource and backs it with memory. Analogous to vmaCreateImage/Buffer.
  * @detail When finished, destroy the session and its memory using vmaDestroyDataGraphPipelineSession.
  */
-VkResult vmaCreateDataGraphPipelineSession(VkDevice                                       device,
-                                           VmaAllocator                                   allocator,
+VkResult vmaCreateDataGraphPipelineSession(VkDevice device, VmaAllocator allocator,
                                            const VkDataGraphPipelineSessionCreateInfoARM *pDataGraphPipelineSessionCreateInfo,
-                                           const VmaAllocationCreateInfo                 *pAllocationCreateInfo,
-                                           VkDataGraphPipelineSessionARM                 *pDataGraphPipelineSession,
-                                           VmaAllocation                                 *pAllocation,
-                                           VmaAllocationInfo                             *pAllocationInfo);
+                                           const VmaAllocationCreateInfo *pAllocationCreateInfo, VkDataGraphPipelineSessionARM *pDataGraphPipelineSession,
+                                           VmaAllocation *pAllocation, VmaAllocationInfo *pAllocationInfo);
 
 /*
- ** @brief Destroys a DataGraphPipelineSession resource and its backing memory, which were created from vmaCreateDataGraphPipelineSession. Analogous to vmaDestroyImage/Buffer.
+ ** @brief Destroys a DataGraphPipelineSession resource and its backing memory, which were created from vmaCreateDataGraphPipelineSession. Analogous to
+ *vmaDestroyImage/Buffer.
  */
-void vmaDestroyDataGraphPipelineSession(VkDevice                      device,
-                                        VmaAllocator                  allocator,
-                                        VkDataGraphPipelineSessionARM session,
-                                        VmaAllocation                 allocation);
+void vmaDestroyDataGraphPipelineSession(VkDevice device, VmaAllocator allocator, VkDataGraphPipelineSessionARM session, VmaAllocation allocation);
 
 /*
  * @brief Helper class to describe a Tensor resource that is to be created (see Tensor constructor below). Analogous to vkb::ImageBuilder/BufferBuilder.
@@ -174,8 +158,7 @@ class Tensor : public vkb::allocated::AllocatedC<VkTensorARM>
 class ExternallyAllocatedTensor : public vkb::core::VulkanResourceC<VkTensorARM>
 {
   public:
-	ExternallyAllocatedTensor(vkb::core::DeviceC &device, TensorBuilder const &builder, VkDeviceMemory existing_memory,
-	                          VkDeviceSize existing_memory_offset);
+	ExternallyAllocatedTensor(vkb::core::DeviceC &device, TensorBuilder const &builder, VkDeviceMemory existing_memory, VkDeviceSize existing_memory_offset);
 	~ExternallyAllocatedTensor();
 
 	const VkTensorDescriptionARM &get_description() const;
@@ -192,8 +175,9 @@ class ExternallyAllocatedTensor : public vkb::core::VulkanResourceC<VkTensorARM>
 class TensorView : public vkb::core::VulkanResourceC<VkTensorViewARM>
 {
   public:
-	TensorView(Tensor &tensor, VkFormat format = VK_FORMAT_UNDEFINED);                           // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
-	TensorView(ExternallyAllocatedTensor &tensor, VkFormat format = VK_FORMAT_UNDEFINED);        // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
+	TensorView(Tensor &tensor, VkFormat format = VK_FORMAT_UNDEFINED);        // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
+	TensorView(ExternallyAllocatedTensor &tensor,
+	           VkFormat                   format = VK_FORMAT_UNDEFINED);        // VK_FORMAT_UNDEFINED means to use the same format as the provided tensor.
 	~TensorView();
 
   private:
@@ -248,12 +232,9 @@ class DataGraphPipeline : public vkb::core::VulkanResourceC<VkPipeline>
 	 * @param tensor_descriptions Descriptions (shape, format, etc.) for each tensor that will be bound to this pipeline.
 	 *                            The first key in the map is the set number and the second key is the binding number.
 	 */
-	DataGraphPipeline(vkb::core::DeviceC                                                           &device,
-	                  VkPipelineLayout                                                              layout,
-	                  VkShaderModule                                                                shader_module,
-	                  const char                                                                   *entry_point,
+	DataGraphPipeline(vkb::core::DeviceC &device, VkPipelineLayout layout, VkShaderModule shader_module, const char *entry_point,
 	                  const std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> &tensor_descriptions,
-	                  const std::vector<VkDataGraphPipelineConstantARM *>                          &data_graph_pipeline_constants = std::vector<VkDataGraphPipelineConstantARM *>());
+	                  const std::vector<VkDataGraphPipelineConstantARM *> &data_graph_pipeline_constants = std::vector<VkDataGraphPipelineConstantARM *>());
 	~DataGraphPipeline();
 
   private:
@@ -273,7 +254,8 @@ class DataGraphPipelineSession : public vkb::allocated::AllocatedC<VkDataGraphPi
 };
 
 /*
- * @brief Helper class to create and manage the lifetime of a VkPipelineLayout resource for a Compute Pipeline. Similar to vkb::PipelineLayout, but supports Tensor resources.
+ * @brief Helper class to create and manage the lifetime of a VkPipelineLayout resource for a Compute Pipeline. Similar to vkb::PipelineLayout, but supports
+ *Tensor resources.
  * @detail The sample framework's vkb::PipelineLayout class doesn't understand Tensor resources, so can't be used for compute shaders that use tensors.
  *		   This class is a modified copy of vkb::PipelineLayout that does support tensors, albeit with less other features.
  */
@@ -290,10 +272,11 @@ class ComputePipelineLayoutWithTensors : public vkb::core::VulkanResourceC<VkPip
 };
 
 /*
- * @brief Helper class to create and manage the lifetime of a VkPipeline resource for a Compute Pipeline. Similar to vkb::ComputePipeline, but supports Tensor resources.
- * @detail The sample framework's vkb::ComputePipeline class (and its dependencies) don't understand Tensor resources, so can't be used for compute shaders that use tensors.
- *		   This class is a modified copy of vkb::ComputePipeline that does support tensors, albeit with less other features.
- *		   We can't use the vkb::PipelineState as that doesn't support tensors, so instead take the VkPipelineLayout and vkb::ShaderModule directly.
+ * @brief Helper class to create and manage the lifetime of a VkPipeline resource for a Compute Pipeline. Similar to vkb::ComputePipeline, but supports Tensor
+ *resources.
+ * @detail The sample framework's vkb::ComputePipeline class (and its dependencies) don't understand Tensor resources, so can't be used for compute shaders that
+ *use tensors. This class is a modified copy of vkb::ComputePipeline that does support tensors, albeit with less other features. We can't use the
+ *vkb::PipelineState as that doesn't support tensors, so instead take the VkPipelineLayout and vkb::ShaderModule directly.
  */
 class ComputePipelineWithTensors : public vkb::core::VulkanResourceC<VkPipeline>
 {

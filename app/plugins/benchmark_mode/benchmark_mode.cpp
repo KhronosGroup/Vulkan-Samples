@@ -23,13 +23,9 @@
 namespace plugins
 {
 BenchmarkMode::BenchmarkMode() :
-    BenchmarkModeTags("Benchmark Mode",
-                      "Log frame averages after running an app.",
-                      {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart, vkb::Hook::OnAppClose},
-                      {},
+    BenchmarkModeTags("Benchmark Mode", "Log frame averages after running an app.", {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart, vkb::Hook::OnAppClose}, {},
                       {{"benchmark", "Enable benchmark mode"}})
-{
-}
+{}
 
 bool BenchmarkMode::handle_option(std::deque<std::string> &arguments)
 {

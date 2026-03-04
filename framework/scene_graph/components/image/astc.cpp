@@ -147,8 +147,7 @@ struct AstcHeader
 };
 
 void Astc::init()
-{
-}
+{}
 
 void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *compressed_data, uint32_t compressed_size)
 {
@@ -158,14 +157,8 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *compresse
 	astcenc_swizzle swizzle = {ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A};
 	// Configure the compressor run
 	astcenc_config astc_config;
-	auto           atscresult = astcenc_config_init(
-        ASTCENC_PRF_LDR_SRGB,
-        blockdim.x,
-        blockdim.y,
-        blockdim.z,
-        ASTCENC_PRE_FAST,
-        ASTCENC_FLG_DECOMPRESS_ONLY,
-        &astc_config);
+	auto           atscresult =
+	    astcenc_config_init(ASTCENC_PRF_LDR_SRGB, blockdim.x, blockdim.y, blockdim.z, ASTCENC_PRE_FAST, ASTCENC_FLG_DECOMPRESS_ONLY, &astc_config);
 
 	if (atscresult != ASTCENC_SUCCESS)
 	{
@@ -208,8 +201,7 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *compresse
 	set_depth(decoded.dim_z);
 }
 
-Astc::Astc(const Image &image) :
-    Image{image.get_name()}
+Astc::Astc(const Image &image) : Image{image.get_name()}
 {
 	init();
 
@@ -223,7 +215,8 @@ Astc::Astc(const Image &image) :
 	constexpr const char file_cache_header[ASTC_CACHE_HEADER_SIZE] = "ASTCConvertedDataV01";
 	const auto           profile                                   = to_profile(image.get_format());
 
-	auto can_load_from_file = [this, profile, fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, std::vector<uint8_t> &dst_data, uint32_t width, uint32_t height, uint32_t depth) {
+	auto can_load_from_file = [this, profile, fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, std::vector<uint8_t> &dst_data,
+	                                                                                             uint32_t width, uint32_t height, uint32_t depth) {
 		if (!use_cache)
 		{
 			LOGD("Device does not support ASTC format and cache is disabled. ASTC image {} will be decoded.", get_name())
@@ -260,9 +253,7 @@ Astc::Astc(const Image &image) :
 			copy_from_file(&file_height, &offset, sizeof(std::uint32_t));
 			copy_from_file(&file_depth, &offset, sizeof(std::uint32_t));
 
-			if (file_width != width || width == 0 ||
-			    file_height != height || height == 0 ||
-			    file_depth != depth || depth == 0)
+			if (file_width != width || width == 0 || file_height != height || height == 0 || file_depth != depth || depth == 0)
 			{
 				return false;
 			}
@@ -288,7 +279,8 @@ Astc::Astc(const Image &image) :
 		}
 	};
 
-	auto save_to_file = [fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, uint8_t *dst_data, uint32_t width, uint32_t height, uint32_t depth) {
+	auto save_to_file = [fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, uint8_t *dst_data, uint32_t width, uint32_t height,
+	                                                                        uint32_t depth) {
 		if (!use_cache)
 		{
 			return;
@@ -321,8 +313,7 @@ Astc::Astc(const Image &image) :
 	};
 
 	// Locate mip #0 in the KTX. This is the first one in the data array for KTX1s, but the last one in KTX2s!
-	auto mip_it = std::ranges::find_if(image.get_mipmaps(),
-	                                   [](auto &mip) { return mip.level == 0; });
+	auto mip_it = std::ranges::find_if(image.get_mipmaps(), [](auto &mip) { return mip.level == 0; });
 	assert(mip_it != image.get_mipmaps().end() && "Mip #0 not found");
 
 	const std::string path = fmt::format("{}/{}.bin", ASTC_CACHE_DIRECTORY, uint64_t(key));
@@ -344,8 +335,7 @@ Astc::Astc(const Image &image) :
 	update_hash(image.get_data_hash());
 }
 
-Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
-    Image{name}
+Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) : Image{name}
 {
 	init();
 
@@ -356,21 +346,20 @@ Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
 	}
 	AstcHeader header{};
 	std::memcpy(&header, data.data(), sizeof(AstcHeader));
-	uint32_t magicval = header.magic[0] + 256 * static_cast<uint32_t>(header.magic[1]) + 65536 * static_cast<uint32_t>(header.magic[2]) + 16777216 * static_cast<uint32_t>(header.magic[3]);
+	uint32_t magicval = header.magic[0] + 256 * static_cast<uint32_t>(header.magic[1]) + 65536 * static_cast<uint32_t>(header.magic[2]) +
+	                    16777216 * static_cast<uint32_t>(header.magic[3]);
 	if (magicval != MAGIC_FILE_CONSTANT)
 	{
 		throw std::runtime_error{"Error reading astc: invalid magic"};
 	}
 
-	BlockDim blockdim = {
-	    /* xdim = */ header.blockdim_x,
-	    /* ydim = */ header.blockdim_y,
-	    /* zdim = */ header.blockdim_z};
+	BlockDim blockdim = {/* xdim = */ header.blockdim_x,
+	                     /* ydim = */ header.blockdim_y,
+	                     /* zdim = */ header.blockdim_z};
 
-	VkExtent3D extent = {
-	    /* width  = */ static_cast<uint32_t>(header.xsize[0] + 256 * header.xsize[1] + 65536 * header.xsize[2]),
-	    /* height = */ static_cast<uint32_t>(header.ysize[0] + 256 * header.ysize[1] + 65536 * header.ysize[2]),
-	    /* depth  = */ static_cast<uint32_t>(header.zsize[0] + 256 * header.zsize[1] + 65536 * header.zsize[2])};
+	VkExtent3D extent = {/* width  = */ static_cast<uint32_t>(header.xsize[0] + 256 * header.xsize[1] + 65536 * header.xsize[2]),
+	                     /* height = */ static_cast<uint32_t>(header.ysize[0] + 256 * header.ysize[1] + 65536 * header.ysize[2]),
+	                     /* depth  = */ static_cast<uint32_t>(header.zsize[0] + 256 * header.zsize[1] + 65536 * header.zsize[2])};
 
 	decode(blockdim, extent, data.data() + sizeof(AstcHeader), to_u32(data.size() - sizeof(AstcHeader)));
 

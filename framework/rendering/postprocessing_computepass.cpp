@@ -23,10 +23,7 @@ namespace vkb
 {
 PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant,
                                                      std::shared_ptr<core::Sampler> &&default_sampler) :
-    PostProcessingPass{parent},
-    cs_source{cs_source},
-    cs_variant{cs_variant},
-    default_sampler{std::move(default_sampler)}
+    PostProcessingPass{parent}, cs_source{cs_source}, cs_variant{cs_variant}, default_sampler{std::move(default_sampler)}
 {
 	if (this->default_sampler == nullptr)
 	{
@@ -152,9 +149,7 @@ void PostProcessingComputePass::transition_images(vkb::core::CommandBufferC &com
 			// use shader reflection to figure out which case, then transition
 			// NOTE: Could add a <name -> readonly?> cache to make this faster?
 			auto resource = std::find_if(pipeline_layout.get_resources().begin(), pipeline_layout.get_resources().end(),
-			                             [&storage](const auto &res) {
-				                             return res.set == 0 && res.name == storage.first;
-			                             });
+			                             [&storage](const auto &res) { return res.set == 0 && res.name == storage.first; });
 			if (resource == pipeline_layout.get_resources().end())
 			{
 				// No such storage image to bind
@@ -220,8 +215,7 @@ void PostProcessingComputePass::draw(vkb::core::CommandBufferC &command_buffer, 
 			const VkFormatProperties fmtProps          = get_render_context().get_device().get_gpu().get_format_properties(view.get_format());
 			bool                     has_linear_filter = (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
 
-			const auto &sampler = it.second.get_sampler() ? *it.second.get_sampler() :
-			                                                (has_linear_filter ? *default_sampler : *default_sampler_nearest);
+			const auto &sampler = it.second.get_sampler() ? *it.second.get_sampler() : (has_linear_filter ? *default_sampler : *default_sampler_nearest);
 
 			command_buffer.bind_image(view, sampler, 0, layout_binding->binding, 0);
 		}

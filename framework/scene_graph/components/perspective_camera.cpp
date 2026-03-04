@@ -23,8 +23,7 @@ namespace vkb
 {
 namespace sg
 {
-PerspectiveCamera::PerspectiveCamera(const std::string &name) :
-    Camera{name}
+PerspectiveCamera::PerspectiveCamera(const std::string &name) : Camera{name}
 {}
 
 void PerspectiveCamera::set_field_of_view(float new_fov)

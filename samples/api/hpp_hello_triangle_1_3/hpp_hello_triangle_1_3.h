@@ -153,15 +153,9 @@ class HPPHelloTriangleV13 : public vkb::Application
 	void             render_triangle(uint32_t swapchain_index);
 	void             select_physical_device_and_surface(vkb::Window *window);
 	void             teardown_per_frame(PerFrame &per_frame);
-	void             transition_image_layout(vk::CommandBuffer       cmd,
-	                                         vk::Image               image,
-	                                         vk::ImageLayout         oldLayout,
-	                                         vk::ImageLayout         newLayout,
-	                                         vk::AccessFlags2        srcAccessMask,
-	                                         vk::AccessFlags2        dstAccessMask,
-	                                         vk::PipelineStageFlags2 srcStage,
-	                                         vk::PipelineStageFlags2 dstStage);
-	bool             validate_extensions(const std::vector<const char *> &required, const std::vector<vk::ExtensionProperties> &available);
+	void transition_image_layout(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::AccessFlags2 srcAccessMask,
+	                             vk::AccessFlags2 dstAccessMask, vk::PipelineStageFlags2 srcStage, vk::PipelineStageFlags2 dstStage);
+	bool validate_extensions(const std::vector<const char *> &required, const std::vector<vk::ExtensionProperties> &available);
 
   private:
 	Context context;

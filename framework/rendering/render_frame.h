@@ -66,11 +66,12 @@ class RenderFrame
 	using FenceType                = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Fence, VkFence>::type;
 	using SemaphoreType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
 
-	using DescriptorSetLayoutType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDescriptorSetLayout, vkb::DescriptorSetLayout>::type;
-	using FencePoolType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
-	using QueueType               = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
-	using RenderTargetType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
-	using SemaphorePoolType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPSemaphorePool, vkb::SemaphorePool>::type;
+	using DescriptorSetLayoutType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDescriptorSetLayout, vkb::DescriptorSetLayout>::type;
+	using FencePoolType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
+	using QueueType         = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
+	using RenderTargetType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using SemaphorePoolType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPSemaphorePool, vkb::SemaphorePool>::type;
 
   public:
 	RenderFrame(vkb::core::Device<bindingType> &device, std::unique_ptr<RenderTargetType> &&render_target, size_t thread_count = 1);
@@ -97,8 +98,8 @@ class RenderFrame
 	 * @param thread_index Selects the thread's command pool used to manage the buffer
 	 * @return The command pool related to the current active frame
 	 */
-	vkb::core::CommandPool<bindingType> &get_command_pool(
-	    QueueType const &queue, vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool, size_t thread_index = 0);
+	vkb::core::CommandPool<bindingType> &
+	    get_command_pool(QueueType const &queue, vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool, size_t thread_index = 0);
 
 	vkb::core::Device<bindingType> &get_device();
 	FencePoolType                  &get_fence_pool();
@@ -107,12 +108,9 @@ class RenderFrame
 	RenderTargetType const         &get_render_target() const;
 	SemaphorePoolType              &get_semaphore_pool();
 	SemaphorePoolType const        &get_semaphore_pool() const;
-	DescriptorSetType               request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
-	                                                       BindingMap<DescriptorBufferInfoType> const &buffer_infos,
-	                                                       BindingMap<DescriptorImageInfoType> const  &image_infos,
-	                                                       bool                                        update_after_bind,
-	                                                       size_t                                      thread_index = 0);
-	void                            reset();
+	DescriptorSetType request_descriptor_set(DescriptorSetLayoutType const &descriptor_set_layout, BindingMap<DescriptorBufferInfoType> const &buffer_infos,
+	                                         BindingMap<DescriptorImageInfoType> const &image_infos, bool update_after_bind, size_t thread_index = 0);
+	void              reset();
 
 	/**
 	 * @brief Sets a new buffer allocation strategy
@@ -152,39 +150,41 @@ class RenderFrame
 
 	vk::DescriptorSet request_descriptor_set_impl(vkb::core::HPPDescriptorSetLayout const    &descriptor_set_layout,
 	                                              BindingMap<vk::DescriptorBufferInfo> const &buffer_infos,
-	                                              BindingMap<vk::DescriptorImageInfo> const  &image_infos,
-	                                              bool                                        update_after_bind,
-	                                              size_t                                      thread_index = 0);
+	                                              BindingMap<vk::DescriptorImageInfo> const &image_infos, bool update_after_bind, size_t thread_index = 0);
 
   private:
 	vkb::core::DeviceCpp                                                                             &device;
 	std::map<vk::BufferUsageFlags, std::vector<std::pair<vkb::BufferPoolCpp, vkb::BufferBlockCpp *>>> buffer_pools;
-	std::map<uint32_t, std::vector<vkb::core::CommandPoolCpp>>                                        command_pools;           // Commands pools per queue family index
-	std::vector<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>>                        descriptor_pools;        // Descriptor pools per thread
-	std::vector<std::unordered_map<std::size_t, vkb::core::HPPDescriptorSet>>                         descriptor_sets;         // Descriptor sets per thread
-	vkb::HPPFencePool                                                                                 fence_pool;
-	vkb::HPPSemaphorePool                                                                             semaphore_pool;
-	std::unique_ptr<vkb::rendering::HPPRenderTarget>                                                  swapchain_render_target;
-	size_t                                                                                            thread_count;
-	BufferAllocationStrategy                                                                          buffer_allocation_strategy     = BufferAllocationStrategy::MultipleAllocationsPerBuffer;
-	DescriptorManagementStrategy                                                                      descriptor_management_strategy = DescriptorManagementStrategy::StoreInCache;
+	std::map<uint32_t, std::vector<vkb::core::CommandPoolCpp>>                 command_pools;           // Commands pools per queue family index
+	std::vector<std::unordered_map<std::size_t, vkb::core::HPPDescriptorPool>> descriptor_pools;        // Descriptor pools per thread
+	std::vector<std::unordered_map<std::size_t, vkb::core::HPPDescriptorSet>>  descriptor_sets;         // Descriptor sets per thread
+	vkb::HPPFencePool                                                          fence_pool;
+	vkb::HPPSemaphorePool                                                      semaphore_pool;
+	std::unique_ptr<vkb::rendering::HPPRenderTarget>                           swapchain_render_target;
+	size_t                                                                     thread_count;
+	BufferAllocationStrategy     buffer_allocation_strategy     = BufferAllocationStrategy::MultipleAllocationsPerBuffer;
+	DescriptorManagementStrategy descriptor_management_strategy = DescriptorManagementStrategy::StoreInCache;
 };
 
 using RenderFrameC   = RenderFrame<vkb::BindingType::C>;
 using RenderFrameCpp = RenderFrame<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline RenderFrame<bindingType>::RenderFrame(vkb::core::Device<bindingType>     &device_,
-                                             std::unique_ptr<RenderTargetType> &&render_target,
-                                             size_t                              thread_count) :
-    device(reinterpret_cast<vkb::core::DeviceCpp &>(device_)), fence_pool{device}, semaphore_pool{device}, thread_count{thread_count}, descriptor_pools(thread_count), descriptor_sets(thread_count)
+inline RenderFrame<bindingType>::RenderFrame(vkb::core::Device<bindingType> &device_, std::unique_ptr<RenderTargetType> &&render_target, size_t thread_count) :
+    device(reinterpret_cast<vkb::core::DeviceCpp &>(device_)),
+    fence_pool{device},
+    semaphore_pool{device},
+    thread_count{thread_count},
+    descriptor_pools(thread_count),
+    descriptor_sets(thread_count)
 {
 	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;        // Block size of a buffer pool in kilobytes
 
 	// A map of the supported usages to a multiplier for the BUFFER_POOL_BLOCK_SIZE
 	static const std::unordered_map<vk::BufferUsageFlags, uint32_t> supported_usage_map = {
 	    {vk::BufferUsageFlagBits::eUniformBuffer, 1},
-	    {vk::BufferUsageFlagBits::eStorageBuffer, 2},        // x2 the size of BUFFER_POOL_BLOCK_SIZE since SSBOs are normally much larger than other types of buffers
+	    {vk::BufferUsageFlagBits::eStorageBuffer,
+	     2},        // x2 the size of BUFFER_POOL_BLOCK_SIZE since SSBOs are normally much larger than other types of buffers
 	    {vk::BufferUsageFlagBits::eVertexBuffer, 1},
 	    {vk::BufferUsageFlagBits::eIndexBuffer, 1}};
 
@@ -304,8 +304,8 @@ inline std::vector<vkb::core::CommandPoolCpp> &RenderFrame<bindingType>::get_com
 }
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandPool<bindingType> &
-    RenderFrame<bindingType>::get_command_pool(QueueType const &queue, vkb::CommandBufferResetMode reset_mode, size_t thread_index)
+inline vkb::core::CommandPool<bindingType> &RenderFrame<bindingType>::get_command_pool(QueueType const &queue, vkb::CommandBufferResetMode reset_mode,
+                                                                                       size_t thread_index)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -319,15 +319,15 @@ inline vkb::core::CommandPool<bindingType> &
 }
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandPoolCpp &
-    RenderFrame<bindingType>::get_command_pool_impl(vkb::core::HPPQueue const &queue, vkb::CommandBufferResetMode reset_mode, size_t thread_index)
+inline vkb::core::CommandPoolCpp &RenderFrame<bindingType>::get_command_pool_impl(vkb::core::HPPQueue const &queue, vkb::CommandBufferResetMode reset_mode,
+                                                                                  size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
 	auto &command_pools = get_command_pools(queue, reset_mode);
 
-	auto command_pool_it = std::ranges::find_if(
-	    command_pools, [&thread_index](vkb::core::CommandPoolCpp &cmd_pool) { return cmd_pool.get_thread_index() == thread_index; });
+	auto command_pool_it =
+	    std::ranges::find_if(command_pools, [&thread_index](vkb::core::CommandPoolCpp &cmd_pool) { return cmd_pool.get_thread_index() == thread_index; });
 	assert(command_pool_it != command_pools.end());
 
 	return *command_pool_it;
@@ -425,11 +425,10 @@ inline typename RenderFrame<bindingType>::SemaphorePoolType const &RenderFrame<b
 }
 
 template <vkb::BindingType bindingType>
-inline typename RenderFrame<bindingType>::DescriptorSetType RenderFrame<bindingType>::request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
-                                                                                                             BindingMap<DescriptorBufferInfoType> const &buffer_infos,
-                                                                                                             BindingMap<DescriptorImageInfoType> const  &image_infos,
-                                                                                                             bool                                        update_after_bind,
-                                                                                                             size_t                                      thread_index)
+inline typename RenderFrame<bindingType>::DescriptorSetType
+    RenderFrame<bindingType>::request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
+                                                     BindingMap<DescriptorBufferInfoType> const &buffer_infos,
+                                                     BindingMap<DescriptorImageInfoType> const &image_infos, bool update_after_bind, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 	assert(thread_index < descriptor_pools.size());
@@ -443,17 +442,15 @@ inline typename RenderFrame<bindingType>::DescriptorSetType RenderFrame<bindingT
 		return static_cast<VkDescriptorSet>(request_descriptor_set_impl(reinterpret_cast<vkb::core::HPPDescriptorSetLayout const &>(descriptor_set_layout),
 		                                                                reinterpret_cast<BindingMap<vk::DescriptorBufferInfo> const &>(buffer_infos),
 		                                                                reinterpret_cast<BindingMap<vk::DescriptorImageInfo> const &>(image_infos),
-		                                                                update_after_bind,
-		                                                                thread_index));
+		                                                                update_after_bind, thread_index));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline vk::DescriptorSet RenderFrame<bindingType>::request_descriptor_set_impl(vkb::core::HPPDescriptorSetLayout const    &descriptor_set_layout,
                                                                                BindingMap<vk::DescriptorBufferInfo> const &buffer_infos,
-                                                                               BindingMap<vk::DescriptorImageInfo> const  &image_infos,
-                                                                               bool                                        update_after_bind,
-                                                                               size_t                                      thread_index)
+                                                                               BindingMap<vk::DescriptorImageInfo> const &image_infos, bool update_after_bind,
+                                                                               size_t thread_index)
 {
 	auto &descriptor_pool = vkb::common::request_resource(device, nullptr, descriptor_pools[thread_index], descriptor_set_layout);
 	if (descriptor_management_strategy == DescriptorManagementStrategy::StoreInCache)

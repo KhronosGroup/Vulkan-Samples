@@ -24,15 +24,15 @@ namespace vkb
 
 class IosPlatform : public Platform
 {
-public:
-    IosPlatform(const PlatformContext &context);
-    
-    virtual ~IosPlatform() = default;
-    
-    virtual const char *get_surface_extension();
-    void* view;
+  public:
+	IosPlatform(const PlatformContext &context);
 
-protected:
-    virtual void create_window(const Window::Properties &properties) override;
+	virtual ~IosPlatform() = default;
+
+	virtual const char *get_surface_extension();
+	void               *view;
+
+  protected:
+	virtual void create_window(const Window::Properties &properties) override;
 };
 }        // namespace vkb

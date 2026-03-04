@@ -47,8 +47,7 @@ class DirectWindow : public Window
 
 	virtual void close() override;
 
-	virtual bool get_display_present_info(VkDisplayPresentInfoKHR *info,
-	                                      uint32_t src_width, uint32_t src_height) const override;
+	virtual bool get_display_present_info(VkDisplayPresentInfoKHR *info, uint32_t src_width, uint32_t src_height) const override;
 
 	float get_dpi_factor() const override;
 

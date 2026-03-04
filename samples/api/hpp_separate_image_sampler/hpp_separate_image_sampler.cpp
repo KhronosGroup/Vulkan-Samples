@@ -193,9 +193,8 @@ vk::DescriptorPool HPPSeparateImageSampler::create_descriptor_pool()
 	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
 	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eSampledImage, 1}, {vk::DescriptorType::eSampler, 2}}};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets       = 3,
-	                                                         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
-	                                                         .pPoolSizes    = pool_sizes.data()};
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{
+	    .maxSets = 3, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()};
 
 	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
@@ -228,19 +227,9 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
-	                                             pipeline_cache,
-	                                             shader_stages,
-	                                             input_state,
-	                                             vk::PrimitiveTopology::eTriangleList,
-	                                             0,
-	                                             vk::PolygonMode::eFill,
-	                                             vk::CullModeFlagBits::eNone,
-	                                             vk::FrontFace::eCounterClockwise,
-	                                             {blend_attachment_state},
-	                                             depth_stencil_state,
-	                                             pipeline_layout,
-	                                             render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, input_state, vk::PrimitiveTopology::eTriangleList, 0,
+	                                             vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
 }
 
 vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<vk::DescriptorSetLayout> const &descriptor_set_layouts)
@@ -254,11 +243,7 @@ vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<v
 vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
 {
 	return vkb::common::create_sampler(
-	    get_device().get_gpu().get_handle(),
-	    get_device().get_handle(),
-	    texture.image->get_format(),
-	    filter,
-	    vk::SamplerAddressMode::eRepeat,
+	    get_device().get_gpu().get_handle(), get_device().get_handle(), texture.image->get_format(), filter, vk::SamplerAddressMode::eRepeat,
 	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(texture.image->get_mipmaps().size()));
 }
@@ -289,12 +274,10 @@ void HPPSeparateImageSampler::draw()
 void HPPSeparateImageSampler::generate_quad()
 {
 	// Setup vertices for a single uv-mapped quad made from two triangles
-	std::vector<VertexStructure> vertices =
-	    {
-	        {{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-	        {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
+	std::vector<VertexStructure> vertices = {{{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	                                         {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	                                         {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+	                                         {{1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
 
 	// Setup indices
 	std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
@@ -306,16 +289,12 @@ void HPPSeparateImageSampler::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
-	                                                       vertex_buffer_size,
-	                                                       vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferCpp>(
+	    get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
-	                                                      index_buffer_size,
-	                                                      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
-	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferCpp>(
+	    get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -342,19 +321,18 @@ void HPPSeparateImageSampler::update_base_descriptor_set()
 	vk::DescriptorImageInfo image_info{{}, texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal};
 
 	// Sampled image descriptor
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-	    {
-	        {.dstSet          = base_descriptor_set,
-	         .dstBinding      = 0,
-	         .descriptorCount = 1,
-	         .descriptorType  = vk::DescriptorType::eUniformBuffer,
-	         .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
-	        {.dstSet          = base_descriptor_set,
-	         .dstBinding      = 1,
-	         .descriptorCount = 1,
-	         .descriptorType  = vk::DescriptorType::eSampledImage,
-	         .pImageInfo      = &image_info}        // Binding 1 : Fragment shader sampled image
-	    }};
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{
+	    {.dstSet          = base_descriptor_set,
+	     .dstBinding      = 0,
+	     .descriptorCount = 1,
+	     .descriptorType  = vk::DescriptorType::eUniformBuffer,
+	     .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
+	    {.dstSet          = base_descriptor_set,
+	     .dstBinding      = 1,
+	     .descriptorCount = 1,
+	     .descriptorType  = vk::DescriptorType::eSampledImage,
+	     .pImageInfo      = &image_info}        // Binding 1 : Fragment shader sampled image
+	}};
 	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
@@ -365,8 +343,11 @@ void HPPSeparateImageSampler::update_sampler_descriptor_set(size_t index)
 	// Descriptor info only references the sampler
 	vk::DescriptorImageInfo sampler_info{samplers[index]};
 
-	vk::WriteDescriptorSet sampler_write_descriptor_set{
-	    .dstSet = sampler_descriptor_sets[index], .dstBinding = 0, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eSampler, .pImageInfo = &sampler_info};
+	vk::WriteDescriptorSet sampler_write_descriptor_set{.dstSet          = sampler_descriptor_sets[index],
+	                                                    .dstBinding      = 0,
+	                                                    .descriptorCount = 1,
+	                                                    .descriptorType  = vk::DescriptorType::eSampler,
+	                                                    .pImageInfo      = &sampler_info};
 
 	get_device().get_handle().updateDescriptorSets(sampler_write_descriptor_set, {});
 }

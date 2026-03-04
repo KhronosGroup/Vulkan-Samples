@@ -61,7 +61,8 @@ void RenderPassesSample::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, lines]() {
+	    /* body = */
+	    [this, lines]() {
 		    // Checkbox vkCmdClear
 		    ImGui::Checkbox("Use vkCmdClearAttachments (color)", &cmd_clear);
 
@@ -105,9 +106,7 @@ bool RenderPassesSample::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	get_stats().request_stats({vkb::StatIndex::gpu_fragment_cycles,
-	                           vkb::StatIndex::gpu_ext_read_bytes,
-	                           vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::gpu_fragment_cycles, vkb::StatIndex::gpu_ext_read_bytes, vkb::StatIndex::gpu_ext_write_bytes});
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
@@ -116,7 +115,8 @@ bool RenderPassesSample::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource vert_shader("base.vert.spv");
 	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader),
+	                                                                                  get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_subpass));

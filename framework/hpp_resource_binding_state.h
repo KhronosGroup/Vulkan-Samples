@@ -68,18 +68,14 @@ class HPPResourceBindingState : private vkb::ResourceBindingState
   public:
 	void bind_buffer(const vkb::core::BufferCpp &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element)
 	{
-		vkb::ResourceBindingState::bind_buffer(reinterpret_cast<vkb::core::BufferC const &>(buffer),
-		                                       static_cast<VkDeviceSize>(offset),
-		                                       static_cast<VkDeviceSize>(range),
-		                                       set,
-		                                       binding,
-		                                       array_element);
+		vkb::ResourceBindingState::bind_buffer(reinterpret_cast<vkb::core::BufferC const &>(buffer), static_cast<VkDeviceSize>(offset),
+		                                       static_cast<VkDeviceSize>(range), set, binding, array_element);
 	}
 
 	void bind_image(const vkb::core::HPPImageView &image_view, const vkb::core::HPPSampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 	{
-		vkb::ResourceBindingState::bind_image(
-		    reinterpret_cast<vkb::core::ImageView const &>(image_view), reinterpret_cast<vkb::core::Sampler const &>(sampler), set, binding, array_element);
+		vkb::ResourceBindingState::bind_image(reinterpret_cast<vkb::core::ImageView const &>(image_view), reinterpret_cast<vkb::core::Sampler const &>(sampler),
+		                                      set, binding, array_element);
 	}
 
 	void bind_image(const vkb::core::HPPImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)

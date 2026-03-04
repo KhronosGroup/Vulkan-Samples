@@ -108,9 +108,7 @@ void TextureCompressionComparison::draw_gui()
 	}
 
 	std::vector<const char *> name_pointers(gui_texture_names.size());
-	std::transform(gui_texture_names.cbegin(), gui_texture_names.cend(), name_pointers.begin(), [](const std::string &in) {
-		return in.c_str();
-	});
+	std::transform(gui_texture_names.cbegin(), gui_texture_names.cend(), name_pointers.begin(), [](const std::string &in) { return in.c_str(); });
 
 	get_gui().show_options_window([this, &name_pointers]() {
 		if (ImGui::Combo("Compressed Format", &current_gui_format, name_pointers.data(), static_cast<int>(name_pointers.size())))
@@ -139,36 +137,12 @@ void TextureCompressionComparison::draw_gui()
 const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCompressionComparison::get_texture_formats()
 {
 	static std::vector<TextureCompressionComparison::CompressedTexture_t> formats = {
-	    CompressedTexture_t{nullptr,
-	                        "",
-	                        VK_FORMAT_R8G8B8A8_SRGB,
-	                        KTX_TTF_RGBA32,
-	                        "KTX_TTF_RGBA32",
-	                        "RGBA 32",
-	                        true},
-	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
-	                        "",
-	                        VK_FORMAT_BC7_SRGB_BLOCK,
-	                        KTX_TTF_BC7_RGBA,
-	                        "KTX_TTF_BC7_RGBA",
-	                        "BC7"},
-	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
-	                        "",
-	                        VK_FORMAT_BC3_SRGB_BLOCK,
-	                        KTX_TTF_BC3_RGBA,
-	                        "KTX_TTF_BC3_RGBA",
-	                        "BC3"},
-	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionASTC_LDR,
-	                        "",
-	                        VK_FORMAT_ASTC_4x4_SRGB_BLOCK,
-	                        KTX_TTF_ASTC_4x4_RGBA,
-	                        "KTX_TTF_ASTC_4x4_RGBA",
-	                        "ASTC 4x4"},
-	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionETC2,
-	                        "",
-	                        VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK,
-	                        KTX_TTF_ETC2_RGBA,
-	                        "KTX_TTF_ETC2_RGBA",
+	    CompressedTexture_t{nullptr, "", VK_FORMAT_R8G8B8A8_SRGB, KTX_TTF_RGBA32, "KTX_TTF_RGBA32", "RGBA 32", true},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC, "", VK_FORMAT_BC7_SRGB_BLOCK, KTX_TTF_BC7_RGBA, "KTX_TTF_BC7_RGBA", "BC7"},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC, "", VK_FORMAT_BC3_SRGB_BLOCK, KTX_TTF_BC3_RGBA, "KTX_TTF_BC3_RGBA", "BC3"},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionASTC_LDR, "", VK_FORMAT_ASTC_4x4_SRGB_BLOCK, KTX_TTF_ASTC_4x4_RGBA,
+	                        "KTX_TTF_ASTC_4x4_RGBA", "ASTC 4x4"},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionETC2, "", VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK, KTX_TTF_ETC2_RGBA, "KTX_TTF_ETC2_RGBA",
 	                        "ETC2"}};
 	return formats;
 }
@@ -211,7 +185,8 @@ void TextureCompressionComparison::create_subpass()
 {
 	vkb::ShaderSource vert_shader("base.vert.spv");
 	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_sub_pass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto scene_sub_pass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader),
+	                                                                                   get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_sub_pass));
@@ -219,7 +194,8 @@ void TextureCompressionComparison::create_subpass()
 	set_render_pipeline(std::move(render_pipeline));
 }
 
-TextureCompressionComparison::TextureBenchmark TextureCompressionComparison::update_textures(const TextureCompressionComparison::CompressedTexture_t &new_format)
+TextureCompressionComparison::TextureBenchmark
+    TextureCompressionComparison::update_textures(const TextureCompressionComparison::CompressedTexture_t &new_format)
 {
 	TextureBenchmark                benchmark;
 	std::unordered_set<std::string> visited;
@@ -265,7 +241,8 @@ class CompressedImage : public vkb::sg::Image
 
 std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTexture2 *ktx_texture, const std::string &name)
 {
-	std::unique_ptr<vkb::core::BufferC> staging_buffer = std::make_unique<vkb::core::BufferC>(get_device(), ktx_texture->dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> staging_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), ktx_texture->dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	memcpy(staging_buffer->map(), ktx_texture->pData, ktx_texture->dataSize);
 
 	const auto vk_format = static_cast<VkFormat>(ktx_texture->vkFormat);
@@ -310,7 +287,8 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 
 	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
-	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(buffer_copies.size()), buffer_copies.data());
+	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                       static_cast<uint32_t>(buffer_copies.size()), buffer_copies.data());
 
 	vkb::image_layout_transition(command_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
@@ -319,7 +297,9 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 	return image_out;
 }
 
-std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format, const std::string &name)
+std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark>
+    TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format,
+                                           const std::string &name)
 {
 	ktxTexture2 *ktx_texture{nullptr};
 	KTX_CHECK(ktxTexture2_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture));

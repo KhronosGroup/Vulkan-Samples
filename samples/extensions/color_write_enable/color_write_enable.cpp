@@ -78,10 +78,12 @@ void ColorWriteEnable::prepare_pipelines()
 		VkPipelineVertexInputStateCreateInfo vertex_input = vkb::initializers::pipeline_vertex_input_state_create_info();
 
 		// Specify we will use triangle lists to draw geometry.
-		VkPipelineInputAssemblyStateCreateInfo input_assembly = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+		VkPipelineInputAssemblyStateCreateInfo input_assembly =
+		    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 		// Specify rasterization state.
-		VkPipelineRasterizationStateCreateInfo raster = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+		VkPipelineRasterizationStateCreateInfo raster =
+		    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
 
 		// Prepare separate attachment for each color channel.
 		std::array<VkPipelineColorBlendAttachmentState, 3> blend_attachment = {
@@ -96,7 +98,8 @@ void ColorWriteEnable::prepare_pipelines()
 		color_write_info.pColorWriteEnables                   = color_write_enables.data();
 
 		// Define color blend with an attachment for each color. Chain it with color_write_info.
-		VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(blend_attachment.size(), blend_attachment.data());
+		VkPipelineColorBlendStateCreateInfo color_blend_state =
+		    vkb::initializers::pipeline_color_blend_state_create_info(blend_attachment.size(), blend_attachment.data());
 
 		color_blend_state.pNext = &color_write_info;
 
@@ -147,14 +150,17 @@ void ColorWriteEnable::prepare_pipelines()
 		shader_stages[1] = load_shader("color_write_enable", "composition.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Specify we will use triangle lists to draw geometry.
-		VkPipelineInputAssemblyStateCreateInfo input_assembly = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+		VkPipelineInputAssemblyStateCreateInfo input_assembly =
+		    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 		// Specify rasterization state.
-		VkPipelineRasterizationStateCreateInfo raster = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+		VkPipelineRasterizationStateCreateInfo raster =
+		    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
 
 		// Prepare separate attachment for each color channel.
-		VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
-		VkPipelineColorBlendStateCreateInfo color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+		VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+		    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
+		VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 		// We will have one viewport and scissor box.
 		VkPipelineViewportStateCreateInfo viewport = vkb::initializers::pipeline_viewport_state_create_info(1, 1);
@@ -250,22 +256,18 @@ void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		}
 		else
 		{
-			throw std::runtime_error("When using Slang shaders, this sample requires support for reading storage images without format (shaderStorageImageReadWithoutFormat)");
+			throw std::runtime_error(
+			    "When using Slang shaders, this sample requires support for reading storage images without format (shaderStorageImageReadWithoutFormat)");
 		}
 	}
 }
 
 void ColorWriteEnable::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> poolSizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 3)};
+	std::vector<VkDescriptorPoolSize> poolSizes = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 3)};
 
 	VkDescriptorPoolCreateInfo descriptorPoolInfo =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(poolSizes.size()),
-	        poolSizes.data(),
-	        1);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(poolSizes.size()), poolSizes.data(), 1);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool));
 }
@@ -329,10 +331,8 @@ void ColorWriteEnable::setup_render_pass()
 	}
 
 	std::array<VkAttachmentReference, 4> color_references = {
-	    VkAttachmentReference{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-	    VkAttachmentReference{1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-	    VkAttachmentReference{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-	    VkAttachmentReference{3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
+	    VkAttachmentReference{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}, VkAttachmentReference{1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+	    VkAttachmentReference{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}, VkAttachmentReference{3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
 
 	// Two subpasses are defined:
 	std::array<VkSubpassDescription, 2> subpass_descriptions{};
@@ -344,10 +344,9 @@ void ColorWriteEnable::setup_render_pass()
 	subpass_descriptions[0].pDepthStencilAttachment = nullptr;
 
 	// - second, with a single attachment. It takes input from the attachments 1 to 3.
-	std::array<VkAttachmentReference, 3> input_references = {
-	    VkAttachmentReference{1, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-	    VkAttachmentReference{2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-	    VkAttachmentReference{3, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}};
+	std::array<VkAttachmentReference, 3> input_references = {VkAttachmentReference{1, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+	                                                         VkAttachmentReference{2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+	                                                         VkAttachmentReference{3, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}};
 
 	subpass_descriptions[1].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass_descriptions[1].colorAttachmentCount    = 1;
@@ -431,9 +430,10 @@ void ColorWriteEnable::setup_framebuffer()
 
 		create_attachments();
 
-		VkDescriptorImageInfo red   = vkb::initializers::descriptor_image_info(samplers.red, attachments.red.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		VkDescriptorImageInfo green = vkb::initializers::descriptor_image_info(samplers.green, attachments.green.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		VkDescriptorImageInfo blue  = vkb::initializers::descriptor_image_info(samplers.blue, attachments.blue.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VkDescriptorImageInfo red = vkb::initializers::descriptor_image_info(samplers.red, attachments.red.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VkDescriptorImageInfo green =
+		    vkb::initializers::descriptor_image_info(samplers.green, attachments.green.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VkDescriptorImageInfo blue = vkb::initializers::descriptor_image_info(samplers.blue, attachments.blue.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
 		    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &red),
@@ -547,9 +547,7 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 	if (drawer.header("Background color"))
 	{
 		if (drawer.color_op<vkb::Drawer::ColorOp::Pick>("", background_color, 0,
-		                                                ImGuiColorEditFlags_NoSidePreview |
-		                                                    ImGuiColorEditFlags_NoSmallPreview |
-		                                                    ImGuiColorEditFlags_Float |
+		                                                ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_Float |
 		                                                    ImGuiColorEditFlags_HDR))
 		{
 			rebuild_command_buffers();

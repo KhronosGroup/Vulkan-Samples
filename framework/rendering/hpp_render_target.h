@@ -39,10 +39,7 @@ struct HPPAttachment
 {
 	HPPAttachment() = default;
 
-	HPPAttachment(vk::Format format, vk::SampleCountFlagBits samples, vk::ImageUsageFlags usage) :
-	    format{format},
-	    samples{samples},
-	    usage{usage}
+	HPPAttachment(vk::Format format, vk::SampleCountFlagBits samples, vk::ImageUsageFlags usage) : format{format}, samples{samples}, usage{usage}
 	{}
 
 	vk::Format              format         = vk::Format::eUndefined;

@@ -22,10 +22,8 @@
 
 namespace vkb
 {
-UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) :
-    Platform{context}
-{
-}
+UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) : Platform{context}
+{}
 
 void UnixD2DPlatform::create_window(const Window::Properties &properties)
 {

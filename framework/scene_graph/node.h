@@ -64,8 +64,7 @@ using NodeCpp = Node<vkb::BindingType::Cpp>;
 // Member function definitions
 
 template <vkb::BindingType bindingType>
-inline Node<bindingType>::Node(size_t id_, std::string const &name_) :
-    id{id_}, name{name_}, transform{*this}
+inline Node<bindingType>::Node(size_t id_, std::string const &name_) : id{id_}, name{name_}, transform{*this}
 {
 	set_component(transform);
 }

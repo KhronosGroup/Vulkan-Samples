@@ -213,8 +213,7 @@ uint32_t to_u32(T value)
 template <typename T>
 inline std::vector<uint8_t> to_bytes(const T &value)
 {
-	return std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-	                            reinterpret_cast<const uint8_t *>(&value) + sizeof(T)};
+	return std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value), reinterpret_cast<const uint8_t *>(&value) + sizeof(T)};
 }
 
 }        // namespace vkb

@@ -19,10 +19,8 @@
 
 namespace vkb
 {
-HeadlessWindow::HeadlessWindow(const Window::Properties &properties) :
-    Window(properties)
-{
-}
+HeadlessWindow::HeadlessWindow(const Window::Properties &properties) : Window(properties)
+{}
 
 VkSurfaceKHR HeadlessWindow::create_surface(vkb::core::InstanceC &instance)
 {

@@ -19,11 +19,8 @@
 
 namespace vkb
 {
-BoolSetting::BoolSetting(bool &handle, bool value) :
-    handle{handle},
-    value{value}
-{
-}
+BoolSetting::BoolSetting(bool &handle, bool value) : handle{handle}, value{value}
+{}
 
 void BoolSetting::set()
 {
@@ -35,11 +32,8 @@ std::type_index BoolSetting::get_type()
 	return typeid(BoolSetting);
 }
 
-IntSetting::IntSetting(int &handle, int value) :
-    handle{handle},
-    value{value}
-{
-}
+IntSetting::IntSetting(int &handle, int value) : handle{handle}, value{value}
+{}
 
 void IntSetting::set()
 {
@@ -52,12 +46,10 @@ std::type_index IntSetting::get_type()
 }
 
 EmptySetting::EmptySetting()
-{
-}
+{}
 
 void EmptySetting::set()
-{
-}
+{}
 
 std::type_index EmptySetting::get_type()
 {

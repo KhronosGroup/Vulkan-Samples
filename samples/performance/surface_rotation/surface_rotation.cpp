@@ -54,8 +54,7 @@ bool SurfaceRotation::prepare(const vkb::ApplicationOptions &options)
 		throw std::runtime_error("Requires a surface to run sample");
 	}
 
-	get_stats().request_stats({vkb::StatIndex::gpu_ext_read_stalls,
-	                           vkb::StatIndex::gpu_ext_write_stalls});
+	get_stats().request_stats({vkb::StatIndex::gpu_ext_read_stalls, vkb::StatIndex::gpu_ext_write_stalls});
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
@@ -64,7 +63,8 @@ bool SurfaceRotation::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource vert_shader("base.vert.spv");
 	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader),
+	                                                                                  get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
@@ -127,14 +127,15 @@ void SurfaceRotation::draw_gui()
 
 	// If pre-rotate is enabled, the aspect ratio will not change, therefore need to check if the
 	// scene has been rotated using the swapchain preTransform attribute
-	auto  rotated      = get_render_context().get_swapchain().get_transform() & (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR);
+	auto  rotated = get_render_context().get_swapchain().get_transform() & (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR);
 	float aspect_ratio = static_cast<float>(extent.width) / extent.height;
 	if (aspect_ratio > 1.0f || (aspect_ratio < 1.0f && rotated))
 	{
 		// GUI landscape layout
 		uint32_t lines = 2;
 		get_gui().show_options_window(
-		    /* body = */ [&]() {
+		    /* body = */
+		    [&]() {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
 			    ImGui::Text("%s | %s", transform.c_str(), resolution_str.c_str());
 		    },
@@ -145,7 +146,8 @@ void SurfaceRotation::draw_gui()
 		// GUI portrait layout
 		uint32_t lines = 3;
 		get_gui().show_options_window(
-		    /* body = */ [&]() {
+		    /* body = */
+		    [&]() {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
 			    ImGui::Text("%s", transform.c_str());
 			    ImGui::Text("%s", resolution_str.c_str());
@@ -161,9 +163,7 @@ VkSurfaceTransformFlagBitsKHR SurfaceRotation::select_pre_transform()
 	if (pre_rotate)
 	{
 		VkSurfaceCapabilitiesKHR surface_properties;
-		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(),
-		                                                   get_surface(),
-		                                                   &surface_properties));
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(), get_surface(), &surface_properties));
 
 		// Best practice: adjust the preTransform attribute in the swapchain properties
 		// so that it matches the value in the surface properties. This is to
@@ -186,9 +186,7 @@ void SurfaceRotation::handle_no_resize_rotations()
 	// If pre-rotate mode is enabled, the sample will detect a 180 degree change in orientation
 	// and re-create the swapchain
 	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(),
-	                                                   get_surface(),
-	                                                   &surface_properties));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(), get_surface(), &surface_properties));
 
 	if (surface_properties.currentExtent.width == get_render_context().get_surface_extent().width &&
 	    surface_properties.currentExtent.height == get_render_context().get_surface_extent().height &&

@@ -38,16 +38,12 @@ bool is_astc(const vk::Format format)
 }
 
 HPPImage::HPPImage(const std::string &name, std::vector<uint8_t> &&d, std::vector<vkb::scene_graph::components::HPPMipmap> &&m) :
-    Component{name},
-    data{std::move(d)},
-    format{vk::Format::eR8G8B8A8Unorm},
-    mipmaps{std::move(m)}
+    Component{name}, data{std::move(d)}, format{vk::Format::eR8G8B8A8Unorm}, mipmaps{std::move(m)}
 {
 	update_hash();
 }
 
-std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPImage::load(const std::string &name, const std::string &uri,
-                                                                       ContentType content_type)
+std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPImage::load(const std::string &name, const std::string &uri, ContentType content_type)
 {
 	std::unique_ptr<vkb::scene_graph::components::HPPImage> image{nullptr};
 
@@ -204,16 +200,9 @@ void HPPImage::create_vk_image(vkb::core::DeviceCpp &device, vk::ImageViewType i
 {
 	assert(!vk_image && !vk_image_view && "Vulkan HPPImage already constructed");
 
-	vk_image = std::make_unique<vkb::core::HPPImage>(device,
-	                                                 get_extent(),
-	                                                 format,
-	                                                 vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-	                                                 VMA_MEMORY_USAGE_GPU_ONLY,
-	                                                 vk::SampleCountFlagBits::e1,
-	                                                 to_u32(mipmaps.size()),
-	                                                 layers,
-	                                                 vk::ImageTiling::eOptimal,
-	                                                 flags);
+	vk_image = std::make_unique<vkb::core::HPPImage>(device, get_extent(), format, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+	                                                 VMA_MEMORY_USAGE_GPU_ONLY, vk::SampleCountFlagBits::e1, to_u32(mipmaps.size()), layers,
+	                                                 vk::ImageTiling::eOptimal, flags);
 	vk_image->set_debug_name(get_name());
 
 	vk_image_view = std::make_unique<vkb::core::HPPImageView>(*vk_image, image_view_type);
@@ -249,8 +238,8 @@ void HPPImage::generate_mipmaps()
 		next_mipmap.extent = vk::Extent3D{next_width, next_height, 1u};
 
 		// Fill next mipmap memory
-		stbir_resize_uint8(data.data() + prev_mipmap.offset, prev_mipmap.extent.width, prev_mipmap.extent.height, 0,
-		                   data.data() + next_mipmap.offset, next_mipmap.extent.width, next_mipmap.extent.height, 0, channels);
+		stbir_resize_uint8(data.data() + prev_mipmap.offset, prev_mipmap.extent.width, prev_mipmap.extent.height, 0, data.data() + next_mipmap.offset,
+		                   next_mipmap.extent.width, next_mipmap.extent.height, 0, channels);
 
 		mipmaps.emplace_back(std::move(next_mipmap));
 

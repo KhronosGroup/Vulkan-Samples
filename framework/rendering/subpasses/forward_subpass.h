@@ -66,11 +66,8 @@ class ForwardSubpass : public vkb::rendering::subpasses::GeometrySubpass<binding
 	 * @param scene Scene to render on this subpass
 	 * @param camera Camera used to look at the scene
 	 */
-	ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context,
-	               ShaderSourceType                          &&vertex_shader,
-	               ShaderSourceType                          &&fragment_shader,
-	               SceneType                                  &scene,
-	               sg::Camera                                 &camera);
+	ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_shader, ShaderSourceType &&fragment_shader,
+	               SceneType &scene, sg::Camera &camera);
 
 	virtual ~ForwardSubpass() = default;
 
@@ -85,11 +82,8 @@ using ForwardSubpassCpp = ForwardSubpass<vkb::BindingType::Cpp>;
 // Member function definitions
 
 template <vkb::BindingType bindingType>
-inline ForwardSubpass<bindingType>::ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context,
-                                                   ShaderSourceType                          &&vertex_source,
-                                                   ShaderSourceType                          &&fragment_source,
-                                                   SceneType                                  &scene_,
-                                                   sg::Camera                                 &camera) :
+inline ForwardSubpass<bindingType>::ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_source,
+                                                   ShaderSourceType &&fragment_source, SceneType &scene_, sg::Camera &camera) :
     GeometrySubpass<bindingType>{render_context, std::move(vertex_source), std::move(fragment_source), scene_, camera}
 {}
 
@@ -112,7 +106,8 @@ inline void ForwardSubpass<bindingType>::prepare()
 		{
 			auto &variant     = sub_mesh->get_mut_shader_variant();
 			auto &vert_module = device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, this->get_vertex_shader_impl(), variant);
-			auto &frag_module = device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader_impl(), variant);
+			auto &frag_module =
+			    device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader_impl(), variant);
 		}
 	}
 }

@@ -134,7 +134,8 @@ struct ColorBlendState
 	std::vector<ColorBlendAttachmentState> attachments;
 };
 
-/// Helper class to create specialization constants for a Vulkan pipeline. The state tracks a pipeline globally, and not per shader. Two shaders using the same constant_id will have the same data.
+/// Helper class to create specialization constants for a Vulkan pipeline. The state tracks a pipeline globally, and not per shader. Two shaders using the same
+/// constant_id will have the same data.
 class SpecializationConstantState
 {
   public:

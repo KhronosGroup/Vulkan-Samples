@@ -42,8 +42,7 @@ struct ImageBuilder : public vkb::allocated::BuilderBaseC<ImageBuilder, VkImageC
 	using Parent = vkb::allocated::BuilderBaseC<ImageBuilder, VkImageCreateInfo>;
 
   public:
-	ImageBuilder(VkExtent3D const &extent) :
-	    Parent(VkImageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, nullptr})
+	ImageBuilder(VkExtent3D const &extent) : Parent(VkImageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, nullptr})
 	{
 		VkImageCreateInfo &create_info = get_create_info();
 		create_info.extent             = extent;
@@ -54,10 +53,8 @@ struct ImageBuilder : public vkb::allocated::BuilderBaseC<ImageBuilder, VkImageC
 		create_info.samples            = VK_SAMPLE_COUNT_1_BIT;
 	}
 
-	ImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) :
-	    ImageBuilder(VkExtent3D{width, height, depth})
-	{
-	}
+	ImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) : ImageBuilder(VkExtent3D{width, height, depth})
+	{}
 
 	ImageBuilder &with_format(VkFormat format)
 	{
@@ -126,27 +123,14 @@ class ImageView;
 class Image : public vkb::allocated::AllocatedC<VkImage>
 {
   public:
-	Image(vkb::core::DeviceC   &device,
-	      VkImage               handle,
-	      const VkExtent3D     &extent,
-	      VkFormat              format,
-	      VkImageUsageFlags     image_usage,
+	Image(vkb::core::DeviceC &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage,
 	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
 
 	// [[deprecated("Use the ImageBuilder ctor instead")]]
-	Image(
-	    vkb::core::DeviceC   &device,
-	    const VkExtent3D     &extent,
-	    VkFormat              format,
-	    VkImageUsageFlags     image_usage,
-	    VmaMemoryUsage        memory_usage       = VMA_MEMORY_USAGE_AUTO,
-	    VkSampleCountFlagBits sample_count       = VK_SAMPLE_COUNT_1_BIT,
-	    uint32_t              mip_levels         = 1,
-	    uint32_t              array_layers       = 1,
-	    VkImageTiling         tiling             = VK_IMAGE_TILING_OPTIMAL,
-	    VkImageCreateFlags    flags              = 0,
-	    uint32_t              num_queue_families = 0,
-	    const uint32_t       *queue_families     = nullptr);
+	Image(vkb::core::DeviceC &device, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage,
+	      VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO, VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT, uint32_t mip_levels = 1,
+	      uint32_t array_layers = 1, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL, VkImageCreateFlags flags = 0, uint32_t num_queue_families = 0,
+	      const uint32_t *queue_families = nullptr);
 
 	Image(vkb::core::DeviceC &device, ImageBuilder const &builder);
 

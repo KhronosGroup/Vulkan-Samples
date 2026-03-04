@@ -21,15 +21,12 @@
 
 namespace vkb
 {
-QueryPool::QueryPool(vkb::core::DeviceC &d, const VkQueryPoolCreateInfo &info) :
-    device{d}
+QueryPool::QueryPool(vkb::core::DeviceC &d, const VkQueryPoolCreateInfo &info) : device{d}
 {
 	VK_CHECK(vkCreateQueryPool(device.get_handle(), &info, nullptr, &handle));
 }
 
-QueryPool::QueryPool(QueryPool &&other) :
-    device{other.device},
-    handle{other.handle}
+QueryPool::QueryPool(QueryPool &&other) : device{other.device}, handle{other.handle}
 {
 	other.handle = VK_NULL_HANDLE;
 }
@@ -50,18 +47,14 @@ VkQueryPool QueryPool::get_handle() const
 
 void QueryPool::host_reset(uint32_t first_query, uint32_t query_count)
 {
-	assert(device.is_extension_enabled("VK_EXT_host_query_reset") &&
-	       "VK_EXT_host_query_reset needs to be enabled to call QueryPool::host_reset");
+	assert(device.is_extension_enabled("VK_EXT_host_query_reset") && "VK_EXT_host_query_reset needs to be enabled to call QueryPool::host_reset");
 
 	vkResetQueryPoolEXT(device.get_handle(), get_handle(), first_query, query_count);
 }
 
-VkResult QueryPool::get_results(uint32_t first_query, uint32_t num_queries,
-                                size_t result_bytes, void *results, VkDeviceSize stride,
-                                VkQueryResultFlags flags)
+VkResult QueryPool::get_results(uint32_t first_query, uint32_t num_queries, size_t result_bytes, void *results, VkDeviceSize stride, VkQueryResultFlags flags)
 {
-	return vkGetQueryPoolResults(device.get_handle(), get_handle(), first_query, num_queries,
-	                             result_bytes, results, stride, flags);
+	return vkGetQueryPoolResults(device.get_handle(), get_handle(), first_query, num_queries, result_bytes, results, stride, flags);
 }
 
 }        // namespace vkb

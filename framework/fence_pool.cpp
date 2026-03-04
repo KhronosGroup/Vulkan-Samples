@@ -21,10 +21,8 @@
 
 namespace vkb
 {
-FencePool::FencePool(vkb::core::DeviceC &device) :
-    device{device}
-{
-}
+FencePool::FencePool(vkb::core::DeviceC &device) : device{device}
+{}
 
 FencePool::~FencePool()
 {

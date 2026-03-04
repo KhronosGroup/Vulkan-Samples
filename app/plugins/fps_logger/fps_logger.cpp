@@ -20,10 +20,8 @@
 
 namespace plugins
 {
-FpsLogger::FpsLogger() :
-    FpsLoggerTags("FPS Logger", "Enable FPS logging.", {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart}, {}, {{"log-fps", "Log FPS"}})
-{
-}
+FpsLogger::FpsLogger() : FpsLoggerTags("FPS Logger", "Enable FPS logging.", {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart}, {}, {{"log-fps", "Log FPS"}})
+{}
 
 bool FpsLogger::handle_option(std::deque<std::string> &arguments)
 {

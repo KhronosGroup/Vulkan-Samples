@@ -69,8 +69,7 @@ class Stats
 	 * @param requested_stats Set of stats to be collected if available
 	 * @param sampling_config Sampling mode configuration (polling or continuous)
 	 */
-	void request_stats(const std::set<StatIndex> &requested_stats,
-	                   CounterSamplingConfig      sampling_config = {CounterSamplingMode::Polling});
+	void request_stats(const std::set<StatIndex> &requested_stats, CounterSamplingConfig sampling_config = {CounterSamplingMode::Polling});
 
 	/**
 	 * @brief Resizes the stats buffers according to the width of the screen

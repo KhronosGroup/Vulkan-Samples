@@ -23,16 +23,13 @@ namespace vkb
 {
 namespace core
 {
-Sampler::Sampler(vkb::core::DeviceC &d, const VkSamplerCreateInfo &info) :
-    VulkanResource{VK_NULL_HANDLE, &d}
+Sampler::Sampler(vkb::core::DeviceC &d, const VkSamplerCreateInfo &info) : VulkanResource{VK_NULL_HANDLE, &d}
 {
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &info, nullptr, &get_handle()));
 }
 
-Sampler::Sampler(Sampler &&other) :
-    VulkanResource{std::move(other)}
-{
-}
+Sampler::Sampler(Sampler &&other) : VulkanResource{std::move(other)}
+{}
 
 Sampler::~Sampler()
 {

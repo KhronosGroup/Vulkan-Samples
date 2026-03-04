@@ -43,12 +43,9 @@ class HPPDescriptorSetLayout : private vkb::DescriptorSetLayout
 	using vkb::DescriptorSetLayout::get_index;
 
   public:
-	HPPDescriptorSetLayout(vkb::core::DeviceCpp                            &device,
-	                       const uint32_t                                   set_index,
-	                       const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
+	HPPDescriptorSetLayout(vkb::core::DeviceCpp &device, const uint32_t set_index, const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
 	                       const std::vector<vkb::core::HPPShaderResource> &resource_set) :
-	    vkb::DescriptorSetLayout(reinterpret_cast<vkb::core::DeviceC &>(device),
-	                             set_index,
+	    vkb::DescriptorSetLayout(reinterpret_cast<vkb::core::DeviceC &>(device), set_index,
 	                             reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules),
 	                             reinterpret_cast<std::vector<vkb::ShaderResource> const &>(resource_set))
 	{}

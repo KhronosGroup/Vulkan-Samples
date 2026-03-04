@@ -24,8 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-Camera::Camera(const std::string &name) :
-    Component{name}
+Camera::Camera(const std::string &name) : Component{name}
 {}
 
 std::type_index Camera::get_type()

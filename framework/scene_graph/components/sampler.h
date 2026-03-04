@@ -55,17 +55,13 @@ using SamplerCpp = Sampler<vkb::BindingType::Cpp>;
 
 template <>
 inline Sampler<vkb::BindingType::Cpp>::Sampler(std::string const &name, vkb::core::HPPSampler &&core_sampler_) :
-    Component{name},
-    core_sampler{std::move(core_sampler_)}
-{
-}
+    Component{name}, core_sampler{std::move(core_sampler_)}
+{}
 
 template <>
 inline Sampler<vkb::BindingType::C>::Sampler(std::string const &name, vkb::core::Sampler &&core_sampler_) :
-    Component{name},
-    core_sampler{std::move(reinterpret_cast<vkb::core::HPPSampler &&>(core_sampler_))}
-{
-}
+    Component{name}, core_sampler{std::move(reinterpret_cast<vkb::core::HPPSampler &&>(core_sampler_))}
+{}
 
 template <vkb::BindingType bindingType>
 inline typename Sampler<bindingType>::CoreSamplerType const &Sampler<bindingType>::get_core_sampler() const

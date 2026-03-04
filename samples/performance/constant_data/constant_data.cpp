@@ -89,8 +89,7 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 
 	// If descriptor indexing and its dependencies were enabled, then we can mark the update after bind method as supported
 	if (get_instance().is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) &&
-	    get_device().is_extension_enabled(VK_KHR_MAINTENANCE3_EXTENSION_NAME) &&
-	    get_device().is_extension_enabled(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
+	    get_device().is_extension_enabled(VK_KHR_MAINTENANCE3_EXTENSION_NAME) && get_device().is_extension_enabled(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
 	{
 		methods[Method::UpdateAfterBindDescriptorSets].supported = true;
 	}
@@ -111,9 +110,12 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	// Shader data passing depends on max. push constant size of the implementation
 	auto push_constant_limit = get_device().get_gpu().get_properties().limits.maxPushConstantsSize;
 
-	push_constant_render_pipeline  = create_render_pipeline<PushConstantSubpass>(push_constant_limit >= 256 ? "constant_data/push_constant_large.vert.spv" : "constant_data/push_constant_small.vert.spv", "constant_data/push_constant.frag.spv");
-	descriptor_set_render_pipeline = create_render_pipeline<DescriptorSetSubpass>(push_constant_limit >= 256 ? "constant_data/ubo_large.vert.spv" : "constant_data/ubo_small.vert.spv", "constant_data/ubo.frag.spv");
-	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert.spv", "constant_data/buffer_array.frag.spv");
+	push_constant_render_pipeline = create_render_pipeline<PushConstantSubpass>(push_constant_limit >= 256 ? "constant_data/push_constant_large.vert.spv" :
+	                                                                                                         "constant_data/push_constant_small.vert.spv",
+	                                                                            "constant_data/push_constant.frag.spv");
+	descriptor_set_render_pipeline = create_render_pipeline<DescriptorSetSubpass>(
+	    push_constant_limit >= 256 ? "constant_data/ubo_large.vert.spv" : "constant_data/ubo_small.vert.spv", "constant_data/ubo.frag.spv");
+	buffer_array_render_pipeline = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert.spv", "constant_data/buffer_array.frag.spv");
 
 	// Add a GUI with the stats you want to monitor
 	get_stats().request_stats(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::gpu_load_store_cycles});
@@ -243,7 +245,8 @@ void ConstantData::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this]() {
+	    /* body = */
+	    [this]() {
 		    // Create a line for every config
 		    ImGui::Text("Method of pushing MVP to shader:");
 
@@ -302,9 +305,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 	}
 }
 
-void ConstantData::PushConstantSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                       vkb::scene_graph::NodeC   &node,
-                                                       size_t                     thread_index)
+void ConstantData::PushConstantSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index)
 {
 	mvp_uniform = fill_mvp(node, get_camera());
 }
@@ -339,9 +340,7 @@ void ConstantData::PushConstantSubpass::prepare_push_constants(vkb::core::Comman
 	}
 }
 
-void ConstantData::DescriptorSetSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                        vkb::scene_graph::NodeC   &node,
-                                                        size_t                     thread_index)
+void ConstantData::DescriptorSetSubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index)
 {
 	MVPUniform mvp;
 
@@ -439,9 +438,7 @@ void ConstantData::BufferArraySubpass::draw(vkb::core::CommandBufferC &command_b
 	GeometrySubpass::draw(command_buffer);
 }
 
-void ConstantData::BufferArraySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer,
-                                                      vkb::scene_graph::NodeC   &node,
-                                                      size_t                     thread_index)
+void ConstantData::BufferArraySubpass::update_uniform(vkb::core::CommandBufferC &command_buffer, vkb::scene_graph::NodeC &node, size_t thread_index)
 {
 	/**
 	 * POI

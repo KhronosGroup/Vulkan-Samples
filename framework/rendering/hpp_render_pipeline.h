@@ -34,15 +34,14 @@ class HPPRenderPipeline : private vkb::RenderPipeline
   public:
 	void add_subpass(std::unique_ptr<vkb::rendering::subpasses::ForwardSubpassCpp> &&subpass)
 	{
-		vkb::RenderPipeline::add_subpass(std::unique_ptr<vkb::rendering::subpasses::ForwardSubpassC>(reinterpret_cast<vkb::rendering::subpasses::ForwardSubpassC *>(subpass.release())));
+		vkb::RenderPipeline::add_subpass(
+		    std::unique_ptr<vkb::rendering::subpasses::ForwardSubpassC>(reinterpret_cast<vkb::rendering::subpasses::ForwardSubpassC *>(subpass.release())));
 	}
 
-	void draw(vkb::core::CommandBufferCpp     &command_buffer,
-	          vkb::rendering::HPPRenderTarget &render_target,
-	          vk::SubpassContents              contents = vk::SubpassContents::eInline)
+	void draw(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target,
+	          vk::SubpassContents contents = vk::SubpassContents::eInline)
 	{
-		vkb::RenderPipeline::draw(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer),
-		                          reinterpret_cast<vkb::RenderTarget &>(render_target),
+		vkb::RenderPipeline::draw(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), reinterpret_cast<vkb::RenderTarget &>(render_target),
 		                          static_cast<VkSubpassContents>(contents));
 	}
 };

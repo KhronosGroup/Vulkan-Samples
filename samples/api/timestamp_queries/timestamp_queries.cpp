@@ -176,7 +176,8 @@ void TimestampQueries::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0,
+			                        NULL);
 
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
@@ -217,7 +218,8 @@ void TimestampQueries::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0,
+			                        NULL);
 
 			// Scene
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
@@ -571,11 +573,10 @@ void TimestampQueries::load_assets()
 
 void TimestampQueries::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6)};
-	uint32_t                   num_descriptor_sets = 4;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	std::vector<VkDescriptorPoolSize> pool_sizes          = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
+	                                                         vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6)};
+	uint32_t                          num_descriptor_sets = 4;
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -593,10 +594,7 @@ void TimestampQueries::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.models));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layouts.models,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.models, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.models));
 
@@ -606,7 +604,8 @@ void TimestampQueries::setup_descriptor_set_layout()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
 
-	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.bloom_filter));
 
 	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.bloom_filter, 1);
@@ -618,7 +617,8 @@ void TimestampQueries::setup_descriptor_set_layout()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
 
-	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.composition));
 
 	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.composition, 1);
@@ -627,11 +627,7 @@ void TimestampQueries::setup_descriptor_set_layout()
 
 void TimestampQueries::setup_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layouts.models,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
 	// 3D object descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object));
@@ -693,57 +689,28 @@ void TimestampQueries::setup_descriptor_sets()
 void TimestampQueries::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_FALSE,
-	        VK_FALSE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layouts.models,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass, 0);
 
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
@@ -864,16 +831,12 @@ void TimestampQueries::prepare_pipelines()
 void TimestampQueries::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                sizeof(ubo_vs),
-	                                                                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                              sizeof(ubo_params),
-	                                                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.params =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 	update_params();
@@ -903,15 +866,8 @@ void TimestampQueries::get_time_stamp_results()
 	// A note on the flags used:
 	//	VK_QUERY_RESULT_64_BIT: Results will have 64 bits. As time stamp values are on nano-seconds, this flag should always be used to avoid 32 bit overflows
 	//  VK_QUERY_RESULT_WAIT_BIT: Since we want to immediately display the results, we use this flag to have the CPU wait until the results are available
-	vkGetQueryPoolResults(
-	    get_device().get_handle(),
-	    query_pool_timestamps,
-	    0,
-	    count,
-	    time_stamps.size() * sizeof(uint64_t),
-	    time_stamps.data(),
-	    sizeof(uint64_t),
-	    VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+	vkGetQueryPoolResults(get_device().get_handle(), query_pool_timestamps, 0, count, time_stamps.size() * sizeof(uint64_t), time_stamps.data(),
+	                      sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 }
 
 void TimestampQueries::update_uniform_buffers()
@@ -1027,7 +983,8 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 		float timestampFrequency = get_device().get_gpu().get_properties().limits.timestampPeriod;
 
 		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", static_cast<float>(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"), static_cast<float>(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"),
+		            static_cast<float>(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
 		if (bloom)
 		{
 			drawer.text("Pass 3: Second bloom pass %.3f ms", static_cast<float>(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);

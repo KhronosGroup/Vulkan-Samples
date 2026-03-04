@@ -31,8 +31,7 @@
 /// @brief A debug callback called from Vulkan validation layers.
 VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
                                                                 vk::DebugUtilsMessageTypeFlagsEXT             message_type,
-                                                                const vk::DebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                                void                                         *user_data)
+                                                                const vk::DebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data)
 {
 	// Log debug message
 	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
@@ -55,23 +54,17 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool validate_extensions(const std::vector<const char *>            &required,
-                         const std::vector<vk::ExtensionProperties> &available)
+bool validate_extensions(const std::vector<const char *> &required, const std::vector<vk::ExtensionProperties> &available)
 {
 	// inner find_if gives true if the extension was not found
 	// outer find_if gives true if none of the extensions were not found, that is if all extensions were found
-	return std::ranges::find_if(required,
-	                            [&available](auto extension) {
-		                            return std::ranges::find_if(available,
-		                                                        [&extension](auto const &ep) {
-			                                                        return strcmp(ep.extensionName, extension) == 0;
-		                                                        }) == available.end();
-	                            }) == required.end();
+	return std::ranges::find_if(required, [&available](auto extension) {
+		       return std::ranges::find_if(available, [&extension](auto const &ep) { return strcmp(ep.extensionName, extension) == 0; }) == available.end();
+	       }) == required.end();
 }
 
 HPPHelloTriangle::HPPHelloTriangle()
-{
-}
+{}
 
 HPPHelloTriangle::~HPPHelloTriangle()
 {
@@ -332,8 +325,9 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
-	if (std::ranges::any_of(device_extensions,
-	                        [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
+	if (std::ranges::any_of(device_extensions, [](vk::ExtensionProperties const &extension) {
+		    return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0;
+	    }))
 	{
 		active_device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 	}
@@ -375,7 +369,9 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
 	    {.stage = vk::ShaderStageFlagBits::eVertex, .module = create_shader_module("hello_triangle/" + shader_folder + "/triangle.vert.spv"), .pName = "main"},
-	    {.stage = vk::ShaderStageFlagBits::eFragment, .module = create_shader_module("hello_triangle/" + shader_folder + "/triangle.frag.spv"), .pName = "main"}};
+	    {.stage  = vk::ShaderStageFlagBits::eFragment,
+	     .module = create_shader_module("hello_triangle/" + shader_folder + "/triangle.frag.spv"),
+	     .pName  = "main"}};
 
 	// Define the vertex input binding.
 	vk::VertexInputBindingDescription binding_description{.binding = 0, .stride = sizeof(Vertex), .inputRate = vk::VertexInputRate::eVertex};
@@ -386,11 +382,10 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 	     {.location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, color)}}};
 
 	// Define the pipeline vertex input.
-	vk::PipelineVertexInputStateCreateInfo vertex_input{
-	    .vertexBindingDescriptionCount   = 1,
-	    .pVertexBindingDescriptions      = &binding_description,
-	    .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
-	    .pVertexAttributeDescriptions    = attribute_descriptions.data()};
+	vk::PipelineVertexInputStateCreateInfo vertex_input{.vertexBindingDescriptionCount   = 1,
+	                                                    .pVertexBindingDescriptions      = &binding_description,
+	                                                    .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
+	                                                    .pVertexAttributeDescriptions    = attribute_descriptions.data()};
 
 	// Our attachment will write to all color channels, but no blending is enabled.
 	vk::PipelineColorBlendAttachmentState blend_attachment{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
@@ -399,17 +394,10 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 	// Disable all depth testing.
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil;
 
-	vk::Pipeline pipeline = vkb::common::create_graphics_pipeline(device,
-	                                                              nullptr,
-	                                                              shader_stages,
-	                                                              vertex_input,
+	vk::Pipeline pipeline = vkb::common::create_graphics_pipeline(device, nullptr, shader_stages, vertex_input,
 	                                                              vk::PrimitiveTopology::eTriangleList,        // We will use triangle lists to draw geometry.
-	                                                              0,
-	                                                              vk::PolygonMode::eFill,
-	                                                              vk::CullModeFlagBits::eBack,
-	                                                              vk::FrontFace::eClockwise,
-	                                                              {blend_attachment},
-	                                                              depth_stencil,
+	                                                              0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise,
+	                                                              {blend_attachment}, depth_stencil,
 	                                                              pipeline_layout,        // We need to specify the pipeline layout
 	                                                              render_pass);           // and the render pass up front as well
 
@@ -431,7 +419,8 @@ vk::ImageView HPPHelloTriangle::create_image_view(vk::Image image)
 	return device.createImageView(image_view_create_info);
 }
 
-vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &required_instance_extensions, std::vector<const char *> const &required_validation_layers)
+vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &required_instance_extensions,
+                                               std::vector<const char *> const &required_validation_layers)
 {
 #if defined(_HPP_VULKAN_LIBRARY)
 	static vk::detail::DynamicLoader dl(_HPP_VULKAN_LIBRARY);
@@ -452,8 +441,9 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 #if (defined(VKB_ENABLE_PORTABILITY))
 	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	bool portability_enumeration_available = false;
-	if (std::ranges::any_of(available_instance_extensions,
-	                        [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	if (std::ranges::any_of(available_instance_extensions, [](vk::ExtensionProperties const &extension) {
+		    return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0;
+	    }))
 	{
 		active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		portability_enumeration_available = true;
@@ -510,11 +500,10 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 	                                     .ppEnabledExtensionNames = active_instance_extensions.data()};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	debug_utils_create_info =
-	    vk::DebugUtilsMessengerCreateInfoEXT{.messageSeverity =
-	                                             vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-	                                         .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-	                                         .pfnUserCallback = debug_utils_messenger_callback};
+	debug_utils_create_info = vk::DebugUtilsMessengerCreateInfoEXT{
+	    .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	    .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	    .pfnUserCallback = debug_utils_messenger_callback};
 
 	instance_info.pNext = &debug_utils_create_info;
 #endif
@@ -600,8 +589,7 @@ vk::ShaderModule HPPHelloTriangle::create_shader_module(std::string const &path)
 	return device.createShaderModule(shader_module_create_info);
 }
 
-vk::SwapchainKHR
-    HPPHelloTriangle::create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain)
+vk::SwapchainKHR HPPHelloTriangle::create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain)
 {
 	vk::SurfaceCapabilitiesKHR surface_properties = gpu.getSurfaceCapabilitiesKHR(surface);
 
@@ -616,8 +604,9 @@ vk::SwapchainKHR
 	}
 
 	// Figure out a suitable surface transform.
-	vk::SurfaceTransformFlagBitsKHR pre_transform =
-	    (surface_properties.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surface_properties.currentTransform;
+	vk::SurfaceTransformFlagBitsKHR pre_transform = (surface_properties.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ?
+	                                                    vk::SurfaceTransformFlagBitsKHR::eIdentity :
+	                                                    surface_properties.currentTransform;
 
 	// Find a supported composite type.
 	vk::CompositeAlphaFlagBitsKHR composite = vk::CompositeAlphaFlagBitsKHR::eOpaque;
@@ -641,20 +630,19 @@ vk::SwapchainKHR
 	// FIFO must be supported by all implementations.
 	vk::PresentModeKHR swapchain_present_mode = vk::PresentModeKHR::eFifo;
 
-	vk::SwapchainCreateInfoKHR swapchain_create_info{
-	    .surface          = surface,
-	    .minImageCount    = desired_swapchain_images,
-	    .imageFormat      = surface_format.format,
-	    .imageColorSpace  = surface_format.colorSpace,
-	    .imageExtent      = swapchain_extent,
-	    .imageArrayLayers = 1,
-	    .imageUsage       = vk::ImageUsageFlagBits::eColorAttachment,
-	    .imageSharingMode = vk::SharingMode::eExclusive,
-	    .preTransform     = pre_transform,
-	    .compositeAlpha   = composite,
-	    .presentMode      = swapchain_present_mode,
-	    .clipped          = true,
-	    .oldSwapchain     = old_swapchain};
+	vk::SwapchainCreateInfoKHR swapchain_create_info{.surface          = surface,
+	                                                 .minImageCount    = desired_swapchain_images,
+	                                                 .imageFormat      = surface_format.format,
+	                                                 .imageColorSpace  = surface_format.colorSpace,
+	                                                 .imageExtent      = swapchain_extent,
+	                                                 .imageArrayLayers = 1,
+	                                                 .imageUsage       = vk::ImageUsageFlagBits::eColorAttachment,
+	                                                 .imageSharingMode = vk::SharingMode::eExclusive,
+	                                                 .preTransform     = pre_transform,
+	                                                 .compositeAlpha   = composite,
+	                                                 .presentMode      = swapchain_present_mode,
+	                                                 .clipped          = true,
+	                                                 .oldSwapchain     = old_swapchain};
 
 	return device.createSwapchainKHR(swapchain_create_info);
 }
@@ -663,9 +651,7 @@ std::pair<vk::Buffer, VmaAllocation> HPPHelloTriangle::create_vertex_buffer()
 {
 	// Vertex data for a single colored triangle
 	const std::vector<Vertex> vertices = {
-	    {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
-	    {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	    {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+	    {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}}, {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}, {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
 
 	const vk::DeviceSize buffer_size = sizeof(vertices[0]) * vertices.size();
 
@@ -675,15 +661,15 @@ std::pair<vk::Buffer, VmaAllocation> HPPHelloTriangle::create_vertex_buffer()
 
 	// We use the Vulkan Memory Allocator to find a memory type that can be written and mapped from the host
 	// On most setups this will return a memory type that resides in VRAM and is accessible from the host
-	VmaAllocationCreateInfo allocation_create_info{
-	    .flags         = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
-	    .usage         = VMA_MEMORY_USAGE_AUTO,
-	    .requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
+	VmaAllocationCreateInfo allocation_create_info{.flags         = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	                                               .usage         = VMA_MEMORY_USAGE_AUTO,
+	                                               .requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
 
 	vk::Buffer        vertex_buffer;
 	VmaAllocation     vertex_buffer_allocation;
 	VmaAllocationInfo allocation_info{};
-	vmaCreateBuffer(vma_allocator, reinterpret_cast<VkBufferCreateInfo *>(&buffer_create_info), &allocation_create_info, reinterpret_cast<VkBuffer *>(&vertex_buffer), &vertex_buffer_allocation, &allocation_info);
+	vmaCreateBuffer(vma_allocator, reinterpret_cast<VkBufferCreateInfo *>(&buffer_create_info), &allocation_create_info,
+	                reinterpret_cast<VkBuffer *>(&vertex_buffer), &vertex_buffer_allocation, &allocation_info);
 	if (allocation_info.pMappedData)
 	{
 		memcpy(allocation_info.pMappedData, vertices.data(), buffer_size);
@@ -699,9 +685,8 @@ std::pair<vk::Buffer, VmaAllocation> HPPHelloTriangle::create_vertex_buffer()
 VmaAllocator HPPHelloTriangle::create_vma_allocator()
 {
 	// This sample uses the Vulkan Memory Alloctor (VMA), which needs to be set up
-	VmaVulkanFunctions vma_vulkan_functions{
-	    .vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr,
-	    .vkGetDeviceProcAddr   = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr};
+	VmaVulkanFunctions vma_vulkan_functions{.vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr,
+	                                        .vkGetDeviceProcAddr   = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr};
 
 	VmaAllocatorCreateInfo allocator_info{.physicalDevice = gpu, .device = device, .pVulkanFunctions = &vma_vulkan_functions, .instance = instance};
 

@@ -125,19 +125,18 @@ class Subpasses : public vkb::VulkanSampleC
 	VkFormat          normal_format{VK_FORMAT_A2B10G10R10_UNORM_PACK32};
 	VkImageUsageFlags rt_usage_flags{VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT};
 
-	std::vector<Config> configs = {
-	    {/* config      = */ Config::RenderTechnique,
-	     /* description = */ "Render technique",
-	     /* options     = */ {"Subpasses", "Renderpasses"},
-	     /* value       = */ 0},
-	    {/* config      = */ Config::TransientAttachments,
-	     /* description = */ "Transient attachments",
-	     /* options     = */ {"Enabled", "Disabled"},
-	     /* value       = */ 0},
-	    {/* config      = */ Config::GBufferSize,
-	     /* description = */ "G-Buffer size",
-	     /* options     = */ {"128-bit", "More"},
-	     /* value       = */ 0}};
+	std::vector<Config> configs = {{/* config      = */ Config::RenderTechnique,
+	                                /* description = */ "Render technique",
+	                                /* options     = */ {"Subpasses", "Renderpasses"},
+	                                /* value       = */ 0},
+	                               {/* config      = */ Config::TransientAttachments,
+	                                /* description = */ "Transient attachments",
+	                                /* options     = */ {"Enabled", "Disabled"},
+	                                /* value       = */ 0},
+	                               {/* config      = */ Config::GBufferSize,
+	                                /* description = */ "G-Buffer size",
+	                                /* options     = */ {"128-bit", "More"},
+	                                /* value       = */ 0}};
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_subpasses();

@@ -200,20 +200,20 @@ class HPPHDR : public HPPApiVulkanSample
 	vk::Image             create_image(vk::Format format, vk::ImageUsageFlagBits usage);
 	vk::Pipeline          create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite);
 	vk::RenderPass        create_offscreen_render_pass();
-	vk::RenderPass        create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description);
-	void                  draw();
-	void                  load_assets();
-	void                  prepare_bloom();
-	void                  prepare_camera();
-	void                  prepare_composition();
-	void                  prepare_models();
-	void                  prepare_offscreen_buffer();
-	void                  prepare_uniform_buffers();
-	void                  update_composition_descriptor_set();
-	void                  update_bloom_descriptor_set();
-	void                  update_model_descriptor_set(vk::DescriptorSet descriptor_set);
-	void                  update_params();
-	void                  update_uniform_buffers();
+	vk::RenderPass create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description);
+	void           draw();
+	void           load_assets();
+	void           prepare_bloom();
+	void           prepare_camera();
+	void           prepare_composition();
+	void           prepare_models();
+	void           prepare_offscreen_buffer();
+	void           prepare_uniform_buffers();
+	void           update_composition_descriptor_set();
+	void           update_bloom_descriptor_set();
+	void           update_model_descriptor_set(vk::DescriptorSet descriptor_set);
+	void           update_params();
+	void           update_uniform_buffers();
 
   private:
 	Bloom                    bloom;

@@ -274,9 +274,7 @@ inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uin
 
 	std::vector<uint8_t> result(elem_count * dst_stride);
 
-	for (uint32_t idxSrc = 0, idxDst = 0;
-	     idxSrc < src_data.size() && idxDst < result.size();
-	     idxSrc += src_stride, idxDst += dst_stride)
+	for (uint32_t idxSrc = 0, idxDst = 0; idxSrc < src_data.size() && idxDst < result.size(); idxSrc += src_stride, idxDst += dst_stride)
 	{
 		std::copy(src_data.begin() + idxSrc, src_data.begin() + idxSrc + src_stride, result.begin() + idxDst);
 	}
@@ -399,13 +397,10 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 
 }        // namespace
 
-std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
-    {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
+std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {{KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
-GLTFLoader::GLTFLoader(vkb::core::DeviceC &device) :
-    device{device}
-{
-}
+GLTFLoader::GLTFLoader(vkb::core::DeviceC &device) : device{device}
+{}
 
 std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
@@ -450,7 +445,8 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 	return std::make_unique<sg::Scene>(load_scene(scene_index, additional_buffer_usage_flags));
 }
 
-std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
+std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer,
+                                                              VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	PROFILE_SCOPE("Load GLTF Model");
 
@@ -535,8 +531,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	scene.set_components(std::move(light_components));
 
 	// Load samplers
-	std::vector<std::unique_ptr<vkb::scene_graph::components::SamplerC>>
-	    sampler_components(model.samplers.size());
+	std::vector<std::unique_ptr<vkb::scene_graph::components::SamplerC>> sampler_components(model.samplers.size());
 
 	for (size_t sampler_index = 0; sampler_index < model.samplers.size(); sampler_index++)
 	{
@@ -555,14 +550,13 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	std::vector<std::future<std::unique_ptr<sg::Image>>> image_component_futures;
 	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
-		image_component_futures.push_back(std::async(
-		    [this, image_index]() {
-			    auto image = parse_image(model.images[image_index]);
+		image_component_futures.push_back(std::async([this, image_index]() {
+			auto image = parse_image(model.images[image_index]);
 
-			    LOGI("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
+			LOGI("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
 
-			    return image;
-		    }));
+			return image;
+		}));
 	}
 
 	std::vector<std::unique_ptr<sg::Image>> image_components;
@@ -753,13 +747,10 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 					submesh->vertices_count = to_u32(model.accessors[attribute.second].count);
 				}
 
-				vkb::core::BufferC buffer{device,
-				                          vertex_data.size(),
-				                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | additional_buffer_usage_flags,
+				vkb::core::BufferC buffer{device, vertex_data.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | additional_buffer_usage_flags,
 				                          VMA_MEMORY_USAGE_CPU_TO_GPU};
 				buffer.update(vertex_data);
-				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
-				                                  gltf_mesh.name, i_primitive, attrib_name));
+				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer", gltf_mesh.name, i_primitive, attrib_name));
 
 				submesh->vertex_buffers.insert(std::make_pair(attrib_name, std::move(buffer)));
 
@@ -796,12 +787,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 						break;
 				}
 
-				submesh->index_buffer = std::make_unique<vkb::core::BufferC>(device,
-				                                                             index_data.size(),
-				                                                             VK_BUFFER_USAGE_INDEX_BUFFER_BIT | additional_buffer_usage_flags,
-				                                                             VMA_MEMORY_USAGE_GPU_TO_CPU);
-				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
-				                                                  gltf_mesh.name, i_primitive));
+				submesh->index_buffer = std::make_unique<vkb::core::BufferC>(
+				    device, index_data.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | additional_buffer_usage_flags, VMA_MEMORY_USAGE_GPU_TO_CPU);
+				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer", gltf_mesh.name, i_primitive));
 
 				submesh->index_buffer->update(index_data);
 			}
@@ -1185,10 +1173,8 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, aligned_vertex_data);
 
-		vkb::core::BufferC buffer{device,
-		                          aligned_vertex_data.size() * sizeof(AlignedVertex),
-		                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-		                          VMA_MEMORY_USAGE_GPU_ONLY};
+		vkb::core::BufferC buffer{device, aligned_vertex_data.size() * sizeof(AlignedVertex),
+		                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
 
 		command_buffer->copy_buffer(stage_buffer, buffer, aligned_vertex_data.size() * sizeof(AlignedVertex));
 
@@ -1228,9 +1214,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 		vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, vertex_data);
 
-		vkb::core::BufferC buffer{device,
-		                          vertex_data.size() * sizeof(Vertex),
-		                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		vkb::core::BufferC buffer{device, vertex_data.size() * sizeof(Vertex), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		                          VMA_MEMORY_USAGE_GPU_ONLY};
 
 		command_buffer->copy_buffer(stage_buffer, buffer, vertex_data.size() * sizeof(Vertex));
@@ -1285,10 +1269,8 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 			vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, meshlets);
 
-			submesh->index_buffer = std::make_unique<vkb::core::BufferC>(device,
-			                                                             meshlets.size() * sizeof(Meshlet),
-			                                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-			                                                             VMA_MEMORY_USAGE_GPU_ONLY);
+			submesh->index_buffer = std::make_unique<vkb::core::BufferC>(
+			    device, meshlets.size() * sizeof(Meshlet), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 			command_buffer->copy_buffer(stage_buffer, *submesh->index_buffer, meshlets.size() * sizeof(Meshlet));
 
@@ -1298,10 +1280,8 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 		{
 			vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(device, index_data);
 
-			submesh->index_buffer = std::make_unique<vkb::core::BufferC>(device,
-			                                                             index_data.size(),
-			                                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-			                                                             VMA_MEMORY_USAGE_GPU_ONLY);
+			submesh->index_buffer = std::make_unique<vkb::core::BufferC>(
+			    device, index_data.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 			command_buffer->copy_buffer(stage_buffer, *submesh->index_buffer, index_data.size());
 
@@ -1465,13 +1445,13 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	if (!gltf_image.image.empty())
 	{
 		// Image embedded in gltf file
-		auto mipmap = sg::Mipmap{
-		    /* .level = */ 0,
-		    /* .offset = */ 0,
-		    /* .extent = */ {/* .width = */ static_cast<uint32_t>(gltf_image.width),
-		                     /* .height = */ static_cast<uint32_t>(gltf_image.height),
-		                     /* .depth = */ 1u}};
-		std::vector<sg::Mipmap> mipmaps{mipmap};
+		auto                    mipmap = sg::Mipmap{/* .level = */ 0,
+                                 /* .offset = */ 0,
+                                 /* .extent = */
+                                 {/* .width = */ static_cast<uint32_t>(gltf_image.width),
+                                  /* .height = */ static_cast<uint32_t>(gltf_image.height),
+                                  /* .depth = */ 1u}};
+        std::vector<sg::Mipmap> mipmaps{mipmap};
 		image = std::make_unique<sg::Image>(gltf_image.name, std::move(gltf_image.image), std::move(mipmaps));
 	}
 	else
@@ -1614,10 +1594,9 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 			// Get properties
 			if (khr_light.Has("color"))
 			{
-				properties.color = glm::vec3(
-				    static_cast<float>(khr_light.Get("color").Get(0).Get<double>()),
-				    static_cast<float>(khr_light.Get("color").Get(1).Get<double>()),
-				    static_cast<float>(khr_light.Get("color").Get(2).Get<double>()));
+				properties.color =
+				    glm::vec3(static_cast<float>(khr_light.Get("color").Get(0).Get<double>()), static_cast<float>(khr_light.Get("color").Get(1).Get<double>()),
+				              static_cast<float>(khr_light.Get("color").Get(2).Get<double>()));
 			}
 
 			if (khr_light.Has("intensity"))

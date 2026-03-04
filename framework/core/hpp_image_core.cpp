@@ -54,28 +54,18 @@ HPPImagePtr HPPImageBuilder::build_unique(vkb::core::DeviceCpp &device) const
 	return std::make_unique<HPPImage>(device, *this);
 }
 
-HPPImage::HPPImage(vkb::core::DeviceCpp   &device,
-                   const vk::Extent3D     &extent,
-                   vk::Format              format,
-                   vk::ImageUsageFlags     image_usage,
-                   VmaMemoryUsage          memory_usage,
-                   vk::SampleCountFlagBits sample_count,
-                   const uint32_t          mip_levels,
-                   const uint32_t          array_layers,
-                   vk::ImageTiling         tiling,
-                   vk::ImageCreateFlags    flags,
-                   uint32_t                num_queue_families,
-                   const uint32_t         *queue_families) :
-    HPPImage{device,
-             HPPImageBuilder{extent}
-                 .with_format(format)
-                 .with_mip_levels(mip_levels)
-                 .with_array_layers(array_layers)
-                 .with_sample_count(sample_count)
-                 .with_tiling(tiling)
-                 .with_flags(flags)
-                 .with_usage(image_usage)
-                 .with_queue_families(num_queue_families, queue_families)}
+HPPImage::HPPImage(vkb::core::DeviceCpp &device, const vk::Extent3D &extent, vk::Format format, vk::ImageUsageFlags image_usage, VmaMemoryUsage memory_usage,
+                   vk::SampleCountFlagBits sample_count, const uint32_t mip_levels, const uint32_t array_layers, vk::ImageTiling tiling,
+                   vk::ImageCreateFlags flags, uint32_t num_queue_families, const uint32_t *queue_families) :
+    HPPImage{device, HPPImageBuilder{extent}
+                         .with_format(format)
+                         .with_mip_levels(mip_levels)
+                         .with_array_layers(array_layers)
+                         .with_sample_count(sample_count)
+                         .with_tiling(tiling)
+                         .with_flags(flags)
+                         .with_usage(image_usage)
+                         .with_queue_families(num_queue_families, queue_families)}
 {}
 
 HPPImage::HPPImage(vkb::core::DeviceCpp &device, HPPImageBuilder const &builder) :
@@ -90,11 +80,7 @@ HPPImage::HPPImage(vkb::core::DeviceCpp &device, HPPImageBuilder const &builder)
 	}
 }
 
-HPPImage::HPPImage(vkb::core::DeviceCpp   &device,
-                   vk::Image               handle,
-                   const vk::Extent3D     &extent,
-                   vk::Format              format,
-                   vk::ImageUsageFlags     image_usage,
+HPPImage::HPPImage(vkb::core::DeviceCpp &device, vk::Image handle, const vk::Extent3D &extent, vk::Format format, vk::ImageUsageFlags image_usage,
                    vk::SampleCountFlagBits sample_count) :
     vkb::allocated::AllocatedCpp<vk::Image>{handle, &device}
 {

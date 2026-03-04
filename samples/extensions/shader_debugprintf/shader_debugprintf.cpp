@@ -24,17 +24,17 @@
 
 std::string ShaderDebugPrintf::debug_output{};
 
-VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT             messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-    void                                       *pUserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+                                                                               VkDebugUtilsMessageTypeFlagsEXT             messageType,
+                                                                               const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
 {
-	// Look for Validation Layer message id names: VVL-DEBUG-PRINTF or WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed WARNING and UNASSIGNED with older Vulkan SDKs)
-	if (strcmp(pCallbackData->pMessageIdName, "VVL-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
+	// Look for Validation Layer message id names: VVL-DEBUG-PRINTF or WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed WARNING and UNASSIGNED
+	// with older Vulkan SDKs)
+	if (strcmp(pCallbackData->pMessageIdName, "VVL-DEBUG-PRINTF") == 0 || strcmp(pCallbackData->pMessageIdName, "WARNING-DEBUG-PRINTF") == 0 ||
+	    strcmp(pCallbackData->pMessageIdName, "UNASSIGNED-DEBUG-PRINTF") == 0)
 	{
-		// Validation messages are a bit verbose, but we only want the text from the shader, so we cut off everything before the first word from the shader message
-		// See scene.vert: debugPrintfEXT("Position = %v3f", outPos);
+		// Validation messages are a bit verbose, but we only want the text from the shader, so we cut off everything before the first word from the shader
+		// message See scene.vert: debugPrintfEXT("Position = %v3f", outPos);
 		std::string shader_message{pCallbackData->pMessage};
 		shader_message = shader_message.substr(shader_message.find("Position"));
 		debug_output.append(shader_message + "\n");
@@ -77,8 +77,8 @@ uint32_t ShaderDebugPrintf::get_api_version() const
 	std::vector<VkLayerProperties> layer_properties(layer_property_count);
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, layer_properties.data()));
 
-	const auto vvl_properties = std::ranges::find_if(layer_properties,
-	                                                 [](VkLayerProperties const &properties) { return strcmp(properties.layerName, validation_layer_name) == 0; });
+	const auto vvl_properties =
+	    std::ranges::find_if(layer_properties, [](VkLayerProperties const &properties) { return strcmp(properties.layerName, validation_layer_name) == 0; });
 
 	// Make sure we have found the validation layer before checking the VVL version and enumerating VVL instance extensions for VK_EXT_layer_settings
 	if (vvl_properties != layer_properties.end())
@@ -108,7 +108,8 @@ void ShaderDebugPrintf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 	else
 	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support features fragmentStoresAndAtomics and/or vertexPipelineStoresAndAtomics");
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT,
+		                           "Selected GPU does not support features fragmentStoresAndAtomics and/or vertexPipelineStoresAndAtomics");
 	}
 
 	// Enable anisotropic filtering if supported
@@ -183,7 +184,8 @@ void ShaderDebugPrintf::build_command_buffers()
 		{
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
 			push_const_block.object_type = 0;
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block), &push_const_block);
+			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			                   &push_const_block);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.skysphere, 0, nullptr);
 
 			draw_model(models.skysphere, draw_cmd_buffers[i]);
@@ -207,7 +209,8 @@ void ShaderDebugPrintf::build_command_buffers()
 			push_const_block.object_type = 1;
 			push_const_block.offset      = glm::vec4(mesh_offsets[j], 0.0f);
 			push_const_block.color       = glm::vec4(mesh_colors[j], 0.0f);
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block), &push_const_block);
+			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			                   &push_const_block);
 			draw_model(models.scene, draw_cmd_buffers[i]);
 		}
 
@@ -229,11 +232,10 @@ void ShaderDebugPrintf::load_assets()
 void ShaderDebugPrintf::setup_descriptor_pool()
 {
 	// Note: Using debugprintf in a shader consumes a descriptor set, so we need to allocate one additional descriptor set
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
-	uint32_t                   num_descriptor_sets = 2;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	std::vector<VkDescriptorPoolSize> pool_sizes          = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	                                                         vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
+	uint32_t                          num_descriptor_sets = 2;
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -250,13 +252,11 @@ void ShaderDebugPrintf::setup_descriptor_set_layout()
 	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	// Pass object offset and color via push constant
-	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(push_const_block), 0);
+	VkPushConstantRange push_constant_range =
+	    vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(push_const_block), 0);
 	pipeline_layout_create_info.pushConstantRangeCount = 1;
 	pipeline_layout_create_info.pPushConstantRanges    = &push_constant_range;
 
@@ -265,11 +265,7 @@ void ShaderDebugPrintf::setup_descriptor_set_layout()
 
 void ShaderDebugPrintf::setup_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	// Sphere model object descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.sphere));
@@ -297,57 +293,28 @@ void ShaderDebugPrintf::setup_descriptor_sets()
 void ShaderDebugPrintf::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_FALSE,
-	        VK_FALSE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
@@ -408,10 +375,8 @@ void ShaderDebugPrintf::prepare_pipelines()
 void ShaderDebugPrintf::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                sizeof(ubo_vs),
-	                                                                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

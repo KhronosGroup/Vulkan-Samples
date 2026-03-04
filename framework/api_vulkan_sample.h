@@ -243,7 +243,8 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	 * @param storage_buffer Set true to store model in SSBO
 	 * @param additional_buffer_usage_flags Additional buffer usage flags to be applied to vertex and index buffers
 	 */
-	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false, VkBufferUsageFlags additional_buffer_usage_flags = 0);
+	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false,
+	                                             VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer

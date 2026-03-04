@@ -21,8 +21,7 @@ namespace vkb
 {
 namespace sg
 {
-Material::Material(const std::string &name) :
-    Component{name}
+Material::Material(const std::string &name) : Component{name}
 {}
 
 std::type_index Material::get_type()

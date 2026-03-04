@@ -27,8 +27,8 @@ namespace vkb
 namespace
 {
 template <class T, class... A>
-T &request_resource(
-    vkb::core::DeviceCpp &device, vkb::HPPResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
+T &request_resource(vkb::core::DeviceCpp &device, vkb::HPPResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources,
+                    A &...args)
 {
 	std::lock_guard<std::mutex> guard(resource_mutex);
 
@@ -38,8 +38,7 @@ T &request_resource(
 }
 }        // namespace
 
-HPPResourceCache::HPPResourceCache(vkb::core::DeviceCpp &device) :
-    device{device}
+HPPResourceCache::HPPResourceCache(vkb::core::DeviceCpp &device) : device{device}
 {}
 
 void HPPResourceCache::clear()
@@ -112,8 +111,7 @@ vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vecto
 	return request_resource(device, recorder, render_pass_mutex, state.render_passes, attachments, load_store_infos, subpasses);
 }
 
-vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits            stage,
-                                                                    const vkb::core::HPPShaderSource  &glsl_source,
+vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source,
                                                                     const vkb::core::HPPShaderVariant &shader_variant)
 {
 	std::string entry_point{"main"};

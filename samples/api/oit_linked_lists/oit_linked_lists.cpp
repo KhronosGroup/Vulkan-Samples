@@ -19,8 +19,7 @@
 #include <algorithm>
 
 OITLinkedLists::OITLinkedLists()
-{
-}
+{}
 
 OITLinkedLists::~OITLinkedLists()
 {
@@ -162,12 +161,9 @@ void OITLinkedLists::build_command_buffers()
 			}
 
 			VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-			vkb::image_layout_transition(
-			    draw_cmd_buffers[i], linked_list_head_image->get_handle(),
-			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			    VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-			    VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
-			    subresource_range);
+			vkb::image_layout_transition(draw_cmd_buffers[i], linked_list_head_image->get_handle(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL,
+			                             VK_IMAGE_LAYOUT_GENERAL, subresource_range);
 
 			// Combine pass
 			{
@@ -251,18 +247,22 @@ void OITLinkedLists::create_fragment_resources(const uint32_t width, const uint3
 {
 	{
 		const VkExtent3D image_extent = {width, height, 1};
-		linked_list_head_image        = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
-		linked_list_head_image_view   = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
+		linked_list_head_image =
+		    std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+		                                       VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
+		linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
 	}
 
 	{
 		fragment_max_count                  = width * height * kFragmentsPerPixelAverage;
 		const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
-		fragment_buffer                     = std::make_unique<vkb::core::BufferC>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		fragment_buffer =
+		    std::make_unique<vkb::core::BufferC>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 	}
 
 	{
-		fragment_counter = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		fragment_counter = std::make_unique<vkb::core::BufferC>(
+		    get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 	}
 }
 
@@ -278,12 +278,9 @@ void OITLinkedLists::clear_sized_resources()
 		vkCmdFillBuffer(command_buffer, fragment_counter->get_handle(), 0, sizeof(glm::uint), 0);
 
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		vkb::image_layout_transition(
-		    command_buffer, linked_list_head_image->get_handle(),
-		    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-		    VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
-		    VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
-		    subresource_range);
+		vkb::image_layout_transition(command_buffer, linked_list_head_image->get_handle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+		                             subresource_range);
 
 		VkClearColorValue linked_lists_clear_value;
 		linked_lists_clear_value.uint32[0] = kLinkedListEndSentinel;
@@ -315,8 +312,10 @@ void OITLinkedLists::load_assets()
 
 void OITLinkedLists::create_constant_buffers()
 {
-	scene_constants = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instance_data   = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	scene_constants =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_data =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void OITLinkedLists::create_descriptors()
@@ -330,7 +329,8 @@ void OITLinkedLists::create_descriptors()
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 4),
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5),
 		};
-		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
+		    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 	}
 
@@ -341,8 +341,9 @@ void OITLinkedLists::create_descriptors()
 		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2),
 		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
 		};
-		const uint32_t             num_descriptor_sets         = 1;
-		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
+		const uint32_t             num_descriptor_sets = 1;
+		VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+		    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 	}
 
@@ -352,12 +353,13 @@ void OITLinkedLists::create_descriptors()
 
 void OITLinkedLists::update_descriptors()
 {
-	VkDescriptorBufferInfo scene_constants_descriptor             = create_descriptor(*scene_constants);
-	VkDescriptorBufferInfo instance_data_descriptor               = create_descriptor(*instance_data);
-	VkDescriptorImageInfo  linked_list_head_image_view_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, linked_list_head_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
-	VkDescriptorBufferInfo fragment_buffer_descriptor             = create_descriptor(*fragment_buffer);
-	VkDescriptorBufferInfo fragment_counter_descriptor            = create_descriptor(*fragment_counter);
-	VkDescriptorImageInfo  background_texture_descriptor          = create_descriptor(background_texture);
+	VkDescriptorBufferInfo scene_constants_descriptor = create_descriptor(*scene_constants);
+	VkDescriptorBufferInfo instance_data_descriptor   = create_descriptor(*instance_data);
+	VkDescriptorImageInfo  linked_list_head_image_view_descriptor =
+	    vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, linked_list_head_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
+	VkDescriptorBufferInfo fragment_buffer_descriptor    = create_descriptor(*fragment_buffer);
+	VkDescriptorBufferInfo fragment_counter_descriptor   = create_descriptor(*fragment_counter);
+	VkDescriptorImageInfo  background_texture_descriptor = create_descriptor(background_texture);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
@@ -380,9 +382,11 @@ void OITLinkedLists::create_pipelines()
 	{
 		VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 
-		VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+		VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+		    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-		VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+		VkPipelineRasterizationStateCreateInfo rasterization_state =
+		    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 		VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xF, VK_FALSE);
 		VkPipelineColorBlendStateCreateInfo color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
@@ -391,10 +395,12 @@ void OITLinkedLists::create_pipelines()
 
 		VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-		VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
+		VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+		    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
 		std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-		VkPipelineDynamicStateCreateInfo dynamicState          = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
+		VkPipelineDynamicStateCreateInfo dynamicState =
+		    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 		std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
@@ -486,9 +492,7 @@ void OITLinkedLists::fill_instance_data()
 {
 	Instance instances[kInstanceCount] = {};
 
-	auto get_random_float = []() {
-		return static_cast<float>(rand()) / (RAND_MAX);
-	};
+	auto get_random_float = []() { return static_cast<float>(rand()) / (RAND_MAX); };
 
 	for (uint32_t l = 0, instance_index = 0; l < kInstanceLayerCount; ++l)
 	{
@@ -496,14 +500,11 @@ void OITLinkedLists::fill_instance_data()
 		{
 			for (uint32_t r = 0; r < kInstanceRowCount; ++r, ++instance_index)
 			{
-				const float x     = static_cast<float>(r) - ((kInstanceRowCount - 1) * 0.5f);
-				const float y     = static_cast<float>(c) - ((kInstanceColumnCount - 1) * 0.5f);
-				const float z     = static_cast<float>(l) - ((kInstanceLayerCount - 1) * 0.5f);
-				const float scale = 0.02f;
-				instances[instance_index].model =
-				    glm::scale(
-				        glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z)),
-				        glm::vec3(scale));
+				const float x                   = static_cast<float>(r) - ((kInstanceRowCount - 1) * 0.5f);
+				const float y                   = static_cast<float>(c) - ((kInstanceColumnCount - 1) * 0.5f);
+				const float z                   = static_cast<float>(l) - ((kInstanceLayerCount - 1) * 0.5f);
+				const float scale               = 0.02f;
+				instances[instance_index].model = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z)), glm::vec3(scale));
 
 				instances[instance_index].color.r = get_random_float();
 				instances[instance_index].color.g = get_random_float();

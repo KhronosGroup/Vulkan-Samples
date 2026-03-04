@@ -77,9 +77,11 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	// Shading rate image size depends on shading rate texel size
 	// For each texel in the target image, there is a corresponding shading texel size width x height block in the shading rate image
 	VkExtent3D image_extent{};
-	image_extent.width  = static_cast<uint32_t>(ceil(width / static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width)));
-	image_extent.height = static_cast<uint32_t>(ceil(height / static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height)));
-	image_extent.depth  = 1;
+	image_extent.width = static_cast<uint32_t>(
+	    ceil(width / static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width)));
+	image_extent.height = static_cast<uint32_t>(
+	    ceil(height / static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height)));
+	image_extent.depth = 1;
 
 	VkImageCreateInfo image_create_info{};
 	image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -192,8 +194,8 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	vkCmdCopyBufferToImage(copy_cmd, staging_buffer.get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 	// Transfer image layout to fragment shading rate attachment layout required to access this in the renderpass
-	vkb::image_layout_transition(
-	    copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
+	vkb::image_layout_transition(copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
 
 	get_device().flush_command_buffer(copy_cmd, queue, true);
 }
@@ -278,8 +280,10 @@ void FragmentShadingRate::setup_render_pass()
 	VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = {};
 	fragment_shading_rate_attachment_info.sType                                  = VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
 	fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment         = &fragment_shading_rate_reference;
-	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width   = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
-	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
+	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width =
+	    physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
+	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height =
+	    physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
 
 	VkSubpassDescription2KHR subpass_description = {};
 	subpass_description.sType                    = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
@@ -297,21 +301,25 @@ void FragmentShadingRate::setup_render_pass()
 	// Subpass dependencies for layout transitions
 	std::array<VkSubpassDependency2KHR, 2> dependencies = {};
 
-	dependencies[0].sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
-	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass      = 0;
-	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[0].sType        = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+	dependencies[0].srcSubpass   = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass   = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask =
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	dependencies[1].sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
-	dependencies[1].srcSubpass      = 0;
-	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[1].sType      = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask =
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[1].dstStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -442,7 +450,8 @@ void FragmentShadingRate::build_command_buffers()
 		{
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
 			push_const_block.object_type = 0;
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block), &push_const_block);
+			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			                   &push_const_block);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 			draw_model(models.skysphere, draw_cmd_buffers[i]);
 		}
@@ -458,7 +467,8 @@ void FragmentShadingRate::build_command_buffers()
 		{
 			push_const_block.object_type = 1;
 			push_const_block.offset      = glm::vec4(mesh_offsets[j], 0.0f);
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block), &push_const_block);
+			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			                   &push_const_block);
 			draw_model(models.scene, draw_cmd_buffers[i]);
 		}
 
@@ -480,11 +490,10 @@ void FragmentShadingRate::load_assets()
 
 void FragmentShadingRate::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6)};
-	uint32_t                   num_descriptor_sets = 4;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	std::vector<VkDescriptorPoolSize> pool_sizes          = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
+	                                                         vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6)};
+	uint32_t                          num_descriptor_sets = 4;
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -503,11 +512,11 @@ void FragmentShadingRate::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	// Pass object offset and color via push constant
-	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(push_const_block), 0);
+	VkPushConstantRange push_constant_range =
+	    vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(push_const_block), 0);
 	pipeline_layout_create_info.pushConstantRangeCount = 1;
 	pipeline_layout_create_info.pPushConstantRanges    = &push_constant_range;
 
@@ -517,8 +526,7 @@ void FragmentShadingRate::setup_descriptor_set_layout()
 void FragmentShadingRate::setup_descriptor_sets()
 {
 	// Shared model object descriptor set
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
@@ -536,59 +544,30 @@ void FragmentShadingRate::setup_descriptor_sets()
 void FragmentShadingRate::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_FALSE,
-	        VK_FALSE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	    // Add fragment shading rate dynamic state, so we can easily toggle this at runtime
-	    VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+	                                                          // Add fragment shading rate dynamic state, so we can easily toggle this at runtime
+	                                                          VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
@@ -643,10 +622,8 @@ void FragmentShadingRate::prepare_pipelines()
 
 void FragmentShadingRate::prepare_uniform_buffers()
 {
-	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                             sizeof(ubo_scene),
-	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_scene), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 

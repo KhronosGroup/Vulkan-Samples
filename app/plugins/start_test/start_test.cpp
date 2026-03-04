@@ -22,10 +22,8 @@
 
 namespace plugins
 {
-StartTest::StartTest() :
-    StartTestTags("Tests", "A collection of flags to run tests.", {}, {{"test", "Run a specific test"}})
-{
-}
+StartTest::StartTest() : StartTestTags("Tests", "A collection of flags to run tests.", {}, {{"test", "Run a specific test"}})
+{}
 
 bool StartTest::handle_command(std::deque<std::string> &arguments) const
 {

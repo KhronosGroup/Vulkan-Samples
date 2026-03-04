@@ -24,8 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-SubMesh::SubMesh(const std::string &name) :
-    Component{name}
+SubMesh::SubMesh(const std::string &name) : Component{name}
 {}
 
 vkb::core::BufferC const &SubMesh::get_index_buffer() const

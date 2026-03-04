@@ -26,8 +26,7 @@ HPPSampler::HPPSampler(vkb::core::DeviceCpp &device, const vk::SamplerCreateInfo
     vkb::core::VulkanResourceCpp<vk::Sampler>{device.get_handle().createSampler(info), &device}
 {}
 
-HPPSampler::HPPSampler(HPPSampler &&other) :
-    VulkanResource(std::move(other))
+HPPSampler::HPPSampler(HPPSampler &&other) : VulkanResource(std::move(other))
 {}
 
 HPPSampler::~HPPSampler()

@@ -51,10 +51,8 @@ std::string get_sponza_texture_filename(const std::string &short_name)
 class HPPCompressedImage : public vkb::scene_graph::components::HPPImage
 {
   public:
-	HPPCompressedImage(vkb::core::DeviceCpp                                  &device,
-	                   const std::string                                     &name,
-	                   std::vector<vkb::scene_graph::components::HPPMipmap> &&mipmaps,
-	                   vk::Format                                             format) :
+	HPPCompressedImage(vkb::core::DeviceCpp &device, const std::string &name, std::vector<vkb::scene_graph::components::HPPMipmap> &&mipmaps,
+	                   vk::Format format) :
 	    vkb::scene_graph::components::HPPImage(name, std::vector<uint8_t>{}, std::move(mipmaps))
 	{
 		vkb::scene_graph::components::HPPImage::set_format(format);
@@ -81,39 +79,37 @@ HPPTextureCompressionComparison::HPPTextureCompressionComparison()
 	    {nullptr, "", vk::Format::eR8G8B8A8Srgb, KTX_TTF_RGBA32, "KTX_TTF_RGBA32", "RGBA 32", true},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc7SrgbBlock, KTX_TTF_BC7_RGBA, "KTX_TTF_BC7_RGBA", "BC7"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc3SrgbBlock, KTX_TTF_BC3_RGBA, "KTX_TTF_BC3_RGBA", "BC3"},
-	    {&vk::PhysicalDeviceFeatures::textureCompressionASTC_LDR, "", vk::Format::eAstc4x4SrgbBlock, KTX_TTF_ASTC_4x4_RGBA, "KTX_TTF_ASTC_4x4_RGBA", "ASTC 4x4"},
+	    {&vk::PhysicalDeviceFeatures::textureCompressionASTC_LDR, "", vk::Format::eAstc4x4SrgbBlock, KTX_TTF_ASTC_4x4_RGBA, "KTX_TTF_ASTC_4x4_RGBA",
+	     "ASTC 4x4"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionETC2, "", vk::Format::eEtc2R8G8B8A8SrgbBlock, KTX_TTF_ETC2_RGBA, "KTX_TTF_ETC2_RGBA", "ETC2"}};
 }
 
 void HPPTextureCompressionComparison::draw_gui()
 {
-	get_gui().show_options_window(
-	    [this]() {
-		    if (ImGui::Combo(
-		            "Compressed Format",
-		            &current_gui_format,
-		            [](void *user_data, int idx) -> char const * { return reinterpret_cast<HPPTextureCompressionData *>(user_data)[idx].gui_name.c_str(); },
-		            texture_compression_data.data(),
-		            static_cast<int>(texture_compression_data.size())))
-		    {
-			    require_redraw = true;
-			    if (texture_compression_data[current_gui_format].is_supported)
-			    {
-				    current_format = current_gui_format;
-			    }
-		    }
-		    const auto &current_gui_tc = texture_compression_data[current_gui_format];
-		    if (current_gui_tc.is_supported)
-		    {
-			    ImGui::Text("Format name: %s", current_gui_tc.format_name.c_str());
-			    ImGui::Text("Bytes: %f MB", static_cast<float>(current_benchmark.total_bytes) / 1024.f / 1024.f);
-			    ImGui::Text("Compression Time: %f (ms)", current_benchmark.compress_time_ms);
-		    }
-		    else
-		    {
-			    ImGui::Text("%s not supported on this GPU.", current_gui_tc.short_name.c_str());
-		    }
-	    });
+	get_gui().show_options_window([this]() {
+		if (ImGui::Combo(
+		        "Compressed Format", &current_gui_format,
+		        [](void *user_data, int idx) -> char const * { return reinterpret_cast<HPPTextureCompressionData *>(user_data)[idx].gui_name.c_str(); },
+		        texture_compression_data.data(), static_cast<int>(texture_compression_data.size())))
+		{
+			require_redraw = true;
+			if (texture_compression_data[current_gui_format].is_supported)
+			{
+				current_format = current_gui_format;
+			}
+		}
+		const auto &current_gui_tc = texture_compression_data[current_gui_format];
+		if (current_gui_tc.is_supported)
+		{
+			ImGui::Text("Format name: %s", current_gui_tc.format_name.c_str());
+			ImGui::Text("Bytes: %f MB", static_cast<float>(current_benchmark.total_bytes) / 1024.f / 1024.f);
+			ImGui::Text("Compression Time: %f (ms)", current_benchmark.compress_time_ms);
+		}
+		else
+		{
+			ImGui::Text("%s not supported on this GPU.", current_gui_tc.short_name.c_str());
+		}
+	});
 }
 
 bool HPPTextureCompressionComparison::prepare(const vkb::ApplicationOptions &options)
@@ -148,9 +144,8 @@ void HPPTextureCompressionComparison::update(float delta_time)
 }
 
 std::pair<std::unique_ptr<vkb::scene_graph::components::HPPImage>, HPPTextureCompressionComparison::HPPTextureBenchmark>
-    HPPTextureCompressionComparison::compress(const std::string                                         &filename,
-                                              HPPTextureCompressionComparison::HPPTextureCompressionData texture_format,
-                                              const std::string                                         &name)
+    HPPTextureCompressionComparison::compress(const std::string &filename, HPPTextureCompressionComparison::HPPTextureCompressionData texture_format,
+                                              const std::string &name)
 {
 	ktxTexture2 *ktx_texture{nullptr};
 	KTX_CHECK(ktxTexture2_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture));
@@ -219,8 +214,8 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 
 	command_buffer.copyBufferToImage(staging_buffer->get_handle(), image, vk::ImageLayout::eTransferDstOptimal, buffer_copies);
 
-	vkb::common::image_layout_transition(
-	    command_buffer, image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, subresource_range);
+	vkb::common::image_layout_transition(command_buffer, image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0).get_handle(), true);
 
@@ -231,8 +226,8 @@ void HPPTextureCompressionComparison::create_subpass()
 {
 	vkb::core::HPPShaderSource vert_shader("base.vert.spv");
 	vkb::core::HPPShaderSource frag_shader("base.frag.spv");
-	auto                       scene_sub_pass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(
-        get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto scene_sub_pass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(get_render_context(), std::move(vert_shader), std::move(frag_shader),
+	                                                                                     get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::rendering::HPPRenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_sub_pass));
