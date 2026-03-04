@@ -73,17 +73,6 @@ MacroBlockBegin: ''
 MacroBlockEnd:   ''
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
-ObjCBinPackProtocolList: Auto
-ObjCBlockIndentWidth: 2
-ObjCSpaceAfterProperty: false
-ObjCSpaceBeforeProtocolList: true
-PenaltyBreakAssignment: 2
-PenaltyBreakBeforeFirstCallParameter: 19
-PenaltyBreakComment: 300
-PenaltyBreakFirstLessLess: 120
-PenaltyBreakString: 1000
-PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
 ReflowComments:  true
 SortIncludes:    true
@@ -105,7 +94,3 @@ SpacesInSquareBrackets: false
 Standard:        Cpp11
 TabWidth:        4
 UseTab:          ForIndentation
----
-Language: ObjC
-DisableFormat: true
-...
