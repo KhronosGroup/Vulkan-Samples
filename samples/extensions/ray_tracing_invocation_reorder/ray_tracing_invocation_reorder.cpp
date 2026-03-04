@@ -1186,7 +1186,6 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &ray_tracing_pipeline_properties;
 	ray_tracing_pipeline_properties.pNext = &acceleration_structure_properties;
-	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
 
 	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
 
