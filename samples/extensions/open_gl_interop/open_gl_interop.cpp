@@ -172,7 +172,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr,
 		                           &sharedSemaphores.gl_ready));
 
-#if WIN32
+#ifdef WIN32
 		VkSemaphoreGetWin32HandleInfoKHR semaphoreGetHandleInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR, nullptr,
 		    VK_NULL_HANDLE, compatable_semaphore_type};
@@ -193,7 +193,7 @@ void OpenGLInterop::prepare_shared_resources()
 
 	{
 		VkExternalMemoryImageCreateInfo external_memory_image_create_info{VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
-#if WIN32
+#ifdef WIN32
 		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 #else
 		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
@@ -224,7 +224,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VkExportMemoryAllocateInfo export_memory_allocate_Info;
 		export_memory_allocate_Info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
 		export_memory_allocate_Info.pNext = &dedicated_allocate_info;
-#if WIN32
+#ifdef WIN32
 		export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 #else
 		export_memory_allocate_Info.handleTypes       = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
@@ -237,7 +237,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
-#if WIN32
+#ifdef WIN32
 		VkMemoryGetWin32HandleInfoKHR memoryFdInfo{VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR, nullptr,
 		                                           sharedTexture.memory,
 		                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT};

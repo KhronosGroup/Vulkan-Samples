@@ -409,7 +409,7 @@ else()
 endif()
 
 # mask out the min/max macros from minwindef.h
-if(MSVC)
+if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 
