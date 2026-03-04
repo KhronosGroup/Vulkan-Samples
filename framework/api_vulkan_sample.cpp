@@ -82,9 +82,8 @@ void ApiVulkanSample::prepare_gui()
 {
 	create_gui(*window, nullptr, 15.0f, true);
 
-	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	                                                              load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	if (uses_dynamic_rendering())
 	{
@@ -412,10 +411,7 @@ void ApiVulkanSample::create_command_buffers()
 	draw_cmd_buffers.resize(get_render_context().get_render_frames().size());
 
 	VkCommandBufferAllocateInfo allocate_info =
-	    vkb::initializers::command_buffer_allocate_info(
-	        cmd_pool,
-	        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	        static_cast<uint32_t>(draw_cmd_buffers.size()));
+	    vkb::initializers::command_buffer_allocate_info(cmd_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, static_cast<uint32_t>(draw_cmd_buffers.size()));
 
 	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &allocate_info, draw_cmd_buffers.data()));
 }
@@ -430,7 +426,8 @@ void ApiVulkanSample::recreate_current_command_buffer()
 	auto &cmd = draw_cmd_buffers[current_buffer];
 	assert(cmd);
 	vkFreeCommandBuffers(get_device().get_handle(), cmd_pool, 1, &cmd);
-	VkCommandBufferAllocateInfo command_buffer_allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr, cmd_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1};
+	VkCommandBufferAllocateInfo command_buffer_allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr, cmd_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	                                                         1};
 	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &cmd));
 }
 
@@ -453,7 +450,8 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 	return shader_stage;
 }
 
-VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename,
+                                                             VkShaderStageFlagBits stage)
 {
 	std::string full_file_name = sample_folder_name + "/" + get_shader_folder() + "/" + shader_filename;
 
@@ -797,19 +795,23 @@ void ApiVulkanSample::setup_render_pass()
 	// Subpass dependencies for layout transitions
 	std::array<VkSubpassDependency, 2> dependencies{};
 
-	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass      = 0;
-	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[0].srcAccessMask   = VK_ACCESS_NONE_KHR;
-	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[0].srcSubpass   = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass   = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask =
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_NONE_KHR;
+	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	dependencies[1].srcSubpass      = 0;
-	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask =
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[1].dstStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -882,19 +884,23 @@ void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 	// Subpass dependencies for layout transitions
 	std::array<VkSubpassDependency, 2> dependencies{};
 
-	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass      = 0;
-	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[0].srcAccessMask   = VK_ACCESS_NONE_KHR;
-	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[0].srcSubpass   = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass   = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask =
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_NONE_KHR;
+	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	dependencies[1].srcSubpass      = 0;
-	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask =
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[1].dstStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -932,11 +938,7 @@ void ApiVulkanSample::create_swapchain_buffers()
 			color_attachment_view.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			color_attachment_view.pNext                 = NULL;
 			color_attachment_view.format                = get_render_context().get_swapchain().get_format();
-			color_attachment_view.components            = {
-                VK_COMPONENT_SWIZZLE_R,
-                VK_COMPONENT_SWIZZLE_G,
-                VK_COMPONENT_SWIZZLE_B,
-                VK_COMPONENT_SWIZZLE_A};
+			color_attachment_view.components            = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
 			color_attachment_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 			color_attachment_view.subresourceRange.baseMipLevel   = 0;
 			color_attachment_view.subresourceRange.levelCount     = 1;
@@ -979,14 +981,12 @@ void ApiVulkanSample::update_swapchain_image_usage_flags(std::set<VkImageUsageFl
 void ApiVulkanSample::handle_surface_changes()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(),
-	                                                   get_render_context().get_swapchain().get_surface(),
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(), get_render_context().get_swapchain().get_surface(),
 	                                                   &surface_properties));
 
 	if ((surface_properties.currentExtent.width != get_render_context().get_surface_extent().width ||
 	     surface_properties.currentExtent.height != get_render_context().get_surface_extent().height) &&
-	    (surface_properties.currentExtent.width != 0xFFFFFFFF &&
-	     surface_properties.currentExtent.height != 0xFFFFFFFF))
+	    (surface_properties.currentExtent.width != 0xFFFFFFFF && surface_properties.currentExtent.height != 0xFFFFFFFF))
 	{
 		resize(surface_properties.currentExtent.width, surface_properties.currentExtent.height);
 	}
@@ -1074,27 +1074,16 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::image_layout_transition(command_buffer,
-	                             texture.image->get_vk_image().get_handle(),
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	vkb::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	                             subresource_range);
 
 	// Copy mip levels from staging buffer
-	vkCmdCopyBufferToImage(
-	    command_buffer,
-	    stage_buffer.get_handle(),
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    static_cast<uint32_t>(bufferCopyRegions.size()),
-	    bufferCopyRegions.data());
+	vkCmdCopyBufferToImage(command_buffer, stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                       static_cast<uint32_t>(bufferCopyRegions.size()), bufferCopyRegions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::image_layout_transition(command_buffer,
-	                             texture.image->get_vk_image().get_handle(),
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	                             subresource_range);
+	vkb::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1121,7 +1110,8 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	// Note that for simplicity, we will always be using max. available anisotropy level for the current device
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_requested_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+	sampler_create_info.maxAnisotropy =
+	    get_device().get_gpu().get_requested_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
@@ -1176,27 +1166,16 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::image_layout_transition(command_buffer,
-	                             texture.image->get_vk_image().get_handle(),
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	vkb::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	                             subresource_range);
 
 	// Copy mip levels from staging buffer
-	vkCmdCopyBufferToImage(
-	    command_buffer,
-	    stage_buffer.get_handle(),
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    static_cast<uint32_t>(buffer_copy_regions.size()),
-	    buffer_copy_regions.data());
+	vkCmdCopyBufferToImage(command_buffer, stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                       static_cast<uint32_t>(buffer_copy_regions.size()), buffer_copy_regions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::image_layout_transition(command_buffer,
-	                             texture.image->get_vk_image().get_handle(),
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	                             subresource_range);
+	vkb::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1220,7 +1199,8 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	// Max level-of-detail should match mip level count
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.maxAnisotropy =
+	    get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
@@ -1275,27 +1255,16 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::image_layout_transition(command_buffer,
-	                             texture.image->get_vk_image().get_handle(),
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	vkb::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	                             subresource_range);
 
 	// Copy mip levels from staging buffer
-	vkCmdCopyBufferToImage(
-	    command_buffer,
-	    stage_buffer.get_handle(),
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    static_cast<uint32_t>(buffer_copy_regions.size()),
-	    buffer_copy_regions.data());
+	vkCmdCopyBufferToImage(command_buffer, stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                       static_cast<uint32_t>(buffer_copy_regions.size()), buffer_copy_regions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::image_layout_transition(command_buffer,
-	                             texture.image->get_vk_image().get_handle(),
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	                             subresource_range);
+	vkb::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1319,7 +1288,8 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	// Max level-of-detail should match mip level count
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.maxAnisotropy =
+	    get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
@@ -1327,7 +1297,8 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	return texture;
 }
 
-std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
+std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer,
+                                                              VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	vkb::GLTFLoader loader{get_device()};
 

@@ -22,11 +22,8 @@
 
 namespace vkb
 {
-DescriptorSet::DescriptorSet(vkb::core::DeviceC                       &device,
-                             const DescriptorSetLayout                &descriptor_set_layout,
-                             DescriptorPool                           &descriptor_pool,
-                             const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-                             const BindingMap<VkDescriptorImageInfo>  &image_infos) :
+DescriptorSet::DescriptorSet(vkb::core::DeviceC &device, const DescriptorSetLayout &descriptor_set_layout, DescriptorPool &descriptor_pool,
+                             const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos) :
     device{device},
     descriptor_set_layout{descriptor_set_layout},
     descriptor_pool{descriptor_pool},
@@ -82,14 +79,20 @@ void DescriptorSet::prepare()
 
 				size_t buffer_range_limit = static_cast<size_t>(buffer_info.range);
 
-				if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) && buffer_range_limit > uniform_buffer_range_limit)
+				if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
+				     binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) &&
+				    buffer_range_limit > uniform_buffer_range_limit)
 				{
-					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the uniform buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, uniform_buffer_range_limit);
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the uniform buffer range limit {}", descriptor_set_layout.get_index(),
+					     binding_index, buffer_info.range, uniform_buffer_range_limit);
 					buffer_range_limit = uniform_buffer_range_limit;
 				}
-				else if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) && buffer_range_limit > storage_buffer_range_limit)
+				else if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ||
+				          binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) &&
+				         buffer_range_limit > storage_buffer_range_limit)
 				{
-					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the storage buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, storage_buffer_range_limit);
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the storage buffer range limit {}", descriptor_set_layout.get_index(),
+					     binding_index, buffer_info.range, storage_buffer_range_limit);
 					buffer_range_limit = storage_buffer_range_limit;
 				}
 
@@ -196,11 +199,7 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 	// Perform the Vulkan call to update the DescriptorSet by executing the write operations
 	if (!write_operations.empty())
 	{
-		vkUpdateDescriptorSets(device.get_handle(),
-		                       to_u32(write_operations.size()),
-		                       write_operations.data(),
-		                       0,
-		                       nullptr);
+		vkUpdateDescriptorSets(device.get_handle(), to_u32(write_operations.size()), write_operations.data(), 0, nullptr);
 	}
 
 	// Store the bindings from the write operations that were executed by vkUpdateDescriptorSets (and their hash)
@@ -213,11 +212,7 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 
 void DescriptorSet::apply_writes() const
 {
-	vkUpdateDescriptorSets(device.get_handle(),
-	                       to_u32(write_descriptor_sets.size()),
-	                       write_descriptor_sets.data(),
-	                       0,
-	                       nullptr);
+	vkUpdateDescriptorSets(device.get_handle(), to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :

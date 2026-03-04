@@ -31,11 +31,8 @@ namespace vkb
 {
 namespace sg
 {
-NodeAnimation::NodeAnimation(vkb::scene_graph::NodeC &node, TransformAnimFn animation_fn) :
-    NodeScript{node, ""},
-    animation_fn{animation_fn}
-{
-}
+NodeAnimation::NodeAnimation(vkb::scene_graph::NodeC &node, TransformAnimFn animation_fn) : NodeScript{node, ""}, animation_fn{animation_fn}
+{}
 
 void NodeAnimation::update(float delta_time)
 {

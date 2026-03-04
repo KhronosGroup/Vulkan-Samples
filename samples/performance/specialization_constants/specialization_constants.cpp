@@ -35,13 +35,10 @@ SpecializationConstants::SpecializationConstants()
 }
 
 SpecializationConstants::ForwardSubpassCustomLights::ForwardSubpassCustomLights(vkb::rendering::RenderContextC &render_context,
-                                                                                vkb::ShaderSource             &&vertex_shader,
-                                                                                vkb::ShaderSource             &&fragment_shader,
-                                                                                vkb::sg::Scene                 &scene_,
-                                                                                vkb::sg::Camera                &camera) :
+                                                                                vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
+                                                                                vkb::sg::Scene &scene_, vkb::sg::Camera &camera) :
     vkb::rendering::subpasses::ForwardSubpassC{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
-{
-}
+{}
 
 bool SpecializationConstants::prepare(const vkb::ApplicationOptions &options)
 {
@@ -149,7 +146,8 @@ void SpecializationConstants::draw_gui()
 	uint32_t lines     = landscape ? 1 : 2;
 
 	get_gui().show_options_window(
-	    /* body = */ [&]() {
+	    /* body = */
+	    [&]() {
 		    ImGui::RadioButton("Uniform Buffer Objects", &specialization_constants_enabled, 0);
 		    if (landscape)
 		    {

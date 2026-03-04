@@ -55,7 +55,8 @@ bool TextureCompressionBasisu::format_supported(VkFormat format)
 {
 	VkFormatProperties format_properties;
 	vkGetPhysicalDeviceFormatProperties(get_device().get_gpu().get_handle(), format, &format_properties);
-	return ((format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT) && (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT));
+	return ((format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT) &&
+	        (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT));
 }
 
 // Get a list of possible transcoding target formats supported by the selected gpu
@@ -123,7 +124,8 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	// We are working with KTX2.0 files, so we need to use the ktxTexture2 class
 	ktxTexture2 *ktx_texture;
 	// Load the KTX2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, reinterpret_cast<ktxTexture **>(&ktx_texture));
+	KTX_error_code result =
+	    ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, reinterpret_cast<ktxTexture **>(&ktx_texture));
 	if (result != KTX_SUCCESS)
 	{
 		throw std::runtime_error("Could not load the requested image file.");
@@ -162,7 +164,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	VkMemoryRequirements memory_requirements  = {};
 	vkGetBufferMemoryRequirements(get_device().get_handle(), staging_buffer, &memory_requirements);
-	memory_allocate_info.allocationSize  = memory_requirements.size;
+	memory_allocate_info.allocationSize = memory_requirements.size;
 	memory_allocate_info.memoryTypeIndex =
 	    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &staging_memory));
@@ -228,18 +230,13 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 	// Copy mip levels from staging buffer
-	vkCmdCopyBufferToImage(
-	    copy_command,
-	    staging_buffer,
-	    texture.image,
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    static_cast<uint32_t>(buffer_copy_regions.size()),
-	    buffer_copy_regions.data());
+	vkCmdCopyBufferToImage(copy_command, staging_buffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(buffer_copy_regions.size()),
+	                       buffer_copy_regions.data());
 
 	// Once the data has been uploaded we transfer to the texture image to the shader read layout, so it can be sampled from
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	vkb::image_layout_transition(
-	    copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 
 	// Store current layout for later reuse
 	texture.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -307,8 +304,9 @@ void TextureCompressionBasisu::destroy_texture(Texture texture)
 
 void TextureCompressionBasisu::update_image_descriptor()
 {
-	VkDescriptorImageInfo image_descriptor     = {texture.sampler, texture.view, texture.image_layout};
-	VkWriteDescriptorSet  write_descriptor_set = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor);
+	VkDescriptorImageInfo image_descriptor = {texture.sampler, texture.view, texture.image_layout};
+	VkWriteDescriptorSet  write_descriptor_set =
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor);
 	vkUpdateDescriptorSets(get_device().get_handle(), 1, &write_descriptor_set, 0, nullptr);
 }
 
@@ -367,12 +365,8 @@ void TextureCompressionBasisu::draw()
 void TextureCompressionBasisu::generate_quad()
 {
 	// Setup vertices for a single uv-mapped quad made from two triangles
-	std::vector<VertexStructure> vertices =
-	    {
-	        {{1.5f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-	        {{-1.5f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-	        {{-1.5f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-	        {{1.5f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
+	std::vector<VertexStructure> vertices = {
+	    {{1.5f, 1.0f, 0.0f}, {1.0f, 1.0f}}, {{-1.5f, 1.0f, 0.0f}, {0.0f, 1.0f}}, {{-1.5f, -1.0f, 0.0f}, {0.0f, 0.0f}}, {{1.5f, -1.0f, 0.0f}, {1.0f, 0.0f}}};
 
 	// Setup indices
 	std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
@@ -384,15 +378,11 @@ void TextureCompressionBasisu::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
@@ -401,57 +391,36 @@ void TextureCompressionBasisu::generate_quad()
 void TextureCompressionBasisu::setup_descriptor_pool()
 {
 	// Example uses one ubo and one image sampler
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	std::vector<VkDescriptorPoolSize> pool_sizes = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	                                                vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void TextureCompressionBasisu::setup_descriptor_set_layout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            VK_SHADER_STAGE_VERTEX_BIT,
-	            0),
-	        // Binding 1 : Fragment shader image sampler
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	            VK_SHADER_STAGE_FRAGMENT_BIT,
-	            1)};
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+	    // Binding 0 : Vertex shader uniform buffer
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    // Binding 1 : Fragment shader image sampler
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
 void TextureCompressionBasisu::setup_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
@@ -460,22 +429,17 @@ void TextureCompressionBasisu::setup_descriptor_set()
 	// Setup a descriptor image info for the current texture to be used as a combined image sampler
 	VkDescriptorImageInfo image_descriptor = {texture.sampler, texture.view, texture.image_layout};
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            0,
-	            &buffer_descriptor),
-	        // Binding 1 : Fragment shader texture sampler
-	        //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
-	            1,                                                // Shader binding point 1
-	            &image_descriptor)                                // Pointer to the descriptor image for our texture
-	    };
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    // Binding 0 : Vertex shader uniform buffer
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),
+	    // Binding 1 : Fragment shader texture sampler
+	    //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_set,
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
+	        1,                                                // Shader binding point 1
+	        &image_descriptor)                                // Pointer to the descriptor image for our texture
+	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
@@ -483,52 +447,27 @@ void TextureCompressionBasisu::setup_descriptor_set()
 void TextureCompressionBasisu::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
@@ -550,11 +489,7 @@ void TextureCompressionBasisu::prepare_pipelines()
 	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -574,10 +509,7 @@ void TextureCompressionBasisu::prepare_pipelines()
 void TextureCompressionBasisu::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         sizeof(ubo_vs),
-	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -602,14 +534,8 @@ bool TextureCompressionBasisu::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 	get_available_target_formats();
-	texture_file_names = {"kodim23_UASTC.ktx2",
-	                      "kodim23_ETC1S.ktx2",
-	                      "kodim20_UASTC.ktx2",
-	                      "kodim20_ETC1S.ktx2",
-	                      "kodim05_UASTC.ktx2",
-	                      "kodim05_ETC1S.ktx2",
-	                      "kodim03_UASTC.ktx2",
-	                      "kodim03_ETC1S.ktx2"};
+	texture_file_names = {"kodim23_UASTC.ktx2", "kodim23_ETC1S.ktx2", "kodim20_UASTC.ktx2", "kodim20_ETC1S.ktx2",
+	                      "kodim05_UASTC.ktx2", "kodim05_ETC1S.ktx2", "kodim03_UASTC.ktx2", "kodim03_ETC1S.ktx2"};
 	transcode_texture(texture_file_names[selected_input_texture], available_target_formats[selected_transcode_target_format]);
 	generate_quad();
 	prepare_uniform_buffers();

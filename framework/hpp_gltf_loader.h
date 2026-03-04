@@ -32,12 +32,11 @@ namespace vkb
 class HPPGLTFLoader : private vkb::GLTFLoader
 {
   public:
-	HPPGLTFLoader(vkb::core::DeviceCpp &device) :
-	    GLTFLoader(reinterpret_cast<vkb::core::DeviceC &>(device))
+	HPPGLTFLoader(vkb::core::DeviceCpp &device) : GLTFLoader(reinterpret_cast<vkb::core::DeviceC &>(device))
 	{}
 
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> read_model_from_file(
-	    const std::string &file_name, uint32_t index, bool storage_buffer = false, vk::BufferUsageFlags additional_buffer_usage_flags = {})
+	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false,
+	                                                                               vk::BufferUsageFlags additional_buffer_usage_flags = {})
 	{
 		return std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>(reinterpret_cast<vkb::scene_graph::components::HPPSubMesh *>(
 		    vkb::GLTFLoader::read_model_from_file(file_name, index, storage_buffer, static_cast<VkBufferUsageFlags>(additional_buffer_usage_flags)).release()));
@@ -45,7 +44,8 @@ class HPPGLTFLoader : private vkb::GLTFLoader
 
 	std::unique_ptr<vkb::scene_graph::HPPScene> read_scene_from_file(const std::string &file_name, int scene_index = -1)
 	{
-		return std::unique_ptr<vkb::scene_graph::HPPScene>(reinterpret_cast<vkb::scene_graph::HPPScene *>(vkb::GLTFLoader::read_scene_from_file(file_name, scene_index).release()));
+		return std::unique_ptr<vkb::scene_graph::HPPScene>(
+		    reinterpret_cast<vkb::scene_graph::HPPScene *>(vkb::GLTFLoader::read_scene_from_file(file_name, scene_index).release()));
 	}
 };
 }        // namespace vkb

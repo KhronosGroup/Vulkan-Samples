@@ -33,9 +33,7 @@
 
 namespace vkb
 {
-Stats::Stats(vkb::rendering::RenderContextC &render_context, size_t buffer_size) :
-    render_context(render_context),
-    buffer_size(buffer_size)
+Stats::Stats(vkb::rendering::RenderContextC &render_context, size_t buffer_size) : render_context(render_context), buffer_size(buffer_size)
 {
 	assert(buffer_size >= 2 && "Buffers size should be greater than 2");
 }
@@ -53,8 +51,7 @@ Stats::~Stats()
 	}
 }
 
-void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
-                          CounterSamplingConfig      config)
+void Stats::request_stats(const std::set<StatIndex> &wanted_stats, CounterSamplingConfig config)
 {
 	if (providers.size() != 0)
 	{
@@ -90,9 +87,7 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 		// Start a thread for continuous sample capture
 		stop_worker = std::make_unique<std::promise<void>>();
 
-		worker_thread = std::thread([this] {
-			continuous_sampling_worker(stop_worker->get_future());
-		});
+		worker_thread = std::thread([this] { continuous_sampling_worker(stop_worker->get_future()); });
 
 		// Reduce smoothing for continuous sampling
 		alpha_smoothing = 0.6f;
@@ -460,17 +455,8 @@ const StatGraphData &Stats::get_graph_data(StatIndex index) const
 	return StatsProvider::default_graph_data(index);
 }
 
-StatGraphData::StatGraphData(const std::string &name,
-                             const std::string &graph_label_format,
-                             float              scale_factor,
-                             bool               has_fixed_max,
-                             float              max_value) :
-    name(name),
-    format{graph_label_format},
-    scale_factor{scale_factor},
-    has_fixed_max{has_fixed_max},
-    max_value{max_value}
-{
-}
+StatGraphData::StatGraphData(const std::string &name, const std::string &graph_label_format, float scale_factor, bool has_fixed_max, float max_value) :
+    name(name), format{graph_label_format}, scale_factor{scale_factor}, has_fixed_max{has_fixed_max}, max_value{max_value}
+{}
 
 }        // namespace vkb

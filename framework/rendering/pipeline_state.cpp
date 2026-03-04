@@ -30,8 +30,10 @@ bool operator==(const VkVertexInputBindingDescription &lhs, const VkVertexInputB
 
 bool operator==(const vkb::ColorBlendAttachmentState &lhs, const vkb::ColorBlendAttachmentState &rhs)
 {
-	return std::tie(lhs.alpha_blend_op, lhs.blend_enable, lhs.color_blend_op, lhs.color_write_mask, lhs.dst_alpha_blend_factor, lhs.dst_color_blend_factor, lhs.src_alpha_blend_factor, lhs.src_color_blend_factor) ==
-	       std::tie(rhs.alpha_blend_op, rhs.blend_enable, rhs.color_blend_op, rhs.color_write_mask, rhs.dst_alpha_blend_factor, rhs.dst_color_blend_factor, rhs.src_alpha_blend_factor, rhs.src_color_blend_factor);
+	return std::tie(lhs.alpha_blend_op, lhs.blend_enable, lhs.color_blend_op, lhs.color_write_mask, lhs.dst_alpha_blend_factor, lhs.dst_color_blend_factor,
+	                lhs.src_alpha_blend_factor, lhs.src_color_blend_factor) ==
+	       std::tie(rhs.alpha_blend_op, rhs.blend_enable, rhs.color_blend_op, rhs.color_write_mask, rhs.dst_alpha_blend_factor, rhs.dst_color_blend_factor,
+	                rhs.src_alpha_blend_factor, rhs.src_color_blend_factor);
 }
 
 bool operator!=(const vkb::StencilOpState &lhs, const vkb::StencilOpState &rhs)
@@ -51,8 +53,9 @@ bool operator!=(const vkb::InputAssemblyState &lhs, const vkb::InputAssemblyStat
 
 bool operator!=(const vkb::RasterizationState &lhs, const vkb::RasterizationState &rhs)
 {
-	return std::tie(lhs.cull_mode, lhs.depth_bias_enable, lhs.depth_clamp_enable, lhs.front_face, lhs.front_face, lhs.polygon_mode, lhs.rasterizer_discard_enable) !=
-	       std::tie(rhs.cull_mode, rhs.depth_bias_enable, rhs.depth_clamp_enable, rhs.front_face, rhs.front_face, rhs.polygon_mode, rhs.rasterizer_discard_enable);
+	return std::tie(lhs.cull_mode, lhs.depth_bias_enable, lhs.depth_clamp_enable, lhs.front_face, lhs.front_face, lhs.polygon_mode,
+	                lhs.rasterizer_discard_enable) != std::tie(rhs.cull_mode, rhs.depth_bias_enable, rhs.depth_clamp_enable, rhs.front_face, rhs.front_face,
+	                                                           rhs.polygon_mode, rhs.rasterizer_discard_enable);
 }
 
 bool operator!=(const vkb::ViewportState &lhs, const vkb::ViewportState &rhs)
@@ -62,8 +65,9 @@ bool operator!=(const vkb::ViewportState &lhs, const vkb::ViewportState &rhs)
 
 bool operator!=(const vkb::MultisampleState &lhs, const vkb::MultisampleState &rhs)
 {
-	return std::tie(lhs.alpha_to_coverage_enable, lhs.alpha_to_one_enable, lhs.min_sample_shading, lhs.rasterization_samples, lhs.sample_mask, lhs.sample_shading_enable) !=
-	       std::tie(rhs.alpha_to_coverage_enable, rhs.alpha_to_one_enable, rhs.min_sample_shading, rhs.rasterization_samples, rhs.sample_mask, rhs.sample_shading_enable);
+	return std::tie(lhs.alpha_to_coverage_enable, lhs.alpha_to_one_enable, lhs.min_sample_shading, lhs.rasterization_samples, lhs.sample_mask,
+	                lhs.sample_shading_enable) != std::tie(rhs.alpha_to_coverage_enable, rhs.alpha_to_one_enable, rhs.min_sample_shading,
+	                                                       rhs.rasterization_samples, rhs.sample_mask, rhs.sample_shading_enable);
 }
 
 bool operator!=(const vkb::DepthStencilState &lhs, const vkb::DepthStencilState &rhs)
@@ -75,12 +79,9 @@ bool operator!=(const vkb::DepthStencilState &lhs, const vkb::DepthStencilState 
 
 bool operator!=(const vkb::ColorBlendState &lhs, const vkb::ColorBlendState &rhs)
 {
-	return std::tie(lhs.logic_op, lhs.logic_op_enable) != std::tie(rhs.logic_op, rhs.logic_op_enable) ||
-	       lhs.attachments.size() != rhs.attachments.size() ||
+	return std::tie(lhs.logic_op, lhs.logic_op_enable) != std::tie(rhs.logic_op, rhs.logic_op_enable) || lhs.attachments.size() != rhs.attachments.size() ||
 	       !std::equal(lhs.attachments.begin(), lhs.attachments.end(), rhs.attachments.begin(),
-	                   [](const vkb::ColorBlendAttachmentState &lhs, const vkb::ColorBlendAttachmentState &rhs) {
-		                   return lhs == rhs;
-	                   });
+	                   [](const vkb::ColorBlendAttachmentState &lhs, const vkb::ColorBlendAttachmentState &rhs) { return lhs == rhs; });
 }
 
 namespace vkb

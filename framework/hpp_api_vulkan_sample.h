@@ -183,8 +183,8 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 	 * @param content_type The type of content in the image file
 	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eRepeat.
 	 */
-	HPPTexture
-	    load_texture(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type, vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat);
+	HPPTexture load_texture(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type,
+	                        vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat);
 
 	/**
 	 * @brief Loads in a ktx 2D texture array
@@ -192,9 +192,8 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 	 * @param content_type The type of content in the image file
 	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eClampToEdge.
 	 */
-	HPPTexture load_texture_array(const std::string                                  &file,
-	                              vkb::scene_graph::components::HPPImage::ContentType content_type,
-	                              vk::SamplerAddressMode                              address_mode = vk::SamplerAddressMode::eClampToEdge);
+	HPPTexture load_texture_array(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type,
+	                              vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eClampToEdge);
 
 	/**
 	 * @brief Loads in a ktx 2D texture cubemap
@@ -210,8 +209,8 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 	 * @param storage_buffer Set true to store model in SSBO
 	 * @param additional_buffer_usage_flags Additional buffer usage flags to be applied to vertex and index buffers
 	 */
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> load_model(
-	    const std::string &file, uint32_t index = 0, bool storage_buffer = false, vk::BufferUsageFlags additional_buffer_usage_flags = {});
+	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false,
+	                                                                     vk::BufferUsageFlags additional_buffer_usage_flags = {});
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer

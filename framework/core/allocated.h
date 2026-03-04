@@ -79,8 +79,7 @@ void init(const DeviceType &device)
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 	}
 
-	if (device.get_gpu().is_extension_supported(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME) &&
-	    device.is_extension_enabled(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME) && device.is_extension_enabled(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
 	}
@@ -238,8 +237,9 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * pass a vector of items to the update method, which will then be copied into the buffer as bytes.
 	 *
 	 * This function DOES NOT automatically manage adhering to the alignment requirements of the items being copied,
-	 * for instance the `minUniformBufferOffsetAlignment` property of the [device](https://vulkan.gpuinfo.org/displaydevicelimit.php?name=minUniformBufferOffsetAlignment&platform=all).
-	 * If the data needs to be aligned on something other than `sizeof(T)`, the user must manage that themselves.
+	 * for instance the `minUniformBufferOffsetAlignment` property of the
+	 * [device](https://vulkan.gpuinfo.org/displaydevicelimit.php?name=minUniformBufferOffsetAlignment&platform=all). If the data needs to be aligned on
+	 * something other than `sizeof(T)`, the user must manage that themselves.
 	 * @param data The data vector to upload
 	 * @param offset The offset to start the copying into the mapped data
 	 * @deprecated Use the `updateTyped` method that uses the `vk::ArrayProxy` class instead.
@@ -287,8 +287,9 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * coupling is always present, so the `vk::ArrayProxy` may as well be used to our advantage here.
 	 *
 	 * @note This function DOES NOT automatically manage adhering to the alignment requirements of the items being copied,
-	 * for instance the `minUniformBufferOffsetAlignment` property of the [device](https://vulkan.gpuinfo.org/displaydevicelimit.php?name=minUniformBufferOffsetAlignment&platform=all).
-	 * If the data needs to be aligned on something other than `sizeof(T)`, the user must manage that themselves.
+	 * for instance the `minUniformBufferOffsetAlignment` property of the
+	 * [device](https://vulkan.gpuinfo.org/displaydevicelimit.php?name=minUniformBufferOffsetAlignment&platform=all). If the data needs to be aligned on
+	 * something other than `sizeof(T)`, the user must manage that themselves.
 	 *
 	 * @todo create `updateTypedAligned` which has an additional argument specifying the required GPU alignment of the elements of the array.
 	 */
@@ -398,19 +399,16 @@ inline Allocated<bindingType, HandleType>::Allocated(Allocated &&other) noexcept
     mapped_data(std::exchange(other.mapped_data, {})),
     coherent(std::exchange(other.coherent, {})),
     persistent(std::exchange(other.persistent, {}))
-{
-}
+{}
 
 template <vkb::BindingType bindingType, typename HandleType>
 template <typename... Args>
 inline Allocated<bindingType, HandleType>::Allocated(const VmaAllocationCreateInfo &allocation_create_info, Args &&...args) :
-    ParentType{std::forward<Args>(args)...},
-    allocation_create_info(allocation_create_info)
+    ParentType{std::forward<Args>(args)...}, allocation_create_info(allocation_create_info)
 {}
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline Allocated<bindingType, HandleType>::Allocated(HandleType handle, vkb::core::Device<bindingType> *device_) :
-    ParentType(handle, device_)
+inline Allocated<bindingType, HandleType>::Allocated(HandleType handle, vkb::core::Device<bindingType> *device_) : ParentType(handle, device_)
 {}
 
 template <vkb::BindingType bindingType, typename HandleType>
@@ -428,7 +426,8 @@ inline void Allocated<bindingType, HandleType>::clear()
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline typename Allocated<bindingType, HandleType>::BufferType Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info, DeviceSizeType alignment)
+inline typename Allocated<bindingType, HandleType>::BufferType Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info,
+                                                                                                                 DeviceSizeType              alignment)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -449,24 +448,13 @@ inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::Buf
 	auto result = VK_SUCCESS;
 	if (alignment == 0)
 	{
-		result = vmaCreateBuffer(
-		    get_memory_allocator(),
-		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
-		    &allocation_create_info,
-		    reinterpret_cast<VkBuffer *>(&buffer),
-		    &allocation,
-		    &allocation_info);
+		result = vmaCreateBuffer(get_memory_allocator(), reinterpret_cast<VkBufferCreateInfo const *>(&create_info), &allocation_create_info,
+		                         reinterpret_cast<VkBuffer *>(&buffer), &allocation, &allocation_info);
 	}
 	else
 	{
-		result = vmaCreateBufferWithAlignment(
-		    get_memory_allocator(),
-		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
-		    &allocation_create_info,
-		    alignment,
-		    reinterpret_cast<VkBuffer *>(&buffer),
-		    &allocation,
-		    &allocation_info);
+		result = vmaCreateBufferWithAlignment(get_memory_allocator(), reinterpret_cast<VkBufferCreateInfo const *>(&create_info), &allocation_create_info,
+		                                      alignment, reinterpret_cast<VkBuffer *>(&buffer), &allocation, &allocation_info);
 	}
 
 	if (result != VK_SUCCESS)
@@ -514,12 +502,8 @@ inline vk::Image Allocated<bindingType, HandleType>::create_image_impl(vk::Image
 	}
 #endif
 
-	VkResult result = vmaCreateImage(get_memory_allocator(),
-	                                 reinterpret_cast<VkImageCreateInfo const *>(&create_info),
-	                                 &allocation_create_info,
-	                                 reinterpret_cast<VkImage *>(&image),
-	                                 &allocation,
-	                                 &allocation_info);
+	VkResult result = vmaCreateImage(get_memory_allocator(), reinterpret_cast<VkImageCreateInfo const *>(&create_info), &allocation_create_info,
+	                                 reinterpret_cast<VkImage *>(&image), &allocation, &allocation_info);
 
 	if (result != VK_SUCCESS)
 	{

@@ -145,53 +145,29 @@ void FragmentDensityMap::setup_samplers()
 void FragmentDensityMap::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: A reversed depth buffer is used for increased precision, so larger depth values are retained.
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
 	// Specify that these states will be dynamic, i.e. not part of the pipeline state object.
-	std::array<VkDynamicState, 2> dynamic_state_enables{
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::array<VkDynamicState, 2> dynamic_state_enables{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        vkb::to_u32(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), vkb::to_u32(dynamic_state_enables.size()), 0);
 
 	VkDevice device_handle = get_device().get_handle();
 	// Load our SPIR-V shaders.
@@ -199,11 +175,7 @@ void FragmentDensityMap::prepare_pipelines()
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        main_pass.meshes.pipeline.pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(main_pass.meshes.pipeline.pipeline_layout, render_pass, 0);
 
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
 	pipeline_create_info.pRasterizationState = &rasterization_state;
@@ -235,9 +207,8 @@ void FragmentDensityMap::prepare_pipelines()
 		vertex_input_state.vertexAttributeDescriptionCount = attribute_descriptions.size();
 
 		shader_stages[0] = load_shader("fragment_density_map/forward.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		shader_stages[1] = load_shader(
-		    is_debug_fdm_enabled() ? "fragment_density_map/forward_debug.frag.spv" : "fragment_density_map/forward.frag.spv",
-		    VK_SHADER_STAGE_FRAGMENT_BIT);
+		shader_stages[1] = load_shader(is_debug_fdm_enabled() ? "fragment_density_map/forward_debug.frag.spv" : "fragment_density_map/forward.frag.spv",
+		                               VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		pipeline_create_info.layout     = main_pass.meshes.pipeline.pipeline_layout;
 		pipeline_create_info.renderPass = render_pass;
@@ -257,9 +228,8 @@ void FragmentDensityMap::prepare_pipelines()
 		depth_stencil_state.depthWriteEnable = VK_FALSE;
 		depth_stencil_state.depthTestEnable  = VK_FALSE;
 		shader_stages[0]                     = quad_uvw_shader_stage;
-		shader_stages[1]                     = load_shader(
-            is_debug_fdm_enabled() ? "fragment_density_map/sky_debug.frag.spv" : "fragment_density_map/sky.frag.spv",
-		    VK_SHADER_STAGE_FRAGMENT_BIT);
+		shader_stages[1] =
+		    load_shader(is_debug_fdm_enabled() ? "fragment_density_map/sky_debug.frag.spv" : "fragment_density_map/sky.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// The vertex shader generates a full-screen quad procedurally.
 		// No vertex buffers are required because the vertex positions are computed in the shader itself.
@@ -305,7 +275,8 @@ void FragmentDensityMap::prepare_pipelines()
 			              .layout = fdm.generate.pipeline.pipeline_layout,
             };
 			VK_CHECK(vkCreateComputePipelines(device_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &fdm.generate.pipeline.pipeline));
-			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(fdm.generate.pipeline.pipeline), "Generate FDM Pipeline (compute)");
+			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(fdm.generate.pipeline.pipeline),
+			                           "Generate FDM Pipeline (compute)");
 		}
 		else
 		{
@@ -321,7 +292,8 @@ void FragmentDensityMap::prepare_pipelines()
 			shader_stages[1]                     = load_shader("fragment_density_map/generate_density_map.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			VK_CHECK(vkCreateGraphicsPipelines(device_handle, pipeline_cache, 1, &pipeline_create_info, nullptr, &fdm.generate.pipeline.pipeline));
-			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(fdm.generate.pipeline.pipeline), "Generate FDM Pipeline (fragment)");
+			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(fdm.generate.pipeline.pipeline),
+			                           "Generate FDM Pipeline (fragment)");
 		}
 	}
 }
@@ -342,11 +314,14 @@ void FragmentDensityMap::build_command_buffers()
 	render_pass_begin_info.pClearValues          = clear_values.data();
 
 	assert((main_pass.extend.height > 0) && (main_pass.extend.width > 0));
-	VkRect2D   main_scissor  = vkb::initializers::rect2D(main_pass.extend.width, main_pass.extend.height, 0, 0);
-	VkViewport main_viewport = vkb::initializers::viewport(static_cast<float>(main_scissor.extent.width), static_cast<float>(main_scissor.extent.height), 0.0f, 1.0f);
+	VkRect2D   main_scissor = vkb::initializers::rect2D(main_pass.extend.width, main_pass.extend.height, 0, 0);
+	VkViewport main_viewport =
+	    vkb::initializers::viewport(static_cast<float>(main_scissor.extent.width), static_cast<float>(main_scissor.extent.height), 0.0f, 1.0f);
 
-	VkRect2D   present_scissor  = vkb::initializers::rect2D(get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 0, 0);
-	VkViewport present_viewport = vkb::initializers::viewport(static_cast<float>(present_scissor.extent.width), static_cast<float>(present_scissor.extent.height), 0.0f, 1.0f);
+	VkRect2D present_scissor =
+	    vkb::initializers::rect2D(get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 0, 0);
+	VkViewport present_viewport =
+	    vkb::initializers::viewport(static_cast<float>(present_scissor.extent.width), static_cast<float>(present_scissor.extent.height), 0.0f, 1.0f);
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -394,28 +369,19 @@ void FragmentDensityMap::build_command_buffers()
 
 					debug_utils.cmd_begin_label(cmd_buffer, mesh_data.submesh->get_name().c_str(), glm::vec4());
 
-					vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, main_pass.meshes.pipeline.pipeline_layout, 0, 1, &main_pass.meshes.descriptor_sets[mesh_idx], 0, NULL);
+					vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, main_pass.meshes.pipeline.pipeline_layout, 0, 1,
+					                        &main_pass.meshes.descriptor_sets[mesh_idx], 0, NULL);
 
-					auto                   &vertex_buffer  = mesh_data.submesh->vertex_buffers.at("position");
-					auto                   &normal_buffer  = mesh_data.submesh->vertex_buffers.at("normal");
-					auto                   &uv_buffer      = mesh_data.submesh->vertex_buffers.at("texcoord_0");
-					std::array<VkBuffer, 3> vertex_buffers = {
-					    vertex_buffer.get_handle(),
-					    normal_buffer.get_handle(),
-					    uv_buffer.get_handle()};
+					auto                       &vertex_buffer  = mesh_data.submesh->vertex_buffers.at("position");
+					auto                       &normal_buffer  = mesh_data.submesh->vertex_buffers.at("normal");
+					auto                       &uv_buffer      = mesh_data.submesh->vertex_buffers.at("texcoord_0");
+					std::array<VkBuffer, 3>     vertex_buffers = {vertex_buffer.get_handle(), normal_buffer.get_handle(), uv_buffer.get_handle()};
 					std::array<VkDeviceSize, 3> vertex_offsets = {0, 0, 0};
 
-					vkCmdBindVertexBuffers(cmd_buffer, 0,
-					                       vertex_buffers.size(),
-					                       vertex_buffers.data(),
-					                       vertex_offsets.data());
-					vkCmdBindIndexBuffer(cmd_buffer,
-					                     mesh_data.submesh->index_buffer->get_handle(),
-					                     mesh_data.submesh->index_offset,
+					vkCmdBindVertexBuffers(cmd_buffer, 0, vertex_buffers.size(), vertex_buffers.data(), vertex_offsets.data());
+					vkCmdBindIndexBuffer(cmd_buffer, mesh_data.submesh->index_buffer->get_handle(), mesh_data.submesh->index_offset,
 					                     mesh_data.submesh->index_type);
-					vkCmdDrawIndexed(cmd_buffer,
-					                 mesh_data.submesh->vertex_indices,
-					                 1, 0, 0, 0);
+					vkCmdDrawIndexed(cmd_buffer, mesh_data.submesh->vertex_indices, 1, 0, 0, 0);
 
 					debug_utils.cmd_end_label(cmd_buffer);
 				}
@@ -432,15 +398,9 @@ void FragmentDensityMap::build_command_buffers()
 			{
 				VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
-				vkb::image_layout_transition(cmd_buffer,
-				                             fdm.image.image,
-				                             VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
-				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				                             VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
-				                             VK_ACCESS_SHADER_READ_BIT,
-				                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
-				                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				                             subresource_range);
+				vkb::image_layout_transition(cmd_buffer, fdm.image.image, VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
+				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT, VK_ACCESS_SHADER_READ_BIT,
+				                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 			}
 			render_pass_begin_info.renderArea.extent = present_scissor.extent;
 			render_pass_begin_info.renderPass        = present.render_pass;
@@ -470,15 +430,10 @@ void FragmentDensityMap::build_command_buffers()
 			if (is_show_fdm_enabled() && !is_update_fdm_enabled())
 			{
 				VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-				vkb::image_layout_transition(cmd_buffer,
-				                             fdm.image.image,
-				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				                             VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
-				                             VK_ACCESS_SHADER_READ_BIT,
-				                             VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
-				                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
-				                             subresource_range);
+				vkb::image_layout_transition(cmd_buffer, fdm.image.image, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				                             VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT, VK_ACCESS_SHADER_READ_BIT,
+				                             VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT, subresource_range);
 			}
 			debug_utils.cmd_end_label(cmd_buffer);
 		}
@@ -625,15 +580,11 @@ void FragmentDensityMap::load_assets()
 					bool        negative_scale   = glm::any(glm::lessThanEqual(node->get_transform().get_scale(), glm::vec3(0.0f)));
 					const auto &color_texture_it = mesh_material->textures.find("base_color_texture");
 					// Cull double-sided/transparent/negatively-scaled/non-textured meshes.
-					if (!negative_scale &&
-					    !mesh_material->double_sided &&
-					    mesh_material->alpha_mode == vkb::sg::AlphaMode::Opaque &&
+					if (!negative_scale && !mesh_material->double_sided && mesh_material->alpha_mode == vkb::sg::AlphaMode::Opaque &&
 					    color_texture_it != mesh_material->textures.end())
 					{
 						SubmeshData &mesh_data = scene_data.emplace_back(std::move(SubmeshData{
-						    .submesh            = submesh,
-						    .world_matrix       = node->get_transform().get_world_matrix(),
-						    .base_color_texture = color_texture_it->second}));
+						    .submesh = submesh, .world_matrix = node->get_transform().get_world_matrix(), .base_color_texture = color_texture_it->second}));
 					}
 					else
 					{
@@ -651,19 +602,17 @@ void FragmentDensityMap::setup_descriptor_pool_main_pass()
 	assert(main_pass.descriptor_pool == VK_NULL_HANDLE);
 	const uint32_t max_sets = vkb::to_u32(scene_data.size());
 
-	std::array<VkDescriptorPoolSize, 2> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, vkb::to_u32(scene_data.size())),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, vkb::to_u32(scene_data.size())),
-	    };
+	std::array<VkDescriptorPoolSize, 2> pool_sizes = {
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, vkb::to_u32(scene_data.size())),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, vkb::to_u32(scene_data.size())),
+	};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        vkb::to_u32(pool_sizes.size()),
-	        pool_sizes.data(), max_sets);
+	    vkb::initializers::descriptor_pool_create_info(vkb::to_u32(pool_sizes.size()), pool_sizes.data(), max_sets);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &main_pass.descriptor_pool));
-	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(main_pass.descriptor_pool), "Main pass descriptor pool");
+	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(main_pass.descriptor_pool),
+	                           "Main pass descriptor pool");
 }
 
 void FragmentDensityMap::setup_additional_descriptor_pool()
@@ -671,17 +620,14 @@ void FragmentDensityMap::setup_additional_descriptor_pool()
 	vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
 	const uint32_t max_sets = 2;        // generate_fdm + present.
 
-	std::array<VkDescriptorPoolSize, 3> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1),
-	    };
+	std::array<VkDescriptorPoolSize, 3> pool_sizes = {
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1),
+	};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        vkb::to_u32(pool_sizes.size()),
-	        pool_sizes.data(), max_sets);
+	    vkb::initializers::descriptor_pool_create_info(vkb::to_u32(pool_sizes.size()), pool_sizes.data(), max_sets);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 	debug_utils.set_debug_name(get_device().get_handle(), VK_OBJECT_TYPE_DESCRIPTOR_POOL, get_object_handle(descriptor_pool), "Additional Descriptor Pool");
@@ -695,58 +641,44 @@ void FragmentDensityMap::setup_descriptor_set_layout_main_pass()
 
 	// Main pass glTF-submesh.
 	{
-		std::array<VkDescriptorSetLayoutBinding, 2> set_layout_bindings =
-		    {
-		        // Binding 0 : Vertex shader uniform buffer.
-		        vkb::initializers::descriptor_set_layout_binding(
-		            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		            VK_SHADER_STAGE_VERTEX_BIT,
-		            0),
-		        // Binding 1 : Fragment shader combined sampler.
-		        vkb::initializers::descriptor_set_layout_binding(
-		            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		            VK_SHADER_STAGE_FRAGMENT_BIT,
-		            1),
-		    };
+		std::array<VkDescriptorSetLayoutBinding, 2> set_layout_bindings = {
+		    // Binding 0 : Vertex shader uniform buffer.
+		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+		    // Binding 1 : Fragment shader combined sampler.
+		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+		};
 
 		descriptor_layout_create_info =
-		    vkb::initializers::descriptor_set_layout_create_info(
-		        set_layout_bindings.data(),
-		        vkb::to_u32(set_layout_bindings.size()));
+		    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), vkb::to_u32(set_layout_bindings.size()));
 
-		pipeline_layout_create_info =
-		    vkb::initializers::pipeline_layout_create_info(
-		        &main_pass.meshes.pipeline.set_layout, 1);
+		pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&main_pass.meshes.pipeline.set_layout, 1);
 
 		assert(main_pass.meshes.pipeline.set_layout == VK_NULL_HANDLE);
 		VK_CHECK(vkCreateDescriptorSetLayout(device_handle, &descriptor_layout_create_info, nullptr, &main_pass.meshes.pipeline.set_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-		                           get_object_handle(main_pass.meshes.pipeline.set_layout), "Submeshes Descriptor Set Layout");
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, get_object_handle(main_pass.meshes.pipeline.set_layout),
+		                           "Submeshes Descriptor Set Layout");
 
 		assert(main_pass.meshes.pipeline.pipeline_layout == VK_NULL_HANDLE);
 		VK_CHECK(vkCreatePipelineLayout(device_handle, &pipeline_layout_create_info, nullptr, &main_pass.meshes.pipeline.pipeline_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-		                           get_object_handle(main_pass.meshes.pipeline.pipeline_layout), "Submeshes Pipeline Layout");
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT, get_object_handle(main_pass.meshes.pipeline.pipeline_layout),
+		                           "Submeshes Pipeline Layout");
 	}
 
 	// Sky
 	{
-		descriptor_layout_create_info =
-		    vkb::initializers::descriptor_set_layout_create_info(nullptr, 0);
+		descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(nullptr, 0);
 
-		pipeline_layout_create_info =
-		    vkb::initializers::pipeline_layout_create_info(
-		        &main_pass.sky_pipeline.set_layout, 1);
+		pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&main_pass.sky_pipeline.set_layout, 1);
 
 		assert(main_pass.sky_pipeline.set_layout == VK_NULL_HANDLE);
 		VK_CHECK(vkCreateDescriptorSetLayout(device_handle, &descriptor_layout_create_info, nullptr, &main_pass.sky_pipeline.set_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-		                           get_object_handle(main_pass.sky_pipeline.set_layout), "Sky Descriptor Set Layout");
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, get_object_handle(main_pass.sky_pipeline.set_layout),
+		                           "Sky Descriptor Set Layout");
 
 		assert(main_pass.sky_pipeline.pipeline_layout == VK_NULL_HANDLE);
 		VK_CHECK(vkCreatePipelineLayout(device_handle, &pipeline_layout_create_info, nullptr, &main_pass.sky_pipeline.pipeline_layout));
-		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-		                           get_object_handle(main_pass.sky_pipeline.pipeline_layout), "Sky Pipeline Layout");
+		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT, get_object_handle(main_pass.sky_pipeline.pipeline_layout),
+		                           "Sky Pipeline Layout");
 	}
 }
 
@@ -754,55 +686,36 @@ void FragmentDensityMap::setup_descriptor_set_layout_fdm()
 {
 	VkDescriptorSetLayoutCreateInfo             descriptor_layout_create_info;
 	VkPipelineLayoutCreateInfo                  pipeline_layout_create_info;
-	VkDevice                                    device_handle = get_device().get_handle();
-	std::array<VkDescriptorSetLayoutBinding, 2> compute_set_layout_bindings =
-	    {
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            VK_SHADER_STAGE_COMPUTE_BIT,
-	            0),
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-	            VK_SHADER_STAGE_COMPUTE_BIT,
-	            1),
-	    };
-	std::array<VkDescriptorSetLayoutBinding, 1> fragment_set_layout_bindings =
-	    {
-	        // Binding 0: Fragment shader uniform buffer.
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            VK_SHADER_STAGE_FRAGMENT_BIT,
-	            0)};
+	VkDevice                                    device_handle               = get_device().get_handle();
+	std::array<VkDescriptorSetLayoutBinding, 2> compute_set_layout_bindings = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1),
+	};
+	std::array<VkDescriptorSetLayoutBinding, 1> fragment_set_layout_bindings = {
+	    // Binding 0: Fragment shader uniform buffer.
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0)};
 
 	if (is_generate_fdm_compute())
 	{
 		descriptor_layout_create_info =
-		    vkb::initializers::descriptor_set_layout_create_info(
-		        compute_set_layout_bindings.data(),
-		        vkb::to_u32(compute_set_layout_bindings.size()));
+		    vkb::initializers::descriptor_set_layout_create_info(compute_set_layout_bindings.data(), vkb::to_u32(compute_set_layout_bindings.size()));
 	}
 	else
 	{
 		descriptor_layout_create_info =
-		    vkb::initializers::descriptor_set_layout_create_info(
-		        fragment_set_layout_bindings.data(),
-		        vkb::to_u32(fragment_set_layout_bindings.size()));
+		    vkb::initializers::descriptor_set_layout_create_info(fragment_set_layout_bindings.data(), vkb::to_u32(fragment_set_layout_bindings.size()));
 	}
 
-	pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &fdm.generate.pipeline.set_layout, 1);
+	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&fdm.generate.pipeline.set_layout, 1);
 
 	vkDestroyDescriptorSetLayout(device_handle, fdm.generate.pipeline.set_layout, nullptr);
 	VK_CHECK(vkCreateDescriptorSetLayout(device_handle, &descriptor_layout_create_info, nullptr, &fdm.generate.pipeline.set_layout));
-	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-	                           get_object_handle(fdm.generate.pipeline.set_layout),
+	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, get_object_handle(fdm.generate.pipeline.set_layout),
 	                           is_generate_fdm_compute() ? "Generate FDM (Compute) Descriptor Set Layout" : "Generate FDM (Fragment) Descriptor Set Layout");
 
 	vkDestroyPipelineLayout(device_handle, fdm.generate.pipeline.pipeline_layout, nullptr);
 	VK_CHECK(vkCreatePipelineLayout(device_handle, &pipeline_layout_create_info, nullptr, &fdm.generate.pipeline.pipeline_layout));
-	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-	                           get_object_handle(fdm.generate.pipeline.pipeline_layout),
+	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_PIPELINE_LAYOUT, get_object_handle(fdm.generate.pipeline.pipeline_layout),
 	                           is_generate_fdm_compute() ? "Generate FDM (Compute) Pipeline Layout" : "Generate FDM (Fragment) Pipeline Layout");
 }
 
@@ -810,30 +723,22 @@ void FragmentDensityMap::setup_descriptor_set_layout_present()
 {
 	VkDescriptorSetLayoutCreateInfo             descriptor_layout_create_info;
 	VkPipelineLayoutCreateInfo                  pipeline_layout_create_info;
-	VkDevice                                    device_handle = get_device().get_handle();
-	std::array<VkDescriptorSetLayoutBinding, 1> set_layout_bindings =
-	    {
-	        // Binding 0 : Fragment shader combined sampler.
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	            VK_SHADER_STAGE_FRAGMENT_BIT,
-	            0),
-	    };
+	VkDevice                                    device_handle       = get_device().get_handle();
+	std::array<VkDescriptorSetLayoutBinding, 1> set_layout_bindings = {
+	    // Binding 0 : Fragment shader combined sampler.
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+	};
 
-	descriptor_layout_create_info =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        vkb::to_u32(set_layout_bindings.size()));
+	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), vkb::to_u32(set_layout_bindings.size()));
 
-	pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &present.pipeline.set_layout, 1);
+	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&present.pipeline.set_layout, 1);
 
 	set_layout_bindings[0].pImmutableSamplers = (is_fdm_enabled() && !is_show_fdm_enabled()) ? &samplers.subsampled_nearest : &samplers.nearest;
 
 	vkDestroyDescriptorSetLayout(device_handle, present.pipeline.set_layout, nullptr);
 	VK_CHECK(vkCreateDescriptorSetLayout(device_handle, &descriptor_layout_create_info, nullptr, &present.pipeline.set_layout));
-	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, get_object_handle(present.pipeline.set_layout), "Present Descriptor Set Layout");
+	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, get_object_handle(present.pipeline.set_layout),
+	                           "Present Descriptor Set Layout");
 
 	vkDestroyPipelineLayout(device_handle, present.pipeline.pipeline_layout, nullptr);
 	VK_CHECK(vkCreatePipelineLayout(device_handle, &pipeline_layout_create_info, nullptr, &present.pipeline.pipeline_layout));
@@ -850,7 +755,8 @@ void FragmentDensityMap::setup_descriptor_set_main_pass()
 		auto &mesh_data       = scene_data[i];
 		auto &mesh_descriptor = main_pass.meshes.descriptor_sets[i];
 
-		VkDescriptorSetAllocateInfo descriptor_set_alloc_info = vkb::initializers::descriptor_set_allocate_info(main_pass.descriptor_pool, &main_pass.meshes.pipeline.set_layout, 1);
+		VkDescriptorSetAllocateInfo descriptor_set_alloc_info =
+		    vkb::initializers::descriptor_set_allocate_info(main_pass.descriptor_pool, &main_pass.meshes.pipeline.set_layout, 1);
 		VK_CHECK(vkAllocateDescriptorSets(device_handle, &descriptor_set_alloc_info, &mesh_descriptor));
 
 		std::string debug_name = fmt::format("Descriptor Set glTF submesh-{} <{}>", i, mesh_data.submesh->get_name());
@@ -859,13 +765,13 @@ void FragmentDensityMap::setup_descriptor_set_main_pass()
 		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*mesh_data.vertex_ubo);
 		VkDescriptorImageInfo  image_descriptor  = vkb::initializers::descriptor_image_info(
             mesh_data.base_color_texture->get_sampler()->get_core_sampler().get_handle(),
-            mesh_data.base_color_texture->get_image()->get_vk_image_view().get_handle(),
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		std::array<VkWriteDescriptorSet, 2> write_descriptor_sets =
-		    {
-		        vkb::initializers::write_descriptor_set(mesh_descriptor, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer.
-		        vkb::initializers::write_descriptor_set(mesh_descriptor, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map.
-		    };
+            mesh_data.base_color_texture->get_image()->get_vk_image_view().get_handle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		std::array<VkWriteDescriptorSet, 2> write_descriptor_sets = {
+		    vkb::initializers::write_descriptor_set(mesh_descriptor, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0,
+		                                            &buffer_descriptor),        // Binding 0 : Vertex shader uniform buffer.
+		    vkb::initializers::write_descriptor_set(mesh_descriptor, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+		                                            &image_descriptor)        // Binding 1 : Color map.
+		};
 		vkUpdateDescriptorSets(device_handle, vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 	}
 }
@@ -874,44 +780,33 @@ void FragmentDensityMap::setup_descriptor_set_fdm()
 {
 	VkDescriptorSetAllocateInfo descriptor_set_alloc_info;
 	VkDevice                    device_handle = get_device().get_handle();
-	descriptor_set_alloc_info                 = vkb::initializers::descriptor_set_allocate_info(
-        descriptor_pool, &fdm.generate.pipeline.set_layout, 1);
+	descriptor_set_alloc_info                 = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &fdm.generate.pipeline.set_layout, 1);
 	VK_CHECK(vkAllocateDescriptorSets(device_handle, &descriptor_set_alloc_info, &fdm.generate.set));
 
-	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET,
-	                           get_object_handle(fdm.generate.set),
-	                           is_generate_fdm_compute() ? "Descriptor set Generate FDM (Compute)" :
-	                                                       "Descriptor set Generate FDM (Fragment)");
+	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET, get_object_handle(fdm.generate.set),
+	                           is_generate_fdm_compute() ? "Descriptor set Generate FDM (Compute)" : "Descriptor set Generate FDM (Fragment)");
 
-	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*fdm.ubo);
-	VkDescriptorImageInfo  image_descriptor  = vkb::initializers::descriptor_image_info(
-        samplers.nearest,
-        fdm.image.view,
-        VK_IMAGE_LAYOUT_GENERAL);
+	VkDescriptorBufferInfo              buffer_descriptor = create_descriptor(*fdm.ubo);
+	VkDescriptorImageInfo               image_descriptor  = vkb::initializers::descriptor_image_info(samplers.nearest, fdm.image.view, VK_IMAGE_LAYOUT_GENERAL);
 	std::array<VkWriteDescriptorSet, 2> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(fdm.generate.set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(fdm.generate.set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor)};
-	vkUpdateDescriptorSets(device_handle,
-	                       is_generate_fdm_compute() ? vkb::to_u32(write_descriptor_sets.size()) : 1u,
-	                       write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(device_handle, is_generate_fdm_compute() ? vkb::to_u32(write_descriptor_sets.size()) : 1u, write_descriptor_sets.data(), 0, NULL);
 }
 
 void FragmentDensityMap::setup_descriptor_set_present()
 {
 	VkDescriptorSetAllocateInfo descriptor_set_alloc_info;
 	VkDevice                    device_handle = get_device().get_handle();
-	descriptor_set_alloc_info                 = vkb::initializers::descriptor_set_allocate_info(
-        descriptor_pool, &present.pipeline.set_layout, 1);
+	descriptor_set_alloc_info                 = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &present.pipeline.set_layout, 1);
 	VK_CHECK(vkAllocateDescriptorSets(device_handle, &descriptor_set_alloc_info, &present.set));
 	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_DESCRIPTOR_SET, get_object_handle(present.set), "Descriptor set Present");
 
-	VkDescriptorImageInfo image_descriptor = vkb::initializers::descriptor_image_info(
-	    (is_fdm_enabled() && !is_show_fdm_enabled()) ? samplers.subsampled_nearest : samplers.nearest,
-	    is_show_fdm_enabled() ? fdm.image.view : main_pass.image.view,
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	VkDescriptorImageInfo image_descriptor =
+	    vkb::initializers::descriptor_image_info((is_fdm_enabled() && !is_show_fdm_enabled()) ? samplers.subsampled_nearest : samplers.nearest,
+	                                             is_show_fdm_enabled() ? fdm.image.view : main_pass.image.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	std::array<VkWriteDescriptorSet, 1> write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(
-	        present.set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &image_descriptor)};
+	    vkb::initializers::write_descriptor_set(present.set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &image_descriptor)};
 	vkUpdateDescriptorSets(device_handle, vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
@@ -920,15 +815,14 @@ void FragmentDensityMap::prepare_uniform_buffers_main_pass()
 	// Create uniform buffers for each glTF-submesh.
 	for (auto &mesh_data : scene_data)
 	{
-		mesh_data.vertex_ubo = std::make_unique<vkb::core::BufferC>(
-		    get_device(), sizeof(UBOVS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		mesh_data.vertex_ubo =
+		    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(UBOVS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 }
 
 void FragmentDensityMap::prepare_uniform_buffers_fdm()
 {
-	fdm.ubo = std::make_unique<vkb::core::BufferC>(
-	    get_device(), sizeof(FDMUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	fdm.ubo      = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(FDMUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	fdm.ubo_data = {};        // Reset so that the GPU UBO is updated.
 	update_uniform_buffer(0.0f);
 }
@@ -937,8 +831,7 @@ void FragmentDensityMap::update_uniform_buffer(float delta_time)
 {
 	// Main pass glTF-submeshes UBO.
 	{
-		UBOVS ubo_vs{
-		    .projection = camera.matrices.perspective};
+		UBOVS ubo_vs{.projection = camera.matrices.perspective};
 
 		for (auto &mesh_data : scene_data)
 		{
@@ -968,11 +861,10 @@ void FragmentDensityMap::update_uniform_buffer(float delta_time)
 		const float     rotating_center_radius = 0.12f * min_dimension;
 
 		FDMUBO new_fdm_data{
-		    .eye_center = {
-		        static_cast<float>(fdm.extend.width) * 0.5f + rotating_center_radius * sin(frame_angle),
-		        static_cast<float>(fdm.extend.height) * 0.5f + rotating_center_radius * cos(frame_angle),
-		        0.0f, 0.0f},
-		    .circle_radius = {min_dimension * radius_factor_1x1, min_dimension * radius_factor_1x2, min_dimension * radius_factor_2x2, min_dimension * radius_factor_2x4},
+		    .eye_center    = {static_cast<float>(fdm.extend.width) * 0.5f + rotating_center_radius * sin(frame_angle),
+		                      static_cast<float>(fdm.extend.height) * 0.5f + rotating_center_radius * cos(frame_angle), 0.0f, 0.0f},
+		    .circle_radius = {min_dimension * radius_factor_1x1, min_dimension * radius_factor_1x2, min_dimension * radius_factor_2x2,
+		                      min_dimension * radius_factor_2x4},
 		};
 
 		if (fdm.ubo_data != new_fdm_data)
@@ -1012,8 +904,7 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	available_options.supports_fdm = false;
 	if (gpu.is_extension_supported(VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME))
 	{
-		const auto &supported_extension_features =
-		    gpu.get_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>();
+		const auto &supported_extension_features = gpu.get_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>();
 
 		if (!supported_extension_features.fragmentDensityMap)
 		{
@@ -1048,22 +939,20 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	else
 	{
 		VkPhysicalDeviceProperties2KHR                  device_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-		VkPhysicalDeviceFragmentDensityMapPropertiesEXT physical_device_FRAGMENT_DENSITY_MAP_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT};
+		VkPhysicalDeviceFragmentDensityMapPropertiesEXT physical_device_FRAGMENT_DENSITY_MAP_properties{
+		    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT};
 		device_properties.pNext = &physical_device_FRAGMENT_DENSITY_MAP_properties;
 
 		vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);
 
-		LOGI("FDM enable: FDM min texel size={}x{} FDM max texel size={}x{}",
-		     physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.width,
+		LOGI("FDM enable: FDM min texel size={}x{} FDM max texel size={}x{}", physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.width,
 		     physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.height,
 		     physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.width,
 		     physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.height);
 
-		fdm.texel_size.width  = std::clamp(fdm.texel_size.width,
-		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.width,
+		fdm.texel_size.width  = std::clamp(fdm.texel_size.width, physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.width,
 		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.width);
-		fdm.texel_size.height = std::clamp(fdm.texel_size.height,
-		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.height,
+		fdm.texel_size.height = std::clamp(fdm.texel_size.height, physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.height,
 		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.height);
 	}
 	last_options = current_options;
@@ -1077,15 +966,8 @@ void FragmentDensityMap::write_density_map(VkCommandBuffer cmd_buffer)
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
 		// Clear the density map buffer by transitioning it from UNDEFINED.
-		vkb::image_layout_transition(cmd_buffer,
-		                             fdm.image.image,
-		                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		                             {},
-		                             VK_ACCESS_SHADER_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_GENERAL,
-		                             subresource_range);
+		vkb::image_layout_transition(cmd_buffer, fdm.image.image, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, {},
+		                             VK_ACCESS_SHADER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresource_range);
 
 		vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fdm.generate.pipeline.pipeline);
 		vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fdm.generate.pipeline.pipeline_layout, 0, 1, &fdm.generate.set, 0, nullptr);
@@ -1097,15 +979,9 @@ void FragmentDensityMap::write_density_map(VkCommandBuffer cmd_buffer)
 
 		if (is_fdm_enabled())
 		{
-			vkb::image_layout_transition(cmd_buffer,
-			                             fdm.image.image,
-			                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-			                             VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
-			                             VK_ACCESS_SHADER_WRITE_BIT,
-			                             VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
-			                             VK_IMAGE_LAYOUT_GENERAL,
-			                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
-			                             subresource_range);
+			vkb::image_layout_transition(cmd_buffer, fdm.image.image, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
+			                             VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT, VK_IMAGE_LAYOUT_GENERAL,
+			                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT, subresource_range);
 		}
 		debug_utils.cmd_end_label(cmd_buffer);
 	}
@@ -1113,10 +989,9 @@ void FragmentDensityMap::write_density_map(VkCommandBuffer cmd_buffer)
 	{
 		debug_utils.cmd_begin_label(cmd_buffer, "Write FDM (fragment)", glm::vec4());
 
-		VkClearValue clear_value{
-		    .color = {{0.0f, 0.0f, 0.0f, 0.0f}}};
-		VkRect2D   scissor  = vkb::initializers::rect2D(fdm.extend.width, fdm.extend.height, 0, 0);
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(scissor.extent.width), static_cast<float>(scissor.extent.height), 0.0f, 1.0f);
+		VkClearValue clear_value{.color = {{0.0f, 0.0f, 0.0f, 0.0f}}};
+		VkRect2D     scissor  = vkb::initializers::rect2D(fdm.extend.width, fdm.extend.height, 0, 0);
+		VkViewport   viewport = vkb::initializers::viewport(static_cast<float>(scissor.extent.width), static_cast<float>(scissor.extent.height), 0.0f, 1.0f);
 
 		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.renderPass            = fdm.generate.render_pass;
@@ -1129,12 +1004,7 @@ void FragmentDensityMap::write_density_map(VkCommandBuffer cmd_buffer)
 		vkCmdBeginRenderPass(cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fdm.generate.pipeline.pipeline);
 
-		vkCmdBindDescriptorSets(cmd_buffer,
-		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-		                        fdm.generate.pipeline.pipeline_layout,
-		                        0, 1,
-		                        &fdm.generate.set,
-		                        0, nullptr);
+		vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fdm.generate.pipeline.pipeline_layout, 0, 1, &fdm.generate.set, 0, nullptr);
 
 		vkCmdSetViewport(cmd_buffer, 0, 1, &viewport);
 		vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
@@ -1158,95 +1028,85 @@ void FragmentDensityMap::setup_render_pass()
 	VkDevice device_handle = get_device().get_handle();
 	// Main render pass (forward render).
 	{
-		std::array<VkAttachmentDescription2, 3> attachments{
-		    // Color attachment.
-		    VkAttachmentDescription2{
-		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
-		        .pNext          = nullptr,
-		        .flags          = 0,
-		        .format         = get_render_context().get_format(),
-		        .samples        = VK_SAMPLE_COUNT_1_BIT,
-		        .loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		        .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
-		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		        .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
-		        .finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-		    // Depth attachment.
-		    VkAttachmentDescription2{
-		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
-		        .pNext          = nullptr,
-		        .flags          = 0,
-		        .format         = depth_format,
-		        .samples        = VK_SAMPLE_COUNT_1_BIT,
-		        .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
-		        .storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR,
-		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		        .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
-		        .finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
+		std::array<VkAttachmentDescription2, 3> attachments{// Color attachment.
+		                                                    VkAttachmentDescription2{.sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		                                                                             .pNext          = nullptr,
+		                                                                             .flags          = 0,
+		                                                                             .format         = get_render_context().get_format(),
+		                                                                             .samples        = VK_SAMPLE_COUNT_1_BIT,
+		                                                                             .loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		                                                                             .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+		                                                                             .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		                                                                             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		                                                                             .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+		                                                                             .finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+		                                                    // Depth attachment.
+		                                                    VkAttachmentDescription2{.sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		                                                                             .pNext          = nullptr,
+		                                                                             .flags          = 0,
+		                                                                             .format         = depth_format,
+		                                                                             .samples        = VK_SAMPLE_COUNT_1_BIT,
+		                                                                             .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		                                                                             .storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		                                                                             .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		                                                                             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		                                                                             .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+		                                                                             .finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
 
-		    // Density map attachment.
-		    VkAttachmentDescription2{
-		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
-		        .pNext          = nullptr,
-		        .flags          = 0,
-		        .format         = VK_FORMAT_R8G8_UNORM,
-		        .samples        = VK_SAMPLE_COUNT_1_BIT,
-		        .loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD,
-		        .storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		        .initialLayout  = density_map_initial_layout,
-		        .finalLayout    = density_map_initial_layout}};
+		                                                    // Density map attachment.
+		                                                    VkAttachmentDescription2{.sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		                                                                             .pNext          = nullptr,
+		                                                                             .flags          = 0,
+		                                                                             .format         = VK_FORMAT_R8G8_UNORM,
+		                                                                             .samples        = VK_SAMPLE_COUNT_1_BIT,
+		                                                                             .loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD,
+		                                                                             .storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		                                                                             .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		                                                                             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		                                                                             .initialLayout  = density_map_initial_layout,
+		                                                                             .finalLayout    = density_map_initial_layout}};
 
-		VkAttachmentReference2 color_attachment_ref{
-		    .sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
-		    .pNext      = nullptr,
-		    .attachment = 0,
-		    .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
+		VkAttachmentReference2 color_attachment_ref{.sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
+		                                            .pNext      = nullptr,
+		                                            .attachment = 0,
+		                                            .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                                            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
 
-		VkAttachmentReference2 depth_reference = {
-		    .sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
-		    .pNext      = nullptr,
-		    .attachment = 1,
-		    .layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-		    .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT};
+		VkAttachmentReference2 depth_reference = {.sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
+		                                          .pNext      = nullptr,
+		                                          .attachment = 1,
+		                                          .layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		                                          .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT};
 
-		VkSubpassDescription2 subpass{
-		    .sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
-		    .pNext                   = nullptr,
-		    .flags                   = 0,
-		    .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
-		    .viewMask                = 0u,
-		    .inputAttachmentCount    = 0,
-		    .pInputAttachments       = nullptr,
-		    .colorAttachmentCount    = 1,
-		    .pColorAttachments       = &color_attachment_ref,
-		    .pResolveAttachments     = nullptr,
-		    .pDepthStencilAttachment = &depth_reference,
-		    .preserveAttachmentCount = 0,
-		    .pPreserveAttachments    = nullptr};
+		VkSubpassDescription2 subpass{.sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
+		                              .pNext                   = nullptr,
+		                              .flags                   = 0,
+		                              .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                              .viewMask                = 0u,
+		                              .inputAttachmentCount    = 0,
+		                              .pInputAttachments       = nullptr,
+		                              .colorAttachmentCount    = 1,
+		                              .pColorAttachments       = &color_attachment_ref,
+		                              .pResolveAttachments     = nullptr,
+		                              .pDepthStencilAttachment = &depth_reference,
+		                              .preserveAttachmentCount = 0,
+		                              .pPreserveAttachments    = nullptr};
 
-		VkSubpassDependency2 dependency{
-		    .sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
-		    .pNext           = nullptr,
-		    .srcSubpass      = 0,
-		    .dstSubpass      = VK_SUBPASS_EXTERNAL,
-		    .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		    .dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-		    .srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		    .dstAccessMask   = VK_ACCESS_SHADER_READ_BIT,
-		    .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-		    .viewOffset      = 0};
+		VkSubpassDependency2 dependency{.sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
+		                                .pNext           = nullptr,
+		                                .srcSubpass      = 0,
+		                                .dstSubpass      = VK_SUBPASS_EXTERNAL,
+		                                .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                .dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		                                .srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                .dstAccessMask   = VK_ACCESS_SHADER_READ_BIT,
+		                                .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+		                                .viewOffset      = 0};
 
 		VkRenderPassFragmentDensityMapCreateInfoEXT density_map_info{
 		    .sType = VK_STRUCTURE_TYPE_RENDER_PASS_FRAGMENT_DENSITY_MAP_CREATE_INFO_EXT,
 		    .pNext = nullptr,
-		    .fragmentDensityMapAttachment{
-		        .attachment = 2,
-		        .layout     = density_map_initial_layout},
+		    .fragmentDensityMapAttachment{.attachment = 2, .layout = density_map_initial_layout},
 		};
 
 		VkRenderPassCreateInfo2 render_pass_info{
@@ -1271,66 +1131,60 @@ void FragmentDensityMap::setup_render_pass()
 	// Write FDM (fragment).
 	if (is_fdm_enabled() && !is_generate_fdm_compute())
 	{
-		std::array<VkAttachmentDescription2, 1> attachments{
-		    VkAttachmentDescription2{
-		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
-		        .pNext          = nullptr,
-		        .flags          = 0,
-		        .format         = VK_FORMAT_R8G8_UNORM,
-		        .samples        = VK_SAMPLE_COUNT_1_BIT,
-		        .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
-		        .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
-		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		        .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
-		        .finalLayout    = VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT}};
+		std::array<VkAttachmentDescription2, 1> attachments{VkAttachmentDescription2{.sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		                                                                             .pNext          = nullptr,
+		                                                                             .flags          = 0,
+		                                                                             .format         = VK_FORMAT_R8G8_UNORM,
+		                                                                             .samples        = VK_SAMPLE_COUNT_1_BIT,
+		                                                                             .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		                                                                             .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+		                                                                             .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		                                                                             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		                                                                             .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+		                                                                             .finalLayout    = VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT}};
 
-		VkAttachmentReference2 attachment_ref{
-		    .sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
-		    .pNext      = nullptr,
-		    .attachment = 0,
-		    .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
+		VkAttachmentReference2 attachment_ref{.sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
+		                                      .pNext      = nullptr,
+		                                      .attachment = 0,
+		                                      .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                                      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
 
-		VkSubpassDescription2 subpass{
-		    .sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
-		    .pNext                   = nullptr,
-		    .flags                   = 0,
-		    .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
-		    .viewMask                = 0,
-		    .inputAttachmentCount    = 0,
-		    .pInputAttachments       = nullptr,
-		    .colorAttachmentCount    = 1,
-		    .pColorAttachments       = &attachment_ref,
-		    .pResolveAttachments     = nullptr,
-		    .pDepthStencilAttachment = nullptr,
-		    .preserveAttachmentCount = 0,
-		    .pPreserveAttachments    = nullptr};
+		VkSubpassDescription2 subpass{.sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
+		                              .pNext                   = nullptr,
+		                              .flags                   = 0,
+		                              .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                              .viewMask                = 0,
+		                              .inputAttachmentCount    = 0,
+		                              .pInputAttachments       = nullptr,
+		                              .colorAttachmentCount    = 1,
+		                              .pColorAttachments       = &attachment_ref,
+		                              .pResolveAttachments     = nullptr,
+		                              .pDepthStencilAttachment = nullptr,
+		                              .preserveAttachmentCount = 0,
+		                              .pPreserveAttachments    = nullptr};
 
-		VkSubpassDependency2 dependency{
-		    .sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
-		    .pNext           = nullptr,
-		    .srcSubpass      = VK_SUBPASS_EXTERNAL,
-		    .dstSubpass      = 0,
-		    .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		    .dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		    .srcAccessMask   = 0,
-		    .dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		    .dependencyFlags = 0,
-		    .viewOffset      = 0};
+		VkSubpassDependency2 dependency{.sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
+		                                .pNext           = nullptr,
+		                                .srcSubpass      = VK_SUBPASS_EXTERNAL,
+		                                .dstSubpass      = 0,
+		                                .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                .dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                .srcAccessMask   = 0,
+		                                .dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                .dependencyFlags = 0,
+		                                .viewOffset      = 0};
 
-		VkRenderPassCreateInfo2 render_pass_info{
-		    .sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,
-		    .pNext                   = nullptr,
-		    .flags                   = 0,
-		    .attachmentCount         = attachments.size(),
-		    .pAttachments            = attachments.data(),
-		    .subpassCount            = 1,
-		    .pSubpasses              = &subpass,
-		    .dependencyCount         = 1,
-		    .pDependencies           = &dependency,
-		    .correlatedViewMaskCount = 0,
-		    .pCorrelatedViewMasks    = nullptr};
+		VkRenderPassCreateInfo2 render_pass_info{.sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,
+		                                         .pNext                   = nullptr,
+		                                         .flags                   = 0,
+		                                         .attachmentCount         = attachments.size(),
+		                                         .pAttachments            = attachments.data(),
+		                                         .subpassCount            = 1,
+		                                         .pSubpasses              = &subpass,
+		                                         .dependencyCount         = 1,
+		                                         .pDependencies           = &dependency,
+		                                         .correlatedViewMaskCount = 0,
+		                                         .pCorrelatedViewMasks    = nullptr};
 
 		vkDestroyRenderPass(device_handle, fdm.generate.render_pass, nullptr);
 		VK_CHECK(vkCreateRenderPass2KHR(device_handle, &render_pass_info, nullptr, &fdm.generate.render_pass));
@@ -1338,66 +1192,60 @@ void FragmentDensityMap::setup_render_pass()
 	}
 	// Present
 	{
-		std::array<VkAttachmentDescription2, 1> attachments{
-		    VkAttachmentDescription2{
-		        .sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
-		        .pNext          = nullptr,
-		        .flags          = 0,
-		        .format         = get_render_context().get_format(),
-		        .samples        = VK_SAMPLE_COUNT_1_BIT,
-		        .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
-		        .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
-		        .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		        .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
-		        .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR}};
+		std::array<VkAttachmentDescription2, 1> attachments{VkAttachmentDescription2{.sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
+		                                                                             .pNext          = nullptr,
+		                                                                             .flags          = 0,
+		                                                                             .format         = get_render_context().get_format(),
+		                                                                             .samples        = VK_SAMPLE_COUNT_1_BIT,
+		                                                                             .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		                                                                             .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+		                                                                             .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		                                                                             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		                                                                             .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+		                                                                             .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR}};
 
-		VkAttachmentReference2 attachment_ref{
-		    .sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
-		    .pNext      = nullptr,
-		    .attachment = 0,
-		    .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
+		VkAttachmentReference2 attachment_ref{.sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
+		                                      .pNext      = nullptr,
+		                                      .attachment = 0,
+		                                      .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                                      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
 
-		VkSubpassDescription2 subpass{
-		    .sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
-		    .pNext                   = nullptr,
-		    .flags                   = 0,
-		    .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
-		    .viewMask                = 0,
-		    .inputAttachmentCount    = 0,
-		    .pInputAttachments       = nullptr,
-		    .colorAttachmentCount    = 1,
-		    .pColorAttachments       = &attachment_ref,
-		    .pResolveAttachments     = nullptr,
-		    .pDepthStencilAttachment = nullptr,
-		    .preserveAttachmentCount = 0,
-		    .pPreserveAttachments    = nullptr};
+		VkSubpassDescription2 subpass{.sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
+		                              .pNext                   = nullptr,
+		                              .flags                   = 0,
+		                              .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                              .viewMask                = 0,
+		                              .inputAttachmentCount    = 0,
+		                              .pInputAttachments       = nullptr,
+		                              .colorAttachmentCount    = 1,
+		                              .pColorAttachments       = &attachment_ref,
+		                              .pResolveAttachments     = nullptr,
+		                              .pDepthStencilAttachment = nullptr,
+		                              .preserveAttachmentCount = 0,
+		                              .pPreserveAttachments    = nullptr};
 
-		VkSubpassDependency2 dependency{
-		    .sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
-		    .pNext           = nullptr,
-		    .srcSubpass      = VK_SUBPASS_EXTERNAL,
-		    .dstSubpass      = 0,
-		    .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		    .dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		    .srcAccessMask   = 0,
-		    .dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		    .dependencyFlags = 0,
-		    .viewOffset      = 0};
+		VkSubpassDependency2 dependency{.sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
+		                                .pNext           = nullptr,
+		                                .srcSubpass      = VK_SUBPASS_EXTERNAL,
+		                                .dstSubpass      = 0,
+		                                .srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                .dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                .srcAccessMask   = 0,
+		                                .dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                .dependencyFlags = 0,
+		                                .viewOffset      = 0};
 
-		VkRenderPassCreateInfo2 render_pass_info{
-		    .sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,
-		    .pNext                   = nullptr,
-		    .flags                   = 0,
-		    .attachmentCount         = attachments.size(),
-		    .pAttachments            = attachments.data(),
-		    .subpassCount            = 1,
-		    .pSubpasses              = &subpass,
-		    .dependencyCount         = 1,
-		    .pDependencies           = &dependency,
-		    .correlatedViewMaskCount = 0,
-		    .pCorrelatedViewMasks    = nullptr};
+		VkRenderPassCreateInfo2 render_pass_info{.sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,
+		                                         .pNext                   = nullptr,
+		                                         .flags                   = 0,
+		                                         .attachmentCount         = attachments.size(),
+		                                         .pAttachments            = attachments.data(),
+		                                         .subpassCount            = 1,
+		                                         .pSubpasses              = &subpass,
+		                                         .dependencyCount         = 1,
+		                                         .pDependencies           = &dependency,
+		                                         .correlatedViewMaskCount = 0,
+		                                         .pCorrelatedViewMasks    = nullptr};
 
 		vkDestroyRenderPass(device_handle, present.render_pass, nullptr);
 		VK_CHECK(vkCreateRenderPass2KHR(device_handle, &render_pass_info, nullptr, &present.render_pass));
@@ -1410,19 +1258,16 @@ void FragmentDensityMap::setup_framebuffer()
 
 	// Main pass framebuffer.
 	{
-		std::array<VkImageView, 3> attachments{
-		    main_pass.image.view,
-		    depth_stencil.view,
-		    fdm.image.view};
-		VkFramebufferCreateInfo framebuffer_create_info{
-		    .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-		    .pNext           = nullptr,
-		    .renderPass      = render_pass,
-		    .attachmentCount = is_fdm_enabled() ? vkb::to_u32(attachments.size()) : (vkb::to_u32(attachments.size()) - 1u),
-		    .pAttachments    = attachments.data(),
-		    .width           = main_pass.extend.width,
-		    .height          = main_pass.extend.height,
-		    .layers          = 1};
+		std::array<VkImageView, 3> attachments{main_pass.image.view, depth_stencil.view, fdm.image.view};
+		VkFramebufferCreateInfo    framebuffer_create_info{.sType      = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+		                                                   .pNext      = nullptr,
+		                                                   .renderPass = render_pass,
+		                                                   .attachmentCount =
+                                                            is_fdm_enabled() ? vkb::to_u32(attachments.size()) : (vkb::to_u32(attachments.size()) - 1u),
+		                                                   .pAttachments = attachments.data(),
+		                                                   .width        = main_pass.extend.width,
+		                                                   .height       = main_pass.extend.height,
+		                                                   .layers       = 1};
 
 		vkDestroyFramebuffer(device_handle, main_pass.framebuffer, nullptr);
 		VK_CHECK(vkCreateFramebuffer(device_handle, &framebuffer_create_info, nullptr, &main_pass.framebuffer));
@@ -1440,14 +1285,13 @@ void FragmentDensityMap::setup_framebuffer()
 			}
 		}
 
-		VkFramebufferCreateInfo framebuffer_create_info{
-		    .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-		    .pNext           = nullptr,
-		    .renderPass      = present.render_pass,
-		    .attachmentCount = 1,
-		    .width           = get_render_context().get_surface_extent().width,
-		    .height          = get_render_context().get_surface_extent().height,
-		    .layers          = 1};
+		VkFramebufferCreateInfo framebuffer_create_info{.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+		                                                .pNext           = nullptr,
+		                                                .renderPass      = present.render_pass,
+		                                                .attachmentCount = 1,
+		                                                .width           = get_render_context().get_surface_extent().width,
+		                                                .height          = get_render_context().get_surface_extent().height,
+		                                                .layers          = 1};
 
 		// Create framebuffers for every swap chain image.
 		framebuffers.resize(get_render_context().get_render_frames().size());
@@ -1470,15 +1314,14 @@ void FragmentDensityMap::setup_framebuffer()
 		if (is_fdm_enabled() && !is_generate_fdm_compute())
 		{
 			std::array<VkImageView, 1> attachments{fdm.image.view};
-			VkFramebufferCreateInfo    framebuffer_create_info{
-			       .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-			       .pNext           = nullptr,
-			       .renderPass      = fdm.generate.render_pass,
-			       .attachmentCount = vkb::to_u32(attachments.size()),
-			       .pAttachments    = attachments.data(),
-			       .width           = fdm.extend.width,
-			       .height          = fdm.extend.height,
-			       .layers          = 1};
+			VkFramebufferCreateInfo    framebuffer_create_info{.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+			                                                   .pNext           = nullptr,
+			                                                   .renderPass      = fdm.generate.render_pass,
+			                                                   .attachmentCount = vkb::to_u32(attachments.size()),
+			                                                   .pAttachments    = attachments.data(),
+			                                                   .width           = fdm.extend.width,
+			                                                   .height          = fdm.extend.height,
+			                                                   .layers          = 1};
 
 			VK_CHECK(vkCreateFramebuffer(device_handle, &framebuffer_create_info, nullptr, &fdm.generate.framebuffer));
 			debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_FRAMEBUFFER, get_object_handle(fdm.generate.framebuffer), "Write FDM Framebuffer");
@@ -1494,16 +1337,13 @@ void FragmentDensityMap::update_extents()
 {
 	// Rendering at 4× the resolution to make performance improvements more noticeable.
 	glm::vec2 rendering_factor{4.0f, 4.0f};
-	fdm.extend = {
-	    std::max(1u,
-	             static_cast<uint32_t>(std::ceil(static_cast<float>(rendering_factor.x * get_render_context().get_surface_extent().width) / static_cast<float>(fdm.texel_size.width)))),
-	    std::max(1u,
-	             static_cast<uint32_t>(std::ceil(static_cast<float>(rendering_factor.y * get_render_context().get_surface_extent().height) / static_cast<float>(fdm.texel_size.height)))),
-	    1};
+	fdm.extend = {std::max(1u, static_cast<uint32_t>(std::ceil(static_cast<float>(rendering_factor.x * get_render_context().get_surface_extent().width) /
+	                                                           static_cast<float>(fdm.texel_size.width)))),
+	              std::max(1u, static_cast<uint32_t>(std::ceil(static_cast<float>(rendering_factor.y * get_render_context().get_surface_extent().height) /
+	                                                           static_cast<float>(fdm.texel_size.height)))),
+	              1};
 
-	main_pass.extend = {
-	    fdm.extend.width * fdm.texel_size.width,
-	    fdm.extend.height * fdm.texel_size.height};
+	main_pass.extend = {fdm.extend.width * fdm.texel_size.width, fdm.extend.height * fdm.texel_size.height};
 
 	camera.update_aspect_ratio(static_cast<float>(main_pass.extend.width) / static_cast<float>(main_pass.extend.height));
 }
@@ -1520,17 +1360,16 @@ void FragmentDensityMap::setup_depth_stencil()
 	// Create depth stencil image.
 	{
 		// This sample needs to add the subsampled flag so we cannot use the framework function.
-		VkImageCreateInfo image_create_info{
-		    .sType     = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-		    .flags     = is_fdm_enabled() ? VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT : 0u,
-		    .imageType = VK_IMAGE_TYPE_2D,
-		    .format    = depth_format,
-		    .extent{main_pass.extend.width, main_pass.extend.height, 1},
-		    .mipLevels   = 1,
-		    .arrayLayers = 1,
-		    .samples     = VK_SAMPLE_COUNT_1_BIT,
-		    .tiling      = VK_IMAGE_TILING_OPTIMAL,
-		    .usage       = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT};
+		VkImageCreateInfo image_create_info{.sType     = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		                                    .flags     = is_fdm_enabled() ? VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT : 0u,
+		                                    .imageType = VK_IMAGE_TYPE_2D,
+		                                    .format    = depth_format,
+		                                    .extent{main_pass.extend.width, main_pass.extend.height, 1},
+		                                    .mipLevels   = 1,
+		                                    .arrayLayers = 1,
+		                                    .samples     = VK_SAMPLE_COUNT_1_BIT,
+		                                    .tiling      = VK_IMAGE_TILING_OPTIMAL,
+		                                    .usage       = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT};
 
 		VkDevice device_handle = get_device().get_handle();
 		VK_CHECK(vkCreateImage(device_handle, &image_create_info, nullptr, &depth_stencil.image));
@@ -1539,10 +1378,10 @@ void FragmentDensityMap::setup_depth_stencil()
 		VkMemoryRequirements memReqs{};
 		vkGetImageMemoryRequirements(device_handle, depth_stencil.image, &memReqs);
 
-		VkMemoryAllocateInfo memory_allocation{
-		    .sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		    .allocationSize  = memReqs.size,
-		    .memoryTypeIndex = get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
+		VkMemoryAllocateInfo memory_allocation{.sType          = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		                                       .allocationSize = memReqs.size,
+		                                       .memoryTypeIndex =
+		                                           get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
 		VK_CHECK(vkAllocateMemory(device_handle, &memory_allocation, nullptr, &depth_stencil.mem));
 		VK_CHECK(vkBindImageMemory(device_handle, depth_stencil.image, depth_stencil.mem, 0));
 
@@ -1551,12 +1390,7 @@ void FragmentDensityMap::setup_depth_stencil()
 		    .image    = depth_stencil.image,
 		    .viewType = VK_IMAGE_VIEW_TYPE_2D,
 		    .format   = depth_format,
-		    .subresourceRange{
-		        .aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT,
-		        .baseMipLevel   = 0,
-		        .levelCount     = 1,
-		        .baseArrayLayer = 0,
-		        .layerCount     = 1}};
+		    .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1}};
 		// Stencil aspect should only be set on depth + stencil formats.
 		if (depth_format >= VK_FORMAT_D16_UNORM_S8_UINT)
 		{
@@ -1577,17 +1411,16 @@ void FragmentDensityMap::setup_color()
 
 	// Create images used to render the framebuffer.
 	// Note: We need to add the subsampled flag.
-	VkImageCreateInfo image_create_info{
-	    .sType     = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-	    .flags     = is_fdm_enabled() ? VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT : 0u,
-	    .imageType = VK_IMAGE_TYPE_2D,
-	    .format    = get_render_context().get_format(),
-	    .extent{main_pass.extend.width, main_pass.extend.height, 1},
-	    .mipLevels   = 1,
-	    .arrayLayers = 1,
-	    .samples     = VK_SAMPLE_COUNT_1_BIT,
-	    .tiling      = VK_IMAGE_TILING_OPTIMAL,
-	    .usage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT};
+	VkImageCreateInfo image_create_info{.sType     = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+	                                    .flags     = is_fdm_enabled() ? VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT : 0u,
+	                                    .imageType = VK_IMAGE_TYPE_2D,
+	                                    .format    = get_render_context().get_format(),
+	                                    .extent{main_pass.extend.width, main_pass.extend.height, 1},
+	                                    .mipLevels   = 1,
+	                                    .arrayLayers = 1,
+	                                    .samples     = VK_SAMPLE_COUNT_1_BIT,
+	                                    .tiling      = VK_IMAGE_TILING_OPTIMAL,
+	                                    .usage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT};
 
 	VkDevice device_handle = get_device().get_handle();
 	VK_CHECK(vkCreateImage(device_handle, &image_create_info, nullptr, &main_pass.image.image));
@@ -1597,27 +1430,25 @@ void FragmentDensityMap::setup_color()
 	VkMemoryRequirements mem_reqs{};
 	vkGetImageMemoryRequirements(device_handle, main_pass.image.image, &mem_reqs);
 
-	VkMemoryAllocateInfo mem_alloc{
-	    .sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-	    .allocationSize  = mem_reqs.size,
-	    .memoryTypeIndex = get_device().get_gpu().get_memory_type(mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
+	VkMemoryAllocateInfo mem_alloc{.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+	                               .allocationSize  = mem_reqs.size,
+	                               .memoryTypeIndex = get_device().get_gpu().get_memory_type(mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
 	VK_CHECK(vkAllocateMemory(device_handle, &mem_alloc, nullptr, &main_pass.image.mem));
 	VK_CHECK(vkBindImageMemory(device_handle, main_pass.image.image, main_pass.image.mem, 0));
 
-	VkImageViewCreateInfo image_view_create_info{
-	    .sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-	    .pNext            = nullptr,
-	    .image            = main_pass.image.image,
-	    .viewType         = VK_IMAGE_VIEW_TYPE_2D,
-	    .format           = get_render_context().get_format(),
-	    .components       = vkb::initializers::component_mapping(),
-	    .subresourceRange = {
-	        .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
-	        .baseMipLevel   = 0,
-	        .levelCount     = 1,
-	        .baseArrayLayer = 0,
-	        .layerCount     = 1,
-	    }};
+	VkImageViewCreateInfo image_view_create_info{.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+	                                             .pNext            = nullptr,
+	                                             .image            = main_pass.image.image,
+	                                             .viewType         = VK_IMAGE_VIEW_TYPE_2D,
+	                                             .format           = get_render_context().get_format(),
+	                                             .components       = vkb::initializers::component_mapping(),
+	                                             .subresourceRange = {
+	                                                 .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+	                                                 .baseMipLevel   = 0,
+	                                                 .levelCount     = 1,
+	                                                 .baseArrayLayer = 0,
+	                                                 .layerCount     = 1,
+	                                             }};
 	VK_CHECK(vkCreateImageView(device_handle, &image_view_create_info, nullptr, &main_pass.image.view));
 	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE_VIEW, get_object_handle(main_pass.image.view), "Main pass color image view");
 }
@@ -1668,17 +1499,16 @@ void FragmentDensityMap::setup_fragment_density_map()
 		return;
 	}
 
-	VkImageCreateInfo image_create_info{
-	    .sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-	    .flags       = 0u,
-	    .imageType   = VK_IMAGE_TYPE_2D,
-	    .format      = VK_FORMAT_R8G8_UNORM,
-	    .extent      = fdm.extend,
-	    .mipLevels   = 1,
-	    .arrayLayers = 1,
-	    .samples     = VK_SAMPLE_COUNT_1_BIT,
-	    .tiling      = VK_IMAGE_TILING_OPTIMAL,
-	    .usage       = 0u};
+	VkImageCreateInfo image_create_info{.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+	                                    .flags       = 0u,
+	                                    .imageType   = VK_IMAGE_TYPE_2D,
+	                                    .format      = VK_FORMAT_R8G8_UNORM,
+	                                    .extent      = fdm.extend,
+	                                    .mipLevels   = 1,
+	                                    .arrayLayers = 1,
+	                                    .samples     = VK_SAMPLE_COUNT_1_BIT,
+	                                    .tiling      = VK_IMAGE_TILING_OPTIMAL,
+	                                    .usage       = 0u};
 
 	if (is_generate_fdm_compute())
 	{
@@ -1706,28 +1536,26 @@ void FragmentDensityMap::setup_fragment_density_map()
 	VkMemoryRequirements mem_reqs{};
 	vkGetImageMemoryRequirements(device_handle, fdm.image.image, &mem_reqs);
 
-	VkMemoryAllocateInfo mem_alloc{
-	    .sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-	    .allocationSize  = mem_reqs.size,
-	    .memoryTypeIndex = get_device().get_gpu().get_memory_type(mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
+	VkMemoryAllocateInfo mem_alloc{.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+	                               .allocationSize  = mem_reqs.size,
+	                               .memoryTypeIndex = get_device().get_gpu().get_memory_type(mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
 	VK_CHECK(vkAllocateMemory(device_handle, &mem_alloc, nullptr, &fdm.image.mem));
 	VK_CHECK(vkBindImageMemory(device_handle, fdm.image.image, fdm.image.mem, 0));
 
-	VkImageViewCreateInfo image_view_create_info{
-	    .sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-	    .pNext            = nullptr,
-	    .flags            = is_update_fdm_enabled() ? VK_IMAGE_VIEW_CREATE_FRAGMENT_DENSITY_MAP_DYNAMIC_BIT_EXT : 0u,
-	    .image            = fdm.image.image,
-	    .viewType         = VK_IMAGE_VIEW_TYPE_2D,
-	    .format           = VK_FORMAT_R8G8_UNORM,
-	    .components       = vkb::initializers::component_mapping(),
-	    .subresourceRange = {
-	        .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
-	        .baseMipLevel   = 0,
-	        .levelCount     = 1,
-	        .baseArrayLayer = 0,
-	        .layerCount     = 1,
-	    }};
+	VkImageViewCreateInfo image_view_create_info{.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+	                                             .pNext            = nullptr,
+	                                             .flags            = is_update_fdm_enabled() ? VK_IMAGE_VIEW_CREATE_FRAGMENT_DENSITY_MAP_DYNAMIC_BIT_EXT : 0u,
+	                                             .image            = fdm.image.image,
+	                                             .viewType         = VK_IMAGE_VIEW_TYPE_2D,
+	                                             .format           = VK_FORMAT_R8G8_UNORM,
+	                                             .components       = vkb::initializers::component_mapping(),
+	                                             .subresourceRange = {
+	                                                 .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+	                                                 .baseMipLevel   = 0,
+	                                                 .levelCount     = 1,
+	                                                 .baseArrayLayer = 0,
+	                                                 .layerCount     = 1,
+	                                             }};
 	VK_CHECK(vkCreateImageView(device_handle, &image_view_create_info, nullptr, &fdm.image.view));
 
 	debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_IMAGE_VIEW, get_object_handle(fdm.image.view), "FDM Image View");
@@ -1735,19 +1563,18 @@ void FragmentDensityMap::setup_fragment_density_map()
 
 void FragmentDensityMap::prepare_gui()
 {
-	vkb::CounterSamplingConfig config{
-	    .mode  = vkb::CounterSamplingMode::Continuous,
-	    .speed = 0.1f};
-	get_stats().request_stats({
-	                              vkb::StatIndex::frame_times,
-	                              vkb::StatIndex::gpu_cycles,
-	                          },
-	                          config);
+	vkb::CounterSamplingConfig config{.mode = vkb::CounterSamplingMode::Continuous, .speed = 0.1f};
+	get_stats().request_stats(
+	    {
+	        vkb::StatIndex::frame_times,
+	        vkb::StatIndex::gpu_cycles,
+	    },
+	    config);
 
 	create_gui(*window, &get_stats(), 15.0f, true);
-	get_gui().prepare(pipeline_cache, present.render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	get_gui().prepare(
+	    pipeline_cache, present.render_pass,
+	    {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT), load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void FragmentDensityMap::on_update_ui_overlay(vkb::Drawer &drawer)

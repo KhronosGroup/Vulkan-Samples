@@ -24,8 +24,7 @@
 #include "gltf_loader.h"
 
 /* Initialize the static variable containing a vector of logic operations' labels for GUI */
-std::vector<std::string> LogicOpDynamicState::GUI_settings::logic_op_names =
-    LogicOpDynamicState::GUI_settings::init_logic_op_names();
+std::vector<std::string> LogicOpDynamicState::GUI_settings::logic_op_names = LogicOpDynamicState::GUI_settings::init_logic_op_names();
 
 LogicOpDynamicState::LogicOpDynamicState()
 {
@@ -151,13 +150,7 @@ void LogicOpDynamicState::build_command_buffers()
 		vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
 		/* Binding background pipeline and descriptor sets  */
-		vkCmdBindDescriptorSets(draw_cmd_buffer,
-		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-		                        pipeline_layouts.background,
-		                        0,
-		                        1,
-		                        &descriptor_sets.background,
-		                        0,
+		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.background, 0, 1, &descriptor_sets.background, 0,
 		                        VK_NULL_HANDLE);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
 
@@ -165,13 +158,7 @@ void LogicOpDynamicState::build_command_buffers()
 		draw_model(background_model, draw_cmd_buffer);
 
 		/* Binding baseline pipeline and descriptor sets */
-		vkCmdBindDescriptorSets(draw_cmd_buffer,
-		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-		                        pipeline_layouts.baseline,
-		                        0,
-		                        1,
-		                        &descriptor_sets.baseline,
-		                        0,
+		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.baseline, 0, 1, &descriptor_sets.baseline, 0,
 		                        VK_NULL_HANDLE);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.baseline);
 
@@ -242,25 +229,16 @@ void LogicOpDynamicState::create_pipeline()
 {
 	/* Setup for first pipeline */
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
 
 	rasterization_state.depthBiasConstantFactor = 1.0f;
 	rasterization_state.depthBiasSlopeFactor    = 1.0f;
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-	        VK_TRUE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_TRUE);
 
 	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
 	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -269,24 +247,18 @@ void LogicOpDynamicState::create_pipeline()
 	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	/* Enable logic operations */
 	color_blend_state.logicOpEnable = VK_TRUE;
 
 	/* Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept */
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
 	    VK_DYNAMIC_STATE_VIEWPORT,
@@ -296,10 +268,7 @@ void LogicOpDynamicState::create_pipeline()
 	    VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT,
 	};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	/* Binding description */
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -416,10 +385,7 @@ void LogicOpDynamicState::create_descriptor_pool()
 	};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, VK_NULL_HANDLE, &descriptor_pool));
 }
@@ -432,14 +398,8 @@ void LogicOpDynamicState::setup_descriptor_set_layout()
 {
 	/* First descriptor set */
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_VERTEX_BIT,
-	        0),
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_VERTEX_BIT,
-	        1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -447,10 +407,7 @@ void LogicOpDynamicState::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, VK_NULL_HANDLE, &descriptor_set_layouts.baseline));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layouts.baseline,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.baseline, 1);
 
 	/* Pass scene node information via push constants */
 	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(push_const_block), 0);
@@ -461,14 +418,8 @@ void LogicOpDynamicState::setup_descriptor_set_layout()
 
 	/* Second descriptor set */
 	set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_VERTEX_BIT,
-	        0),
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	        VK_SHADER_STAGE_FRAGMENT_BIT,
-	        1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
 
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
@@ -491,11 +442,7 @@ void LogicOpDynamicState::setup_descriptor_set_layout()
 void LogicOpDynamicState::create_descriptor_sets()
 {
 	/* First descriptor set */
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layouts.baseline,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.baseline, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.baseline));
 
@@ -503,45 +450,23 @@ void LogicOpDynamicState::create_descriptor_sets()
 	VkDescriptorBufferInfo matrix_baseline_buffer_descriptor = create_descriptor(*uniform_buffers.baseline);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.baseline,
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        0,
-	        &matrix_common_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.baseline,
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        1,
-	        &matrix_baseline_buffer_descriptor)};
+	    vkb::initializers::write_descriptor_set(descriptor_sets.baseline, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_common_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_sets.baseline, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &matrix_baseline_buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
-	                       write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 
 	/* Second descriptor set */
-	alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layouts.background,
-	        1);
+	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.background, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.background));
 
 	VkDescriptorImageInfo background_image_descriptor = create_descriptor(textures.envmap);
 
 	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.background,
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        0,
-	        &matrix_common_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.background,
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	        1,
-	        &background_image_descriptor)};
+	    vkb::initializers::write_descriptor_set(descriptor_sets.background, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_common_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_sets.background, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &background_image_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
-	                       write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
 /**
@@ -595,35 +520,20 @@ void LogicOpDynamicState::model_data_creation()
 	cube.index_count                      = index_count;
 
 	/* Array with vertices indexes for corresponding triangles */
-	std::array<uint32_t, index_count> indices{0, 4, 3, 7,
-	                                          UINT32_MAX,
-	                                          1, 0, 2, 3,
-	                                          UINT32_MAX,
-	                                          2, 6, 1, 5,
-	                                          UINT32_MAX,
-	                                          1, 5, 0, 4,
-	                                          UINT32_MAX,
-	                                          4, 5, 7, 6,
-	                                          UINT32_MAX,
-	                                          2, 3, 6, 7};
+	std::array<uint32_t, index_count> indices{0, 4, 3, 7, UINT32_MAX, 1, 0, 2, 3, UINT32_MAX, 2, 6, 1, 5, UINT32_MAX,
+	                                          1, 5, 0, 4, UINT32_MAX, 4, 5, 7, 6, UINT32_MAX, 2, 3, 6, 7};
 
 	vkb::core::BufferC vertex_pos_staging  = vkb::core::BufferC::create_staging_buffer(get_device(), vertices_pos);
 	vkb::core::BufferC vertex_norm_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices_norm);
 	vkb::core::BufferC index_staging       = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	cube.vertices_pos = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         vertex_buffer_size,
-	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                         VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.vertices_pos = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size,
+	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	cube.vertices_norm = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                          vertex_buffer_size,
-	                                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                          VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.vertices_norm = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size,
+	                                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	cube.indices = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	cube.indices = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
@@ -632,27 +542,12 @@ void LogicOpDynamicState::model_data_creation()
 	VkBufferCopy copy_region = {};
 
 	copy_region.size = vertex_buffer_size;
-	vkCmdCopyBuffer(
-	    copy_command,
-	    vertex_pos_staging.get_handle(),
-	    cube.vertices_pos->get_handle(),
-	    1,
-	    &copy_region);
+	vkCmdCopyBuffer(copy_command, vertex_pos_staging.get_handle(), cube.vertices_pos->get_handle(), 1, &copy_region);
 
-	vkCmdCopyBuffer(
-	    copy_command,
-	    vertex_norm_staging.get_handle(),
-	    cube.vertices_norm->get_handle(),
-	    1,
-	    &copy_region);
+	vkCmdCopyBuffer(copy_command, vertex_norm_staging.get_handle(), cube.vertices_norm->get_handle(), 1, &copy_region);
 
 	copy_region.size = index_buffer_size;
-	vkCmdCopyBuffer(
-	    copy_command,
-	    index_staging.get_handle(),
-	    cube.indices->get_handle(),
-	    1,
-	    &copy_region);
+	vkCmdCopyBuffer(copy_command, index_staging.get_handle(), cube.indices->get_handle(), 1, &copy_region);
 
 	get_device().flush_command_buffer(copy_command, queue, true);
 }

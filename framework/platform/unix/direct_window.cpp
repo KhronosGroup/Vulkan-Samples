@@ -29,135 +29,70 @@ namespace vkb
 {
 namespace
 {
-static KeyCode key_map[] = {
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Backspace,
-    KeyCode::Tab,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Enter,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Escape,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Unknown,
-    KeyCode::Space,
-    KeyCode::_1,
-    KeyCode::Apostrophe,
-    KeyCode::Backslash,
-    KeyCode::_4,
-    KeyCode::_5,
-    KeyCode::_7,
-    KeyCode::Apostrophe,
-    KeyCode::_9,
-    KeyCode::_0,
-    KeyCode::_8,
-    KeyCode::Equal,
-    KeyCode::Comma,
-    KeyCode::Minus,
-    KeyCode::Period,
-    KeyCode::Slash,
-    KeyCode::_0,
-    KeyCode::_1,
-    KeyCode::_2,
-    KeyCode::_3,
-    KeyCode::_4,
-    KeyCode::_5,
-    KeyCode::_6,
-    KeyCode::_7,
-    KeyCode::_8,
-    KeyCode::_9,
-    KeyCode::Semicolon,
-    KeyCode::Semicolon,
-    KeyCode::Comma,
-    KeyCode::Equal,
-    KeyCode::Period,
-    KeyCode::Slash,
-    KeyCode::_2,
-    KeyCode::A,
-    KeyCode::B,
-    KeyCode::C,
-    KeyCode::D,
-    KeyCode::E,
-    KeyCode::F,
-    KeyCode::G,
-    KeyCode::H,
-    KeyCode::I,
-    KeyCode::J,
-    KeyCode::K,
-    KeyCode::L,
-    KeyCode::M,
-    KeyCode::N,
-    KeyCode::O,
-    KeyCode::P,
-    KeyCode::Q,
-    KeyCode::R,
-    KeyCode::S,
-    KeyCode::T,
-    KeyCode::U,
-    KeyCode::V,
-    KeyCode::W,
-    KeyCode::X,
-    KeyCode::Y,
-    KeyCode::Z,
-    KeyCode::LeftBracket,
-    KeyCode::Backslash,
-    KeyCode::RightBracket,
-    KeyCode::_6,
-    KeyCode::Minus,
-    KeyCode::GraveAccent,
-    KeyCode::A,
-    KeyCode::B,
-    KeyCode::C,
-    KeyCode::D,
-    KeyCode::E,
-    KeyCode::F,
-    KeyCode::G,
-    KeyCode::H,
-    KeyCode::I,
-    KeyCode::J,
-    KeyCode::K,
-    KeyCode::L,
-    KeyCode::M,
-    KeyCode::N,
-    KeyCode::O,
-    KeyCode::P,
-    KeyCode::Q,
-    KeyCode::R,
-    KeyCode::S,
-    KeyCode::T,
-    KeyCode::U,
-    KeyCode::V,
-    KeyCode::W,
-    KeyCode::X,
-    KeyCode::Y,
-    KeyCode::Z,
-    KeyCode::LeftBracket,
-    KeyCode::Backslash,
-    KeyCode::RightBracket,
-    KeyCode::GraveAccent,
-    KeyCode::Backspace};
+static KeyCode key_map[] = {KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Backspace,   KeyCode::Tab,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Enter,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Escape,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Unknown,     KeyCode::Unknown,
+                            KeyCode::Space,       KeyCode::_1,
+                            KeyCode::Apostrophe,  KeyCode::Backslash,
+                            KeyCode::_4,          KeyCode::_5,
+                            KeyCode::_7,          KeyCode::Apostrophe,
+                            KeyCode::_9,          KeyCode::_0,
+                            KeyCode::_8,          KeyCode::Equal,
+                            KeyCode::Comma,       KeyCode::Minus,
+                            KeyCode::Period,      KeyCode::Slash,
+                            KeyCode::_0,          KeyCode::_1,
+                            KeyCode::_2,          KeyCode::_3,
+                            KeyCode::_4,          KeyCode::_5,
+                            KeyCode::_6,          KeyCode::_7,
+                            KeyCode::_8,          KeyCode::_9,
+                            KeyCode::Semicolon,   KeyCode::Semicolon,
+                            KeyCode::Comma,       KeyCode::Equal,
+                            KeyCode::Period,      KeyCode::Slash,
+                            KeyCode::_2,          KeyCode::A,
+                            KeyCode::B,           KeyCode::C,
+                            KeyCode::D,           KeyCode::E,
+                            KeyCode::F,           KeyCode::G,
+                            KeyCode::H,           KeyCode::I,
+                            KeyCode::J,           KeyCode::K,
+                            KeyCode::L,           KeyCode::M,
+                            KeyCode::N,           KeyCode::O,
+                            KeyCode::P,           KeyCode::Q,
+                            KeyCode::R,           KeyCode::S,
+                            KeyCode::T,           KeyCode::U,
+                            KeyCode::V,           KeyCode::W,
+                            KeyCode::X,           KeyCode::Y,
+                            KeyCode::Z,           KeyCode::LeftBracket,
+                            KeyCode::Backslash,   KeyCode::RightBracket,
+                            KeyCode::_6,          KeyCode::Minus,
+                            KeyCode::GraveAccent, KeyCode::A,
+                            KeyCode::B,           KeyCode::C,
+                            KeyCode::D,           KeyCode::E,
+                            KeyCode::F,           KeyCode::G,
+                            KeyCode::H,           KeyCode::I,
+                            KeyCode::J,           KeyCode::K,
+                            KeyCode::L,           KeyCode::M,
+                            KeyCode::N,           KeyCode::O,
+                            KeyCode::P,           KeyCode::Q,
+                            KeyCode::R,           KeyCode::S,
+                            KeyCode::T,           KeyCode::U,
+                            KeyCode::V,           KeyCode::W,
+                            KeyCode::X,           KeyCode::Y,
+                            KeyCode::Z,           KeyCode::LeftBracket,
+                            KeyCode::Backslash,   KeyCode::RightBracket,
+                            KeyCode::GraveAccent, KeyCode::Backspace};
 
 static KeyCode map_multichar_key(int tty_fd, KeyCode initial)
 {
@@ -212,9 +147,7 @@ static KeyCode map_multichar_key(int tty_fd, KeyCode initial)
 }
 
 }        // namespace
-DirectWindow::DirectWindow(Platform *platform, const Window::Properties &properties) :
-    Window(properties),
-    platform{platform}
+DirectWindow::DirectWindow(Platform *platform, const Window::Properties &properties) : Window(properties), platform{platform}
 {
 	// Setup tty for reading keyboard from console
 	if ((tty_fd = open("/dev/tty", O_RDWR | O_NDELAY)) > 0)
@@ -332,31 +265,25 @@ static std::vector<Candidate> find_display_candidates(VkPhysicalDevice phys_dev,
 				}
 
 				// Eliminate modes that don't fit the plane capabilities
-				if (mode.parameters.visibleRegion.width > caps.maxDstExtent.width ||
-				    mode.parameters.visibleRegion.height > caps.maxDstExtent.height ||
-				    mode.parameters.visibleRegion.width < caps.minDstExtent.width ||
-				    mode.parameters.visibleRegion.height < caps.minDstExtent.height)
+				if (mode.parameters.visibleRegion.width > caps.maxDstExtent.width || mode.parameters.visibleRegion.height > caps.maxDstExtent.height ||
+				    mode.parameters.visibleRegion.width < caps.minDstExtent.width || mode.parameters.visibleRegion.height < caps.minDstExtent.height)
 				{
 					continue;
 				}
 
-				if (window_mode == Window::Mode::Fullscreen ||
-				    window_mode == Window::Mode::FullscreenBorderless)
+				if (window_mode == Window::Mode::Fullscreen || window_mode == Window::Mode::FullscreenBorderless)
 				{
 					// For full-screen modes (where the src image is the same size as the
 					// display) we must also check the src extents are valid.
-					if (mode.parameters.visibleRegion.width > caps.maxSrcExtent.width ||
-					    mode.parameters.visibleRegion.height > caps.maxSrcExtent.height ||
-					    mode.parameters.visibleRegion.width < caps.minSrcExtent.width ||
-					    mode.parameters.visibleRegion.height < caps.minSrcExtent.height)
+					if (mode.parameters.visibleRegion.width > caps.maxSrcExtent.width || mode.parameters.visibleRegion.height > caps.maxSrcExtent.height ||
+					    mode.parameters.visibleRegion.width < caps.minSrcExtent.width || mode.parameters.visibleRegion.height < caps.minSrcExtent.height)
 					{
 						continue;
 					}
 				}
 
 				// Add to list of candidates
-				candidates.push_back(Candidate{display, *props, mode, caps, plane_index,
-				                               plane_properties[plane_index].currentStackIndex});
+				candidates.push_back(Candidate{display, *props, mode, caps, plane_index, plane_properties[plane_index].currentStackIndex});
 			}
 		}
 	}
@@ -389,8 +316,7 @@ VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice 
 	{
 		const Candidate &cand = candidates[c];
 
-		uint32_t area = cand.display_props.physicalResolution.width *
-		                cand.display_props.physicalResolution.height;
+		uint32_t area = cand.display_props.physicalResolution.width * cand.display_props.physicalResolution.height;
 
 		uint32_t diff = abs(static_cast<int32_t>(area) - static_cast<int32_t>(wanted_area));
 
@@ -408,8 +334,7 @@ VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice 
 	full_extent.height = best.mode.parameters.visibleRegion.height;
 
 	VkExtent2D image_extent;
-	if (properties.mode == Window::Mode::Fullscreen ||
-	    properties.mode == Window::Mode::FullscreenBorderless)
+	if (properties.mode == Window::Mode::Fullscreen || properties.mode == Window::Mode::FullscreenBorderless)
 	{
 		// Fullscreen & Borderless options create a surface that matches the display size
 		image_extent.width  = full_extent.width;
@@ -419,10 +344,8 @@ VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice 
 	{
 		// Normal and stretch options create a surface at the requested width & height
 		// clamped to the plane capabilities in play
-		image_extent.width  = std::min(best.caps.maxSrcExtent.width,
-		                               std::max(properties.extent.width, best.caps.minSrcExtent.width));
-		image_extent.height = std::min(best.caps.maxSrcExtent.height,
-		                               std::max(properties.extent.height, best.caps.minSrcExtent.height));
+		image_extent.width  = std::min(best.caps.maxSrcExtent.width, std::max(properties.extent.width, best.caps.minSrcExtent.width));
+		image_extent.height = std::min(best.caps.maxSrcExtent.height, std::max(properties.extent.height, best.caps.minSrcExtent.height));
 	}
 
 	// Calculate the display DPI
@@ -495,8 +418,7 @@ float DirectWindow::get_dpi_factor() const
 	return dpi / win_base_density;
 }
 
-bool DirectWindow::get_display_present_info(VkDisplayPresentInfoKHR *info,
-                                            uint32_t src_width, uint32_t src_height) const
+bool DirectWindow::get_display_present_info(VkDisplayPresentInfoKHR *info, uint32_t src_width, uint32_t src_height) const
 {
 	// Only stretch mode needs to supply a VkDisplayPresentInfoKHR
 	if (properties.mode != Window::Mode::FullscreenStretch || !info)

@@ -62,7 +62,8 @@ struct Passive
 }        // namespace tags
 
 /**
- * @brief Associate how plugins can interact with each other. This interoperability is decided by comparing tags of different plugins. The plugins inclusion and exclusion lists are populated by this function
+ * @brief Associate how plugins can interact with each other. This interoperability is decided by comparing tags of different plugins. The plugins inclusion and
+ * exclusion lists are populated by this function
  *
  * @param plugins A list of plugins which are used together
  * @return std::vector<Plugin *> A list of plugins which are used together
@@ -95,10 +96,8 @@ enum class Hook
 class Plugin
 {
   public:
-	Plugin(const std::string                                       name,
-	       const std::string                                       description,
-	       std::vector<std::pair<std::string, std::string>> const &commands = {},
-	       std::vector<std::pair<std::string, std::string>> const &options  = {}) :
+	Plugin(const std::string name, const std::string description, std::vector<std::pair<std::string, std::string>> const &commands = {},
+	       std::vector<std::pair<std::string, std::string>> const &options = {}) :
 	    name{name}, description{description}, commands{commands}, options{options} {};
 
 	virtual ~Plugin() = default;

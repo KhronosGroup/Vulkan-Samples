@@ -72,17 +72,20 @@ class RenderContext
 	using RenderTargetType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 	using SwapchainType    = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPSwapchain, vkb::Swapchain>::type;
 
-	using Extent2DType                       = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
-	using FormatType                         = typename std::conditional<bindingType == BindingType::Cpp, vk::Format, VkFormat>::type;
-	using ImageCompressionFixedRateFlagsType = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFixedRateFlagsEXT, VkImageCompressionFixedRateFlagsEXT>::type;
-	using ImageCompressionFlagsType          = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFlagsEXT, VkImageCompressionFlagsEXT>::type;
-	using ImageUsageFlagBitsType             = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageUsageFlagBits, VkImageUsageFlagBits>::type;
-	using PipelineStageFlagsType             = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineStageFlags, VkPipelineStageFlags>::type;
-	using PresentModeType                    = typename std::conditional<bindingType == BindingType::Cpp, vk::PresentModeKHR, VkPresentModeKHR>::type;
-	using SemaphoreType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
-	using SurfaceFormatType                  = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
-	using SurfaceTransformFlagBitsType       = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceTransformFlagBitsKHR, VkSurfaceTransformFlagBitsKHR>::type;
-	using SurfaceType                        = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using Extent2DType = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using FormatType   = typename std::conditional<bindingType == BindingType::Cpp, vk::Format, VkFormat>::type;
+	using ImageCompressionFixedRateFlagsType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFixedRateFlagsEXT, VkImageCompressionFixedRateFlagsEXT>::type;
+	using ImageCompressionFlagsType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFlagsEXT, VkImageCompressionFlagsEXT>::type;
+	using ImageUsageFlagBitsType = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageUsageFlagBits, VkImageUsageFlagBits>::type;
+	using PipelineStageFlagsType = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineStageFlags, VkPipelineStageFlags>::type;
+	using PresentModeType        = typename std::conditional<bindingType == BindingType::Cpp, vk::PresentModeKHR, VkPresentModeKHR>::type;
+	using SemaphoreType          = typename std::conditional<bindingType == BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
+	using SurfaceFormatType      = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
+	using SurfaceTransformFlagBitsType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceTransformFlagBitsKHR, VkSurfaceTransformFlagBitsKHR>::type;
+	using SurfaceType = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
 	/**
 	 * @brief Constructor
@@ -93,17 +96,11 @@ class RenderContext
 	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode
 	 * @param surface_format_priority_list The order in which the swapchain prioritizes selecting its surface format
 	 */
-	RenderContext(vkb::core::DeviceCpp                    &device,
-	              vk::SurfaceKHR                           surface,
-	              const vkb::Window                       &window,
-	              vk::PresentModeKHR                       present_mode                 = vk::PresentModeKHR::eFifo,
+	RenderContext(vkb::core::DeviceCpp &device, vk::SurfaceKHR surface, const vkb::Window &window, vk::PresentModeKHR present_mode = vk::PresentModeKHR::eFifo,
 	              const std::vector<vk::PresentModeKHR>   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
 	              const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                                                       {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}});
-	RenderContext(vkb::core::DeviceC                    &device,
-	              VkSurfaceKHR                           surface,
-	              const vkb::Window                     &window,
-	              VkPresentModeKHR                       present_mode                 = VK_PRESENT_MODE_FIFO_KHR,
+	RenderContext(vkb::core::DeviceC &device, VkSurfaceKHR surface, const vkb::Window &window, VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR,
 	              const std::vector<VkPresentModeKHR>   &present_mode_priority_list   = {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR},
 	              const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list = {{VK_FORMAT_R8G8B8A8_SRGB, VK_COLORSPACE_SRGB_NONLINEAR_KHR},
 	                                                                                     {VK_FORMAT_B8G8R8A8_SRGB, VK_COLORSPACE_SRGB_NONLINEAR_KHR}});
@@ -215,10 +212,8 @@ class RenderContext
 	 */
 	void submit(const std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &command_buffers);
 
-	SemaphoreType submit(const QueueType                                                           &queue,
-	                     const std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &command_buffers,
-	                     SemaphoreType                                                              wait_semaphore,
-	                     PipelineStageFlagsType                                                     wait_pipeline_stage);
+	SemaphoreType submit(const QueueType &queue, const std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &command_buffers,
+	                     SemaphoreType wait_semaphore, PipelineStageFlagsType wait_pipeline_stage);
 
 	/**
 	 * @brief Submits a command buffer related to a frame to a queue
@@ -263,12 +258,11 @@ class RenderContext
 	virtual void wait_frame();
 
   private:
-	void          initialize_swapchain(vk::SurfaceKHR surface, vk::PresentModeKHR present_movde, std::vector<vk::PresentModeKHR> const &present_mode_priority_list, std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list);
-	void          submit_impl(const std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> &command_buffers);
-	vk::Semaphore submit_impl(vkb::core::HPPQueue const                                       &queue,
-	                          std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> const &command_buffers,
-	                          vk::Semaphore                                                    wait_semaphore,
-	                          vk::PipelineStageFlags                                           wait_pipeline_stage);
+	void initialize_swapchain(vk::SurfaceKHR surface, vk::PresentModeKHR present_movde, std::vector<vk::PresentModeKHR> const &present_mode_priority_list,
+	                          std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list);
+	void submit_impl(const std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> &command_buffers);
+	vk::Semaphore submit_impl(vkb::core::HPPQueue const &queue, std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> const &command_buffers,
+	                          vk::Semaphore wait_semaphore, vk::PipelineStageFlags wait_pipeline_stage);
 	void          submit_impl(vkb::core::HPPQueue const &queue, std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> const &command_buffers);
 	void          update_swapchain_impl(vk::Extent2D const &extent, vk::SurfaceTransformFlagBitsKHR transform);
 
@@ -281,12 +275,12 @@ class RenderContext
 	std::vector<std::unique_ptr<vkb::rendering::RenderFrameCpp>> frames;
 	vk::SurfaceTransformFlagBitsKHR                              pre_transform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
 	bool                                                         prepared      = false;
-	const vkb::core::HPPQueue                                   &queue;        // If swapchain exists, then this will be a present supported queue, else a graphics queue
-	vk::Extent2D                                                 surface_extent;
-	std::unique_ptr<vkb::core::HPPSwapchain>                     swapchain;
-	vkb::core::HPPSwapchainProperties                            swapchain_properties;
-	size_t                                                       thread_count = 1;
-	const vkb::Window                                           &window;
+	const vkb::core::HPPQueue               &queue;        // If swapchain exists, then this will be a present supported queue, else a graphics queue
+	vk::Extent2D                             surface_extent;
+	std::unique_ptr<vkb::core::HPPSwapchain> swapchain;
+	vkb::core::HPPSwapchainProperties        swapchain_properties;
+	size_t                                   thread_count = 1;
+	const vkb::Window                       &window;
 };
 
 using RenderContextC   = RenderContext<vkb::BindingType::C>;
@@ -295,10 +289,7 @@ using RenderContextCpp = RenderContext<vkb::BindingType::Cpp>;
 // Member function definitions
 
 template <>
-inline RenderContextCpp::RenderContext(vkb::core::DeviceCpp                    &device,
-                                       vk::SurfaceKHR                           surface,
-                                       const vkb::Window                       &window,
-                                       vk::PresentModeKHR                       present_mode,
+inline RenderContextCpp::RenderContext(vkb::core::DeviceCpp &device, vk::SurfaceKHR surface, const vkb::Window &window, vk::PresentModeKHR present_mode,
                                        std::vector<vk::PresentModeKHR> const   &present_mode_priority_list,
                                        std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list) :
     device(device),
@@ -310,10 +301,7 @@ inline RenderContextCpp::RenderContext(vkb::core::DeviceCpp                    &
 }
 
 template <>
-inline RenderContextC::RenderContext(vkb::core::DeviceC                    &device,
-                                     VkSurfaceKHR                           surface,
-                                     const Window                          &window,
-                                     VkPresentModeKHR                       present_mode,
+inline RenderContextC::RenderContext(vkb::core::DeviceC &device, VkSurfaceKHR surface, const Window &window, VkPresentModeKHR present_mode,
                                      const std::vector<VkPresentModeKHR>   &present_mode_priority_list,
                                      const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list) :
     device(reinterpret_cast<vkb::core::DeviceCpp &>(device)),
@@ -321,15 +309,13 @@ inline RenderContextC::RenderContext(vkb::core::DeviceC                    &devi
     queue(reinterpret_cast<vkb::core::HPPQueue const &>(device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0))),
     surface_extent{window.get_extent().width, window.get_extent().height}
 {
-	initialize_swapchain(static_cast<vk::SurfaceKHR>(surface),
-	                     static_cast<vk::PresentModeKHR>(present_mode),
+	initialize_swapchain(static_cast<vk::SurfaceKHR>(surface), static_cast<vk::PresentModeKHR>(present_mode),
 	                     reinterpret_cast<std::vector<vk::PresentModeKHR> const &>(present_mode_priority_list),
 	                     reinterpret_cast<std::vector<vk::SurfaceFormatKHR> const &>(surface_format_priority_list));
 }
 
 template <vkb::BindingType bindingType>
-inline void RenderContext<bindingType>::initialize_swapchain(vk::SurfaceKHR                           surface,
-                                                             vk::PresentModeKHR                       present_mode,
+inline void RenderContext<bindingType>::initialize_swapchain(vk::SurfaceKHR surface, vk::PresentModeKHR present_mode,
                                                              std::vector<vk::PresentModeKHR> const   &present_mode_priority_list,
                                                              std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list)
 {
@@ -339,8 +325,8 @@ inline void RenderContext<bindingType>::initialize_swapchain(vk::SurfaceKHR     
 
 		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 		{
-			swapchain =
-			    std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
+			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list,
+			                                                      surface_extent);
 		}
 		else
 		{
@@ -669,11 +655,9 @@ inline void RenderContext<bindingType>::prepare(size_t thread_count, typename Re
 		// Otherwise, create a single RenderFrame
 		swapchain = nullptr;
 
-		auto color_image = vkb::core::HPPImage{device,
-		                                       vk::Extent3D{surface_extent.width, surface_extent.height, 1},
+		auto color_image = vkb::core::HPPImage{device, vk::Extent3D{surface_extent.width, surface_extent.height, 1},
 		                                       DEFAULT_VK_FORMAT,        // We can use any format here that we like
-		                                       vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
-		                                       VMA_MEMORY_USAGE_GPU_ONLY};
+		                                       vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_GPU_ONLY};
 
 		std::unique_ptr<HPPRenderTarget> render_target = create_render_target_func(std::move(color_image));
 		frames.emplace_back(std::make_unique<vkb::rendering::RenderFrameCpp>(device, std::move(render_target), thread_count));
@@ -796,10 +780,8 @@ inline void RenderContext<bindingType>::submit_impl(std::vector<std::shared_ptr<
 
 template <vkb::BindingType bindingType>
 inline typename RenderContext<bindingType>::SemaphoreType
-    RenderContext<bindingType>::submit(const QueueType                                                           &queue,
-                                       const std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &command_buffers,
-                                       SemaphoreType                                                              wait_semaphore,
-                                       PipelineStageFlagsType                                                     wait_pipeline_stage)
+    RenderContext<bindingType>::submit(const QueueType &queue, const std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &command_buffers,
+                                       SemaphoreType wait_semaphore, PipelineStageFlagsType wait_pipeline_stage)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -809,16 +791,14 @@ inline typename RenderContext<bindingType>::SemaphoreType
 	{
 		return static_cast<VkSemaphore>(submit_impl(reinterpret_cast<vkb::core::HPPQueue const &>(queue),
 		                                            reinterpret_cast<std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> const &>(command_buffers),
-		                                            static_cast<vk::Semaphore>(wait_semaphore),
-		                                            static_cast<vk::PipelineStageFlags>(wait_pipeline_stage)));
+		                                            static_cast<vk::Semaphore>(wait_semaphore), static_cast<vk::PipelineStageFlags>(wait_pipeline_stage)));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline vk::Semaphore RenderContext<bindingType>::submit_impl(const vkb::core::HPPQueue                                       &queue,
                                                              const std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> &command_buffers,
-                                                             vk::Semaphore                                                    wait_semaphore,
-                                                             vk::PipelineStageFlags                                           wait_pipeline_stage)
+                                                             vk::Semaphore wait_semaphore, vk::PipelineStageFlags wait_pipeline_stage)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
 	std::ranges::transform(command_buffers, cmd_buf_handles.begin(), [](auto const &cmd_buf) { return cmd_buf->get_handle(); });

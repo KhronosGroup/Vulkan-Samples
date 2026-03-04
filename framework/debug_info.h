@@ -38,8 +38,7 @@ struct Base
 {
 	std::string label;
 
-	Base(const std::string &label) :
-	    label{label}
+	Base(const std::string &label) : label{label}
 	{}
 
 	virtual ~Base() = default;
@@ -57,9 +56,7 @@ struct Static : public Base
 {
 	T value;
 
-	Static(const std::string &label, const T &value) :
-	    Base(label),
-	    value{value}
+	Static(const std::string &label, const T &value) : Base(label), value{value}
 	{}
 
 	virtual ~Static() = default;
@@ -80,9 +77,7 @@ struct Dynamic : public Base
 {
 	T &value;
 
-	Dynamic(const std::string &label, T &value) :
-	    Base(label),
-	    value{value}
+	Dynamic(const std::string &label, T &value) : Base(label), value{value}
 	{}
 
 	virtual ~Dynamic() = default;
@@ -103,23 +98,16 @@ struct Vector final : public Static<T>
 {
 	T x, y, z;
 
-	Vector(const std::string &label, const glm::vec3 &vec) :
-	    Vector(label, vec.x, vec.y, vec.z)
+	Vector(const std::string &label, const glm::vec3 &vec) : Vector(label, vec.x, vec.y, vec.z)
 	{}
-	Vector(const std::string &label, T x, T y, T z) :
-	    Static<T>(label, x),
-	    x{x},
-	    y{y},
-	    z{z}
+	Vector(const std::string &label, T x, T y, T z) : Static<T>(label, x), x{x}, y{y}, z{z}
 	{}
 
 	virtual ~Vector() = default;
 
 	const std::string to_string() override
 	{
-		return "x: " + vkb::to_string(x) + " " +
-		       "y: " + vkb::to_string(y) + " " +
-		       "z: " + vkb::to_string(z);
+		return "x: " + vkb::to_string(x) + " " + "y: " + vkb::to_string(y) + " " + "z: " + vkb::to_string(z);
 	}
 };
 
@@ -133,10 +121,7 @@ struct MinMax final : public Dynamic<T>
 {
 	T min, max;
 
-	MinMax(const std::string &label, T &value) :
-	    Dynamic<T>(label, value),
-	    min{value},
-	    max{value}
+	MinMax(const std::string &label, T &value) : Dynamic<T>(label, value), min{value}, max{value}
 	{
 		static_assert(std::is_arithmetic<T>::value, "MinMax must be templated to a numeric type.");
 	}

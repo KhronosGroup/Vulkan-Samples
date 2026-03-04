@@ -28,13 +28,8 @@ class HPPImage;
 class HPPImageView : public vkb::core::VulkanResourceCpp<vk::ImageView>
 {
   public:
-	HPPImageView(vkb::core::HPPImage &image,
-	             vk::ImageViewType    view_type,
-	             vk::Format           format           = vk::Format::eUndefined,
-	             uint32_t             base_mip_level   = 0,
-	             uint32_t             base_array_layer = 0,
-	             uint32_t             n_mip_levels     = 0,
-	             uint32_t             n_array_layers   = 0);
+	HPPImageView(vkb::core::HPPImage &image, vk::ImageViewType view_type, vk::Format format = vk::Format::eUndefined, uint32_t base_mip_level = 0,
+	             uint32_t base_array_layer = 0, uint32_t n_mip_levels = 0, uint32_t n_array_layers = 0);
 
 	HPPImageView(HPPImageView &) = delete;
 	HPPImageView(HPPImageView &&other);

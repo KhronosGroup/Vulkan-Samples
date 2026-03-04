@@ -43,7 +43,8 @@ SparseImage::~SparseImage()
  */
 void SparseImage::load_assets()
 {
-	virtual_texture.raw_data_image = vkb::sg::Image::load("/textures/vulkan_logo_full.ktx", "/textures/vulkan_logo_full.ktx", vkb::sg::Image::ContentType::Color);
+	virtual_texture.raw_data_image =
+	    vkb::sg::Image::load("/textures/vulkan_logo_full.ktx", "/textures/vulkan_logo_full.ktx", vkb::sg::Image::ContentType::Color);
 
 	assert(virtual_texture.raw_data_image->get_format() == image_format);
 	VkExtent3D   tex_extent = virtual_texture.raw_data_image->get_extent();
@@ -63,7 +64,8 @@ void SparseImage::create_sparse_bind_queue()
 	uint8_t sparse_queue_family_index = 0xFF;
 	for (uint32_t i = 0; i < static_cast<uint32_t>(queue_family_properties.size()); i++)
 	{
-		if ((queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) && (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) && !(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+		if ((queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) && (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) &&
+		    !(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
 		{
 			sparse_queue_family_index = i;
 			break;
@@ -107,7 +109,10 @@ bool SparseImage::prepare(const vkb::ApplicationOptions &options)
 
 	load_least_detailed_level();
 
-	mesh_data = CalculateMipLevelData(current_mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), static_cast<uint32_t>(num_vertical_blocks), static_cast<uint32_t>(num_horizontal_blocks), virtual_texture.mip_levels);
+	mesh_data =
+	    CalculateMipLevelData(current_mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}),
+	                          VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), static_cast<uint32_t>(num_vertical_blocks),
+	                          static_cast<uint32_t>(num_horizontal_blocks), virtual_texture.mip_levels);
 
 	next_stage = Stages::Idle;
 
@@ -124,7 +129,8 @@ void SparseImage::prepare_pipelines()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &sample_pipeline_layout));
 
 	VkPipelineVertexInputStateCreateInfo            vertex_input          = vkb::initializers::pipeline_vertex_input_state_create_info();
-	std::array<VkVertexInputBindingDescription, 1U> vertex_input_bindings = {vkb::initializers::vertex_input_binding_description(0, sizeof(SimpleVertex), VK_VERTEX_INPUT_RATE_VERTEX)};
+	std::array<VkVertexInputBindingDescription, 1U> vertex_input_bindings = {
+	    vkb::initializers::vertex_input_binding_description(0, sizeof(SimpleVertex), VK_VERTEX_INPUT_RATE_VERTEX)};
 
 	std::array<VkVertexInputAttributeDescription, 2U> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0U, 0U, VK_FORMAT_R32G32_SFLOAT, offsetof(SimpleVertex, norm)),
@@ -137,14 +143,19 @@ void SparseImage::prepare_pipelines()
 
 	std::array<VkDynamicState, 2U> dynamic_states{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state         = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0U, VK_FALSE);
-	VkPipelineRasterizationStateCreateInfo rasterization_state          = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
-	VkPipelineColorBlendAttachmentState    color_blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo    color_blend_state            = vkb::initializers::pipeline_color_blend_state_create_info(1U, &color_blend_attachment_state);
-	VkPipelineViewportStateCreateInfo      viewport_state               = vkb::initializers::pipeline_viewport_state_create_info(1U, 1U);
-	VkPipelineDepthStencilStateCreateInfo  depth_stencil_state          = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_NEVER);
-	VkPipelineMultisampleStateCreateInfo   multisampling_state          = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
-	VkPipelineDynamicStateCreateInfo       pipeline_dynamic_states      = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states.data(), vkb::to_u32(dynamic_states.size()));
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0U, VK_FALSE);
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+	VkPipelineColorBlendAttachmentState color_blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
+	VkPipelineColorBlendStateCreateInfo   color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1U, &color_blend_attachment_state);
+	VkPipelineViewportStateCreateInfo     viewport_state    = vkb::initializers::pipeline_viewport_state_create_info(1U, 1U);
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_NEVER);
+	VkPipelineMultisampleStateCreateInfo multisampling_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
+	VkPipelineDynamicStateCreateInfo     pipeline_dynamic_states =
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states.data(), vkb::to_u32(dynamic_states.size()));
 
 	std::array<VkPipelineShaderStageCreateInfo, 2U> shader_stages{};
 
@@ -267,7 +278,8 @@ void SparseImage::process_texture_block(const TextureBlock &texture_block)
 	{
 		if (!virtual_texture.page_table[page_index].fixed)
 		{
-			virtual_texture.page_table[page_index].render_required_set.erase({static_cast<uint8_t>(texture_block.old_mip_level), texture_block.column, texture_block.row});
+			virtual_texture.page_table[page_index].render_required_set.erase(
+			    {static_cast<uint8_t>(texture_block.old_mip_level), texture_block.column, texture_block.row});
 		}
 	}
 	page_indices.clear();
@@ -282,7 +294,8 @@ void SparseImage::process_texture_block(const TextureBlock &texture_block)
 
 	for (auto page_index : page_indices)
 	{
-		virtual_texture.page_table[page_index].render_required_set.insert({static_cast<uint8_t>(texture_block.new_mip_level), texture_block.column, texture_block.row});
+		virtual_texture.page_table[page_index].render_required_set.insert(
+		    {static_cast<uint8_t>(texture_block.new_mip_level), texture_block.column, texture_block.row});
 
 		if (!virtual_texture.page_table[page_index].valid)
 		{
@@ -314,8 +327,10 @@ SparseImage::MemPageDescription SparseImage::get_mem_page_description(size_t pag
 	uint8_t            mip_level            = get_mip_level(page_index);
 
 	mem_page_description.mip_level = mip_level;
-	mem_page_description.x         = (page_index - virtual_texture.mip_properties[mip_level].mip_base_page_index) % virtual_texture.mip_properties[mip_level].num_columns;
-	mem_page_description.y         = (page_index - virtual_texture.mip_properties[mip_level].mip_base_page_index) / virtual_texture.mip_properties[mip_level].num_columns;
+	mem_page_description.x =
+	    (page_index - virtual_texture.mip_properties[mip_level].mip_base_page_index) % virtual_texture.mip_properties[mip_level].num_columns;
+	mem_page_description.y =
+	    (page_index - virtual_texture.mip_properties[mip_level].mip_base_page_index) / virtual_texture.mip_properties[mip_level].num_columns;
 
 	return mem_page_description;
 }
@@ -325,11 +340,13 @@ SparseImage::MemPageDescription SparseImage::get_mem_page_description(size_t pag
  */
 size_t SparseImage::get_page_index(MemPageDescription mem_page_desc)
 {
-	return virtual_texture.mip_properties[mem_page_desc.mip_level].mip_base_page_index + virtual_texture.mip_properties[mem_page_desc.mip_level].num_columns * mem_page_desc.y + mem_page_desc.x;
+	return virtual_texture.mip_properties[mem_page_desc.mip_level].mip_base_page_index +
+	       virtual_texture.mip_properties[mem_page_desc.mip_level].num_columns * mem_page_desc.y + mem_page_desc.x;
 }
 
 /**
- * 	@brief Check if all the required resources (memory pages from the more detailed mip level) for the particular memory page to be rendered, are already allocated and valid in the memory.
+ * 	@brief Check if all the required resources (memory pages from the more detailed mip level) for the particular memory page to be rendered, are already
+ * allocated and valid in the memory.
  */
 void SparseImage::check_mip_page_requirements(std::vector<MemPageDescription> &mipgen_required_vec, MemPageDescription mem_page_desc)
 {
@@ -364,7 +381,8 @@ void SparseImage::check_mip_page_requirements(std::vector<MemPageDescription> &m
 }
 
 /**
- * 	@brief Convert information from BLOCK-based into PAGE-based data. BLOCKS are just the abstraction units described by num_horizontal_blocks and num_vertical_blocks. PAGES are the actually allocated chunks of memory, their size is device-dependent.
+ * 	@brief Convert information from BLOCK-based into PAGE-based data. BLOCKS are just the abstraction units described by num_horizontal_blocks and
+ * num_vertical_blocks. PAGES are the actually allocated chunks of memory, their size is device-dependent.
  */
 std::vector<size_t> SparseImage::get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level)
 {
@@ -415,7 +433,8 @@ void SparseImage::compare_mips_table()
 		{
 			if (!virtual_texture.new_mip_table[y][x].on_screen && virtual_texture.current_mip_table[y][x].on_screen)
 			{
-				// The particular block is removed from all render_required_set`s in page_table[] entries, because it was previously visible on screen, and is not anymore.
+				// The particular block is removed from all render_required_set`s in page_table[] entries, because it was previously visible on screen, and is
+				// not anymore.
 				TextureBlock texture_block = {y, x, virtual_texture.current_mip_table[y][x].mip_level, virtual_texture.new_mip_table[y][x].mip_level, false};
 				process_texture_block(texture_block);
 
@@ -423,10 +442,11 @@ void SparseImage::compare_mips_table()
 				update_required                         = true;
 			}
 			else if (virtual_texture.new_mip_table[y][x].on_screen &&
-			         (!virtual_texture.current_mip_table[y][x].on_screen ||
-			          (static_cast<uint8_t>(virtual_texture.new_mip_table[y][x].mip_level) != static_cast<uint8_t>(virtual_texture.current_mip_table[y][x].mip_level))))
+			         (!virtual_texture.current_mip_table[y][x].on_screen || (static_cast<uint8_t>(virtual_texture.new_mip_table[y][x].mip_level) !=
+			                                                                 static_cast<uint8_t>(virtual_texture.current_mip_table[y][x].mip_level))))
 			{
-				// The particular block is visible on screen and needs to be updated, because either it wasn't previously visible on screen or the required mip_level has changed.
+				// The particular block is visible on screen and needs to be updated, because either it wasn't previously visible on screen or the required
+				// mip_level has changed.
 				TextureBlock texture_block = {y, x, virtual_texture.current_mip_table[y][x].mip_level, virtual_texture.new_mip_table[y][x].mip_level, true};
 				virtual_texture.texture_block_update_set.insert(texture_block);
 				update_required = true;
@@ -542,14 +562,15 @@ void SparseImage::update_and_generate()
 
 	std::vector<uint8_t> temp_buffer(virtual_texture.page_size);
 
-	size_t level_zero_count = std::count_if(
-	    virtual_texture.update_set.begin(), virtual_texture.update_set.end(), [this](auto page_index) { return get_mip_level(page_index) == 0; });
+	size_t level_zero_count =
+	    std::count_if(virtual_texture.update_set.begin(), virtual_texture.update_set.end(), [this](auto page_index) { return get_mip_level(page_index) == 0; });
 	size_t level_zero_index = 0;
 
 	std::unique_ptr<vkb::core::BufferC> multi_page_buffer;
 	if (0 < level_zero_count)
 	{
-		multi_page_buffer = std::make_unique<vkb::core::BufferC>(get_device(), level_zero_count * virtual_texture.page_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+		multi_page_buffer = std::make_unique<vkb::core::BufferC>(get_device(), level_zero_count * virtual_texture.page_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		                                                         VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 	}
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -570,20 +591,24 @@ void SparseImage::update_and_generate()
 			if (current_mip_level != 0xFF)
 			{
 				subresource_range.baseMipLevel = current_mip_level;
-				vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+				vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 				if (current_mip_level != 0)
 				{
 					subresource_range.baseMipLevel = current_mip_level - 1U;
-					vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+					vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 				}
 			}
 
 			subresource_range.baseMipLevel = mip_level;
-			vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+			vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 			if (mip_level != 0)
 			{
 				subresource_range.baseMipLevel = mip_level - 1U;
-				vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
+				vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
 			}
 
 			current_mip_level = mip_level;
@@ -625,31 +650,30 @@ void SparseImage::update_and_generate()
 			region.imageOffset = VkOffset3D({block_offset.x, block_offset.y, 0});
 			region.imageExtent = VkExtent3D({block_extent.width, block_extent.height, 1U});
 
-			vkCmdCopyBufferToImage(command_buffer, multi_page_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &region);
+			vkCmdCopyBufferToImage(command_buffer, multi_page_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U,
+			                       &region);
 
 			virtual_texture.page_table[page_index].valid = true;
 		}
 		else
 		{
 			VkImageBlit blit_cmd{};
-			blit_cmd.srcOffsets[0]                 = {(block_offset.x) * 2, (block_offset.y) * 2, 0};
-			blit_cmd.srcOffsets[1]                 = {(block_offset.x + static_cast<int>(block_extent.width)) * 2, (block_offset.y + static_cast<int>(block_extent.height)) * 2, 1};
+			blit_cmd.srcOffsets[0] = {(block_offset.x) * 2, (block_offset.y) * 2, 0};
+			blit_cmd.srcOffsets[1] = {(block_offset.x + static_cast<int>(block_extent.width)) * 2, (block_offset.y + static_cast<int>(block_extent.height)) * 2,
+			                          1};
 			blit_cmd.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 			blit_cmd.srcSubresource.mipLevel       = mip_level - 1U;
 			blit_cmd.srcSubresource.baseArrayLayer = 0U;
 			blit_cmd.srcSubresource.layerCount     = 1U;
 			blit_cmd.dstOffsets[0]                 = {block_offset.x, block_offset.y, 0};
-			blit_cmd.dstOffsets[1]                 = {block_offset.x + static_cast<int>(block_extent.width), block_offset.y + static_cast<int>(block_extent.height), 1};
+			blit_cmd.dstOffsets[1] = {block_offset.x + static_cast<int>(block_extent.width), block_offset.y + static_cast<int>(block_extent.height), 1};
 			blit_cmd.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 			blit_cmd.dstSubresource.mipLevel       = mip_level;
 			blit_cmd.dstSubresource.baseArrayLayer = 0U;
 			blit_cmd.dstSubresource.layerCount     = 1U;
 
-			vkCmdBlitImage(command_buffer,
-			               virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			               virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			               1U, &blit_cmd,
-			               VK_FILTER_LINEAR);
+			vkCmdBlitImage(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, virtual_texture.texture_image,
+			               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &blit_cmd, VK_FILTER_LINEAR);
 
 			virtual_texture.page_table[page_index].valid = true;
 		}
@@ -666,11 +690,13 @@ void SparseImage::update_and_generate()
 	if (current_mip_level != 0xFF)
 	{
 		subresource_range.baseMipLevel = current_mip_level;
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 		if (current_mip_level != 0)
 		{
 			subresource_range.baseMipLevel = current_mip_level - 1U;
-			vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+			vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 		}
 	}
 
@@ -729,7 +755,9 @@ void SparseImage::free_unused_memory()
 
 	if (memory_defragmentation && !pages_to_reallocate.empty())
 	{
-		std::unique_ptr<vkb::core::BufferC> reallocation_buffer = std::make_unique<vkb::core::BufferC>(get_device(), virtual_texture.page_size * pages_to_reallocate.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		std::unique_ptr<vkb::core::BufferC> reallocation_buffer =
+		    std::make_unique<vkb::core::BufferC>(get_device(), virtual_texture.page_size * pages_to_reallocate.size(),
+		                                         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 		VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -772,8 +800,10 @@ void SparseImage::free_unused_memory()
 		subresource_range.levelCount     = virtual_texture.mip_levels;
 		subresource_range.baseMipLevel   = virtual_texture.base_mip_level;
 
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
-		vkCmdCopyImageToBuffer(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, reallocation_buffer->get_handle(), static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
+		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
+		vkCmdCopyImageToBuffer(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, reallocation_buffer->get_handle(),
+		                       static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
 		get_device().flush_command_buffer(command_buffer, queue, true);
 
 		std::vector<std::shared_ptr<MemSector>> temp_sectors;
@@ -793,9 +823,12 @@ void SparseImage::free_unused_memory()
 
 		command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
-		vkCmdCopyBufferToImage(command_buffer, reallocation_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             subresource_range);
+		vkCmdCopyBufferToImage(command_buffer, reallocation_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                       static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
+		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 		get_device().flush_command_buffer(command_buffer, queue, true);
 
 		for (auto &page_index : pages_to_reallocate)
@@ -956,7 +989,10 @@ void SparseImage::calculate_mips_table()
 		num_horizontal_blocks = num_horizontal_blocks_upd;
 
 		reset_mip_table();
-		mesh_data = CalculateMipLevelData(current_mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), static_cast<uint32_t>(num_vertical_blocks), static_cast<uint32_t>(num_horizontal_blocks), virtual_texture.mip_levels);
+		mesh_data = CalculateMipLevelData(current_mvp_transform,
+		                                  VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}),
+		                                  VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), static_cast<uint32_t>(num_vertical_blocks),
+		                                  static_cast<uint32_t>(num_horizontal_blocks), virtual_texture.mip_levels);
 	}
 	else
 	{
@@ -1039,34 +1075,40 @@ void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
  * What this function does, is based on the mesh data created in calculate_mesh_coordinates(), for each node within a mesh it calculates:
  * "What is the ratio between x/y movement on the screen to the u/v movement on the texture?".
  *
- * The idea is, that when moving pixel-by-pixel along the x or y axis on-screen, if the small on-screen step causes a significant step on-texture, then the area is far away from the observer and less-detailed mip-level is required.
- * The formula used for those calculations is:
+ * The idea is, that when moving pixel-by-pixel along the x or y axis on-screen, if the small on-screen step causes a significant step on-texture, then the area
+ *is far away from the observer and less-detailed mip-level is required. The formula used for those calculations is:
  *
  *	LOD = log2 (max(dT / dx, dT / dy)); where:
  *			- dT is an on-texture-step in texels,
  *			- dx, dy are on-screen-steps in pixels.
  *
- * One thing that makes these calculations complicated is that with the data provided by the mesh we move from one node to the other. But those steps (either horizontal or vertical) does not neccesarily
- * go along the x and y axis. Because of that each vertical and horizontal step needs to be digested into x and y movement. Given that fact, for each "rectangularish" block that holds information on LOD required,
- * there need to be 4 movements calculated and compared with their counterparts on the texture side.
+ * One thing that makes these calculations complicated is that with the data provided by the mesh we move from one node to the other. But those steps (either
+ *horizontal or vertical) does not neccesarily go along the x and y axis. Because of that each vertical and horizontal step needs to be digested into x and y
+ *movement. Given that fact, for each "rectangularish" block that holds information on LOD required, there need to be 4 movements calculated and compared with
+ *their counterparts on the texture side.
  *
  * Naming convention explained and method:
- * - first mentioning of either "..vertical.." or "..horizontal.." in the variable name means that this variable is used in calculations related to moving one node down (vertical) or right (horizontal) from the current position.
- *   Calculations are handled from the top-left corner of the texture, so we are moving either to bottom or right (on the texture, not neccessarily on the screen).
+ * - first mentioning of either "..vertical.." or "..horizontal.." in the variable name means that this variable is used in calculations related to moving one
+ *node down (vertical) or right (horizontal) from the current position. Calculations are handled from the top-left corner of the texture, so we are moving
+ *either to bottom or right (on the texture, not neccessarily on the screen).
  * - pH stands for "point H". It is a separate point for the vertical and horizontal step, from which the step is splitted into x and y on-screen axis.
  * - A is a vertice we start calculations from. From A we move to either bottom node (which is B) or to the right node (which is C).
  *
  * - IMPORTANT:    I assume that:
- *						- each block is a parallelogram which is obviously not 1:1 true, but the more precise we get (the more blocks we split the texture into) the more accurate this statement is.
+ *						- each block is a parallelogram which is obviously not 1:1 true, but the more precise we get (the more blocks we split the texture into)
+ *the more accurate this statement is.
  *						- the image is not "stretched' within a single block, which has the same rules as stated above.
  *
  *					With those assumption, I'm providing a parralel lines from the Ph point to the corresponding edges. This creates an another parrallelogram.
  *
  * Variables named: ..vertical_vertical.. or ..vertical_horizontal_top.. should be understood as:
- * This relates to the vertical step (from A --> B) and describes (the edge from pH to the corresponding vertical edge) or (describes the edge from the pH to the corresponding horizontal-top edge).
+ * This relates to the vertical step (from A --> B) and describes (the edge from pH to the corresponding vertical edge) or (describes the edge from the pH to
+ *the corresponding horizontal-top edge).
  *
- * Assuming that the image is not stretched within a single block, I calculate the ratio of for example (...vertical_vertical... / AB_vertical) or (...vertical_horizontal_top... / AC_horizontal).
- * I know, that each parrallelogram on-screen corresponds to the fixed-size rectangular on-texture. Given the ratio I calculated I can just get the on-texture step in texels from the right-triangle property and compare it to the x or y step of vertical/horizontal step in pixels on-screen.
+ * Assuming that the image is not stretched within a single block, I calculate the ratio of for example (...vertical_vertical... / AB_vertical) or
+ *(...vertical_horizontal_top... / AC_horizontal). I know, that each parrallelogram on-screen corresponds to the fixed-size rectangular on-texture. Given the
+ *ratio I calculated I can just get the on-texture step in texels from the right-triangle property and compare it to the x or y step of vertical/horizontal step
+ *in pixels on-screen.
  */
 void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 {
@@ -1115,29 +1157,41 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 			double a_horizontal = ax_horizontal[row];
 
 			// Coordinates of the point which is the common point of two lines: 1) AtoB or AtoC; 2) The line going through point H, parallel to AtoC or AtoB
-			double x_vertical_vertical = (a_vertical * mesh[row][column].x + pH_vertical_y - (pH_vertical_x * a_horizontal) - mesh[row][column].y) / (a_vertical - a_horizontal);
+			double x_vertical_vertical =
+			    (a_vertical * mesh[row][column].x + pH_vertical_y - (pH_vertical_x * a_horizontal) - mesh[row][column].y) / (a_vertical - a_horizontal);
 			double y_vertical_vertical = (x_vertical_vertical - mesh[row][column].x) * a_vertical + mesh[row][column].y;
 
-			double x_vertical_horizontal_top    = (a_horizontal * mesh[row][column].x + pH_vertical_y - (pH_vertical_x * a_vertical) - mesh[row][column].y) / (a_horizontal - a_vertical);
-			double y_vertical_horizontal_top    = (x_vertical_horizontal_top - mesh[row][column].x) * a_horizontal + mesh[row][column].y;
-			double x_vertical_horizontal_bottom = (a_horizontal * mesh[row + 1][column].x + pH_vertical_y - (pH_vertical_x * a_vertical) - mesh[row + 1][column].y) / (a_horizontal - a_vertical);
+			double x_vertical_horizontal_top =
+			    (a_horizontal * mesh[row][column].x + pH_vertical_y - (pH_vertical_x * a_vertical) - mesh[row][column].y) / (a_horizontal - a_vertical);
+			double y_vertical_horizontal_top = (x_vertical_horizontal_top - mesh[row][column].x) * a_horizontal + mesh[row][column].y;
+			double x_vertical_horizontal_bottom =
+			    (a_horizontal * mesh[row + 1][column].x + pH_vertical_y - (pH_vertical_x * a_vertical) - mesh[row + 1][column].y) / (a_horizontal - a_vertical);
 			double y_vertical_horizontal_bottom = (x_vertical_horizontal_bottom - mesh[row + 1][column].x) * a_horizontal + mesh[row + 1][column].y;
 
-			double x_horizontal_horizontal = (a_horizontal * mesh[row][column].x + pH_horizontal_y - (pH_horizontal_x * a_vertical) - mesh[row][column].y) / (a_horizontal - a_vertical);
+			double x_horizontal_horizontal =
+			    (a_horizontal * mesh[row][column].x + pH_horizontal_y - (pH_horizontal_x * a_vertical) - mesh[row][column].y) / (a_horizontal - a_vertical);
 			double y_horizontal_horizontal = (x_horizontal_horizontal - mesh[row][column].x) * a_horizontal + mesh[row][column].y;
 
-			double x_horizontal_vertical_left  = (a_vertical * mesh[row][column].x + pH_horizontal_y - (pH_horizontal_x * a_horizontal) - mesh[row][column].y) / (a_vertical - a_horizontal);
-			double y_horizontal_vertical_left  = (x_horizontal_vertical_left - mesh[row][column].x) * a_vertical + mesh[row][column].y;
-			double x_horizontal_vertical_right = (a_vertical * mesh[row][column + 1].x + pH_horizontal_y - (pH_horizontal_x * a_horizontal) - mesh[row][column + 1].y) / (a_vertical - a_horizontal);
+			double x_horizontal_vertical_left =
+			    (a_vertical * mesh[row][column].x + pH_horizontal_y - (pH_horizontal_x * a_horizontal) - mesh[row][column].y) / (a_vertical - a_horizontal);
+			double y_horizontal_vertical_left = (x_horizontal_vertical_left - mesh[row][column].x) * a_vertical + mesh[row][column].y;
+			double x_horizontal_vertical_right =
+			    (a_vertical * mesh[row][column + 1].x + pH_horizontal_y - (pH_horizontal_x * a_horizontal) - mesh[row][column + 1].y) /
+			    (a_vertical - a_horizontal);
 			double y_horizontal_vertical_right = (x_horizontal_vertical_right - mesh[row][column + 1].x) * a_vertical + mesh[row][column + 1].y;
 
 			// On-screen distances from point H (vertical and horizontal) to the corresponding points calculated above
-			double on_screen_pH_vertical_vertical          = sqrt(pow(pH_vertical_x - x_vertical_vertical, 2) + pow(pH_vertical_y - y_vertical_vertical, 2));
-			double on_screen_pH_vertical_horizontal_top    = sqrt(pow(pH_vertical_x - x_vertical_horizontal_top, 2) + pow(pH_vertical_y - y_vertical_horizontal_top, 2));
-			double on_screen_pH_vertical_horizontal_bottom = sqrt(pow(pH_vertical_x - x_vertical_horizontal_bottom, 2) + pow(pH_vertical_y - y_vertical_horizontal_bottom, 2));
-			double on_screen_pH_horizontal_horizontal      = sqrt(pow(pH_horizontal_x - x_horizontal_horizontal, 2) + pow(pH_horizontal_y - y_horizontal_horizontal, 2));
-			double on_screen_pH_horizontal_vertical_left   = sqrt(pow(pH_horizontal_x - x_horizontal_vertical_left, 2) + pow(pH_horizontal_y - y_horizontal_vertical_left, 2));
-			double on_screen_pH_horizontal_vertical_right  = sqrt(pow(pH_horizontal_x - x_horizontal_vertical_right, 2) + pow(pH_horizontal_y - y_horizontal_vertical_right, 2));
+			double on_screen_pH_vertical_vertical = sqrt(pow(pH_vertical_x - x_vertical_vertical, 2) + pow(pH_vertical_y - y_vertical_vertical, 2));
+			double on_screen_pH_vertical_horizontal_top =
+			    sqrt(pow(pH_vertical_x - x_vertical_horizontal_top, 2) + pow(pH_vertical_y - y_vertical_horizontal_top, 2));
+			double on_screen_pH_vertical_horizontal_bottom =
+			    sqrt(pow(pH_vertical_x - x_vertical_horizontal_bottom, 2) + pow(pH_vertical_y - y_vertical_horizontal_bottom, 2));
+			double on_screen_pH_horizontal_horizontal =
+			    sqrt(pow(pH_horizontal_x - x_horizontal_horizontal, 2) + pow(pH_horizontal_y - y_horizontal_horizontal, 2));
+			double on_screen_pH_horizontal_vertical_left =
+			    sqrt(pow(pH_horizontal_x - x_horizontal_vertical_left, 2) + pow(pH_horizontal_y - y_horizontal_vertical_left, 2));
+			double on_screen_pH_horizontal_vertical_right =
+			    sqrt(pow(pH_horizontal_x - x_horizontal_vertical_right, 2) + pow(pH_horizontal_y - y_horizontal_vertical_right, 2));
 
 			// On-texture counterparts of distances above
 			double on_texture_pH_vertical_vertical          = on_screen_pH_vertical_vertical / AC_horizontal * dTu;
@@ -1148,17 +1202,31 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 			double on_texture_pH_horizontal_vertical_right  = on_screen_pH_horizontal_vertical_right / AC_horizontal * dTu;
 
 			// Texel-to-pixel ratios
-			double x_texture_to_screen_vertical_ratio   = abs(pH_vertical_to_A) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_vertical_vertical, 2) + pow(on_texture_pH_vertical_horizontal_top, 2)) / abs(pH_vertical_to_A);
-			double y_texture_to_screen_vertical_ratio   = abs(pH_vertical_to_B) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_vertical_vertical, 2) + pow(on_texture_pH_vertical_horizontal_bottom, 2)) / abs(pH_vertical_to_B);
-			double x_texture_to_screen_horizontal_ratio = abs(pH_horizontal_to_A) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_horizontal_horizontal, 2) + pow(on_texture_pH_horizontal_vertical_left, 2)) / abs(pH_horizontal_to_A);
-			double y_texture_to_screen_horizontal_ratio = abs(pH_horizontal_to_C) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_horizontal_horizontal, 2) + pow(on_texture_pH_horizontal_vertical_right, 2)) / abs(pH_horizontal_to_C);
+			double x_texture_to_screen_vertical_ratio =
+			    abs(pH_vertical_to_A) < 1.0 ?
+			        0.0 :
+			        sqrt(pow(on_texture_pH_vertical_vertical, 2) + pow(on_texture_pH_vertical_horizontal_top, 2)) / abs(pH_vertical_to_A);
+			double y_texture_to_screen_vertical_ratio =
+			    abs(pH_vertical_to_B) < 1.0 ?
+			        0.0 :
+			        sqrt(pow(on_texture_pH_vertical_vertical, 2) + pow(on_texture_pH_vertical_horizontal_bottom, 2)) / abs(pH_vertical_to_B);
+			double x_texture_to_screen_horizontal_ratio =
+			    abs(pH_horizontal_to_A) < 1.0 ?
+			        0.0 :
+			        sqrt(pow(on_texture_pH_horizontal_horizontal, 2) + pow(on_texture_pH_horizontal_vertical_left, 2)) / abs(pH_horizontal_to_A);
+			double y_texture_to_screen_horizontal_ratio =
+			    abs(pH_horizontal_to_C) < 1.0 ?
+			        0.0 :
+			        sqrt(pow(on_texture_pH_horizontal_horizontal, 2) + pow(on_texture_pH_horizontal_vertical_right, 2)) / abs(pH_horizontal_to_C);
 
 			// Using the log2 formula to calculate required mip level
-			double delta     = std::max(std::max(x_texture_to_screen_horizontal_ratio, y_texture_to_screen_horizontal_ratio), std::max(x_texture_to_screen_vertical_ratio, y_texture_to_screen_vertical_ratio));
+			double delta     = std::max(std::max(x_texture_to_screen_horizontal_ratio, y_texture_to_screen_horizontal_ratio),
+			                            std::max(x_texture_to_screen_vertical_ratio, y_texture_to_screen_vertical_ratio));
 			double mip_level = std::min(static_cast<double>(mip_levels - 1U), std::max(log2(delta), 0.0));
 
 			mip_table[row][column].mip_level = mip_level;
-			mip_table[row][column].on_screen = mesh[row][column].on_screen || mesh[row + 1][column].on_screen || mesh[row][column + 1].on_screen || mesh[row + 1][column + 1].on_screen;
+			mip_table[row][column].on_screen =
+			    mesh[row][column].on_screen || mesh[row + 1][column].on_screen || mesh[row][column + 1].on_screen || mesh[row + 1][column + 1].on_screen;
 		}
 	}
 }
@@ -1182,7 +1250,8 @@ void SparseImage::create_vertex_buffer()
 	vertices[3].uv = {0.0f, 1.0f};
 
 	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
-	vertex_buffer       = std::make_unique<vkb::core::BufferC>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1205,7 +1274,8 @@ void SparseImage::create_index_buffer()
 	index_count                           = indices.size();
 
 	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
-	index_buffer        = std::make_unique<vkb::core::BufferC>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	index_buffer        = std::make_unique<vkb::core::BufferC>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                                                        VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1229,11 +1299,7 @@ void SparseImage::create_descriptor_pool()
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U),
 	};
 
-	VkDescriptorPoolCreateInfo pool_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        1U);
+	VkDescriptorPoolCreateInfo pool_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 1U);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &pool_info, VK_NULL_HANDLE, &descriptor_pool));
 }
@@ -1244,18 +1310,9 @@ void SparseImage::create_descriptor_pool()
 void SparseImage::create_descriptor_set_layout()
 {
 	std::array<VkDescriptorSetLayoutBinding, 3U> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_VERTEX_BIT,
-	        0U),
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	        VK_SHADER_STAGE_FRAGMENT_BIT,
-	        1U),
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_FRAGMENT_BIT,
-	        2U),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0U),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1U),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2U),
 	};
 
 	VkDescriptorSetLayoutCreateInfo set_layout_create_info =
@@ -1272,11 +1329,7 @@ void SparseImage::create_descriptor_set_layout()
  */
 void SparseImage::create_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo set_alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1U);
+	VkDescriptorSetAllocateInfo set_alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1U);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &set_alloc_info, &descriptor_set));
 
@@ -1289,24 +1342,9 @@ void SparseImage::create_descriptor_sets()
 	image_info.sampler     = texture_sampler;
 
 	std::array<VkWriteDescriptorSet, 3U> write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(
-	        descriptor_set,
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        0U,
-	        &mvp_buffer_desc_info,
-	        1U),
-	    vkb::initializers::write_descriptor_set(
-	        descriptor_set,
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	        1U,
-	        &image_info,
-	        1U),
-	    vkb::initializers::write_descriptor_set(
-	        descriptor_set,
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        2U,
-	        &frag_settings_desc_info,
-	        1U)};
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0U, &mvp_buffer_desc_info, 1U),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1U, &image_info, 1U),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2U, &frag_settings_desc_info, 1U)};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0U, nullptr);
 }
@@ -1330,10 +1368,12 @@ void SparseImage::update_frag_settings()
 void SparseImage::create_uniform_buffers()
 {
 	VkDeviceSize buffer_size = sizeof(MVP);
-	mvp_buffer               = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	mvp_buffer               = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU,
+                                                      VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
 	buffer_size               = sizeof(FragSettingsData);
-	frag_settings_data_buffer = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	frag_settings_data_buffer = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU,
+	                                                                 VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
 /**
@@ -1453,11 +1493,11 @@ void SparseImage::create_sparse_texture_image()
 	uint32_t sparse_memory_req_count;
 	uint32_t memory_req_count;
 
-	vkGetImageSparseMemoryRequirements(
-	    get_device().get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
+	vkGetImageSparseMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &sparse_memory_req_count,
+	                                   sparse_image_memory_requirements.data());
 	sparse_image_memory_requirements.resize(sparse_memory_req_count);
-	vkGetImageSparseMemoryRequirements(
-	    get_device().get_handle(), virtual_texture.texture_image, &sparse_memory_req_count, sparse_image_memory_requirements.data());
+	vkGetImageSparseMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &sparse_memory_req_count,
+	                                   sparse_image_memory_requirements.data());
 
 	vkGetImageMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &memory_requirements);
 
@@ -1475,17 +1515,21 @@ void SparseImage::create_sparse_texture_image()
 
 	for (uint32_t mip_level = 0U; mip_level < virtual_texture.mip_levels; mip_level++)
 	{
-		size_t numRows    = current_mip_height / virtual_texture.format_properties.imageGranularity.height + (current_mip_height % virtual_texture.format_properties.imageGranularity.height == 0U ? 0U : 1U);
-		size_t numColumns = current_mip_width / virtual_texture.format_properties.imageGranularity.width + (current_mip_width % virtual_texture.format_properties.imageGranularity.width == 0U ? 0U : 1U);
+		size_t numRows = current_mip_height / virtual_texture.format_properties.imageGranularity.height +
+		                 (current_mip_height % virtual_texture.format_properties.imageGranularity.height == 0U ? 0U : 1U);
+		size_t numColumns = current_mip_width / virtual_texture.format_properties.imageGranularity.width +
+		                    (current_mip_width % virtual_texture.format_properties.imageGranularity.width == 0U ? 0U : 1U);
 
 		num_total_pages += numRows * numColumns;
 
-		virtual_texture.mip_properties[mip_level].width               = current_mip_width;
-		virtual_texture.mip_properties[mip_level].height              = current_mip_height;
-		virtual_texture.mip_properties[mip_level].num_columns         = numColumns;
-		virtual_texture.mip_properties[mip_level].num_rows            = numRows;
-		virtual_texture.mip_properties[mip_level].mip_num_pages       = numRows * numColumns;
-		virtual_texture.mip_properties[mip_level].mip_base_page_index = mip_level > 0U ? virtual_texture.mip_properties[mip_level - 1U].mip_base_page_index + virtual_texture.mip_properties[mip_level - 1U].mip_num_pages : 0U;
+		virtual_texture.mip_properties[mip_level].width         = current_mip_width;
+		virtual_texture.mip_properties[mip_level].height        = current_mip_height;
+		virtual_texture.mip_properties[mip_level].num_columns   = numColumns;
+		virtual_texture.mip_properties[mip_level].num_rows      = numRows;
+		virtual_texture.mip_properties[mip_level].mip_num_pages = numRows * numColumns;
+		virtual_texture.mip_properties[mip_level].mip_base_page_index =
+		    mip_level > 0U ? virtual_texture.mip_properties[mip_level - 1U].mip_base_page_index + virtual_texture.mip_properties[mip_level - 1U].mip_num_pages :
+		                     0U;
 
 		if (current_mip_height > 1U)
 		{
@@ -1526,13 +1570,19 @@ void SparseImage::create_sparse_texture_image()
 		memory_bind_info.subresource.mipLevel   = mipLevel;
 		memory_bind_info.flags                  = 0U;
 
-		memory_bind_info.offset.x = static_cast<uint32_t>(((page_index - mip_properties.mip_base_page_index) % mip_properties.num_columns) * virtual_texture.format_properties.imageGranularity.width);
-		memory_bind_info.offset.y = static_cast<uint32_t>(((page_index - mip_properties.mip_base_page_index) / mip_properties.num_columns) * virtual_texture.format_properties.imageGranularity.height);
+		memory_bind_info.offset.x = static_cast<uint32_t>(((page_index - mip_properties.mip_base_page_index) % mip_properties.num_columns) *
+		                                                  virtual_texture.format_properties.imageGranularity.width);
+		memory_bind_info.offset.y = static_cast<uint32_t>(((page_index - mip_properties.mip_base_page_index) / mip_properties.num_columns) *
+		                                                  virtual_texture.format_properties.imageGranularity.height);
 		memory_bind_info.offset.z = 0;
 
 		memory_bind_info.extent.depth  = virtual_texture.format_properties.imageGranularity.depth;
-		memory_bind_info.extent.width  = (mip_properties.width - memory_bind_info.offset.x < virtual_texture.format_properties.imageGranularity.width) ? static_cast<uint32_t>(mip_properties.width - memory_bind_info.offset.x) : virtual_texture.format_properties.imageGranularity.width;
-		memory_bind_info.extent.height = (mip_properties.height - memory_bind_info.offset.y < virtual_texture.format_properties.imageGranularity.height) ? static_cast<uint32_t>(mip_properties.height - memory_bind_info.offset.y) : virtual_texture.format_properties.imageGranularity.height;
+		memory_bind_info.extent.width  = (mip_properties.width - memory_bind_info.offset.x < virtual_texture.format_properties.imageGranularity.width) ?
+		                                     static_cast<uint32_t>(mip_properties.width - memory_bind_info.offset.x) :
+		                                     virtual_texture.format_properties.imageGranularity.width;
+		memory_bind_info.extent.height = (mip_properties.height - memory_bind_info.offset.y < virtual_texture.format_properties.imageGranularity.height) ?
+		                                     static_cast<uint32_t>(mip_properties.height - memory_bind_info.offset.y) :
+		                                     virtual_texture.format_properties.imageGranularity.height;
 	}
 
 	//==================================================================================================
@@ -1559,7 +1609,8 @@ void SparseImage::create_sparse_texture_image()
 	subresource_range.levelCount     = virtual_texture.mip_levels;
 	subresource_range.baseMipLevel   = virtual_texture.base_mip_level;
 
-	vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+	vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 	get_device().flush_command_buffer(command_buffer, queue, true);
 
 	//==================================================================================================

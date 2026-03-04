@@ -46,7 +46,8 @@ class PipelineLayout
 
 	const std::vector<ShaderModule *> &get_shader_modules() const;
 
-	const std::vector<ShaderResource> get_resources(const ShaderResourceType &type = ShaderResourceType::All, VkShaderStageFlagBits stage = VK_SHADER_STAGE_ALL) const;
+	const std::vector<ShaderResource> get_resources(const ShaderResourceType &type  = ShaderResourceType::All,
+	                                                VkShaderStageFlagBits     stage = VK_SHADER_STAGE_ALL) const;
 
 	const std::unordered_map<uint32_t, std::vector<ShaderResource>> &get_shader_sets() const;
 

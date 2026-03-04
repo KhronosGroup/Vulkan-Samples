@@ -21,8 +21,7 @@ namespace vkb
 {
 namespace sg
 {
-PBRMaterial::PBRMaterial(const std::string &name) :
-    Material{name}
+PBRMaterial::PBRMaterial(const std::string &name) : Material{name}
 {}
 
 std::type_index PBRMaterial::get_type()

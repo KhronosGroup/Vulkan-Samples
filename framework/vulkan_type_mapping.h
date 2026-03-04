@@ -28,8 +28,7 @@ namespace detail
 // Mapping from VkType to vk::Type
 template <typename VkType>
 struct HPPType
-{
-};
+{};
 
 template <>
 struct HPPType<VkBuffer>
@@ -380,8 +379,7 @@ struct HPPType<VkTensorViewARM>
 
 template <vkb::BindingType bindingType, typename T>
 struct VulkanTypeMapping
-{
-};
+{};
 template <typename T>
 struct VulkanTypeMapping<vkb::BindingType::Cpp, T>
 {

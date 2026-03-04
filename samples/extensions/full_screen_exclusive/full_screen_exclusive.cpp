@@ -22,8 +22,7 @@
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
-                                                     const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                     void                                       *user_data)
+                                                     const VkDebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data)
 {
 	(void) user_data;
 
@@ -69,7 +68,8 @@ bool FullScreenExclusive::validate_extensions(const std::vector<const char *> &r
 	return true;
 }
 
-void FullScreenExclusive::init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
+void FullScreenExclusive::init_instance(const std::vector<const char *> &required_instance_extensions,
+                                        const std::vector<const char *> &required_validation_layers)
 {
 	LOGI("Initializing vulkan instance.")
 
@@ -143,9 +143,9 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-	debug_utils_create_info.messageSeverity                    = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-	debug_utils_create_info.messageType                        = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-	debug_utils_create_info.pfnUserCallback                    = debug_callback;
+	debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+	debug_utils_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	debug_utils_create_info.pfnUserCallback = debug_callback;
 
 	instance_info.pNext = &debug_utils_create_info;
 #endif
@@ -498,9 +498,7 @@ VkShaderModule FullScreenExclusive::load_shader_module(const char *path) const
 	std::vector<uint32_t> spirv = vkb::fs::read_shader_binary_u32(path);
 
 	VkShaderModuleCreateInfo module_info{
-	    .sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-	    .codeSize = spirv.size() * sizeof(uint32_t),
-	    .pCode    = spirv.data()};
+	    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, .codeSize = spirv.size() * sizeof(uint32_t), .pCode = spirv.data()};
 
 	VkShaderModule shader_module;
 	VK_CHECK(vkCreateShaderModule(context.device, &module_info, nullptr, &shader_module));
@@ -667,8 +665,7 @@ void FullScreenExclusive::render_triangle(uint32_t swapchain_index)
 	if (context.per_frame[swapchain_index].swapchain_release_semaphore == VK_NULL_HANDLE)
 	{
 		VkSemaphoreCreateInfo semaphore_info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-		VK_CHECK(vkCreateSemaphore(context.device, &semaphore_info, nullptr,
-		                           &context.per_frame[swapchain_index].swapchain_release_semaphore));
+		VK_CHECK(vkCreateSemaphore(context.device, &semaphore_info, nullptr, &context.per_frame[swapchain_index].swapchain_release_semaphore));
 	}
 
 	VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -807,9 +804,10 @@ void FullScreenExclusive::initialize_windows()
 	surface_full_screen_exclusive_Win32_info_EXT.pNext    = nullptr;
 	surface_full_screen_exclusive_Win32_info_EXT.hmonitor = MonitorFromWindow(HWND_application_window, MONITOR_DEFAULTTONEAREST);
 
-	surface_full_screen_exclusive_info_EXT.sType               = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
-	surface_full_screen_exclusive_info_EXT.pNext               = &surface_full_screen_exclusive_Win32_info_EXT;
-	surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;        // Set the fullScreenExclusive stage to default when initializing
+	surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
+	surface_full_screen_exclusive_info_EXT.pNext = &surface_full_screen_exclusive_Win32_info_EXT;
+	surface_full_screen_exclusive_info_EXT.fullScreenExclusive =
+	    VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;        // Set the fullScreenExclusive stage to default when initializing
 
 	// Windows placement should only be registered ONCE:
 	GetWindowPlacement(HWND_application_window, &wpc);
@@ -1049,7 +1047,8 @@ void FullScreenExclusive::recreate()
 		{
 			VkResult result = vkAcquireFullScreenExclusiveModeEXT(context.device, context.swapchain);
 			if (result != VK_SUCCESS)
-				LOGI("vkAcquireFullScreenExclusiveModeEXT: " + vkb::to_string(result))        // it would be necessary to learn the result on an unsuccessful attempt
+				LOGI("vkAcquireFullScreenExclusiveModeEXT: " +
+				     vkb::to_string(result))        // it would be necessary to learn the result on an unsuccessful attempt
 		}
 	}
 }

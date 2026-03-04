@@ -1510,127 +1510,121 @@ const std::string to_string(ShaderResourceType type)
 
 const std::string buffer_usage_to_string(VkBufferUsageFlags flags)
 {
-	return to_string<VkBufferUsageFlagBits>(flags,
-	                                        {{VK_BUFFER_USAGE_TRANSFER_SRC_BIT, "VK_BUFFER_USAGE_TRANSFER_SRC_BIT"},
-	                                         {VK_BUFFER_USAGE_TRANSFER_DST_BIT, "VK_BUFFER_USAGE_TRANSFER_DST_BIT"},
-	                                         {VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT, "VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT"},
-	                                         {VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT, "VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT"},
-	                                         {VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, "VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT"},
-	                                         {VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "VK_BUFFER_USAGE_STORAGE_BUFFER_BIT"},
-	                                         {VK_BUFFER_USAGE_INDEX_BUFFER_BIT, "VK_BUFFER_USAGE_INDEX_BUFFER_BIT"},
-	                                         {VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, "VK_BUFFER_USAGE_VERTEX_BUFFER_BIT"},
-	                                         {VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, "VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT"},
-	                                         {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT"},
-	                                         {VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT, "VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT"},
-	                                         {VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT, "VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT"},
-	                                         {VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT, "VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT"},
-	                                         {VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, "VK_BUFFER_USAGE_RAY_TRACING_BIT_NV"},
-	                                         {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT"},
-	                                         {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR"}});
+	return to_string<VkBufferUsageFlagBits>(
+	    flags, {{VK_BUFFER_USAGE_TRANSFER_SRC_BIT, "VK_BUFFER_USAGE_TRANSFER_SRC_BIT"},
+	            {VK_BUFFER_USAGE_TRANSFER_DST_BIT, "VK_BUFFER_USAGE_TRANSFER_DST_BIT"},
+	            {VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT, "VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT"},
+	            {VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT, "VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT"},
+	            {VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, "VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT"},
+	            {VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "VK_BUFFER_USAGE_STORAGE_BUFFER_BIT"},
+	            {VK_BUFFER_USAGE_INDEX_BUFFER_BIT, "VK_BUFFER_USAGE_INDEX_BUFFER_BIT"},
+	            {VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, "VK_BUFFER_USAGE_VERTEX_BUFFER_BIT"},
+	            {VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, "VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT"},
+	            {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT"},
+	            {VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT, "VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT"},
+	            {VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT, "VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT"},
+	            {VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT, "VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT"},
+	            {VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, "VK_BUFFER_USAGE_RAY_TRACING_BIT_NV"},
+	            {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT"},
+	            {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR"}});
 }
 
 const std::string shader_stage_to_string(VkShaderStageFlags flags)
 {
-	return to_string<VkShaderStageFlagBits>(flags,
-	                                        {{VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "TESSELLATION_CONTROL"},
-	                                         {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "TESSELLATION_EVALUATION"},
-	                                         {VK_SHADER_STAGE_GEOMETRY_BIT, "GEOMETRY"},
-	                                         {VK_SHADER_STAGE_VERTEX_BIT, "VERTEX"},
-	                                         {VK_SHADER_STAGE_FRAGMENT_BIT, "FRAGMENT"},
-	                                         {VK_SHADER_STAGE_COMPUTE_BIT, "COMPUTE"},
-	                                         {VK_SHADER_STAGE_ALL_GRAPHICS, "ALL GRAPHICS"}});
+	return to_string<VkShaderStageFlagBits>(flags, {{VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "TESSELLATION_CONTROL"},
+	                                                {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "TESSELLATION_EVALUATION"},
+	                                                {VK_SHADER_STAGE_GEOMETRY_BIT, "GEOMETRY"},
+	                                                {VK_SHADER_STAGE_VERTEX_BIT, "VERTEX"},
+	                                                {VK_SHADER_STAGE_FRAGMENT_BIT, "FRAGMENT"},
+	                                                {VK_SHADER_STAGE_COMPUTE_BIT, "COMPUTE"},
+	                                                {VK_SHADER_STAGE_ALL_GRAPHICS, "ALL GRAPHICS"}});
 }
 
 const std::string image_usage_to_string(VkImageUsageFlags flags)
 {
-	return to_string<VkImageUsageFlagBits>(flags,
-	                                       {{VK_IMAGE_USAGE_TRANSFER_SRC_BIT, "VK_IMAGE_USAGE_TRANSFER_SRC_BIT"},
-	                                        {VK_IMAGE_USAGE_TRANSFER_DST_BIT, "VK_IMAGE_USAGE_TRANSFER_DST_BIT"},
-	                                        {VK_IMAGE_USAGE_SAMPLED_BIT, "VK_IMAGE_USAGE_SAMPLED_BIT"},
-	                                        {VK_IMAGE_USAGE_STORAGE_BIT, "VK_IMAGE_USAGE_STORAGE_BIT"},
-	                                        {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT"},
-	                                        {VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT"},
-	                                        {VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT"},
-	                                        {VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT"},
-	                                        {VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR, "VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR"},
-	                                        {VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR, "VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR"},
-	                                        {VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR, "VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR"},
-	                                        {VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT, "VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT"},
-	                                        {VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR, "VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR"},
-	                                        {VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT, "VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT"},
-	                                        {VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT, "VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT"},
-	                                        {VK_IMAGE_USAGE_INVOCATION_MASK_BIT_HUAWEI, "VK_IMAGE_USAGE_INVOCATION_MASK_BIT_HUAWEI"},
-	                                        {VK_IMAGE_USAGE_SAMPLE_WEIGHT_BIT_QCOM, "VK_IMAGE_USAGE_SAMPLE_WEIGHT_BIT_QCOM"},
-	                                        {VK_IMAGE_USAGE_SAMPLE_BLOCK_MATCH_BIT_QCOM, "VK_IMAGE_USAGE_SAMPLE_BLOCK_MATCH_BIT_QCOM"}});
+	return to_string<VkImageUsageFlagBits>(
+	    flags, {{VK_IMAGE_USAGE_TRANSFER_SRC_BIT, "VK_IMAGE_USAGE_TRANSFER_SRC_BIT"},
+	            {VK_IMAGE_USAGE_TRANSFER_DST_BIT, "VK_IMAGE_USAGE_TRANSFER_DST_BIT"},
+	            {VK_IMAGE_USAGE_SAMPLED_BIT, "VK_IMAGE_USAGE_SAMPLED_BIT"},
+	            {VK_IMAGE_USAGE_STORAGE_BIT, "VK_IMAGE_USAGE_STORAGE_BIT"},
+	            {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT"},
+	            {VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT"},
+	            {VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT"},
+	            {VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT"},
+	            {VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR, "VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR"},
+	            {VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR, "VK_IMAGE_USAGE_VIDEO_DECODE_SRC_BIT_KHR"},
+	            {VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR, "VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR"},
+	            {VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT, "VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT"},
+	            {VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR, "VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR"},
+	            {VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT, "VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT"},
+	            {VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT, "VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT"},
+	            {VK_IMAGE_USAGE_INVOCATION_MASK_BIT_HUAWEI, "VK_IMAGE_USAGE_INVOCATION_MASK_BIT_HUAWEI"},
+	            {VK_IMAGE_USAGE_SAMPLE_WEIGHT_BIT_QCOM, "VK_IMAGE_USAGE_SAMPLE_WEIGHT_BIT_QCOM"},
+	            {VK_IMAGE_USAGE_SAMPLE_BLOCK_MATCH_BIT_QCOM, "VK_IMAGE_USAGE_SAMPLE_BLOCK_MATCH_BIT_QCOM"}});
 }
 
 const std::string image_aspect_to_string(VkImageAspectFlags flags)
 {
-	return to_string<VkImageAspectFlagBits>(flags,
-	                                        {{VK_IMAGE_ASPECT_COLOR_BIT, "VK_IMAGE_ASPECT_COLOR_BIT"},
-	                                         {VK_IMAGE_ASPECT_DEPTH_BIT, "VK_IMAGE_ASPECT_DEPTH_BIT"},
-	                                         {VK_IMAGE_ASPECT_STENCIL_BIT, "VK_IMAGE_ASPECT_STENCIL_BIT"},
-	                                         {VK_IMAGE_ASPECT_METADATA_BIT, "VK_IMAGE_ASPECT_METADATA_BIT"},
-	                                         {VK_IMAGE_ASPECT_PLANE_0_BIT, "VK_IMAGE_ASPECT_PLANE_0_BIT"},
-	                                         {VK_IMAGE_ASPECT_PLANE_1_BIT, "VK_IMAGE_ASPECT_PLANE_1_BIT"},
-	                                         {VK_IMAGE_ASPECT_PLANE_2_BIT, "VK_IMAGE_ASPECT_PLANE_2_BIT"}});
+	return to_string<VkImageAspectFlagBits>(flags, {{VK_IMAGE_ASPECT_COLOR_BIT, "VK_IMAGE_ASPECT_COLOR_BIT"},
+	                                                {VK_IMAGE_ASPECT_DEPTH_BIT, "VK_IMAGE_ASPECT_DEPTH_BIT"},
+	                                                {VK_IMAGE_ASPECT_STENCIL_BIT, "VK_IMAGE_ASPECT_STENCIL_BIT"},
+	                                                {VK_IMAGE_ASPECT_METADATA_BIT, "VK_IMAGE_ASPECT_METADATA_BIT"},
+	                                                {VK_IMAGE_ASPECT_PLANE_0_BIT, "VK_IMAGE_ASPECT_PLANE_0_BIT"},
+	                                                {VK_IMAGE_ASPECT_PLANE_1_BIT, "VK_IMAGE_ASPECT_PLANE_1_BIT"},
+	                                                {VK_IMAGE_ASPECT_PLANE_2_BIT, "VK_IMAGE_ASPECT_PLANE_2_BIT"}});
 }
 
 const std::string cull_mode_to_string(VkCullModeFlags flags)
 {
-	return to_string<VkCullModeFlagBits>(flags,
-	                                     {{VK_CULL_MODE_NONE, "VK_CULL_MODE_NONE"},
-	                                      {VK_CULL_MODE_FRONT_BIT, "VK_CULL_MODE_FRONT_BIT"},
-	                                      {VK_CULL_MODE_BACK_BIT, "VK_CULL_MODE_BACK_BIT"},
-	                                      {VK_CULL_MODE_FRONT_AND_BACK, "VK_CULL_MODE_FRONT_AND_BACK"}});
+	return to_string<VkCullModeFlagBits>(flags, {{VK_CULL_MODE_NONE, "VK_CULL_MODE_NONE"},
+	                                             {VK_CULL_MODE_FRONT_BIT, "VK_CULL_MODE_FRONT_BIT"},
+	                                             {VK_CULL_MODE_BACK_BIT, "VK_CULL_MODE_BACK_BIT"},
+	                                             {VK_CULL_MODE_FRONT_AND_BACK, "VK_CULL_MODE_FRONT_AND_BACK"}});
 }
 
 const std::string color_component_to_string(VkColorComponentFlags flags)
 {
-	return to_string<VkColorComponentFlagBits>(flags,
-	                                           {{VK_COLOR_COMPONENT_R_BIT, "R"},
-	                                            {VK_COLOR_COMPONENT_G_BIT, "G"},
-	                                            {VK_COLOR_COMPONENT_B_BIT, "B"},
-	                                            {VK_COLOR_COMPONENT_A_BIT, "A"}});
+	return to_string<VkColorComponentFlagBits>(
+	    flags, {{VK_COLOR_COMPONENT_R_BIT, "R"}, {VK_COLOR_COMPONENT_G_BIT, "G"}, {VK_COLOR_COMPONENT_B_BIT, "B"}, {VK_COLOR_COMPONENT_A_BIT, "A"}});
 }
 
 const std::string image_compression_flags_to_string(VkImageCompressionFlagsEXT flags)
 {
-	return 0 == flags ? "VK_IMAGE_COMPRESSION_DEFAULT_EXT" :
-	                    to_string<VkImageCompressionFlagsEXT>(flags,
-	                                                          {{VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT"},
-	                                                           {VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT"},
-	                                                           {VK_IMAGE_COMPRESSION_DISABLED_EXT, "VK_IMAGE_COMPRESSION_DISABLED_EXT"}});
+	return 0 == flags ?
+	           "VK_IMAGE_COMPRESSION_DEFAULT_EXT" :
+	           to_string<VkImageCompressionFlagsEXT>(flags, {{VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT"},
+	                                                         {VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT"},
+	                                                         {VK_IMAGE_COMPRESSION_DISABLED_EXT, "VK_IMAGE_COMPRESSION_DISABLED_EXT"}});
 }
 
 const std::string image_compression_fixed_rate_flags_to_string(VkImageCompressionFixedRateFlagsEXT flags)
 {
 	return 0 == flags ? "VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT" :
-	                    to_string<VkImageCompressionFixedRateFlagsEXT>(flags,
-	                                                                   {{VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT"},
-	                                                                    {VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT"}});
+	                    to_string<VkImageCompressionFixedRateFlagsEXT>(
+	                        flags, {{VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT"},
+	                                {VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT, "VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT"}});
 }
 
 std::vector<std::string> split(const std::string &input, char delim)

@@ -76,10 +76,15 @@ class RaytracingExtended : public ApiVulkanSample
 		FlameParticleGenerator() = default;
 
 		FlameParticleGenerator(glm::vec3 generator_origin, glm::vec3 generator_direction, float generator_radius, size_t n_particles) :
-		    origin(generator_origin), direction(generator_direction), radius(generator_radius), n_particles(n_particles), generator(std::chrono::system_clock::now().time_since_epoch().count())
+		    origin(generator_origin),
+		    direction(generator_direction),
+		    radius(generator_radius),
+		    n_particles(n_particles),
+		    generator(std::chrono::system_clock::now().time_since_epoch().count())
 		{
 			using namespace glm;
-			u = normalize(abs(dot(generator_direction, vec3(0, 0, 1))) > 0.9f ? cross(generator_direction, vec3(1, 0, 0)) : cross(generator_direction, vec3(0, 0, 1)));
+			u = normalize(abs(dot(generator_direction, vec3(0, 0, 1))) > 0.9f ? cross(generator_direction, vec3(1, 0, 0)) :
+			                                                                    cross(generator_direction, vec3(0, 0, 1)));
 			v = normalize(cross(generator_direction, u));
 
 			for (size_t i = 0; i < n_particles; ++i)
@@ -109,10 +114,10 @@ class RaytracingExtended : public ApiVulkanSample
 		}
 		void update_particles(float time_delta)
 		{
-			particles.erase(std::remove_if(particles.begin(), particles.end(), [this, lifetime{this->lifetime}](const FlameParticle &particle) {
-				                return particle.duration > (generate_random() * lifetime);
-			                }),
-			                particles.end());
+			particles.erase(
+			    std::remove_if(particles.begin(), particles.end(),
+			                   [this, lifetime{this->lifetime}](const FlameParticle &particle) { return particle.duration > (generate_random() * lifetime); }),
+			    particles.end());
 
 			for (auto &&particle : particles)
 			{
@@ -184,8 +189,7 @@ class RaytracingExtended : public ApiVulkanSample
 	struct SceneLoadInfo
 	{
 		SceneLoadInfo() = default;
-		SceneLoadInfo(const char *filename, glm::mat3x4 transform, uint32_t object_type) :
-		    filename(filename), transform(transform), object_type(object_type)
+		SceneLoadInfo(const char *filename, glm::mat3x4 transform, uint32_t object_type) : filename(filename), transform(transform), object_type(object_type)
 		{}
 		const char *filename = "";
 		glm::mat3x4 transform;
@@ -227,8 +231,7 @@ class RaytracingExtended : public ApiVulkanSample
 		VkFormat       format;
 		uint32_t       width;
 		uint32_t       height;
-		StorageImage() :
-		    memory(VK_NULL_HANDLE), image(VK_NULL_HANDLE), view(VK_NULL_HANDLE), format(), width(0), height(0)
+		StorageImage() : memory(VK_NULL_HANDLE), image(VK_NULL_HANDLE), view(VK_NULL_HANDLE), format(), width(0), height(0)
 		{}
 	} storage_image;
 

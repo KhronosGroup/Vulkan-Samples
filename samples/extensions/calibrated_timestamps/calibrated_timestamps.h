@@ -46,7 +46,8 @@ class CalibratedTimestamps : public ApiVulkanSample
 		uint64_t    delta = 0;
 		std::string tag   = "Untagged";
 	};
-	std::vector<VkCalibratedTimestampInfoEXT>       timestamps_info{};        // This vector is essential to vkGetCalibratedTimestampsEXT, and only need to be registered once.
+	std::vector<VkCalibratedTimestampInfoEXT>
+	    timestamps_info{};        // This vector is essential to vkGetCalibratedTimestampsEXT, and only need to be registered once.
 	std::unordered_map<std::string, DeltaTimestamp> delta_timestamps{};
 
   public:
@@ -154,9 +155,9 @@ class CalibratedTimestamps : public ApiVulkanSample
 	std::vector<std::string> object_names{};
 
   private:
-	void     get_time_domains();                                                 // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
-	VkResult get_timestamps();                                                   // this creates local timestamps information vector, update timestamps vector and deviation vector
-	void     get_device_time_domain();                                           // this gets the optimal time domain which has the minimal value on its max deviation.
+	void get_time_domains();        // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
+	VkResult get_timestamps();                // this creates local timestamps information vector, update timestamps vector and deviation vector
+	void     get_device_time_domain();        // this gets the optimal time domain which has the minimal value on its max deviation.
 	void     timestamps_begin(const std::string &input_tag = "Untagged");        // this marks the timestamp begin and partially updates the delta_timestamps
 	void     timestamps_end(const std::string &input_tag = "Untagged");          // this marks the timestamp ends and updates the delta_timestamps
 

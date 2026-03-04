@@ -52,11 +52,8 @@ class SpecializationConstants : public vkb::VulkanSampleC
 	class ForwardSubpassCustomLights : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
-		ForwardSubpassCustomLights(vkb::rendering::RenderContextC &render_context,
-		                           vkb::ShaderSource             &&vertex_source,
-		                           vkb::ShaderSource             &&fragment_source,
-		                           vkb::sg::Scene                 &scene,
-		                           vkb::sg::Camera                &camera);
+		ForwardSubpassCustomLights(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source,
+		                           vkb::sg::Scene &scene, vkb::sg::Camera &camera);
 
 		virtual void prepare() override;
 
@@ -73,7 +70,8 @@ class SpecializationConstants : public vkb::VulkanSampleC
 		 * @return BufferAllocation A buffer allocation created for use in shaders
 		 */
 		template <typename T>
-		vkb::BufferAllocationC allocate_custom_lights(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
+		vkb::BufferAllocationC allocate_custom_lights(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights,
+		                                              size_t light_count)
 		{
 			T light_info;
 			light_info.count = vkb::to_u32(light_count);

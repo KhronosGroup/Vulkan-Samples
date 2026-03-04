@@ -24,8 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-Texture::Texture(const std::string &name) :
-    Component{name}
+Texture::Texture(const std::string &name) : Component{name}
 {}
 
 std::type_index Texture::get_type()

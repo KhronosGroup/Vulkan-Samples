@@ -44,8 +44,7 @@ using CreateFunc = std::function<std::unique_ptr<vkb::Application>()>;
 class AppInfo
 {
   public:
-	AppInfo(const std::string &id, const CreateFunc &create) :
-	    id(id), create(create)
+	AppInfo(const std::string &id, const CreateFunc &create) : id(id), create(create)
 	{}
 
 	std::string id;
@@ -59,7 +58,8 @@ class AppInfo
 class SampleInfo : public AppInfo
 {
   public:
-	SampleInfo(const std::string &id, const CreateFunc &create, const std::string &category, const std::string &author, const std::string &name, const std::string &description, const std::vector<std::string> &tags = {}) :
+	SampleInfo(const std::string &id, const CreateFunc &create, const std::string &category, const std::string &author, const std::string &name,
+	           const std::string &description, const std::vector<std::string> &tags = {}) :
 	    AppInfo(id, create), category(category), author(author), name(name), description(description), tags(tags)
 	{}
 

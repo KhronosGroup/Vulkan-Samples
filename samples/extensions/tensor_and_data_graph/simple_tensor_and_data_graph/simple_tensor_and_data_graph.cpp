@@ -141,12 +141,11 @@ void SimpleTensorAndDataGraph::prepare_input_tensor()
 	// In this case we are going to represent a small RGB image, so have a batch size of 1, a width and height of 10 and 3 channels.
 	std::vector<int64_t> dimensions = {1, 10, 10, 3};
 	// Create tensor and back it with memory. Set linear tiling flags and host-visible VMA flags so the backing memory can updated from the CPU.
-	input_tensor = std::make_unique<Tensor>(get_device(),
-	                                        TensorBuilder(dimensions)
-	                                            .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
-	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
-	                                            .with_format(VK_FORMAT_R32_SFLOAT)
-	                                            .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
+	input_tensor = std::make_unique<Tensor>(get_device(), TensorBuilder(dimensions)
+	                                                          .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
+	                                                          .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
+	                                                          .with_format(VK_FORMAT_R32_SFLOAT)
+	                                                          .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
 	// Upload fixed initial data - smoothly varying colors over the square
 	std::vector<glm::fvec3> input_tensor_data;
 	for (int y = 0; y < dimensions[1]; ++y)
@@ -172,10 +171,9 @@ void SimpleTensorAndDataGraph::prepare_output_tensor()
 	// The output of the network is half the width and height of the input, but still RGB.
 	std::vector<int64_t> dimensions = {1, 5, 5, 3};
 	// Create tensor and back it with memory
-	output_tensor      = std::make_unique<Tensor>(get_device(),
-                                             TensorBuilder(dimensions)
-                                                 .with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM | VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM)
-                                                 .with_format(VK_FORMAT_R32_SFLOAT));
+	output_tensor = std::make_unique<Tensor>(
+	    get_device(),
+	    TensorBuilder(dimensions).with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM | VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM).with_format(VK_FORMAT_R32_SFLOAT));
 	output_tensor_view = std::make_unique<TensorView>(*output_tensor);
 }
 
@@ -185,10 +183,9 @@ void SimpleTensorAndDataGraph::prepare_output_tensor()
  */
 void SimpleTensorAndDataGraph::prepare_output_image(uint32_t width, uint32_t height)
 {
-	output_image      = std::make_unique<vkb::core::Image>(get_device(),
-                                                      vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
-                                                          .with_format(VK_FORMAT_R8G8B8A8_UNORM)
-                                                          .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+	output_image      = std::make_unique<vkb::core::Image>(get_device(), vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
+                                                                        .with_format(VK_FORMAT_R8G8B8A8_UNORM)
+                                                                        .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
 	output_image_view = std::make_unique<vkb::core::ImageView>(*output_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 }
 
@@ -209,20 +206,16 @@ void SimpleTensorAndDataGraph::prepare_data_graph_pipeline()
 	// be bound to the pipeline.
 	std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> tensor_descriptions;
 	// All bindings are in set 0
-	tensor_descriptions[0] =
-	    {
-	        // Binding 0 is the input tensor
-	        {0, &input_tensor->get_description()},
-	        // Binding 1 is the output tensor
-	        {1, &output_tensor->get_description()}};
+	tensor_descriptions[0] = {// Binding 0 is the input tensor
+	                          {0, &input_tensor->get_description()},
+	                          // Binding 1 is the output tensor
+	                          {1, &output_tensor->get_description()}};
 
-	VkShaderModule shader_module = vkb::load_shader("tensor_and_data_graph/simple_tensor_and_data_graph/spirv/pooling.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
+	VkShaderModule shader_module =
+	    vkb::load_shader("tensor_and_data_graph/simple_tensor_and_data_graph/spirv/pooling.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
 
-	data_graph_pipeline = std::make_unique<DataGraphPipeline>(get_device(),
-	                                                          data_graph_pipeline_layout->get_handle(),
-	                                                          shader_module,
-	                                                          "main",
-	                                                          tensor_descriptions);
+	data_graph_pipeline =
+	    std::make_unique<DataGraphPipeline>(get_device(), data_graph_pipeline_layout->get_handle(), shader_module, "main", tensor_descriptions);
 
 	// Create a Pipeline Session for the Pipeline. Unlike compute and graphics pipelines, data graph pipelines require
 	// additional state to be stored (e.g. for intermediate results). This is stored separately to the pipeline itself in
@@ -245,12 +238,11 @@ void SimpleTensorAndDataGraph::prepare_data_graph_pipeline_descriptor_set()
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &data_graph_pipeline_descriptor_set));
 
 	// Write bindings to it, telling it which tensors to use as input and output
-	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings =
-	    {
-	        // Binding 0 is the input tensor
-	        {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
-	        // Binding 1 is the output tensor
-	        {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}}};
+	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings = {
+	    // Binding 0 is the input tensor
+	    {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
+	    // Binding 1 is the output tensor
+	    {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}}};
 	write_descriptor_set(get_device().get_handle(), data_graph_pipeline_descriptor_set, {}, tensor_bindings);
 }
 
@@ -261,8 +253,8 @@ void SimpleTensorAndDataGraph::prepare_data_graph_pipeline_descriptor_set()
 void SimpleTensorAndDataGraph::prepare_visualization_pipeline()
 {
 	// Load the compute shader
-	vkb::ShaderModule &visualization_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/visualization_two_tensors.comp.spv"});
+	vkb::ShaderModule &visualization_comp = get_device().get_resource_cache().request_shader_module(
+	    VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/visualization_two_tensors.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.
@@ -277,7 +269,8 @@ void SimpleTensorAndDataGraph::prepare_visualization_pipeline()
  */
 void SimpleTensorAndDataGraph::prepare_visualization_pipeline_descriptor_set()
 {
-	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than allocating a new one)
+	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than
+	// allocating a new one)
 	if (visualization_pipeline_descriptor_set == VK_NULL_HANDLE)
 	{
 		VkDescriptorSetAllocateInfo alloc_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -288,17 +281,15 @@ void SimpleTensorAndDataGraph::prepare_visualization_pipeline_descriptor_set()
 	}
 
 	// Write bindings to it
-	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings =
-	    {
-	        // Binding 0 is the input tensor
-	        {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
-	        // Binding 1 is the output tensor
-	        {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}}};
+	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings = {
+	    // Binding 0 is the input tensor
+	    {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
+	    // Binding 1 is the output tensor
+	    {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}}};
 
-	std::map<uint32_t, VkDescriptorImageInfo> image_bindings =
-	    {
-	        // Binding 2 is the output image
-	        {2, VkDescriptorImageInfo{VK_NULL_HANDLE, output_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL}}};
+	std::map<uint32_t, VkDescriptorImageInfo> image_bindings = {
+	    // Binding 2 is the output image
+	    {2, VkDescriptorImageInfo{VK_NULL_HANDLE, output_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL}}};
 
 	write_descriptor_set(get_device().get_handle(), visualization_pipeline_descriptor_set, image_bindings, tensor_bindings);
 }
@@ -327,8 +318,8 @@ void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &comman
 {
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());
-	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline_layout->get_handle(),
-	                        0, 1, &data_graph_pipeline_descriptor_set, 0, nullptr);
+	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline_layout->get_handle(), 0, 1,
+	                        &data_graph_pipeline_descriptor_set, 0, nullptr);
 	vkCmdDispatchDataGraphARM(command_buffer.get_handle(), data_graph_pipeline_session->get_handle(), VK_NULL_HANDLE);
 
 	// Barrier for `output_tensor` (written to by the graph pipeline above, and read from by the visualization compute shader below)
@@ -355,12 +346,12 @@ void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &comman
 
 	// Bind and run visualization compute pipeline
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline->get_handle());
-	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline_layout->get_handle(),
-	                        0, 1, &visualization_pipeline_descriptor_set, 0, nullptr);
+	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline_layout->get_handle(), 0, 1,
+	                        &visualization_pipeline_descriptor_set, 0, nullptr);
 
 	// Pass the output_image size as a push constant
-	vkCmdPushConstants(command_buffer.get_handle(), visualization_pipeline_layout->get_handle(), VK_SHADER_STAGE_COMPUTE_BIT, 0,
-	                   sizeof(glm::uvec2), &render_target.get_extent());
+	vkCmdPushConstants(command_buffer.get_handle(), visualization_pipeline_layout->get_handle(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(glm::uvec2),
+	                   &render_target.get_extent());
 	uint32_t group_count_x = (render_target.get_extent().width + 7) / 8;        // The visualization shader has a group size of 8
 	uint32_t group_count_y = (render_target.get_extent().height + 7) / 8;
 	vkCmdDispatch(command_buffer.get_handle(), group_count_x, group_count_y, 1);
@@ -394,8 +385,7 @@ void SimpleTensorAndDataGraph::draw_gui()
 	draw_list->AddText(ImVec2(cx + 100, cy + 100), IM_COL32_WHITE, "Output tensor");
 
 	draw_list->AddLine(ImVec2(cx - 25, cy), ImVec2(cx - 5, cy), IM_COL32_WHITE, 5.0f);
-	ImGui::RenderArrowPointingAt(draw_list, ImVec2(cx + 25.0f, cy),
-	                             ImVec2(30.0f, 10.0f), ImGuiDir_Right, IM_COL32_WHITE);
+	ImGui::RenderArrowPointingAt(draw_list, ImVec2(cx + 25.0f, cy), ImVec2(30.0f, 10.0f), ImGuiDir_Right, IM_COL32_WHITE);
 	ImVec2 text_size = ImGui::CalcTextSize("Pooling");
 	draw_list->AddText(ImVec2(cx - text_size.x / 2, cy + 20), IM_COL32_WHITE, "Pooling");
 }

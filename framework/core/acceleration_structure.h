@@ -40,8 +40,7 @@ class AccelerationStructure
 	 * @param device A valid Vulkan device
 	 * @param type The type of the acceleration structure (top- or bottom-level)
 	 */
-	AccelerationStructure(vkb::core::DeviceC            &device,
-	                      VkAccelerationStructureTypeKHR type);
+	AccelerationStructure(vkb::core::DeviceC &device, VkAccelerationStructureTypeKHR type);
 
 	~AccelerationStructure();
 
@@ -62,32 +61,17 @@ class AccelerationStructure
 	 * @param index_buffer_data_address set this if don't want the index_buffer data_address
 	 * @param transform_buffer_data_address set this if don't want the transform_buffer data_address
 	 */
-	uint64_t add_triangle_geometry(vkb::core::BufferC &vertex_buffer,
-	                               vkb::core::BufferC &index_buffer,
-	                               vkb::core::BufferC &transform_buffer,
-	                               uint32_t            triangle_count,
-	                               uint32_t            max_vertex,
-	                               VkDeviceSize        vertex_stride,
-	                               uint32_t            transform_offset              = 0,
-	                               VkFormat            vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
-	                               VkIndexType         index_type                    = VK_INDEX_TYPE_UINT32,
-	                               VkGeometryFlagsKHR  flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
-	                               uint64_t            vertex_buffer_data_address    = 0,
-	                               uint64_t            index_buffer_data_address     = 0,
-	                               uint64_t            transform_buffer_data_address = 0);
+	uint64_t add_triangle_geometry(vkb::core::BufferC &vertex_buffer, vkb::core::BufferC &index_buffer, vkb::core::BufferC &transform_buffer,
+	                               uint32_t triangle_count, uint32_t max_vertex, VkDeviceSize vertex_stride, uint32_t transform_offset = 0,
+	                               VkFormat vertex_format = VK_FORMAT_R32G32B32_SFLOAT, VkIndexType index_type = VK_INDEX_TYPE_UINT32,
+	                               VkGeometryFlagsKHR flags = VK_GEOMETRY_OPAQUE_BIT_KHR, uint64_t vertex_buffer_data_address = 0,
+	                               uint64_t index_buffer_data_address = 0, uint64_t transform_buffer_data_address = 0);
 
-	void update_triangle_geometry(uint64_t triangleUUID, std::unique_ptr<vkb::core::BufferC> &vertex_buffer,
-	                              std::unique_ptr<vkb::core::BufferC> &index_buffer,
-	                              std::unique_ptr<vkb::core::BufferC> &transform_buffer,
-	                              uint32_t                             triangle_count,
-	                              uint32_t                             max_vertex,
-	                              VkDeviceSize                         vertex_stride,
-	                              uint32_t                             transform_offset              = 0,
-	                              VkFormat                             vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
-	                              VkGeometryFlagsKHR                   flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
-	                              uint64_t                             vertex_buffer_data_address    = 0,
-	                              uint64_t                             index_buffer_data_address     = 0,
-	                              uint64_t                             transform_buffer_data_address = 0);
+	void update_triangle_geometry(uint64_t triangleUUID, std::unique_ptr<vkb::core::BufferC> &vertex_buffer, std::unique_ptr<vkb::core::BufferC> &index_buffer,
+	                              std::unique_ptr<vkb::core::BufferC> &transform_buffer, uint32_t triangle_count, uint32_t max_vertex,
+	                              VkDeviceSize vertex_stride, uint32_t transform_offset = 0, VkFormat vertex_format = VK_FORMAT_R32G32B32_SFLOAT,
+	                              VkGeometryFlagsKHR flags = VK_GEOMETRY_OPAQUE_BIT_KHR, uint64_t vertex_buffer_data_address = 0,
+	                              uint64_t index_buffer_data_address = 0, uint64_t transform_buffer_data_address = 0);
 
 	/**
 	 * @brief Adds instance geometry to the acceleration structure (only valid for top level)
@@ -97,15 +81,11 @@ class AccelerationStructure
 	 * @param transform_offset Offset of this geometry in the transform data buffer
 	 * @param flags Ray tracing geometry flags
 	 */
-	uint64_t add_instance_geometry(std::unique_ptr<vkb::core::BufferC> &instance_buffer,
-	                               uint32_t                             instance_count,
-	                               uint32_t                             transform_offset = 0,
-	                               VkGeometryFlagsKHR                   flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
+	uint64_t add_instance_geometry(std::unique_ptr<vkb::core::BufferC> &instance_buffer, uint32_t instance_count, uint32_t transform_offset = 0,
+	                               VkGeometryFlagsKHR flags = VK_GEOMETRY_OPAQUE_BIT_KHR);
 
-	void update_instance_geometry(uint64_t instance_UID, std::unique_ptr<vkb::core::BufferC> &instance_buffer,
-	                              uint32_t           instance_count,
-	                              uint32_t           transform_offset = 0,
-	                              VkGeometryFlagsKHR flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
+	void update_instance_geometry(uint64_t instance_UID, std::unique_ptr<vkb::core::BufferC> &instance_buffer, uint32_t instance_count,
+	                              uint32_t transform_offset = 0, VkGeometryFlagsKHR flags = VK_GEOMETRY_OPAQUE_BIT_KHR);
 
 	/**
 	 * @brief Builds the acceleration structure on the device (requires at least one geometry to be added)
@@ -113,9 +93,8 @@ class AccelerationStructure
 	 * @param flags Build flags
 	 * @param mode Build mode (build or update)
 	 */
-	void build(VkQueue                              queue,
-	           VkBuildAccelerationStructureFlagsKHR flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-	           VkBuildAccelerationStructureModeKHR  mode  = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
+	void build(VkQueue queue, VkBuildAccelerationStructureFlagsKHR flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+	           VkBuildAccelerationStructureModeKHR mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 
 	VkAccelerationStructureKHR get_handle() const;
 

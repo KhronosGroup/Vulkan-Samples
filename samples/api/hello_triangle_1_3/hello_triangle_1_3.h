@@ -139,8 +139,7 @@ class HelloTriangleV13 : public vkb::Application
 
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-	bool validate_extensions(const std::vector<const char *>          &required,
-	                         const std::vector<VkExtensionProperties> &available);
+	bool validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
 
 	void init_instance();
 
@@ -164,7 +163,8 @@ class HelloTriangleV13 : public vkb::Application
 
 	VkResult present_image(uint32_t index);
 
-	void transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags2 srcAccessMask, VkAccessFlags2 dstAccessMask, VkPipelineStageFlags2 srcStage, VkPipelineStageFlags2 dstStage);
+	void transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags2 srcAccessMask,
+	                             VkAccessFlags2 dstAccessMask, VkPipelineStageFlags2 srcStage, VkPipelineStageFlags2 dstStage);
 
 	uint32_t find_memory_type(VkPhysicalDevice physical_device, uint32_t type_filter, VkMemoryPropertyFlags properties);
 

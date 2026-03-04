@@ -50,11 +50,8 @@ class DescriptorSet
 	 * @param buffer_infos The descriptors that describe buffer data
 	 * @param image_infos The descriptors that describe image data
 	 */
-	DescriptorSet(vkb::core::DeviceC                       &device,
-	              const DescriptorSetLayout                &descriptor_set_layout,
-	              DescriptorPool                           &descriptor_pool,
-	              const BindingMap<VkDescriptorBufferInfo> &buffer_infos = {},
-	              const BindingMap<VkDescriptorImageInfo>  &image_infos  = {});
+	DescriptorSet(vkb::core::DeviceC &device, const DescriptorSetLayout &descriptor_set_layout, DescriptorPool &descriptor_pool,
+	              const BindingMap<VkDescriptorBufferInfo> &buffer_infos = {}, const BindingMap<VkDescriptorImageInfo> &image_infos = {});
 
 	DescriptorSet(const DescriptorSet &) = delete;
 
@@ -73,8 +70,7 @@ class DescriptorSet
 	 * @param new_buffer_infos A map of buffer descriptors and their respective bindings
 	 * @param new_image_infos A map of image descriptors and their respective bindings
 	 */
-	void reset(const BindingMap<VkDescriptorBufferInfo> &new_buffer_infos = {},
-	           const BindingMap<VkDescriptorImageInfo>  &new_image_infos  = {});
+	void reset(const BindingMap<VkDescriptorBufferInfo> &new_buffer_infos = {}, const BindingMap<VkDescriptorImageInfo> &new_image_infos = {});
 
 	/**
 	 * @brief Updates the contents of the DescriptorSet by performing the write operations

@@ -64,7 +64,8 @@ bool HPPPushDescriptors::prepare(const vkb::ApplicationOptions &options)
 		*/
 
 		// Get device push descriptor properties (to display them)
-		auto property_chain  = get_device().get_gpu().get_handle().getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDevicePushDescriptorPropertiesKHR>();
+		auto property_chain =
+		    get_device().get_gpu().get_handle().getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDevicePushDescriptorPropertiesKHR>();
 		max_push_descriptors = property_chain.get<vk::PhysicalDevicePushDescriptorPropertiesKHR>().maxPushDescriptors;
 
 		/*
@@ -137,10 +138,9 @@ void HPPPushDescriptors::build_command_buffers()
 			// Note: dstSet for each descriptor set write is left at nullptr as this is ignored when using push descriptors
 
 			vk::DescriptorBufferInfo cube_buffer_descriptor{cube.uniform_buffer->get_handle(), 0, vk::WholeSize};
-			vk::DescriptorImageInfo  cube_image_descriptor{cube.texture.sampler,
-                                                          cube.texture.image->get_vk_image_view().get_handle(),
-                                                          descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-			                                                                               cube.texture.image->get_vk_image_view().get_format())};
+			vk::DescriptorImageInfo  cube_image_descriptor{
+                cube.texture.sampler, cube.texture.image->get_vk_image_view().get_handle(),
+                descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, cube.texture.image->get_vk_image_view().get_format())};
 
 			std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
 			    {{.dstBinding = 0, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &scene_buffer_descriptor},
@@ -190,9 +190,10 @@ void HPPPushDescriptors::render(float delta_time)
 
 void HPPPushDescriptors::create_descriptor_set_layout()
 {
-	std::array<vk::DescriptorSetLayoutBinding, 3> set_layout_bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                                      {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                                      {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+	std::array<vk::DescriptorSetLayoutBinding, 3> set_layout_bindings = {
+	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	     {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	     {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info{.flags        = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR,
 	                                                                .bindingCount = static_cast<uint32_t>(set_layout_bindings.size()),
@@ -223,36 +224,22 @@ void HPPPushDescriptors::create_pipeline()
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{
 	    .depthTestEnable = true, .depthWriteEnable = true, .depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
-	pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
-	                                                 pipeline_cache,
-	                                                 shader_stages,
-	                                                 vertex_input_state,
-	                                                 vk::PrimitiveTopology::eTriangleList,
-	                                                 0,
-	                                                 vk::PolygonMode::eFill,
-	                                                 vk::CullModeFlagBits::eBack,
-	                                                 vk::FrontFace::eClockwise,
-	                                                 {blend_attachment_state},
-	                                                 depth_stencil_state,
-	                                                 pipeline_layout,
-	                                                 render_pass);
+	pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, vertex_input_state,
+	                                                 vk::PrimitiveTopology::eTriangleList, 0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
+	                                                 vk::FrontFace::eClockwise, {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
 }
 
 void HPPPushDescriptors::create_uniform_buffers()
 {
 	// Vertex shader scene uniform buffer block
-	uniform_buffers.scene = std::make_unique<vkb::core::BufferCpp>(get_device(),
-	                                                               sizeof(UboScene),
-	                                                               vk::BufferUsageFlagBits::eUniformBuffer,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.scene =
+	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(UboScene), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Vertex shader cube model uniform buffer blocks
 	for (auto &cube : cubes)
 	{
-		cube.uniform_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
-		                                                             sizeof(glm::mat4),
-		                                                             vk::BufferUsageFlagBits::eUniformBuffer,
-		                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
+		cube.uniform_buffer =
+		    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(glm::mat4), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffers();

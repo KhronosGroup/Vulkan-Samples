@@ -102,14 +102,11 @@ GLuint OffscreenContext::build_program(const char *vertex_shader_source, const c
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
 void OffscreenContext::init_context()
 {
-	EGLint egl_maj_vers{0},
-	    egl_min_vers{0};
+	EGLint egl_maj_vers{0}, egl_min_vers{0};
 	data.display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 	eglInitialize(data.display, &egl_maj_vers, &egl_min_vers);
 
-	constexpr EGLint conf_attr[] = {
-	    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
-	    EGL_NONE};
+	constexpr EGLint conf_attr[] = {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR, EGL_NONE};
 
 	EGLint num_configs;
 	eglChooseConfig(data.display, conf_attr, &data.config, 1, &num_configs);

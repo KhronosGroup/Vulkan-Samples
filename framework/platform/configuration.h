@@ -125,10 +125,9 @@ class Configuration
 	 * @param args A parameter pack containing the parameters to initialize a setting object
 	 */
 	template <class T, class... A>
-	void insert(uint32_t config_index, A &&... args)
+	void insert(uint32_t config_index, A &&...args)
 	{
-		static_assert(std::is_base_of<Setting, T>::value,
-		              "T is not a type of setting.");
+		static_assert(std::is_base_of<Setting, T>::value, "T is not a type of setting.");
 
 		insert_setting(config_index, std::make_unique<T>(args...));
 	}

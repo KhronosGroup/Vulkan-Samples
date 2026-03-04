@@ -62,16 +62,12 @@ using BufferAllocationCpp = BufferAllocation<vkb::BindingType::Cpp>;
 
 template <>
 inline BufferAllocation<vkb::BindingType::Cpp>::BufferAllocation(vkb::core::BufferCpp &buffer, vk::DeviceSize size, vk::DeviceSize offset) :
-    buffer(&buffer),
-    offset(offset),
-    size(size)
+    buffer(&buffer), offset(offset), size(size)
 {}
 
 template <>
 inline BufferAllocation<vkb::BindingType::C>::BufferAllocation(vkb::core::BufferC &buffer, VkDeviceSize size, VkDeviceSize offset) :
-    buffer(reinterpret_cast<vkb::core::BufferCpp *>(&buffer)),
-    offset(static_cast<vk::DeviceSize>(offset)),
-    size(static_cast<vk::DeviceSize>(size))
+    buffer(reinterpret_cast<vkb::core::BufferCpp *>(&buffer)), offset(static_cast<vk::DeviceSize>(offset)), size(static_cast<vk::DeviceSize>(size))
 {}
 
 template <vkb::BindingType bindingType>
@@ -306,41 +302,40 @@ class BufferPool
 	using DeviceSizeType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
 
   public:
-	BufferPool(
-	    vkb::core::Device<bindingType> &device, DeviceSizeType block_size, BufferUsageFlagsType usage, VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU);
+	BufferPool(vkb::core::Device<bindingType> &device, DeviceSizeType block_size, BufferUsageFlagsType usage,
+	           VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	BufferBlock<bindingType> &request_buffer_block(DeviceSizeType minimum_size, bool minimal = false);
 
 	void reset();
 
   private:
-	vkb::core::DeviceCpp                        &device;
-	std::vector<std::unique_ptr<BufferBlockCpp>> buffer_blocks;         /// List of blocks requested (need to be pointers in order to keep their address constant on vector resizing)
-	vk::DeviceSize                               block_size = 0;        /// Minimum size of the blocks
-	vk::BufferUsageFlags                         usage;
-	VmaMemoryUsage                               memory_usage{};
+	vkb::core::DeviceCpp &device;
+	std::vector<std::unique_ptr<BufferBlockCpp>>
+	                     buffer_blocks;         /// List of blocks requested (need to be pointers in order to keep their address constant on vector resizing)
+	vk::DeviceSize       block_size = 0;        /// Minimum size of the blocks
+	vk::BufferUsageFlags usage;
+	VmaMemoryUsage       memory_usage{};
 };
 
 using BufferPoolC   = BufferPool<vkb::BindingType::C>;
 using BufferPoolCpp = BufferPool<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-BufferPool<bindingType>::BufferPool(vkb::core::Device<bindingType> &device,
-                                    DeviceSizeType                  block_size,
-                                    BufferUsageFlagsType            usage,
-                                    VmaMemoryUsage                  memory_usage) :
+BufferPool<bindingType>::BufferPool(vkb::core::Device<bindingType> &device, DeviceSizeType block_size, BufferUsageFlagsType usage,
+                                    VmaMemoryUsage memory_usage) :
     device{reinterpret_cast<vkb::core::DeviceCpp &>(device)}, block_size{block_size}, usage{usage}, memory_usage{memory_usage}
-{
-}
+{}
 
 template <vkb::BindingType bindingType>
 BufferBlock<bindingType> &BufferPool<bindingType>::request_buffer_block(DeviceSizeType minimum_size, bool minimal)
 {
 	// Find a block in the range of the blocks which can fit the minimum size
 	auto it = minimal ? std::ranges::find_if(buffer_blocks,
-	                                         [&minimum_size](auto const &buffer_block) { return (buffer_block->get_size() == minimum_size) && buffer_block->can_allocate(minimum_size); }) :
-	                    std::ranges::find_if(buffer_blocks,
-	                                         [&minimum_size](auto const &buffer_block) { return buffer_block->can_allocate(minimum_size); });
+	                                         [&minimum_size](auto const &buffer_block) {
+		                                         return (buffer_block->get_size() == minimum_size) && buffer_block->can_allocate(minimum_size);
+	                                         }) :
+	                    std::ranges::find_if(buffer_blocks, [&minimum_size](auto const &buffer_block) { return buffer_block->can_allocate(minimum_size); });
 
 	if (it == buffer_blocks.end())
 	{

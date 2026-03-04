@@ -27,9 +27,7 @@ namespace plugins
 {
 WindowOptions::WindowOptions() :
     WindowOptionsTags("Window Options",
-                      "A collection of flags to configure window used when running the application. Implementation may differ between platforms",
-                      {},
-                      {},
+                      "A collection of flags to configure window used when running the application. Implementation may differ between platforms", {}, {},
                       {{"borderless", "Run in borderless mode"},
                        {"fullscreen", "Run in fullscreen mode"},
                        {"headless-surface", "Run in headless surface mode. A Surface and swap-chain is still created using VK_EXT_headless_surface."},
@@ -37,8 +35,7 @@ WindowOptions::WindowOptions() :
                        {"stretch", "Stretch window to fullscreen (direct-to-display only)"},
                        {"vsync", "Force vsync {ON | OFF}. If not set samples decide how vsync is set"},
                        {"width", "Initial window width"}})
-{
-}
+{}
 
 bool WindowOptions::handle_option(std::deque<std::string> &arguments)
 {

@@ -25,8 +25,7 @@
 
 namespace vkb
 {
-void DebugUtilsExtDebugUtils::set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                             const char *name) const
+void DebugUtilsExtDebugUtils::set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle, const char *name) const
 {
 	VkDebugUtilsObjectNameInfoEXT name_info{};
 	name_info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -38,8 +37,8 @@ void DebugUtilsExtDebugUtils::set_debug_name(VkDevice device, VkObjectType objec
 	vkSetDebugUtilsObjectNameEXT(device, &name_info);
 }
 
-void DebugUtilsExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                            uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
+void DebugUtilsExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
+                                            size_t tag_data_size) const
 {
 	VkDebugUtilsObjectTagInfoEXT tag_info{};
 	tag_info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT;
@@ -53,8 +52,7 @@ void DebugUtilsExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object
 	vkSetDebugUtilsObjectTagEXT(device, &tag_info);
 }
 
-void DebugUtilsExtDebugUtils::cmd_begin_label(VkCommandBuffer command_buffer,
-                                              const char *name, glm::vec4 color) const
+void DebugUtilsExtDebugUtils::cmd_begin_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const
 {
 	VkDebugUtilsLabelEXT label_info{};
 	label_info.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
@@ -71,8 +69,7 @@ void DebugUtilsExtDebugUtils::cmd_end_label(VkCommandBuffer command_buffer) cons
 	vkCmdEndDebugUtilsLabelEXT(command_buffer);
 }
 
-void DebugUtilsExtDebugUtils::cmd_insert_label(VkCommandBuffer command_buffer,
-                                               const char *name, glm::vec4 color) const
+void DebugUtilsExtDebugUtils::cmd_insert_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const
 {
 	VkDebugUtilsLabelEXT label_info{};
 	label_info.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
@@ -119,8 +116,7 @@ static const std::unordered_map<VkObjectType, VkDebugReportObjectTypeEXT> VK_OBJ
     {VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_KHR, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT},
 };
 
-void DebugMarkerExtDebugUtils::set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                              const char *name) const
+void DebugMarkerExtDebugUtils::set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle, const char *name) const
 {
 	VkDebugMarkerObjectNameInfoEXT name_info{};
 	name_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
@@ -132,8 +128,8 @@ void DebugMarkerExtDebugUtils::set_debug_name(VkDevice device, VkObjectType obje
 	vkDebugMarkerSetObjectNameEXT(device, &name_info);
 }
 
-void DebugMarkerExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-                                             uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
+void DebugMarkerExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
+                                             size_t tag_data_size) const
 {
 	VkDebugMarkerObjectTagInfoEXT tag_info{};
 	tag_info.sType      = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
@@ -147,8 +143,7 @@ void DebugMarkerExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType objec
 	vkDebugMarkerSetObjectTagEXT(device, &tag_info);
 }
 
-void DebugMarkerExtDebugUtils::cmd_begin_label(VkCommandBuffer command_buffer,
-                                               const char *name, glm::vec4 color) const
+void DebugMarkerExtDebugUtils::cmd_begin_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const
 {
 	VkDebugMarkerMarkerInfoEXT marker_info{};
 	marker_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
@@ -165,8 +160,7 @@ void DebugMarkerExtDebugUtils::cmd_end_label(VkCommandBuffer command_buffer) con
 	vkCmdDebugMarkerEndEXT(command_buffer);
 }
 
-void DebugMarkerExtDebugUtils::cmd_insert_label(VkCommandBuffer command_buffer,
-                                                const char *name, glm::vec4 color) const
+void DebugMarkerExtDebugUtils::cmd_insert_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const
 {
 	VkDebugMarkerMarkerInfoEXT marker_info{};
 	marker_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
@@ -177,10 +171,8 @@ void DebugMarkerExtDebugUtils::cmd_insert_label(VkCommandBuffer command_buffer,
 	vkCmdDebugMarkerInsertEXT(command_buffer, &marker_info);
 }
 
-ScopedDebugLabel::ScopedDebugLabel(const DebugUtils &debug_utils, VkCommandBuffer command_buffer,
-                                   const char *name, glm::vec4 color) :
-    debug_utils{&debug_utils},
-    command_buffer{VK_NULL_HANDLE}
+ScopedDebugLabel::ScopedDebugLabel(const DebugUtils &debug_utils, VkCommandBuffer command_buffer, const char *name, glm::vec4 color) :
+    debug_utils{&debug_utils}, command_buffer{VK_NULL_HANDLE}
 {
 	if (name && *name != '\0')
 	{
@@ -193,8 +185,7 @@ ScopedDebugLabel::ScopedDebugLabel(const DebugUtils &debug_utils, VkCommandBuffe
 
 ScopedDebugLabel::ScopedDebugLabel(const vkb::core::CommandBufferC &command_buffer, const char *name, glm::vec4 color) :
     ScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
-{
-}
+{}
 
 ScopedDebugLabel::~ScopedDebugLabel()
 {

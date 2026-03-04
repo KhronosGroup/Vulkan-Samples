@@ -20,8 +20,7 @@
 namespace vkb
 {
 
-UnixPlatformContext::UnixPlatformContext(int argc, char **argv) :
-    PlatformContext{}
+UnixPlatformContext::UnixPlatformContext(int argc, char **argv) : PlatformContext{}
 {
 	_arguments.reserve(argc);
 	for (int i = 1; i < argc; ++i)

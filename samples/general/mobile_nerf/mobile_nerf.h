@@ -76,8 +76,7 @@ class MobileNerf : public ApiVulkanSample
 
 	struct MLP_Weights
 	{
-		float data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT +
-		           BIAS_0_COUNT + BIAS_1_COUNT + BIAS_2_COUNT];        // Array of floats
+		float data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT + BIAS_0_COUNT + BIAS_1_COUNT + BIAS_2_COUNT];        // Array of floats
 	};
 
 	struct Vertex
@@ -220,9 +219,8 @@ class MobileNerf : public ApiVulkanSample
 	glm::vec3 camera_pos = glm::vec3(-2.2f, 2.2f, 2.2f);
 
 	// Currently combo mode translation are hard-coded
-	glm::mat4x4 combo_model_transform[4] = {
-	    glm::translate(glm::vec3(0.5, 0.75, 0)), glm::translate(glm::vec3(0.5, 0.25, 0)),
-	    glm::translate(glm::vec3(0, -0.25, 0.5)), glm::translate(glm::vec3(0, -0.75, -0.5))};
+	glm::mat4x4 combo_model_transform[4] = {glm::translate(glm::vec3(0.5, 0.75, 0)), glm::translate(glm::vec3(0.5, 0.25, 0)),
+	                                        glm::translate(glm::vec3(0, -0.25, 0.5)), glm::translate(glm::vec3(0, -0.75, -0.5))};
 
 	// For instancing
 	InstancingInfo instancing_info;

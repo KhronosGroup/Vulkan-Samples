@@ -25,13 +25,9 @@
 namespace plugins
 {
 ShadingLanguageSelection::ShadingLanguageSelection() :
-    ShadingLanguageSelectionTags("Shading language selection",
-                                 "A collection of flags to select shader from different shading languages (glsl, hlsl or slang)",
-                                 {},
-                                 {},
-                                 {{"shading-language", "Shading language to use (glsl, hlsl or slang)"}})
-{
-}
+    ShadingLanguageSelectionTags("Shading language selection", "A collection of flags to select shader from different shading languages (glsl, hlsl or slang)",
+                                 {}, {}, {{"shading-language", "Shading language to use (glsl, hlsl or slang)"}})
+{}
 
 bool ShadingLanguageSelection::handle_option(std::deque<std::string> &arguments)
 {

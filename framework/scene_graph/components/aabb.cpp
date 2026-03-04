@@ -28,11 +28,8 @@ AABB::AABB()
 	reset();
 }
 
-AABB::AABB(const glm::vec3 &min, const glm::vec3 &max) :
-    min{min},
-    max{max}
-{
-}
+AABB::AABB(const glm::vec3 &min, const glm::vec3 &max) : min{min}, max{max}
+{}
 
 std::type_index AABB::get_type()
 {

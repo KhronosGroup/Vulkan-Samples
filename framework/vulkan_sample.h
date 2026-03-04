@@ -139,13 +139,14 @@ class VulkanSample : public vkb::Application
 	using SceneType        = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using StatsType        = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
-	using Extent2DType                = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
-	using InstanceCreateFlagsType     = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
-	using LayerSettingType            = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
-	using PhysicalDeviceType          = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
-	using SurfaceFormatType           = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
-	using SurfaceType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
-	using ValidationFeatureEnableType = typename std::conditional<bindingType == BindingType::Cpp, vk::ValidationFeatureEnableEXT, VkValidationFeatureEnableEXT>::type;
+	using Extent2DType            = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using InstanceCreateFlagsType = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
+	using LayerSettingType        = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
+	using PhysicalDeviceType      = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
+	using SurfaceFormatType       = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
+	using SurfaceType             = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using ValidationFeatureEnableType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vk::ValidationFeatureEnableEXT, VkValidationFeatureEnableEXT>::type;
 
 	Configuration                                    &get_configuration();
 	vkb::rendering::RenderContext<bindingType>       &get_render_context();
@@ -201,7 +202,7 @@ class VulkanSample : public vkb::Application
 
 	virtual uint32_t                get_api_version() const;
 	virtual InstanceCreateFlagsType get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
-	virtual void                   *get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) const;
+	virtual void *get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) const;
 
 	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -394,9 +395,8 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
 	 */
-	std::vector<vk::SurfaceFormatKHR> surface_priority_list = {
-	    {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	    {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
+	std::vector<vk::SurfaceFormatKHR> surface_priority_list = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	                                                           {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	/**
 	 * @brief The configuration of the sample
@@ -452,21 +452,18 @@ inline void VulkanSample<bindingType>::add_device_extension(const char *extensio
 }
 
 template <vkb::BindingType bindingType>
-inline std::unique_ptr<typename vkb::core::Device<bindingType>>
-    VulkanSample<bindingType>::create_device(vkb::core::PhysicalDevice<bindingType> &gpu)
+inline std::unique_ptr<typename vkb::core::Device<bindingType>> VulkanSample<bindingType>::create_device(vkb::core::PhysicalDevice<bindingType> &gpu)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		return std::make_unique<vkb::core::DeviceCpp>(
-		    gpu, surface, std::move(debug_utils), get_device_extensions(), [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
+		return std::make_unique<vkb::core::DeviceCpp>(gpu, surface, std::move(debug_utils), get_device_extensions(),
+		                                              [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
 	}
 	else
 	{
-		return std::make_unique<vkb::core::DeviceC>(gpu,
-		                                            static_cast<VkSurfaceKHR>(surface),
+		return std::make_unique<vkb::core::DeviceC>(gpu, static_cast<VkSurfaceKHR>(surface),
 		                                            std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
-		                                            get_device_extensions(),
-		                                            [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); });
+		                                            get_device_extensions(), [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); });
 	}
 }
 
@@ -478,11 +475,10 @@ inline std::unique_ptr<vkb::core::Instance<bindingType>> VulkanSample<bindingTyp
 	request_instance_extensions(requested_extensions);
 
 	return std::make_unique<vkb::core::Instance<bindingType>>(
-	    get_name(),
-	    get_api_version(),
-	    requested_layers,
-	    requested_extensions,
-	    [this](std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) { return get_instance_create_info_extensions(enabled_layers, enabled_extensions); },
+	    get_name(), get_api_version(), requested_layers, requested_extensions,
+	    [this](std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) {
+		    return get_instance_create_info_extensions(enabled_layers, enabled_extensions);
+	    },
 	    [this](std::vector<std::string> const &enabled_extensions) {
 		    if constexpr (bindingType == BindingType::Cpp)
 		    {
@@ -518,10 +514,10 @@ template <vkb::BindingType bindingType>
 void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk::SurfaceFormatKHR> &surface_priority_list)
 {
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
-	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
+	vk::PresentModeKHR present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
-	vk::PresentModeKHR               present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	vk::PresentModeKHR present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
 	std::vector<vk::PresentModeKHR>  present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
@@ -568,14 +564,12 @@ inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType
 	}
 	else
 	{
-		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		          reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
+		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer), reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                                 vkb::rendering::HPPRenderTarget &render_target)
+inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target)
 {
 	auto &views = render_target.get_views();
 
@@ -638,8 +632,7 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp    
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::draw_gui()
-{
-}
+{}
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target)
@@ -656,8 +649,7 @@ inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw_renderpass_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                                            vkb::rendering::HPPRenderTarget &render_target)
+inline void VulkanSample<bindingType>::draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target)
 {
 	set_viewport_and_scissor_impl(command_buffer, render_target.get_extent());
 
@@ -696,8 +688,7 @@ inline uint32_t VulkanSample<bindingType>::get_api_version() const
 	return VK_API_VERSION_1_1;
 }
 
-inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_layer_setting,
-                                 std::vector<std::string> const   &enabled_layers,
+inline bool enable_layer_setting(vk::LayerSettingEXT const &requested_layer_setting, std::vector<std::string> const &enabled_layers,
                                  std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
 {
 	// We are checking if the layer is available.
@@ -711,8 +702,9 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_lay
 	{
 		// Check for VK_EXT_layer_settings extension in the driver which indicates MoltenVK vs. KosmicKrisp (note: VK_MVK_moltenvk extension is deprecated).
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		if (std::ranges::any_of(available_instance_extensions,
-		                        [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
+		if (std::ranges::any_of(available_instance_extensions, [](vk::ExtensionProperties const &extension) {
+			    return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;
+		    }))
 		{
 			is_available = true;
 		}
@@ -725,11 +717,10 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_lay
 		return false;
 	}
 
-	bool is_already_enabled = std::ranges::any_of(enabled_layer_settings,
-	                                              [&requested_layer_setting](vk::LayerSettingEXT const &enabled_layer_setting) {
-		                                              return (strcmp(requested_layer_setting.pLayerName, enabled_layer_setting.pLayerName) == 0) &&
-		                                                     (strcmp(requested_layer_setting.pSettingName, enabled_layer_setting.pSettingName) == 0);
-	                                              });
+	bool is_already_enabled = std::ranges::any_of(enabled_layer_settings, [&requested_layer_setting](vk::LayerSettingEXT const &enabled_layer_setting) {
+		return (strcmp(requested_layer_setting.pLayerName, enabled_layer_setting.pLayerName) == 0) &&
+		       (strcmp(requested_layer_setting.pSettingName, enabled_layer_setting.pSettingName) == 0);
+	});
 
 	if (is_already_enabled)
 	{
@@ -742,15 +733,15 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_lay
 	return true;
 }
 
-inline bool enable_layer_setting(VkLayerSettingEXT const          &requested_layer_setting,
-                                 std::vector<std::string> const   &enabled_layers,
+inline bool enable_layer_setting(VkLayerSettingEXT const &requested_layer_setting, std::vector<std::string> const &enabled_layers,
                                  std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
 {
 	return enable_layer_setting(reinterpret_cast<vk::LayerSettingEXT const &>(requested_layer_setting), enabled_layers, enabled_layer_settings);
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::InstanceCreateFlagsType VulkanSample<bindingType>::get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const
+inline typename VulkanSample<bindingType>::InstanceCreateFlagsType
+    VulkanSample<bindingType>::get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const
 {
 	vk::InstanceCreateFlags flags;
 #if defined(VKB_ENABLE_PORTABILITY)
@@ -807,9 +798,8 @@ inline void *VulkanSample<bindingType>::get_instance_create_info_extensions(std:
 		if (!enabled_layer_settings.empty())
 		{
 			// If layer settings are defined, then activate the sample's required layer settings during instance creation
-			static vk::LayerSettingsCreateInfoEXT layer_settings_create_info_ext{.pNext        = pNext,
-			                                                                     .settingCount = static_cast<uint32_t>(enabled_layer_settings.size()),
-			                                                                     .pSettings    = enabled_layer_settings.data()};
+			static vk::LayerSettingsCreateInfoEXT layer_settings_create_info_ext{
+			    .pNext = pNext, .settingCount = static_cast<uint32_t>(enabled_layer_settings.size()), .pSettings = enabled_layer_settings.data()};
 			pNext = &layer_settings_create_info_ext;
 		}
 	}
@@ -1107,8 +1097,7 @@ inline void VulkanSample<bindingType>::input_event(const InputEvent &input_event
 	if (input_event.get_source() == EventSource::Keyboard)
 	{
 		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
-		if (key_event.get_action() == KeyAction::Down &&
-		    (key_event.get_code() == KeyCode::PrintScreen || key_event.get_code() == KeyCode::F12))
+		if (key_event.get_action() == KeyAction::Down && (key_event.get_code() == KeyCode::PrintScreen || key_event.get_code() == KeyCode::F12))
 		{
 			vkb::common::screenshot(*render_context, "screenshot-" + get_name());
 		}
@@ -1159,9 +1148,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 #ifdef VKB_VULKAN_DEBUG
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		auto                                 debugExtensionIt =
-		    std::ranges::find_if(available_instance_extensions,
-		                         [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+		auto                                 debugExtensionIt              = std::ranges::find_if(
+            available_instance_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_instance_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -1208,7 +1196,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		}
 	}
 
-	// Shaders generated by Slang require a certain SPIR-V environment that can't be satisfied by Vulkan 1.0, so we need to expliclity up that to at least 1.1 and enable some required extensions
+	// Shaders generated by Slang require a certain SPIR-V environment that can't be satisfied by Vulkan 1.0, so we need to expliclity up that to at least 1.1
+	// and enable some required extensions
 	if (get_shading_language() == ShadingLanguage::SLANG)
 	{
 		assert(VK_API_VERSION_1_1 <= get_api_version());
@@ -1226,9 +1215,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	if (!debug_utils)
 	{
 		std::vector<vk::ExtensionProperties> available_device_extensions = physical_device->get_handle().enumerateDeviceExtensionProperties();
-		auto                                 debugExtensionIt =
-		    std::ranges::find_if(available_device_extensions,
-		                         [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+		auto                                 debugExtensionIt            = std::ranges::find_if(
+            available_device_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_device_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
@@ -1281,11 +1269,8 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 	}
 	else
 	{
-		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::RenderContextCpp &>(get_render_context()),
-		                                    window,
-		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats),
-		                                    font_size,
-		                                    explicit_update);
+		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::RenderContextCpp &>(get_render_context()), window,
+		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats), font_size, explicit_update);
 	}
 }
 
@@ -1354,7 +1339,8 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 	requested_extensions[VK_EXT_DEBUG_REPORT_EXTENSION_NAME] = vkb::RequestMode::Optional;
 #endif
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || \
+                                                             defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 #endif
 }
@@ -1417,13 +1403,11 @@ inline void VulkanSample<bindingType>::request_layer_settings_impl(std::vector<v
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::request_validation_feature_enables(std::vector<ValidationFeatureEnableType> &requested_layer_settings) const
-{
-}
+{}
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::reset_stats_view()
-{
-}
+{}
 
 template <vkb::BindingType bindingType>
 inline bool VulkanSample<bindingType>::resize(uint32_t width, uint32_t height)
@@ -1540,14 +1524,12 @@ inline void VulkanSample<bindingType>::set_viewport_and_scissor(vkb::core::Comma
 	}
 	else
 	{
-		set_viewport_and_scissor_impl(reinterpret_cast<vkb::core::CommandBufferCpp const &>(command_buffer),
-		                              reinterpret_cast<vk::Extent2D const &>(extent));
+		set_viewport_and_scissor_impl(reinterpret_cast<vkb::core::CommandBufferCpp const &>(command_buffer), reinterpret_cast<vk::Extent2D const &>(extent));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer,
-                                                                     vk::Extent2D const                &extent)
+inline void VulkanSample<bindingType>::set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer, vk::Extent2D const &extent)
 {
 	command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
 	command_buffer.get_handle().setScissor(0, vk::Rect2D{{}, extent});
@@ -1595,10 +1577,9 @@ inline void VulkanSample<bindingType>::update_debug_window()
 	get_debug_info().template insert<field::Static, std::string>("driver_version", driver_version_str);
 	get_debug_info().template insert<field::Static, std::string>("resolution",
 	                                                             to_string(static_cast<VkExtent2D const &>(render_context->get_swapchain().get_extent())));
-	get_debug_info().template insert<field::Static, std::string>("surface_format",
-	                                                             to_string(render_context->get_swapchain().get_format()) + " (" +
-	                                                                 to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) +
-	                                                                 "bpp)");
+	get_debug_info().template insert<field::Static, std::string>(
+	    "surface_format", to_string(render_context->get_swapchain().get_format()) + " (" +
+	                          to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bpp)");
 
 	if (scene != nullptr)
 	{

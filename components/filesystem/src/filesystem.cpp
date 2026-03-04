@@ -35,9 +35,7 @@ void init()
 
 void init_with_context(const PlatformContext &context)
 {
-	fs = std::make_shared<StdFileSystem>(
-	    context.external_storage_directory(),
-	    context.temp_directory());
+	fs = std::make_shared<StdFileSystem>(context.external_storage_directory(), context.temp_directory());
 }
 
 FileSystemPtr get()

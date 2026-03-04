@@ -66,10 +66,9 @@ using LightingStateCpp = LightingState<vkb::BindingType::Cpp>;
  */
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
 
-inline const std::vector<std::string> light_type_definitions = {
-    "DIRECTIONAL_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Directional)),
-    "POINT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Point)),
-    "SPOT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Spot))};
+inline const std::vector<std::string> light_type_definitions = {"DIRECTIONAL_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Directional)),
+                                                                "POINT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Point)),
+                                                                "SPOT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Spot))};
 
 /**
  * @brief This class defines an interface for subpasses
@@ -82,9 +81,10 @@ class Subpass
 	using ResolveModeFlagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ResolveModeFlagBits, VkResolveModeFlagBits>::type;
 	using SampleCountflagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SampleCountFlagBits, VkSampleCountFlagBits>::type;
 
-	using DepthStencilStateType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
-	using RenderTargetType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
-	using ShaderSourceType      = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
+	using DepthStencilStateType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
+	using RenderTargetType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
+	using ShaderSourceType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
 
   public:
 	Subpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_shader, ShaderSourceType &&fragment_shader);
@@ -114,8 +114,7 @@ class Subpass
 	 * @param max_lights_per_type The maximum amount of lights allowed for any given type of light.
 	 */
 	template <typename T>
-	void allocate_lights(const std::vector<sg::Light *> &scene_lights,
-	                     size_t                          max_lights_per_type);
+	void allocate_lights(const std::vector<sg::Light *> &scene_lights, size_t max_lights_per_type);
 
 	const std::vector<uint32_t>                               &get_color_resolve_attachments() const;
 	const std::string                                         &get_debug_name() const;
@@ -212,9 +211,8 @@ inline glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 }
 
 template <vkb::BindingType bindingType>
-inline Subpass<bindingType>::Subpass(vkb::rendering::RenderContext<bindingType> &render_context,
-                                     ShaderSourceType                          &&vertex_source,
-                                     ShaderSourceType                          &&fragment_source) :
+inline Subpass<bindingType>::Subpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_source,
+                                     ShaderSourceType &&fragment_source) :
     render_context{reinterpret_cast<vkb::rendering::RenderContextCpp &>(render_context)}
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -301,8 +299,7 @@ inline const typename Subpass<bindingType>::ShaderSourceType &Subpass<bindingTyp
 
 template <vkb::BindingType bindingType>
 template <typename T>
-void Subpass<bindingType>::allocate_lights(const std::vector<sg::Light *> &scene_lights,
-                                           size_t                          max_lights_per_type)
+void Subpass<bindingType>::allocate_lights(const std::vector<sg::Light *> &scene_lights, size_t max_lights_per_type)
 {
 	lighting_state.directional_lights.clear();
 	lighting_state.point_lights.clear();
