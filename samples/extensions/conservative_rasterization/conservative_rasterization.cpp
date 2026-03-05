@@ -26,7 +26,7 @@
 #include "conservative_rasterization.h"
 
 #define FB_COLOR_FORMAT VK_FORMAT_R8G8B8A8_UNORM
-#define ZOOM_FACTOR 16
+#define ZOOM_FACTOR     16
 
 ConservativeRasterization::ConservativeRasterization()
 {

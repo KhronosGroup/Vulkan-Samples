@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#define OPENCL_EXPORTED_FUNCTION(func_name) std::function<decltype(func_name)> func_name##_ptr = nullptr
+#define OPENCL_EXPORTED_FUNCTION(func_name)           std::function<decltype(func_name)> func_name##_ptr = nullptr
 #define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) std::function<decltype(func_name)> func_name##_ptr = nullptr
 #include "open_cl_functions.inl"
 
