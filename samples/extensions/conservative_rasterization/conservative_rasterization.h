@@ -28,7 +28,7 @@
 #include "api_vulkan_sample.h"
 
 #define FB_COLOR_FORMAT VK_FORMAT_R8G8B8A8_UNORM
-#define ZOOM_FACTOR 16
+#define ZOOM_FACTOR     16
 
 class ConservativeRasterization : public ApiVulkanSample
 {

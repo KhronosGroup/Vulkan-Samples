@@ -32,7 +32,7 @@
 
 #include <filesystem/filesystem.hpp>
 
-#define MAGIC_FILE_CONSTANT 0x5CA1AB13
+#define MAGIC_FILE_CONSTANT  0x5CA1AB13
 #define ASTC_CACHE_DIRECTORY "cache/astc_to_bin"
 
 constexpr uint32_t ASTC_CACHE_HEADER_SIZE = 64;

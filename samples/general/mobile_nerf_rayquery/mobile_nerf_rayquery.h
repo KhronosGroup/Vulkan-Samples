@@ -59,8 +59,8 @@ class MobileNerfRayQuery : public ApiVulkanSample
 // The third layer weights' size is changed from 48 to 64 to make sure a 16 bytes alignement
 // #define WEIGHTS_2_COUNT (48)
 #define WEIGHTS_2_COUNT (64)
-#define BIAS_0_COUNT (16)
-#define BIAS_1_COUNT (16)
+#define BIAS_0_COUNT    (16)
+#define BIAS_1_COUNT    (16)
 // The third layer bias' size is changed from 3 to 4 to make sure a 16 bytes alignement
 #define BIAS_2_COUNT (4)
 
