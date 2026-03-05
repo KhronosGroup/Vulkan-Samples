@@ -207,10 +207,7 @@ uint64_t RayQueries::get_buffer_device_address(VkBuffer buffer)
 
 void RayQueries::create_top_level_acceleration_structure()
 {
-	VkTransformMatrixKHR transform_matrix = {
-	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, 1.0f, 0.0f, 0.0f,
-	    0.0f, 0.0f, 1.0f, 0.0f};
+	VkTransformMatrixKHR transform_matrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
 
 	VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
 	acceleration_structure_instance.transform                              = transform_matrix;
@@ -220,10 +217,9 @@ void RayQueries::create_top_level_acceleration_structure()
 	acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 	acceleration_structure_instance.accelerationStructureReference         = bottom_level_acceleration_structure->get_device_address();
 
-	std::unique_ptr<vkb::core::BufferC> instances_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                                            sizeof(VkAccelerationStructureInstanceKHR),
-	                                                                                            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> instances_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), sizeof(VkAccelerationStructureInstanceKHR),
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
 
 	// Top Level AS with single instance
@@ -242,7 +238,8 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	// For the sake of simplicity we won't stage the vertex data to the GPU memory
 
 	// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
-	const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	const VkBufferUsageFlags buffer_usage_flags =
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
 	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(model.vertices.data(), vertex_buffer_size);
@@ -251,32 +248,22 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	index_buffer->update(model.indices.data(), index_buffer_size);
 
 	// Set up a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
-	VkTransformMatrixKHR transform_matrix = {
-	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, 1.0f, 0.0f, 0.0f,
-	    0.0f, 0.0f, 1.0f, 0.0f};
-	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	VkTransformMatrixKHR                transform_matrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
+	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
 	if (bottom_level_acceleration_structure == nullptr)
 	{
-		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
-		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-		bottom_level_acceleration_structure->add_triangle_geometry(*vertex_buffer,
-		                                                           *index_buffer,
-		                                                           *transform_matrix_buffer,
-		                                                           static_cast<uint32_t>(model.indices.size()),
-		                                                           static_cast<uint32_t>(model.vertices.size()) - 1,
-		                                                           sizeof(Vertex),
-		                                                           0,
-		                                                           VK_FORMAT_R32G32B32_SFLOAT,
-		                                                           VK_INDEX_TYPE_UINT32,
-		                                                           VK_GEOMETRY_OPAQUE_BIT_KHR,
-		                                                           get_buffer_device_address(vertex_buffer->get_handle()),
-		                                                           get_buffer_device_address(index_buffer->get_handle()));
+		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
+		bottom_level_acceleration_structure->add_triangle_geometry(
+		    *vertex_buffer, *index_buffer, *transform_matrix_buffer, static_cast<uint32_t>(model.indices.size()),
+		    static_cast<uint32_t>(model.vertices.size()) - 1, sizeof(Vertex), 0, VK_FORMAT_R32G32B32_SFLOAT, VK_INDEX_TYPE_UINT32, VK_GEOMETRY_OPAQUE_BIT_KHR,
+		    get_buffer_device_address(vertex_buffer->get_handle()), get_buffer_device_address(index_buffer->get_handle()));
 	}
 	bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
-	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
+	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+	                                           VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
 void RayQueries::load_node(vkb::scene_graph::NodeC &node)
@@ -348,24 +335,20 @@ void RayQueries::load_scene()
 
 void RayQueries::create_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
-	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
+	std::vector<VkDescriptorPoolSize> pool_sizes = {{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1}, {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
-	    {
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1)};
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+	                                                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1)};
 
-	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	VkDescriptorSetLayoutCreateInfo descriptor_layout =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
@@ -394,7 +377,8 @@ void RayQueries::create_descriptor_sets()
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer);
 
-	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &buffer_descriptor);
+	VkWriteDescriptorSet uniform_buffer_write =
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &buffer_descriptor);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    acceleration_structure_write,
@@ -405,29 +389,27 @@ void RayQueries::create_descriptor_sets()
 
 void RayQueries::prepare_pipelines()
 {
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
-	depth_stencil_state.depthBoundsTestEnable                 = VK_FALSE;
-	depth_stencil_state.minDepthBounds                        = 0.f;
-	depth_stencil_state.maxDepthBounds                        = 1.f;
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
+	depth_stencil_state.depthBoundsTestEnable = VK_FALSE;
+	depth_stencil_state.minDepthBounds        = 0.f;
+	depth_stencil_state.maxDepthBounds        = 1.f;
 
 	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
@@ -455,9 +437,8 @@ void RayQueries::prepare_pipelines()
 	pipeline_create_info.pDepthStencilState           = &depth_stencil_state;
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
-	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("ray_queries", "ray_shadow.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("ray_queries", "ray_shadow.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {load_shader("ray_queries", "ray_shadow.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	                                                                      load_shader("ray_queries", "ray_shadow.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
@@ -468,17 +449,14 @@ void RayQueries::prepare_pipelines()
 void RayQueries::create_uniforms()
 {
 	// Note that in contrast to a typical pipeline, our vertex/index buffer requires the acceleration structure build flag
-	static constexpr VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	static constexpr VkBufferUsageFlags buffer_usage_flags =
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
 	const auto vertex_buffer_size = model.vertices.size() * sizeof(model.vertices[0]);
 	const auto index_buffer_size  = model.indices.size() * sizeof(model.indices[0]);
-	vertex_buffer                 = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                         vertex_buffer_size,
-                                                         buffer_usage_flags | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_buffer                  = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                        index_buffer_size,
-                                                        buffer_usage_flags | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer  = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 	if (vertex_buffer_size)
 	{
@@ -489,10 +467,9 @@ void RayQueries::create_uniforms()
 		index_buffer->update(model.indices.data(), index_buffer_size);
 	}
 
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                      sizeof(global_uniform),
-	                                                      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), sizeof(global_uniform),
+	    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -503,10 +480,11 @@ void RayQueries::update_uniform_buffers()
 	global_uniform.proj            = vkb::rendering::vulkan_style_projection(camera.matrices.perspective);
 	global_uniform.view            = camera.matrices.view;
 
-	const float PI                = 3.14159f;
-	const float radius            = 100.f;
-	const float speed             = 2.f * PI / 10000.f;
-	const float time              = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count());
+	const float PI     = 3.14159f;
+	const float radius = 100.f;
+	const float speed  = 2.f * PI / 10000.f;
+	const float time =
+	    static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count());
 	const float angle             = glm::mod(time * speed, PI);
 	global_uniform.light_position = glm::vec3(0.0f, radius * sinf(angle), radius * cosf(angle));
 

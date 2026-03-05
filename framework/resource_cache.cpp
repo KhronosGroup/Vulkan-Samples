@@ -35,10 +35,8 @@ T &request_resource(vkb::core::DeviceC &device, ResourceRecord &recorder, std::m
 }
 }        // namespace
 
-ResourceCache::ResourceCache(vkb::core::DeviceC &device) :
-    device{device}
-{
-}
+ResourceCache::ResourceCache(vkb::core::DeviceC &device) : device{device}
+{}
 
 void ResourceCache::warmup(const std::vector<uint8_t> &data)
 {
@@ -68,8 +66,7 @@ PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderM
 	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, shader_modules);
 }
 
-DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const uint32_t                     set_index,
-                                                                  const std::vector<ShaderModule *> &shader_modules,
+DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const uint32_t set_index, const std::vector<ShaderModule *> &shader_modules,
                                                                   const std::vector<ShaderResource> &set_resources)
 {
 	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
@@ -85,13 +82,15 @@ ComputePipeline &ResourceCache::request_compute_pipeline(PipelineState &pipeline
 	return request_resource(device, recorder, compute_pipeline_mutex, state.compute_pipelines, pipeline_cache, pipeline_state);
 }
 
-DescriptorSet &ResourceCache::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos)
+DescriptorSet &ResourceCache::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
+                                                     const BindingMap<VkDescriptorImageInfo> &image_infos)
 {
 	auto &descriptor_pool = request_resource(device, recorder, descriptor_set_mutex, state.descriptor_pools, descriptor_set_layout);
 	return request_resource(device, recorder, descriptor_set_mutex, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
-RenderPass &ResourceCache::request_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
+RenderPass &ResourceCache::request_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos,
+                                               const std::vector<SubpassInfo> &subpasses)
 {
 	return request_resource(device, recorder, render_pass_mutex, state.render_passes, attachments, load_store_infos, subpasses);
 }
@@ -171,8 +170,7 @@ void ResourceCache::update_descriptor_sets(const std::vector<core::ImageView> &o
 
 	if (!set_updates.empty())
 	{
-		vkUpdateDescriptorSets(device.get_handle(), to_u32(set_updates.size()), set_updates.data(),
-		                       0, nullptr);
+		vkUpdateDescriptorSets(device.get_handle(), to_u32(set_updates.size()), set_updates.data(), 0, nullptr);
 	}
 
 	// Delete old entries (moved out descriptor sets)

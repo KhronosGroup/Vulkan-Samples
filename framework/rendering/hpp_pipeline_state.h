@@ -39,7 +39,8 @@ struct HPPColorBlendAttachmentState
 	vk::BlendFactor         src_alpha_blend_factor = vk::BlendFactor::eOne;
 	vk::BlendFactor         dst_alpha_blend_factor = vk::BlendFactor::eZero;
 	vk::BlendOp             alpha_blend_op         = vk::BlendOp::eAdd;
-	vk::ColorComponentFlags color_write_mask       = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::ColorComponentFlags color_write_mask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 };
 
 struct HPPColorBlendState
@@ -59,9 +60,10 @@ struct HPPStencilOpState
 
 struct HPPDepthStencilState
 {
-	vk::Bool32        depth_test_enable        = true;
-	vk::Bool32        depth_write_enable       = true;
-	vk::CompareOp     depth_compare_op         = vk::CompareOp::eGreater;        // Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::Bool32    depth_test_enable  = true;
+	vk::Bool32    depth_write_enable = true;
+	vk::CompareOp depth_compare_op =
+	    vk::CompareOp::eGreater;        // Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::Bool32        depth_bounds_test_enable = false;
 	vk::Bool32        stencil_test_enable      = false;
 	HPPStencilOpState front;

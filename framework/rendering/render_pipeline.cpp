@@ -29,8 +29,7 @@
 
 namespace vkb
 {
-RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &&subpasses_) :
-    subpasses{std::move(subpasses_)}
+RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<vkb::rendering::SubpassC>> &&subpasses_) : subpasses{std::move(subpasses_)}
 {
 	prepare();
 

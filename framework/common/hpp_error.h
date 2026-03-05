@@ -33,8 +33,7 @@ namespace common
 class HPPVulkanException : public vkb::VulkanException
 {
   public:
-	HPPVulkanException(vk::Result result, std::string const &msg = "Vulkan error") :
-	    vkb::VulkanException(static_cast<VkResult>(result), msg)
+	HPPVulkanException(vk::Result result, std::string const &msg = "Vulkan error") : vkb::VulkanException(static_cast<VkResult>(result), msg)
 	{}
 };
 }        // namespace common

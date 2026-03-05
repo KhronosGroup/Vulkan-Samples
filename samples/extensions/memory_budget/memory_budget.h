@@ -25,7 +25,7 @@
 
 #include "api_vulkan_sample.h"
 
-#define MESH_DENSITY 2048
+#define MESH_DENSITY      2048
 #define MESH_DENSITY_HALF 1024
 
 class MemoryBudget : public ApiVulkanSample

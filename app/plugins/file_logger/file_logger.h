@@ -27,11 +27,11 @@ using FileLoggerTags = vkb::PluginBase<vkb::tags::Passive>;
 
 /**
  * @brief File Logger
- * 
+ *
  * Enables writing log messages to a file
- * 
+ *
  * Usage: vulkan_sample --log-file filename.txt
- * 
+ *
  */
 class FileLogger : public FileLoggerTags
 {

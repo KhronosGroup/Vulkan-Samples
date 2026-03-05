@@ -102,8 +102,8 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::core::HPPShaderSource vert_shader("base.vert.spv");
 	vkb::core::HPPShaderSource frag_shader("base.frag.spv");
-	auto                       scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(
-        get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(get_render_context(), std::move(vert_shader), std::move(frag_shader),
+	                                                                                    get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::rendering::HPPRenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
@@ -116,7 +116,8 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 void HPPPipelineCache::draw_gui()
 {
 	get_gui().show_options_window(
-	    /* body = */ [this]() {
+	    /* body = */
+	    [this]() {
 		    if (ImGui::Checkbox("Pipeline cache", &enable_pipeline_cache))
 		    {
 			    get_device().get_resource_cache().set_pipeline_cache(enable_pipeline_cache ? pipeline_cache : nullptr);

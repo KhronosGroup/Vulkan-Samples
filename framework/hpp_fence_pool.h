@@ -40,8 +40,7 @@ class HPPFencePool : private vkb::FencePool
 	using vkb::FencePool::reset;
 	using vkb::FencePool::wait;
 
-	HPPFencePool(vkb::core::DeviceCpp &device) :
-	    vkb::FencePool(reinterpret_cast<vkb::core::DeviceC &>(device))
+	HPPFencePool(vkb::core::DeviceCpp &device) : vkb::FencePool(reinterpret_cast<vkb::core::DeviceC &>(device))
 	{}
 
 	vk::Fence request_fence()

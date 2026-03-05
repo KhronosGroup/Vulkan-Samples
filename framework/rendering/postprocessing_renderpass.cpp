@@ -24,14 +24,9 @@ namespace vkb
 constexpr uint32_t DEPTH_RESOLVE_BITMASK = 0x80000000;
 constexpr uint32_t ATTACHMENT_BITMASK    = 0x7FFFFFFF;
 
-PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass       *parent,
-                                             vkb::rendering::RenderContextC &render_context,
-                                             ShaderSource                  &&triangle_vs,
-                                             ShaderSource                  &&fs,
-                                             ShaderVariant                 &&fs_variant) :
-    Subpass(render_context, std::move(triangle_vs), std::move(fs)),
-    parent{parent},
-    fs_variant{std::move(fs_variant)}
+PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass *parent, vkb::rendering::RenderContextC &render_context, ShaderSource &&triangle_vs,
+                                             ShaderSource &&fs, ShaderVariant &&fs_variant) :
+    Subpass(render_context, std::move(triangle_vs), std::move(fs)), parent{parent}, fs_variant{std::move(fs_variant)}
 {
 	set_disable_depth_stencil_attachment(true);
 
@@ -174,8 +169,8 @@ void PostProcessingSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 			const VkFormatProperties fmtProps          = get_render_context().get_device().get_gpu().get_format_properties(view.get_format());
 			bool                     has_linear_filter = (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
 
-			const auto &sampler = it.second.get_sampler() ? *it.second.get_sampler() :
-			                                                (has_linear_filter ? *parent->default_sampler : *parent->default_sampler_nearest);
+			const auto &sampler =
+			    it.second.get_sampler() ? *it.second.get_sampler() : (has_linear_filter ? *parent->default_sampler : *parent->default_sampler_nearest);
 
 			command_buffer.bind_image(view, sampler, 0, layout_binding->binding, 0);
 		}
@@ -203,8 +198,7 @@ void PostProcessingSubpass::default_draw_func(vkb::core::CommandBufferC &command
 }
 
 PostProcessingRenderPass::PostProcessingRenderPass(PostProcessingPipeline *parent, std::unique_ptr<core::Sampler> &&default_sampler) :
-    PostProcessingPass{parent},
-    default_sampler{std::move(default_sampler)}
+    PostProcessingPass{parent}, default_sampler{std::move(default_sampler)}
 {
 	if (this->default_sampler == nullptr)
 	{
@@ -234,11 +228,8 @@ PostProcessingRenderPass::PostProcessingRenderPass(PostProcessingPipeline *paren
 	}
 }
 
-void PostProcessingRenderPass::update_load_stores(
-    const AttachmentSet        &input_attachments,
-    const SampledAttachmentSet &sampled_attachments,
-    const AttachmentSet        &output_attachments,
-    const RenderTarget         &fallback_render_target)
+void PostProcessingRenderPass::update_load_stores(const AttachmentSet &input_attachments, const SampledAttachmentSet &sampled_attachments,
+                                                  const AttachmentSet &output_attachments, const RenderTarget &fallback_render_target)
 {
 	if (!load_stores_dirty)
 	{
@@ -253,14 +244,13 @@ void PostProcessingRenderPass::update_load_stores(
 	for (uint32_t j = 0; j < static_cast<uint32_t>(render_target.get_attachments().size()); j++)
 	{
 		const bool is_input   = input_attachments.find(j) != input_attachments.end();
-		const bool is_sampled = std::ranges::find_if(sampled_attachments,
-		                                             [&render_target, j](auto &pair) {
-			                                             // NOTE: if RT not set, default is the currently-active one
-			                                             auto *sampled_rt = pair.first ? pair.first : &render_target;
-			                                             // unpack attachment
-			                                             uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
-			                                             return attachment == j && sampled_rt == &render_target;
-		                                             }) != sampled_attachments.end();
+		const bool is_sampled = std::ranges::find_if(sampled_attachments, [&render_target, j](auto &pair) {
+			                        // NOTE: if RT not set, default is the currently-active one
+			                        auto *sampled_rt = pair.first ? pair.first : &render_target;
+			                        // unpack attachment
+			                        uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
+			                        return attachment == j && sampled_rt == &render_target;
+		                        }) != sampled_attachments.end();
 		const bool is_output  = output_attachments.find(j) != output_attachments.end();
 
 		VkAttachmentLoadOp load;
@@ -333,11 +323,9 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 	}
 }
 
-void PostProcessingRenderPass::transition_attachments(const AttachmentSet        &input_attachments,
-                                                      const SampledAttachmentSet &sampled_attachments,
-                                                      const AttachmentSet        &output_attachments,
-                                                      vkb::core::CommandBufferC  &command_buffer,
-                                                      RenderTarget               &fallback_render_target)
+void PostProcessingRenderPass::transition_attachments(const AttachmentSet &input_attachments, const SampledAttachmentSet &sampled_attachments,
+                                                      const AttachmentSet &output_attachments, vkb::core::CommandBufferC &command_buffer,
+                                                      RenderTarget &fallback_render_target)
 {
 	auto       &render_target = this->render_target ? *this->render_target : fallback_render_target;
 	const auto &views         = render_target.get_views();
@@ -357,8 +345,7 @@ void PostProcessingRenderPass::transition_attachments(const AttachmentSet       
 			continue;
 		}
 
-		ensure_src_access(prev_pass_barrier_info.image_write_access, prev_pass_barrier_info.pipeline_stage,
-		                  prev_layout);
+		ensure_src_access(prev_pass_barrier_info.image_write_access, prev_pass_barrier_info.pipeline_stage, prev_layout);
 
 		vkb::ImageMemoryBarrier barrier;
 		barrier.old_layout      = render_target.get_layout(input);
@@ -405,8 +392,7 @@ void PostProcessingRenderPass::transition_attachments(const AttachmentSet       
 		}
 		else
 		{
-			ensure_src_access(prev_pass_barrier_info.image_read_access, prev_pass_barrier_info.pipeline_stage,
-			                  prev_layout);
+			ensure_src_access(prev_pass_barrier_info.image_read_access, prev_pass_barrier_info.pipeline_stage, prev_layout);
 		}
 
 		vkb::ImageMemoryBarrier barrier;
@@ -497,10 +483,8 @@ void PostProcessingRenderPass::prepare_draw(vkb::core::CommandBufferC &command_b
 		}
 	}
 
-	transition_attachments(input_attachments, sampled_attachments, output_attachments,
-	                       command_buffer, fallback_render_target);
-	update_load_stores(input_attachments, sampled_attachments, output_attachments,
-	                   fallback_render_target);
+	transition_attachments(input_attachments, sampled_attachments, output_attachments, command_buffer, fallback_render_target);
+	update_load_stores(input_attachments, sampled_attachments, output_attachments, fallback_render_target);
 }
 
 void PostProcessingRenderPass::draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)

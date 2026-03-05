@@ -57,12 +57,9 @@ class HPPRenderPass : private vkb::RenderPass
 	using vkb::RenderPass::get_color_output_count;
 
   public:
-	HPPRenderPass(vkb::core::DeviceCpp                             &device,
-	              const std::vector<vkb::rendering::HPPAttachment> &attachments,
-	              const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
-	              const std::vector<vkb::core::HPPSubpassInfo>     &subpasses) :
-	    vkb::RenderPass(reinterpret_cast<vkb::core::DeviceC &>(device),
-	                    reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
+	HPPRenderPass(vkb::core::DeviceCpp &device, const std::vector<vkb::rendering::HPPAttachment> &attachments,
+	              const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos, const std::vector<vkb::core::HPPSubpassInfo> &subpasses) :
+	    vkb::RenderPass(reinterpret_cast<vkb::core::DeviceC &>(device), reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
 	                    reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
 	                    reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses))
 	{}

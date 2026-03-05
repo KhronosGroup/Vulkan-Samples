@@ -49,7 +49,8 @@ void AsyncComputeSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 void AsyncComputeSample::draw_gui()
 {
 	get_gui().show_options_window(
-	    /* body = */ [this]() {
+	    /* body = */
+	    [this]() {
 		    ImGui::Checkbox("Enable async queues", &async_enabled);
 		    ImGui::Checkbox("Double buffer HDR", &double_buffer_hdr_frames);
 		    ImGui::Checkbox("Rotate shadows", &rotate_shadows);
@@ -59,10 +60,7 @@ void AsyncComputeSample::draw_gui()
 
 static VkExtent3D downsample_extent(const VkExtent3D &extent, uint32_t level)
 {
-	return {
-	    std::max(1u, extent.width >> level),
-	    std::max(1u, extent.height >> level),
-	    std::max(1u, extent.depth >> level)};
+	return {std::max(1u, extent.width >> level), std::max(1u, extent.height >> level), std::max(1u, extent.depth >> level)};
 }
 
 void AsyncComputeSample::prepare_render_targets()
@@ -74,23 +72,17 @@ void AsyncComputeSample::prepare_render_targets()
 
 	// Support double-buffered HDR.
 	vkb::core::Image color_targets[2]{
-	    {get_device(), size, VK_FORMAT_R16G16B16A16_SFLOAT,
-	     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-	     VMA_MEMORY_USAGE_GPU_ONLY},
-	    {get_device(), size, VK_FORMAT_R16G16B16A16_SFLOAT,
-	     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-	     VMA_MEMORY_USAGE_GPU_ONLY},
+	    {get_device(), size, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY},
+	    {get_device(), size, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY},
 	};
 	color_targets[0].set_debug_name("color_targets[0]");
 	color_targets[1].set_debug_name("color_targets[1]");
 
 	// Should only really need one depth target, but vkb::RenderTarget needs to own the resource.
 	vkb::core::Image depth_targets[2]{
-	    {get_device(), size, VK_FORMAT_D32_SFLOAT,
-	     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	    {get_device(), size, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
-	    {get_device(), size, VK_FORMAT_D32_SFLOAT,
-	     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	    {get_device(), size, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
 	};
 	depth_targets[0].set_debug_name("depth_targets[0]");
@@ -100,17 +92,15 @@ void AsyncComputeSample::prepare_render_targets()
 	// Min-spec is 4K however, so clamp to that if required.
 	VkExtent3D              shadow_resolution{8 * 1024, 8 * 1024, 1};
 	VkImageFormatProperties depth_properties{};
-	vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(), VK_FORMAT_D16_UNORM, VK_IMAGE_TYPE_2D,
-	                                         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-	                                         0, &depth_properties);
+	vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(), VK_FORMAT_D16_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+	                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0, &depth_properties);
 	shadow_resolution.width  = std::min(depth_properties.maxExtent.width, shadow_resolution.width);
 	shadow_resolution.height = std::min(depth_properties.maxExtent.height, shadow_resolution.height);
 	shadow_resolution.width  = std::min(get_device().get_gpu().get_properties().limits.maxFramebufferWidth, shadow_resolution.width);
 	shadow_resolution.height = std::min(get_device().get_gpu().get_properties().limits.maxFramebufferHeight, shadow_resolution.height);
 
 	vkb::core::Image shadow_target{get_device(), shadow_resolution, VK_FORMAT_D16_UNORM,
-	                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-	                               VMA_MEMORY_USAGE_GPU_ONLY};
+	                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
 	shadow_target.set_debug_name("shadow_target");
 
 	// Create a simple mip-chain used for bloom blur.
@@ -118,13 +108,9 @@ void AsyncComputeSample::prepare_render_targets()
 	// but there's no real reason to do it like that.
 	for (uint32_t level = 1; level < 7; level++)
 	{
-		blur_chain.push_back(std::make_unique<vkb::core::Image>(
-		    get_device(), downsample_extent(size, level),
-		    VK_FORMAT_R16G16B16A16_SFLOAT,
-		    VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		    VMA_MEMORY_USAGE_GPU_ONLY));
-		blur_chain_views.push_back(std::make_unique<vkb::core::ImageView>(
-		    *blur_chain.back(), VK_IMAGE_VIEW_TYPE_2D));
+		blur_chain.push_back(std::make_unique<vkb::core::Image>(get_device(), downsample_extent(size, level), VK_FORMAT_R16G16B16A16_SFLOAT,
+		                                                        VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_GPU_ONLY));
+		blur_chain_views.push_back(std::make_unique<vkb::core::ImageView>(*blur_chain.back(), VK_IMAGE_VIEW_TYPE_2D));
 	}
 
 	// Calculate valid filter
@@ -251,10 +237,7 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 			auto *node = light->get_node();
 
 			// Hardcoded to fit to the scene.
-			auto ortho_camera = std::make_unique<vkb::sg::OrthographicCamera>("shadow_camera",
-			                                                                  -2000.0f, 3000.0f,
-			                                                                  -2500.0f, 1500.0f,
-			                                                                  -2000.0f, 2000.0f);
+			auto ortho_camera = std::make_unique<vkb::sg::OrthographicCamera>("shadow_camera", -2000.0f, 3000.0f, -2500.0f, 1500.0f, -2000.0f, 2000.0f);
 
 			ortho_camera->set_node(*node);
 			get_scene().add_component(std::move(ortho_camera), *node);
@@ -279,41 +262,41 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource composite_vert_shader("async_compute/composite.vert.spv");
 	vkb::ShaderSource composite_frag_shader("async_compute/composite.frag.spv");
-	auto              composite_scene_subpass =
-	    std::make_unique<CompositeSubpass>(get_render_context(), std::move(composite_vert_shader), std::move(composite_frag_shader));
+	auto composite_scene_subpass = std::make_unique<CompositeSubpass>(get_render_context(), std::move(composite_vert_shader), std::move(composite_frag_shader));
 
 	forward_render_pipeline.add_subpass(std::move(scene_subpass));
-	forward_render_pipeline.set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
-	                                        {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
+	forward_render_pipeline.set_load_store(
+	    {{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE}, {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
 
 	auto blit_render_pipeline = std::make_unique<vkb::RenderPipeline>();
 	blit_render_pipeline->add_subpass(std::move(composite_scene_subpass));
-	blit_render_pipeline->set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
-	                                      {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
+	blit_render_pipeline->set_load_store(
+	    {{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE}, {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
 
 	set_render_pipeline(std::move(blit_render_pipeline));
 
 	vkb::CounterSamplingConfig config;
 	config.mode = vkb::CounterSamplingMode::Continuous;
-	get_stats().request_stats({
-	                              vkb::StatIndex::frame_times,
-	                              vkb::StatIndex::gpu_cycles,
-	                              vkb::StatIndex::gpu_vertex_cycles,
-	                              vkb::StatIndex::gpu_fragment_cycles,
-	                          },
-	                          config);
+	get_stats().request_stats(
+	    {
+	        vkb::StatIndex::frame_times,
+	        vkb::StatIndex::gpu_cycles,
+	        vkb::StatIndex::gpu_vertex_cycles,
+	        vkb::StatIndex::gpu_fragment_cycles,
+	    },
+	    config);
 
 	create_gui(*window, &get_stats());
 
-	auto &threshold_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::ShaderSource("async_compute/threshold.comp.spv"));
-	auto &blur_up_module   = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::ShaderSource("async_compute/blur_up.comp.spv"));
-	auto &blur_down_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::ShaderSource("async_compute/blur_down.comp.spv"));
-	threshold_pipeline     = &get_device().get_resource_cache().request_pipeline_layout({&threshold_module});
-	blur_up_pipeline       = &get_device().get_resource_cache().request_pipeline_layout({&blur_up_module});
-	blur_down_pipeline     = &get_device().get_resource_cache().request_pipeline_layout({&blur_down_module});
+	auto &threshold_module =
+	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource("async_compute/threshold.comp.spv"));
+	auto &blur_up_module =
+	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource("async_compute/blur_up.comp.spv"));
+	auto &blur_down_module =
+	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource("async_compute/blur_down.comp.spv"));
+	threshold_pipeline = &get_device().get_resource_cache().request_pipeline_layout({&threshold_module});
+	blur_up_pipeline   = &get_device().get_resource_cache().request_pipeline_layout({&blur_up_module});
+	blur_down_pipeline = &get_device().get_resource_cache().request_pipeline_layout({&blur_down_module});
 
 	setup_queues();
 
@@ -380,13 +363,13 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 	assert(1 < views.size());
 
 	{
-		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the resource.
-		// Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use.
-		// The application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue family.
-		// A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but the content will be undefined.
-		// We do not need to acquire color_targets[0] from present_graphics to early_graphics
-		// A queue transfer barrier is not necessary for the resource first access.
-		// Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer barrier.
+		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of
+		// the resource. Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use. The
+		// application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue
+		// family. A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but
+		// the content will be undefined. We do not need to acquire color_targets[0] from present_graphics to early_graphics A queue transfer barrier is not
+		// necessary for the resource first access. Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer
+		// barrier.
 		vkb::ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -425,14 +408,15 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		vkb::ImageMemoryBarrier memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		    .dst_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,        // Ignored for the release barrier.
-		                                                                   // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
-		    .src_access_mask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		    .dst_access_mask  = 0,                                               // dst_access_mask is ignored for release barriers, without affecting its validity
-		    .old_layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,        // We want a layout transition, so the old_layout and new_layout values need to be replicated in the acquire barrier
+		                                                                   // Release barriers ignore dst_access_mask unless using
+		                                                                   // VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		    .dst_access_mask = 0,                                          // dst_access_mask is ignored for release barriers, without affecting its validity
+		    .old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,        // We want a layout transition, so the old_layout and new_layout values need to be
+		                                                                   // replicated in the acquire barrier
 		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		    .src_queue_family = queue_family_transfer ?
-		                            early_graphics_queue->get_family_index() :
-		                            VK_QUEUE_FAMILY_IGNORED,        // Release barriers are executed from a queue of the source queue family
+		    .src_queue_family = queue_family_transfer ? early_graphics_queue->get_family_index() :
+		                                                VK_QUEUE_FAMILY_IGNORED,        // Release barriers are executed from a queue of the source queue family
 		    .dst_queue_family = queue_family_transfer ? post_compute_queue->get_family_index() : VK_QUEUE_FAMILY_IGNORED,
 		};
 
@@ -474,7 +458,8 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
 		vkb::ImageMemoryBarrier memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,        // Ignored for the acquire barrier.
-		                                                                    // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		                                                                    // Acquire barriers ignore src_access_mask unless using
+		                                                                    // VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
 		    .dst_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		    .src_access_mask  = 0,        // src_access_mask is ignored for acquire barriers, without affecting its validity
 		    .dst_access_mask  = VK_ACCESS_SHADER_READ_BIT,
@@ -492,11 +477,13 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
 		vkb::ImageMemoryBarrier memory_barrier_2{
 		    .src_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,        // Ignored for the acquire barrier.
-		                                                                    // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
-		    .dst_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-		    .src_access_mask  = 0,        // src_access_mask is ignored for acquire barriers, without affecting its validity
-		    .dst_access_mask  = VK_ACCESS_SHADER_READ_BIT,
-		    .old_layout       = VK_IMAGE_LAYOUT_GENERAL,        // We want a layout transition, so the old_layout and new_layout values need to be replicated in the acquire barrier
+		                                                                    // Acquire barriers ignore src_access_mask unless using
+		                                                                    // VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		    .src_access_mask = 0,        // src_access_mask is ignored for acquire barriers, without affecting its validity
+		    .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+		    .old_layout = VK_IMAGE_LAYOUT_GENERAL,        // We want a layout transition, so the old_layout and new_layout values need to be replicated in the
+		                                                  // acquire barrier
 		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		    .src_queue_family = post_compute_queue->get_family_index(),
 		    .dst_queue_family = present_graphics_queue->get_family_index(),        // Acquire barriers are executed from a queue of the destination queue family
@@ -507,13 +494,13 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 
 	draw(*command_buffer, get_render_context().get_active_frame().get_render_target());
 
-	// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the resource.
-	// Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use.
-	// The application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue family.
-	// A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but the content will be undefined.
-	// We do not need to release blur_chain_views[1] and color_targets[0] from present_graphics
-	// A queue transfer barrier is not necessary for the resource first access.
-	// Moreover, in our sample we do not care about the content after presenting so we can skip the queue transfer barrier.
+	// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the
+	// resource. Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use. The
+	// application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue
+	// family. A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but the
+	// content will be undefined. We do not need to release blur_chain_views[1] and color_targets[0] from present_graphics A queue transfer barrier is not
+	// necessary for the resource first access. Moreover, in our sample we do not care about the content after presenting so we can skip the queue transfer
+	// barrier.
 
 	command_buffer->end();
 
@@ -573,11 +560,13 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
 		vkb::ImageMemoryBarrier memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,        // Ignored for the acquire barrier.
-		                                                                   // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
-		    .dst_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    .src_access_mask  = 0,        // src_access_mask is ignored for acquire barriers, without affecting its validity
-		    .dst_access_mask  = VK_ACCESS_SHADER_READ_BIT,
-		    .old_layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,        // We want a layout transition, so the old_layout and new_layout values need to be replicated in the release barrier
+		                                                                   // Acquire barriers ignore src_access_mask unless using
+		                                                                   // VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		    .src_access_mask = 0,        // src_access_mask is ignored for acquire barriers, without affecting its validity
+		    .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+		    .old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,        // We want a layout transition, so the old_layout and new_layout values need to be
+		                                                                   // replicated in the release barrier
 		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		    .src_queue_family = early_graphics_queue->get_family_index(),
 		    .dst_queue_family = post_compute_queue->get_family_index(),        // Acquire barriers are executed from a queue of the destination queue family
@@ -586,13 +575,13 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	}
 
 	const auto discard_blur_view = [&](const vkb::core::ImageView &view) {
-		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of the resource.
-		// Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use.
-		// The application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue family.
-		// A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but the content will be undefined.
-		// We do not need to acquire blur_chain_views[1] from present_graphics to post_compute
-		// A queue transfer barrier is not necessary for the resource first access.
-		// Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer barrier.
+		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of
+		// the resource. Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use. The
+		// application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue
+		// family. A queue family can take ownership of a resource without an ownership transfer, in the same way as for a resource that was just created, but
+		// the content will be undefined. We do not need to acquire blur_chain_views[1] from present_graphics to post_compute A queue transfer barrier is not
+		// necessary for the resource first access. Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer
+		// barrier.
 		vkb::ImageMemoryBarrier memory_barrier{};
 
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -614,14 +603,23 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
 		vkb::ImageMemoryBarrier memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    .dst_stage_mask = is_final ? VkPipelineStageFlags(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT) : VkPipelineStageFlags(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT),        // Ignored for the release barrier.
-		                                                                                                                                                                 // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
-		    .src_access_mask  = VK_ACCESS_SHADER_WRITE_BIT,
-		    .dst_access_mask  = is_final ? VkAccessFlags(0) : VkAccessFlags(VK_ACCESS_SHADER_READ_BIT),        // dst_access_mask is ignored for release barriers, without affecting its validity
-		    .old_layout       = VK_IMAGE_LAYOUT_GENERAL,                                                       // We want a layout transition, so the old_layout and new_layout values need to be replicated in the acquire barrier
+		    .dst_stage_mask =
+		        is_final ?
+		            VkPipelineStageFlags(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT) :
+		            VkPipelineStageFlags(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT),        // Ignored for the release barrier.
+		                                                                               // Release barriers ignore dst_access_mask unless using
+		                                                                               // VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		    .src_access_mask = VK_ACCESS_SHADER_WRITE_BIT,
+		    .dst_access_mask =
+		        is_final ? VkAccessFlags(0) :
+		                   VkAccessFlags(VK_ACCESS_SHADER_READ_BIT),        // dst_access_mask is ignored for release barriers, without affecting its validity
+		    .old_layout = VK_IMAGE_LAYOUT_GENERAL,        // We want a layout transition, so the old_layout and new_layout values need to be replicated in the
+		                                                  // acquire barrier
 		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		    .src_queue_family = queue_family_transfer ? post_compute_queue->get_family_index() : VK_QUEUE_FAMILY_IGNORED,            // Release barriers are executed from a queue of the source queue family
-		    .dst_queue_family = queue_family_transfer ? present_graphics_queue->get_family_index() : VK_QUEUE_FAMILY_IGNORED,        // Release barriers are executed from a queue of the source queue family
+		    .src_queue_family = queue_family_transfer ? post_compute_queue->get_family_index() :
+		                                                VK_QUEUE_FAMILY_IGNORED,        // Release barriers are executed from a queue of the source queue family
+		    .dst_queue_family = queue_family_transfer ? present_graphics_queue->get_family_index() :
+		                                                VK_QUEUE_FAMILY_IGNORED,        // Release barriers are executed from a queue of the source queue family
 		};
 
 		command_buffer->image_memory_barrier(view, memory_barrier);
@@ -685,9 +683,10 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		vkb::ImageMemoryBarrier memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    .dst_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,        // Ignored for the release barrier.
-		                                                                   // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
+		                                                                   // Release barriers ignore dst_access_mask unless using
+		                                                                   // VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
 		    .src_access_mask  = VK_ACCESS_SHADER_READ_BIT,
-		    .dst_access_mask  = 0,                                               // dst_access_mask is ignored for release barriers, without affecting its validity
+		    .dst_access_mask  = 0,        // dst_access_mask is ignored for release barriers, without affecting its validity
 		    .old_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,        // Purely ownership transfer. We do not need a layout transition.
 		    .new_layout       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		    .src_queue_family = post_compute_queue->get_family_index(),        // Release barriers are executed from a queue of the source queue family
@@ -747,7 +746,8 @@ void AsyncComputeSample::update(float delta_time)
 
 	forward_subpass->set_shadow_map(&shadow_render_target->get_views()[0], comparison_sampler.get());
 
-	composite_subpass->set_texture(&get_current_forward_render_target().get_views()[0], blur_chain_views[1].get(), linear_sampler.get());        // blur_chain[1] and color_targets[0] will be used by the present queue
+	composite_subpass->set_texture(&get_current_forward_render_target().get_views()[0], blur_chain_views[1].get(),
+	                               linear_sampler.get());        // blur_chain[1] and color_targets[0] will be used by the present queue
 
 	elapsed_time += delta_time;
 	float rotation_factor = elapsed_time;
@@ -758,17 +758,15 @@ void AsyncComputeSample::update(float delta_time)
 	if (rotate_shadows)
 	{
 		// Move shadows and directional light slightly.
-		orientation = glm::normalize(
-		    glm::angleAxis(glm::pi<float>(), glm::vec3(0.0f, -1.0f, 0.0f)) *
-		    glm::angleAxis(-0.2f * glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)) *
-		    glm::angleAxis(glm::two_pi<float>() * glm::fract(rotation_factor * 0.05f), glm::vec3(0.0f, 0.0f, -1.0f)) *
-		    glm::angleAxis(-0.05f * glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)));
+		orientation = glm::normalize(glm::angleAxis(glm::pi<float>(), glm::vec3(0.0f, -1.0f, 0.0f)) *
+		                             glm::angleAxis(-0.2f * glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)) *
+		                             glm::angleAxis(glm::two_pi<float>() * glm::fract(rotation_factor * 0.05f), glm::vec3(0.0f, 0.0f, -1.0f)) *
+		                             glm::angleAxis(-0.05f * glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)));
 	}
 	else
 	{
-		orientation = glm::normalize(
-		    glm::angleAxis(glm::pi<float>(), glm::vec3(0.0f, -1.0f, 0.0f)) *
-		    glm::angleAxis(-0.2f * glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)));
+		orientation = glm::normalize(glm::angleAxis(glm::pi<float>(), glm::vec3(0.0f, -1.0f, 0.0f)) *
+		                             glm::angleAxis(-0.2f * glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)));
 	}
 
 	auto &shadow_camera_transform = shadow_camera->get_node()->get_component<vkb::sg::Transform>();
@@ -823,9 +821,8 @@ std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 	return std::make_unique<AsyncComputeSample>();
 }
 
-AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
-                                                     vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-                                                     vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
+                                                     vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 {
 	// PCF, so need depth bias to avoid (most) shadow acne.
@@ -841,13 +838,12 @@ void AsyncComputeSample::DepthMapSubpass::draw(vkb::core::CommandBufferC &comman
 	vkb::rendering::subpasses::ForwardSubpassC::draw(command_buffer);
 }
 
-AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
-                                                                     vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-                                                                     vkb::sg::Scene &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera_) :
+AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
+                                                                     vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera,
+                                                                     vkb::sg::Camera &shadow_camera_) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera),
     shadow_camera(shadow_camera_)
-{
-}
+{}
 
 void AsyncComputeSample::ShadowMapForwardSubpass::set_shadow_map(const vkb::core::ImageView *view, const vkb::core::Sampler *sampler)
 {
@@ -874,12 +870,10 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::core::CommandBufferC
 	vkb::rendering::subpasses::ForwardSubpassC::draw(command_buffer);
 }
 
-AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::rendering::RenderContextC &render_context,
-                                                       vkb::ShaderSource             &&vertex_shader,
-                                                       vkb::ShaderSource             &&fragment_shader) :
+AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
+                                                       vkb::ShaderSource &&fragment_shader) :
     vkb::rendering::SubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader))
-{
-}
+{}
 
 void AsyncComputeSample::CompositeSubpass::set_texture(const vkb::core::ImageView *hdr_view_, const vkb::core::ImageView *bloom_view_,
                                                        const vkb::core::Sampler *sampler_)

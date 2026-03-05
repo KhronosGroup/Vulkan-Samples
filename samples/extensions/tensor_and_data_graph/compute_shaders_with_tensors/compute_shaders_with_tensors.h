@@ -30,11 +30,11 @@
  * @details A `Tensor` resource (`input_tensor`) is created by the preprocessing compute shader. This is read as an input by a `Data Graph Pipeline`
  *          (`data_graph_pipeline`).
  *          The Data Graph Pipeline runs a neural network and produces an output which is written into the `output_tensor` Tensor.
- *          Two constant tensors (`constant_weights_tensor` & `constant_bias_tensor`) are also passed into the Convolution2d operator in the form of weights and bias.
- *          The `output_tensor` is then copied to `postprocessed_tensor` by another compute shader simply for demonstrative purposes.
- *          In reality this shader would be used for postprocessing, hence the shader name (`postprocessing.comp`).
- *          In order to visualize the results of this pipeline, there is a Compute Pipeline (`visualization_pipeline`) which copies the
- *          contents of the `input_tensor`, `output_tensor` and `postprocessed_tensor` into an Image (`output_image`) which is blitted to the Swapchain.
+ *          Two constant tensors (`constant_weights_tensor` & `constant_bias_tensor`) are also passed into the Convolution2d operator in the form of weights and
+ *bias. The `output_tensor` is then copied to `postprocessed_tensor` by another compute shader simply for demonstrative purposes. In reality this shader would
+ *be used for postprocessing, hence the shader name (`postprocessing.comp`). In order to visualize the results of this pipeline, there is a Compute Pipeline
+ *(`visualization_pipeline`) which copies the contents of the `input_tensor`, `output_tensor` and `postprocessed_tensor` into an Image (`output_image`) which is
+ *blitted to the Swapchain.
  *
  *			As a diagram, this looks like:
  *
@@ -42,7 +42,8 @@
  *                                                       \         /
  *			preprocessing_pipeline -> input_tensor -> data_graph_pipeline -> output_tensor -> postprocessing_pipeline -> postprocessed_tensor
  *                                          \                                 											\
- *                                           \--------------------------------------------------------------> visualization_pipeline -> output_image -> blit -> swapchain
+ *                                           \--------------------------------------------------------------> visualization_pipeline -> output_image -> blit ->
+ *swapchain
  *
  *		    Because the common Vulkan Samples framework code is not aware of the Tensor resource type or Data Graph Pipelines,
  *			generic functionality for these concepts has been added to a new tensor_and_data_graph_common.h/cpp file, which this sample

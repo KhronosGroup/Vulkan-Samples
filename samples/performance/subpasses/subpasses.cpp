@@ -78,23 +78,12 @@ std::unique_ptr<vkb::RenderTarget> Subpasses::create_render_target(vkb::core::Im
 	// Albedo                  RGBA8_UNORM   (32-bit)
 	// Normal                  RGB10A2_UNORM (32-bit)
 
-	vkb::core::Image depth_image{device,
-	                             extent,
-	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
-	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
-	                             VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image depth_image{device, extent, vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
+	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags, VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device,
-	                              extent,
-	                              albedo_format,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image albedo_image{device, extent, albedo_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags, VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image normal_image{device,
-	                              extent,
-	                              normal_format,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image normal_image{device, extent, normal_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<vkb::core::Image> images;
 
@@ -171,10 +160,7 @@ bool Subpasses::prepare(const vkb::ApplicationOptions &options)
 	lighting_render_pipeline = create_lighting_renderpass();
 
 	// Enable stats
-	get_stats().request_stats({vkb::StatIndex::frame_times,
-	                           vkb::StatIndex::gpu_fragment_jobs,
-	                           vkb::StatIndex::gpu_tiles,
-	                           vkb::StatIndex::gpu_ext_read_bytes,
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_fragment_jobs, vkb::StatIndex::gpu_tiles, vkb::StatIndex::gpu_ext_read_bytes,
 	                           vkb::StatIndex::gpu_ext_write_bytes});
 
 	// Enable gui
@@ -208,8 +194,7 @@ void Subpasses::update(float delta_time)
 	}
 
 	// Check whether the user switched the attachment or the G-buffer option
-	if (configs[Config::TransientAttachments].value != last_transient_attachment ||
-	    configs[Config::GBufferSize].value != last_g_buffer_size)
+	if (configs[Config::TransientAttachments].value != last_transient_attachment || configs[Config::GBufferSize].value != last_g_buffer_size)
 	{
 		// If attachment option has changed
 		if (configs[Config::TransientAttachments].value != last_transient_attachment)
@@ -270,7 +255,8 @@ void Subpasses::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, lines]() {
+	    /* body = */
+	    [this, lines]() {
 		    // Create a line for every config
 		    for (size_t i = 0; i < configs.size(); ++i)
 		    {
@@ -310,8 +296,8 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
-	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
-	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs),
+	                                                                                   get_scene(), *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -343,8 +329,8 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
-	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
-	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs),
+	                                                                                   get_scene(), *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -384,10 +370,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	return lighting_render_pipeline;
 }
 
-void draw_pipeline(vkb::core::CommandBufferC &command_buffer,
-                   vkb::RenderTarget         &render_target,
-                   vkb::RenderPipeline       &render_pipeline,
-                   vkb::GuiC                 *gui = nullptr)
+void draw_pipeline(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target, vkb::RenderPipeline &render_pipeline, vkb::GuiC *gui = nullptr)
 {
 	auto &extent = render_target.get_extent();
 

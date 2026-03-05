@@ -65,8 +65,7 @@ bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource vert_shader("base.vert.spv");
 	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_subpass =
-	    std::make_unique<ForwardSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<ForwardSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
@@ -79,9 +78,7 @@ bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 
 	// Adjust the maximum number of secondary command buffers
 	// In this sample, only the recording of opaque meshes will be multi-threaded
-	auto is_opaque = [](vkb::sg::SubMesh *sub_mesh) {
-		return sub_mesh->get_material()->alpha_mode != vkb::sg::AlphaMode::Blend;
-	};
+	auto is_opaque              = [](vkb::sg::SubMesh *sub_mesh) { return sub_mesh->get_material()->alpha_mode != vkb::sg::AlphaMode::Blend; };
 	auto count_opaque_submeshes = [is_opaque](uint32_t accumulated, const vkb::sg::Mesh *mesh) -> uint32_t {
 		return accumulated + vkb::to_u32(mesh->get_nodes().size() * std::count_if(mesh->get_submeshes().begin(), mesh->get_submeshes().end(), is_opaque));
 	};
@@ -164,20 +161,17 @@ void CommandBufferUsage::draw_gui()
 		    ImGui::Text("(%d threads)", subpass->get_state().thread_count);
 
 		    // Buffer management options
-		    ImGui::RadioButton(
-		        "Allocate and free", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBufferResetMode::AlwaysAllocate));
+		    ImGui::RadioButton("Allocate and free", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBufferResetMode::AlwaysAllocate));
 		    if (landscape)
 		    {
 			    ImGui::SameLine();
 		    }
-		    ImGui::RadioButton(
-		        "Reset buffer", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBufferResetMode::ResetIndividually));
+		    ImGui::RadioButton("Reset buffer", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBufferResetMode::ResetIndividually));
 		    if (landscape)
 		    {
 			    ImGui::SameLine();
 		    }
-		    ImGui::RadioButton(
-		        "Reset pool", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBufferResetMode::ResetPool));
+		    ImGui::RadioButton("Reset pool", &gui_command_buffer_reset_mode, static_cast<int>(vkb::CommandBufferResetMode::ResetPool));
 	    },
 	    /* lines = */ lines);
 }
@@ -190,8 +184,8 @@ void CommandBufferUsage::render(vkb::core::CommandBufferC &primary_command_buffe
 		{
 			// The user will set the number of secondary command buffers used for opaque meshes
 			// There will be additional buffers for transparent meshes and for the GUI
-			get_render_pipeline().draw(
-			    primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+			get_render_pipeline().draw(primary_command_buffer, get_render_context().get_active_frame().get_render_target(),
+			                           VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 		}
 		else
 		{
@@ -232,7 +226,8 @@ void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_comm
 			                                    .get_command_pool(queue, subpass->get_state().command_buffer_reset_mode)
 			                                    .request_command_buffer(VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
-			secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
+			secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
+			                                &primary_command_buffer);
 
 			secondary_command_buffer->set_viewport(0, {viewport});
 
@@ -253,20 +248,14 @@ void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_comm
 	primary_command_buffer.end_render_pass();
 }
 
-CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,
-                                                                     vkb::ShaderSource             &&vertex_shader,
-                                                                     vkb::ShaderSource             &&fragment_shader,
-                                                                     vkb::sg::Scene                 &scene_,
-                                                                     vkb::sg::Camera                &camera) :
+CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
+                                                                     vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene_, vkb::sg::Camera &camera) :
     vkb::rendering::subpasses::ForwardSubpassC{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
-{
-}
+{}
 
 void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::CommandBufferC                                                   &command_buffer,
                                                               const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
-                                                              uint32_t                                                                     mesh_start,
-                                                              uint32_t                                                                     mesh_end,
-                                                              size_t                                                                       thread_index)
+                                                              uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
 {
 	command_buffer.set_color_blend_state(color_blend_state);
 
@@ -284,12 +273,9 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::Command
 }
 
 std::shared_ptr<vkb::core::CommandBufferC>
-    CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::core::CommandBufferC                                                   &primary_command_buffer,
+    CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::core::CommandBufferC &primary_command_buffer,
                                                                        const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
-                                                                       uint32_t                                                                     mesh_start,
-                                                                       uint32_t                                                                     mesh_end,
-                                                                       uint32_t                                                                     subpass_index,
-                                                                       size_t                                                                       thread_index)
+                                                                       uint32_t mesh_start, uint32_t mesh_end, uint32_t subpass_index, size_t thread_index)
 {
 	const auto &queue = get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -301,7 +287,8 @@ std::shared_ptr<vkb::core::CommandBufferC>
 	secondary_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 
 	{
-		vkb::ScopedDebugLabel subpass_debug_label{*secondary_command_buffer, fmt::format("Record secondary command buffer, subpass #{}", subpass_index).c_str()};
+		vkb::ScopedDebugLabel subpass_debug_label{*secondary_command_buffer,
+		                                          fmt::format("Record secondary command buffer, subpass #{}", subpass_index).c_str()};
 
 		secondary_command_buffer->set_viewport(0, {viewport});
 
@@ -378,14 +365,9 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 
 			if (state.multi_threading)
 			{
-				auto fut = thread_pool.push(std::bind(&CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary,
-				                                      this,
-				                                      std::ref(primary_command_buffer),
-				                                      std::cref(sorted_opaque_nodes),
-				                                      mesh_start,
-				                                      mesh_end,
-				                                      cb_count,
-				                                      std::placeholders::_1));
+				auto fut =
+				    thread_pool.push(std::bind(&CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary, this, std::ref(primary_command_buffer),
+				                               std::cref(sorted_opaque_nodes), mesh_start, mesh_end, cb_count, std::placeholders::_1));
 
 				secondary_cmd_buf_futures.push_back(std::move(fut));
 			}

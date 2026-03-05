@@ -75,10 +75,10 @@ class HPPImage : public vkb::sg::Component
 	// from Component
 	virtual std::type_index get_type() override;
 
-	void                                                        clear_data();
-	void                                                        coerce_format_to_srgb();
-	void                                                        create_vk_image(vkb::core::DeviceCpp &device, vk::ImageViewType image_view_type = vk::ImageViewType::e2D, vk::ImageCreateFlags flags = {});
-	void                                                        generate_mipmaps();
+	void clear_data();
+	void coerce_format_to_srgb();
+	void create_vk_image(vkb::core::DeviceCpp &device, vk::ImageViewType image_view_type = vk::ImageViewType::e2D, vk::ImageCreateFlags flags = {});
+	void generate_mipmaps();
 	const std::vector<uint8_t>                                 &get_data() const;
 	const vk::Extent3D                                         &get_extent() const;
 	vk::Format                                                  get_format() const;

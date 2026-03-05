@@ -57,9 +57,7 @@ class ComputePipeline : public Pipeline
 
 	virtual ~ComputePipeline() = default;
 
-	ComputePipeline(vkb::core::DeviceC &device,
-	                VkPipelineCache     pipeline_cache,
-	                PipelineState      &pipeline_state);
+	ComputePipeline(vkb::core::DeviceC &device, VkPipelineCache pipeline_cache, PipelineState &pipeline_state);
 };
 
 class GraphicsPipeline : public Pipeline
@@ -69,8 +67,6 @@ class GraphicsPipeline : public Pipeline
 
 	virtual ~GraphicsPipeline() = default;
 
-	GraphicsPipeline(vkb::core::DeviceC &device,
-	                 VkPipelineCache     pipeline_cache,
-	                 PipelineState      &pipeline_state);
+	GraphicsPipeline(vkb::core::DeviceC &device, VkPipelineCache pipeline_cache, PipelineState &pipeline_state);
 };
 }        // namespace vkb

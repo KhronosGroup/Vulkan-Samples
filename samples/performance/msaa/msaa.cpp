@@ -112,23 +112,21 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource scene_vs{"base.vert.spv"};
 	vkb::ShaderSource scene_fs{"base.frag.spv"};
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
-	scene_pipeline                  = std::make_unique<vkb::RenderPipeline>();
+	auto              scene_subpass =
+	    std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
+	scene_pipeline = std::make_unique<vkb::RenderPipeline>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
 	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
-	postprocessing_pipeline->add_pass()
-	    .add_subpass(vkb::ShaderSource{"postprocessing/outline.frag.spv"});
+	postprocessing_pipeline->add_pass().add_subpass(vkb::ShaderSource{"postprocessing/outline.frag.spv"});
 
-	ms_depth_postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
-	ms_depth_postprocessing_pipeline->add_pass()
-	    .add_subpass(vkb::ShaderSource{"postprocessing/outline_ms_depth.frag.spv"});
+	ms_depth_postprocessing_pipeline =
+	    std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
+	ms_depth_postprocessing_pipeline->add_pass().add_subpass(vkb::ShaderSource{"postprocessing/outline_ms_depth.frag.spv"});
 
 	update_pipelines();
 
-	get_stats().request_stats({vkb::StatIndex::frame_times,
-	                           vkb::StatIndex::gpu_ext_read_bytes,
-	                           vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_read_bytes, vkb::StatIndex::gpu_ext_write_bytes});
 
 	create_gui(*window, &get_stats());
 
@@ -172,19 +170,9 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 		depth_resolve_usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 	}
 
-	vkb::core::Image depth_image{device,
-	                             extent,
-	                             depth_format,
-	                             depth_usage,
-	                             VMA_MEMORY_USAGE_GPU_ONLY,
-	                             sample_count};
+	vkb::core::Image depth_image{device, extent, depth_format, depth_usage, VMA_MEMORY_USAGE_GPU_ONLY, sample_count};
 
-	vkb::core::Image depth_resolve_image{device,
-	                                     extent,
-	                                     depth_format,
-	                                     depth_resolve_usage,
-	                                     VMA_MEMORY_USAGE_GPU_ONLY,
-	                                     VK_SAMPLE_COUNT_1_BIT};
+	vkb::core::Image depth_resolve_image{device, extent, depth_format, depth_resolve_usage, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT};
 
 	VkImageUsageFlags color_ms_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	if (ColorResolve::OnWriteback == color_resolve_method)
@@ -200,12 +188,7 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 		color_ms_usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	vkb::core::Image color_ms_image{device,
-	                                extent,
-	                                swapchain_image.get_format(),
-	                                color_ms_usage,
-	                                VMA_MEMORY_USAGE_GPU_ONLY,
-	                                sample_count};
+	vkb::core::Image color_ms_image{device, extent, swapchain_image.get_format(), color_ms_usage, VMA_MEMORY_USAGE_GPU_ONLY, sample_count};
 
 	VkImageUsageFlags color_resolve_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	if (run_postprocessing)
@@ -222,12 +205,7 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 		color_resolve_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 
-	vkb::core::Image color_resolve_image{device,
-	                                     extent,
-	                                     swapchain_image.get_format(),
-	                                     color_resolve_usage,
-	                                     VMA_MEMORY_USAGE_GPU_ONLY,
-	                                     VK_SAMPLE_COUNT_1_BIT};
+	vkb::core::Image color_resolve_image{device, extent, swapchain_image.get_format(), color_resolve_usage, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT};
 
 	scene_load_store.clear();
 	std::vector<vkb::core::Image> images;
@@ -272,10 +250,8 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 
 void MSAASample::update(float delta_time)
 {
-	if ((gui_run_postprocessing != last_gui_run_postprocessing) ||
-	    (gui_sample_count != last_gui_sample_count) ||
-	    (gui_color_resolve_method != last_gui_color_resolve_method) ||
-	    (gui_resolve_depth_on_writeback != last_gui_resolve_depth_on_writeback) ||
+	if ((gui_run_postprocessing != last_gui_run_postprocessing) || (gui_sample_count != last_gui_sample_count) ||
+	    (gui_color_resolve_method != last_gui_color_resolve_method) || (gui_resolve_depth_on_writeback != last_gui_resolve_depth_on_writeback) ||
 	    (gui_depth_resolve_mode != last_gui_depth_resolve_mode))
 	{
 		run_postprocessing         = gui_run_postprocessing;
@@ -382,9 +358,8 @@ void MSAASample::update_for_scene_and_postprocessing(bool msaa_enabled)
 	scene_pipeline->set_load_store(scene_load_store);
 }
 
-void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                        std::vector<vkb::LoadStoreInfo>           &load_store,
-                                        uint32_t                                   resolve_attachment)
+void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store,
+                                        uint32_t resolve_attachment)
 {
 	// Render to multisampled color attachment
 	subpass->set_output_attachments({i_color_ms});
@@ -417,9 +392,8 @@ void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC
 	}
 }
 
-void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                         std::vector<vkb::LoadStoreInfo>           &load_store,
-                                         uint32_t                                   output_attachment)
+void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store,
+                                         uint32_t output_attachment)
 {
 	// Render to a single-sampled attachment
 	subpass->set_output_attachments({output_attachment});
@@ -432,8 +406,7 @@ void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::Subpass
 	subpass->set_color_resolve_attachments({});
 }
 
-void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                          std::vector<vkb::LoadStoreInfo>           &load_store)
+void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store)
 {
 	if (depth_writeback_resolve_supported && resolve_depth_on_writeback)
 	{
@@ -462,8 +435,7 @@ void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::rendering::Subpas
 	}
 }
 
-void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                                 std::vector<vkb::LoadStoreInfo>           &load_store)
+void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store)
 {
 	// Auxiliary single-sampled depth attachment is not used
 	load_store[i_depth_resolve].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -580,10 +552,7 @@ void MSAASample::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarg
 	}
 }
 
-void MSAASample::postprocessing(vkb::core::CommandBufferC &command_buffer,
-                                vkb::RenderTarget         &render_target,
-                                VkImageLayout             &swapchain_layout,
-                                bool                       msaa_enabled)
+void MSAASample::postprocessing(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target, VkImageLayout &swapchain_layout, bool msaa_enabled)
 {
 	auto        depth_attachment   = (msaa_enabled && depth_writeback_resolve_supported && resolve_depth_on_writeback) ? i_depth_resolve : i_depth;
 	bool        multisampled_depth = msaa_enabled && !(depth_writeback_resolve_supported && resolve_depth_on_writeback);
@@ -620,10 +589,8 @@ void MSAASample::postprocessing(vkb::core::CommandBufferC &command_buffer,
 	command_buffer.end_render_pass();
 }
 
-void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC               &command_buffer,
-                                             const std::vector<vkb::core::ImageView> &views,
-                                             uint32_t                                 color_destination,
-                                             VkImageLayout                           &color_layout)
+void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::core::ImageView> &views,
+                                             uint32_t color_destination, VkImageLayout &color_layout)
 {
 	{
 		// The multisampled color is the source of the resolve operation
@@ -708,9 +675,8 @@ void MSAASample::prepare_supported_sample_count_list()
 
 	// All possible sample counts are listed here from most to least preferred as default
 	// On Mali GPUs 4X MSAA is recommended as best performance/quality trade-off
-	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT, VK_SAMPLE_COUNT_8_BIT,
-	                                             VK_SAMPLE_COUNT_16_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_64_BIT,
-	                                             VK_SAMPLE_COUNT_1_BIT};
+	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT,  VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_16_BIT,
+	                                             VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_1_BIT};
 
 	for (auto &count : counts)
 	{
@@ -748,8 +714,8 @@ void MSAASample::prepare_depth_resolve_mode_list()
 		else
 		{
 			// All possible modes are listed here from most to least preferred as default
-			std::vector<VkResolveModeFlagBits> modes = {VK_RESOLVE_MODE_SAMPLE_ZERO_BIT, VK_RESOLVE_MODE_MIN_BIT,
-			                                            VK_RESOLVE_MODE_MAX_BIT, VK_RESOLVE_MODE_AVERAGE_BIT};
+			std::vector<VkResolveModeFlagBits> modes = {VK_RESOLVE_MODE_SAMPLE_ZERO_BIT, VK_RESOLVE_MODE_MIN_BIT, VK_RESOLVE_MODE_MAX_BIT,
+			                                            VK_RESOLVE_MODE_AVERAGE_BIT};
 
 			for (auto &mode : modes)
 			{

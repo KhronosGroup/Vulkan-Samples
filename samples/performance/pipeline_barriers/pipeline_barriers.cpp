@@ -102,8 +102,8 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert.spv"};
 	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag.spv"};
 
-	auto gbuffer_pass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
-	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
+	auto gbuffer_pass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs),
+	                                                                                  get_scene(), *camera);
 	gbuffer_pass->set_output_attachments({1, 2, 3});
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
 	gbuffer_pipeline.set_load_store(vkb::gbuffer::get_clear_store_all());
@@ -116,9 +116,7 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	get_stats().request_stats({vkb::StatIndex::frame_times,
-	                           vkb::StatIndex::gpu_vertex_cycles,
-	                           vkb::StatIndex::gpu_fragment_cycles},
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_vertex_cycles, vkb::StatIndex::gpu_fragment_cycles},
 	                          vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
 
 	create_gui(*window, &get_stats());
@@ -145,22 +143,13 @@ std::unique_ptr<vkb::RenderTarget> PipelineBarriers::create_render_target(vkb::c
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
 
-	vkb::core::Image depth_image{device,
-	                             extent,
-	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
-	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-	                             VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image depth_image{device, extent, vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
+	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device,
-	                              extent,
-	                              VK_FORMAT_R8G8B8A8_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+	vkb::core::Image albedo_image{device, extent, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                              VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image normal_image{device,
-	                              extent,
-	                              VK_FORMAT_A2B10G10R10_UNORM_PACK32,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+	vkb::core::Image normal_image{device, extent, VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                              VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<vkb::core::Image> images;
@@ -353,7 +342,8 @@ void PipelineBarriers::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, portrait_mode]() {
+	    /* body = */
+	    [this, portrait_mode]() {
 		    ImGui::Text("Pipeline barrier stages:");
 		    ImGui::RadioButton("Bottom to top", reinterpret_cast<int *>(&dependency_type), DependencyType::BOTTOM_TO_TOP);
 		    ImGui::SameLine();

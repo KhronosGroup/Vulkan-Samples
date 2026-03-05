@@ -107,8 +107,7 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	int32_t attachment_height{0};
 
 	std::array<uint32_t, 4>             color_attachment_input_indices{VK_ATTACHMENT_UNUSED, 0, 1, 2};
-	VkRenderingInputAttachmentIndexInfo rendering_attachment_index_info{VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO_KHR,
-	                                                                    nullptr,
+	VkRenderingInputAttachmentIndexInfo rendering_attachment_index_info{VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO_KHR, nullptr,
 	                                                                    static_cast<uint32_t>(color_attachment_input_indices.size()),
 	                                                                    color_attachment_input_indices.data()};
 

@@ -67,6 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: clang-format --version
       - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
       - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
       - name: Run Clang Format diff

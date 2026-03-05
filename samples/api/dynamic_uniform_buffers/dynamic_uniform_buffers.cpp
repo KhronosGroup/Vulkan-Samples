@@ -153,53 +153,13 @@ void DynamicUniformBuffers::generate_cube()
 {
 	// Setup vertices indices for a colored cube
 	std::vector<Vertex> vertices = {
-	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-	    {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-	    {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
-	    {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
-	    {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
-	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},
-	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
+	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}}, {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},   {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},  {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}}, {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
+	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},  {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
 	};
 
 	std::vector<uint32_t> indices = {
-	    0,
-	    1,
-	    2,
-	    2,
-	    3,
-	    0,
-	    1,
-	    5,
-	    6,
-	    6,
-	    2,
-	    1,
-	    7,
-	    6,
-	    5,
-	    5,
-	    4,
-	    7,
-	    4,
-	    0,
-	    3,
-	    3,
-	    7,
-	    4,
-	    4,
-	    5,
-	    1,
-	    1,
-	    0,
-	    4,
-	    3,
-	    2,
-	    6,
-	    6,
-	    7,
-	    3,
+	    0, 1, 2, 2, 3, 0, 1, 5, 6, 6, 2, 1, 7, 6, 5, 5, 4, 7, 4, 0, 3, 3, 7, 4, 4, 5, 1, 1, 0, 4, 3, 2, 6, 6, 7, 3,
 	};
 
 	index_count = static_cast<uint32_t>(indices.size());
@@ -210,67 +170,46 @@ void DynamicUniformBuffers::generate_cube()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
 void DynamicUniformBuffers::setup_descriptor_pool()
 {
 	// Example uses one ubo and one image sampler
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	std::vector<VkDescriptorPoolSize> pool_sizes = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	                                                vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
+	                                                vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void DynamicUniformBuffers::setup_descriptor_set_layout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
-	    {
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)};
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
 void DynamicUniformBuffers::setup_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
@@ -292,51 +231,26 @@ void DynamicUniformBuffers::setup_descriptor_set()
 void DynamicUniformBuffers::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
@@ -358,11 +272,7 @@ void DynamicUniformBuffers::prepare_pipelines()
 	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -403,15 +313,9 @@ void DynamicUniformBuffers::prepare_uniform_buffers()
 	// Vertex shader uniform buffer block
 
 	// Static shared uniform buffer object with projection and view matrix
-	uniform_buffers.view = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                            sizeof(ubo_vs),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.view = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	uniform_buffers.dynamic = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                               buffer_size,
-	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.dynamic = std::make_unique<vkb::core::BufferC>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
 	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
@@ -467,8 +371,7 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 				rotations[index] += animation_timer * rotation_speeds[index];
 
 				// Update matrices
-				glm::vec3 pos(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x,
-				              -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
+				glm::vec3 pos(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x, -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
 				              -((fdim * offset.z) / 2.0f) + offset.z / 2.0f + fz * offset.z);
 				*model_mat = glm::translate(glm::mat4(1.0f), pos);
 				*model_mat = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));

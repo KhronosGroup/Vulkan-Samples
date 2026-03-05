@@ -22,8 +22,7 @@
 namespace plugins
 {
 BatchMode::BatchMode() :
-    BatchModeTags("Batch Mode",
-                  "Run a collection of samples in sequence.",
+    BatchModeTags("Batch Mode", "Run a collection of samples in sequence.",
                   {
                       vkb::Hook::OnUpdate,
                       vkb::Hook::OnAppError,
@@ -34,8 +33,7 @@ BatchMode::BatchMode() :
                    {"skip", "Skip a sample by id"},
                    {"tag", "Filter samples by tags"},
                    {"wrap-to-start", "Once all configurations have run wrap to the start"}})
-{
-}
+{}
 
 bool BatchMode::handle_command(std::deque<std::string> &arguments) const
 {
@@ -143,8 +141,8 @@ void BatchMode::trigger_command()
 		std::vector<apps::AppInfo *> filtered_list;
 		filtered_list.reserve(sample_list.size() - skips.size());
 
-		std::copy_if(
-		    sample_list.begin(), sample_list.end(), std::back_inserter(filtered_list), [&](const apps::AppInfo *app) { return !skips.count(app->id); });
+		std::copy_if(sample_list.begin(), sample_list.end(), std::back_inserter(filtered_list),
+		             [&](const apps::AppInfo *app) { return !skips.count(app->id); });
 
 		if (filtered_list.size() != sample_list.size())
 		{

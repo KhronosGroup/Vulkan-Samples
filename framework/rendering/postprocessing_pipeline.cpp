@@ -22,8 +22,7 @@
 namespace vkb
 {
 PostProcessingPipeline::PostProcessingPipeline(vkb::rendering::RenderContextC &render_context, ShaderSource triangle_vs) :
-    render_context{&render_context},
-    triangle_vs{std::move(triangle_vs)}
+    render_context{&render_context}, triangle_vs{std::move(triangle_vs)}
 {}
 
 void PostProcessingPipeline::draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)

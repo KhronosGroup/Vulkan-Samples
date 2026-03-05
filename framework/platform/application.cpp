@@ -22,10 +22,8 @@
 
 namespace vkb
 {
-Application::Application() :
-    name{"Sample Name"}
-{
-}
+Application::Application() : name{"Sample Name"}
+{}
 
 bool Application::prepare(const ApplicationOptions &options)
 {
@@ -42,8 +40,7 @@ bool Application::prepare(const ApplicationOptions &options)
 }
 
 void Application::finish()
-{
-}
+{}
 
 bool Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)
 {
@@ -51,8 +48,7 @@ bool Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)
 }
 
 void Application::input_event(const InputEvent &input_event)
-{
-}
+{}
 
 Drawer *Application::get_drawer()
 {
@@ -66,8 +62,7 @@ void Application::update(float delta_time)
 }
 
 void Application::update_overlay(float delta_time, const std::function<void()> &additional_ui)
-{
-}
+{}
 
 const std::string &Application::get_name() const
 {

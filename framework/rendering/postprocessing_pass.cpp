@@ -21,8 +21,7 @@
 
 namespace vkb
 {
-PostProcessingPassBase::PostProcessingPassBase(PostProcessingPipeline *parent) :
-    parent{parent}
+PostProcessingPassBase::PostProcessingPassBase(PostProcessingPipeline *parent) : parent{parent}
 {}
 
 vkb::rendering::RenderContextC &PostProcessingPassBase::get_render_context() const

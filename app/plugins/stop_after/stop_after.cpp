@@ -21,13 +21,9 @@
 namespace plugins
 {
 StopAfter::StopAfter() :
-    StopAfterTags("Stop After X",
-                  "A collection of flags to stop the running application after a set period.",
-                  {vkb::Hook::OnUpdate},
-                  {},
+    StopAfterTags("Stop After X", "A collection of flags to stop the running application after a set period.", {vkb::Hook::OnUpdate}, {},
                   {{"stop-after-frame", "Stop the application after a certain number of frames"}})
-{
-}
+{}
 
 bool StopAfter::handle_option(std::deque<std::string> &arguments)
 {

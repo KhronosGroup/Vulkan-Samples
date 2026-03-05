@@ -21,9 +21,7 @@
 #include <rendering/render_context.h>
 #include <spirv_glsl.hpp>
 
-void write_descriptor_set(VkDevice                                                 device,
-                          VkDescriptorSet                                          set,
-                          const std::map<uint32_t, VkDescriptorImageInfo>         &image_bindings,
+void write_descriptor_set(VkDevice device, VkDescriptorSet set, const std::map<uint32_t, VkDescriptorImageInfo> &image_bindings,
                           const std::map<uint32_t, VkWriteDescriptorSetTensorARM> &tensor_bindings)
 {
 	std::vector<VkWriteDescriptorSet> writes;
@@ -52,21 +50,14 @@ void write_descriptor_set(VkDevice                                              
 	vkUpdateDescriptorSets(device, writes.size(), writes.data(), 0, nullptr);
 }
 
-VkResult vmaCreateTensor(VkDevice                       device,
-                         VmaAllocator                   allocator,
-                         const VkTensorCreateInfoARM   *pTensorCreateInfo,
-                         const VmaAllocationCreateInfo *pAllocationCreateInfo,
-                         VkTensorARM                   *pTensor,
-                         VmaAllocation                 *pAllocation,
-                         VmaAllocationInfo             *pAllocationInfo)
+VkResult vmaCreateTensor(VkDevice device, VmaAllocator allocator, const VkTensorCreateInfoARM *pTensorCreateInfo,
+                         const VmaAllocationCreateInfo *pAllocationCreateInfo, VkTensorARM *pTensor, VmaAllocation *pAllocation,
+                         VmaAllocationInfo *pAllocationInfo)
 {
 	// Note that this implementation has some slight differences to the equivalent vmaCreateImage/Buffer functions because we are outside
 	// the VMA implementation so can't use any of its internal functions and have to use the public APIs instead.
 
-	if (pTensorCreateInfo == nullptr ||
-	    pTensorCreateInfo->pDescription == nullptr ||
-	    pTensor == nullptr ||
-	    pAllocation == nullptr)
+	if (pTensorCreateInfo == nullptr || pTensorCreateInfo->pDescription == nullptr || pTensor == nullptr || pAllocation == nullptr)
 	{
 		return VK_ERROR_INITIALIZATION_FAILED;
 	}
@@ -75,11 +66,7 @@ VkResult vmaCreateTensor(VkDevice                       device,
 	*pAllocation = VK_NULL_HANDLE;
 
 	// 1. Create VkTensor.
-	VkResult res = vkCreateTensorARM(
-	    device,
-	    pTensorCreateInfo,
-	    nullptr,
-	    pTensor);
+	VkResult res = vkCreateTensorARM(device, pTensorCreateInfo, nullptr, pTensor);
 	if (res >= 0)
 	{
 		// 2. vkGetTensorMemoryRequirements.
@@ -91,11 +78,7 @@ VkResult vmaCreateTensor(VkDevice                       device,
 
 		// 3. Allocate memory using allocator.
 		VmaAllocationInfo allocation_info;
-		res = vmaAllocateMemory(allocator,
-		                        &vkMemReq.memoryRequirements,
-		                        pAllocationCreateInfo,
-		                        pAllocation,
-		                        &allocation_info);
+		res = vmaAllocateMemory(allocator, &vkMemReq.memoryRequirements, pAllocationCreateInfo, pAllocation, &allocation_info);
 
 		if (res >= 0)
 		{
@@ -129,10 +112,7 @@ VkResult vmaCreateTensor(VkDevice                       device,
 	return res;
 }
 
-void vmaDestroyTensor(VkDevice      device,
-                      VmaAllocator  allocator,
-                      VkTensorARM   tensor,
-                      VmaAllocation allocation)
+void vmaDestroyTensor(VkDevice device, VmaAllocator allocator, VkTensorARM tensor, VmaAllocation allocation)
 {
 	if (tensor != VK_NULL_HANDLE)
 	{
@@ -145,20 +125,15 @@ void vmaDestroyTensor(VkDevice      device,
 	}
 }
 
-VkResult vmaCreateDataGraphPipelineSession(VkDevice                                       device,
-                                           VmaAllocator                                   allocator,
+VkResult vmaCreateDataGraphPipelineSession(VkDevice device, VmaAllocator allocator,
                                            const VkDataGraphPipelineSessionCreateInfoARM *pDataGraphPipelineSessionCreateInfo,
-                                           const VmaAllocationCreateInfo                 *pAllocationCreateInfo,
-                                           VkDataGraphPipelineSessionARM                 *pDataGraphPipelineSession,
-                                           VmaAllocation                                 *pAllocation,
-                                           VmaAllocationInfo                             *pAllocationInfo)
+                                           const VmaAllocationCreateInfo *pAllocationCreateInfo, VkDataGraphPipelineSessionARM *pDataGraphPipelineSession,
+                                           VmaAllocation *pAllocation, VmaAllocationInfo *pAllocationInfo)
 {
 	// Note that this implementation has some slight differences to the equivalent vmaCreateImage/Buffer functions because we are outside
 	// the VMA implementation so can't use any of its internal functions and have to use the public APIs instead.
 
-	if (pDataGraphPipelineSessionCreateInfo == nullptr ||
-	    pDataGraphPipelineSession == nullptr ||
-	    pAllocation == nullptr)
+	if (pDataGraphPipelineSessionCreateInfo == nullptr || pDataGraphPipelineSession == nullptr || pAllocation == nullptr)
 	{
 		return VK_ERROR_INITIALIZATION_FAILED;
 	}
@@ -167,17 +142,14 @@ VkResult vmaCreateDataGraphPipelineSession(VkDevice                             
 	*pAllocation               = VK_NULL_HANDLE;
 
 	// 1. Create DataGraphPipelineSession.
-	VkResult res = vkCreateDataGraphPipelineSessionARM(
-	    device,
-	    pDataGraphPipelineSessionCreateInfo,
-	    nullptr,
-	    pDataGraphPipelineSession);
+	VkResult res = vkCreateDataGraphPipelineSessionARM(device, pDataGraphPipelineSessionCreateInfo, nullptr, pDataGraphPipelineSession);
 	if (res >= 0)
 	{
 		// 2. Query valid bind points for the session
-		VkDataGraphPipelineSessionBindPointRequirementsInfoARM bind_point_req_info = {VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_SESSION_BIND_POINT_REQUIREMENTS_INFO_ARM};
-		bind_point_req_info.session                                                = *pDataGraphPipelineSession;
-		uint32_t requirement_count                                                 = 0;
+		VkDataGraphPipelineSessionBindPointRequirementsInfoARM bind_point_req_info = {
+		    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_SESSION_BIND_POINT_REQUIREMENTS_INFO_ARM};
+		bind_point_req_info.session = *pDataGraphPipelineSession;
+		uint32_t requirement_count  = 0;
 
 		res = vkGetDataGraphPipelineSessionBindPointRequirementsARM(device, &bind_point_req_info, &requirement_count, nullptr);
 		if (res != VK_SUCCESS)
@@ -212,21 +184,18 @@ VkResult vmaCreateDataGraphPipelineSession(VkDevice                             
 		// 3. vkGetDataGraphPipelineSessionMemoryRequirements.
 		VkDataGraphPipelineSessionBindPointARM              memory_bind_point        = VK_DATA_GRAPH_PIPELINE_SESSION_BIND_POINT_TRANSIENT_ARM;
 		VkMemoryRequirements2                               vkMemReq                 = {VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2};
-		VkDataGraphPipelineSessionMemoryRequirementsInfoARM memory_requirements_info = {VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_SESSION_MEMORY_REQUIREMENTS_INFO_ARM};
-		memory_requirements_info.session                                             = *pDataGraphPipelineSession;
-		memory_requirements_info.bindPoint                                           = memory_bind_point;
-		memory_requirements_info.objectIndex                                         = 0;
+		VkDataGraphPipelineSessionMemoryRequirementsInfoARM memory_requirements_info = {
+		    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_SESSION_MEMORY_REQUIREMENTS_INFO_ARM};
+		memory_requirements_info.session     = *pDataGraphPipelineSession;
+		memory_requirements_info.bindPoint   = memory_bind_point;
+		memory_requirements_info.objectIndex = 0;
 		vkGetDataGraphPipelineSessionMemoryRequirementsARM(device, &memory_requirements_info, &vkMemReq);
 
 		if (vkMemReq.memoryRequirements.size > 0)
 		{
 			// 4. Allocate memory using allocator.
 			VmaAllocationInfo allocation_info;
-			res = vmaAllocateMemory(allocator,
-			                        &vkMemReq.memoryRequirements,
-			                        pAllocationCreateInfo,
-			                        pAllocation,
-			                        &allocation_info);
+			res = vmaAllocateMemory(allocator, &vkMemReq.memoryRequirements, pAllocationCreateInfo, pAllocation, &allocation_info);
 
 			if (res >= 0)
 			{
@@ -268,10 +237,7 @@ VkResult vmaCreateDataGraphPipelineSession(VkDevice                             
 	return res;
 }
 
-void vmaDestroyDataGraphPipelineSession(VkDevice                      device,
-                                        VmaAllocator                  allocator,
-                                        VkDataGraphPipelineSessionARM tensor,
-                                        VmaAllocation                 allocation)
+void vmaDestroyDataGraphPipelineSession(VkDevice device, VmaAllocator allocator, VkDataGraphPipelineSessionARM tensor, VmaAllocation allocation)
 {
 	if (tensor != VK_NULL_HANDLE)
 	{
@@ -289,8 +255,9 @@ TensorBuilder::TensorBuilder(std::vector<int64_t> in_dimensions) :
     dimensions(std::move(in_dimensions)),
     description{VK_STRUCTURE_TYPE_TENSOR_DESCRIPTION_ARM}
 {
-	description.dimensionCount     = dimensions.size();
-	description.pDimensions        = dimensions.data();        // Note we point to the dimensions array stored in this object, not the one passed in (which is already empty!)
+	description.dimensionCount = dimensions.size();
+	description.pDimensions =
+	    dimensions.data();        // Note we point to the dimensions array stored in this object, not the one passed in (which is already empty!)
 	get_create_info().pDescription = &description;
 
 	alloc_create_info.usage = VMA_MEMORY_USAGE_UNKNOWN;        // The default value set by the base class of 'VMA_MEMORY_USAGE_AUTO' won't work for tensors
@@ -337,20 +304,13 @@ const VkTensorDescriptionARM &TensorDescriptor::get_description() const
 }
 
 Tensor::Tensor(vkb::core::DeviceC &device, TensorBuilder const &builder) :
-    vkb::allocated::AllocatedC<VkTensorARM>(builder.get_allocation_create_info(), nullptr, &device),
-    descriptor(builder)
+    vkb::allocated::AllocatedC<VkTensorARM>(builder.get_allocation_create_info(), nullptr, &device), descriptor(builder)
 {
 	VkTensorARM       tensor = VK_NULL_HANDLE;
 	VmaAllocationInfo allocation_info{};
 	VmaAllocation     allocation = VK_NULL_HANDLE;
-	VK_CHECK(vmaCreateTensor(
-	    device.get_handle(),
-	    vkb::allocated::get_memory_allocator(),
-	    &descriptor.get_create_info(),
-	    &builder.get_allocation_create_info(),
-	    &tensor,
-	    &allocation,
-	    &allocation_info));
+	VK_CHECK(vmaCreateTensor(device.get_handle(), vkb::allocated::get_memory_allocator(), &descriptor.get_create_info(), &builder.get_allocation_create_info(),
+	                         &tensor, &allocation, &allocation_info));
 
 	set_allocation(allocation);
 	post_create(allocation_info);
@@ -391,8 +351,7 @@ ExternallyAllocatedTensor::ExternallyAllocatedTensor(vkb::core::DeviceC &device,
 	VkResult    res    = vkCreateTensorARM(device.get_handle(), &descriptor.get_create_info(), nullptr, &tensor);
 
 	// Bind it to existing memory
-	VkBindTensorMemoryInfoARM bind_info = {VK_STRUCTURE_TYPE_BIND_TENSOR_MEMORY_INFO_ARM,
-	                                       nullptr, tensor, existing_memory, existing_memory_offset};
+	VkBindTensorMemoryInfoARM bind_info = {VK_STRUCTURE_TYPE_BIND_TENSOR_MEMORY_INFO_ARM, nullptr, tensor, existing_memory, existing_memory_offset};
 	vkBindTensorMemoryARM(device.get_handle(), 1, &bind_info);
 
 	set_handle(tensor);
@@ -420,14 +379,12 @@ VkFormat ExternallyAllocatedTensor::get_format() const
 	return descriptor.get_create_info().pDescription->format;
 };
 
-TensorView::TensorView(Tensor &tensor, VkFormat format) :
-    vkb::core::VulkanResourceC<VkTensorViewARM>(VK_NULL_HANDLE, &tensor.get_device())
+TensorView::TensorView(Tensor &tensor, VkFormat format) : vkb::core::VulkanResourceC<VkTensorViewARM>(VK_NULL_HANDLE, &tensor.get_device())
 {
 	Init(tensor, format);
 }
 
-TensorView::TensorView(ExternallyAllocatedTensor &tensor, VkFormat format) :
-    vkb::core::VulkanResourceC<VkTensorViewARM>(VK_NULL_HANDLE, &tensor.get_device())
+TensorView::TensorView(ExternallyAllocatedTensor &tensor, VkFormat format) : vkb::core::VulkanResourceC<VkTensorViewARM>(VK_NULL_HANDLE, &tensor.get_device())
 {
 	Init(tensor, format);
 }
@@ -492,10 +449,7 @@ const VkDescriptorSetLayout &DataGraphPipelineLayout::get_descriptor_set_layout(
 	return descriptor_set_layout;
 }
 
-DataGraphPipeline::DataGraphPipeline(vkb::core::DeviceC                                                           &device,
-                                     VkPipelineLayout                                                              layout,
-                                     VkShaderModule                                                                shader_module,
-                                     const char                                                                   *entry_point,
+DataGraphPipeline::DataGraphPipeline(vkb::core::DeviceC &device, VkPipelineLayout layout, VkShaderModule shader_module, const char *entry_point,
                                      const std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> &tensor_descriptions,
                                      const std::vector<VkDataGraphPipelineConstantARM *>                          &data_graph_pipeline_constants) :
     vkb::core::VulkanResourceC<VkPipeline>(VK_NULL_HANDLE, &device), shader_module(shader_module)
@@ -551,9 +505,7 @@ DataGraphPipeline::~DataGraphPipeline()
 	vkDestroyPipeline(get_device().get_handle(), get_handle(), nullptr);
 }
 
-DataGraphPipelineSession::DataGraphPipelineSession(vkb::core::DeviceC     &device,
-                                                   VkPipeline              data_graph_pipeline,
-                                                   VmaAllocationCreateInfo alloc_create_info) :
+DataGraphPipelineSession::DataGraphPipelineSession(vkb::core::DeviceC &device, VkPipeline data_graph_pipeline, VmaAllocationCreateInfo alloc_create_info) :
     vkb::allocated::AllocatedC<VkDataGraphPipelineSessionARM>(alloc_create_info, nullptr, &device)
 {
 	VkDataGraphPipelineSessionCreateInfoARM pipeline_session_create_info = {};
@@ -563,14 +515,8 @@ DataGraphPipelineSession::DataGraphPipelineSession(vkb::core::DeviceC     &devic
 	VkDataGraphPipelineSessionARM data_graph_pipeline_session = VK_NULL_HANDLE;
 	VmaAllocationInfo             allocation_info{};
 	VmaAllocation                 allocation = VK_NULL_HANDLE;
-	VK_CHECK(vmaCreateDataGraphPipelineSession(
-	    device.get_handle(),
-	    vkb::allocated::get_memory_allocator(),
-	    &pipeline_session_create_info,
-	    &alloc_create_info,
-	    &data_graph_pipeline_session,
-	    &allocation,
-	    &allocation_info));
+	VK_CHECK(vmaCreateDataGraphPipelineSession(device.get_handle(), vkb::allocated::get_memory_allocator(), &pipeline_session_create_info, &alloc_create_info,
+	                                           &data_graph_pipeline_session, &allocation, &allocation_info));
 
 	set_allocation(allocation);
 	if (allocation_info.size > 0)        // Sometimes no memory is needed, which is fine.
@@ -593,7 +539,8 @@ ComputePipelineLayoutWithTensors::ComputePipelineLayoutWithTensors(vkb::core::De
     vkb::core::VulkanResourceC<VkPipelineLayout>(nullptr, &device)
 {
 	// Create a regular vkb::PipelineLayout to reflect all the regular shader resources except tensors
-	std::unique_ptr<vkb::PipelineLayout> layout_without_tensors = std::make_unique<vkb::PipelineLayout>(device, std::vector<vkb::ShaderModule *>{&shader_module});
+	std::unique_ptr<vkb::PipelineLayout> layout_without_tensors =
+	    std::make_unique<vkb::PipelineLayout>(device, std::vector<vkb::ShaderModule *>{&shader_module});
 
 	// Gather all the binding info that was found
 	std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> all_bindings;
@@ -626,7 +573,8 @@ ComputePipelineLayoutWithTensors::ComputePipelineLayoutWithTensors(vkb::core::De
 	}
 
 	// Create set layouts now that we have the full set of bindings
-	std::vector<VkDescriptorSetLayout> descriptor_set_layouts_array;        // As well as storing a std::map of descriptor set layouts, we need a linear array for use in VkPipelineLayoutCreateInfo
+	std::vector<VkDescriptorSetLayout> descriptor_set_layouts_array;        // As well as storing a std::map of descriptor set layouts, we need a linear array
+	                                                                        // for use in VkPipelineLayoutCreateInfo
 	for (const std::pair<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> &set_idx_and_bindings : all_bindings)
 	{
 		uint32_t                                         set_idx  = set_idx_and_bindings.first;
@@ -705,17 +653,17 @@ ComputePipelineWithTensors::~ComputePipelineWithTensors()
 }
 
 BlitSubpass::BlitSubpass(vkb::rendering::RenderContextC &renderContext, vkb::core::ImageView *source) :
-    vkb::rendering::SubpassC(renderContext, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"}, vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
+    vkb::rendering::SubpassC(renderContext, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"},
+                             vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
     source(source)
-{
-}
+{}
 
 void BlitSubpass::prepare()
 {
-	vkb::ShaderModule &fullscreen_vert =
-	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"});
-	vkb::ShaderModule &blit_frag =
-	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"});
+	vkb::ShaderModule &fullscreen_vert = get_render_context().get_device().get_resource_cache().request_shader_module(
+	    VK_SHADER_STAGE_VERTEX_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"});
+	vkb::ShaderModule &blit_frag = get_render_context().get_device().get_resource_cache().request_shader_module(
+	    VK_SHADER_STAGE_FRAGMENT_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"});
 	pipeline_layout = &get_render_context().get_device().get_resource_cache().request_pipeline_layout({&fullscreen_vert, &blit_frag});
 
 	VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};

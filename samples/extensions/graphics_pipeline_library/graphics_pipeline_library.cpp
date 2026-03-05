@@ -165,10 +165,9 @@ void GraphicsPipelineLibrary::load_assets()
 
 void GraphicsPipelineLibrary::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)};
-	uint32_t                   num_descriptor_sets = 1;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	std::vector<VkDescriptorPoolSize> pool_sizes          = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)};
+	uint32_t                          num_descriptor_sets = 1;
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -184,8 +183,7 @@ void GraphicsPipelineLibrary::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	// Pass random colors using push constants
 	VkPushConstantRange push_constant_range{};
@@ -201,8 +199,7 @@ void GraphicsPipelineLibrary::setup_descriptor_set_layout()
 
 void GraphicsPipelineLibrary::setup_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
@@ -229,7 +226,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
 		library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_VERTEX_INPUT_INTERFACE_BIT_EXT;
 
-		VkPipelineInputAssemblyStateCreateInfo       input_assembly_state  = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+		VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+		    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 		VkPipelineVertexInputStateCreateInfo         vertex_input_state    = vkb::initializers::pipeline_vertex_input_state_create_info();
 		std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 		    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
@@ -252,7 +250,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		pipeline_library_create_info.pInputAssemblyState = &input_assembly_state;
 		pipeline_library_create_info.pVertexInputState   = &vertex_input_state;
 
-		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.vertex_input_interface));
+		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr,
+		                                   &pipeline_library.vertex_input_interface));
 	}
 
 	// Create a pipeline library for the vertex shader stage
@@ -261,9 +260,7 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
 		library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_PRE_RASTERIZATION_SHADERS_BIT_EXT;
 
-		VkDynamicState vertexDynamicStates[2] = {
-		    VK_DYNAMIC_STATE_VIEWPORT,
-		    VK_DYNAMIC_STATE_SCISSOR};
+		VkDynamicState vertexDynamicStates[2] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 		VkPipelineDynamicStateCreateInfo dynamicInfo{};
 		dynamicInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -275,7 +272,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		viewportState.viewportCount                     = 1;
 		viewportState.scissorCount                      = 1;
 
-		VkPipelineRasterizationStateCreateInfo rasterizationState = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+		VkPipelineRasterizationStateCreateInfo rasterizationState =
+		    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
 
 		// Using the pipeline library extension, we can skip the pipeline shader module creation and directly pass the shader code to the pipeline
 		std::vector<uint32_t> spirv;
@@ -304,7 +302,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		pipeline_library_create_info.pViewportState      = &viewportState;
 		pipeline_library_create_info.pRasterizationState = &rasterizationState;
 
-		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.pre_rasterization_shaders));
+		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr,
+		                                   &pipeline_library.pre_rasterization_shaders));
 	}
 
 	// Create a pipeline library for the fragment output interface
@@ -326,7 +325,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		pipeline_library_create_info.pColorBlendState  = &color_blend_state;
 		pipeline_library_create_info.pMultisampleState = &multisample_state;
 
-		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.fragment_output_interface));
+		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr,
+		                                   &pipeline_library.fragment_output_interface));
 	}
 }
 
@@ -337,8 +337,9 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
 	library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_SHADER_BIT_EXT;
 
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
-	VkPipelineMultisampleStateCreateInfo  multisample_state   = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
 
 	// Using the pipeline library extension, we can skip the pipeline shader module creation and directly pass the shader code to the pipeline
 	std::vector<uint32_t> spirv;
@@ -388,11 +389,8 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 
 	// Create the pipeline using the pre-built pipeline library parts
 	// Except for above fragment shader part all parts have been pre-built and will be re-used
-	std::vector<VkPipeline> libraries = {
-	    pipeline_library.vertex_input_interface,
-	    pipeline_library.pre_rasterization_shaders,
-	    fragment_shader,
-	    pipeline_library.fragment_output_interface};
+	std::vector<VkPipeline> libraries = {pipeline_library.vertex_input_interface, pipeline_library.pre_rasterization_shaders, fragment_shader,
+	                                     pipeline_library.fragment_output_interface};
 
 	// Link the library parts into a graphics pipeline
 	VkPipelineLibraryCreateInfoKHR linking_info{};
@@ -407,8 +405,8 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	executable_pipeline_create_info.renderPass = render_pass;
 	if (link_time_optimization)
 	{
-		// If link time optimization is activated in the UI, we set the VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT flag which will let the implementation do additional optimizations at link time
-		// This trades in pipeline creation time for run-time performance
+		// If link time optimization is activated in the UI, we set the VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT flag which will let the implementation
+		// do additional optimizations at link time This trades in pipeline creation time for run-time performance
 		executable_pipeline_create_info.flags = VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT;
 	}
 
@@ -425,17 +423,15 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 void GraphicsPipelineLibrary::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                      sizeof(ubo_vs),
-	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
 
 void GraphicsPipelineLibrary::update_uniform_buffers()
 {
-	camera.set_perspective(45.0f, (static_cast<float>(width) / static_cast<float>(split_x)) / (static_cast<float>(height) / static_cast<float>(split_y)), 0.1f, 256.0f);
+	camera.set_perspective(45.0f, (static_cast<float>(width) / static_cast<float>(split_x)) / (static_cast<float>(height) / static_cast<float>(split_y)), 0.1f,
+	                       256.0f);
 
 	ubo_vs.projection = camera.matrices.perspective;
 	ubo_vs.modelview  = camera.matrices.view * glm::rotate(glm::mat4(1.0f), glm::radians(accumulated_time * 360.0f), glm::vec3(0.0f, 1.0f, 0.0f));

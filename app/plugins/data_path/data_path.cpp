@@ -23,13 +23,9 @@
 namespace plugins
 {
 DataPath::DataPath() :
-    DataPathTags("Data Path Override",
-                 "Specify the folder containing the sample data folders.",
-                 {vkb::Hook::OnAppStart},
-                 {},
+    DataPathTags("Data Path Override", "Specify the folder containing the sample data folders.", {vkb::Hook::OnAppStart}, {},
                  {{"data-path", "Folder containing data files"}})
-{
-}
+{}
 
 bool DataPath::handle_option(std::deque<std::string> &arguments)
 {

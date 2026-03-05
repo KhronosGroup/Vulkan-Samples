@@ -45,8 +45,8 @@ class HPPDebugUtils
 	/**
 	 * @brief Tags the given Vulkan object with some data.
 	 */
-	virtual void set_debug_tag(
-	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const = 0;
+	virtual void set_debug_tag(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
+	                           size_t tag_data_size) const = 0;
 
 	/**
 	 * @brief Inserts a command to begin a new debug label/marker scope.
@@ -74,8 +74,8 @@ class HPPDebugUtilsExtDebugUtils final : public vkb::core::HPPDebugUtils
 
 	void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const override;
 
-	void set_debug_tag(
-	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
+	void set_debug_tag(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
+	                   size_t tag_data_size) const override;
 
 	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
@@ -94,8 +94,8 @@ class HPPDebugMarkerExtDebugUtils final : public vkb::core::HPPDebugUtils
 
 	void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const override;
 
-	void set_debug_tag(
-	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
+	void set_debug_tag(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
+	                   size_t tag_data_size) const override;
 
 	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
@@ -151,8 +151,7 @@ class HPPScopedDebugLabel final
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
                                                                        vk::DebugUtilsMessageTypeFlagsEXT             message_type,
-                                                                       vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
-                                                                       void                                         *user_data)
+                                                                       vk::DebugUtilsMessengerCallbackDataEXT const *callback_data, void *user_data)
 {
 	// Log debug message
 	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
@@ -168,18 +167,14 @@ inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::Debug
 
 inline vk::DebugUtilsMessengerCreateInfoEXT getDefaultDebugUtilsMessengerCreateInfoEXT()
 {
-	return vk::DebugUtilsMessengerCreateInfoEXT{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-	                                            .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-	                                            .pfnUserCallback = debug_utils_messenger_callback};
+	return vk::DebugUtilsMessengerCreateInfoEXT{
+	    .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	    .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	    .pfnUserCallback = debug_utils_messenger_callback};
 }
 
-inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT flags,
-                                                       vk::DebugReportObjectTypeEXT /*type*/,
-                                                       uint64_t /*object*/,
-                                                       size_t /*location*/,
-                                                       int32_t /*message_code*/,
-                                                       char const *layer_prefix,
-                                                       char const *message,
+inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT flags, vk::DebugReportObjectTypeEXT /*type*/, uint64_t /*object*/,
+                                                       size_t /*location*/, int32_t /*message_code*/, char const *layer_prefix, char const *message,
                                                        void * /*user_data*/)
 {
 	if (flags & vk::DebugReportFlagBitsEXT::eError)
@@ -203,7 +198,8 @@ inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT f
 
 inline vk::DebugReportCallbackCreateInfoEXT getDefaultDebugReportCallbackCreateInfoEXT()
 {
-	return vk::DebugReportCallbackCreateInfoEXT{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+	return vk::DebugReportCallbackCreateInfoEXT{.flags = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning |
+	                                                     vk::DebugReportFlagBitsEXT::ePerformanceWarning,
 	                                            .pfnCallback = debug_callback};
 }
 

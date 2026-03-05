@@ -40,8 +40,8 @@ class HPPDescriptorPool : private vkb::DescriptorPool
 	using vkb::DescriptorPool::reset;
 
 	HPPDescriptorPool(vkb::core::DeviceCpp &device, const vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, uint32_t pool_size = MAX_SETS_PER_POOL) :
-	    vkb::DescriptorPool(
-	        reinterpret_cast<vkb::core::DeviceC &>(device), reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout), pool_size)
+	    vkb::DescriptorPool(reinterpret_cast<vkb::core::DeviceC &>(device), reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout),
+	                        pool_size)
 	{}
 };
 }        // namespace core

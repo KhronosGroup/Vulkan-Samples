@@ -36,14 +36,8 @@ struct CallbackData final
 /// Row padding is different between KTX (pad to 4) and Vulkan (none).
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
-static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_level,
-                                                             int          face,
-                                                             int          width,
-                                                             int          height,
-                                                             int          depth,
-                                                             ktx_uint64_t face_lod_size,
-                                                             void        *pixels,
-                                                             void        *user_data)
+static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int mip_level, int face, int width, int height, int depth, ktx_uint64_t face_lod_size,
+                                                             void *pixels, void *user_data)
 {
 	auto *callback_data = reinterpret_cast<CallbackData *>(user_data);
 	assert(static_cast<size_t>(mip_level) < callback_data->mipmaps->size() && "Not enough space in the mipmap vector");
@@ -65,17 +59,13 @@ static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_le
 	return KTX_SUCCESS;
 }
 
-Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type) :
-    Image{name}
+Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type) : Image{name}
 {
 	auto data_buffer = reinterpret_cast<const ktx_uint8_t *>(data.data());
 	auto data_size   = static_cast<ktx_size_t>(data.size());
 
 	ktxTexture *texture;
-	auto        load_ktx_result = ktxTexture_CreateFromMemory(data_buffer,
-	                                                          data_size,
-	                                                          KTX_TEXTURE_CREATE_NO_FLAGS,
-	                                                          &texture);
+	auto        load_ktx_result = ktxTexture_CreateFromMemory(data_buffer, data_size, KTX_TEXTURE_CREATE_NO_FLAGS, &texture);
 	if (load_ktx_result != KTX_SUCCESS)
 	{
 		throw std::runtime_error{"Error loading KTX texture: " + name};

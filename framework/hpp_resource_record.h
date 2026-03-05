@@ -65,23 +65,18 @@ class HPPResourceRecord : private vkb::ResourceRecord
 	}
 
 	size_t register_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments,
-	                            const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
-	                            const std::vector<vkb::core::HPPSubpassInfo>     &subpasses)
+	                            const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos, const std::vector<vkb::core::HPPSubpassInfo> &subpasses)
 	{
 		return vkb::ResourceRecord::register_render_pass(reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
 		                                                 reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
 		                                                 reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses));
 	}
 
-	size_t register_shader_module(vk::ShaderStageFlagBits            stage,
-	                              const vkb::core::HPPShaderSource  &glsl_source,
-	                              const std::string                 &entry_point,
+	size_t register_shader_module(vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source, const std::string &entry_point,
 	                              const vkb::core::HPPShaderVariant &shader_variant)
 	{
-		return vkb::ResourceRecord::register_shader_module(static_cast<VkShaderStageFlagBits>(stage),
-		                                                   reinterpret_cast<vkb::ShaderSource const &>(glsl_source),
-		                                                   entry_point,
-		                                                   reinterpret_cast<vkb::ShaderVariant const &>(shader_variant));
+		return vkb::ResourceRecord::register_shader_module(static_cast<VkShaderStageFlagBits>(stage), reinterpret_cast<vkb::ShaderSource const &>(glsl_source),
+		                                                   entry_point, reinterpret_cast<vkb::ShaderVariant const &>(shader_variant));
 	}
 
 	void set_graphics_pipeline(size_t index, const vkb::core::HPPGraphicsPipeline &graphics_pipeline)

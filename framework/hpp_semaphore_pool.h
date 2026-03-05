@@ -37,8 +37,7 @@ class HPPSemaphorePool : private vkb::SemaphorePool
   public:
 	using vkb::SemaphorePool::reset;
 
-	HPPSemaphorePool(vkb::core::DeviceCpp &device) :
-	    vkb::SemaphorePool(reinterpret_cast<vkb::core::DeviceC &>(device))
+	HPPSemaphorePool(vkb::core::DeviceCpp &device) : vkb::SemaphorePool(reinterpret_cast<vkb::core::DeviceC &>(device))
 	{}
 
 	void release_owned_semaphore(vk::Semaphore semaphore)

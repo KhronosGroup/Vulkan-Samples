@@ -41,7 +41,8 @@ template <typename... TAGS>
 class PluginBase : public Plugin, public Tag<TAGS...>
 {
   public:
-	PluginBase(const std::string name, const std::string description, const std::vector<Hook> &hooks = {}, std::vector<std::pair<std::string, std::string>> const &commands = {}, std::vector<std::pair<std::string, std::string>> const &options = {});
+	PluginBase(const std::string name, const std::string description, const std::vector<Hook> &hooks = {},
+	           std::vector<std::pair<std::string, std::string>> const &commands = {}, std::vector<std::pair<std::string, std::string>> const &options = {});
 
 	virtual ~PluginBase() = default;
 
@@ -64,10 +65,11 @@ class PluginBase : public Plugin, public Tag<TAGS...>
 };
 
 template <typename... TAGS>
-PluginBase<TAGS...>::PluginBase(const std::string name, const std::string description, const std::vector<Hook> &hooks, std::vector<std::pair<std::string, std::string>> const &commands, std::vector<std::pair<std::string, std::string>> const &options) :
+PluginBase<TAGS...>::PluginBase(const std::string name, const std::string description, const std::vector<Hook> &hooks,
+                                std::vector<std::pair<std::string, std::string>> const &commands,
+                                std::vector<std::pair<std::string, std::string>> const &options) :
     Plugin(name, description, commands, options), hooks{hooks}
-{
-}
+{}
 
 template <typename... TAGS>
 bool PluginBase<TAGS...>::has_tag(TagID id) const

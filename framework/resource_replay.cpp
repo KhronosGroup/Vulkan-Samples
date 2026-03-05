@@ -81,14 +81,11 @@ void ResourceReplay::play(ResourceCache &resource_cache, ResourceRecord &recorde
 
 void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::istringstream &stream)
 {
-	VkShaderStageFlagBits    stage{};
-	std::string              glsl_source;
-	std::string              entry_point;
+	VkShaderStageFlagBits stage{};
+	std::string           glsl_source;
+	std::string           entry_point;
 
-	read(stream,
-	     stage,
-	     glsl_source,
-	     entry_point);
+	read(stream, stage, glsl_source, entry_point);
 
 	ShaderSource shader_source{};
 	shader_source.set_source(std::move(glsl_source));
@@ -103,17 +100,13 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 {
 	std::vector<size_t> shader_indices;
 
-	read(stream,
-	     shader_indices);
+	read(stream, shader_indices);
 
 	std::vector<ShaderModule *> shader_stages(shader_indices.size());
-	std::transform(shader_indices.begin(),
-	               shader_indices.end(),
-	               shader_stages.begin(),
-	               [&](size_t shader_index) {
-		               assert(shader_index < shader_modules.size());
-		               return shader_modules[shader_index];
-	               });
+	std::transform(shader_indices.begin(), shader_indices.end(), shader_stages.begin(), [&](size_t shader_index) {
+		assert(shader_index < shader_modules.size());
+		return shader_modules[shader_index];
+	});
 
 	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_stages);
 
@@ -126,9 +119,7 @@ void ResourceReplay::create_render_pass(ResourceCache &resource_cache, std::istr
 	std::vector<LoadStoreInfo> load_store_infos;
 	std::vector<SubpassInfo>   subpasses;
 
-	read(stream,
-	     attachments,
-	     load_store_infos);
+	read(stream, attachments, load_store_infos);
 
 	read_subpass_info(stream, subpasses);
 
@@ -143,20 +134,14 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	size_t   render_pass_index{};
 	uint32_t subpass_index{};
 
-	read(stream,
-	     pipeline_layout_index,
-	     render_pass_index,
-	     subpass_index);
+	read(stream, pipeline_layout_index, render_pass_index, subpass_index);
 
 	std::map<uint32_t, std::vector<uint8_t>> specialization_constant_state{};
-	read(stream,
-	     specialization_constant_state);
+	read(stream, specialization_constant_state);
 
 	VertexInputState vertex_input_state{};
 
-	read(stream,
-	     vertex_input_state.attributes,
-	     vertex_input_state.bindings);
+	read(stream, vertex_input_state.attributes, vertex_input_state.bindings);
 
 	InputAssemblyState input_assembly_state{};
 	RasterizationState rasterization_state{};
@@ -164,19 +149,11 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	MultisampleState   multisample_state{};
 	DepthStencilState  depth_stencil_state{};
 
-	read(stream,
-	     input_assembly_state,
-	     rasterization_state,
-	     viewport_state,
-	     multisample_state,
-	     depth_stencil_state);
+	read(stream, input_assembly_state, rasterization_state, viewport_state, multisample_state, depth_stencil_state);
 
 	ColorBlendState color_blend_state{};
 
-	read(stream,
-	     color_blend_state.logic_op,
-	     color_blend_state.logic_op_enable,
-	     color_blend_state.attachments);
+	read(stream, color_blend_state.logic_op, color_blend_state.logic_op_enable, color_blend_state.attachments);
 
 	PipelineState pipeline_state{};
 	assert(pipeline_layout_index < pipeline_layouts.size());

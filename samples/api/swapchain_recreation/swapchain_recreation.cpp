@@ -346,8 +346,7 @@ bool SwapchainRecreation::recreate_swapchain()
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_gpu_handle(), get_surface(), &surface_properties));
 
 	// Only rebuild the swapchain if the dimensions have changed
-	if (surface_properties.currentExtent.width == swapchain_extents.width &&
-	    surface_properties.currentExtent.height == swapchain_extents.height &&
+	if (surface_properties.currentExtent.width == swapchain_extents.width && surface_properties.currentExtent.height == swapchain_extents.height &&
 	    are_present_modes_compatible())
 	{
 		return false;
@@ -476,8 +475,7 @@ void SwapchainRecreation::render(uint32_t index)
 	// Draw two rectangles via vkCmdClearAttachments.  The gray rectangle scales with the
 	// window, but the colorful one has fixed size, and it's skipped if the window is too small.
 	vkCmdClearAttachments(frame.command_buffer, 1, &gray_clear, 1, &gray_rect);
-	if (colorful_rect_x + colorful_rect_width <= swapchain_extents.width &&
-	    colorful_rect_y + colorful_rect_height <= swapchain_extents.height)
+	if (colorful_rect_x + colorful_rect_width <= swapchain_extents.width && colorful_rect_y + colorful_rect_height <= swapchain_extents.height)
 	{
 		vkCmdClearAttachments(frame.command_buffer, 1, &colorful_clear, 1, &colorful_rect);
 	}
@@ -683,9 +681,7 @@ void SwapchainRecreation::cleanup_present_history()
 		// Move clean up data to the next (now first) present operation, if any.  Note that
 		// there cannot be any clean up data on the rest of the present operations, because
 		// the first present already gathers every old swapchain to clean up.
-		assert(std::ranges::all_of(present_history, [](const PresentOperationInfo &op) {
-			return op.old_swapchains.empty();
-		}));
+		assert(std::ranges::all_of(present_history, [](const PresentOperationInfo &op) { return op.old_swapchains.empty(); }));
 		present_history.front().old_swapchains = std::move(present_info.old_swapchains);
 
 		// Put the present operation at the end of the queue, so it's revisited after the
@@ -743,8 +739,7 @@ void SwapchainRecreation::associate_fence_with_present_history(uint32_t index, V
 	// present with that image.  Associate the fence with that present operation.
 	for (size_t history_index = 0; history_index < present_history.size(); ++history_index)
 	{
-		PresentOperationInfo &present_info =
-		    present_history[present_history.size() - history_index - 1];
+		PresentOperationInfo &present_info = present_history[present_history.size() - history_index - 1];
 		if (present_info.image_index == INVALID_IMAGE_INDEX)
 		{
 			// No previous presentation with this index.

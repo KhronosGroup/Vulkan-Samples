@@ -73,9 +73,7 @@ class QueryPool
 	 * @param stride The stride in bytes between results for individual queries
 	 * @param flags A bitmask of VkQueryResultFlagBits
 	 */
-	VkResult get_results(uint32_t first_query, uint32_t num_queries,
-	                     size_t result_bytes, void *results, VkDeviceSize stride,
-	                     VkQueryResultFlags flags);
+	VkResult get_results(uint32_t first_query, uint32_t num_queries, size_t result_bytes, void *results, VkDeviceSize stride, VkQueryResultFlags flags);
 
   private:
 	vkb::core::DeviceC &device;

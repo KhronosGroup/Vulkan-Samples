@@ -64,41 +64,34 @@ class CommandPool : private vkb::core::CommandPoolBase
 	using CommandPoolType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
 
   public:
-	CommandPool(vkb::core::Device<bindingType>           &device,
-	            uint32_t                                  queue_family_index,
-	            vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
-	            size_t                                    thread_index = 0,
-	            vkb::CommandBufferResetMode               reset_mode   = vkb::CommandBufferResetMode::ResetIndividually);
+	CommandPool(vkb::core::Device<bindingType> &device, uint32_t queue_family_index, vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
+	            size_t thread_index = 0, vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetIndividually);
 	CommandPool(CommandPool<bindingType> const &)            = delete;
 	CommandPool(CommandPool<bindingType> &&other)            = default;
 	CommandPool &operator=(CommandPool<bindingType> const &) = delete;
 	CommandPool &operator=(CommandPool<bindingType> &&other) = default;
 	~CommandPool()                                           = default;
 
-	vkb::core::Device<bindingType>                        &get_device();
-	CommandPoolType                                        get_handle() const;
-	uint32_t                                               get_queue_family_index() const;
-	vkb::rendering::RenderFrame<bindingType>              *get_render_frame();
-	vkb::CommandBufferResetMode                            get_reset_mode() const;
-	size_t                                                 get_thread_index() const;
-	std::shared_ptr<vkb::core::CommandBuffer<bindingType>> request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
-	void                                                   reset_pool();
+	vkb::core::Device<bindingType>           &get_device();
+	CommandPoolType                           get_handle() const;
+	uint32_t                                  get_queue_family_index() const;
+	vkb::rendering::RenderFrame<bindingType> *get_render_frame();
+	vkb::CommandBufferResetMode               get_reset_mode() const;
+	size_t                                    get_thread_index() const;
+	std::shared_ptr<vkb::core::CommandBuffer<bindingType>>
+	     request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
+	void reset_pool();
 };
 
 using CommandPoolC   = CommandPool<vkb::BindingType::C>;
 using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandPool<bindingType>::CommandPool(vkb::core::Device<bindingType>           &device,
-                                                        uint32_t                                  queue_family_index,
-                                                        vkb::rendering::RenderFrame<bindingType> *render_frame,
-                                                        size_t                                    thread_index,
-                                                        vkb::CommandBufferResetMode               reset_mode) :
-    CommandPoolBase(reinterpret_cast<vkb::core::DeviceCpp &>(device),
-                    queue_family_index,
-                    reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame),
-                    thread_index,
-                    reset_mode)
+inline vkb::core::CommandPool<bindingType>::CommandPool(vkb::core::Device<bindingType> &device, uint32_t queue_family_index,
+                                                        vkb::rendering::RenderFrame<bindingType> *render_frame, size_t thread_index,
+                                                        vkb::CommandBufferResetMode reset_mode) :
+    CommandPoolBase(reinterpret_cast<vkb::core::DeviceCpp &>(device), queue_family_index, reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame),
+                    thread_index, reset_mode)
 {}
 
 template <vkb::BindingType bindingType>

@@ -122,15 +122,8 @@ void RayTracingPositionFetch::create_storage_image()
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &storage_image.view));
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkb::image_layout_transition(command_buffer,
-	                             storage_image.image,
-	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-	                             {},
-	                             {},
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_GENERAL,
-	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+	vkb::image_layout_transition(command_buffer, storage_image.image, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, {}, {},
+	                             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	get_device().flush_command_buffer(command_buffer, queue);
 }
 
@@ -141,17 +134,18 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 {
 	// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
 	// Note: We flip the Y-Axis to match the glTF coordinate system and also offset the model to center it
-	VkTransformMatrixKHR transform_matrix = {
-	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, -1.0f, 0.0f, 2.0f,
-	    0.0f, 0.0f, 1.0f, 0.0f};
-	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(transform_matrix), VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	VkTransformMatrixKHR                transform_matrix        = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f};
+	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), sizeof(transform_matrix),
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
 	bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
 
-	// For ray tracing, the vertex and index buffers of the glTF scene need to be used for acceleration structure builds and getting device addresses, so we provide additional flags in this sample
-	const VkBufferUsageFlags additional_buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	// For ray tracing, the vertex and index buffers of the glTF scene need to be used for acceleration structure builds and getting device addresses, so we
+	// provide additional flags in this sample
+	const VkBufferUsageFlags additional_buffer_usage_flags =
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
 	// Add all parts of the glTF scene to the bottom level architecture
 	vkb::GLTFLoader loader{get_device()};
@@ -167,22 +161,16 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 			vkb::sg::VertexAttribute attrib;
 			sub_mesh->get_attribute("position", attrib);
 
-			bottom_level_acceleration_structure->add_triangle_geometry(
-			    sub_mesh->vertex_buffers.at("position"),
-			    *sub_mesh->index_buffer,
-			    *transform_matrix_buffer,
-			    num_triangles,
-			    num_vertices,
-			    attrib.stride,
-			    0,
-			    attrib.format,
-			    sub_mesh->index_type,
-			    VK_GEOMETRY_OPAQUE_BIT_KHR);
+			bottom_level_acceleration_structure->add_triangle_geometry(sub_mesh->vertex_buffers.at("position"), *sub_mesh->index_buffer,
+			                                                           *transform_matrix_buffer, num_triangles, num_vertices, attrib.stride, 0, attrib.format,
+			                                                           sub_mesh->index_type, VK_GEOMETRY_OPAQUE_BIT_KHR);
 		}
 	}
 	bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
-	// To access vertex positions from a shader, we need to set the VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR for the bottom level acceleration structure
-	VkBuildAccelerationStructureFlagsKHR acceleration_build_flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	// To access vertex positions from a shader, we need to set the VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR for the bottom level acceleration
+	// structure
+	VkBuildAccelerationStructureFlagsKHR acceleration_build_flags =
+	    VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	bottom_level_acceleration_structure->build(queue, acceleration_build_flags, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
@@ -191,10 +179,7 @@ void RayTracingPositionFetch::create_bottom_level_acceleration_structure()
 */
 void RayTracingPositionFetch::create_top_level_acceleration_structure()
 {
-	VkTransformMatrixKHR transform_matrix = {
-	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, 1.0f, 0.0f, 0.0f,
-	    0.0f, 0.0f, 1.0f, 0.0f};
+	VkTransformMatrixKHR transform_matrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
 
 	VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
 	acceleration_structure_instance.transform                              = transform_matrix;
@@ -204,10 +189,9 @@ void RayTracingPositionFetch::create_top_level_acceleration_structure()
 	acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 	acceleration_structure_instance.accelerationStructureReference         = bottom_level_acceleration_structure->get_device_address();
 
-	std::unique_ptr<vkb::core::BufferC> instances_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                                            sizeof(VkAccelerationStructureInstanceKHR),
-	                                                                                            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> instances_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), sizeof(VkAccelerationStructureInstanceKHR),
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
 
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
@@ -246,27 +230,32 @@ inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
 
 void RayTracingPositionFetch::create_shader_binding_tables()
 {
-	const uint32_t           handle_size            = ray_tracing_pipeline_properties.shaderGroupHandleSize;
-	const uint32_t           handle_size_aligned    = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
-	const uint32_t           group_count            = static_cast<uint32_t>(shader_groups.size());
-	const uint32_t           sbt_size               = group_count * handle_size_aligned;
-	const VkBufferUsageFlags sbt_buffer_usage_flags = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-	const VmaMemoryUsage     sbt_memory_usage       = VMA_MEMORY_USAGE_CPU_TO_GPU;
+	const uint32_t handle_size = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+	const uint32_t handle_size_aligned =
+	    aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
+	const uint32_t           group_count = static_cast<uint32_t>(shader_groups.size());
+	const uint32_t           sbt_size    = group_count * handle_size_aligned;
+	const VkBufferUsageFlags sbt_buffer_usage_flags =
+	    VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	const VmaMemoryUsage sbt_memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
-	                                                                                     .with_usage(sbt_buffer_usage_flags)
-	                                                                                     .with_vma_usage(sbt_memory_usage)
-	                                                                                     .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
-	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
-                                                                                       .with_usage(sbt_buffer_usage_flags)
-                                                                                       .with_vma_usage(sbt_memory_usage)
-                                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
-	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
-                                                                                      .with_usage(sbt_buffer_usage_flags)
-                                                                                      .with_vma_usage(sbt_memory_usage)
-                                                                                      .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	raygen_shader_binding_table =
+	    std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+	                                                           .with_usage(sbt_buffer_usage_flags)
+	                                                           .with_vma_usage(sbt_memory_usage)
+	                                                           .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	miss_shader_binding_table =
+	    std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+	                                                           .with_usage(sbt_buffer_usage_flags)
+	                                                           .with_vma_usage(sbt_memory_usage)
+	                                                           .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+	hit_shader_binding_table =
+	    std::make_unique<vkb::core::BufferC>(get_device(), vkb::core::BufferBuilderC(handle_size)
+	                                                           .with_usage(sbt_buffer_usage_flags)
+	                                                           .with_vma_usage(sbt_memory_usage)
+	                                                           .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
@@ -290,9 +279,7 @@ void RayTracingPositionFetch::create_shader_binding_tables()
 void RayTracingPositionFetch::create_descriptor_sets()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
-	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1},
-	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+	    {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1}, {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}, {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
@@ -322,13 +309,11 @@ void RayTracingPositionFetch::create_descriptor_sets()
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*ubo);
 
-	VkWriteDescriptorSet result_image_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
-	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor);
+	VkWriteDescriptorSet result_image_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
+	VkWriteDescriptorSet uniform_buffer_write =
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor);
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-	    acceleration_structure_write,
-	    result_image_write,
-	    uniform_buffer_write};
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {acceleration_structure_write, result_image_write, uniform_buffer_write};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
@@ -340,7 +325,8 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 0, 1),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 1, 1),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, 2, 1)};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, 2, 1)};
 
 	VkDescriptorSetLayoutCreateInfo layout_info = vkb::initializers::descriptor_set_layout_create_info(bindings.data(), static_cast<uint32_t>(bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &layout_info, nullptr, &descriptor_set_layout));
@@ -398,7 +384,8 @@ void RayTracingPositionFetch::create_ray_tracing_pipeline()
 	raytracing_pipeline_create_info.pGroups                      = shader_groups.data();
 	raytracing_pipeline_create_info.maxPipelineRayRecursionDepth = 1;
 	raytracing_pipeline_create_info.layout                       = pipeline_layout;
-	VK_CHECK(vkCreateRayTracingPipelinesKHR(get_device().get_handle(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &raytracing_pipeline_create_info, nullptr, &pipeline));
+	VK_CHECK(
+	    vkCreateRayTracingPipelinesKHR(get_device().get_handle(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &raytracing_pipeline_create_info, nullptr, &pipeline));
 }
 
 /*
@@ -425,9 +412,10 @@ void RayTracingPositionFetch::build_command_buffers()
 		create_storage_image();
 		// The descriptor also needs to be updated to reference the new image
 		VkDescriptorImageInfo image_descriptor{};
-		image_descriptor.imageView              = storage_image.view;
-		image_descriptor.imageLayout            = VK_IMAGE_LAYOUT_GENERAL;
-		VkWriteDescriptorSet result_image_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
+		image_descriptor.imageView   = storage_image.view;
+		image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		VkWriteDescriptorSet result_image_write =
+		    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 		vkUpdateDescriptorSets(get_device().get_handle(), 1, &result_image_write, 0, VK_NULL_HANDLE);
 	}
 
@@ -439,22 +427,14 @@ void RayTracingPositionFetch::build_command_buffers()
 	    Setup the strided device address regions pointing at the shader identifiers in the shader binding table
 	*/
 
-	const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
+	const uint32_t handle_size_aligned =
+	    aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
 
-	const VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{
-	    raygen_shader_binding_table->get_device_address(),
-	    handle_size_aligned,
-	    handle_size_aligned};
+	const VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{raygen_shader_binding_table->get_device_address(), handle_size_aligned, handle_size_aligned};
 
-	const VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{
-	    miss_shader_binding_table->get_device_address(),
-	    handle_size_aligned,
-	    handle_size_aligned};
+	const VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{miss_shader_binding_table->get_device_address(), handle_size_aligned, handle_size_aligned};
 
-	const VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{
-	    hit_shader_binding_table->get_device_address(),
-	    handle_size_aligned,
-	    handle_size_aligned};
+	const VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{hit_shader_binding_table->get_device_address(), handle_size_aligned, handle_size_aligned};
 
 	const VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
@@ -468,41 +448,21 @@ void RayTracingPositionFetch::build_command_buffers()
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, 0);
 
-		vkCmdTraceRaysKHR(
-		    draw_cmd_buffers[i],
-		    &raygen_shader_sbt_entry,
-		    &miss_shader_sbt_entry,
-		    &hit_shader_sbt_entry,
-		    &callable_shader_sbt_entry,
-		    width,
-		    height,
-		    1);
+		vkCmdTraceRaysKHR(draw_cmd_buffers[i], &raygen_shader_sbt_entry, &miss_shader_sbt_entry, &hit_shader_sbt_entry, &callable_shader_sbt_entry, width,
+		                  height, 1);
 
 		/*
 		    Copy ray tracing output to swap chain image
 		*/
 
 		// Prepare current swap chain image as transfer destination
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             get_render_context().get_swapchain().get_images()[i],
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-		                             {},
-		                             VK_ACCESS_TRANSFER_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                             subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i], get_render_context().get_swapchain().get_images()[i], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT, {}, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 		// Prepare ray tracing output image as transfer source
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             storage_image.image,
-		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-		                             {},
-		                             VK_ACCESS_TRANSFER_READ_BIT,
-		                             VK_IMAGE_LAYOUT_GENERAL,
-		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		                             subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i], storage_image.image, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, {},
+		                             VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
 
 		VkImageCopy copy_region{};
 		copy_region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -510,25 +470,16 @@ void RayTracingPositionFetch::build_command_buffers()
 		copy_region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 		copy_region.dstOffset      = {0, 0, 0};
 		copy_region.extent         = {width, height, 1};
-		vkCmdCopyImage(draw_cmd_buffers[i], storage_image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		               get_render_context().get_swapchain().get_images()[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+		vkCmdCopyImage(draw_cmd_buffers[i], storage_image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, get_render_context().get_swapchain().get_images()[i],
+		               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
 		// Transition swap chain image back for presentation
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             get_render_context().get_swapchain().get_images()[i],
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		vkb::image_layout_transition(draw_cmd_buffers[i], get_render_context().get_swapchain().get_images()[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 		// Transition ray tracing output image back to general layout
-		vkb::image_layout_transition(draw_cmd_buffers[i],
-		                             storage_image.image,
-		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		                             VK_ACCESS_TRANSFER_READ_BIT,
-		                             {},
-		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		                             VK_IMAGE_LAYOUT_GENERAL,
-		                             subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i], storage_image.image, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                             VK_ACCESS_TRANSFER_READ_BIT, {}, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range);
 
 		/*
 		    Start a new render pass to draw the UI overlay on top of the ray traced image

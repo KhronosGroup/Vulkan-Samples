@@ -25,9 +25,7 @@
 
 namespace vkb
 {
-PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<ShaderModule *> &shader_modules) :
-    device{device},
-    shader_modules{shader_modules}
+PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<ShaderModule *> &shader_modules) : device{device}, shader_modules{shader_modules}
 {
 	// Collect and combine all the shader resources from each of the shader modules
 	// Collate them all into a map that is indexed by the name of the resource
@@ -82,7 +80,8 @@ PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<Sha
 	// Create a descriptor set layout for each shader set in the shader modules
 	for (auto &shader_set_it : shader_sets)
 	{
-		descriptor_set_layouts.emplace_back(&device.get_resource_cache().request_descriptor_set_layout(shader_set_it.first, shader_modules, shader_set_it.second));
+		descriptor_set_layouts.emplace_back(
+		    &device.get_resource_cache().request_descriptor_set_layout(shader_set_it.first, shader_modules, shader_set_it.second));
 	}
 
 	// Collect all the descriptor set layout handles, maintaining set order

@@ -271,9 +271,7 @@ void Platform::update()
 			delta_time = simulation_frame_time;
 		}
 
-		active_app->update_overlay(delta_time, [=, this]() {
-			on_update_ui_overlay(*active_app->get_drawer());
-		});
+		active_app->update_overlay(delta_time, [=, this]() { on_update_ui_overlay(*active_app->get_drawer()); });
 		active_app->update(delta_time);
 
 		if (auto *app = dynamic_cast<VulkanSampleCpp *>(active_app.get()))
@@ -499,8 +497,7 @@ void Platform::input_event(const InputEvent &input_event)
 	{
 		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
 
-		if (key_event.get_code() == KeyCode::Back ||
-		    key_event.get_code() == KeyCode::Escape)
+		if (key_event.get_code() == KeyCode::Back || key_event.get_code() == KeyCode::Escape)
 		{
 			close();
 		}

@@ -51,7 +51,8 @@ bool SwapchainImages::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource vert_shader("base.vert.spv");
 	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader),
+	                                                                                  get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
@@ -83,7 +84,8 @@ void SwapchainImages::update(float delta_time)
 void SwapchainImages::draw_gui()
 {
 	get_gui().show_options_window(
-	    /* body = */ [this]() {
+	    /* body = */
+	    [this]() {
 		    ImGui::RadioButton("Double buffering", &swapchain_image_count, 2);
 		    ImGui::SameLine();
 		    ImGui::RadioButton("Triple buffering", &swapchain_image_count, 3);

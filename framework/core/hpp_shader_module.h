@@ -85,8 +85,7 @@ class HPPShaderSource : private vkb::ShaderSource
 {
   public:
 	HPPShaderSource() = default;
-	HPPShaderSource(const std::string &filename) :
-	    vkb::ShaderSource(filename)
+	HPPShaderSource(const std::string &filename) : vkb::ShaderSource(filename)
 	{}
 };
 
@@ -100,16 +99,10 @@ class HPPShaderModule : private vkb::ShaderModule
 	using vkb::ShaderModule::set_resource_mode;
 
   public:
-	HPPShaderModule(vkb::core::DeviceCpp              &device,
-	                vk::ShaderStageFlagBits            stage,
-	                const vkb::core::HPPShaderSource  &glsl_source,
-	                const std::string                 &entry_point,
+	HPPShaderModule(vkb::core::DeviceCpp &device, vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source, const std::string &entry_point,
 	                const vkb::core::HPPShaderVariant &shader_variant) :
-	    vkb::ShaderModule(reinterpret_cast<vkb::core::DeviceC &>(device),
-	                      static_cast<VkShaderStageFlagBits>(stage),
-	                      reinterpret_cast<vkb::ShaderSource const &>(glsl_source),
-	                      entry_point,
-	                      reinterpret_cast<vkb::ShaderVariant const &>(shader_variant))
+	    vkb::ShaderModule(reinterpret_cast<vkb::core::DeviceC &>(device), static_cast<VkShaderStageFlagBits>(stage),
+	                      reinterpret_cast<vkb::ShaderSource const &>(glsl_source), entry_point, reinterpret_cast<vkb::ShaderVariant const &>(shader_variant))
 	{}
 
 	const std::vector<vkb::core::HPPShaderResource> &get_resources() const

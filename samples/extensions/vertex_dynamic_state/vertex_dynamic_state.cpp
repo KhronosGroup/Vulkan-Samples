@@ -162,56 +162,30 @@ void VertexDynamicState::update_uniform_buffers()
 void VertexDynamicState::create_pipeline()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
 	const auto color_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
-	color_blend_state.attachmentCount = 1;
-	color_blend_state.pAttachments    = &color_attachment_state;
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+	color_blend_state.attachmentCount                     = 1;
+	color_blend_state.pAttachments                        = &color_attachment_state;
 
 	/* Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept */
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_FALSE,
-	        VK_FALSE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	    VK_DYNAMIC_STATE_VERTEX_INPUT_EXT};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_VERTEX_INPUT_EXT};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	shader_stages[0] = load_shader("vertex_dynamic_state", "gbuffer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
@@ -230,23 +204,11 @@ void VertexDynamicState::create_pipeline()
 
 	/* Initialize vertex input binding and attributes structures  */
 
-	vertex_bindings_description_ext[0] = vkb::initializers::vertex_input_binding_description2ext(
-	    0,
-	    sizeof(Vertex),
-	    VK_VERTEX_INPUT_RATE_VERTEX,
-	    1);
+	vertex_bindings_description_ext[0] = vkb::initializers::vertex_input_binding_description2ext(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX, 1);
 
-	vertex_attribute_description_ext[0] = vkb::initializers::vertex_input_attribute_description2ext(
-	    0,
-	    0,
-	    VK_FORMAT_R32G32B32_SFLOAT,
-	    offsetof(Vertex, pos));
+	vertex_attribute_description_ext[0] = vkb::initializers::vertex_input_attribute_description2ext(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos));
 
-	vertex_attribute_description_ext[1] = vkb::initializers::vertex_input_attribute_description2ext(
-	    0,
-	    1,
-	    VK_FORMAT_R32G32B32_SFLOAT,
-	    offsetof(Vertex, normal));
+	vertex_attribute_description_ext[1] = vkb::initializers::vertex_input_attribute_description2ext(0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal));
 
 	/* Use the pNext to point to the rendering create struct */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -298,8 +260,9 @@ void VertexDynamicState::create_pipeline()
  * 			 - UI - some statistic tab
  *
  * 	@note In case of Vertex Input Dynamic State feature sample need to create model in runtime because of requirement to have different data structure.
- * 		  By default function "load_model" from framework is parsing data from .gltf files and build it every time in declared structure (see Vertex structure in framework files).
- * 		  Before drawing different models (in case of vertex input data structure) "change_vertex_input_data" fuction is called for dynamically change Vertex Input data.
+ * 		  By default function "load_model" from framework is parsing data from .gltf files and build it every time in declared structure (see Vertex structure
+ * in framework files). Before drawing different models (in case of vertex input data structure) "change_vertex_input_data" fuction is called for dynamically
+ * change Vertex Input data.
  */
 void VertexDynamicState::build_command_buffers()
 {
@@ -347,11 +310,8 @@ void VertexDynamicState::build_command_buffers()
 		/* First set of vertex input dynamic data (Vertex structure) */
 		vertex_bindings_description_ext[0].stride  = sizeof(Vertex);
 		vertex_attribute_description_ext[1].offset = offsetof(Vertex, normal);
-		vkCmdSetVertexInputEXT(draw_cmd_buffer,
-		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
-		                       vertex_bindings_description_ext.data(),
-		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
-		                       vertex_attribute_description_ext.data());
+		vkCmdSetVertexInputEXT(draw_cmd_buffer, static_cast<uint32_t>(vertex_bindings_description_ext.size()), vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()), vertex_attribute_description_ext.data());
 
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
 		draw_model(skybox, draw_cmd_buffer);
@@ -363,11 +323,8 @@ void VertexDynamicState::build_command_buffers()
 		/* Second set of vertex input dynamic data (SampleVertex structure) */
 		vertex_bindings_description_ext[0].stride  = sizeof(SampleVertex);
 		vertex_attribute_description_ext[1].offset = offsetof(SampleVertex, normal);
-		vkCmdSetVertexInputEXT(draw_cmd_buffer,
-		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
-		                       vertex_bindings_description_ext.data(),
-		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
-		                       vertex_attribute_description_ext.data());
+		vkCmdSetVertexInputEXT(draw_cmd_buffer, static_cast<uint32_t>(vertex_bindings_description_ext.size()), vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()), vertex_attribute_description_ext.data());
 
 		draw_created_model(draw_cmd_buffer);
 
@@ -386,11 +343,10 @@ void VertexDynamicState::build_command_buffers()
  */
 void VertexDynamicState::create_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
-	uint32_t                   num_descriptor_sets = 4;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	std::vector<VkDescriptorPoolSize> pool_sizes          = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	                                                         vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
+	uint32_t                          num_descriptor_sets = 4;
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -411,10 +367,7 @@ void VertexDynamicState::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
@@ -427,11 +380,7 @@ void VertexDynamicState::setup_descriptor_set_layout()
  */
 void VertexDynamicState::create_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
@@ -517,30 +466,15 @@ void VertexDynamicState::model_data_creation()
 	cube.index_count                      = index_count;
 
 	/* Array with vertices indexes for corresponding triangles */
-	std::array<uint32_t, index_count> indices{0, 4, 3,
-	                                          4, 7, 3,
-	                                          0, 3, 2,
-	                                          0, 2, 1,
-	                                          1, 2, 6,
-	                                          6, 5, 1,
-	                                          5, 6, 7,
-	                                          7, 4, 5,
-	                                          0, 1, 5,
-	                                          5, 4, 0,
-	                                          3, 7, 6,
-	                                          6, 2, 3};
+	std::array<uint32_t, index_count> indices{0, 4, 3, 4, 7, 3, 0, 3, 2, 0, 2, 1, 1, 2, 6, 6, 5, 1, 5, 6, 7, 7, 4, 5, 0, 1, 5, 5, 4, 0, 3, 7, 6, 6, 2, 3};
 
 	vkb::core::BufferC vertex_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
 	vkb::core::BufferC index_staging  = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	cube.vertices = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	cube.vertices = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                     VMA_MEMORY_USAGE_GPU_ONLY);
 
-	cube.indices = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	cube.indices = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                    VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
@@ -549,20 +483,10 @@ void VertexDynamicState::model_data_creation()
 	VkBufferCopy copy_region = {};
 
 	copy_region.size = vertex_buffer_size;
-	vkCmdCopyBuffer(
-	    copy_command,
-	    vertex_staging.get_handle(),
-	    cube.vertices->get_handle(),
-	    1,
-	    &copy_region);
+	vkCmdCopyBuffer(copy_command, vertex_staging.get_handle(), cube.vertices->get_handle(), 1, &copy_region);
 
 	copy_region.size = index_buffer_size;
-	vkCmdCopyBuffer(
-	    copy_command,
-	    index_staging.get_handle(),
-	    cube.indices->get_handle(),
-	    1,
-	    &copy_region);
+	vkCmdCopyBuffer(copy_command, index_staging.get_handle(), cube.indices->get_handle(), 1, &copy_region);
 
 	get_device().flush_command_buffer(copy_command, queue, true);
 }

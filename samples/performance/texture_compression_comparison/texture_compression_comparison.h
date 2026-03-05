@@ -71,7 +71,8 @@ class TextureCompressionComparison : public vkb::VulkanSampleC
 	void                                                         create_subpass();
 	TextureBenchmark                                             update_textures(const CompressedTexture_t &new_format);
 	std::unique_ptr<vkb::sg::Image>                              create_image(ktxTexture2 *ktx_texture, const std::string &name);
-	std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark> compress(const std::string &filename, CompressedTexture_t texture_format, const std::string &name);
+	std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark> compress(const std::string &filename, CompressedTexture_t texture_format,
+	                                                                      const std::string &name);
 	std::vector<std::string>                                     gui_texture_names;
 	std::unordered_map<std::string, SampleTexture>               texture_raw_data;
 	std::vector<std::pair<vkb::sg::Texture *, std::string>>      textures;

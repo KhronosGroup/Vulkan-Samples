@@ -68,14 +68,14 @@ class HPPHelloTriangle : public vkb::Application
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 	virtual void update(float delta_time) override;
 
-	std::pair<vk::Result, uint32_t>      acquire_next_image();
-	vk::Device                           create_device(const std::vector<const char *> &required_device_extensions);
-	vk::Pipeline                         create_graphics_pipeline();
-	vk::ImageView                        create_image_view(vk::Image image);
-	vk::Instance                         create_instance(std::vector<const char *> const &required_instance_extensions, std::vector<const char *> const &required_validation_layers);
-	vk::RenderPass                       create_render_pass();
-	vk::ShaderModule                     create_shader_module(std::string const &path);
-	vk::SwapchainKHR                     create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain);
+	std::pair<vk::Result, uint32_t> acquire_next_image();
+	vk::Device                      create_device(const std::vector<const char *> &required_device_extensions);
+	vk::Pipeline                    create_graphics_pipeline();
+	vk::ImageView                   create_image_view(vk::Image image);
+	vk::Instance   create_instance(std::vector<const char *> const &required_instance_extensions, std::vector<const char *> const &required_validation_layers);
+	vk::RenderPass create_render_pass();
+	vk::ShaderModule create_shader_module(std::string const &path);
+	vk::SwapchainKHR create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain);
 	std::pair<vk::Buffer, VmaAllocation> create_vertex_buffer();
 	VmaAllocator                         create_vma_allocator();
 	void                                 init_framebuffers();

@@ -29,10 +29,11 @@ void HPPDebugUtilsExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectTyp
 	device.setDebugUtilsObjectNameEXT(name_info);
 }
 
-void HPPDebugUtilsExtDebugUtils::set_debug_tag(
-    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
+void HPPDebugUtilsExtDebugUtils::set_debug_tag(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
+                                               size_t tag_data_size) const
 {
-	vk::DebugUtilsObjectTagInfoEXT tag_info{.objectType = object_type, .objectHandle = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
+	vk::DebugUtilsObjectTagInfoEXT tag_info{
+	    .objectType = object_type, .objectHandle = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
 	device.setDebugUtilsObjectTagEXT(tag_info);
 }
 
@@ -59,8 +60,8 @@ void HPPDebugMarkerExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectTy
 	device.debugMarkerSetObjectNameEXT(name_info);
 }
 
-void HPPDebugMarkerExtDebugUtils::set_debug_tag(
-    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
+void HPPDebugMarkerExtDebugUtils::set_debug_tag(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
+                                                size_t tag_data_size) const
 {
 	vk::DebugMarkerObjectTagInfoEXT tag_info{
 	    .objectType = vk::debugReportObjectType(object_type), .object = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
@@ -84,10 +85,7 @@ void HPPDebugMarkerExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buf
 	command_buffer.debugMarkerInsertEXT(marker_info);
 }
 
-HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
-                                         vk::CommandBuffer    command_buffer,
-                                         std::string const   &name,
-                                         glm::vec4 const      color) :
+HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const color) :
     debug_utils{&debug_utils}, command_buffer{VK_NULL_HANDLE}
 {
 	if (!name.empty())
@@ -99,12 +97,9 @@ HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
 	}
 }
 
-HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer,
-                                         std::string const                 &name,
-                                         glm::vec4 const                    color) :
+HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer, std::string const &name, glm::vec4 const color) :
     HPPScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
-{
-}
+{}
 
 HPPScopedDebugLabel::~HPPScopedDebugLabel()
 {

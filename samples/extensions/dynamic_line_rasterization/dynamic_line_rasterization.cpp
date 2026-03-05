@@ -65,52 +65,28 @@ bool DynamicLineRasterization::prepare(const vkb::ApplicationOptions &options)
 
 void DynamicLineRasterization::prepare_scene()
 {
-	std::vector<glm::vec3> vertices = {
-	    {-1.0f, -1.0f, 1.0f},
-	    {1.0f, -1.0f, 1.0f},
-	    {1.0f, 1.0f, 1.0f},
-	    {-1.0f, 1.0f, 1.0f},
+	std::vector<glm::vec3> vertices = {{-1.0f, -1.0f, 1.0f},  {1.0f, -1.0f, 1.0f},  {1.0f, 1.0f, 1.0f},  {-1.0f, 1.0f, 1.0f},
 
-	    {-1.0f, -1.0f, -1.0f},
-	    {1.0f, -1.0f, -1.0f},
-	    {1.0f, 1.0f, -1.0f},
-	    {-1.0f, 1.0f, -1.0f}};
+	                                   {-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f}};
 
-	std::vector<uint32_t> cube_indices = {
-	    0, 1, 2,
-	    2, 3, 0,
+	std::vector<uint32_t> cube_indices = {0, 1, 2, 2, 3, 0,
 
-	    4, 5, 6,
-	    6, 7, 4,
+	                                      4, 5, 6, 6, 7, 4,
 
-	    0, 3, 7,
-	    7, 4, 0,
+	                                      0, 3, 7, 7, 4, 0,
 
-	    1, 5, 6,
-	    6, 2, 1,
+	                                      1, 5, 6, 6, 2, 1,
 
-	    3, 2, 6,
-	    6, 7, 3,
+	                                      3, 2, 6, 6, 7, 3,
 
-	    0, 4, 5,
-	    5, 1, 0};
+	                                      0, 4, 5, 5, 1, 0};
 
 	// Indices of the edges of the cube
-	std::vector<uint32_t> edges_indices = {
-	    0, 1,
-	    1, 2,
-	    2, 3,
-	    3, 0,
+	std::vector<uint32_t> edges_indices = {0, 1, 1, 2, 2, 3, 3, 0,
 
-	    4, 5,
-	    5, 6,
-	    6, 7,
-	    7, 4,
+	                                       4, 5, 5, 6, 6, 7, 7, 4,
 
-	    0, 4,
-	    1, 5,
-	    2, 6,
-	    3, 7};
+	                                       0, 4, 1, 5, 2, 6, 3, 7};
 
 	cube_index_count                 = static_cast<uint32_t>(cube_indices.size());
 	edges_index_count                = static_cast<uint32_t>(edges_indices.size());
@@ -118,22 +94,15 @@ void DynamicLineRasterization::prepare_scene()
 	uint32_t cube_index_buffer_size  = static_cast<uint32_t>(cube_indices.size() * sizeof(uint32_t));
 	uint32_t edges_index_buffer_size = static_cast<uint32_t>(edges_indices.size() * sizeof(uint32_t));
 
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	cube_index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         cube_index_buffer_size,
-	                                                         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+	cube_index_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), cube_index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	cube_index_buffer->update(cube_indices.data(), cube_index_buffer_size);
 
-	edges_index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                          edges_index_buffer_size,
-	                                                          VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	edges_index_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), edges_index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	edges_index_buffer->update(edges_indices.data(), edges_index_buffer_size);
 
 	fill_color = glm::vec4(0.957f, 0.384f, 0.024f, 0.1f);
@@ -151,32 +120,20 @@ void DynamicLineRasterization::setup_descriptor_pool()
 	};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        static_cast<uint32_t>(pool_sizes.size()));
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), static_cast<uint32_t>(pool_sizes.size()));
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void DynamicLineRasterization::create_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-	        VK_TRUE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_TRUE);
 
 	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
 	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -185,40 +142,26 @@ void DynamicLineRasterization::create_pipelines()
 	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_FALSE,
-	        VK_FALSE,
-	        VK_COMPARE_OP_NEVER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_NEVER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	    VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
-	    VK_DYNAMIC_STATE_POLYGON_MODE_EXT,
-	    VK_DYNAMIC_STATE_LINE_RASTERIZATION_MODE_EXT,
-	    VK_DYNAMIC_STATE_LINE_STIPPLE_ENABLE_EXT,
-	    VK_DYNAMIC_STATE_LINE_STIPPLE_EXT,
-	    VK_DYNAMIC_STATE_LINE_WIDTH};
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT,
+	                                                     VK_DYNAMIC_STATE_SCISSOR,
+	                                                     VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
+	                                                     VK_DYNAMIC_STATE_POLYGON_MODE_EXT,
+	                                                     VK_DYNAMIC_STATE_LINE_RASTERIZATION_MODE_EXT,
+	                                                     VK_DYNAMIC_STATE_LINE_STIPPLE_ENABLE_EXT,
+	                                                     VK_DYNAMIC_STATE_LINE_STIPPLE_EXT,
+	                                                     VK_DYNAMIC_STATE_LINE_WIDTH};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
@@ -253,12 +196,7 @@ void DynamicLineRasterization::create_pipelines()
 	graphics_create.pStages             = shader_stages.data();
 	graphics_create.layout              = pipeline_layout;
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
-	                                   pipeline_cache,
-	                                   1,
-	                                   &graphics_create,
-	                                   VK_NULL_HANDLE,
-	                                   &pipelines.object));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipelines.object));
 
 	shader_stages[0]                  = load_shader("dynamic_line_rasterization", "grid.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1]                  = load_shader("dynamic_line_rasterization", "grid.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -311,8 +249,7 @@ void DynamicLineRasterization::create_descriptor_set_layout()
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout));
 
-	VkPushConstantRange push_constant_range =
-	    vkb::initializers::push_constant_range(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(glm::vec4), 0);
+	VkPushConstantRange push_constant_range = vkb::initializers::push_constant_range(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(glm::vec4), 0);
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout);
 

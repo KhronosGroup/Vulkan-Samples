@@ -122,7 +122,8 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalD
 
 	if (result != VK_SUCCESS)
 	{
-		throw vkb::VulkanException{result, "Could not create device with the selected profile. The device may not support all features required by this profile!"};
+		throw vkb::VulkanException{result,
+		                           "Could not create device with the selected profile. The device may not support all features required by this profile!"};
 	}
 
 	// Post device setup required for the framework
@@ -175,8 +176,9 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
 	// If VK_KHR_portability_enumeration is available in the implementation, then we must enable the extension
-	if (std::ranges::any_of(available_instance_extensions,
-	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
+	if (std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension) {
+		    return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0;
+	    }))
 	{
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
@@ -200,7 +202,8 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 
 	if (result != VK_SUCCESS)
 	{
-		throw vkb::VulkanException{result, "Could not create instance with the selected profile. The instance may not support all features required by this profile!"};
+		throw vkb::VulkanException{result,
+		                           "Could not create instance with the selected profile. The instance may not support all features required by this profile!"};
 	}
 
 	volkLoadInstance(vulkan_instance);
@@ -236,7 +239,8 @@ void Profiles::generate_textures()
 	image_view.subresourceRange.baseArrayLayer = 0;
 	image_view.subresourceRange.layerCount     = 1;
 
-	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t), nullptr);
+	auto staging_buffer =
+	    vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t), nullptr);
 
 	textures.resize(32);
 	for (size_t i = 0; i < textures.size(); i++)
@@ -245,8 +249,9 @@ void Profiles::generate_textures()
 		VkMemoryAllocateInfo memory_allocation_info = vkb::initializers::memory_allocate_info();
 		VkMemoryRequirements memory_requirements;
 		vkGetImageMemoryRequirements(get_device().get_handle(), textures[i].image, &memory_requirements);
-		memory_allocation_info.allocationSize  = memory_requirements.size;
-		memory_allocation_info.memoryTypeIndex = get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memory_allocation_info.allocationSize = memory_requirements.size;
+		memory_allocation_info.memoryTypeIndex =
+		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &textures[i].memory));
 		VK_CHECK(vkBindImageMemory(get_device().get_handle(), textures[i].image, textures[i].memory, 0));
 		image_view.image = textures[i].image;
@@ -318,56 +323,37 @@ void Profiles::generate_cubes()
 	for (uint32_t i = 0; i < count; i++)
 	{
 		// Get a random texture index that the shader will sample from via the vertex attribute
-		const auto texture_index = [&rndDist, &rndEngine]() {
-			return rndDist(rndEngine);
-		};
+		const auto texture_index = [&rndDist, &rndEngine]() { return rndDist(rndEngine); };
 
 		// Push vertices to buffer
 		float pos = 2.5f * i - (count * 2.5f / 2.0f);
 
 		const std::vector<VertexStructure> cube = {
-		    {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},
-		    {{-1.0f + pos, 1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},  {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},    {{-1.0f + pos, 1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},
-		    {{1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},  {{1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},
-		    {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()}, {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},   {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()},
-		    {{-1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
-		    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},
-		    {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()}, {{-1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},   {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},
-		    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
-		    {{-1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},
-		    {{1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},  {{1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
-		    {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},
-		    {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()}, {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},   {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
 		};
 		for (auto &vertex : cube)
 		{
 			vertices.push_back(vertex);
 		}
 		// Push indices to buffer
-		const std::vector<uint32_t> cubeIndices = {
-		    0, 1, 2, 0, 2, 3,
-		    4, 5, 6, 4, 6, 7,
-		    8, 9, 10, 8, 10, 11,
-		    12, 13, 14, 12, 14, 15,
-		    16, 17, 18, 16, 18, 19,
-		    20, 21, 22, 20, 22, 23};
+		const std::vector<uint32_t> cubeIndices = {0,  1,  2,  0,  2,  3,  4,  5,  6,  4,  6,  7,  8,  9,  10, 8,  10, 11,
+		                                           12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23};
 		for (auto &index : cubeIndices)
 		{
 			indices.push_back(index + static_cast<uint32_t>(vertices.size()));
@@ -381,15 +367,11 @@ void Profiles::generate_cubes()
 
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                     vertex_buffer_size,
-	                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    index_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
@@ -453,10 +435,7 @@ void Profiles::setup_descriptor_pool()
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(textures.size()))};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        3);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 3);
 	descriptor_pool_create_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -473,26 +452,17 @@ void Profiles::setup_descriptor_set_layout()
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT descriptor_set_layout_binding_flags{};
 	descriptor_set_layout_binding_flags.sType                         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
 	descriptor_set_layout_binding_flags.bindingCount                  = 2;
-	std::vector<VkDescriptorBindingFlagsEXT> descriptor_binding_flags = {
-	    0,
-	    VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
-	descriptor_set_layout_binding_flags.pBindingFlags = descriptor_binding_flags.data();
+	std::vector<VkDescriptorBindingFlagsEXT> descriptor_binding_flags = {0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+	descriptor_set_layout_binding_flags.pBindingFlags                 = descriptor_binding_flags.data();
 
 	descriptor_layout_create_info.pNext = &descriptor_set_layout_binding_flags;
 
 	// Set layout for the uniform buffer and the image
-	set_layout_bindings = {
-	    // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_VERTEX_BIT,
-	        0),
-	    // Binding 1 : Fragment shader combined image and sampler
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	        VK_SHADER_STAGE_FRAGMENT_BIT,
-	        1,
-	        static_cast<uint32_t>(textures.size()))};
+	set_layout_bindings                        = {// Binding 0 : Vertex shader uniform buffer
+                           vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+                           // Binding 1 : Fragment shader combined image and sampler
+                           vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,
+	                                                                                               static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	descriptor_layout_create_info.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
@@ -501,11 +471,7 @@ void Profiles::setup_descriptor_set_layout()
 	// Set layout for the samplers
 	set_layout_bindings = {
 	    // Binding 0: Fragment shader sampler
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_SAMPLER,
-	        VK_SHADER_STAGE_FRAGMENT_BIT,
-	        0,
-	        static_cast<uint32_t>(textures.size()))};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	descriptor_layout_create_info.pNext        = nullptr;
@@ -515,9 +481,7 @@ void Profiles::setup_descriptor_set_layout()
 	// Set layout for the base descriptors in set 0 and set layout for the sampler descriptors in set 1
 	std::vector<VkDescriptorSetLayout> set_layouts = {base_descriptor_set_layout, sampler_descriptor_set_layout};
 	VkPipelineLayoutCreateInfo         pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        set_layouts.data(),
-	        static_cast<uint32_t>(set_layouts.size()));
+	    vkb::initializers::pipeline_layout_create_info(set_layouts.data(), static_cast<uint32_t>(set_layouts.size()));
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
@@ -527,17 +491,13 @@ void Profiles::setup_descriptor_set()
 	VkDescriptorSetAllocateInfo descriptor_set_alloc_info{};
 
 	// Descriptors set for the uniform buffer and the image
-	descriptor_set_alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &base_descriptor_set_layout,
-	        1);
+	descriptor_set_alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &base_descriptor_set_layout, 1);
 
 	VkDescriptorSetVariableDescriptorCountAllocateInfoEXT variableDescriptorCountAllocInfo = {};
 	uint32_t                                              variableDescCounts[]             = {static_cast<uint32_t>(textures.size())};
-	variableDescriptorCountAllocInfo.sType                                                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
-	variableDescriptorCountAllocInfo.descriptorSetCount                                    = 1;
-	variableDescriptorCountAllocInfo.pDescriptorCounts                                     = variableDescCounts;
+	variableDescriptorCountAllocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+	variableDescriptorCountAllocInfo.descriptorSetCount = 1;
+	variableDescriptorCountAllocInfo.pDescriptorCounts  = variableDescCounts;
 
 	descriptor_set_alloc_info.pNext = &variableDescriptorCountAllocInfo;
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &base_descriptor_set));
@@ -552,11 +512,7 @@ void Profiles::setup_descriptor_set()
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets(2);
 	// Binding 0 : Vertex shader uniform buffer
-	write_descriptor_sets[0] = vkb::initializers::write_descriptor_set(
-	    base_descriptor_set,
-	    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	    0,
-	    &buffer_descriptor);
+	write_descriptor_sets[0] = vkb::initializers::write_descriptor_set(base_descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor);
 
 	// Binding 1 : Fragment shader sampled image
 	// Put all images into a single array
@@ -585,52 +541,27 @@ void Profiles::setup_descriptor_set()
 void Profiles::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
@@ -672,10 +603,7 @@ void Profiles::prepare_pipelines()
 void Profiles::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         sizeof(ubo_vs),
-	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

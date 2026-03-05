@@ -73,42 +73,34 @@ class HPPSwapchain
 	 * @brief Constructor to create a swapchain by changing the compression settings
 	 *        only and preserving the configuration from the old swapchain.
 	 */
-	HPPSwapchain(HPPSwapchain                               &swapchain,
-	             const vk::ImageCompressionFlagsEXT          requested_compression,
+	HPPSwapchain(HPPSwapchain &swapchain, const vk::ImageCompressionFlagsEXT requested_compression,
 	             const vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate);
 
 	/**
 	 * @brief Constructor to create a swapchain.
 	 */
-	HPPSwapchain(vkb::core::DeviceCpp                       &device,
-	             vk::SurfaceKHR                              surface,
-	             const vk::PresentModeKHR                    present_mode,
-	             const std::vector<vk::PresentModeKHR>      &present_mode_priority_list       = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
-	             const std::vector<vk::SurfaceFormatKHR>    &surface_format_priority_list     = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                                                             {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}},
-	             const vk::Extent2D                         &extent                           = {},
-	             const uint32_t                              image_count                      = 3,
-	             const vk::SurfaceTransformFlagBitsKHR       transform                        = vk::SurfaceTransformFlagBitsKHR::eIdentity,
-	             const std::set<vk::ImageUsageFlagBits>     &image_usage_flags                = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
-	             const vk::ImageCompressionFlagsEXT          requested_compression            = vk::ImageCompressionFlagBitsEXT::eDefault,
+	HPPSwapchain(vkb::core::DeviceCpp &device, vk::SurfaceKHR surface, const vk::PresentModeKHR present_mode,
+	             const std::vector<vk::PresentModeKHR>   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
+	             const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	                                                                                      {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}},
+	             const vk::Extent2D &extent = {}, const uint32_t image_count = 3,
+	             const vk::SurfaceTransformFlagBitsKHR   transform         = vk::SurfaceTransformFlagBitsKHR::eIdentity,
+	             const std::set<vk::ImageUsageFlagBits> &image_usage_flags = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
+	             const vk::ImageCompressionFlagsEXT      requested_compression                = vk::ImageCompressionFlagBitsEXT::eDefault,
 	             const vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate = vk::ImageCompressionFixedRateFlagBitsEXT::eNone);
 
 	/**
 	 * @brief Constructor to create a swapchain from the old swapchain
 	 *        by configuring all parameters.
 	 */
-	HPPSwapchain(HPPSwapchain                               &old_swapchain,
-	             vkb::core::DeviceCpp                       &device,
-	             vk::SurfaceKHR                              surface,
-	             const vk::PresentModeKHR                    present_mode,
-	             const std::vector<vk::PresentModeKHR>      &present_mode_priority_list       = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
-	             const std::vector<vk::SurfaceFormatKHR>    &surface_format_priority_list     = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                                                             {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}},
-	             const vk::Extent2D                         &extent                           = {},
-	             const uint32_t                              image_count                      = 3,
-	             const vk::SurfaceTransformFlagBitsKHR       transform                        = vk::SurfaceTransformFlagBitsKHR::eIdentity,
-	             const std::set<vk::ImageUsageFlagBits>     &image_usage_flags                = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
-	             const vk::ImageCompressionFlagsEXT          requested_compression            = vk::ImageCompressionFlagBitsEXT::eDefault,
+	HPPSwapchain(HPPSwapchain &old_swapchain, vkb::core::DeviceCpp &device, vk::SurfaceKHR surface, const vk::PresentModeKHR present_mode,
+	             const std::vector<vk::PresentModeKHR>   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
+	             const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	                                                                                      {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}},
+	             const vk::Extent2D &extent = {}, const uint32_t image_count = 3,
+	             const vk::SurfaceTransformFlagBitsKHR   transform         = vk::SurfaceTransformFlagBitsKHR::eIdentity,
+	             const std::set<vk::ImageUsageFlagBits> &image_usage_flags = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
+	             const vk::ImageCompressionFlagsEXT      requested_compression                = vk::ImageCompressionFlagBitsEXT::eDefault,
 	             const vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate = vk::ImageCompressionFixedRateFlagBitsEXT::eNone);
 
 	HPPSwapchain(const HPPSwapchain &) = delete;

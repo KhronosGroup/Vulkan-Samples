@@ -43,10 +43,8 @@
 namespace vkb
 {
 
-UnixPlatform::UnixPlatform(const PlatformContext &context, const UnixType &type) :
-    Platform{context}, type{type}
-{
-}
+UnixPlatform::UnixPlatform(const PlatformContext &context, const UnixType &type) : Platform{context}, type{type}
+{}
 
 void UnixPlatform::create_window(const Window::Properties &properties)
 {

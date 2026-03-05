@@ -123,7 +123,8 @@ class SparseImage : public ApiVulkanSample
 		bool     fixed            = false;        // not freed from the memory at any cases
 		PageInfo page_memory_info;                // memory-related info
 
-		std::set<std::tuple<uint8_t, size_t, size_t>> render_required_set;        // set holding information on what BLOCKS require this particular memory page to be valid for rendering
+		std::set<std::tuple<uint8_t, size_t, size_t>>
+		    render_required_set;        // set holding information on what BLOCKS require this particular memory page to be valid for rendering
 	};
 
 	struct MemAllocInfo
@@ -178,8 +179,7 @@ class SparseImage : public ApiVulkanSample
 		std::set<uint32_t> available_offsets;
 		std::set<size_t>   virt_page_indices;
 
-		MemSector(MemAllocInfo &mem_alloc_info) :
-		    MemAllocInfo(mem_alloc_info)
+		MemSector(MemAllocInfo &mem_alloc_info) : MemAllocInfo(mem_alloc_info)
 		{
 			VkMemoryAllocateInfo memory_allocate_info{};
 			memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -275,8 +275,17 @@ class SparseImage : public ApiVulkanSample
 		VkExtent2D texture_base_dim;
 		VkExtent2D screen_base_dim;
 
-		CalculateMipLevelData(const glm::mat4 &mvp_transform, const VkExtent2D &texture_base_dim, const VkExtent2D &screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels) :
-		    mesh(vertical_num_blocks + 1U), vertical_num_blocks(vertical_num_blocks), horizontal_num_blocks(horizontal_num_blocks), mip_levels(mip_levels), ax_vertical(horizontal_num_blocks + 1U), ax_horizontal(vertical_num_blocks + 1U), mvp_transform(mvp_transform), texture_base_dim(texture_base_dim), screen_base_dim(screen_base_dim)
+		CalculateMipLevelData(const glm::mat4 &mvp_transform, const VkExtent2D &texture_base_dim, const VkExtent2D &screen_base_dim,
+		                      uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels) :
+		    mesh(vertical_num_blocks + 1U),
+		    vertical_num_blocks(vertical_num_blocks),
+		    horizontal_num_blocks(horizontal_num_blocks),
+		    mip_levels(mip_levels),
+		    ax_vertical(horizontal_num_blocks + 1U),
+		    ax_horizontal(vertical_num_blocks + 1U),
+		    mvp_transform(mvp_transform),
+		    texture_base_dim(texture_base_dim),
+		    screen_base_dim(screen_base_dim)
 		{
 			for (auto &row : mesh)
 			{
@@ -285,7 +294,13 @@ class SparseImage : public ApiVulkanSample
 		}
 
 		CalculateMipLevelData() :
-		    mvp_transform(glm::mat4(0)), texture_base_dim(VkExtent2D{0U, 0U}), screen_base_dim(VkExtent2D{0U, 0U}), mesh{0}, vertical_num_blocks(0U), horizontal_num_blocks(0U), mip_levels(0U)
+		    mvp_transform(glm::mat4(0)),
+		    texture_base_dim(VkExtent2D{0U, 0U}),
+		    screen_base_dim(VkExtent2D{0U, 0U}),
+		    mesh{0},
+		    vertical_num_blocks(0U),
+		    horizontal_num_blocks(0U),
+		    mip_levels(0U)
 		{}
 		void calculate_mesh_coordinates();
 		void calculate_mip_levels();

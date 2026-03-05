@@ -114,8 +114,10 @@ void DescriptorIndexing::render(float delta_time)
 
 	for (unsigned i = 0; i < NumDescriptorsNonUniform; i++)
 	{
-		VkDescriptorImageInfo image_info = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, test_images[i].image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		VkWriteDescriptorSet  write      = vkb::initializers::write_descriptor_set(descriptors.descriptor_set_update_after_bind, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 0, &image_info);
+		VkDescriptorImageInfo image_info =
+		    vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, test_images[i].image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VkWriteDescriptorSet write =
+		    vkb::initializers::write_descriptor_set(descriptors.descriptor_set_update_after_bind, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 0, &image_info);
 
 		// One way we can use VK_EXT_descriptor_indexing is to treat the update-after-bind descriptor set as a ring buffer where we write descriptors,
 		// and we use push constants as a way to index into the "bindless" descriptor set.
@@ -194,7 +196,8 @@ void DescriptorIndexing::create_bindless_descriptors()
 {
 	uint32_t descriptorCount = descriptor_indexing_properties.maxDescriptorSetUpdateAfterBindSampledImages;
 
-	VkDescriptorSetLayoutBinding    binding                = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 0, descriptorCount);
+	VkDescriptorSetLayoutBinding binding =
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 0, descriptorCount);
 	VkDescriptorSetLayoutCreateInfo set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(&binding, 1);
 
 	// We're going to use update-after-bind, so we need to make sure the flag is set correctly in the set layout.
@@ -216,11 +219,8 @@ void DescriptorIndexing::create_bindless_descriptors()
 	//   The only restriction is that the descriptor cannot actually be accessed by the GPU.
 
 	// Typically, if you're using descriptor indexing, you will want to use all four of these, but all of these are separate feature bits.
-	const VkDescriptorBindingFlagsEXT flags =
-	    VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT |
-	    VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT |
-	    VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT |
-	    VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
+	const VkDescriptorBindingFlagsEXT flags = VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT |
+	                                          VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
 
 	// In unextended Vulkan, there is no way to pass down flags to a binding, so we're going to do so via a pNext.
 	// Each pBinding has a corresponding pBindingFlags.
@@ -233,7 +233,8 @@ void DescriptorIndexing::create_bindless_descriptors()
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &set_layout_create_info, nullptr, &descriptors.set_layout));
 
 	// We're going to allocate two separate descriptor sets from the same pool, and here VARIABLE_DESCRIPTOR_COUNT comes in handy!
-	// For the non-uniform indexing part, we allocate few descriptors, and for the streaming case, we allocate a fairly large ring buffer of descriptors we can play around with.
+	// For the non-uniform indexing part, we allocate few descriptors, and for the streaming case, we allocate a fairly large ring buffer of descriptors we can
+	// play around with.
 	uint32_t poolCount = NumDescriptorsStreaming + NumDescriptorsNonUniform;
 
 	VkDescriptorPoolSize       pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, poolCount);
@@ -282,19 +283,14 @@ void DescriptorIndexing::create_pipelines()
 	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 0, VK_FALSE);
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE, 0);
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+	VkPipelineColorBlendAttachmentState   blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+	VkPipelineColorBlendStateCreateInfo   color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
-	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
+	VkPipelineViewportStateCreateInfo    viewport_state        = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineMultisampleStateCreateInfo multisample_state     = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+	std::vector<VkDynamicState>          dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	VkPipelineDynamicStateCreateInfo     dynamic_state         = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
 
 	info.pVertexInputState   = &vertex_input_state;
 	info.pInputAssemblyState = &input_assembly_state;
@@ -360,7 +356,8 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	image_view.image                           = test_image.image;
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view, nullptr, &test_image.image_view));
 
-	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t), nullptr);
+	auto staging_buffer =
+	    vkb::core::BufferC::create_staging_buffer(get_device(), image_info.extent.width * image_info.extent.height * sizeof(uint32_t), nullptr);
 
 	// Generate a random texture.
 	// Fairly simple, create different colors and some different patterns.
@@ -478,9 +475,11 @@ void DescriptorIndexing::create_images()
 	// prepare a descriptor set with all textures prepared ahead of time.
 	for (unsigned i = 0; i < NumDescriptorsNonUniform; i++)
 	{
-		VkDescriptorImageInfo image_info = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, test_images[i].image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		VkWriteDescriptorSet  write      = vkb::initializers::write_descriptor_set(descriptors.descriptor_set_nonuniform, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 0, &image_info);
-		write.dstArrayElement            = i;
+		VkDescriptorImageInfo image_info =
+		    vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, test_images[i].image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VkWriteDescriptorSet write =
+		    vkb::initializers::write_descriptor_set(descriptors.descriptor_set_nonuniform, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 0, &image_info);
+		write.dstArrayElement = i;
 		vkUpdateDescriptorSets(get_device().get_handle(), 1, &write, 0, nullptr);
 	}
 }

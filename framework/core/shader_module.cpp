@@ -24,11 +24,8 @@
 
 namespace vkb
 {
-ShaderModule::ShaderModule(vkb::core::DeviceC   &device,
-                           VkShaderStageFlagBits stage,
-                           const ShaderSource   &shader_source,
-                           const std::string    &entry_point,
-                           const ShaderVariant  &shader_variant) :
+ShaderModule::ShaderModule(vkb::core::DeviceC &device, VkShaderStageFlagBits stage, const ShaderSource &shader_source, const std::string &entry_point,
+                           const ShaderVariant &shader_variant) :
     device{device}, stage{stage}, entry_point{entry_point}
 {
 	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", shader_source.get_filename(), shader_variant.get_id(), entry_point);
@@ -47,8 +44,7 @@ ShaderModule::ShaderModule(vkb::core::DeviceC   &device,
 
 	// Generate a unique id, determined by source and variant
 	std::hash<std::string> hasher{};
-	id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()),
-	                        reinterpret_cast<const char *>(spirv.data() + spirv.size())});
+	id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()), reinterpret_cast<const char *>(spirv.data() + spirv.size())});
 }
 
 ShaderModule::ShaderModule(ShaderModule &&other) :
@@ -149,9 +145,7 @@ void ShaderVariant::clear()
 	id = 0;
 }
 
-ShaderSource::ShaderSource(const std::string &filename) :
-    filename{filename},
-    source{fs::read_text_file(filename)}
+ShaderSource::ShaderSource(const std::string &filename) : filename{filename}, source{fs::read_text_file(filename)}
 {
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});

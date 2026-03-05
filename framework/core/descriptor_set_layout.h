@@ -48,9 +48,7 @@ class DescriptorSetLayout
 	 * @param shader_modules The shader modules this set layout will be used for
 	 * @param resource_set A grouping of shader resources belonging to the same set
 	 */
-	DescriptorSetLayout(vkb::core::DeviceC                &device,
-	                    const uint32_t                     set_index,
-	                    const std::vector<ShaderModule *> &shader_modules,
+	DescriptorSetLayout(vkb::core::DeviceC &device, const uint32_t set_index, const std::vector<ShaderModule *> &shader_modules,
 	                    const std::vector<ShaderResource> &resource_set);
 
 	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
