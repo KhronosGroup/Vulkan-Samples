@@ -194,5 +194,5 @@ jobs:
       - name: build_ios
         run: |
           source ~/VulkanSDK/iOS/setup-env.sh
-          cmake -H"." -B"build/ios" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          cmake -G Xcode -B"build/ios" --toolchain bldsys/toolchain/ios.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
           cmake --build "build/ios" --target vulkan_samples --config ${{ matrix.build_type }} -- -allowProvisioningUpdates
