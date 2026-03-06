@@ -1,0 +1,36 @@
+////
+- Copyright (c) 2026 Arm Limited and Contributors
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+= GLTF
+
+////
+The following block adds linkage to this repo in the Vulkan docs site project. It's only visible if the file is viewed via the Antora framework.
+////
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/gltf[Khronos Vulkan samples github repository].
+endif::[]
+
+
+== Overview
+
+This sample demonstrates the usage of the new GLTF API sample base class `GLTFApiVulkanSample`, which abstracts away all of the GLTF scene loading functionalities. This sample is generated from a template (See link:../../bldsys/cmake/template/sample_api_gltf/sample.cpp.in[sample.cpp.in]), which fills the gap by implementing the necessary components of a rendering pipeline consisting of two passes: a main pass and a present + UI pass.
+The GLTF API sample base class (See link:./gltf_api_vulkan_sample.h[gltf_api_vulkan_sample.h] and link:./gltf_api_vulkan_sample.cpp[gltf_api_vulkan_sample.cpp]) and the corresponding template combined are useful additions to the Vulkan Samples framework by providing a starting point for more complex samples. The base class also has the following configurable attributes for customisation:
+
+* `scene_file` - a string that specifies path to the GLTF scene you would like to load. Default: `"scenes/bonza/Bonza.gltf"`
