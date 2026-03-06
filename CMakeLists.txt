@@ -43,7 +43,9 @@ else ()
 # search for Vulkan SDK
 find_package(Vulkan)
 
-if(Vulkan_FOUND)
+# Apple platforms always define Vulkan_SDK, so don't look for shader compilers otherwise we will build
+# the shaders for every new config - instead use pre-built shaders which improves project build times.
+if(Vulkan_FOUND AND NOT APPLE)
     if(NOT Vulkan_dxc_exe_FOUND)
         find_program(Vulkan_dxc_EXECUTABLE
                     NAMES dxc
