@@ -1,6 +1,6 @@
-# Copyright (c) 2020-2025, Arm Limited and Contributors
-# Copyright (c) 2024-2025, Mobica Limited
-# Copyright (c) 2024-2025, Sascha Willems
+# Copyright (c) 2020-2026, Arm Limited and Contributors
+# Copyright (c) 2024-2026, Mobica Limited
+# Copyright (c) 2024-2026, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
