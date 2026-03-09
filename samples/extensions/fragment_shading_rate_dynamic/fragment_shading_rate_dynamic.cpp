@@ -110,9 +110,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		                               static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height)));
 		image_extent.depth = 1;
 
-		auto create_shading_rate = [&](VkImageUsageFlags image_usage, VkFormat format) {
-			return std::make_unique<vkb::core::Image>(get_device(), image_extent, format, image_usage, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
-		};
+		auto create_shading_rate = [&](VkImageUsageFlags image_usage, VkFormat format)
+		{ return std::make_unique<vkb::core::Image>(get_device(), image_extent, format, image_usage, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT); };
 
 		shading_rate_image = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_FORMAT_R8_UINT);
 		shading_rate_image_compute = create_shading_rate(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_R8_UINT);
@@ -370,7 +369,8 @@ void FragmentShadingRateDynamic::setup_render_pass()
 void FragmentShadingRateDynamic::setup_framebuffer()
 {
 	// Create ths shading rate image attachment if not defined (first run and resize)
-	auto check_dimension = [this](const vkb::core::ImageView *view) {
+	auto check_dimension = [this](const vkb::core::ImageView *view)
+	{
 		if (!view)
 		{
 			return false;
@@ -456,7 +456,8 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		bool            enable_fragment_shading_rate;
 	};
 
-	auto build_command_buffer = [&](RenderTarget render_target) {
+	auto build_command_buffer = [&](RenderTarget render_target)
+	{
 		VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(render_target._command_buffer, &command_buffer_begin_info));
 
@@ -802,7 +803,8 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 
 		if (debug_utils_supported)
 		{
-			auto set_name = [device{get_device().get_handle()}](VkObjectType object_type, const char *name, const void *handle) {
+			auto set_name = [device{get_device().get_handle()}](VkObjectType object_type, const char *name, const void *handle)
+			{
 				VkDebugUtilsObjectNameInfoEXT name_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT};
 				name_info.objectType                    = object_type;
 				name_info.objectHandle                  = (uint64_t) handle;
@@ -988,9 +990,8 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	const auto enabled_instance_extensions = get_instance().get_extensions();
-	debug_utils_supported                  = std::ranges::find_if(enabled_instance_extensions, [](std::string const &ext) {
-                                return ext == VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-                            }) != enabled_instance_extensions.cend();
+	debug_utils_supported                  = std::ranges::find_if(enabled_instance_extensions, [](std::string const &ext)
+	                                                              { return ext == VK_EXT_DEBUG_UTILS_EXTENSION_NAME; }) != enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));

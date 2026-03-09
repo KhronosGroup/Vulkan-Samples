@@ -476,10 +476,10 @@ inline std::unique_ptr<vkb::core::Instance<bindingType>> VulkanSample<bindingTyp
 
 	return std::make_unique<vkb::core::Instance<bindingType>>(
 	    get_name(), get_api_version(), requested_layers, requested_extensions,
-	    [this](std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) {
-		    return get_instance_create_info_extensions(enabled_layers, enabled_extensions);
-	    },
-	    [this](std::vector<std::string> const &enabled_extensions) {
+	    [this](std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions)
+	    { return get_instance_create_info_extensions(enabled_layers, enabled_extensions); },
+	    [this](std::vector<std::string> const &enabled_extensions)
+	    {
 		    if constexpr (bindingType == BindingType::Cpp)
 		    {
 			    return get_instance_create_flags(enabled_extensions);
@@ -542,7 +542,8 @@ template <vkb::BindingType bindingType>
 inline size_t VulkanSample<bindingType>::determine_physical_device_score_impl(vk::PhysicalDevice const &gpu) const
 {
 	// Prefer discrete GPUs that support presenting to our surface, as they are most likely to provide good performance for rendering and presenting.
-	auto supports_surface = [this, &gpu]() {
+	auto supports_surface = [this, &gpu]()
+	{
 		for (uint32_t queue_idx = 0; queue_idx < gpu.getQueueFamilyProperties().size(); ++queue_idx)
 		{
 			if (gpu.getSurfaceSupportKHR(queue_idx, surface))
@@ -693,8 +694,8 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const &requested_layer_sett
 {
 	// We are checking if the layer is available.
 	// Vulkan does not provide a reflection API for layer settings. Layer settings are described in each layer JSON manifest.
-	bool is_available = std::ranges::any_of(
-	    enabled_layers, [&requested_layer_setting](auto const &enabled_layer) { return enabled_layer == requested_layer_setting.pLayerName; });
+	bool is_available = std::ranges::any_of(enabled_layers, [&requested_layer_setting](auto const &enabled_layer)
+	                                        { return enabled_layer == requested_layer_setting.pLayerName; });
 
 #if defined(PLATFORM__MACOS)
 	// On Apple the MoltenVK driver configuration layer is implicitly enabled and available, and cannot be explicitly added or checked via enabled_layers.
@@ -702,9 +703,8 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const &requested_layer_sett
 	{
 		// Check for VK_EXT_layer_settings extension in the driver which indicates MoltenVK vs. KosmicKrisp (note: VK_MVK_moltenvk extension is deprecated).
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		if (std::ranges::any_of(available_instance_extensions, [](vk::ExtensionProperties const &extension) {
-			    return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;
-		    }))
+		if (std::ranges::any_of(available_instance_extensions, [](vk::ExtensionProperties const &extension)
+		                        { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 		{
 			is_available = true;
 		}
@@ -717,10 +717,12 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const &requested_layer_sett
 		return false;
 	}
 
-	bool is_already_enabled = std::ranges::any_of(enabled_layer_settings, [&requested_layer_setting](vk::LayerSettingEXT const &enabled_layer_setting) {
-		return (strcmp(requested_layer_setting.pLayerName, enabled_layer_setting.pLayerName) == 0) &&
-		       (strcmp(requested_layer_setting.pSettingName, enabled_layer_setting.pSettingName) == 0);
-	});
+	bool is_already_enabled = std::ranges::any_of(enabled_layer_settings,
+	                                              [&requested_layer_setting](vk::LayerSettingEXT const &enabled_layer_setting)
+	                                              {
+		                                              return (strcmp(requested_layer_setting.pLayerName, enabled_layer_setting.pLayerName) == 0) &&
+		                                                     (strcmp(requested_layer_setting.pSettingName, enabled_layer_setting.pSettingName) == 0);
+	                                              });
 
 	if (is_already_enabled)
 	{
@@ -1148,8 +1150,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 #ifdef VKB_VULKAN_DEBUG
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		auto                                 debugExtensionIt              = std::ranges::find_if(
-            available_instance_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+		auto                                 debugExtensionIt = std::ranges::find_if(available_instance_extensions, [](vk::ExtensionProperties const &ep)
+		                                                                             { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_instance_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -1215,8 +1217,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	if (!debug_utils)
 	{
 		std::vector<vk::ExtensionProperties> available_device_extensions = physical_device->get_handle().enumerateDeviceExtensionProperties();
-		auto                                 debugExtensionIt            = std::ranges::find_if(
-            available_device_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+		auto                                 debugExtensionIt = std::ranges::find_if(available_device_extensions, [](vk::ExtensionProperties const &ep)
+		                                                                             { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_device_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);

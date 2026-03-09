@@ -460,7 +460,8 @@ inline vk::DescriptorSet RenderFrame<bindingType>::request_descriptor_set_impl(v
 		// If update after bind is enabled, we store the binding index of each binding that need to be updated before being bound
 		if (update_after_bind)
 		{
-			auto aggregate_binding_to_update = [&bindings_to_update, &descriptor_set_layout](const auto &infos_map) {
+			auto aggregate_binding_to_update = [&bindings_to_update, &descriptor_set_layout](const auto &infos_map)
+			{
 				for (const auto &[binding_index, ignored] : infos_map)
 				{
 					if (!(descriptor_set_layout.get_layout_binding_flag(binding_index) & vk::DescriptorBindingFlagBits::eUpdateAfterBind))

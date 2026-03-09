@@ -703,10 +703,12 @@ void MobileNerfRayQuery::create_static_object_buffers(int models_entry)
 	staging_index_buffer->update(model.indices);
 
 	// Copy over the data for each of the models
-	with_vkb_command_buffer([&](vkb::core::CommandBufferC &cmd) {
-		cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
-		cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
-	});
+	with_vkb_command_buffer(
+	    [&](vkb::core::CommandBufferC &cmd)
+	    {
+		    cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
+		    cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
+	    });
 
 	LOGI("Done Creating static object buffers");
 }
@@ -765,16 +767,18 @@ uint64_t MobileNerfRayQuery::get_buffer_device_address(VkBuffer buffer)
 void MobileNerfRayQuery::create_top_level_acceleration_structure()
 {
 	std::vector<VkAccelerationStructureInstanceKHR> acceleration_structure_instances;
-	auto                                            add_instance = [&](Model &model, const VkTransformMatrixKHR &transform_matrix, uint32_t instance_index) {
-        VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
-        acceleration_structure_instance.transform           = transform_matrix;
-        acceleration_structure_instance.instanceCustomIndex = instance_index;        // this is the model index instead of the instance index in instancing rendering.
-                                                                                     // need this to index correct weights and vertex & index buffer in shader.
-        acceleration_structure_instance.mask                                   = 0xFF;
-        acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
-        acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-        acceleration_structure_instance.accelerationStructureReference         = model.bottom_level_acceleration_structure->get_device_address();
-        acceleration_structure_instances.emplace_back(acceleration_structure_instance);
+	auto                                            add_instance = [&](Model &model, const VkTransformMatrixKHR &transform_matrix, uint32_t instance_index)
+	{
+		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
+		acceleration_structure_instance.transform = transform_matrix;
+		acceleration_structure_instance.instanceCustomIndex =
+		    instance_index;        // this is the model index instead of the instance index in instancing rendering.
+		                           // need this to index correct weights and vertex & index buffer in shader.
+		acceleration_structure_instance.mask                                   = 0xFF;
+		acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
+		acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+		acceleration_structure_instance.accelerationStructureReference         = model.bottom_level_acceleration_structure->get_device_address();
+		acceleration_structure_instances.emplace_back(acceleration_structure_instance);
 	};
 
 	auto     &ii = instancing_info;
@@ -887,7 +891,8 @@ void MobileNerfRayQuery::create_pipeline_layout()
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_bounded, nullptr, &descriptor_set_layout_common));
 	}
 
-	auto create_unbounded_descriptor_set_layout = [&](VkDescriptorSetLayout &layout_handle, VkDescriptorSetLayoutBinding &binding) {
+	auto create_unbounded_descriptor_set_layout = [&](VkDescriptorSetLayout &layout_handle, VkDescriptorSetLayoutBinding &binding)
+	{
 		VkDescriptorSetLayoutBindingFlagsCreateInfoEXT setLayoutBindingFlags{};
 		setLayoutBindingFlags.sType                        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
 		setLayoutBindingFlags.bindingCount                 = 1;
@@ -945,7 +950,8 @@ void MobileNerfRayQuery::create_descriptor_sets()
 	descriptor_set_feature1.resize(numDescriptorPerModel);
 	descriptor_set_feature2.resize(numDescriptorPerModel);
 
-	auto allocate_unbounded_descriptor_set = [&](VkDescriptorSetLayout &descriptor_set_layout, VkDescriptorSet &descriptor_set) {
+	auto allocate_unbounded_descriptor_set = [&](VkDescriptorSetLayout &descriptor_set_layout, VkDescriptorSet &descriptor_set)
+	{
 		uint32_t counts[1];
 		counts[0] = static_cast<uint32_t>(models.size());
 

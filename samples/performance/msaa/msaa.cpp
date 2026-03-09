@@ -777,7 +777,8 @@ void MSAASample::draw_gui()
 	uint32_t   lines        = landscape ? 3 : 4;
 
 	get_gui().show_options_window(
-	    [this, msaa_enabled, landscape]() {
+	    [this, msaa_enabled, landscape]()
+	    {
 		    ImGui::AlignTextToFramePadding();
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.4f);
 		    if (ImGui::BeginCombo("##sample_count", to_string(gui_sample_count).c_str()))

@@ -102,36 +102,38 @@ void TextureCompressionComparison::draw_gui()
 	{
 		const auto &formats = get_texture_formats();
 		gui_texture_names.resize(formats.size());
-		std::transform(formats.cbegin(), formats.cend(), gui_texture_names.begin(), [this](const CompressedTexture_t &format) -> std::string {
-			return fmt::format(FMT_STRING("{:s} {:s}"), format.short_name, is_texture_format_supported(format) ? "" : "(not supported)");
-		});
+		std::transform(formats.cbegin(), formats.cend(), gui_texture_names.begin(),
+		               [this](const CompressedTexture_t &format) -> std::string
+		               { return fmt::format(FMT_STRING("{:s} {:s}"), format.short_name, is_texture_format_supported(format) ? "" : "(not supported)"); });
 	}
 
 	std::vector<const char *> name_pointers(gui_texture_names.size());
 	std::transform(gui_texture_names.cbegin(), gui_texture_names.cend(), name_pointers.begin(), [](const std::string &in) { return in.c_str(); });
 
-	get_gui().show_options_window([this, &name_pointers]() {
-		if (ImGui::Combo("Compressed Format", &current_gui_format, name_pointers.data(), static_cast<int>(name_pointers.size())))
-		{
-			require_redraw     = true;
-			const auto &format = get_texture_formats()[current_gui_format];
-			if (is_texture_format_supported(format))
-			{
-				current_format = current_gui_format;
-			}
-		}
-		const auto &format = get_texture_formats()[current_gui_format];
-		if (is_texture_format_supported(format))
-		{
-			ImGui::Text("Format name: %s", format.format_name);
-			ImGui::Text("Bytes: %f MB", static_cast<float>(current_benchmark.total_bytes) / 1024.f / 1024.f);
-			ImGui::Text("Compression Time: %f (ms)", current_benchmark.compress_time_ms);
-		}
-		else
-		{
-			ImGui::Text("%s not supported on this GPU.", format.short_name);
-		}
-	});
+	get_gui().show_options_window(
+	    [this, &name_pointers]()
+	    {
+		    if (ImGui::Combo("Compressed Format", &current_gui_format, name_pointers.data(), static_cast<int>(name_pointers.size())))
+		    {
+			    require_redraw     = true;
+			    const auto &format = get_texture_formats()[current_gui_format];
+			    if (is_texture_format_supported(format))
+			    {
+				    current_format = current_gui_format;
+			    }
+		    }
+		    const auto &format = get_texture_formats()[current_gui_format];
+		    if (is_texture_format_supported(format))
+		    {
+			    ImGui::Text("Format name: %s", format.format_name);
+			    ImGui::Text("Bytes: %f MB", static_cast<float>(current_benchmark.total_bytes) / 1024.f / 1024.f);
+			    ImGui::Text("Compression Time: %f (ms)", current_benchmark.compress_time_ms);
+		    }
+		    else
+		    {
+			    ImGui::Text("%s not supported on this GPU.", format.short_name);
+		    }
+	    });
 }
 
 const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCompressionComparison::get_texture_formats()

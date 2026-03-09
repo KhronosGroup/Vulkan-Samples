@@ -56,24 +56,25 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 
 	std::default_random_engine            rng(42);        // Use a fixed seed, makes rendering deterministic from run to run.
 	std::uniform_real_distribution<float> float_distribution{-1.0f, 1.0f};
-	const auto                            get_random_axis = [&]() -> glm::vec3 {
-        glm::vec3 axis;
+	const auto                            get_random_axis = [&]() -> glm::vec3
+	{
+		glm::vec3 axis;
 
-        for (unsigned i = 0; i < 3; i++)
-        {
-            axis[i] = float_distribution(rng);
-        }
+		for (unsigned i = 0; i < 3; i++)
+		{
+			axis[i] = float_distribution(rng);
+		}
 
-        if (glm::all(glm::equal(axis, glm::vec3(0.0f))))
-        {
-            axis = glm::vec3(1.0f, 0.0f, 0.0f);
-        }
-        else
-        {
-            axis = glm::normalize(axis);
-        }
+		if (glm::all(glm::equal(axis, glm::vec3(0.0f))))
+		{
+			axis = glm::vec3(1.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			axis = glm::normalize(axis);
+		}
 
-        return axis;
+		return axis;
 	};
 
 	const auto get_random_angular_freq = [&]() -> float { return 1.0f + 0.2f * float_distribution(rng); };

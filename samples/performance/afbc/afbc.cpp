@@ -118,7 +118,8 @@ void AFBCSample::draw_gui()
 {
 	get_gui().show_options_window(
 	    /* body = */
-	    [this]() {
+	    [this]()
+	    {
 		    ImGui::Checkbox("Enable AFBC", &afbc_enabled);
 
 		    if (get_device().is_extension_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))

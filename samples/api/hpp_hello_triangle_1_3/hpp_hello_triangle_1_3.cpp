@@ -200,10 +200,12 @@ void HPPHelloTriangleV13::select_physical_device_and_surface(vkb::Window *window
 		// Find a queue family that supports graphics and presentation
 		std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
 
-		auto qfpIt = std::ranges::find_if(queue_family_properties, [&physical_device, surface = context.surface](vk::QueueFamilyProperties const &qfp) {
-			static uint32_t index = 0;
-			return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) && physical_device.getSurfaceSupportKHR(index++, surface);
-		});
+		auto qfpIt = std::ranges::find_if(queue_family_properties,
+		                                  [&physical_device, surface = context.surface](vk::QueueFamilyProperties const &qfp)
+		                                  {
+			                                  static uint32_t index = 0;
+			                                  return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) && physical_device.getSurfaceSupportKHR(index++, surface);
+		                                  });
 		if (qfpIt != queue_family_properties.end())
 		{
 			context.graphics_queue_index = std::distance(queue_family_properties.begin(), qfpIt);
@@ -386,9 +388,8 @@ void HPPHelloTriangleV13::init_device()
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
-	if (std::ranges::any_of(device_extensions, [](vk::ExtensionProperties const &extension) {
-		    return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0;
-	    }))
+	if (std::ranges::any_of(device_extensions, [](vk::ExtensionProperties const &extension)
+	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
 	{
 		required_device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 	}
@@ -459,9 +460,9 @@ void HPPHelloTriangleV13::init_instance()
 	std::vector<const char *> required_instance_extensions{VK_KHR_SURFACE_EXTENSION_NAME};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	bool has_debug_utils = std::ranges::any_of(available_instance_extensions, [](auto const &ep) {
-		return strncmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME, strlen(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) == 0;
-	});
+	bool has_debug_utils =
+	    std::ranges::any_of(available_instance_extensions, [](auto const &ep)
+	                        { return strncmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME, strlen(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) == 0; });
 	if (has_debug_utils)
 	{
 		required_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -474,9 +475,9 @@ void HPPHelloTriangleV13::init_instance()
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	required_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	bool portability_enumeration_available = std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension) {
-		return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0;
-	});
+	bool portability_enumeration_available =
+	    std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension)
+	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; });
 	if (portability_enumeration_available)
 	{
 		required_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
@@ -1127,15 +1128,18 @@ void HPPHelloTriangleV13::transition_image_layout(vk::CommandBuffer cmd, vk::Ima
  */
 bool HPPHelloTriangleV13::validate_extensions(const std::vector<const char *> &required, const std::vector<vk::ExtensionProperties> &available)
 {
-	return std::ranges::all_of(required, [&available](auto const &extension_name) {
-		bool found = std::ranges::any_of(available, [&extension_name](auto const &ep) { return strcmp(ep.extensionName, extension_name) == 0; });
-		if (!found)
-		{
-			// Output an error message for the missing extension
-			LOGE("Error: Required extension not found: {}", extension_name);
-		}
-		return found;
-	});
+	return std::ranges::all_of(required,
+	                           [&available](auto const &extension_name)
+	                           {
+		                           bool found = std::ranges::any_of(available, [&extension_name](auto const &ep)
+		                                                            { return strcmp(ep.extensionName, extension_name) == 0; });
+		                           if (!found)
+		                           {
+			                           // Output an error message for the missing extension
+			                           LOGE("Error: Required extension not found: {}", extension_name);
+		                           }
+		                           return found;
+	                           });
 }
 
 std::unique_ptr<vkb::Application> create_hpp_hello_triangle_1_3()

@@ -454,7 +454,8 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	uint32_t item_id = 0;
 
-	auto add_color_edit = [&](const char *caption, std::array<float, 4> &color) {
+	auto add_color_edit = [&](const char *caption, std::array<float, 4> &color)
+	{
 		ImGuiColorEditFlags flags            = ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float;
 		float               color_edit_width = 200;
 		ImGui::PushID(++item_id);
@@ -466,7 +467,8 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 		ImGui::PopID();
 	};
 
-	auto add_color_mask_checkbox = [&](const char *caption, bool &enabled, bool same_line = true) {
+	auto add_color_mask_checkbox = [&](const char *caption, bool &enabled, bool same_line = true)
+	{
 		ImGui::PushID(++item_id);
 		if (drawer.checkbox(caption, &enabled))
 		{
@@ -483,7 +485,8 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 
 	};
 
-	auto add_combo_with_button = [&](const char *caption, int32_t &index, int32_t first, int32_t last, std::vector<std::string> names) {
+	auto add_combo_with_button = [&](const char *caption, int32_t &index, int32_t first, int32_t last, std::vector<std::string> names)
+	{
 		ImGui::PushID(++item_id);
 		if (drawer.button("Next"))
 		{

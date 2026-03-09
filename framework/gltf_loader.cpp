@@ -550,13 +550,15 @@ sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_
 	std::vector<std::future<std::unique_ptr<sg::Image>>> image_component_futures;
 	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
-		image_component_futures.push_back(std::async([this, image_index]() {
-			auto image = parse_image(model.images[image_index]);
+		image_component_futures.push_back(std::async(
+		    [this, image_index]()
+		    {
+			    auto image = parse_image(model.images[image_index]);
 
-			LOGI("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
+			    LOGI("Loaded gltf image #{} ({})", image_index, model.images[image_index].uri.c_str());
 
-			return image;
-		}));
+			    return image;
+		    }));
 	}
 
 	std::vector<std::unique_ptr<sg::Image>> image_components;

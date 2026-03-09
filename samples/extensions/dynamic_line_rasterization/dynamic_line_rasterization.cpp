@@ -388,14 +388,16 @@ void DynamicLineRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &
 
 void DynamicLineRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	auto build_command_buffers_when = [this](bool drawer_action) {
+	auto build_command_buffers_when = [this](bool drawer_action)
+	{
 		if (drawer_action)
 		{
 			rebuild_command_buffers();
 		}
 	};
 
-	auto uint16_to_hex_string = [](const char *caption, uint16_t value) {
+	auto uint16_to_hex_string = [](const char *caption, uint16_t value)
+	{
 		std::stringstream stream;
 		stream << caption << std::hex << value;
 		return stream.str();

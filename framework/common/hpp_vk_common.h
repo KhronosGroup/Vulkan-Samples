@@ -155,9 +155,9 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice gpu, vk::Su
 	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
 	assert(!supported_surface_formats.empty());
 
-	auto it = std::ranges::find_if(supported_surface_formats, [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
-		return std::ranges::any_of(preferred_formats, [&surface_format](vk::Format format) { return format == surface_format.format; });
-	});
+	auto it = std::ranges::find_if(
+	    supported_surface_formats, [&preferred_formats](vk::SurfaceFormatKHR surface_format)
+	    { return std::ranges::any_of(preferred_formats, [&surface_format](vk::Format format) { return format == surface_format.format; }); });
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
@@ -370,9 +370,8 @@ inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> co
 	// Try to find a queue family index that supports compute but not graphics
 	if (queue_flag & vk::QueueFlagBits::eCompute)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) {
-			return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics);
-		});
+		auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property)
+		                                       { return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics); });
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
@@ -383,10 +382,12 @@ inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> co
 	// Try to find a queue family index that supports transfer but not graphics and compute
 	if (queue_flag & vk::QueueFlagBits::eTransfer)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) {
-			return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
-			       !(property.queueFlags & vk::QueueFlagBits::eCompute);
-		});
+		auto propertyIt = std::ranges::find_if(queue_family_properties,
+		                                       [queue_flag](const vk::QueueFamilyProperties &property)
+		                                       {
+			                                       return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
+			                                              !(property.queueFlags & vk::QueueFlagBits::eCompute);
+		                                       });
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
@@ -394,8 +395,8 @@ inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> co
 	}
 
 	// For other queue types or if no separate compute queue is present, return the first one to support the requested flags
-	auto propertyIt = std::ranges::find_if(
-	    queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) == queue_flag; });
+	auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property)
+	                                       { return (property.queueFlags & queue_flag) == queue_flag; });
 	if (propertyIt != queue_family_properties.end())
 	{
 		return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));

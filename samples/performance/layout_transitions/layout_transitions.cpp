@@ -252,7 +252,8 @@ void LayoutTransitions::draw_gui()
 {
 	get_gui().show_options_window(
 	    /* body = */
-	    [this]() {
+	    [this]()
+	    {
 		    ImGui::Text("Transition images from:");
 		    ImGui::RadioButton("Undefined layout", reinterpret_cast<int *>(&layout_transition_type), LayoutTransitionType::UNDEFINED);
 		    ImGui::SameLine();

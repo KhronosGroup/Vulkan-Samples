@@ -368,7 +368,8 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 		{
 			uint8_t *rgba = buffer + 4 * (y * image_info.extent.width + x);
 
-			const auto float_to_unorm8 = [](float v) -> uint8_t {
+			const auto float_to_unorm8 = [](float v) -> uint8_t
+			{
 				v *= 255.0f;
 				int rounded = static_cast<int>(v + 0.5f);
 				if (rounded < 0)

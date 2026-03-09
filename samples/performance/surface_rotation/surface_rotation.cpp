@@ -135,7 +135,8 @@ void SurfaceRotation::draw_gui()
 		uint32_t lines = 2;
 		get_gui().show_options_window(
 		    /* body = */
-		    [&]() {
+		    [&]()
+		    {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
 			    ImGui::Text("%s | %s", transform.c_str(), resolution_str.c_str());
 		    },
@@ -147,7 +148,8 @@ void SurfaceRotation::draw_gui()
 		uint32_t lines = 3;
 		get_gui().show_options_window(
 		    /* body = */
-		    [&]() {
+		    [&]()
+		    {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
 			    ImGui::Text("%s", transform.c_str());
 			    ImGui::Text("%s", resolution_str.c_str());

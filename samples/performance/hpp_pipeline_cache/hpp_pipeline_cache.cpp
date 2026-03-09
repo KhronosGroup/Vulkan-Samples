@@ -118,7 +118,8 @@ void HPPPipelineCache::draw_gui()
 {
 	get_gui().show_options_window(
 	    /* body = */
-	    [this]() {
+	    [this]()
+	    {
 		    if (ImGui::Checkbox("Pipeline cache", &enable_pipeline_cache))
 		    {
 			    get_device().get_resource_cache().set_pipeline_cache(enable_pipeline_cache ? pipeline_cache : nullptr);

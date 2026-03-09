@@ -1478,62 +1478,76 @@ void ShaderObject::iterate_current()
 
 	if (iterate_basic)
 	{
-		funcs.emplace_back([selected_shader, this]() {
-			selected_basic_object = selected_shader % num_basic_objects;
-			current_basic_linked_shaders[selected_shader % num_basic_objects]++;
-			current_basic_linked_shaders[selected_shader % num_basic_objects] %= basic_vert_shaders.size();
-		});
+		funcs.emplace_back(
+		    [selected_shader, this]()
+		    {
+			    selected_basic_object = selected_shader % num_basic_objects;
+			    current_basic_linked_shaders[selected_shader % num_basic_objects]++;
+			    current_basic_linked_shaders[selected_shader % num_basic_objects] %= basic_vert_shaders.size();
+		    });
 	}
 
 	if (iterate_material_vert)
 	{
-		funcs.emplace_back([selected_shader, this]() {
-			selected_material_object = selected_shader % num_material_objects;
-			current_material_shaders[selected_shader % num_material_objects].vert++;
-			current_material_shaders[selected_shader % num_material_objects].vert %= material_vert_shaders.size();
-		});
+		funcs.emplace_back(
+		    [selected_shader, this]()
+		    {
+			    selected_material_object = selected_shader % num_material_objects;
+			    current_material_shaders[selected_shader % num_material_objects].vert++;
+			    current_material_shaders[selected_shader % num_material_objects].vert %= material_vert_shaders.size();
+		    });
 	}
 
 	if (iterate_material_geo)
 	{
-		funcs.emplace_back([selected_shader, this]() {
-			selected_material_object = selected_shader % num_material_objects;
-			current_material_shaders[selected_shader % num_material_objects].geo++;
-			current_material_shaders[selected_shader % num_material_objects].geo %= material_geo_shaders.size();
-		});
+		funcs.emplace_back(
+		    [selected_shader, this]()
+		    {
+			    selected_material_object = selected_shader % num_material_objects;
+			    current_material_shaders[selected_shader % num_material_objects].geo++;
+			    current_material_shaders[selected_shader % num_material_objects].geo %= material_geo_shaders.size();
+		    });
 	}
 
 	if (iterate_material_frag)
 	{
-		funcs.emplace_back([selected_shader, this]() {
-			selected_material_object = selected_shader % num_material_objects;
-			current_material_shaders[selected_shader % num_material_objects].frag++;
-			current_material_shaders[selected_shader % num_material_objects].frag %= material_frag_shaders.size();
-		});
+		funcs.emplace_back(
+		    [selected_shader, this]()
+		    {
+			    selected_material_object = selected_shader % num_material_objects;
+			    current_material_shaders[selected_shader % num_material_objects].frag++;
+			    current_material_shaders[selected_shader % num_material_objects].frag %= material_frag_shaders.size();
+		    });
 	};
 
 	if (iterate_post_process)
 	{
-		funcs.emplace_back([this]() {
-			current_post_process_shader++;
-			current_post_process_shader %= post_process_frag_shaders.size();
-		});
+		funcs.emplace_back(
+		    [this]()
+		    {
+			    current_post_process_shader++;
+			    current_post_process_shader %= post_process_frag_shaders.size();
+		    });
 	};
 
 	if (iterate_output)
 	{
-		funcs.emplace_back([this]() {
-			current_output_format++;
-			current_output_format %= output_images.size();
-		});
+		funcs.emplace_back(
+		    [this]()
+		    {
+			    current_output_format++;
+			    current_output_format %= output_images.size();
+		    });
 	}
 
 	if (iterate_depth)
 	{
-		funcs.emplace_back([this]() {
-			current_depth_format++;
-			current_depth_format %= depth_images.size();
-		});
+		funcs.emplace_back(
+		    [this]()
+		    {
+			    current_depth_format++;
+			    current_depth_format %= depth_images.size();
+		    });
 	}
 
 	if (funcs.size() == 0)

@@ -297,7 +297,8 @@ void RaytracingInvocationReorder::create_static_object_buffers()
 	{
 		auto cmd = get_device().get_command_pool().request_command_buffer();
 		cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-		auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer) {
+		auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer)
+		{
 			auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(),
 			                                                          buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd->copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
@@ -438,7 +439,8 @@ void RaytracingInvocationReorder::create_top_level_acceleration_structure(bool p
 
 	// Add the instances for the static scene, billboard texture, and refraction model
 	std::vector<VkAccelerationStructureInstanceKHR> instances;
-	auto add_instance = [&](ModelBuffer &model_buffer, const VkTransformMatrixKHR &transform_matrix, uint32_t instance_index) {
+	auto add_instance = [&](ModelBuffer &model_buffer, const VkTransformMatrixKHR &transform_matrix, uint32_t instance_index)
+	{
 		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
 		acceleration_structure_instance.transform           = transform_matrix;
 		acceleration_structure_instance.instanceCustomIndex = instance_index;
@@ -761,7 +763,8 @@ void RaytracingInvocationReorder::create_dynamic_object_buffers(float time)
 	dynamic_vertex_buffer->update(refraction_model.data(), vertex_buffer_size);
 	dynamic_index_buffer->update(refraction_indices.data(), index_buffer_size);
 
-	auto assign_buffer = [&](ModelBuffer &buffer) {
+	auto assign_buffer = [&](ModelBuffer &buffer)
+	{
 		buffer.vertex_offset     = 0;
 		buffer.index_offset      = 0;
 		buffer.is_static         = false;
@@ -1086,7 +1089,8 @@ void RaytracingInvocationReorder::build_command_buffers()
 			}
 		}
 
-		auto getBufferBarrier = [](const vkb::core::BufferC &buffer) {
+		auto getBufferBarrier = [](const vkb::core::BufferC &buffer)
+		{
 			VkBufferMemoryBarrier barrier = vkb::initializers::buffer_memory_barrier();
 			barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT;
 			barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT;

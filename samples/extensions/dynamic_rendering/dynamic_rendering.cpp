@@ -315,7 +315,8 @@ void DynamicRendering::build_command_buffers()
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
-		auto draw_scene = [&] {
+		auto draw_scene = [&]
+		{
 			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 

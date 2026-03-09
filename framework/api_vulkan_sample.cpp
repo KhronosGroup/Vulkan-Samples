@@ -478,10 +478,12 @@ void ApiVulkanSample::update_overlay(float delta_time, const std::function<void(
 			accumulated_time = 0.0f;
 		}
 
-		get_gui().show_simple_window(get_name(), fps, [this, additional_ui]() {
-			on_update_ui_overlay(get_gui().get_drawer());
-			additional_ui();
-		});
+		get_gui().show_simple_window(get_name(), fps,
+		                             [this, additional_ui]()
+		                             {
+			                             on_update_ui_overlay(get_gui().get_drawer());
+			                             additional_ui();
+		                             });
 
 		get_gui().update(delta_time);
 

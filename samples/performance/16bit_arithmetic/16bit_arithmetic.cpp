@@ -327,7 +327,8 @@ void KHR16BitArithmeticSample::draw_gui()
 
 	get_gui().show_options_window(
 	    /* body = */
-	    [this, label]() {
+	    [this, label]()
+	    {
 		    if (!supported_extensions)
 		    {
 			    ImGui::Text("%s", label);

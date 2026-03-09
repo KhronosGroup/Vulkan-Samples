@@ -586,7 +586,8 @@ void RaytracingReflection::create_shader_binding_tables()
 	VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(get_device().get_handle(), pipeline, 0, group_count, sbt_size, shader_handle_storage.data()));
 
 	// Write the handles in the SBT buffer
-	auto copyHandles = [&](auto &buffer, std::vector<uint32_t> &indices, uint32_t stride) {
+	auto copyHandles = [&](auto &buffer, std::vector<uint32_t> &indices, uint32_t stride)
+	{
 		auto *pBuffer = static_cast<uint8_t *>(buffer->map());
 		for (uint32_t index = 0; index < static_cast<uint32_t>(indices.size()); index++)
 		{

@@ -260,11 +260,13 @@ bool is_depth_a_dependency(std::vector<T_SubpassDescription> &subpass_descriptio
 	}
 
 	// Otherwise check if any uses depth as an input
-	return std::ranges::any_of(subpass_descriptions, [&attachment_descriptions](auto const &subpass) {
-		return std::ranges::any_of(std::span{subpass.pInputAttachments, subpass.inputAttachmentCount}, [&attachment_descriptions](auto const &reference) {
-			return vkb::is_depth_format(attachment_descriptions[reference.attachment].format);
-		});
-	});
+	return std::ranges::any_of(subpass_descriptions,
+	                           [&attachment_descriptions](auto const &subpass)
+	                           {
+		                           return std::ranges::any_of(std::span{subpass.pInputAttachments, subpass.inputAttachmentCount},
+		                                                      [&attachment_descriptions](auto const &reference)
+		                                                      { return vkb::is_depth_format(attachment_descriptions[reference.attachment].format); });
+	                           });
 
 	return false;
 }

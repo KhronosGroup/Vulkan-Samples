@@ -50,7 +50,8 @@ void AsyncComputeSample::draw_gui()
 {
 	get_gui().show_options_window(
 	    /* body = */
-	    [this]() {
+	    [this]()
+	    {
 		    ImGui::Checkbox("Enable async queues", &async_enabled);
 		    ImGui::Checkbox("Double buffer HDR", &double_buffer_hdr_frames);
 		    ImGui::Checkbox("Rotate shadows", &rotate_shadows);
@@ -574,7 +575,8 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		command_buffer->image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
 
-	const auto discard_blur_view = [&](const vkb::core::ImageView &view) {
+	const auto discard_blur_view = [&](const vkb::core::ImageView &view)
+	{
 		// If maintenance9 is not enabled, resources with VK_SHARING_MODE_EXCLUSIVE must only be accessed by queues in the queue family that has ownership of
 		// the resource. Upon creation resources with VK_SHARING_MODE_EXCLUSIVE are not owned by any queue, ownership is implicitly acquired upon first use. The
 		// application must perform a queue family ownership transfer if it wishes to make the memory contents of the resource accessible to a different queue
@@ -594,7 +596,8 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		command_buffer->image_memory_barrier(view, memory_barrier);
 	};
 
-	const auto read_only_blur_view = [&](const vkb::core::ImageView &view, bool is_final) {
+	const auto read_only_blur_view = [&](const vkb::core::ImageView &view, bool is_final)
+	{
 		const bool queue_family_transfer = is_final && post_compute_queue->get_family_index() != present_graphics_queue->get_family_index();
 
 		// release_barrier_2: Releasing blur_chain_views[1] from  post_compute to present_graphics
@@ -632,7 +635,8 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		float    inv_input_width, inv_input_height;
 	};
 
-	const auto dispatch_pass = [&](const vkb::core::ImageView &dst, const vkb::core::ImageView &src, bool is_final = false) {
+	const auto dispatch_pass = [&](const vkb::core::ImageView &dst, const vkb::core::ImageView &src, bool is_final = false)
+	{
 		discard_blur_view(dst);
 
 		auto dst_extent = downsample_extent(dst.get_image().get_extent(), dst.get_subresource_range().baseMipLevel);

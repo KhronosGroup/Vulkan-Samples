@@ -153,9 +153,8 @@ void ImageCompressionControlSample::create_render_context()
 		std::vector<VkSurfaceFormatKHR> new_surface_priority_list;
 		for (auto const &surface_priority : get_surface_priority_list())
 		{
-			auto it = std::ranges::find_if(surface_formats_that_support_compression, [&](VkSurfaceFormatKHR &sf) {
-				return surface_priority.format == sf.format && surface_priority.colorSpace == sf.colorSpace;
-			});
+			auto it = std::ranges::find_if(surface_formats_that_support_compression, [&](VkSurfaceFormatKHR &sf)
+			                               { return surface_priority.format == sf.format && surface_priority.colorSpace == sf.colorSpace; });
 			if (it != surface_formats_that_support_compression.end())
 			{
 				new_surface_priority_list.push_back(*it);
@@ -509,7 +508,8 @@ void ImageCompressionControlSample::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    [&]() {
+	    [&]()
+	    {
 		    const auto window_width = ImGui::GetWindowWidth();
 
 		    /**

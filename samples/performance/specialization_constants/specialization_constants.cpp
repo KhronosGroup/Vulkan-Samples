@@ -147,7 +147,8 @@ void SpecializationConstants::draw_gui()
 
 	get_gui().show_options_window(
 	    /* body = */
-	    [&]() {
+	    [&]()
+	    {
 		    ImGui::RadioButton("Uniform Buffer Objects", &specialization_constants_enabled, 0);
 		    if (landscape)
 		    {

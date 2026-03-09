@@ -103,28 +103,33 @@ inline VkSurfaceFormatKHR choose_surface_format(const VkSurfaceFormatKHR        
                                                 const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list)
 {
 	// Try to find the requested surface format in the supported surface formats
-	auto surface_format_it = std::ranges::find_if(available_surface_formats, [&requested_surface_format](const VkSurfaceFormatKHR &surface) {
-		if (surface.format == requested_surface_format.format && surface.colorSpace == requested_surface_format.colorSpace)
-		{
-			return true;
-		}
+	auto surface_format_it =
+	    std::ranges::find_if(available_surface_formats,
+	                         [&requested_surface_format](const VkSurfaceFormatKHR &surface)
+	                         {
+		                         if (surface.format == requested_surface_format.format && surface.colorSpace == requested_surface_format.colorSpace)
+		                         {
+			                         return true;
+		                         }
 
-		return false;
-	});
+		                         return false;
+	                         });
 
 	// If the requested surface format isn't found, then try to request a format from the priority list
 	if (surface_format_it == available_surface_formats.end())
 	{
 		for (auto &surface_format : surface_format_priority_list)
 		{
-			surface_format_it = std::ranges::find_if(available_surface_formats, [&surface_format](const VkSurfaceFormatKHR &surface) {
-				if (surface.format == surface_format.format && surface.colorSpace == surface_format.colorSpace)
-				{
-					return true;
-				}
+			surface_format_it = std::ranges::find_if(available_surface_formats,
+			                                         [&surface_format](const VkSurfaceFormatKHR &surface)
+			                                         {
+				                                         if (surface.format == surface_format.format && surface.colorSpace == surface_format.colorSpace)
+				                                         {
+					                                         return true;
+				                                         }
 
-				return false;
-			});
+				                                         return false;
+			                                         });
 			if (surface_format_it != available_surface_formats.end())
 			{
 				LOGW("(Swapchain) Surface format ({}) not supported. Selecting ({}).", to_string(requested_surface_format), to_string(*surface_format_it));

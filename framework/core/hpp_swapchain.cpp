@@ -63,9 +63,9 @@ vk::PresentModeKHR choose_present_mode(vk::PresentModeKHR request_present_mode, 
 	if (present_mode_it == available_present_modes.end())
 	{
 		// If the requested present mode isn't found, then try to find a mode from the priority list
-		auto const chosen_present_mode_it = std::ranges::find_if(present_mode_priority_list, [&available_present_modes](vk::PresentModeKHR present_mode) {
-			return std::ranges::find(available_present_modes, present_mode) != available_present_modes.end();
-		});
+		auto const chosen_present_mode_it =
+		    std::ranges::find_if(present_mode_priority_list, [&available_present_modes](vk::PresentModeKHR present_mode)
+		                         { return std::ranges::find(available_present_modes, present_mode) != available_present_modes.end(); });
 
 		// If nothing found, always default to FIFO
 		vk::PresentModeKHR const chosen_present_mode =
@@ -92,9 +92,8 @@ vk::SurfaceFormatKHR choose_surface_format(const vk::SurfaceFormatKHR           
 	if (surface_format_it == available_surface_formats.end())
 	{
 		auto const chosen_surface_format_it =
-		    std::ranges::find_if(surface_format_priority_list, [&available_surface_formats](vk::SurfaceFormatKHR surface_format) {
-			    return std::ranges::find(available_surface_formats, surface_format) != available_surface_formats.end();
-		    });
+		    std::ranges::find_if(surface_format_priority_list, [&available_surface_formats](vk::SurfaceFormatKHR surface_format)
+		                         { return std::ranges::find(available_surface_formats, surface_format) != available_surface_formats.end(); });
 
 		// If nothing found, default to the first available format
 		vk::SurfaceFormatKHR const &chosen_surface_format =
@@ -184,9 +183,9 @@ std::set<vk::ImageUsageFlagBits> choose_image_usage(const std::set<vk::ImageUsag
 		static const std::vector<vk::ImageUsageFlagBits> image_usage_priority_list = {
 		    vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eStorage, vk::ImageUsageFlagBits::eSampled, vk::ImageUsageFlagBits::eTransferDst};
 
-		auto const priority_list_it = std::ranges::find_if(image_usage_priority_list, [&supported_image_usage, &supported_features](auto const image_usage) {
-			return ((image_usage & supported_image_usage) && validate_format_feature(image_usage, supported_features));
-		});
+		auto const priority_list_it =
+		    std::ranges::find_if(image_usage_priority_list, [&supported_image_usage, &supported_features](auto const image_usage)
+		                         { return ((image_usage & supported_image_usage) && validate_format_feature(image_usage, supported_features)); });
 		if (priority_list_it != image_usage_priority_list.end())
 		{
 			validated_image_usage_flags.insert(*priority_list_it);

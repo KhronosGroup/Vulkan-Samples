@@ -522,10 +522,12 @@ void MobileNerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, Fram
 	attachment.image =
 	    std::make_unique<vkb::core::Image>(get_device(), VkExtent3D{surfaceExtent.width, surfaceExtent.height, 1}, format, usage, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	with_command_buffer([&](VkCommandBuffer command_buffer) {
-		vkb::image_layout_transition(command_buffer, attachment.image->get_handle(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, {},
-		                             {}, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, {aspectMask, 0, 1, 0, 1});
-	});
+	with_command_buffer(
+	    [&](VkCommandBuffer command_buffer)
+	    {
+		    vkb::image_layout_transition(command_buffer, attachment.image->get_handle(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                                 {}, {}, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, {aspectMask, 0, 1, 0, 1});
+	    });
 
 	VkImageViewCreateInfo color_image_view           = vkb::initializers::image_view_create_info();
 	color_image_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
@@ -1260,10 +1262,12 @@ void MobileNerf::create_static_object_buffers(int model_index, int sub_model_ind
 	staging_index_buffer->update(model.indices);
 
 	// Copy over the data for each of the models
-	with_vkb_command_buffer([&](vkb::core::CommandBufferC &cmd) {
-		cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
-		cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
-	});
+	with_vkb_command_buffer(
+	    [&](vkb::core::CommandBufferC &cmd)
+	    {
+		    cmd.copy_buffer(*staging_vertex_buffer, *model.vertex_buffer, staging_vertex_buffer->get_size());
+		    cmd.copy_buffer(*staging_index_buffer, *model.index_buffer, staging_index_buffer->get_size());
+	    });
 
 	LOGI("Done Creating static object buffers");
 }
@@ -1507,8 +1511,8 @@ void MobileNerf::prepare_instance_data()
 	staging_instance_buffer->update(instance_data);
 
 	// now transfer over to the end buffer
-	with_vkb_command_buffer(
-	    [&](vkb::core::CommandBufferC &cmd) { cmd.copy_buffer(*staging_instance_buffer, *instance_buffer, staging_instance_buffer->get_size()); });
+	with_vkb_command_buffer([&](vkb::core::CommandBufferC &cmd)
+	                        { cmd.copy_buffer(*staging_instance_buffer, *instance_buffer, staging_instance_buffer->get_size()); });
 }
 
 void MobileNerf::draw()

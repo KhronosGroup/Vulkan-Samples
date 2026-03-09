@@ -337,7 +337,8 @@ void PipelineBarriers::draw_gui()
 
 	get_gui().show_options_window(
 	    /* body = */
-	    [this, portrait_mode]() {
+	    [this, portrait_mode]()
+	    {
 		    ImGui::Text("Pipeline barrier stages:");
 		    ImGui::RadioButton("Bottom to top", reinterpret_cast<int *>(&dependency_type), DependencyType::BOTTOM_TO_TOP);
 		    ImGui::SameLine();

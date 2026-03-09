@@ -427,9 +427,9 @@ inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::g
 template <vkb::BindingType bindingType>
 inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::get_queue_by_present(uint32_t queue_index) const
 {
-	auto queueIt = std::ranges::find_if(queues, [queue_index](const std::vector<vkb::core::HPPQueue> &queue_family) {
-		return !queue_family.empty() && queue_index < queue_family[0].get_properties().queueCount && queue_family[0].support_present();
-	});
+	auto queueIt = std::ranges::find_if(
+	    queues, [queue_index](const std::vector<vkb::core::HPPQueue> &queue_family)
+	    { return !queue_family.empty() && queue_index < queue_family[0].get_properties().queueCount && queue_family[0].support_present(); });
 	if (queueIt != queues.end())
 	{
 		if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -592,11 +592,14 @@ inline void Device<bindingType>::flush_command_buffer_impl(vk::Device device, vk
 template <vkb::BindingType bindingType>
 vkb::core::HPPQueue const &Device<bindingType>::get_queue_by_flags_impl(vk::QueueFlags required_queue_flags, uint32_t queue_index) const
 {
-	auto queueIt = std::ranges::find_if(queues, [required_queue_flags, queue_index](const std::vector<vkb::core::HPPQueue> &queue) {
-		assert(!queue.empty());
-		vk::QueueFamilyProperties const &properties = queue[0].get_properties();
-		return ((properties.queueFlags & required_queue_flags) == required_queue_flags) && (queue_index < properties.queueCount);
-	});
+	auto queueIt =
+	    std::ranges::find_if(queues,
+	                         [required_queue_flags, queue_index](const std::vector<vkb::core::HPPQueue> &queue)
+	                         {
+		                         assert(!queue.empty());
+		                         vk::QueueFamilyProperties const &properties = queue[0].get_properties();
+		                         return ((properties.queueFlags & required_queue_flags) == required_queue_flags) && (queue_index < properties.queueCount);
+	                         });
 
 	if (queueIt == queues.end())
 	{

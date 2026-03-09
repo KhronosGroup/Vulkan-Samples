@@ -246,7 +246,8 @@ void ConstantData::draw_gui()
 
 	get_gui().show_options_window(
 	    /* body = */
-	    [this]() {
+	    [this]()
+	    {
 		    // Create a line for every config
 		    ImGui::Text("Method of pushing MVP to shader:");
 

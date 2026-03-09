@@ -85,7 +85,8 @@ void SwapchainImages::draw_gui()
 {
 	get_gui().show_options_window(
 	    /* body = */
-	    [this]() {
+	    [this]()
+	    {
 		    ImGui::RadioButton("Double buffering", &swapchain_image_count, 2);
 		    ImGui::SameLine();
 		    ImGui::RadioButton("Triple buffering", &swapchain_image_count, 3);

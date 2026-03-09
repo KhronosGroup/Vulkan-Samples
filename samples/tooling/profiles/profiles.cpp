@@ -176,9 +176,8 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
 	// If VK_KHR_portability_enumeration is available in the implementation, then we must enable the extension
-	if (std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension) {
-		    return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0;
-	    }))
+	if (std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension)
+	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		enabled_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;

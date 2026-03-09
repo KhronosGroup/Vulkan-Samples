@@ -34,7 +34,8 @@ struct CompareExtent2D
 
 Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage) : format{format}, samples{samples}, usage{usage}
 {}
-const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget> {
+const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget>
+{
 	VkFormat depth_format = get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle());
 
 	core::Image depth_image{swapchain_image.get_device(), swapchain_image.get_extent(), depth_format,
@@ -88,7 +89,8 @@ vkb::RenderTarget::RenderTarget(std::vector<core::ImageView> &&image_views) :
 	std::set<VkExtent2D, CompareExtent2D> unique_extent;
 
 	// Returns the extent of the base mip level pointed at by a view
-	auto get_view_extent = [](const core::ImageView &view) {
+	auto get_view_extent = [](const core::ImageView &view)
+	{
 		const VkExtent3D mip0_extent = view.get_image().get_extent();
 		const uint32_t   mip_level   = view.get_subresource_range().baseMipLevel;
 		return VkExtent2D{mip0_extent.width >> mip_level, mip0_extent.height >> mip_level};

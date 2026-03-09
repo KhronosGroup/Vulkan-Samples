@@ -62,7 +62,8 @@ void RenderPassesSample::draw_gui()
 
 	get_gui().show_options_window(
 	    /* body = */
-	    [this, lines]() {
+	    [this, lines]()
+	    {
 		    // Checkbox vkCmdClear
 		    ImGui::Checkbox("Use vkCmdClearAttachments (color)", &cmd_clear);
 

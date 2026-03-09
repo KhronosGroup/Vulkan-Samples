@@ -706,11 +706,13 @@ void ComputeShadersWithTensors::draw_gui()
 
 	ImDrawList *draw_list = ImGui::GetForegroundDrawList();
 
-	auto draw_text_centered = [&](float x, float y, const char *text) {
+	auto draw_text_centered = [&](float x, float y, const char *text)
+	{
 		ImVec2 text_size = ImGui::CalcTextSize(text);
 		draw_list->AddText(ImVec2(x - text_size.x / 2, y - text_size.y / 2), IM_COL32_WHITE, text);
 	};
-	auto draw_arrow_centered = [&](float x, float y, float half_length, const char *label) {
+	auto draw_arrow_centered = [&](float x, float y, float half_length, const char *label)
+	{
 		draw_list->AddLine(ImVec2(x - half_length, y), ImVec2(x + half_length - 30.0f, y), IM_COL32_WHITE, 5.0f);
 		ImGui::RenderArrowPointingAt(draw_list, ImVec2(x + half_length, y), ImVec2(30.0f, 10.0f), ImGuiDir_Right, IM_COL32_WHITE);
 		draw_text_centered(x, y + 20, label);

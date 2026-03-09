@@ -60,22 +60,24 @@ class ThreadPool
 
 			for (size_t i = 0; i < thread_count; ++i)
 			{
-				workers.emplace_back([this, i] {
-					size_t thread_index = i;
-					while (true)
-					{
-						std::function<void(size_t)> task;
-						{
-							std::unique_lock<std::mutex> lock(queue_mutex);
-							condition.wait(lock, [this] { return stop_flag || !tasks.empty(); });
-							if (stop_flag && tasks.empty())
-								return;
-							task = std::move(tasks.front());
-							tasks.pop();
-						}
-						task(thread_index);
-					}
-				});
+				workers.emplace_back(
+				    [this, i]
+				    {
+					    size_t thread_index = i;
+					    while (true)
+					    {
+						    std::function<void(size_t)> task;
+						    {
+							    std::unique_lock<std::mutex> lock(queue_mutex);
+							    condition.wait(lock, [this] { return stop_flag || !tasks.empty(); });
+							    if (stop_flag && tasks.empty())
+								    return;
+							    task = std::move(tasks.front());
+							    tasks.pop();
+						    }
+						    task(thread_index);
+					    }
+				    });
 			}
 		}
 	}

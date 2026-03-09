@@ -76,16 +76,17 @@ class Instance
 	    std::function<void *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext =
 	        [](std::vector<std::string> const &, std::vector<std::string> const &) { return nullptr; },
 	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const &get_create_flags =
-	        [](std::vector<std::string> const &) {
-		        if constexpr (bindingType == vkb::BindingType::Cpp)
-		        {
-			        return vk::InstanceCreateFlags{};
-		        }
-		        else
-		        {
-			        return 0;
-		        }
-	        });
+	        [](std::vector<std::string> const &)
+	    {
+		    if constexpr (bindingType == vkb::BindingType::Cpp)
+		    {
+			    return vk::InstanceCreateFlags{};
+		    }
+		    else
+		    {
+			    return 0;
+		    }
+	    });
 
 	/**
 	 * @brief Queries the GPUs of a InstanceType that is already created
@@ -140,8 +141,8 @@ namespace
 inline bool enable_extension(std::string const &requested_extension, std::vector<vk::ExtensionProperties> const &available_extensions,
                              std::vector<std::string> &enabled_extensions)
 {
-	bool is_available = std::ranges::any_of(
-	    available_extensions, [&requested_extension](auto const &available_extension) { return requested_extension == available_extension.extensionName; });
+	bool is_available = std::ranges::any_of(available_extensions, [&requested_extension](auto const &available_extension)
+	                                        { return requested_extension == available_extension.extensionName; });
 	if (is_available)
 	{
 		bool is_already_enabled =

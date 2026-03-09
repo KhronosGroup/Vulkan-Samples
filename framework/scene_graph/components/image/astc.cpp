@@ -216,7 +216,8 @@ Astc::Astc(const Image &image) : Image{image.get_name()}
 	const auto           profile                                   = to_profile(image.get_format());
 
 	auto can_load_from_file = [this, profile, fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, std::vector<uint8_t> &dst_data,
-	                                                                                             uint32_t width, uint32_t height, uint32_t depth) {
+	                                                                                             uint32_t width, uint32_t height, uint32_t depth)
+	{
 		if (!use_cache)
 		{
 			LOGD("Device does not support ASTC format and cache is disabled. ASTC image {} will be decoded.", get_name())
@@ -235,7 +236,8 @@ Astc::Astc(const Image &image) : Image{image.get_name()}
 			}
 			size_t offset = 0;
 
-			auto copy_from_file = [fs, path](void *dst, size_t *offset, size_t content_size) {
+			auto copy_from_file = [fs, path](void *dst, size_t *offset, size_t content_size)
+			{
 				const auto bin_content = fs->read_chunk(path, *offset, content_size);
 				std::memcpy(dst, &bin_content[0], content_size);
 				*offset += content_size;
@@ -279,8 +281,9 @@ Astc::Astc(const Image &image) : Image{image.get_name()}
 		}
 	};
 
-	auto save_to_file = [fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, uint8_t *dst_data, uint32_t width, uint32_t height,
-	                                                                        uint32_t depth) {
+	auto save_to_file =
+	    [fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, uint8_t *dst_data, uint32_t width, uint32_t height, uint32_t depth)
+	{
 		if (!use_cache)
 		{
 			return;
@@ -294,9 +297,8 @@ Astc::Astc(const Image &image) : Image{image.get_name()}
 			std::vector<uint8_t> astc_file_content;
 			astc_file_content.reserve(sizeof(file_cache_header) + (3 * sizeof(std::uint32_t)) + image_size);
 
-			auto append_to_file = [](std::vector<uint8_t> &dst_file, const std::uint8_t *content, size_t content_size) {
-				dst_file.insert(dst_file.end(), content, content + content_size);
-			};
+			auto append_to_file = [](std::vector<uint8_t> &dst_file, const std::uint8_t *content, size_t content_size)
+			{ dst_file.insert(dst_file.end(), content, content + content_size); };
 
 			append_to_file(astc_file_content, (uint8_t *) &file_cache_header, sizeof(file_cache_header));
 			append_to_file(astc_file_content, (uint8_t *) &width, sizeof(uint32_t));

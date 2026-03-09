@@ -485,7 +485,8 @@ void MultiDrawIndirect::initialize_resources()
 
 	auto cmd = get_device().get_command_pool().request_command_buffer();
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer, VkBufferUsageFlags buffer_usage_flags) {
+	auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer, VkBufferUsageFlags buffer_usage_flags)
+	{
 		auto output_buffer =
 		    std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		                                         VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
@@ -553,7 +554,8 @@ void MultiDrawIndirect::create_pipeline()
 
 	// Create descriptors
 	auto create_descriptors = [this](const std::vector<VkDescriptorSetLayoutBinding> &set_layout_bindings, VkDescriptorSetLayout &_descriptor_set_layout,
-	                                 VkPipelineLayout &_pipeline_layout) {
+	                                 VkPipelineLayout &_pipeline_layout)
+	{
 		VkDescriptorSetLayoutCreateInfo descriptor_layout =
 		    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &_descriptor_set_layout));
@@ -651,7 +653,8 @@ void MultiDrawIndirect::create_pipeline()
 
 void MultiDrawIndirect::create_compute_pipeline()
 {
-	auto create = [this](VkPipelineLayout &layout, VkPipeline &_pipeline, const char *filename) {
+	auto create = [this](VkPipelineLayout &layout, VkPipeline &_pipeline, const char *filename)
+	{
 		VkComputePipelineCreateInfo compute_create_info = vkb::initializers::compute_pipeline_create_info(layout, 0);
 		compute_create_info.stage                       = load_shader(filename, VK_SHADER_STAGE_COMPUTE_BIT);
 
@@ -675,7 +678,8 @@ void MultiDrawIndirect::initialize_descriptors()
 		AddressPipeline
 	};
 
-	auto bind = [this](VkDescriptorSet &_descriptor_set, VkDescriptorSetLayout &_descriptor_set_layout, Target target) {
+	auto bind = [this](VkDescriptorSet &_descriptor_set, VkDescriptorSetLayout &_descriptor_set_layout, Target target)
+	{
 		VkDescriptorSetAllocateInfo descriptor_set_allocate_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &_descriptor_set_layout, 1);
 		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_allocate_info, &_descriptor_set));
 
@@ -817,7 +821,8 @@ void MultiDrawIndirect::run_gpu_cull()
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 
 	vkBeginCommandBuffer(cmd, &begin);
-	auto bind = [&cmd](VkPipeline &_pipeline, VkPipelineLayout &_pipeline_layout, VkDescriptorSet &_descriptor_set) {
+	auto bind = [&cmd](VkPipeline &_pipeline, VkPipelineLayout &_pipeline_layout, VkDescriptorSet &_descriptor_set)
+	{
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _pipeline_layout, 0, 1, &_descriptor_set, 0, nullptr);
 	};
@@ -886,10 +891,12 @@ struct VisibilityTester
 	{
 		using namespace glm;
 		std::array<int, 4> V{0, 1, 4, 5};
-		return std::ranges::all_of(V, [this, origin, radius](size_t i) {
-			const auto &plane = planes[i];
-			return dot(origin, vec3(plane.xyz)) + plane.w + radius >= 0;
-		});
+		return std::ranges::all_of(V,
+		                           [this, origin, radius](size_t i)
+		                           {
+			                           const auto &plane = planes[i];
+			                           return dot(origin, vec3(plane.xyz)) + plane.w + radius >= 0;
+		                           });
 	}
 };
 

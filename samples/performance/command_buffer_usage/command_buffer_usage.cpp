@@ -79,9 +79,8 @@ bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 	// Adjust the maximum number of secondary command buffers
 	// In this sample, only the recording of opaque meshes will be multi-threaded
 	auto is_opaque              = [](vkb::sg::SubMesh *sub_mesh) { return sub_mesh->get_material()->alpha_mode != vkb::sg::AlphaMode::Blend; };
-	auto count_opaque_submeshes = [is_opaque](uint32_t accumulated, const vkb::sg::Mesh *mesh) -> uint32_t {
-		return accumulated + vkb::to_u32(mesh->get_nodes().size() * std::count_if(mesh->get_submeshes().begin(), mesh->get_submeshes().end(), is_opaque));
-	};
+	auto count_opaque_submeshes = [is_opaque](uint32_t accumulated, const vkb::sg::Mesh *mesh) -> uint32_t
+	{ return accumulated + vkb::to_u32(mesh->get_nodes().size() * std::count_if(mesh->get_submeshes().begin(), mesh->get_submeshes().end(), is_opaque)); };
 	const auto    &mesh_components   = get_scene().get_components<vkb::sg::Mesh>();
 	const uint32_t opaque_mesh_count = std::accumulate(mesh_components.begin(), mesh_components.end(), 0, count_opaque_submeshes);
 
@@ -148,7 +147,8 @@ void CommandBufferUsage::draw_gui()
 
 	get_gui().show_options_window(
 	    /* body = */
-	    [&]() {
+	    [&]()
+	    {
 		    // Secondary command buffer count
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
 		    ImGui::SliderInt("##secCmdBufs", &gui_secondary_cmd_buf_count, 0, max_secondary_command_buffer_count, "Secondary CmdBuffs: %d");

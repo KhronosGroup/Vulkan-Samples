@@ -124,9 +124,8 @@ void HelloTriangle::init_instance()
 #if (defined(VKB_ENABLE_PORTABILITY))
 	required_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	bool portability_enumeration_available = false;
-	if (std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension) {
-		    return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0;
-	    }))
+	if (std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension)
+	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		required_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 		portability_enumeration_available = true;
@@ -298,9 +297,8 @@ void HelloTriangle::init_device()
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
-	if (std::ranges::any_of(device_extensions, [](VkExtensionProperties const &extension) {
-		    return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0;
-	    }))
+	if (std::ranges::any_of(device_extensions, [](VkExtensionProperties const &extension)
+	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
 	{
 		required_device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 	}
