@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# ​​​​​Changes from Qualcomm Technologies, Inc. are provided under the following license:
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. 
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 
 cmake_minimum_required(VERSION 3.16)
 include(android_package)
@@ -137,6 +140,7 @@ if(IOS)
     endif ()
     # Vulkan cache variables already defined by main project CMakeLists and updated on Apple platforms by global_options.cmake
     if(Vulkan_LIBRARY AND ${Vulkan_VERSION} VERSION_GREATER_EQUAL 1.3.278)
+        get_filename_component(Vulkan_Target_SDK "$ENV{VULKAN_SDK}/.." REALPATH)
         target_sources(${PROJECT_NAME} PRIVATE
                 ${Vulkan_Target_SDK}/iOS/share/vulkan
         )
