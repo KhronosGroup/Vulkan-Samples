@@ -1,5 +1,6 @@
 ////
-- Copyright (c) 2024, Sascha Willems
+- Copyright (c) 2024-2026, Sascha Willems
+- Copyright (c) 2026 Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -21,6 +22,10 @@ ifndef::general_samplespath[:general_samplespath:]
 == General Samples
 
 The goal of these samples is to demonstrate different techniques or showcase complex scenarios that doesn't necessarily fit any of the main categories.
+
+=== xref:./{general_samplespath}gltf/README.adoc[GLTF]
+
+A GLTF sample.
 
 === xref:./{general_samplespath}mobile_nerf/README.adoc[Mobile NeRF]
 

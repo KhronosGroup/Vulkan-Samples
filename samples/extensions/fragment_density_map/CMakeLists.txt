@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Arm Limited and Contributors
+# Copyright (c) 2025-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,13 +26,13 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
                 NAME "Fragment Density Map"
                 DESCRIPTION "Demonstration of how to use VK_EXT_fragment_density_map"
                 SHADER_FILES_GLSL
-                    "fragment_density_map/forward.frag"
-                    "fragment_density_map/forward.vert"
+                    "gltf/forward.frag"
+                    "gltf/forward.vert"
                     "fragment_density_map/forward_debug.frag"
                     "fragment_density_map/generate_density_map.comp"
                     "fragment_density_map/generate_density_map.frag"
-                    "fragment_density_map/quad_uv.vert"
-                    "fragment_density_map/quad_uvw.vert"
-                    "fragment_density_map/sky.frag"
+                    "gltf/quad_uv.vert"
+                    "gltf/quad_uvw.vert"
+                    "gltf/sky.frag"
                     "fragment_density_map/sky_debug.frag"
-                    "fragment_density_map/texture.frag")
+                    "gltf/texture.frag")

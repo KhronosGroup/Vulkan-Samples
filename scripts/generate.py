@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright 2023, Thomas Atkinson
+# Copyright 2023-2026, Thomas Atkinson
+# Copyright (c) 2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -182,6 +183,7 @@ if __name__ == "__main__":
     generate_android_gradle_help(subparsers)
     generate_sample_help(subparsers, "sample")
     generate_sample_help(subparsers, "sample_api")
+    generate_sample_help(subparsers, "sample_api_gltf")
 
     args = argument_parser.parse_args()
 
