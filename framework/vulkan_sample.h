@@ -833,15 +833,11 @@ inline void const *VulkanSample<bindingType>::get_instance_create_info_extension
 
 	if (contains(enabled_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vkb::core::getDefaultDebugUtilsMessengerCreateInfoEXT();
-		debug_utils_create_info.pNext                                       = pNext;
-		pNext                                                               = &debug_utils_create_info;
+		pNext = get_debug_utils_messenger_create_info();
 	}
 	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 	{
-		static vk::DebugReportCallbackCreateInfoEXT debug_report_create_info = vkb::core::getDefaultDebugReportCallbackCreateInfoEXT();
-		debug_report_create_info.pNext                                       = pNext;
-		pNext                                                                = &debug_report_create_info;
+		pNext = get_debug_report_callback_create_info();
 	}
 
 	if (contains(enabled_extensions, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME))

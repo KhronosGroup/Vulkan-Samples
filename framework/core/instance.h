@@ -25,6 +25,27 @@ namespace vkb
 {
 namespace core
 {
+namespace
+{
+template <vkb::BindingType bindingType>
+typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type get_default_create_flags(std::vector<std::string> const &)
+{
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return vk::InstanceCreateFlags{};
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void const *get_default_pNext(std::vector<std::string> const &, std::vector<std::string> const &)
+{
+	return nullptr;
+}
+}        // namespace
+
 /**
  * @brief A wrapper class for InstanceType
  *
@@ -54,19 +75,8 @@ class Instance
 	    uint32_t                                                                                               api_version          = VK_API_VERSION_1_1,
 	    std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_layers     = {},
 	    std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_extensions = {},
-	    std::function<void const *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext =
-	        [](std::vector<std::string> const &, std::vector<std::string> const &) { return nullptr; },
-	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const &get_create_flags =
-	        [](std::vector<std::string> const &) {
-		        if constexpr (bindingType == vkb::BindingType::Cpp)
-		        {
-			        return vk::InstanceCreateFlags{};
-		        }
-		        else
-		        {
-			        return 0;
-		        }
-	        });
+	    std::function<void const *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext            = get_default_pNext,
+	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const                        &get_create_flags     = get_default_create_flags);
 
 	Instance(vk::Instance instance, std::vector<char const *> const &externally_enabled_extensions = {}, bool needsToInitializeDispatcher = false);
 	Instance(VkInstance instance, std::vector<char const *> const &externally_enabled_extensions = {});

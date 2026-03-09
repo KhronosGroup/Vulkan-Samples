@@ -81,6 +81,7 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	ShaderDebugPrintf();
 	~ShaderDebugPrintf();
 	void                                              request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	void                                              request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void                                              request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const override;
 	void                                              request_validation_feature_enables(std::vector<ValidationFeatureEnableType> &requested_layer_settings) const override;
 	void                                              build_command_buffers() override;
