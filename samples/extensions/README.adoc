@@ -44,6 +44,12 @@ Read the blog post here for discussion: (https://www.khronos.org/blog/streamlini
 Demonstrates how to use Dynamic Rendering with local reads to fully replace render passses with multiple subpasses.
 See this https://www.khronos.org/blog/streamlining-subpasses[this blogpost].
 
+=== xref:./{extension_samplespath}rasterization_order_attachment_access/README.adoc[Rasterization Order Attachment Access]
+
+*Extensions*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_rasterization_order_attachment_access[`VK_EXT_rasterization_order_attachment_access`], https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_dynamic_rendering[`VK_KHR_dynamic_rendering`], https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_dynamic_rendering_local_read[`VK_KHR_dynamic_rendering_local_read`]
+
+Demonstrates how to use rasterization order attachment access with dynamic rendering local read to implement framebuffer fetch with guaranteed fragment ordering. A runtime toggle compares single-draw ROAA blending against multi-draw fallback with pipeline barriers.
+
 === xref:./{extension_samplespath}push_descriptors/README.adoc[Push Descriptors]
 
 *Extension*: https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_KHR_push_descriptor[`VK_KHR_push_descriptor`]
