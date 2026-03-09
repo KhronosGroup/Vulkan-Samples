@@ -110,7 +110,7 @@ std::unique_ptr<vkb::RenderTarget> MultithreadingRenderPasses::create_shadow_ren
 	return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
-std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_shadow_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_shadow_renderpass()
 {
 	// Shadowmap subpass
 	auto shadowmap_vs  = vkb::ShaderSource{"shadows/shadowmap.vert.spv"};
@@ -120,13 +120,13 @@ std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_shadow_r
 	shadow_subpass = scene_subpass.get();
 
 	// Shadowmap pipeline
-	auto shadowmap_render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto shadowmap_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	shadowmap_render_pipeline->add_subpass(std::move(scene_subpass));
 
 	return shadowmap_render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_main_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_main_renderpass()
 {
 	// Main subpass
 	auto main_vs       = vkb::ShaderSource{"shadows/main.vert.spv"};
@@ -135,7 +135,7 @@ std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_main_ren
 	    get_render_context(), std::move(main_vs), std::move(main_fs), get_scene(), *camera, *shadowmap_camera, shadow_render_targets);
 
 	// Main pipeline
-	auto main_render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto main_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	main_render_pipeline->add_subpass(std::move(scene_subpass));
 
 	return main_render_pipeline;

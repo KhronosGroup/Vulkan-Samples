@@ -235,7 +235,7 @@ class ConstantData : public vkb::VulkanSampleC
 	};
 
 	template <typename T>
-	std::unique_ptr<vkb::RenderPipeline> create_render_pipeline(const std::string &vertex_shader, const std::string &fragment_shader)
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_render_pipeline(const std::string &vertex_shader, const std::string &fragment_shader)
 	{
 		static_assert(std::is_base_of<ConstantDataSubpass, T>::value, "T is an invalid type. Must be a derived class from ConstantDataSubpass");
 
@@ -253,7 +253,7 @@ class ConstantData : public vkb::VulkanSampleC
 
 		std::vector<std::unique_ptr<vkb::rendering::SubpassC>> subpasses{};
 		subpasses.push_back(std::move(subpass));
-		return std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
+		return std::make_unique<vkb::rendering::RenderPipelineC>(std::move(subpasses));
 	}
 
   private:
@@ -272,13 +272,13 @@ class ConstantData : public vkb::VulkanSampleC
 	vkb::sg::PerspectiveCamera *camera{};
 
 	// The render pipeline designed for using push constants
-	std::unique_ptr<vkb::RenderPipeline> push_constant_render_pipeline{nullptr};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> push_constant_render_pipeline{nullptr};
 
 	// The render pipeline designed for using Descriptor Sets, Dynamic Descriptor Sets and Update-after-bind Descriptor Sets
-	std::unique_ptr<vkb::RenderPipeline> descriptor_set_render_pipeline{nullptr};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> descriptor_set_render_pipeline{nullptr};
 
 	// The render pipeline designed for using a large shader storage buffer object that is instanced into to get the relevant MVP data
-	std::unique_ptr<vkb::RenderPipeline> buffer_array_render_pipeline{nullptr};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> buffer_array_render_pipeline{nullptr};
 
 	uint32_t max_push_constant_size{128};
 
