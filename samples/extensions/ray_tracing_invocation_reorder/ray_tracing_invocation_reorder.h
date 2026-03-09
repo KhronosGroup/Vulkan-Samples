@@ -32,6 +32,8 @@ class RaytracingInvocationReorder : public ApiVulkanSample
   public:
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	// Acceleration structure properties.
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
 #ifdef VK_EXT_ray_tracing_invocation_reorder
 	VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT invocation_reorder_properties_ext{};
 #endif
