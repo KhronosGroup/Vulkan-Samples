@@ -1,4 +1,5 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
