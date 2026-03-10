@@ -93,7 +93,9 @@ class RaytracingExtended : public ApiVulkanSample
 				particles.emplace_back(generateParticle(starting_lifetime));
 			}
 		}
+
 		~FlameParticleGenerator() = default;
+
 		FlameParticle generateParticle(float _lifetime = 0.f) const
 		{
 			using namespace glm;
@@ -107,11 +109,13 @@ class RaytracingExtended : public ApiVulkanSample
 			particle.duration = _lifetime;
 			return particle;
 		}
+
 		glm::vec3 generate_random_direction() const
 		{
 			using namespace glm;
 			return normalize(0.2f * generate_random() * u + 0.2f * generate_random() * v + 0.8f * direction * generate_random());
 		}
+
 		void update_particles(float time_delta)
 		{
 			particles.erase(std::remove_if(particles.begin(), particles.end(),
@@ -176,6 +180,7 @@ class RaytracingExtended : public ApiVulkanSample
 	{
 		bool use_vertex_staging_buffer = true;
 	} scene_options;
+
 	size_t                                         frame_count = 0;
 	std::chrono::high_resolution_clock::time_point start       = std::chrono::high_resolution_clock::now();
 
@@ -189,8 +194,10 @@ class RaytracingExtended : public ApiVulkanSample
 	struct SceneLoadInfo
 	{
 		SceneLoadInfo() = default;
+
 		SceneLoadInfo(const char *filename, glm::mat3x4 transform, uint32_t object_type) : filename(filename), transform(transform), object_type(object_type)
 		{}
+
 		const char *filename = "";
 		glm::mat3x4 transform;
 		uint32_t    object_type = 0;
@@ -231,6 +238,7 @@ class RaytracingExtended : public ApiVulkanSample
 		VkFormat       format;
 		uint32_t       width;
 		uint32_t       height;
+
 		StorageImage() : memory(VK_NULL_HANDLE), image(VK_NULL_HANDLE), view(VK_NULL_HANDLE), format(), width(0), height(0)
 		{}
 	} storage_image;
@@ -240,6 +248,7 @@ class RaytracingExtended : public ApiVulkanSample
 		glm::mat4 view_inverse;
 		glm::mat4 proj_inverse;
 	} uniform_data;
+
 	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	struct SceneInstanceData
@@ -249,6 +258,7 @@ class RaytracingExtended : public ApiVulkanSample
 		uint32_t image_index;
 		uint32_t object_type;        // controls how shader handles object / whether to load from buffer for static objects or dynamic objects
 	};
+
 	std::unique_ptr<vkb::core::BufferC> data_to_model_buffer;
 
 	std::vector<VkCommandBuffer> raytracing_command_buffers;

@@ -53,10 +53,13 @@ namespace tags
 {
 struct Entrypoint
 {};
+
 struct FullControl
 {};
+
 struct Stopping
 {};
+
 struct Passive
 {};
 }        // namespace tags

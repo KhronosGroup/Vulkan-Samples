@@ -93,13 +93,15 @@ class Portability : public ApiVulkanSample
 		VkDeviceMemory mem;
 		VkImageView    view;
 		VkFormat       format;
-		void           destroy(VkDevice device) const
+
+		void destroy(VkDevice device) const
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
 			vkFreeMemory(device, mem, nullptr);
 		}
 	};
+
 	struct FrameBuffer
 	{
 		int32_t               width, height;

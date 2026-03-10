@@ -28,6 +28,7 @@ namespace core
 template <vkb::BindingType bindingType>
 class Device;
 using DeviceC = Device<vkb::BindingType::C>;
+
 /**
  * @brief Represents a Vulkan Sampler
  */

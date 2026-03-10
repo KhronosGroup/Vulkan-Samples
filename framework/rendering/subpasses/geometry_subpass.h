@@ -67,11 +67,13 @@ namespace
 // type trait to get the default value for request_command_buffer
 template <typename T>
 struct DefaultFrontFaceTypeValue;
+
 template <>
 struct DefaultFrontFaceTypeValue<vk::FrontFace>
 {
 	static constexpr vk::FrontFace value = vk::FrontFace::eCounterClockwise;
 };
+
 template <>
 struct DefaultFrontFaceTypeValue<VkFrontFace>
 {

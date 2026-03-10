@@ -455,6 +455,7 @@ uint32_t HelloTriangleV13::find_memory_type(VkPhysicalDevice physical_device, ui
 	// If no suitable memory type was found, throw an exception
 	throw std::runtime_error("Failed to find suitable memory type.");
 }
+
 /**
  * @brief Initializes per frame data.
  * @param per_frame The data of a frame.
@@ -661,6 +662,7 @@ void HelloTriangleV13::init_swapchain()
 		context.swapchain_image_views.push_back(image_view);
 	}
 }
+
 /**
  * @brief Helper function to load a shader module.
  * @param path The path for the shader (relative to the assets directory).

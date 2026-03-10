@@ -46,6 +46,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 		uint64_t    delta = 0;
 		std::string tag   = "Untagged";
 	};
+
 	std::vector<VkCalibratedTimestampInfoEXT>
 	    timestamps_info{};        // This vector is essential to vkGetCalibratedTimestampsEXT, and only need to be registered once.
 	std::unordered_map<std::string, DeltaTimestamp> delta_timestamps{};
@@ -123,7 +124,8 @@ class CalibratedTimestamps : public ApiVulkanSample
 		VkDeviceMemory mem    = VK_NULL_HANDLE;
 		VkImageView    view   = VK_NULL_HANDLE;
 		VkFormat       format = VK_FORMAT_UNDEFINED;
-		void           destroy(VkDevice device) const
+
+		void destroy(VkDevice device) const
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);

@@ -56,7 +56,8 @@ struct BufferBuilder
 	BufferBuilder         &with_flags(BufferCreateFlagsType flags);
 	BufferBuilder         &with_usage(BufferUsageFlagsType usage);
 	BufferBuilder         &with_alignment(DeviceSizeType align);
-	DeviceSizeType         get_alignment() const
+
+	DeviceSizeType get_alignment() const
 	{
 		return alignment;
 	}

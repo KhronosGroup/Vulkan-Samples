@@ -54,6 +54,7 @@ class ShaderDebugPrintf : public ApiVulkanSample
 		VkPipeline skysphere{VK_NULL_HANDLE};
 		VkPipeline sphere{VK_NULL_HANDLE};
 	} pipelines;
+
 	VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
 
 	struct
@@ -61,6 +62,7 @@ class ShaderDebugPrintf : public ApiVulkanSample
 		VkDescriptorSet skysphere{VK_NULL_HANDLE};
 		VkDescriptorSet sphere{VK_NULL_HANDLE};
 	} descriptor_sets;
+
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
 	struct

@@ -147,6 +147,7 @@ static KeyCode map_multichar_key(int tty_fd, KeyCode initial)
 }
 
 }        // namespace
+
 DirectWindow::DirectWindow(Platform *platform, const Window::Properties &properties) : Window(properties), platform{platform}
 {
 	// Setup tty for reading keyboard from console

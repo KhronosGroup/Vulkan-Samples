@@ -861,6 +861,7 @@ struct VisibilityTester
 {
 	explicit VisibilityTester(glm::mat4x4 view_matrix) : planes(get_view_planes(view_matrix))
 	{}
+
 	std::array<glm::vec4, 6> planes;
 
 	static std::array<glm::vec4, 6> get_view_planes(const glm::mat4x4 &mat)

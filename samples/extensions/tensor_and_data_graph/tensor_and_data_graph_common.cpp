@@ -272,11 +272,13 @@ TensorBuilder &TensorBuilder::with_format(VkFormat format)
 	description.format = format;
 	return *this;
 }
+
 TensorBuilder &TensorBuilder::with_tiling(VkTensorTilingARM tiling)
 {
 	description.tiling = tiling;
 	return *this;
 }
+
 TensorBuilder &TensorBuilder::with_usage(VkTensorUsageFlagsARM usage)
 {
 	description.usage = usage;

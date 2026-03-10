@@ -43,6 +43,7 @@ class Profiles : public ApiVulkanSample
 		VkImageView    image_view{};
 		VkDeviceMemory memory{};
 	};
+
 	std::vector<RandomTexture> textures;
 	VkSampler                  sampler{};
 

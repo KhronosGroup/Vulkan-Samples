@@ -54,6 +54,7 @@ class KHR16BitStorageInputOutputSample : public vkb::VulkanSampleC
 		glm::vec3           axis;
 		float               angular_frequency;
 	};
+
 	std::vector<Transform> teapot_transforms;
 
 	void update_pipeline();

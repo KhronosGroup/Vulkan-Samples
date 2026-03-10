@@ -276,6 +276,7 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	{
 		return update(reinterpret_cast<const uint8_t *>(&object), sizeof(T), offset);
 	}
+
 	/**
 	 * @brief Copies an object as byte data into the buffer.  This is a convenience method that allows the user to
 	 * pass an object to the update method, which will then be copied into the buffer as bytes.  The use of the `vk::ArrayProxy`

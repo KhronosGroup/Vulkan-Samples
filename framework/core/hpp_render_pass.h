@@ -27,6 +27,7 @@ namespace common
 struct HPPLoadStoreInfo;
 
 }
+
 namespace rendering
 {
 struct HPPAttachment;

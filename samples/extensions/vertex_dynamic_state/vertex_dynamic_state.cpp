@@ -70,6 +70,7 @@ bool VertexDynamicState::prepare(const vkb::ApplicationOptions &options)
 
 	return true;
 }
+
 /**
  * 	@fn void VertexDynamicState::load_assets()
  *	@brief Loading extra models, textures from assets

@@ -44,11 +44,13 @@ namespace
 // type trait to get the default value for request_command_buffer
 template <typename T>
 struct DefaultCommandBufferLevelValue;
+
 template <>
 struct DefaultCommandBufferLevelValue<vk::CommandBufferLevel>
 {
 	static constexpr vk::CommandBufferLevel value = vk::CommandBufferLevel::ePrimary;
 };
+
 template <>
 struct DefaultCommandBufferLevelValue<VkCommandBufferLevel>
 {

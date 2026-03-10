@@ -97,6 +97,7 @@ class ConservativeRasterization : public ApiVulkanSample
 		VkDeviceMemory mem;
 		VkImageView    view;
 	};
+
 	struct OffscreenPass
 	{
 		int32_t               width, height;

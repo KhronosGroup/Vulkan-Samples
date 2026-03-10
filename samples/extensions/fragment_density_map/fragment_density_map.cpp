@@ -1252,6 +1252,7 @@ void FragmentDensityMap::setup_render_pass()
 		debug_utils.set_debug_name(device_handle, VK_OBJECT_TYPE_RENDER_PASS, get_object_handle(present.render_pass), "Present Renderpass");
 	}
 }
+
 void FragmentDensityMap::setup_framebuffer()
 {
 	VkDevice device_handle = get_device().get_handle();

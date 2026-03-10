@@ -56,6 +56,7 @@ class BufferDeviceAddress : public ApiVulkanSample
 		VkDeviceMemory  memory{};
 		VkDeviceAddress gpu_address{};
 	};
+
 	std::vector<TestBuffer> test_buffers;
 	void                    create_vbo_buffers();
 	TestBuffer              create_vbo_buffer();

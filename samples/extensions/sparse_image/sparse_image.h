@@ -302,6 +302,7 @@ class SparseImage : public ApiVulkanSample
 		    horizontal_num_blocks(0U),
 		    mip_levels(0U)
 		{}
+
 		void calculate_mesh_coordinates();
 		void calculate_mip_levels();
 	};

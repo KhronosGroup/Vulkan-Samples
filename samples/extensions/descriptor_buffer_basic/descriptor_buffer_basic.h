@@ -39,6 +39,7 @@ class DescriptorBufferBasic : public ApiVulkanSample
 		VkDeviceSize                        size;
 		VkDeviceSize                        offset;
 	};
+
 	DescriptorData uniform_binding_descriptor;
 	DescriptorData image_binding_descriptor;
 
@@ -49,6 +50,7 @@ class DescriptorBufferBasic : public ApiVulkanSample
 		glm::vec3                           rotation;
 		glm::mat4                           model_mat;
 	};
+
 	std::array<Cube, 2> cubes;
 
 	struct Models

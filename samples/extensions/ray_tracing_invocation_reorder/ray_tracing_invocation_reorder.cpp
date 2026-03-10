@@ -51,6 +51,7 @@ struct RaytracingInvocationReorder::Model
 	VkTransformMatrixKHR                 default_transform;
 	uint32_t                             texture_index;
 	uint32_t                             object_type;
+
 	Model() : default_transform({1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f}), texture_index(0), object_type(0)
 	{}
 };
@@ -821,6 +822,7 @@ void RaytracingInvocationReorder::create_ray_tracing_pipeline()
 		uint32_t renderMode = RenderMode::RENDER_DEFAULT;
 		uint32_t maxRays    = 60;
 	} specialConsts;
+
 	std::vector<VkSpecializationMapEntry> specializationMapEntries;
 	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecialConsts_s, renderMode), sizeof(uint32_t)));
 	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(1, offsetof(SpecialConsts_s, maxRays), sizeof(uint32_t)));

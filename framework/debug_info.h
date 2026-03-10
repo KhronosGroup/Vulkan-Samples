@@ -100,6 +100,7 @@ struct Vector final : public Static<T>
 
 	Vector(const std::string &label, const glm::vec3 &vec) : Vector(label, vec.x, vec.y, vec.z)
 	{}
+
 	Vector(const std::string &label, T x, T y, T z) : Static<T>(label, x), x{x}, y{y}, z{z}
 	{}
 

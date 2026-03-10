@@ -35,6 +35,7 @@ struct QuickTimer
 	const char             *name;
 	const clock::time_point start;
 	bool                    print_on_exit;
+
 	explicit QuickTimer(const char *name_, bool print_on_exit_ = true) : name(name_), start(clock::now()), print_on_exit(print_on_exit_)
 	{}
 
@@ -75,6 +76,7 @@ struct RaytracingExtended::Model
 	VkTransformMatrixKHR                 default_transform;
 	uint32_t                             texture_index;
 	uint32_t                             object_type;
+
 	Model() : default_transform({1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f}), texture_index(0), object_type(0)
 	{}
 };
@@ -1049,6 +1051,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 		uint32_t renderMode = RenderMode::RENDER_DEFAULT;
 		uint32_t maxRays    = 60;
 	} specialConsts;
+
 	std::vector<VkSpecializationMapEntry> specializationMapEntries;
 	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecialConsts_s, renderMode), sizeof(uint32_t)));
 	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(1, offsetof(SpecialConsts_s, maxRays), sizeof(uint32_t)));

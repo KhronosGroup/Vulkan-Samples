@@ -72,6 +72,7 @@ class RaytracingBasic : public ApiVulkanSample
 		glm::mat4 view_inverse;
 		glm::mat4 proj_inverse;
 	} uniform_data;
+
 	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	VkPipeline            pipeline;

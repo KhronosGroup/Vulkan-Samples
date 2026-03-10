@@ -264,6 +264,7 @@ void HPPImage::update_hash(size_t hash)
 {
 	data_hash = hash;
 }
+
 const std::vector<uint8_t> &HPPImage::get_data() const
 {
 	return data;

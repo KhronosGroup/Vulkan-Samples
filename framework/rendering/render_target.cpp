@@ -34,6 +34,7 @@ struct CompareExtent2D
 
 Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage) : format{format}, samples{samples}, usage{usage}
 {}
+
 const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget>
 {
 	VkFormat depth_format = get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle());

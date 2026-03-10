@@ -99,13 +99,15 @@ class HDR : public ApiVulkanSample
 		VkDeviceMemory mem;
 		VkImageView    view;
 		VkFormat       format;
-		void           destroy(VkDevice device)
+
+		void destroy(VkDevice device)
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
 			vkFreeMemory(device, mem, nullptr);
 		}
 	};
+
 	struct FrameBuffer
 	{
 		int32_t               width, height;

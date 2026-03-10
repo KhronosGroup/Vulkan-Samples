@@ -72,6 +72,7 @@ bool PatchControlPoints::prepare(const vkb::ApplicationOptions &options)
 
 	return true;
 }
+
 /**
  * 	@fn void PatchControlPoints::load_assets()
  *	@brief Loading models from assets

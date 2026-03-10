@@ -484,6 +484,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 		int32_t x;
 		int32_t y;
 	} touch_pos;
+
 	bool   touch_down  = false;
 	double touch_timer = 0.0;
 

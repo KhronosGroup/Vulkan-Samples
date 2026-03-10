@@ -82,6 +82,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		VkCommandBuffer command_buffer = VK_NULL_HANDLE;
 		VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
 	};
+
 	std::vector<ComputeBuffers>  compute_buffers;
 	std::vector<VkCommandBuffer> small_command_buffers;
 	VkExtent2D                   subpass_extent;
@@ -97,6 +98,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		uint32_t   n_rates;
 		uint32_t   _pad;
 	};
+
 	std::unique_ptr<vkb::core::BufferC> frequency_information_params;
 
 	struct
@@ -133,6 +135,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	} ubo_scene;
 
 	VkPipelineLayout pipeline_layout;
+
 	struct Pipelines
 	{
 		VkPipeline skysphere;

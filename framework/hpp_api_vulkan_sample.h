@@ -434,11 +434,13 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 
 	// true if application has focused, false if moved to background
 	bool focused = false;
+
 	struct TouchPos
 	{
 		int32_t x;
 		int32_t y;
 	} touch_pos;
+
 	bool   touch_down  = false;
 	double touch_timer = 0.0;
 

@@ -42,6 +42,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 		GPU,
 		GPU_DEVICE_ADDRESS
 	} render_mode = GPU;
+
 	struct Vertex
 	{
 		glm::vec3 pt;

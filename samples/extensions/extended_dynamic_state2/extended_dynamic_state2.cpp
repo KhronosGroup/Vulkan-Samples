@@ -86,6 +86,7 @@ bool ExtendedDynamicState2::prepare(const vkb::ApplicationOptions &options)
 
 	return true;
 }
+
 /**
  * 	@fn void ExtendedDynamicState2::load_assets()
  *	@brief Loading extra models, textures from assets

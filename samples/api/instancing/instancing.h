@@ -52,6 +52,7 @@ class Instancing : public ApiVulkanSample
 		float     scale;
 		uint32_t  texIndex;
 	};
+
 	// Contains the instanced data
 	struct InstanceBuffer
 	{
@@ -75,6 +76,7 @@ class Instancing : public ApiVulkanSample
 	} uniform_buffers;
 
 	VkPipelineLayout pipeline_layout;
+
 	struct Pipelines
 	{
 		VkPipeline instanced_rocks;
@@ -83,6 +85,7 @@ class Instancing : public ApiVulkanSample
 	} pipelines;
 
 	VkDescriptorSetLayout descriptor_set_layout;
+
 	struct DescriptorSets
 	{
 		VkDescriptorSet instanced_rocks;

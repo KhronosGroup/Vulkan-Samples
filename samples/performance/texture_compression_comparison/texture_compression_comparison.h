@@ -52,6 +52,7 @@ class TextureCompressionComparison : public vkb::VulkanSampleC
 			frame_time_ms += other.frame_time_ms;
 			return *this;
 		}
+
 		VkDeviceSize total_bytes      = 0;
 		float        compress_time_ms = 0.f;
 		float        frame_time_ms    = 0.f;

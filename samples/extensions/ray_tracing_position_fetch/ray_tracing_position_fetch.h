@@ -54,6 +54,7 @@ class RayTracingPositionFetch : public ApiVulkanSample
 		glm::mat4 proj_inverse{1.0f};
 		int32_t   display_mode{0};
 	} uniform_data;
+
 	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
