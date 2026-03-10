@@ -83,13 +83,13 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	class MainSubpass : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
-		MainSubpass(vkb::rendering::RenderContextC                  &render_context,
-		            vkb::ShaderSource                              &&vertex_source,
-		            vkb::ShaderSource                              &&fragment_source,
-		            vkb::sg::Scene                                  &scene,
-		            vkb::sg::Camera                                 &camera,
-		            vkb::sg::Camera                                 &shadowmap_camera,
-		            std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets);
+		MainSubpass(vkb::rendering::RenderContextC                              &render_context,
+		            vkb::ShaderSource                                          &&vertex_source,
+		            vkb::ShaderSource                                          &&fragment_source,
+		            vkb::sg::Scene                                              &scene,
+		            vkb::sg::Camera                                             &camera,
+		            vkb::sg::Camera                                             &shadowmap_camera,
+		            std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets);
 
 		virtual void prepare() override;
 
@@ -100,13 +100,13 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 
 		vkb::sg::Camera &shadowmap_camera;
 
-		std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets;
+		std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets;
 	};
 
   private:
 	virtual void prepare_render_context() override;
 
-	std::unique_ptr<vkb::RenderTarget> create_shadow_render_target(uint32_t size);
+	std::unique_ptr<vkb::rendering::RenderTargetC> create_shadow_render_target(uint32_t size);
 
 	/**
 	 * @return Shadow render pass which should run first
@@ -120,7 +120,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 
 	const uint32_t SHADOWMAP_RESOLUTION{1024};
 
-	std::vector<std::unique_ptr<vkb::RenderTarget>> shadow_render_targets;
+	std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> shadow_render_targets;
 
 	/**
 	 * @brief Pipeline for shadowmap rendering

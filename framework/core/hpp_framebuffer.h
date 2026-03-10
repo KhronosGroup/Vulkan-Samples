@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,12 +24,14 @@ namespace vkb
 {
 namespace rendering
 {
-class HPPRenderTarget;
-}
+template <vkb::BindingType bindingType>
+class RenderTarget;
+using RenderTargetC   = RenderTarget<vkb::BindingType::C>;
+using RenderTargetCpp = RenderTarget<vkb::BindingType::Cpp>;
+}        // namespace rendering
 
 namespace core
 {
-class HPPDevice;
 class HPPRenderPass;
 
 /**
@@ -40,9 +42,9 @@ class HPPRenderPass;
 class HPPFramebuffer : private vkb::Framebuffer
 {
   public:
-	HPPFramebuffer(vkb::core::DeviceCpp &device, const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass) :
+	HPPFramebuffer(vkb::core::DeviceCpp &device, const vkb::rendering::RenderTargetCpp &render_target, const vkb::core::HPPRenderPass &render_pass) :
 	    vkb::Framebuffer(reinterpret_cast<vkb::core::DeviceC &>(device),
-	                     reinterpret_cast<vkb::RenderTarget const &>(render_target),
+	                     reinterpret_cast<vkb::rendering::RenderTargetC const &>(render_target),
 	                     reinterpret_cast<vkb::RenderPass const &>(render_pass))
 	{}
 
