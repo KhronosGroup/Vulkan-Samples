@@ -104,14 +104,15 @@ class RenderPipeline
 	void set_load_store(const std::vector<LoadStoreInfoType> &load_store);
 
   private:
-	void draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-	               vkb::rendering::HPPRenderTarget &render_target,
-	               vk::SubpassContents              contents);
+	void draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target, vk::SubpassContents contents);
 
   private:
-	size_t                                                   active_subpass_index = 0;
-	std::vector<vk::ClearValue>                              clear_value{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}, vk::ClearDepthStencilValue{0.0f, ~0U}};                                                    // Defaults for swapchain and depth attachment
-	std::vector<vkb::common::HPPLoadStoreInfo>               load_store{{vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore}, {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare}};        // Defaults for swapchain and depth attachment
+	size_t                                     active_subpass_index = 0;
+	std::vector<vk::ClearValue>                clear_value{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f},
+                                            vk::ClearDepthStencilValue{0.0f, ~0U}};        // Defaults for swapchain and depth attachment
+	std::vector<vkb::common::HPPLoadStoreInfo> load_store{
+	    {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore},
+	    {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare}};        // Defaults for swapchain and depth attachment
 	std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> subpasses;
 };
 
@@ -166,8 +167,7 @@ void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &co
 	}
 	else
 	{
-		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		          reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target),
+		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer), reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target),
 		          static_cast<vk::SubpassContents>(contents));
 	}
 
@@ -175,9 +175,8 @@ void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &co
 }
 
 template <vkb::BindingType bindingType>
-void RenderPipeline<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                            vkb::rendering::HPPRenderTarget &render_target,
-                                            vk::SubpassContents              contents)
+void RenderPipeline<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target,
+                                            vk::SubpassContents contents)
 {
 	for (size_t i = 0; i < subpasses.size(); ++i)
 	{

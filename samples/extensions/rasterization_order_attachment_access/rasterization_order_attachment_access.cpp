@@ -92,21 +92,17 @@ void RasterizationOrderAttachmentAccess::load_assets()
 // Creates uniform buffer for scene data and instance buffer with randomized sphere transforms/colors
 void RasterizationOrderAttachmentAccess::create_buffers()
 {
-	scene_uniform_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(), sizeof(SceneUniforms),
-	    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	scene_uniform_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	instance_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(), sizeof(InstanceData) * kInstanceCount,
-	    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(InstanceData) * kInstanceCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Initialize instance data with random colors
 	instances.resize(kInstanceCount);
 	srand(42);
 
-	const auto random_float = []() {
-		return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-	};
+	const auto random_float = []() { return static_cast<float>(rand()) / static_cast<float>(RAND_MAX); };
 
 	uint32_t idx = 0;
 	for (uint32_t z = 0; z < kInstanceLayerCount; ++z)
@@ -115,20 +111,12 @@ void RasterizationOrderAttachmentAccess::create_buffers()
 		{
 			for (uint32_t x = 0; x < kInstanceRowCount; ++x, ++idx)
 			{
-				const glm::vec3 pos = {
-				    static_cast<float>(x) - (kInstanceRowCount - 1) * 0.5f,
-				    static_cast<float>(y) - (kInstanceColumnCount - 1) * 0.5f,
-				    static_cast<float>(z) - (kInstanceLayerCount - 1) * 0.5f};
+				const glm::vec3 pos = {static_cast<float>(x) - (kInstanceRowCount - 1) * 0.5f, static_cast<float>(y) - (kInstanceColumnCount - 1) * 0.5f,
+				                       static_cast<float>(z) - (kInstanceLayerCount - 1) * 0.5f};
 
-				instances[idx].model = glm::scale(
-				    glm::translate(glm::mat4(1.0f), pos),
-				    glm::vec3(0.03f));
+				instances[idx].model = glm::scale(glm::translate(glm::mat4(1.0f), pos), glm::vec3(0.03f));
 
-				instances[idx].color = glm::vec4(
-				    random_float(),
-				    random_float(),
-				    random_float(),
-				    random_float() * 0.8f + 0.2f);
+				instances[idx].color = glm::vec4(random_float(), random_float(), random_float(), random_float() * 0.8f + 0.2f);
 			}
 		}
 	}
@@ -153,7 +141,8 @@ void RasterizationOrderAttachmentAccess::create_descriptors()
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT, 3),
 		};
-		const VkDescriptorSetLayoutCreateInfo layout_info = vkb::initializers::descriptor_set_layout_create_info(bindings.data(), static_cast<uint32_t>(bindings.size()));
+		const VkDescriptorSetLayoutCreateInfo layout_info =
+		    vkb::initializers::descriptor_set_layout_create_info(bindings.data(), static_cast<uint32_t>(bindings.size()));
 		VK_CHECK(vkCreateDescriptorSetLayout(device, &layout_info, nullptr, &descriptor_set_layout));
 	}
 
@@ -175,7 +164,8 @@ void RasterizationOrderAttachmentAccess::create_descriptors()
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, set_count),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, set_count),
 	};
-	VkDescriptorPoolCreateInfo pool_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), set_count);
+	VkDescriptorPoolCreateInfo pool_info =
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), set_count);
 	VK_CHECK(vkCreateDescriptorPool(device, &pool_info, nullptr, &descriptor_pool));
 
 	// Allocate
@@ -222,17 +212,21 @@ void RasterizationOrderAttachmentAccess::create_pipelines()
 	const VkFormat color_format = get_render_context().get_swapchain().get_format();
 
 	// Common pipeline state
-	VkPipelineVertexInputStateCreateInfo         vertex_input_state   = vkb::initializers::pipeline_vertex_input_state_create_info();
-	const VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
-	const VkPipelineRasterizationStateCreateInfo rasterization_state  = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
-	const VkPipelineColorBlendAttachmentState    blend_attachment     = vkb::initializers::pipeline_color_blend_attachment_state(0xF, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo          color_blend_state    = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
-	const VkPipelineMultisampleStateCreateInfo   multisample_state    = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
-	const VkPipelineViewportStateCreateInfo      viewport_state       = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-	const VkPipelineDepthStencilStateCreateInfo  depth_stencil_state  = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
+	VkPipelineVertexInputStateCreateInfo         vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+	const VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	const VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	const VkPipelineColorBlendAttachmentState   blend_attachment  = vkb::initializers::pipeline_color_blend_attachment_state(0xF, VK_FALSE);
+	VkPipelineColorBlendStateCreateInfo         color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
+	const VkPipelineMultisampleStateCreateInfo  multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+	const VkPipelineViewportStateCreateInfo     viewport_state    = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	const VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
 	const std::vector<VkDynamicState>      dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	const VkPipelineDynamicStateCreateInfo dynamic_state  = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states.data(), static_cast<uint32_t>(dynamic_states.size()), 0);
+	const VkPipelineDynamicStateCreateInfo dynamic_state =
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states.data(), static_cast<uint32_t>(dynamic_states.size()), 0);
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
@@ -260,7 +254,7 @@ void RasterizationOrderAttachmentAccess::create_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(device, pipeline_cache, 1, &pipeline_info, nullptr, &background_pipeline));
 
 	// Blend pipelines (sphere geometry with local read)
-	const VkVertexInputBindingDescription   vertex_binding   = vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX);
+	const VkVertexInputBindingDescription vertex_binding = vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX);
 	const VkVertexInputAttributeDescription vertex_attribute = vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
 
 	vertex_input_state.vertexBindingDescriptionCount   = 1;
@@ -400,12 +394,9 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 			}
 
 			// Transition: UNDEFINED -> RENDERING_LOCAL_READ_KHR (enables framebuffer fetch)
-			vkb::image_layout_transition(
-			    draw_cmd_buffers[i], swapchain_buffers[i].image,
-			    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			    VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR,
-			    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+			vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+			                             VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
 			// Set up color attachment for dynamic rendering with local read support
 			VkRenderingAttachmentInfoKHR color_attachment = {};
@@ -457,9 +448,10 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 
 				VkDependencyInfoKHR dependency_info = {};
 				dependency_info.sType               = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
-				dependency_info.dependencyFlags     = VK_DEPENDENCY_BY_REGION_BIT;        // BY_REGION makes the barrier tile-local, which is more efficient on tiled GPUs
-				dependency_info.memoryBarrierCount  = 1;
-				dependency_info.pMemoryBarriers     = &memory_barrier;
+				dependency_info.dependencyFlags =
+				    VK_DEPENDENCY_BY_REGION_BIT;        // BY_REGION makes the barrier tile-local, which is more efficient on tiled GPUs
+				dependency_info.memoryBarrierCount = 1;
+				dependency_info.pMemoryBarriers    = &memory_barrier;
 				vkCmdPipelineBarrier2KHR(draw_cmd_buffers[i], &dependency_info);
 
 				// ROAA ON: Single instanced draw. Extension guarantees fragment ordering.
@@ -497,22 +489,17 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 			}
 
 			// Transition: RENDERING_LOCAL_READ_KHR -> COLOR_ATTACHMENT_OPTIMAL (required for UI rendering)
-			vkb::image_layout_transition(
-			    draw_cmd_buffers[i], swapchain_buffers[i].image,
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			    VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+			vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR,
+			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
 			draw_ui(draw_cmd_buffers[i], i);
 
 			// Transition: COLOR_ATTACHMENT_OPTIMAL -> PRESENT_SRC_KHR
-			vkb::image_layout_transition(
-			    draw_cmd_buffers[i], swapchain_buffers[i].image,
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-			    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,
-			    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+			vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,
+			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 		}
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
@@ -549,14 +536,8 @@ void RasterizationOrderAttachmentAccess::retrieve_timestamp_results()
 
 	// WAIT_BIT blocks until results are available. 64_BIT for full precision timestamps
 	const VkDevice device = get_device().get_handle();
-	vkGetQueryPoolResults(
-	    device,
-	    timestamp_query_pool,
-	    0, 2,
-	    timestamp_results.size() * sizeof(uint64_t),
-	    timestamp_results.data(),
-	    sizeof(uint64_t),
-	    VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+	vkGetQueryPoolResults(device, timestamp_query_pool, 0, 2, timestamp_results.size() * sizeof(uint64_t), timestamp_results.data(), sizeof(uint64_t),
+	                      VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 
 	// timestampPeriod is nanoseconds per tick, convert delta to milliseconds
 	const VkPhysicalDeviceProperties &properties = get_device().get_gpu().get_properties();
