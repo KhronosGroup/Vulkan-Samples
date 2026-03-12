@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Sascha Willems
+/* Copyright (c) 2020-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,6 @@ FragmentShadingRate::FragmentShadingRate()
 {
 	title = "Fragment shading rate";
 	// Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);

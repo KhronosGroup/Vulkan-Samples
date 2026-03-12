@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,11 @@ class LayoutTransitions : public vkb::VulkanSampleC
 
 	virtual ~LayoutTransitions() = default;
 
-	virtual bool prepare(const vkb::ApplicationOptions &options) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+	void request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const override;
+#endif
 
   private:
 	enum LayoutTransitionType : int
@@ -53,9 +57,9 @@ class LayoutTransitions : public vkb::VulkanSampleC
 
 	VkImageLayout pick_old_layout(VkImageLayout last_layout);
 
-	vkb::RenderPipeline gbuffer_pipeline;
+	vkb::rendering::RenderPipelineC gbuffer_pipeline;
 
-	vkb::RenderPipeline lighting_pipeline;
+	vkb::rendering::RenderPipelineC lighting_pipeline;
 
 	LayoutTransitionType layout_transition_type{LayoutTransitionType::UNDEFINED};
 };

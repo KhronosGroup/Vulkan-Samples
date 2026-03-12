@@ -1,4 +1,5 @@
-/* Copyright (c) 2023-2025, Mobica Limited
+/* Copyright (c) 2023-2026, Mobica Limited
+ * Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +20,6 @@
 
 ColorWriteEnable::ColorWriteEnable()
 {
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
 }
@@ -63,13 +63,9 @@ bool ColorWriteEnable::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void ColorWriteEnable::prepare_gui()
+uint32_t ColorWriteEnable::get_gui_subpass() const
 {
-	create_gui(*window, nullptr, 15.0f, true);
-	get_gui().set_subpass(1);
-	get_gui().prepare(pipeline_cache, render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	return 1;
 }
 
 void ColorWriteEnable::prepare_pipelines()

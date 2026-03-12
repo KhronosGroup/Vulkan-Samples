@@ -82,6 +82,7 @@
 ** xref:samples/extensions/portability/README.adoc[Portability]
 ** xref:samples/extensions/push_descriptors/README.adoc[Push descriptors]
 *** xref:samples/extensions/hpp_push_descriptors/README.adoc[Push descriptors (Vulkan-Hpp)]
+** xref:samples/extensions/rasterization_order_attachment_access/README.adoc[Rasterization order attachment access]
 ** xref:samples/extensions/ray_tracing_basic/README.adoc[Raytracing basic]
 ** xref:samples/extensions/ray_tracing_extended/README.adoc[Raytracing extended]
 ** xref:samples/extensions/ray_tracing_invocation_reorder/README.adoc[Ray tracing invocation reorder (SER)]
@@ -136,4 +137,4 @@
 ** xref:docs/build.adoc[Build guide]
 ** xref:docs/memory_limits.adoc[Memory limits]
 ** xref:docs/misc.adoc[Miscellaneous]
-* link:https://github.com/KhronosGroup/Vulkan-Samples[GitHub Repository, window=_blank]
+* link:https://github.com/KhronosGroup/Vulkan-Samples[GitHub Repository, window=_blank

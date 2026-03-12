@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,23 +36,6 @@ LayoutTransitions::LayoutTransitions()
 
 	config.insert<vkb::IntSetting>(0, reinterpret_cast<int &>(layout_transition_type), LayoutTransitionType::UNDEFINED);
 	config.insert<vkb::IntSetting>(1, reinterpret_cast<int &>(layout_transition_type), LayoutTransitionType::LAST_LAYOUT);
-
-#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
-	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional=*/true);
-
-	VkLayerSettingEXT layerSetting;
-	layerSetting.pLayerName   = "MoltenVK";
-	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
-	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
-	layerSetting.valueCount   = 1;
-
-	// Make this static so layer setting reference remains valid after leaving constructor scope
-	static const int32_t disableMetalArgumentBuffers = 0;
-	layerSetting.pValues                             = &disableMetalArgumentBuffers;
-
-	add_layer_setting(layerSetting);
-#endif
 }
 
 bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
@@ -92,6 +75,24 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 
 	return true;
 }
+
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+void LayoutTransitions::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
+	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+
+void LayoutTransitions::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const
+{
+	// Make this static so layer setting reference remains valid after leaving the current scope
+	static const int32_t disableMetalArgumentBuffers = 0;
+
+	vkb::VulkanSampleC::request_layer_settings(requested_layer_settings);
+	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &disableMetalArgumentBuffers});
+}
+#endif
 
 void LayoutTransitions::prepare_render_context()
 {

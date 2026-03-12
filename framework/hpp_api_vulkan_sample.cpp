@@ -71,10 +71,21 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 void HPPApiVulkanSample::prepare_gui()
 {
 	create_gui(*window, nullptr, 15.0f, true);
-	get_gui().prepare(pipeline_cache,
-	                  render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
-	                   load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)});
+
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
+	    load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)};
+
+	if (uses_dynamic_rendering())
+	{
+		vk::Format color_format = get_render_context().get_swapchain().get_format();
+		vk::Format depth_fmt    = depth_format;
+		get_gui().prepare(pipeline_cache, color_format, depth_fmt, shader_stages);
+	}
+	else
+	{
+		get_gui().prepare(pipeline_cache, render_pass, shader_stages, get_gui_subpass());
+	}
 }
 
 void HPPApiVulkanSample::update(float delta_time)
@@ -458,6 +469,17 @@ void HPPApiVulkanSample::draw_ui(const vk::CommandBuffer command_buffer)
 	}
 }
 
+void HPPApiVulkanSample::draw_ui(const vk::CommandBuffer command_buffer, uint32_t swapchain_image_index)
+{
+	if (has_gui())
+	{
+		command_buffer.setViewport(0, vk::Viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f});
+		command_buffer.setScissor(0, vk::Rect2D{{0, 0}, extent});
+
+		get_gui().draw(command_buffer, swapchain_buffers[swapchain_image_index].view, extent.width, extent.height);
+	}
+}
+
 void HPPApiVulkanSample::prepare_frame()
 {
 	if (get_render_context().has_swapchain())
@@ -543,7 +565,10 @@ HPPApiVulkanSample::~HPPApiVulkanSample()
 		// Clean up Vulkan resources
 		device.destroyDescriptorPool(descriptor_pool);
 		destroy_command_buffers();
-		device.destroyRenderPass(render_pass);
+		if (!uses_dynamic_rendering())
+		{
+			device.destroyRenderPass(render_pass);
+		}
 		for (auto &framebuffer : framebuffers)
 		{
 			device.destroyFramebuffer(framebuffer);

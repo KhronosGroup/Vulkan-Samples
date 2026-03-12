@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2024, Bradley Austin Davis
- * Copyright (c) 2020-2024, Arm Limited
+/* Copyright (c) 2020-2026, Bradley Austin Davis
+ * Copyright (c) 2020-2026, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,6 +55,9 @@ class OpenGLInterop : public ApiVulkanSample
 	void build_command_buffers() override;
 	void view_changed() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+
+  protected:
+	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 
   private:
 	void prepare_shared_resources();

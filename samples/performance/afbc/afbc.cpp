@@ -64,7 +64,7 @@ bool AFBCSample::prepare(const vkb::ApplicationOptions &options)
 	vkb::ShaderSource frag_shader("base.frag.spv");
 	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
@@ -72,9 +72,6 @@ bool AFBCSample::prepare(const vkb::ApplicationOptions &options)
 	get_stats().request_stats({vkb::StatIndex::gpu_ext_write_bytes});
 
 	create_gui(*window, &get_stats());
-
-	// Store the start time to calculate rotation
-	start_time = std::chrono::system_clock::now();
 
 	return true;
 }
@@ -91,7 +88,8 @@ void AFBCSample::update(float delta_time)
 	/* Pan the camera back and forth. */
 	auto &camera_transform = camera->get_node()->get_component<vkb::sg::Transform>();
 
-	float rotation_factor = std::chrono::duration<float>(std::chrono::system_clock::now() - start_time).count();
+	elapsed_time += delta_time;
+	float rotation_factor = elapsed_time;
 
 	glm::quat qy          = glm::angleAxis(0.003f * sin(rotation_factor * 0.7f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::quat orientation = glm::normalize(qy * camera_transform.get_rotation() * glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f)));

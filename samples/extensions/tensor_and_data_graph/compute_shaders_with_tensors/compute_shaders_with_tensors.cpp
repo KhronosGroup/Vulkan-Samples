@@ -24,8 +24,6 @@
 
 ComputeShadersWithTensors::ComputeShadersWithTensors()
 {
-	set_api_version(VK_API_VERSION_1_3);        // Required by the emulation layers
-
 	// Declare that we need the data graph and tensor extensions
 	add_device_extension("VK_ARM_tensors");
 	add_device_extension("VK_ARM_data_graph");
@@ -50,6 +48,12 @@ ComputeShadersWithTensors::~ComputeShadersWithTensors()
 
 	// Make sure resources created in the render pipeline are destroyed before the Device gets destroyed.
 	set_render_pipeline(nullptr);
+}
+
+uint32_t ComputeShadersWithTensors::get_api_version() const
+{
+	// Required by the emulation layers
+	return VK_API_VERSION_1_3;
 }
 
 /**
@@ -113,7 +117,7 @@ bool ComputeShadersWithTensors::prepare(const vkb::ApplicationOptions &options)
 	prepare_visualization_pipeline_descriptor_set();
 
 	// Create a RenderPipeline to blit `output_image` to the swapchain
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::make_unique<BlitSubpass>(get_render_context()));
 	set_render_pipeline(std::move(render_pipeline));
 

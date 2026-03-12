@@ -64,6 +64,10 @@ class GraphConstants : public vkb::VulkanSampleC
 	void draw_gui() override;
 
   private:
+	// from vkb::VulkanSample
+	uint32_t get_api_version() const override;
+
+  private:
 	void prepare_descriptor_pool();
 
 	void prepare_input_tensor();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Sascha Willems
+/* Copyright (c) 2020-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -71,10 +71,10 @@ DebugUtils::~DebugUtils()
  */
 void DebugUtils::debug_check_extension()
 {
-	std::vector<const char *> enabled_instance_extensions = get_instance().get_extensions();
+	std::vector<std::string> enabled_instance_extensions = get_instance().get_extensions();
 	for (auto &enabled_extension : enabled_instance_extensions)
 	{
-		if (strcmp(enabled_extension, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+		if (enabled_extension == VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
 		{
 			debug_utils_supported = true;
 			break;

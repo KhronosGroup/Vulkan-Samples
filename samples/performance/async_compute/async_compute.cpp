@@ -286,7 +286,7 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	forward_render_pipeline.set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
 	                                        {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
 
-	auto blit_render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto blit_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	blit_render_pipeline->add_subpass(std::move(composite_scene_subpass));
 	blit_render_pipeline->set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
 	                                      {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
@@ -304,9 +304,6 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	                          config);
 
 	create_gui(*window, &get_stats());
-
-	// Store the start time to calculate rotation
-	start_time = std::chrono::system_clock::now();
 
 	auto &threshold_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
 	                                                                                 vkb::ShaderSource("async_compute/threshold.comp.spv"));
@@ -752,7 +749,8 @@ void AsyncComputeSample::update(float delta_time)
 
 	composite_subpass->set_texture(&get_current_forward_render_target().get_views()[0], blur_chain_views[1].get(), linear_sampler.get());        // blur_chain[1] and color_targets[0] will be used by the present queue
 
-	float rotation_factor = std::chrono::duration<float>(std::chrono::system_clock::now() - start_time).count();
+	elapsed_time += delta_time;
+	float rotation_factor = elapsed_time;
 
 	glm::quat orientation;
 

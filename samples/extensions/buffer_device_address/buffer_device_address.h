@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,6 +70,9 @@ class BufferDeviceAddress : public ApiVulkanSample
 	uint32_t                              descriptor_offset{};
 	float                                 accumulated_time{};
 	uint32_t                              num_indices_per_mesh{};
+
+  protected:
+	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address();

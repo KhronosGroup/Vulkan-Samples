@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Mobica Limited
+/* Copyright (c) 2024-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,6 @@ DynamicMultisampleRasterization::DynamicMultisampleRasterization()
 {
 	title = "DynamicState3 Multisample Rasterization";
 
-	set_api_version(VK_API_VERSION_1_2);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
@@ -49,6 +48,11 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 		destroy_image_data(depth_stencil);
 		destroy_image_data(color_attachment);
 	}
+}
+
+uint32_t DynamicMultisampleRasterization::get_api_version() const
+{
+	return VK_API_VERSION_1_2;
 }
 
 void DynamicMultisampleRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
@@ -249,6 +253,16 @@ void DynamicMultisampleRasterization::build_command_buffers()
 		                             VK_IMAGE_LAYOUT_UNDEFINED,
 		                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
 		                             depth_range);
+
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             color_attachment.image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             range);
 
 		vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
 		vkCmdSetRasterizationSamplesEXT(draw_cmd_buffers[i], sample_count);        // VK_EXT_extended_dynamic_state3

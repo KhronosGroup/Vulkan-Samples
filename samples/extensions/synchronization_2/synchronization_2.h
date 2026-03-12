@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,6 +70,7 @@ class Synchronization2 : public ApiVulkanSample
 		VkQueue                             queue;                        // Separate queue for compute commands (queue family may differ from the one used for graphics)
 		VkCommandPool                       command_pool;                 // Use a separate command pool (queue family may differ from the one used for graphics)
 		VkCommandBuffer                     command_buffer;               // Command buffer storing the dispatch commands and barriers
+		VkFence                             fence;                        // Fence to wait for compute dispatch completion before UBO update
 		VkSemaphore                         semaphore;                    // Execution dependency between compute & graphic submission
 		VkDescriptorSetLayout               descriptor_set_layout;        // Compute shader binding layout
 		VkDescriptorSet                     descriptor_set;               // Compute shader bindings

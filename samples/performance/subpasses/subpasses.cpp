@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,23 +50,6 @@ Subpasses::Subpasses()
 	config.insert<vkb::IntSetting>(3, configs[Config::RenderTechnique].value, 0);
 	config.insert<vkb::IntSetting>(3, configs[Config::TransientAttachments].value, 0);
 	config.insert<vkb::IntSetting>(3, configs[Config::GBufferSize].value, 1);
-
-#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
-	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional=*/true);
-
-	VkLayerSettingEXT layerSetting;
-	layerSetting.pLayerName   = "MoltenVK";
-	layerSetting.pSettingName = "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS";
-	layerSetting.type         = VK_LAYER_SETTING_TYPE_INT32_EXT;
-	layerSetting.valueCount   = 1;
-
-	// Make this static so layer setting reference remains valid after leaving constructor scope
-	static const int32_t disableMetalArgumentBuffers = 0;
-	layerSetting.pValues                             = &disableMetalArgumentBuffers;
-
-	add_layer_setting(layerSetting);
-#endif
 }
 
 std::unique_ptr<vkb::RenderTarget> Subpasses::create_render_target(vkb::core::Image &&swapchain_image)
@@ -185,6 +168,24 @@ bool Subpasses::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+#if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
+void Subpasses::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
+	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+
+void Subpasses::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const
+{
+	// Make this static so layer setting reference remains valid after leaving the current scope
+	static const int32_t disableMetalArgumentBuffers = 0;
+
+	vkb::VulkanSampleC::request_layer_settings(requested_layer_settings);
+	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &disableMetalArgumentBuffers});
+}
+#endif
+
 void Subpasses::update(float delta_time)
 {
 	// Check whether the user changed the render technique
@@ -298,7 +299,7 @@ void Subpasses::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpasses()
+std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_one_renderpass_two_subpasses()
 {
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
@@ -322,7 +323,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	subpasses.push_back(std::move(scene_subpass));
 	subpasses.push_back(std::move(lighting_subpass));
 
-	auto render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(subpasses));
 
 	render_pipeline->set_load_store(vkb::gbuffer::get_clear_all_store_swapchain());
 
@@ -331,7 +332,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpas
 	return render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_geometry_renderpass()
 {
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
@@ -346,7 +347,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
-	auto geometry_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
+	auto geometry_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(scene_subpasses));
 
 	geometry_render_pipeline->set_load_store(vkb::gbuffer::get_clear_store_all());
 
@@ -355,7 +356,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	return geometry_render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_lighting_renderpass()
 {
 	// Lighting subpass
 	auto lighting_vs      = vkb::ShaderSource{"deferred/lighting.vert.spv"};
@@ -368,7 +369,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	std::vector<std::unique_ptr<vkb::rendering::SubpassC>> lighting_subpasses{};
 	lighting_subpasses.push_back(std::move(lighting_subpass));
 
-	auto lighting_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(lighting_subpasses));
+	auto lighting_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>(std::move(lighting_subpasses));
 
 	lighting_render_pipeline->set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
@@ -377,10 +378,10 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	return lighting_render_pipeline;
 }
 
-void draw_pipeline(vkb::core::CommandBufferC &command_buffer,
-                   vkb::RenderTarget         &render_target,
-                   vkb::RenderPipeline       &render_pipeline,
-                   vkb::GuiC                 *gui = nullptr)
+void draw_pipeline(vkb::core::CommandBufferC       &command_buffer,
+                   vkb::RenderTarget               &render_target,
+                   vkb::rendering::RenderPipelineC &render_pipeline,
+                   vkb::GuiC                       *gui = nullptr)
 {
 	auto &extent = render_target.get_extent();
 
