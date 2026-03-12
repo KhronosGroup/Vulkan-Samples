@@ -93,6 +93,10 @@ class PostprocessingWithVgf : public vkb::VulkanSampleC
 	void draw_gui() override;
 
   private:
+	// from vkb::VulkanSample
+	uint32_t get_api_version() const override;
+
+  private:
 	VgfData load_vgf(const std::string &vgf_file_path);
 
 	void prepare_scene_render_target(uint32_t width, uint32_t height);
@@ -144,7 +148,7 @@ class PostprocessingWithVgf : public vkb::VulkanSampleC
 	std::unique_ptr<ExternallyAllocatedTensor> output_tensor;
 	std::unique_ptr<TensorView>                output_tensor_view;
 
-	std::unique_ptr<vkb::RenderPipeline> blit_pipeline;
+	std::unique_ptr<vkb::rendering::RenderPipelineC> blit_pipeline;
 
 	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
 

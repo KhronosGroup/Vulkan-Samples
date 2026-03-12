@@ -26,14 +26,17 @@
 
 TensorImageAliasing::TensorImageAliasing()
 {
-	set_api_version(VK_API_VERSION_1_3);        // Required by the emulation layers
-
 	// Declare that we need the data graph and tensor extensions
 	add_device_extension("VK_ARM_tensors");
 	add_device_extension("VK_ARM_data_graph");
 	// These extensions are dependencies of the above, so we need to add them too.
 	add_device_extension("VK_KHR_maintenance5");
 	add_device_extension("VK_KHR_deferred_host_operations");
+}
+
+uint32_t TensorImageAliasing::get_api_version() const
+{
+	return VK_API_VERSION_1_3;        // Required by the emulation layers
 }
 
 TensorImageAliasing::~TensorImageAliasing()
@@ -109,7 +112,7 @@ bool TensorImageAliasing::prepare(const vkb::ApplicationOptions &options)
 	vkb::ShaderSource frag_shader("base.frag.spv");
 	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), camera);
 
-	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
 	render_pipeline->prepare();
 
@@ -130,7 +133,7 @@ bool TensorImageAliasing::prepare(const vkb::ApplicationOptions &options)
 	prepare_data_graph_pipeline_descriptor_set();
 
 	// Create a RenderPipeline to blit `output_image` to the swapchain
-	blit_pipeline = std::make_unique<vkb::RenderPipeline>();
+	blit_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	blit_pipeline->add_subpass(std::make_unique<BlitSubpass>(get_render_context(), output_image_view.get()));
 	blit_pipeline->prepare();
 
