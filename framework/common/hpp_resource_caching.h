@@ -23,7 +23,6 @@
 #include "core/hpp_render_pass.h"
 #include "core/hpp_shader_module.h"
 #include "hpp_resource_record.h"
-#include "rendering/hpp_render_target.h"
 #include "resource_caching.h"
 #include <vulkan/vulkan_hash.hpp>
 
@@ -227,9 +226,9 @@ struct hash<vkb::core::HPPSubpassInfo>
 };
 
 template <>
-struct hash<vkb::rendering::HPPAttachment>
+struct hash<vkb::rendering::AttachmentCpp>
 {
-	size_t operator()(const vkb::rendering::HPPAttachment &attachment) const
+	size_t operator()(const vkb::rendering::AttachmentCpp &attachment) const
 	{
 		size_t result = 0;
 		vkb::hash_combine(result, attachment.format);
@@ -250,13 +249,13 @@ struct hash<vkb::rendering::HPPPipelineState>
 };
 
 template <>
-struct hash<vkb::rendering::HPPRenderTarget>
+struct hash<vkb::rendering::RenderTargetCpp>
 {
-	size_t operator()(const vkb::rendering::HPPRenderTarget &render_target) const
+	size_t operator()(const vkb::rendering::RenderTargetCpp &render_target) const
 	{
 		std::size_t result = 0;
 
-		for (auto &view : render_target.get_views())
+		for (auto const &view : render_target.get_views())
 		{
 			vkb::hash_combine(result, view.get_handle());
 			vkb::hash_combine(result, view.get_image().get_handle());

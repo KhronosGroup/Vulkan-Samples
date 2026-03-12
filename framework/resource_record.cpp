@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,11 +16,11 @@
  */
 
 #include "resource_record.h"
-
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
 #include "core/shader_module.h"
+#include "rendering/render_target.h"
 #include "resource_cache.h"
 
 namespace vkb
@@ -79,7 +79,7 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	return pipeline_layout_indices.back();
 }
 
-size_t ResourceRecord::register_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
+size_t ResourceRecord::register_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
 	render_pass_indices.push_back(render_pass_indices.size());
 

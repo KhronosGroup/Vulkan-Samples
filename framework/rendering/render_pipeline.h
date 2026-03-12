@@ -21,7 +21,6 @@
 #include "common/hpp_vk_common.h"
 #include "common/vk_common.h"
 #include "core/command_buffer.h"
-#include "rendering/hpp_render_target.h"
 #include "rendering/render_target.h"
 #include "rendering/subpass.h"
 #include <vulkan/vulkan.hpp>
@@ -49,7 +48,6 @@ class RenderPipeline
 	using SubpassContentsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SubpassContents, VkSubpassContents>::type;
 
 	using LoadStoreInfoType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPLoadStoreInfo, vkb::LoadStoreInfo>::type;
-	using RenderTargetType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 
   public:
 	RenderPipeline(std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> &&subpasses = {});
@@ -69,7 +67,7 @@ class RenderPipeline
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
-	void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target, SubpassContentsType contents = {});
+	void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target, SubpassContentsType contents = {});
 
 	/**
 	 * @return Subpass currently being recorded, or the first one if drawing has not started
@@ -105,7 +103,7 @@ class RenderPipeline
 
   private:
 	void draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-	               vkb::rendering::HPPRenderTarget &render_target,
+	               vkb::rendering::RenderTargetCpp &render_target,
 	               vk::SubpassContents              contents);
 
   private:
@@ -150,7 +148,7 @@ void RenderPipeline<bindingType>::add_subpass(std::unique_ptr<vkb::rendering::Su
 }
 
 template <vkb::BindingType bindingType>
-void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target, SubpassContentsType contents)
+void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target, SubpassContentsType contents)
 {
 	assert(!subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
@@ -167,7 +165,7 @@ void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &co
 	else
 	{
 		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		          reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target),
+		          reinterpret_cast<vkb::rendering::RenderTargetCpp &>(render_target),
 		          static_cast<vk::SubpassContents>(contents));
 	}
 
@@ -176,7 +174,7 @@ void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &co
 
 template <vkb::BindingType bindingType>
 void RenderPipeline<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                            vkb::rendering::HPPRenderTarget &render_target,
+                                            vkb::rendering::RenderTargetCpp &render_target,
                                             vk::SubpassContents              contents)
 {
 	for (size_t i = 0; i < subpasses.size(); ++i)

@@ -196,7 +196,7 @@ void ImageCompressionControlSample::prepare_render_context()
 	get_render_context().prepare(1, std::bind(&ImageCompressionControlSample::create_render_target, this, std::placeholders::_1));
 }
 
-std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	/**
 	 * The render passes will use 3 attachments: Color, Depth and Swapchain.
@@ -348,7 +348,7 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 	images.push_back(std::move(color_image));
 	scene_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE});
 
-	return std::make_unique<vkb::RenderTarget>(std::move(images));
+	return std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
 void ImageCompressionControlSample::update(float delta_time)

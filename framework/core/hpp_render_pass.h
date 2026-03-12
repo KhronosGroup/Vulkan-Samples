@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,12 +25,14 @@ namespace vkb
 namespace common
 {
 struct HPPLoadStoreInfo;
-
 }
+
 namespace rendering
 {
-struct HPPAttachment;
-}
+template <vkb::BindingType bindingType>
+struct Attachment;
+using AttachmentCpp = Attachment<vkb::BindingType::Cpp>;
+}        // namespace rendering
 
 namespace core
 {
@@ -58,11 +60,11 @@ class HPPRenderPass : private vkb::RenderPass
 
   public:
 	HPPRenderPass(vkb::core::DeviceCpp                             &device,
-	              const std::vector<vkb::rendering::HPPAttachment> &attachments,
+	              const std::vector<vkb::rendering::AttachmentCpp> &attachments,
 	              const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
 	              const std::vector<vkb::core::HPPSubpassInfo>     &subpasses) :
 	    vkb::RenderPass(reinterpret_cast<vkb::core::DeviceC &>(device),
-	                    reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
+	                    reinterpret_cast<std::vector<vkb::rendering::AttachmentC> const &>(attachments),
 	                    reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
 	                    reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses))
 	{}
