@@ -46,8 +46,8 @@ class DebugUtils
 	/**
 	 * @brief Tags the given Vulkan object with some data.
 	 */
-	virtual void set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
-	                           size_t tag_data_size) const = 0;
+	virtual void set_debug_tag(
+	    VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const = 0;
 
 	/**
 	 * @brief Inserts a command to begin a new debug label/marker scope.
@@ -75,8 +75,8 @@ class DebugUtilsExtDebugUtils final : public DebugUtils
 
 	void set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle, const char *name) const override;
 
-	void set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
-	                   size_t tag_data_size) const override;
+	void set_debug_tag(
+	    VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
 
 	void cmd_begin_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const override;
 
@@ -95,8 +95,8 @@ class DebugMarkerExtDebugUtils final : public DebugUtils
 
 	void set_debug_name(VkDevice device, VkObjectType object_type, uint64_t object_handle, const char *name) const override;
 
-	void set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
-	                   size_t tag_data_size) const override;
+	void set_debug_tag(
+	    VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
 
 	void cmd_begin_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const override;
 

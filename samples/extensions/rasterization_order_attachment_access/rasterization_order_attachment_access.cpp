@@ -95,8 +95,8 @@ void RasterizationOrderAttachmentAccess::create_buffers()
 	scene_uniform_buffer =
 	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	instance_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(InstanceData) * kInstanceCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), sizeof(InstanceData) * kInstanceCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Initialize instance data with random colors
 	instances.resize(kInstanceCount);
@@ -111,7 +111,8 @@ void RasterizationOrderAttachmentAccess::create_buffers()
 		{
 			for (uint32_t x = 0; x < kInstanceRowCount; ++x, ++idx)
 			{
-				const glm::vec3 pos = {static_cast<float>(x) - (kInstanceRowCount - 1) * 0.5f, static_cast<float>(y) - (kInstanceColumnCount - 1) * 0.5f,
+				const glm::vec3 pos = {static_cast<float>(x) - (kInstanceRowCount - 1) * 0.5f,
+				                       static_cast<float>(y) - (kInstanceColumnCount - 1) * 0.5f,
 				                       static_cast<float>(z) - (kInstanceLayerCount - 1) * 0.5f};
 
 				instances[idx].model = glm::scale(glm::translate(glm::mat4(1.0f), pos), glm::vec3(0.03f));
@@ -394,9 +395,15 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 			}
 
 			// Transition: UNDEFINED -> RENDERING_LOCAL_READ_KHR (enables framebuffer fetch)
-			vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-			                             VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+			vkb::image_layout_transition(draw_cmd_buffers[i],
+			                             swapchain_buffers[i].image,
+			                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             0,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                             VK_IMAGE_LAYOUT_UNDEFINED,
+			                             VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR,
+			                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
 			// Set up color attachment for dynamic rendering with local read support
 			VkRenderingAttachmentInfoKHR color_attachment = {};
@@ -489,17 +496,28 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 			}
 
 			// Transition: RENDERING_LOCAL_READ_KHR -> COLOR_ATTACHMENT_OPTIMAL (required for UI rendering)
-			vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+			vkb::image_layout_transition(draw_cmd_buffers[i],
+			                             swapchain_buffers[i].image,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                             VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR,
+			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
 			draw_ui(draw_cmd_buffers[i], i);
 
 			// Transition: COLOR_ATTACHMENT_OPTIMAL -> PRESENT_SRC_KHR
-			vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+			vkb::image_layout_transition(draw_cmd_buffers[i],
+			                             swapchain_buffers[i].image,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                             0,
+			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 		}
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
@@ -536,7 +554,13 @@ void RasterizationOrderAttachmentAccess::retrieve_timestamp_results()
 
 	// WAIT_BIT blocks until results are available. 64_BIT for full precision timestamps
 	const VkDevice device = get_device().get_handle();
-	vkGetQueryPoolResults(device, timestamp_query_pool, 0, 2, timestamp_results.size() * sizeof(uint64_t), timestamp_results.data(), sizeof(uint64_t),
+	vkGetQueryPoolResults(device,
+	                      timestamp_query_pool,
+	                      0,
+	                      2,
+	                      timestamp_results.size() * sizeof(uint64_t),
+	                      timestamp_results.data(),
+	                      sizeof(uint64_t),
 	                      VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 
 	// timestampPeriod is nanoseconds per tick, convert delta to milliseconds

@@ -35,7 +35,8 @@ class Device;
 
 template <vkb::BindingType bindingType>
 struct BufferBuilder
-    : public vkb::allocated::BuilderBase<bindingType, BufferBuilder<bindingType>,
+    : public vkb::allocated::BuilderBase<bindingType,
+                                         BufferBuilder<bindingType>,
                                          typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type>
 {
   public:
@@ -149,9 +150,12 @@ class Buffer : public vkb::allocated::Allocated<bindingType, typename std::condi
 	 * @param queue_family_indices optional queue family indices
 	 */
 	// [[deprecated("Use the BufferBuilder ctor instead")]]
-	Buffer(vkb::core::Device<bindingType> &device, DeviceSizeType size, BufferUsageFlagsType buffer_usage, VmaMemoryUsage memory_usage,
-	       VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
-	       const std::vector<uint32_t> &queue_family_indices = {});
+	Buffer(vkb::core::Device<bindingType> &device,
+	       DeviceSizeType                  size,
+	       BufferUsageFlagsType            buffer_usage,
+	       VmaMemoryUsage                  memory_usage,
+	       VmaAllocationCreateFlags        flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+	       const std::vector<uint32_t>    &queue_family_indices = {});
 
 	Buffer(vkb::core::Device<bindingType> &device, BufferBuilder<bindingType> const &builder);
 
@@ -220,15 +224,20 @@ inline Buffer<bindingType> Buffer<bindingType>::create_staging_buffer(vkb::core:
 }
 
 template <vkb::BindingType bindingType>
-inline Buffer<bindingType>::Buffer(vkb::core::Device<bindingType> &device, DeviceSizeType size, BufferUsageFlagsType buffer_usage, VmaMemoryUsage memory_usage,
-                                   VmaAllocationCreateFlags flags, const std::vector<uint32_t> &queue_family_indices) :
-    Buffer(device, BufferBuilder<bindingType>(size)
-                       .with_usage(buffer_usage)
-                       .with_vma_usage(memory_usage)
-                       .with_alignment(0)
-                       .with_vma_flags(flags)
-                       .with_queue_families(queue_family_indices)
-                       .with_implicit_sharing_mode())
+inline Buffer<bindingType>::Buffer(vkb::core::Device<bindingType> &device,
+                                   DeviceSizeType                  size,
+                                   BufferUsageFlagsType            buffer_usage,
+                                   VmaMemoryUsage                  memory_usage,
+                                   VmaAllocationCreateFlags        flags,
+                                   const std::vector<uint32_t>    &queue_family_indices) :
+    Buffer(device,
+           BufferBuilder<bindingType>(size)
+               .with_usage(buffer_usage)
+               .with_vma_usage(memory_usage)
+               .with_alignment(0)
+               .with_vma_flags(flags)
+               .with_queue_families(queue_family_indices)
+               .with_implicit_sharing_mode())
 {}
 
 template <vkb::BindingType bindingType>

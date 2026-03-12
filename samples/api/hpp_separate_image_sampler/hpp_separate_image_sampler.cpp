@@ -227,9 +227,19 @@ vk::Pipeline HPPSeparateImageSampler::create_graphics_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, input_state, vk::PrimitiveTopology::eTriangleList, 0,
-	                                             vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise,
-	                                             {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<vk::DescriptorSetLayout> const &descriptor_set_layouts)
@@ -243,7 +253,11 @@ vk::PipelineLayout HPPSeparateImageSampler::create_pipeline_layout(std::vector<v
 vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
 {
 	return vkb::common::create_sampler(
-	    get_device().get_gpu().get_handle(), get_device().get_handle(), texture.image->get_format(), filter, vk::SamplerAddressMode::eRepeat,
+	    get_device().get_gpu().get_handle(),
+	    get_device().get_handle(),
+	    texture.image->get_format(),
+	    filter,
+	    vk::SamplerAddressMode::eRepeat,
 	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(texture.image->get_mipmaps().size()));
 }

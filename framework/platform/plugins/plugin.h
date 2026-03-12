@@ -99,8 +99,10 @@ enum class Hook
 class Plugin
 {
   public:
-	Plugin(const std::string name, const std::string description, std::vector<std::pair<std::string, std::string>> const &commands = {},
-	       std::vector<std::pair<std::string, std::string>> const &options = {}) :
+	Plugin(const std::string                                       name,
+	       const std::string                                       description,
+	       std::vector<std::pair<std::string, std::string>> const &commands = {},
+	       std::vector<std::pair<std::string, std::string>> const &options  = {}) :
 	    name{name}, description{description}, commands{commands}, options{options} {};
 
 	virtual ~Plugin() = default;

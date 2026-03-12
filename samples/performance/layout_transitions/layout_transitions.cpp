@@ -103,13 +103,19 @@ std::unique_ptr<vkb::RenderTarget> LayoutTransitions::create_render_target(vkb::
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
 
-	vkb::core::Image depth_image{device, extent, vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
-	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image depth_image{device,
+	                             extent,
+	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
+	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device, extent, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image albedo_image{
+	    device, extent, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image normal_image{device, extent, VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+	vkb::core::Image normal_image{device,
+	                              extent,
+	                              VK_FORMAT_A2B10G10R10_UNORM_PACK32,
+	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                              VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<vkb::core::Image> images;

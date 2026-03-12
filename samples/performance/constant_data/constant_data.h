@@ -105,8 +105,11 @@ class ConstantData : public vkb::VulkanSampleC
 	class ConstantDataSubpass : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
-		ConstantDataSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                    vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		ConstantDataSubpass(vkb::rendering::RenderContextC &render_context,
+		                    vkb::ShaderSource             &&vertex_shader,
+		                    vkb::ShaderSource             &&fragment_shader,
+		                    vkb::sg::Scene                 &scene,
+		                    vkb::sg::Camera                &camera) :
 		    vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
@@ -123,8 +126,11 @@ class ConstantData : public vkb::VulkanSampleC
 	class PushConstantSubpass : public ConstantDataSubpass
 	{
 	  public:
-		PushConstantSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                    vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		PushConstantSubpass(vkb::rendering::RenderContextC &render_context,
+		                    vkb::ShaderSource             &&vertex_shader,
+		                    vkb::ShaderSource             &&fragment_shader,
+		                    vkb::sg::Scene                 &scene,
+		                    vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
@@ -157,8 +163,11 @@ class ConstantData : public vkb::VulkanSampleC
 	class DescriptorSetSubpass : public ConstantDataSubpass
 	{
 	  public:
-		DescriptorSetSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                     vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		DescriptorSetSubpass(vkb::rendering::RenderContextC &render_context,
+		                     vkb::ShaderSource             &&vertex_shader,
+		                     vkb::ShaderSource             &&fragment_shader,
+		                     vkb::sg::Scene                 &scene,
+		                     vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 
@@ -191,8 +200,11 @@ class ConstantData : public vkb::VulkanSampleC
 	class BufferArraySubpass : public ConstantDataSubpass
 	{
 	  public:
-		BufferArraySubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                   vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+		BufferArraySubpass(vkb::rendering::RenderContextC &render_context,
+		                   vkb::ShaderSource             &&vertex_shader,
+		                   vkb::ShaderSource             &&fragment_shader,
+		                   vkb::sg::Scene                 &scene,
+		                   vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
 

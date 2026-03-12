@@ -25,7 +25,10 @@
 namespace plugins
 {
 UserInterfaceOptions::UserInterfaceOptions() :
-    UserInterfaceOptionsTags("User interface options", "A collection of flags to configure the user interface", {}, {},
+    UserInterfaceOptionsTags("User interface options",
+                             "A collection of flags to configure the user interface",
+                             {},
+                             {},
                              {{"hideui", "If flag is set, hides the user interface at startup"}})
 {}
 

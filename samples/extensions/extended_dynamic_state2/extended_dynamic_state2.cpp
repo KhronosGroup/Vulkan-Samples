@@ -312,7 +312,9 @@ void ExtendedDynamicState2::create_pipelines()
 
 	/* Attribute descriptions */
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes_background = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
+	    vkb::initializers::vertex_input_attribute_description(0,
+	                                                          0,
+	                                                          VK_FORMAT_R32G32B32_SFLOAT,
 	                                                          0),                                                                 // Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)),        // Normal
 	};
@@ -494,8 +496,8 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 
 	/* Second descriptor set */
 	set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	                                                     VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_VERTEX_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, 1),
 	};
 
@@ -834,14 +836,14 @@ void ExtendedDynamicState2::model_data_creation()
 	vkb::core::BufferC vertex_norm_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices_norm);
 	vkb::core::BufferC index_staging       = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	cube.vertices_pos = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size,
-	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.vertices_pos = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	cube.vertices_norm = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size,
-	                                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.vertices_norm = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	cube.indices = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                    VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.indices = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);

@@ -215,8 +215,8 @@ Astc::Astc(const Image &image) : Image{image.get_name()}
 	constexpr const char file_cache_header[ASTC_CACHE_HEADER_SIZE] = "ASTCConvertedDataV01";
 	const auto           profile                                   = to_profile(image.get_format());
 
-	auto can_load_from_file = [this, profile, fs, file_cache_header, bytes_per_pixel, use_cache](const Path &path, std::vector<uint8_t> &dst_data,
-	                                                                                             uint32_t width, uint32_t height, uint32_t depth)
+	auto can_load_from_file = [this, profile, fs, file_cache_header, bytes_per_pixel, use_cache](
+	                              const Path &path, std::vector<uint8_t> &dst_data, uint32_t width, uint32_t height, uint32_t depth)
 	{
 		if (!use_cache)
 		{

@@ -275,7 +275,8 @@ void ConservativeRasterization::build_command_buffers()
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.scene, 0, 1, &descriptor_sets.scene, 0, nullptr);
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+			vkCmdBindPipeline(draw_cmd_buffers[i],
+			                  VK_PIPELINE_BIND_POINT_GRAPHICS,
 			                  conservative_raster_enabled ? pipelines.triangle_conservative_raster : pipelines.triangle);
 
 			VkDeviceSize offsets[1] = {0};
@@ -313,8 +314,8 @@ void ConservativeRasterization::build_command_buffers()
 
 			// Low-res triangle from offscreen framebuffer
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.fullscreen);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.fullscreen, 0, 1, &descriptor_sets.fullscreen, 0,
-			                        nullptr);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.fullscreen, 0, 1, &descriptor_sets.fullscreen, 0, nullptr);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
 			// Overlay actual triangle
@@ -355,11 +356,11 @@ void ConservativeRasterization::load_assets()
 	vkb::core::BufferC index_staging_buffer  = vkb::core::BufferC::create_staging_buffer(get_device(), index_buffer);
 
 	// Device local destination buffers
-	triangle.vertices = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size,
-	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	triangle.vertices = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	triangle.indices = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size,
-	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	triangle.indices = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from host to device
 	get_device().copy_buffer(vertex_staging_buffer, *triangle.vertices, queue);
@@ -382,11 +383,14 @@ void ConservativeRasterization::setup_descriptor_set_layout()
 
 	// Scene rendering
 	set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT,
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_VERTEX_BIT,
 	                                                     0),        // Binding 0: Vertex shader uniform buffer
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT,
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	                                                     VK_SHADER_STAGE_FRAGMENT_BIT,
 	                                                     1),        // Binding 1: Fragment shader image sampler
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_FRAGMENT_BIT,
 	                                                     2)        // Binding 2: Fragment shader uniform buffer
 	};
 	descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
@@ -396,9 +400,11 @@ void ConservativeRasterization::setup_descriptor_set_layout()
 
 	// Fullscreen pass
 	set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT,
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_VERTEX_BIT,
 	                                                     0),        // Binding 0: Vertex shader uniform buffer
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT,
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	                                                     VK_SHADER_STAGE_FRAGMENT_BIT,
 	                                                     1)        // Binding 1: Fragment shader image sampler
 	};
 	descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
@@ -418,8 +424,8 @@ void ConservativeRasterization::setup_descriptor_set()
 	std::vector<VkWriteDescriptorSet> offscreen_write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_sets.scene, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_buffer_descriptor),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(offscreen_write_descriptor_sets.size()), offscreen_write_descriptor_sets.data(), 0,
-	                       nullptr);
+	vkUpdateDescriptorSets(
+	    get_device().get_handle(), static_cast<uint32_t>(offscreen_write_descriptor_sets.size()), offscreen_write_descriptor_sets.data(), 0, nullptr);
 
 	// Fullscreen pass
 	descriptor_set_allocate_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.fullscreen, 1);

@@ -90,9 +90,10 @@ bool is_depth_format(VkFormat format);
  *		  By default we start with the highest precision packed format
  * @return The valid suited depth format
  */
-VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_only = false,
-                                   const std::vector<VkFormat> &depth_format_priority_list = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT,
-                                                                                              VK_FORMAT_D16_UNORM});
+VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
+                                   bool                         depth_only                 = false,
+                                   const std::vector<VkFormat> &depth_format_priority_list = {
+                                       VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM});
 
 /**
  * @brief Helper function to pick a blendable format from a priority ordered list
@@ -163,9 +164,10 @@ VkShaderModule load_shader_from_vector(const std::vector<uint32_t> &spirv, VkDev
  * @param preferred_formats List of preferred VkFormats to use.
  * @return The preferred VkSurfaceFormatKHR.
  */
-VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice gpu, VkSurfaceKHR surface,
-                                         std::vector<VkFormat> const &preferred_formats = {VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB,
-                                                                                           VK_FORMAT_A8B8G8R8_SRGB_PACK32});
+VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice             gpu,
+                                         VkSurfaceKHR                 surface,
+                                         std::vector<VkFormat> const &preferred_formats = {
+                                             VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32});
 
 /**
  * @brief Image memory barrier structure used to define
@@ -217,8 +219,14 @@ struct BufferMemoryBarrier
  * @param new_layout The VkImageLayout to transition to.
  * @param subresource_range The VkImageSubresourceRange to use with the transition.
  */
-void image_layout_transition(VkCommandBuffer command_buffer, VkImage image, VkPipelineStageFlags src_stage_mask, VkPipelineStageFlags dst_stage_mask,
-                             VkAccessFlags src_access_mask, VkAccessFlags dst_access_mask, VkImageLayout old_layout, VkImageLayout new_layout,
+void image_layout_transition(VkCommandBuffer                command_buffer,
+                             VkImage                        image,
+                             VkPipelineStageFlags           src_stage_mask,
+                             VkPipelineStageFlags           dst_stage_mask,
+                             VkAccessFlags                  src_access_mask,
+                             VkAccessFlags                  dst_access_mask,
+                             VkImageLayout                  old_layout,
+                             VkImageLayout                  new_layout,
                              VkImageSubresourceRange const &subresource_range);
 
 /**
@@ -232,8 +240,8 @@ void image_layout_transition(VkCommandBuffer command_buffer, VkImage image, VkPi
  * @param new_layout The VkImageLayout to transition to.
  * @param subresource_range The VkImageSubresourceRange to use with the transition.
  */
-void image_layout_transition(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
-                             VkImageSubresourceRange const &subresource_range);
+void image_layout_transition(
+    VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkImageSubresourceRange const &subresource_range);
 
 /**
  * @brief Put an image memory barrier for a layout transition of an image, on a fixed subresource with first mip level and layer.
@@ -257,8 +265,10 @@ void image_layout_transition(VkCommandBuffer command_buffer, VkImage image, VkIm
  * @param old_layout The VkImageLayout to transition from.
  * @param new_layout The VkImageLayout to transition to.
  */
-void image_layout_transition(VkCommandBuffer command_buffer, std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
-                             VkImageLayout old_layout, VkImageLayout new_layout);
+void image_layout_transition(VkCommandBuffer                                                 command_buffer,
+                             std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
+                             VkImageLayout                                                   old_layout,
+                             VkImageLayout                                                   new_layout);
 
 /**
  * @brief Helper functions for compression controls

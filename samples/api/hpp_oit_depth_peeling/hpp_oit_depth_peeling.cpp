@@ -115,28 +115,39 @@ void HPPOITDepthPeeling::build_command_buffers()
 				// It is bound as texture and read in the shader to discard fragments from the
 				// previous layers.
 				vk::ImageSubresourceRange depth_subresource_range = {vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1};
-				vkb::common::image_layout_transition(command_buffer, depths[l % kDepthCount].image->get_handle(), vk::PipelineStageFlagBits::eFragmentShader,
+				vkb::common::image_layout_transition(command_buffer,
+				                                     depths[l % kDepthCount].image->get_handle(),
+				                                     vk::PipelineStageFlagBits::eFragmentShader,
 				                                     vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
 				                                     vk::AccessFlagBits::eShaderRead,
 				                                     vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 				                                     l <= 1 ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilReadOnlyOptimal,
-				                                     vk::ImageLayout::eDepthStencilAttachmentOptimal, depth_subresource_range);
+				                                     vk::ImageLayout::eDepthStencilAttachmentOptimal,
+				                                     depth_subresource_range);
 				if (l > 0)
 				{
-					vkb::common::image_layout_transition(command_buffer, depths[(l + 1) % kDepthCount].image->get_handle(),
+					vkb::common::image_layout_transition(command_buffer,
+					                                     depths[(l + 1) % kDepthCount].image->get_handle(),
 					                                     vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
 					                                     vk::PipelineStageFlagBits::eFragmentShader,
 					                                     vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-					                                     vk::AccessFlagBits::eShaderRead, vk::ImageLayout::eDepthStencilAttachmentOptimal,
-					                                     vk::ImageLayout::eDepthStencilReadOnlyOptimal, depth_subresource_range);
+					                                     vk::AccessFlagBits::eShaderRead,
+					                                     vk::ImageLayout::eDepthStencilAttachmentOptimal,
+					                                     vk::ImageLayout::eDepthStencilReadOnlyOptimal,
+					                                     depth_subresource_range);
 				}
 
 				// Set one of the layer textures as color attachment, as the gatherPass pass will render to it.
 				vk::ImageSubresourceRange layer_subresource_range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
-				vkb::common::image_layout_transition(command_buffer, layers[l].image->get_handle(), vk::PipelineStageFlagBits::eFragmentShader,
-				                                     vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::AccessFlagBits::eShaderRead,
-				                                     vk::AccessFlagBits::eColorAttachmentWrite, vk::ImageLayout::eUndefined,
-				                                     vk::ImageLayout::eColorAttachmentOptimal, layer_subresource_range);
+				vkb::common::image_layout_transition(command_buffer,
+				                                     layers[l].image->get_handle(),
+				                                     vk::PipelineStageFlagBits::eFragmentShader,
+				                                     vk::PipelineStageFlagBits::eColorAttachmentOutput,
+				                                     vk::AccessFlagBits::eShaderRead,
+				                                     vk::AccessFlagBits::eColorAttachmentWrite,
+				                                     vk::ImageLayout::eUndefined,
+				                                     vk::ImageLayout::eColorAttachmentOptimal,
+				                                     layer_subresource_range);
 
 				render_pass_begin_info.framebuffer = layers[l].gather_framebuffer;
 				render_pass_begin_info.renderPass  = gatherPass.render_pass;
@@ -146,8 +157,8 @@ void HPPOITDepthPeeling::build_command_buffers()
 					command_buffer.setViewport(0, viewport);
 					command_buffer.setScissor(0, scissor);
 
-					command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, gatherPass.pipeline_layout, 0,
-					                                  depths[l % kDepthCount].gather_descriptor_set, {});
+					command_buffer.bindDescriptorSets(
+					    vk::PipelineBindPoint::eGraphics, gatherPass.pipeline_layout, 0, depths[l % kDepthCount].gather_descriptor_set, {});
 
 					command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, l == 0 ? gatherPass.first_pipeline : gatherPass.pipeline);
 					draw_model(model, command_buffer);
@@ -155,10 +166,15 @@ void HPPOITDepthPeeling::build_command_buffers()
 				command_buffer.endRenderPass();
 
 				// Get the layer texture ready to be read by the combinePass pass.
-				vkb::common::image_layout_transition(command_buffer, layers[l].image->get_handle(), vk::PipelineStageFlagBits::eColorAttachmentOutput,
-				                                     vk::PipelineStageFlagBits::eFragmentShader, vk::AccessFlagBits::eColorAttachmentWrite,
-				                                     vk::AccessFlagBits::eShaderRead, vk::ImageLayout::eColorAttachmentOptimal,
-				                                     vk::ImageLayout::eShaderReadOnlyOptimal, layer_subresource_range);
+				vkb::common::image_layout_transition(command_buffer,
+				                                     layers[l].image->get_handle(),
+				                                     vk::PipelineStageFlagBits::eColorAttachmentOutput,
+				                                     vk::PipelineStageFlagBits::eFragmentShader,
+				                                     vk::AccessFlagBits::eColorAttachmentWrite,
+				                                     vk::AccessFlagBits::eShaderRead,
+				                                     vk::ImageLayout::eColorAttachmentOptimal,
+				                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+				                                     layer_subresource_range);
 			}
 
 			// Combine pass
@@ -229,9 +245,19 @@ void HPPOITDepthPeeling::create_background_pipeline()
 
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{.depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
-	background.pipeline = vkb::common::create_graphics_pipeline(
-	    get_device().get_handle(), pipeline_cache, shader_stages, {}, vk::PrimitiveTopology::eTriangleList, {}, vk::PolygonMode::eFill,
-	    vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, {blend_attachment_state}, depth_stencil_state, combinePass.pipeline_layout, render_pass);
+	background.pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                                            pipeline_cache,
+	                                                            shader_stages,
+	                                                            {},
+	                                                            vk::PrimitiveTopology::eTriangleList,
+	                                                            {},
+	                                                            vk::PolygonMode::eFill,
+	                                                            vk::CullModeFlagBits::eNone,
+	                                                            vk::FrontFace::eCounterClockwise,
+	                                                            {blend_attachment_state},
+	                                                            depth_stencil_state,
+	                                                            combinePass.pipeline_layout,
+	                                                            render_pass);
 }
 
 void HPPOITDepthPeeling::create_combine_pass()
@@ -272,9 +298,19 @@ void HPPOITDepthPeeling::create_combine_pass_pipeline()
 
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{.depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
-	combinePass.pipeline = vkb::common::create_graphics_pipeline(
-	    get_device().get_handle(), pipeline_cache, shader_stages, {}, vk::PrimitiveTopology::eTriangleList, {}, vk::PolygonMode::eFill,
-	    vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, {blend_attachment_state}, depth_stencil_state, combinePass.pipeline_layout, render_pass);
+	combinePass.pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                                             pipeline_cache,
+	                                                             shader_stages,
+	                                                             {},
+	                                                             vk::PrimitiveTopology::eTriangleList,
+	                                                             {},
+	                                                             vk::PolygonMode::eFill,
+	                                                             vk::CullModeFlagBits::eNone,
+	                                                             vk::FrontFace::eCounterClockwise,
+	                                                             {blend_attachment_state},
+	                                                             depth_stencil_state,
+	                                                             combinePass.pipeline_layout,
+	                                                             render_pass);
 }
 
 void HPPOITDepthPeeling::create_descriptor_pool()
@@ -363,17 +399,35 @@ void HPPOITDepthPeeling::create_gather_pass_pipelines()
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{
 	    .depthTestEnable = true, .depthWriteEnable = true, .depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
-	gatherPass.first_pipeline =
-	    vkb::common::create_graphics_pipeline(device, pipeline_cache, shader_stages, vertex_input_state, vk::PrimitiveTopology::eTriangleList, {},
-	                                          vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, {blend_attachment_state},
-	                                          depth_stencil_state, gatherPass.pipeline_layout, gatherPass.render_pass);
+	gatherPass.first_pipeline = vkb::common::create_graphics_pipeline(device,
+	                                                                  pipeline_cache,
+	                                                                  shader_stages,
+	                                                                  vertex_input_state,
+	                                                                  vk::PrimitiveTopology::eTriangleList,
+	                                                                  {},
+	                                                                  vk::PolygonMode::eFill,
+	                                                                  vk::CullModeFlagBits::eNone,
+	                                                                  vk::FrontFace::eCounterClockwise,
+	                                                                  {blend_attachment_state},
+	                                                                  depth_stencil_state,
+	                                                                  gatherPass.pipeline_layout,
+	                                                                  gatherPass.render_pass);
 
 	shader_stages[1] = load_shader("oit_depth_peeling/gather.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
-	gatherPass.pipeline =
-	    vkb::common::create_graphics_pipeline(device, pipeline_cache, shader_stages, vertex_input_state, vk::PrimitiveTopology::eTriangleList, {},
-	                                          vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, {blend_attachment_state},
-	                                          depth_stencil_state, gatherPass.pipeline_layout, gatherPass.render_pass);
+	gatherPass.pipeline = vkb::common::create_graphics_pipeline(device,
+	                                                            pipeline_cache,
+	                                                            shader_stages,
+	                                                            vertex_input_state,
+	                                                            vk::PrimitiveTopology::eTriangleList,
+	                                                            {},
+	                                                            vk::PolygonMode::eFill,
+	                                                            vk::CullModeFlagBits::eNone,
+	                                                            vk::FrontFace::eCounterClockwise,
+	                                                            {blend_attachment_state},
+	                                                            depth_stencil_state,
+	                                                            gatherPass.pipeline_layout,
+	                                                            gatherPass.render_pass);
 }
 
 void HPPOITDepthPeeling::create_gather_pass_render_pass()
@@ -418,25 +472,36 @@ void HPPOITDepthPeeling::create_images(const uint32_t width, const uint32_t heig
 	const vk::Extent3D image_extent = {width, height, 1};
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)
 	{
-		layers[i].image      = std::make_unique<vkb::core::HPPImage>(get_device(), image_extent, vk::Format::eR8G8B8A8Unorm,
+		layers[i].image      = std::make_unique<vkb::core::HPPImage>(get_device(),
+                                                                image_extent,
+                                                                vk::Format::eR8G8B8A8Unorm,
                                                                 vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
-                                                                VMA_MEMORY_USAGE_GPU_ONLY, vk::SampleCountFlagBits::e1);
+                                                                VMA_MEMORY_USAGE_GPU_ONLY,
+                                                                vk::SampleCountFlagBits::e1);
 		layers[i].image_view = std::make_unique<vkb::core::HPPImageView>(*layers[i].image, vk::ImageViewType::e2D, vk::Format::eR8G8B8A8Unorm);
 	}
 
 	for (uint32_t i = 0; i < kDepthCount; ++i)
 	{
-		depths[i].image      = std::make_unique<vkb::core::HPPImage>(get_device(), image_extent, vk::Format::eD32Sfloat,
+		depths[i].image      = std::make_unique<vkb::core::HPPImage>(get_device(),
+                                                                image_extent,
+                                                                vk::Format::eD32Sfloat,
                                                                 vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eDepthStencilAttachment,
-                                                                VMA_MEMORY_USAGE_GPU_ONLY, vk::SampleCountFlagBits::e1);
+                                                                VMA_MEMORY_USAGE_GPU_ONLY,
+                                                                vk::SampleCountFlagBits::e1);
 		depths[i].image_view = std::make_unique<vkb::core::HPPImageView>(*depths[i].image, vk::ImageViewType::e2D, vk::Format::eD32Sfloat);
 	}
 }
 
 void HPPOITDepthPeeling::create_point_sampler()
 {
-	point_sampler = vkb::common::create_sampler(get_device().get_handle(), vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest,
-	                                            vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
+	point_sampler = vkb::common::create_sampler(get_device().get_handle(),
+	                                            vk::Filter::eNearest,
+	                                            vk::Filter::eNearest,
+	                                            vk::SamplerMipmapMode::eNearest,
+	                                            vk::SamplerAddressMode::eClampToEdge,
+	                                            1.0f,
+	                                            1.0f);
 }
 
 void HPPOITDepthPeeling::create_scene_constants_buffer()
@@ -467,8 +532,8 @@ void HPPOITDepthPeeling::update_descriptors()
 
 	for (uint32_t i = 0; i < kDepthCount; ++i)
 	{
-		vk::DescriptorImageInfo depth_texture_descriptor{point_sampler, depths[(i + 1) % kDepthCount].image_view->get_handle(),
-		                                                 vk::ImageLayout::eDepthStencilReadOnlyOptimal};
+		vk::DescriptorImageInfo depth_texture_descriptor{
+		    point_sampler, depths[(i + 1) % kDepthCount].image_view->get_handle(), vk::ImageLayout::eDepthStencilReadOnlyOptimal};
 
 		std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = depths[i].gather_descriptor_set,
 		                                                                 .dstBinding      = 0,
@@ -483,8 +548,8 @@ void HPPOITDepthPeeling::update_descriptors()
 		device.updateDescriptorSets(write_descriptor_sets, {});
 	}
 
-	vk::DescriptorImageInfo background_texture_descriptor{background.texture.sampler, background.texture.image->get_vk_image_view().get_handle(),
-	                                                      vk::ImageLayout::eShaderReadOnlyOptimal};
+	vk::DescriptorImageInfo background_texture_descriptor{
+	    background.texture.sampler, background.texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal};
 
 	std::array<vk::DescriptorImageInfo, kLayerMaxCount> layer_texture_descriptor;
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)

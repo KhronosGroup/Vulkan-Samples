@@ -197,20 +197,29 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 		image_blit.dstOffsets[1].z           = 1;
 
 		// Prepare current mip level as image blit destination
-		vkb::image_layout_transition(blit_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                             {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
+		vkb::image_layout_transition(
+		    blit_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
 
 		// Blit from previous level
-		vkCmdBlitImage(blit_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_blit,
+		vkCmdBlitImage(blit_command,
+		               texture.image,
+		               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		               texture.image,
+		               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		               1,
+		               &image_blit,
 		               VK_FILTER_LINEAR);
 
 		// Prepare current mip level as image blit source for next level
-		vkb::image_layout_transition(blit_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		                             {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
+		vkb::image_layout_transition(
+		    blit_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
 	}
 
 	// After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
-	vkb::image_layout_transition(blit_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	vkb::image_layout_transition(blit_command,
+	                             texture.image,
+	                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture.mip_levels, 0, 1});
 
 	get_device().flush_command_buffer(blit_command, queue, true);

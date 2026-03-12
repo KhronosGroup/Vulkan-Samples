@@ -34,8 +34,8 @@ inline uint32_t choose_image_count(uint32_t request_image_count, uint32_t min_im
 	return clamp(request_image_count, min_image_count, (max_image_count != 0) ? max_image_count : request_image_count);
 }
 
-vk::Extent2D choose_extent(vk::Extent2D request_extent, const vk::Extent2D &min_image_extent, const vk::Extent2D &max_image_extent,
-                           const vk::Extent2D &current_extent)
+vk::Extent2D
+    choose_extent(vk::Extent2D request_extent, const vk::Extent2D &min_image_extent, const vk::Extent2D &max_image_extent, const vk::Extent2D &current_extent)
 {
 	if (current_extent.width == 0xFFFFFFFF)
 	{
@@ -44,7 +44,10 @@ vk::Extent2D choose_extent(vk::Extent2D request_extent, const vk::Extent2D &min_
 
 	if (request_extent.width < 1 || request_extent.height < 1)
 	{
-		LOGW("(HPPSwapchain) Image extent ({}, {}) not supported. Selecting ({}, {}).", request_extent.width, request_extent.height, current_extent.width,
+		LOGW("(HPPSwapchain) Image extent ({}, {}) not supported. Selecting ({}, {}).",
+		     request_extent.width,
+		     request_extent.height,
+		     current_extent.width,
 		     current_extent.height);
 		return current_extent;
 	}
@@ -55,7 +58,8 @@ vk::Extent2D choose_extent(vk::Extent2D request_extent, const vk::Extent2D &min_
 	return request_extent;
 }
 
-vk::PresentModeKHR choose_present_mode(vk::PresentModeKHR request_present_mode, const std::vector<vk::PresentModeKHR> &available_present_modes,
+vk::PresentModeKHR choose_present_mode(vk::PresentModeKHR                     request_present_mode,
+                                       const std::vector<vk::PresentModeKHR> &available_present_modes,
                                        const std::vector<vk::PresentModeKHR> &present_mode_priority_list)
 {
 	// Try to find the requested present mode in the available present modes
@@ -64,7 +68,8 @@ vk::PresentModeKHR choose_present_mode(vk::PresentModeKHR request_present_mode, 
 	{
 		// If the requested present mode isn't found, then try to find a mode from the priority list
 		auto const chosen_present_mode_it =
-		    std::ranges::find_if(present_mode_priority_list, [&available_present_modes](vk::PresentModeKHR present_mode)
+		    std::ranges::find_if(present_mode_priority_list,
+		                         [&available_present_modes](vk::PresentModeKHR present_mode)
 		                         { return std::ranges::find(available_present_modes, present_mode) != available_present_modes.end(); });
 
 		// If nothing found, always default to FIFO
@@ -92,7 +97,8 @@ vk::SurfaceFormatKHR choose_surface_format(const vk::SurfaceFormatKHR           
 	if (surface_format_it == available_surface_formats.end())
 	{
 		auto const chosen_surface_format_it =
-		    std::ranges::find_if(surface_format_priority_list, [&available_surface_formats](vk::SurfaceFormatKHR surface_format)
+		    std::ranges::find_if(surface_format_priority_list,
+		                         [&available_surface_formats](vk::SurfaceFormatKHR surface_format)
 		                         { return std::ranges::find(available_surface_formats, surface_format) != available_surface_formats.end(); });
 
 		// If nothing found, default to the first available format
@@ -117,7 +123,8 @@ inline uint32_t choose_image_array_layers(uint32_t request_image_array_layers, u
 	return clamp(request_image_array_layers, 1u, max_image_array_layers);
 }
 
-vk::SurfaceTransformFlagBitsKHR choose_transform(vk::SurfaceTransformFlagBitsKHR request_transform, vk::SurfaceTransformFlagsKHR supported_transform,
+vk::SurfaceTransformFlagBitsKHR choose_transform(vk::SurfaceTransformFlagBitsKHR request_transform,
+                                                 vk::SurfaceTransformFlagsKHR    supported_transform,
                                                  vk::SurfaceTransformFlagBitsKHR current_transform)
 {
 	if (request_transform & supported_transform)
@@ -137,12 +144,14 @@ vk::CompositeAlphaFlagBitsKHR choose_composite_alpha(vk::CompositeAlphaFlagBitsK
 		return request_composite_alpha;
 	}
 
-	static const std::vector<vk::CompositeAlphaFlagBitsKHR> composite_alpha_priority_list = {
-	    vk::CompositeAlphaFlagBitsKHR::eOpaque, vk::CompositeAlphaFlagBitsKHR::ePreMultiplied, vk::CompositeAlphaFlagBitsKHR::ePostMultiplied,
-	    vk::CompositeAlphaFlagBitsKHR::eInherit};
+	static const std::vector<vk::CompositeAlphaFlagBitsKHR> composite_alpha_priority_list = {vk::CompositeAlphaFlagBitsKHR::eOpaque,
+	                                                                                         vk::CompositeAlphaFlagBitsKHR::ePreMultiplied,
+	                                                                                         vk::CompositeAlphaFlagBitsKHR::ePostMultiplied,
+	                                                                                         vk::CompositeAlphaFlagBitsKHR::eInherit};
 
 	auto const chosen_composite_alpha_it =
-	    std::find_if(composite_alpha_priority_list.begin(), composite_alpha_priority_list.end(),
+	    std::find_if(composite_alpha_priority_list.begin(),
+	                 composite_alpha_priority_list.end(),
 	                 [&supported_composite_alpha](vk::CompositeAlphaFlagBitsKHR composite_alpha) { return composite_alpha & supported_composite_alpha; });
 	if (chosen_composite_alpha_it == composite_alpha_priority_list.end())
 	{
@@ -150,7 +159,8 @@ vk::CompositeAlphaFlagBitsKHR choose_composite_alpha(vk::CompositeAlphaFlagBitsK
 	}
 	else
 	{
-		LOGW("(HPPSwapchain) Composite alpha '{}' not supported. Selecting '{}.", vk::to_string(request_composite_alpha),
+		LOGW("(HPPSwapchain) Composite alpha '{}' not supported. Selecting '{}.",
+		     vk::to_string(request_composite_alpha),
 		     vk::to_string(*chosen_composite_alpha_it));
 		return *chosen_composite_alpha_it;
 	}
@@ -162,7 +172,8 @@ bool validate_format_feature(vk::ImageUsageFlagBits image_usage, vk::FormatFeatu
 }
 
 std::set<vk::ImageUsageFlagBits> choose_image_usage(const std::set<vk::ImageUsageFlagBits> &requested_image_usage_flags,
-                                                    vk::ImageUsageFlags supported_image_usage, vk::FormatFeatureFlags supported_features)
+                                                    vk::ImageUsageFlags                     supported_image_usage,
+                                                    vk::FormatFeatureFlags                  supported_features)
 {
 	std::set<vk::ImageUsageFlagBits> validated_image_usage_flags;
 	for (auto flag : requested_image_usage_flags)
@@ -184,7 +195,8 @@ std::set<vk::ImageUsageFlagBits> choose_image_usage(const std::set<vk::ImageUsag
 		    vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eStorage, vk::ImageUsageFlagBits::eSampled, vk::ImageUsageFlagBits::eTransferDst};
 
 		auto const priority_list_it =
-		    std::ranges::find_if(image_usage_priority_list, [&supported_image_usage, &supported_features](auto const image_usage)
+		    std::ranges::find_if(image_usage_priority_list,
+		                         [&supported_image_usage, &supported_features](auto const image_usage)
 		                         { return ((image_usage & supported_image_usage) && validate_format_feature(image_usage, supported_features)); });
 		if (priority_list_it != image_usage_priority_list.end())
 		{
@@ -283,7 +295,8 @@ HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const vk::Extent2D &exte
                  old_swapchain.requested_compression_fixed_rate}
 {}
 
-HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const vk::ImageCompressionFlagsEXT requested_compression,
+HPPSwapchain::HPPSwapchain(HPPSwapchain                               &old_swapchain,
+                           const vk::ImageCompressionFlagsEXT          requested_compression,
                            const vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
     HPPSwapchain{old_swapchain,
                  old_swapchain.device,
@@ -299,20 +312,31 @@ HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const vk::ImageCompressi
                  requested_compression_fixed_rate}
 {}
 
-HPPSwapchain::HPPSwapchain(vkb::core::DeviceCpp &device, vk::SurfaceKHR surface, const vk::PresentModeKHR present_mode,
-                           const std::vector<vk::PresentModeKHR>   &present_mode_priority_list,
-                           const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list, const vk::Extent2D &extent, const uint32_t image_count,
-                           const vk::SurfaceTransformFlagBitsKHR transform, const std::set<vk::ImageUsageFlagBits> &image_usage_flags,
+HPPSwapchain::HPPSwapchain(vkb::core::DeviceCpp                       &device,
+                           vk::SurfaceKHR                              surface,
+                           const vk::PresentModeKHR                    present_mode,
+                           const std::vector<vk::PresentModeKHR>      &present_mode_priority_list,
+                           const std::vector<vk::SurfaceFormatKHR>    &surface_format_priority_list,
+                           const vk::Extent2D                         &extent,
+                           const uint32_t                              image_count,
+                           const vk::SurfaceTransformFlagBitsKHR       transform,
+                           const std::set<vk::ImageUsageFlagBits>     &image_usage_flags,
                            const vk::ImageCompressionFlagsEXT          requested_compression,
                            const vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
-    HPPSwapchain{*this,  device,      surface,   present_mode,     present_mode_priority_list, surface_format_priority_list,
-                 extent, image_count, transform, image_usage_flags}
+    HPPSwapchain{
+        *this, device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, extent, image_count, transform, image_usage_flags}
 {}
 
-HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, vkb::core::DeviceCpp &device, vk::SurfaceKHR surface, const vk::PresentModeKHR present_mode,
-                           std::vector<vk::PresentModeKHR> const   &present_mode_priority_list,
-                           const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list, const vk::Extent2D &extent, const uint32_t image_count,
-                           const vk::SurfaceTransformFlagBitsKHR transform, const std::set<vk::ImageUsageFlagBits> &image_usage_flags,
+HPPSwapchain::HPPSwapchain(HPPSwapchain                               &old_swapchain,
+                           vkb::core::DeviceCpp                       &device,
+                           vk::SurfaceKHR                              surface,
+                           const vk::PresentModeKHR                    present_mode,
+                           std::vector<vk::PresentModeKHR> const      &present_mode_priority_list,
+                           const std::vector<vk::SurfaceFormatKHR>    &surface_format_priority_list,
+                           const vk::Extent2D                         &extent,
+                           const uint32_t                              image_count,
+                           const vk::SurfaceTransformFlagBitsKHR       transform,
+                           const std::set<vk::ImageUsageFlagBits>     &image_usage_flags,
                            const vk::ImageCompressionFlagsEXT          requested_compression,
                            const vk::ImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
     device{device}, surface{surface}, requested_compression{requested_compression}, requested_compression_fixed_rate{requested_compression_fixed_rate}
@@ -404,7 +428,8 @@ HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, vkb::core::DeviceCpp &de
 
 		if (applied_compression_fixed_rate != requested_compression_fixed_rate)
 		{
-			LOGW("(Swapchain) Requested fixed-rate compression ({}) was not applied, instead images use {}", vk::to_string(requested_compression_fixed_rate),
+			LOGW("(Swapchain) Requested fixed-rate compression ({}) was not applied, instead images use {}",
+			     vk::to_string(requested_compression_fixed_rate),
 			     vk::to_string(applied_compression_fixed_rate));
 
 			this->requested_compression_fixed_rate = applied_compression_fixed_rate;

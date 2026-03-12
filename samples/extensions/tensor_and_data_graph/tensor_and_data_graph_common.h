@@ -62,16 +62,22 @@ struct MultidimensionalArrayView
 /*
  ** @brief Helper function to write a series of image and tensor bindings to a descriptor set. Does not support descriptor arrays.
  */
-void write_descriptor_set(VkDevice device, VkDescriptorSet set, const std::map<uint32_t, VkDescriptorImageInfo> &image_bindings,
+void write_descriptor_set(VkDevice                                                 device,
+                          VkDescriptorSet                                          set,
+                          const std::map<uint32_t, VkDescriptorImageInfo>         &image_bindings,
                           const std::map<uint32_t, VkWriteDescriptorSetTensorARM> &tensor_bindings);
 
 /*
  * @brief Creates a Tensor resource and backs it with memory. Analogous to vmaCreateImage/Buffer.
  * @detail When finished, destroy the tensor and its memory using vmaDestroyTensor.
  */
-VkResult vmaCreateTensor(VkDevice device, VmaAllocator allocator, const VkTensorCreateInfoARM *pTensorCreateInfo,
-                         const VmaAllocationCreateInfo *pAllocationCreateInfo, VkTensorARM *pTensor, VmaAllocation *pAllocation,
-                         VmaAllocationInfo *pAllocationInfo);
+VkResult vmaCreateTensor(VkDevice                       device,
+                         VmaAllocator                   allocator,
+                         const VkTensorCreateInfoARM   *pTensorCreateInfo,
+                         const VmaAllocationCreateInfo *pAllocationCreateInfo,
+                         VkTensorARM                   *pTensor,
+                         VmaAllocation                 *pAllocation,
+                         VmaAllocationInfo             *pAllocationInfo);
 
 /*
  ** @brief Destroys a Tensor resource and its backing memory, which were created from vmaCreateTensor. Analogous to vmaDestroyImage/Buffer.
@@ -82,10 +88,13 @@ void vmaDestroyTensor(VkDevice device, VmaAllocator allocator, VkTensorARM tenso
  * @brief Creates a VkDataGraphPipelineSessionARM resource and backs it with memory. Analogous to vmaCreateImage/Buffer.
  * @detail When finished, destroy the session and its memory using vmaDestroyDataGraphPipelineSession.
  */
-VkResult vmaCreateDataGraphPipelineSession(VkDevice device, VmaAllocator allocator,
+VkResult vmaCreateDataGraphPipelineSession(VkDevice                                       device,
+                                           VmaAllocator                                   allocator,
                                            const VkDataGraphPipelineSessionCreateInfoARM *pDataGraphPipelineSessionCreateInfo,
-                                           const VmaAllocationCreateInfo *pAllocationCreateInfo, VkDataGraphPipelineSessionARM *pDataGraphPipelineSession,
-                                           VmaAllocation *pAllocation, VmaAllocationInfo *pAllocationInfo);
+                                           const VmaAllocationCreateInfo                 *pAllocationCreateInfo,
+                                           VkDataGraphPipelineSessionARM                 *pDataGraphPipelineSession,
+                                           VmaAllocation                                 *pAllocation,
+                                           VmaAllocationInfo                             *pAllocationInfo);
 
 /*
  ** @brief Destroys a DataGraphPipelineSession resource and its backing memory, which were created from vmaCreateDataGraphPipelineSession. Analogous to
@@ -232,7 +241,10 @@ class DataGraphPipeline : public vkb::core::VulkanResourceC<VkPipeline>
 	 * @param tensor_descriptions Descriptions (shape, format, etc.) for each tensor that will be bound to this pipeline.
 	 *                            The first key in the map is the set number and the second key is the binding number.
 	 */
-	DataGraphPipeline(vkb::core::DeviceC &device, VkPipelineLayout layout, VkShaderModule shader_module, const char *entry_point,
+	DataGraphPipeline(vkb::core::DeviceC                                                           &device,
+	                  VkPipelineLayout                                                              layout,
+	                  VkShaderModule                                                                shader_module,
+	                  const char                                                                   *entry_point,
 	                  const std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> &tensor_descriptions,
 	                  const std::vector<VkDataGraphPipelineConstantARM *> &data_graph_pipeline_constants = std::vector<VkDataGraphPipelineConstantARM *>());
 	~DataGraphPipeline();

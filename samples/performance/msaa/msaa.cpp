@@ -358,8 +358,9 @@ void MSAASample::update_for_scene_and_postprocessing(bool msaa_enabled)
 	scene_pipeline->set_load_store(scene_load_store);
 }
 
-void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store,
-                                        uint32_t resolve_attachment)
+void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
+                                        std::vector<vkb::LoadStoreInfo>           &load_store,
+                                        uint32_t                                   resolve_attachment)
 {
 	// Render to multisampled color attachment
 	subpass->set_output_attachments({i_color_ms});
@@ -392,8 +393,9 @@ void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC
 	}
 }
 
-void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store,
-                                         uint32_t output_attachment)
+void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
+                                         std::vector<vkb::LoadStoreInfo>           &load_store,
+                                         uint32_t                                   output_attachment)
 {
 	// Render to a single-sampled attachment
 	subpass->set_output_attachments({output_attachment});
@@ -589,8 +591,10 @@ void MSAASample::postprocessing(vkb::core::CommandBufferC &command_buffer, vkb::
 	command_buffer.end_render_pass();
 }
 
-void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::core::ImageView> &views,
-                                             uint32_t color_destination, VkImageLayout &color_layout)
+void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC               &command_buffer,
+                                             const std::vector<vkb::core::ImageView> &views,
+                                             uint32_t                                 color_destination,
+                                             VkImageLayout                           &color_layout)
 {
 	{
 		// The multisampled color is the source of the resolve operation
@@ -675,8 +679,13 @@ void MSAASample::prepare_supported_sample_count_list()
 
 	// All possible sample counts are listed here from most to least preferred as default
 	// On Mali GPUs 4X MSAA is recommended as best performance/quality trade-off
-	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT,  VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_16_BIT,
-	                                             VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_1_BIT};
+	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT,
+	                                             VK_SAMPLE_COUNT_2_BIT,
+	                                             VK_SAMPLE_COUNT_8_BIT,
+	                                             VK_SAMPLE_COUNT_16_BIT,
+	                                             VK_SAMPLE_COUNT_32_BIT,
+	                                             VK_SAMPLE_COUNT_64_BIT,
+	                                             VK_SAMPLE_COUNT_1_BIT};
 
 	for (auto &count : counts)
 	{
@@ -714,8 +723,8 @@ void MSAASample::prepare_depth_resolve_mode_list()
 		else
 		{
 			// All possible modes are listed here from most to least preferred as default
-			std::vector<VkResolveModeFlagBits> modes = {VK_RESOLVE_MODE_SAMPLE_ZERO_BIT, VK_RESOLVE_MODE_MIN_BIT, VK_RESOLVE_MODE_MAX_BIT,
-			                                            VK_RESOLVE_MODE_AVERAGE_BIT};
+			std::vector<VkResolveModeFlagBits> modes = {
+			    VK_RESOLVE_MODE_SAMPLE_ZERO_BIT, VK_RESOLVE_MODE_MIN_BIT, VK_RESOLVE_MODE_MAX_BIT, VK_RESOLVE_MODE_AVERAGE_BIT};
 
 			for (auto &mode : modes)
 			{

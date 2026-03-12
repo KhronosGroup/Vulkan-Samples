@@ -250,8 +250,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		pipeline_library_create_info.pInputAssemblyState = &input_assembly_state;
 		pipeline_library_create_info.pVertexInputState   = &vertex_input_state;
 
-		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr,
-		                                   &pipeline_library.vertex_input_interface));
+		VK_CHECK(vkCreateGraphicsPipelines(
+		    get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.vertex_input_interface));
 	}
 
 	// Create a pipeline library for the vertex shader stage
@@ -302,8 +302,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		pipeline_library_create_info.pViewportState      = &viewportState;
 		pipeline_library_create_info.pRasterizationState = &rasterizationState;
 
-		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr,
-		                                   &pipeline_library.pre_rasterization_shaders));
+		VK_CHECK(vkCreateGraphicsPipelines(
+		    get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.pre_rasterization_shaders));
 	}
 
 	// Create a pipeline library for the fragment output interface
@@ -325,8 +325,8 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		pipeline_library_create_info.pColorBlendState  = &color_blend_state;
 		pipeline_library_create_info.pMultisampleState = &multisample_state;
 
-		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr,
-		                                   &pipeline_library.fragment_output_interface));
+		VK_CHECK(vkCreateGraphicsPipelines(
+		    get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.fragment_output_interface));
 	}
 }
 
@@ -389,8 +389,8 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 
 	// Create the pipeline using the pre-built pipeline library parts
 	// Except for above fragment shader part all parts have been pre-built and will be re-used
-	std::vector<VkPipeline> libraries = {pipeline_library.vertex_input_interface, pipeline_library.pre_rasterization_shaders, fragment_shader,
-	                                     pipeline_library.fragment_output_interface};
+	std::vector<VkPipeline> libraries = {
+	    pipeline_library.vertex_input_interface, pipeline_library.pre_rasterization_shaders, fragment_shader, pipeline_library.fragment_output_interface};
 
 	// Link the library parts into a graphics pipeline
 	VkPipelineLibraryCreateInfoKHR linking_info{};
@@ -430,8 +430,8 @@ void GraphicsPipelineLibrary::prepare_uniform_buffers()
 
 void GraphicsPipelineLibrary::update_uniform_buffers()
 {
-	camera.set_perspective(45.0f, (static_cast<float>(width) / static_cast<float>(split_x)) / (static_cast<float>(height) / static_cast<float>(split_y)), 0.1f,
-	                       256.0f);
+	camera.set_perspective(
+	    45.0f, (static_cast<float>(width) / static_cast<float>(split_x)) / (static_cast<float>(height) / static_cast<float>(split_y)), 0.1f, 256.0f);
 
 	ubo_vs.projection = camera.matrices.perspective;
 	ubo_vs.modelview  = camera.matrices.view * glm::rotate(glm::mat4(1.0f), glm::radians(accumulated_time * 360.0f), glm::vec3(0.0f, 1.0f, 0.0f));

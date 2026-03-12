@@ -131,9 +131,11 @@ void OpenGLInterop::prepare_shared_resources()
 	auto physicalDeviceHandle = get_device().get_gpu().get_handle();
 
 	{
-		VkExternalSemaphoreHandleTypeFlagBits flags[] = {VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT,
+		VkExternalSemaphoreHandleTypeFlagBits flags[] = {VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT,
+		                                                 VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT,
 		                                                 VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT,
-		                                                 VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT};
+		                                                 VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT,
+		                                                 VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT};
 
 		VkPhysicalDeviceExternalSemaphoreInfo zzzz{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO, nullptr};
 		VkExternalSemaphoreProperties         aaaa{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES, nullptr};
@@ -157,15 +159,15 @@ void OpenGLInterop::prepare_shared_resources()
 			throw;
 		}
 
-		VkExportSemaphoreCreateInfo exportSemaphoreCreateInfo{VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO, nullptr,
-		                                                      static_cast<VkExternalSemaphoreHandleTypeFlags>(compatable_semaphore_type)};
-		VkSemaphoreCreateInfo       semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, &exportSemaphoreCreateInfo};
+		VkExportSemaphoreCreateInfo exportSemaphoreCreateInfo{
+		    VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO, nullptr, static_cast<VkExternalSemaphoreHandleTypeFlags>(compatable_semaphore_type)};
+		VkSemaphoreCreateInfo semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, &exportSemaphoreCreateInfo};
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr, &sharedSemaphores.gl_complete));
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr, &sharedSemaphores.gl_ready));
 
 #ifdef WIN32
-		VkSemaphoreGetWin32HandleInfoKHR semaphoreGetHandleInfo{VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR, nullptr, VK_NULL_HANDLE,
-		                                                        compatable_semaphore_type};
+		VkSemaphoreGetWin32HandleInfoKHR semaphoreGetHandleInfo{
+		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR, nullptr, VK_NULL_HANDLE, compatable_semaphore_type};
 		semaphoreGetHandleInfo.semaphore = sharedSemaphores.gl_ready;
 		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.gl_ready));
 		semaphoreGetHandleInfo.semaphore = sharedSemaphores.gl_complete;
@@ -226,12 +228,12 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
 #ifdef WIN32
-		VkMemoryGetWin32HandleInfoKHR memoryFdInfo{VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR, nullptr, sharedTexture.memory,
-		                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT};
+		VkMemoryGetWin32HandleInfoKHR memoryFdInfo{
+		    VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR, nullptr, sharedTexture.memory, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT};
 		VK_CHECK(vkGetMemoryWin32HandleKHR(deviceHandle, &memoryFdInfo, &shareHandles.memory));
 #else
-		VkMemoryGetFdInfoKHR memoryFdInfo{VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR, nullptr, sharedTexture.memory,
-		                                  VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT};
+		VkMemoryGetFdInfoKHR memoryFdInfo{
+		    VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR, nullptr, sharedTexture.memory, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT};
 		VK_CHECK(vkGetMemoryFdKHR(deviceHandle, &memoryFdInfo, &shareHandles.memory));
 #endif
 
@@ -286,12 +288,12 @@ void OpenGLInterop::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
 }
@@ -613,8 +615,8 @@ void OpenGLInterop::build_command_buffers()
 
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		vkb::image_layout_transition(
+		    draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -637,8 +639,8 @@ void OpenGLInterop::build_command_buffers()
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		vkb::image_layout_transition(
+		    draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}

@@ -31,7 +31,8 @@
 /// @brief A debug callback called from Vulkan validation layers.
 VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
                                                                 vk::DebugUtilsMessageTypeFlagsEXT             message_type,
-                                                                const vk::DebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data)
+                                                                const vk::DebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                                void                                         *user_data)
 {
 	// Log debug message
 	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
@@ -327,7 +328,8 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
-	if (std::ranges::any_of(device_extensions, [](vk::ExtensionProperties const &extension)
+	if (std::ranges::any_of(device_extensions,
+	                        [](vk::ExtensionProperties const &extension)
 	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
 	{
 		active_device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
@@ -395,10 +397,17 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 	// Disable all depth testing.
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil;
 
-	vk::Pipeline pipeline = vkb::common::create_graphics_pipeline(device, nullptr, shader_stages, vertex_input,
+	vk::Pipeline pipeline = vkb::common::create_graphics_pipeline(device,
+	                                                              nullptr,
+	                                                              shader_stages,
+	                                                              vertex_input,
 	                                                              vk::PrimitiveTopology::eTriangleList,        // We will use triangle lists to draw geometry.
-	                                                              0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise,
-	                                                              {blend_attachment}, depth_stencil,
+	                                                              0,
+	                                                              vk::PolygonMode::eFill,
+	                                                              vk::CullModeFlagBits::eBack,
+	                                                              vk::FrontFace::eClockwise,
+	                                                              {blend_attachment},
+	                                                              depth_stencil,
 	                                                              pipeline_layout,        // We need to specify the pipeline layout
 	                                                              render_pass);           // and the render pass up front as well
 
@@ -442,7 +451,8 @@ vk::Instance HPPHelloTriangle::create_instance(std::vector<const char *> const &
 #if (defined(VKB_ENABLE_PORTABILITY))
 	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	bool portability_enumeration_available = false;
-	if (std::ranges::any_of(available_instance_extensions, [](vk::ExtensionProperties const &extension)
+	if (std::ranges::any_of(available_instance_extensions,
+	                        [](vk::ExtensionProperties const &extension)
 	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }))
 	{
 		active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
@@ -668,8 +678,12 @@ std::pair<vk::Buffer, VmaAllocation> HPPHelloTriangle::create_vertex_buffer()
 	vk::Buffer        vertex_buffer;
 	VmaAllocation     vertex_buffer_allocation;
 	VmaAllocationInfo allocation_info{};
-	vmaCreateBuffer(vma_allocator, reinterpret_cast<VkBufferCreateInfo *>(&buffer_create_info), &allocation_create_info,
-	                reinterpret_cast<VkBuffer *>(&vertex_buffer), &vertex_buffer_allocation, &allocation_info);
+	vmaCreateBuffer(vma_allocator,
+	                reinterpret_cast<VkBufferCreateInfo *>(&buffer_create_info),
+	                &allocation_create_info,
+	                reinterpret_cast<VkBuffer *>(&vertex_buffer),
+	                &vertex_buffer_allocation,
+	                &allocation_info);
 	if (allocation_info.pMappedData)
 	{
 		memcpy(allocation_info.pMappedData, vertices.data(), buffer_size);

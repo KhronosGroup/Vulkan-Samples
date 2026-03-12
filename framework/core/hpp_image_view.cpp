@@ -25,8 +25,13 @@ namespace vkb
 {
 namespace core
 {
-HPPImageView::HPPImageView(vkb::core::HPPImage &img, vk::ImageViewType view_type, vk::Format format, uint32_t mip_level, uint32_t array_layer,
-                           uint32_t n_mip_levels, uint32_t n_array_layers) :
+HPPImageView::HPPImageView(vkb::core::HPPImage &img,
+                           vk::ImageViewType    view_type,
+                           vk::Format           format,
+                           uint32_t             mip_level,
+                           uint32_t             array_layer,
+                           uint32_t             n_mip_levels,
+                           uint32_t             n_array_layers) :
     VulkanResource{nullptr, &img.get_device()}, image{&img}, format{format}
 {
 	if (format == vk::Format::eUndefined)
@@ -88,8 +93,8 @@ void HPPImageView::set_image(vkb::core::HPPImage &img)
 
 vk::ImageSubresourceLayers HPPImageView::get_subresource_layers() const
 {
-	return vk::ImageSubresourceLayers{subresource_range.aspectMask, subresource_range.baseMipLevel, subresource_range.baseArrayLayer,
-	                                  subresource_range.layerCount};
+	return vk::ImageSubresourceLayers{
+	    subresource_range.aspectMask, subresource_range.baseMipLevel, subresource_range.baseArrayLayer, subresource_range.layerCount};
 }
 
 vk::ImageSubresourceRange HPPImageView::get_subresource_range() const

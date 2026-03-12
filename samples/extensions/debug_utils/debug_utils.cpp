@@ -347,10 +347,14 @@ void DebugUtils::build_command_buffers()
 
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
 				push_const_block.object_type = 0;
-				vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layouts.models, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-				                   sizeof(push_const_block), &push_const_block);
-				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skysphere, 0,
-				                        NULL);
+				vkCmdPushConstants(draw_cmd_buffers[i],
+				                   pipeline_layouts.models,
+				                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				                   0,
+				                   sizeof(push_const_block),
+				                   &push_const_block);
+				vkCmdBindDescriptorSets(
+				    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skysphere, 0, NULL);
 
 				draw_model(models.skysphere, draw_cmd_buffers[i]);
 			}
@@ -373,8 +377,12 @@ void DebugUtils::build_command_buffers()
 				push_const_block.object_type = 1;
 				push_const_block.offset      = glm::vec4(mesh_offsets[j], 0.0f);
 				push_const_block.color       = glm::vec4(mesh_colors[j], 0.0f);
-				vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layouts.models, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-				                   sizeof(push_const_block), &push_const_block);
+				vkCmdPushConstants(draw_cmd_buffers[i],
+				                   pipeline_layouts.models,
+				                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				                   0,
+				                   sizeof(push_const_block),
+				                   &push_const_block);
 				cmd_insert_label(draw_cmd_buffers[i], "Draw sphere", {mesh_colors[j].r, mesh_colors[j].g, mesh_colors[j].b, 1.0f});
 				draw_model(models.scene, draw_cmd_buffers[i]);
 			}
@@ -414,8 +422,8 @@ void DebugUtils::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0,
-			                        NULL);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, NULL);
 
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
@@ -456,8 +464,8 @@ void DebugUtils::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0,
-			                        NULL);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, NULL);
 
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
@@ -1023,8 +1031,8 @@ void DebugUtils::update_uniform_buffers()
 
 void DebugUtils::draw()
 {
-	queue_begin_label(queue, static_cast<std::string>("Graphics queue command buffer " + std::to_string(current_buffer) + " submission").c_str(),
-	                  {1.0f, 1.0f, 1.0f, 1.0f});
+	queue_begin_label(
+	    queue, static_cast<std::string>("Graphics queue command buffer " + std::to_string(current_buffer) + " submission").c_str(), {1.0f, 1.0f, 1.0f, 1.0f});
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];

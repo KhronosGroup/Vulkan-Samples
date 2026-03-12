@@ -212,12 +212,12 @@ void OpenCLInteropArm::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
 }
@@ -466,8 +466,8 @@ void OpenCLInteropArm::prepare_shared_resources()
 	image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
 	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	vkCmdPipelineBarrier(copy_command, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
-	                     &image_memory_barrier);
+	vkCmdPipelineBarrier(
+	    copy_command, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 
 	get_device().flush_command_buffer(copy_command, queue, true);
 
@@ -478,8 +478,8 @@ void OpenCLInteropArm::prepare_shared_resources()
 	const cl_import_properties_arm import_properties[3] = {CL_IMPORT_TYPE_ARM, CL_IMPORT_TYPE_ANDROID_HARDWARE_BUFFER_ARM, 0};
 
 	cl_int result  = CL_SUCCESS;
-	cl_data->image = clImportMemoryARM(cl_data->context, CL_MEM_READ_WRITE, import_properties, shared_texture.hardware_buffer,
-	                                   CL_IMPORT_MEMORY_WHOLE_ALLOCATION_ARM, &result);
+	cl_data->image = clImportMemoryARM(
+	    cl_data->context, CL_MEM_READ_WRITE, import_properties, shared_texture.hardware_buffer, CL_IMPORT_MEMORY_WHOLE_ALLOCATION_ARM, &result);
 
 	if (result != CL_SUCCESS)
 	{

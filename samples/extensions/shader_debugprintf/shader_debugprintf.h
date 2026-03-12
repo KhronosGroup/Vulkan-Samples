@@ -78,7 +78,8 @@ class ShaderDebugPrintf : public ApiVulkanSample
 
 	VKAPI_ATTR static VkBool32 VKAPI_CALL debug_utils_message_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
 	                                                                   VkDebugUtilsMessageTypeFlagsEXT             messageType,
-	                                                                   const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData);
+	                                                                   const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+	                                                                   void                                       *pUserData);
 
 	ShaderDebugPrintf();
 	~ShaderDebugPrintf();

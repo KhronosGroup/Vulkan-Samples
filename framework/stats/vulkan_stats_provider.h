@@ -43,7 +43,9 @@ class VulkanStatsProvider : public StatsProvider
 
 		StatData() = default;
 
-		StatData(uint32_t counter_index, VkPerformanceCounterStorageKHR storage, StatScaling stat_scaling = StatScaling::ByDeltaTime,
+		StatData(uint32_t                       counter_index,
+		         VkPerformanceCounterStorageKHR storage,
+		         StatScaling                    stat_scaling    = StatScaling::ByDeltaTime,
 		         uint32_t                       divisor_index   = std::numeric_limits<uint32_t>::max(),
 		         VkPerformanceCounterStorageKHR divisor_storage = VK_PERFORMANCE_COUNTER_STORAGE_FLOAT64_KHR) :
 		    scaling(stat_scaling), counter_index(counter_index), divisor_counter_index(divisor_index), storage(storage), divisor_storage(divisor_storage)

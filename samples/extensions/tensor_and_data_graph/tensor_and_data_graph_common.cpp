@@ -21,7 +21,9 @@
 #include <rendering/render_context.h>
 #include <spirv_glsl.hpp>
 
-void write_descriptor_set(VkDevice device, VkDescriptorSet set, const std::map<uint32_t, VkDescriptorImageInfo> &image_bindings,
+void write_descriptor_set(VkDevice                                                 device,
+                          VkDescriptorSet                                          set,
+                          const std::map<uint32_t, VkDescriptorImageInfo>         &image_bindings,
                           const std::map<uint32_t, VkWriteDescriptorSetTensorARM> &tensor_bindings)
 {
 	std::vector<VkWriteDescriptorSet> writes;
@@ -50,9 +52,13 @@ void write_descriptor_set(VkDevice device, VkDescriptorSet set, const std::map<u
 	vkUpdateDescriptorSets(device, writes.size(), writes.data(), 0, nullptr);
 }
 
-VkResult vmaCreateTensor(VkDevice device, VmaAllocator allocator, const VkTensorCreateInfoARM *pTensorCreateInfo,
-                         const VmaAllocationCreateInfo *pAllocationCreateInfo, VkTensorARM *pTensor, VmaAllocation *pAllocation,
-                         VmaAllocationInfo *pAllocationInfo)
+VkResult vmaCreateTensor(VkDevice                       device,
+                         VmaAllocator                   allocator,
+                         const VkTensorCreateInfoARM   *pTensorCreateInfo,
+                         const VmaAllocationCreateInfo *pAllocationCreateInfo,
+                         VkTensorARM                   *pTensor,
+                         VmaAllocation                 *pAllocation,
+                         VmaAllocationInfo             *pAllocationInfo)
 {
 	// Note that this implementation has some slight differences to the equivalent vmaCreateImage/Buffer functions because we are outside
 	// the VMA implementation so can't use any of its internal functions and have to use the public APIs instead.
@@ -125,10 +131,13 @@ void vmaDestroyTensor(VkDevice device, VmaAllocator allocator, VkTensorARM tenso
 	}
 }
 
-VkResult vmaCreateDataGraphPipelineSession(VkDevice device, VmaAllocator allocator,
+VkResult vmaCreateDataGraphPipelineSession(VkDevice                                       device,
+                                           VmaAllocator                                   allocator,
                                            const VkDataGraphPipelineSessionCreateInfoARM *pDataGraphPipelineSessionCreateInfo,
-                                           const VmaAllocationCreateInfo *pAllocationCreateInfo, VkDataGraphPipelineSessionARM *pDataGraphPipelineSession,
-                                           VmaAllocation *pAllocation, VmaAllocationInfo *pAllocationInfo)
+                                           const VmaAllocationCreateInfo                 *pAllocationCreateInfo,
+                                           VkDataGraphPipelineSessionARM                 *pDataGraphPipelineSession,
+                                           VmaAllocation                                 *pAllocation,
+                                           VmaAllocationInfo                             *pAllocationInfo)
 {
 	// Note that this implementation has some slight differences to the equivalent vmaCreateImage/Buffer functions because we are outside
 	// the VMA implementation so can't use any of its internal functions and have to use the public APIs instead.
@@ -311,8 +320,13 @@ Tensor::Tensor(vkb::core::DeviceC &device, TensorBuilder const &builder) :
 	VkTensorARM       tensor = VK_NULL_HANDLE;
 	VmaAllocationInfo allocation_info{};
 	VmaAllocation     allocation = VK_NULL_HANDLE;
-	VK_CHECK(vmaCreateTensor(device.get_handle(), vkb::allocated::get_memory_allocator(), &descriptor.get_create_info(), &builder.get_allocation_create_info(),
-	                         &tensor, &allocation, &allocation_info));
+	VK_CHECK(vmaCreateTensor(device.get_handle(),
+	                         vkb::allocated::get_memory_allocator(),
+	                         &descriptor.get_create_info(),
+	                         &builder.get_allocation_create_info(),
+	                         &tensor,
+	                         &allocation,
+	                         &allocation_info));
 
 	set_allocation(allocation);
 	post_create(allocation_info);
@@ -343,8 +357,10 @@ VkFormat Tensor::get_format() const
 	return descriptor.get_create_info().pDescription->format;
 };
 
-ExternallyAllocatedTensor::ExternallyAllocatedTensor(vkb::core::DeviceC &device, TensorBuilder const &builder, VkDeviceMemory existing_memory,
-                                                     VkDeviceSize existing_memory_offset) :
+ExternallyAllocatedTensor::ExternallyAllocatedTensor(vkb::core::DeviceC  &device,
+                                                     TensorBuilder const &builder,
+                                                     VkDeviceMemory       existing_memory,
+                                                     VkDeviceSize         existing_memory_offset) :
     vkb::core::VulkanResourceC<VkTensorARM>(VK_NULL_HANDLE, &device),        // Handle will be set later in the constructor
     descriptor(builder)
 {
@@ -451,7 +467,10 @@ const VkDescriptorSetLayout &DataGraphPipelineLayout::get_descriptor_set_layout(
 	return descriptor_set_layout;
 }
 
-DataGraphPipeline::DataGraphPipeline(vkb::core::DeviceC &device, VkPipelineLayout layout, VkShaderModule shader_module, const char *entry_point,
+DataGraphPipeline::DataGraphPipeline(vkb::core::DeviceC                                                           &device,
+                                     VkPipelineLayout                                                              layout,
+                                     VkShaderModule                                                                shader_module,
+                                     const char                                                                   *entry_point,
                                      const std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> &tensor_descriptions,
                                      const std::vector<VkDataGraphPipelineConstantARM *>                          &data_graph_pipeline_constants) :
     vkb::core::VulkanResourceC<VkPipeline>(VK_NULL_HANDLE, &device), shader_module(shader_module)
@@ -517,8 +536,13 @@ DataGraphPipelineSession::DataGraphPipelineSession(vkb::core::DeviceC &device, V
 	VkDataGraphPipelineSessionARM data_graph_pipeline_session = VK_NULL_HANDLE;
 	VmaAllocationInfo             allocation_info{};
 	VmaAllocation                 allocation = VK_NULL_HANDLE;
-	VK_CHECK(vmaCreateDataGraphPipelineSession(device.get_handle(), vkb::allocated::get_memory_allocator(), &pipeline_session_create_info, &alloc_create_info,
-	                                           &data_graph_pipeline_session, &allocation, &allocation_info));
+	VK_CHECK(vmaCreateDataGraphPipelineSession(device.get_handle(),
+	                                           vkb::allocated::get_memory_allocator(),
+	                                           &pipeline_session_create_info,
+	                                           &alloc_create_info,
+	                                           &data_graph_pipeline_session,
+	                                           &allocation,
+	                                           &allocation_info));
 
 	set_allocation(allocation);
 	if (allocation_info.size > 0)        // Sometimes no memory is needed, which is fine.
@@ -655,8 +679,8 @@ ComputePipelineWithTensors::~ComputePipelineWithTensors()
 }
 
 BlitSubpass::BlitSubpass(vkb::rendering::RenderContextC &renderContext, vkb::core::ImageView *source) :
-    vkb::rendering::SubpassC(renderContext, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"},
-                             vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
+    vkb::rendering::SubpassC(
+        renderContext, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"}, vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
     source(source)
 {}
 

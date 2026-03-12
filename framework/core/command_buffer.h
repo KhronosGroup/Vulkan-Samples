@@ -128,29 +128,39 @@ class CommandBuffer
 	void begin(CommandBufferUsageFlagsType flags, const RenderPassType *render_pass, const FramebufferType *framebuffer, uint32_t subpass_index);
 
 	void begin_query(QueryPoolType const &query_pool, uint32_t query, QueryControlFlagsType flags);
-	void begin_render_pass(RenderTargetType const &render_target, std::vector<LoadStoreInfoType> const &load_store_infos,
-	                       std::vector<ClearValueType> const &clear_values, std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses,
-	                       SubpassContentsType contents = VK_SUBPASS_CONTENTS_INLINE);
-	void begin_render_pass(RenderTargetType const &render_target, RenderPassType const &render_pass, FramebufferType const &framebuffer,
-	                       std::vector<ClearValueType> const &clear_values, SubpassContentsType contents = vk::SubpassContents::eInline);
-	void bind_buffer(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, DeviceSizeType range, uint32_t set, uint32_t binding,
-	                 uint32_t array_element);
+	void begin_render_pass(RenderTargetType const                                                   &render_target,
+	                       std::vector<LoadStoreInfoType> const                                     &load_store_infos,
+	                       std::vector<ClearValueType> const                                        &clear_values,
+	                       std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses,
+	                       SubpassContentsType                                                       contents = VK_SUBPASS_CONTENTS_INLINE);
+	void begin_render_pass(RenderTargetType const            &render_target,
+	                       RenderPassType const              &render_pass,
+	                       FramebufferType const             &framebuffer,
+	                       std::vector<ClearValueType> const &clear_values,
+	                       SubpassContentsType                contents = vk::SubpassContents::eInline);
+	void bind_buffer(
+	    vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, DeviceSizeType range, uint32_t set, uint32_t binding, uint32_t array_element);
 	void bind_image(ImageViewType const &image_view, SamplerType const &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 	void bind_image(ImageViewType const &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 	void bind_index_buffer(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, IndexTypeType index_type);
 	void bind_input(ImageViewType const &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 	void bind_lighting(vkb::rendering::LightingState<bindingType> &lighting_state, uint32_t set, uint32_t binding);
 	void bind_pipeline_layout(PipelineLayoutType &pipeline_layout);
-	void bind_vertex_buffers(uint32_t first_binding, std::vector<std::reference_wrapper<const vkb::core::Buffer<bindingType>>> const &buffers,
-	                         std::vector<DeviceSizeType> const &offsets);
+	void bind_vertex_buffers(uint32_t                                                                         first_binding,
+	                         std::vector<std::reference_wrapper<const vkb::core::Buffer<bindingType>>> const &buffers,
+	                         std::vector<DeviceSizeType> const                                               &offsets);
 	void blit_image(ImageType const &src_img, ImageType const &dst_img, std::vector<ImageBlitType> const &regions);
-	void buffer_memory_barrier(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, DeviceSizeType size,
-	                           BufferMemoryBarrierType const &memory_barrier);
+	void buffer_memory_barrier(vkb::core::Buffer<bindingType> const &buffer,
+	                           DeviceSizeType                        offset,
+	                           DeviceSizeType                        size,
+	                           BufferMemoryBarrierType const        &memory_barrier);
 	void clear(ClearAttachmentType const &info, ClearRectType const &rect);
 	void copy_buffer(vkb::core::Buffer<bindingType> const &src_buffer, vkb::core::Buffer<bindingType> const &dst_buffer, DeviceSizeType size);
 	void copy_buffer_to_image(vkb::core::Buffer<bindingType> const &buffer, ImageType const &image, std::vector<BufferImageCopyType> const &regions);
 	void copy_image(ImageType const &src_img, ImageType const &dst_img, std::vector<ImageCopyType> const &regions);
-	void copy_image_to_buffer(ImageType const &image, ImageLayoutType image_layout, vkb::core::Buffer<bindingType> const &buffer,
+	void copy_image_to_buffer(ImageType const                        &image,
+	                          ImageLayoutType                         image_layout,
+	                          vkb::core::Buffer<bindingType> const   &buffer,
 	                          std::vector<BufferImageCopyType> const &regions);
 	void dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
 	void dispatch_indirect(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset);
@@ -163,7 +173,8 @@ class CommandBuffer
 	void execute_commands(vkb::core::CommandBuffer<bindingType> &secondary_command_buffer);
 	void execute_commands(std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &secondary_command_buffers);
 	CommandBufferLevelType get_level() const;
-	RenderPassType        &get_render_pass(RenderTargetType const &render_target, std::vector<LoadStoreInfoType> const &load_store_infos,
+	RenderPassType        &get_render_pass(RenderTargetType const                                                   &render_target,
+	                                       std::vector<LoadStoreInfoType> const                                     &load_store_infos,
 	                                       std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses);
 	void                   image_memory_barrier(ImageViewType const &image_view, ImageMemoryBarrierType const &memory_barrier) const;
 	void                   image_memory_barrier(RenderTargetType &render_target, uint32_t view_index, ImageMemoryBarrierType const &memory_barrier) const;
@@ -224,21 +235,30 @@ class CommandBuffer
 	bool is_render_size_optimal(const vk::Extent2D &extent, const vk::Rect2D &render_area);
 
   private:
-	void begin_impl(vk::CommandBufferUsageFlags flags, vkb::core::CommandBuffer<bindingType> *primary_cmd_buf);
-	void begin_impl(vk::CommandBufferUsageFlags flags, vkb::core::HPPRenderPass const *render_pass, vkb::core::HPPFramebuffer const *framebuffer,
-	                uint32_t subpass_index);
-	void begin_render_pass_impl(vkb::rendering::HPPRenderTarget const &render_target, vkb::core::HPPRenderPass const &render_pass,
-	                            vkb::core::HPPFramebuffer const &framebuffer, std::vector<vk::ClearValue> const &clear_values, vk::SubpassContents contents);
-	void bind_vertex_buffers_impl(uint32_t first_binding, std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> const &buffers,
-	                              std::vector<vk::DeviceSize> const &offsets);
-	void buffer_memory_barrier_impl(vkb::core::BufferCpp const &buffer, vk::DeviceSize offset, vk::DeviceSize size,
-	                                vkb::common::HPPBufferMemoryBarrier const &memory_barrier);
-	void copy_buffer_impl(vkb::core::BufferCpp const &src_buffer, vkb::core::BufferCpp const &dst_buffer, vk::DeviceSize size);
-	void execute_commands_impl(std::vector<std::shared_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> &secondary_command_buffers);
-	void flush_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
-	void flush_descriptor_state_impl(vk::PipelineBindPoint pipeline_bind_point);
-	void flush_pipeline_state_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
-	vkb::core::HPPRenderPass &get_render_pass_impl(vkb::core::DeviceCpp &device, vkb::rendering::HPPRenderTarget const &render_target,
+	void                      begin_impl(vk::CommandBufferUsageFlags flags, vkb::core::CommandBuffer<bindingType> *primary_cmd_buf);
+	void                      begin_impl(vk::CommandBufferUsageFlags      flags,
+	                                     vkb::core::HPPRenderPass const  *render_pass,
+	                                     vkb::core::HPPFramebuffer const *framebuffer,
+	                                     uint32_t                         subpass_index);
+	void                      begin_render_pass_impl(vkb::rendering::HPPRenderTarget const &render_target,
+	                                                 vkb::core::HPPRenderPass const        &render_pass,
+	                                                 vkb::core::HPPFramebuffer const       &framebuffer,
+	                                                 std::vector<vk::ClearValue> const     &clear_values,
+	                                                 vk::SubpassContents                    contents);
+	void                      bind_vertex_buffers_impl(uint32_t                                                               first_binding,
+	                                                   std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> const &buffers,
+	                                                   std::vector<vk::DeviceSize> const                                     &offsets);
+	void                      buffer_memory_barrier_impl(vkb::core::BufferCpp const                &buffer,
+	                                                     vk::DeviceSize                             offset,
+	                                                     vk::DeviceSize                             size,
+	                                                     vkb::common::HPPBufferMemoryBarrier const &memory_barrier);
+	void                      copy_buffer_impl(vkb::core::BufferCpp const &src_buffer, vkb::core::BufferCpp const &dst_buffer, vk::DeviceSize size);
+	void                      execute_commands_impl(std::vector<std::shared_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> &secondary_command_buffers);
+	void                      flush_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
+	void                      flush_descriptor_state_impl(vk::PipelineBindPoint pipeline_bind_point);
+	void                      flush_pipeline_state_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
+	vkb::core::HPPRenderPass &get_render_pass_impl(vkb::core::DeviceCpp                                           &device,
+	                                               vkb::rendering::HPPRenderTarget const                          &render_target,
 	                                               std::vector<vkb::common::HPPLoadStoreInfo> const               &load_store_infos,
 	                                               std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &subpasses);
 	void       image_memory_barrier_impl(vkb::core::HPPImageView const &image_view, vkb::common::HPPImageMemoryBarrier const &memory_barrier) const;
@@ -318,8 +338,8 @@ inline void CommandBuffer<bindingType>::begin_impl(vk::CommandBufferUsageFlags f
 	{
 		assert(primary_cmd_buf && "A primary command buffer pointer must be provided when calling begin from a secondary one");
 
-		return begin_impl(flags, primary_cmd_buf->current_render_pass, primary_cmd_buf->current_framebuffer,
-		                  primary_cmd_buf->pipeline_state.get_subpass_index());
+		return begin_impl(
+		    flags, primary_cmd_buf->current_render_pass, primary_cmd_buf->current_framebuffer, primary_cmd_buf->pipeline_state.get_subpass_index());
 	}
 	else
 	{
@@ -328,8 +348,10 @@ inline void CommandBuffer<bindingType>::begin_impl(vk::CommandBufferUsageFlags f
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::begin(CommandBufferUsageFlagsType flags, const RenderPassType *render_pass, const FramebufferType *framebuffer,
-                                              uint32_t subpass_index)
+inline void CommandBuffer<bindingType>::begin(CommandBufferUsageFlagsType flags,
+                                              const RenderPassType       *render_pass,
+                                              const FramebufferType      *framebuffer,
+                                              uint32_t                    subpass_index)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -337,14 +359,18 @@ inline void CommandBuffer<bindingType>::begin(CommandBufferUsageFlagsType flags,
 	}
 	else
 	{
-		begin_impl(static_cast<vk::CommandBufferUsageFlags>(flags), reinterpret_cast<vkb::core::HPPRenderPass const *>(render_pass),
-		           reinterpret_cast<vkb::core::HPPFramebuffer const *>(framebuffer), subpass_index);
+		begin_impl(static_cast<vk::CommandBufferUsageFlags>(flags),
+		           reinterpret_cast<vkb::core::HPPRenderPass const *>(render_pass),
+		           reinterpret_cast<vkb::core::HPPFramebuffer const *>(framebuffer),
+		           subpass_index);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::begin_impl(vk::CommandBufferUsageFlags flags, vkb::core::HPPRenderPass const *render_pass,
-                                                   vkb::core::HPPFramebuffer const *framebuffer, uint32_t subpass_index)
+inline void CommandBuffer<bindingType>::begin_impl(vk::CommandBufferUsageFlags      flags,
+                                                   vkb::core::HPPRenderPass const  *render_pass,
+                                                   vkb::core::HPPFramebuffer const *framebuffer,
+                                                   uint32_t                         subpass_index)
 {
 	// Reset state
 	pipeline_state.reset();
@@ -386,7 +412,8 @@ inline void CommandBuffer<bindingType>::begin_query(QueryPoolType const &query_p
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::begin_render_pass(RenderTargetType const &render_target, std::vector<LoadStoreInfoType> const &load_store_infos,
+inline void CommandBuffer<bindingType>::begin_render_pass(RenderTargetType const                                                   &render_target,
+                                                          std::vector<LoadStoreInfoType> const                                     &load_store_infos,
                                                           std::vector<ClearValueType> const                                        &clear_values,
                                                           std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses,
                                                           SubpassContentsType                                                       contents)
@@ -403,9 +430,11 @@ inline void CommandBuffer<bindingType>::begin_render_pass(RenderTargetType const
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::begin_render_pass(RenderTargetType const &render_target, RenderPassType const &render_pass,
-                                                          FramebufferType const &framebuffer, std::vector<ClearValueType> const &clear_values,
-                                                          SubpassContentsType contents)
+inline void CommandBuffer<bindingType>::begin_render_pass(RenderTargetType const            &render_target,
+                                                          RenderPassType const              &render_pass,
+                                                          FramebufferType const             &framebuffer,
+                                                          std::vector<ClearValueType> const &clear_values,
+                                                          SubpassContentsType                contents)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -416,14 +445,17 @@ inline void CommandBuffer<bindingType>::begin_render_pass(RenderTargetType const
 		begin_render_pass_impl(reinterpret_cast<vkb::rendering::HPPRenderTarget const &>(render_target),
 		                       reinterpret_cast<vkb::core::HPPRenderPass const &>(render_pass),
 		                       reinterpret_cast<vkb::core::HPPFramebuffer const &>(framebuffer),
-		                       reinterpret_cast<std::vector<vk::ClearValue> const &>(clear_values), static_cast<vk::SubpassContents>(contents));
+		                       reinterpret_cast<std::vector<vk::ClearValue> const &>(clear_values),
+		                       static_cast<vk::SubpassContents>(contents));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void CommandBuffer<bindingType>::begin_render_pass_impl(vkb::rendering::HPPRenderTarget const &render_target,
-                                                               vkb::core::HPPRenderPass const &render_pass, vkb::core::HPPFramebuffer const &framebuffer,
-                                                               std::vector<vk::ClearValue> const &clear_values, vk::SubpassContents contents)
+                                                               vkb::core::HPPRenderPass const        &render_pass,
+                                                               vkb::core::HPPFramebuffer const       &framebuffer,
+                                                               std::vector<vk::ClearValue> const     &clear_values,
+                                                               vk::SubpassContents                    contents)
 {
 	current_render_pass = &render_pass;
 	current_framebuffer = &framebuffer;
@@ -459,8 +491,8 @@ inline void CommandBuffer<bindingType>::begin_render_pass_impl(vkb::rendering::H
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::bind_buffer(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, DeviceSizeType range, uint32_t set,
-                                                    uint32_t binding, uint32_t array_element)
+inline void CommandBuffer<bindingType>::bind_buffer(
+    vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, DeviceSizeType range, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -468,14 +500,14 @@ inline void CommandBuffer<bindingType>::bind_buffer(vkb::core::Buffer<bindingTyp
 	}
 	else
 	{
-		resource_binding_state.bind_buffer(reinterpret_cast<vkb::core::Buffer<vkb::BindingType::Cpp> const &>(buffer), offset, range, set, binding,
-		                                   array_element);
+		resource_binding_state.bind_buffer(
+		    reinterpret_cast<vkb::core::Buffer<vkb::BindingType::Cpp> const &>(buffer), offset, range, set, binding, array_element);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::bind_image(ImageViewType const &image_view, SamplerType const &sampler, uint32_t set, uint32_t binding,
-                                                   uint32_t array_element)
+inline void
+    CommandBuffer<bindingType>::bind_image(ImageViewType const &image_view, SamplerType const &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -484,7 +516,10 @@ inline void CommandBuffer<bindingType>::bind_image(ImageViewType const &image_vi
 	else
 	{
 		resource_binding_state.bind_image(reinterpret_cast<vkb::core::HPPImageView const &>(image_view),
-		                                  reinterpret_cast<vkb::core::HPPSampler const &>(sampler), set, binding, array_element);
+		                                  reinterpret_cast<vkb::core::HPPSampler const &>(sampler),
+		                                  set,
+		                                  binding,
+		                                  array_element);
 	}
 }
 
@@ -561,7 +596,8 @@ inline void CommandBuffer<bindingType>::bind_vertex_buffers(uint32_t            
 	}
 	else
 	{
-		bind_vertex_buffers_impl(first_binding, reinterpret_cast<std::vector<std::reference_wrapper<vkb::core::BufferCpp const>> const &>(buffers),
+		bind_vertex_buffers_impl(first_binding,
+		                         reinterpret_cast<std::vector<std::reference_wrapper<vkb::core::BufferCpp const>> const &>(buffers),
 		                         reinterpret_cast<std::vector<vk::DeviceSize> const &>(offsets));
 	}
 }
@@ -581,20 +617,29 @@ inline void CommandBuffer<bindingType>::blit_image(ImageType const &src_img, Ima
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		this->get_resource().blitImage(src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal,
-		                               regions, vk::Filter::eNearest);
+		this->get_resource().blitImage(src_img.get_handle(),
+		                               vk::ImageLayout::eTransferSrcOptimal,
+		                               dst_img.get_handle(),
+		                               vk::ImageLayout::eTransferDstOptimal,
+		                               regions,
+		                               vk::Filter::eNearest);
 	}
 	else
 	{
-		this->get_resource().blitImage(src_img.get_resource(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_resource(),
-		                               vk::ImageLayout::eTransferDstOptimal, reinterpret_cast<std::vector<vk::ImageBlit> const &>(regions),
+		this->get_resource().blitImage(src_img.get_resource(),
+		                               vk::ImageLayout::eTransferSrcOptimal,
+		                               dst_img.get_resource(),
+		                               vk::ImageLayout::eTransferDstOptimal,
+		                               reinterpret_cast<std::vector<vk::ImageBlit> const &>(regions),
 		                               vk::Filter::eNearest);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::buffer_memory_barrier(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, DeviceSizeType size,
-                                                              BufferMemoryBarrierType const &memory_barrier)
+inline void CommandBuffer<bindingType>::buffer_memory_barrier(vkb::core::Buffer<bindingType> const &buffer,
+                                                              DeviceSizeType                        offset,
+                                                              DeviceSizeType                        size,
+                                                              BufferMemoryBarrierType const        &memory_barrier)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -602,13 +647,17 @@ inline void CommandBuffer<bindingType>::buffer_memory_barrier(vkb::core::Buffer<
 	}
 	else
 	{
-		buffer_memory_barrier_impl(reinterpret_cast<vkb::core::BufferCpp const &>(buffer), static_cast<vk::DeviceSize>(offset),
-		                           static_cast<vk::DeviceSize>(size), reinterpret_cast<vkb::common::HPPBufferMemoryBarrier const &>(memory_barrier));
+		buffer_memory_barrier_impl(reinterpret_cast<vkb::core::BufferCpp const &>(buffer),
+		                           static_cast<vk::DeviceSize>(offset),
+		                           static_cast<vk::DeviceSize>(size),
+		                           reinterpret_cast<vkb::common::HPPBufferMemoryBarrier const &>(memory_barrier));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::buffer_memory_barrier_impl(vkb::core::BufferCpp const &buffer, vk::DeviceSize offset, vk::DeviceSize size,
+inline void CommandBuffer<bindingType>::buffer_memory_barrier_impl(vkb::core::BufferCpp const                &buffer,
+                                                                   vk::DeviceSize                             offset,
+                                                                   vk::DeviceSize                             size,
                                                                    vkb::common::HPPBufferMemoryBarrier const &memory_barrier)
 {
 	vk::BufferMemoryBarrier buffer_memory_barrier{.srcAccessMask = memory_barrier.src_access_mask,
@@ -634,8 +683,9 @@ inline void CommandBuffer<bindingType>::clear(ClearAttachmentType const &attachm
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::copy_buffer(vkb::core::Buffer<bindingType> const &src_buffer, vkb::core::Buffer<bindingType> const &dst_buffer,
-                                                    DeviceSizeType size)
+inline void CommandBuffer<bindingType>::copy_buffer(vkb::core::Buffer<bindingType> const &src_buffer,
+                                                    vkb::core::Buffer<bindingType> const &dst_buffer,
+                                                    DeviceSizeType                        size)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -643,7 +693,8 @@ inline void CommandBuffer<bindingType>::copy_buffer(vkb::core::Buffer<bindingTyp
 	}
 	else
 	{
-		copy_buffer_impl(reinterpret_cast<vkb::core::BufferCpp const &>(src_buffer), reinterpret_cast<vkb::core::BufferCpp const &>(dst_buffer),
+		copy_buffer_impl(reinterpret_cast<vkb::core::BufferCpp const &>(src_buffer),
+		                 reinterpret_cast<vkb::core::BufferCpp const &>(dst_buffer),
 		                 static_cast<vk::DeviceSize>(size));
 	}
 }
@@ -656,7 +707,8 @@ inline void CommandBuffer<bindingType>::copy_buffer_impl(vkb::core::BufferCpp co
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::copy_buffer_to_image(vkb::core::Buffer<bindingType> const &buffer, ImageType const &image,
+inline void CommandBuffer<bindingType>::copy_buffer_to_image(vkb::core::Buffer<bindingType> const   &buffer,
+                                                             ImageType const                        &image,
                                                              std::vector<BufferImageCopyType> const &regions)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -665,7 +717,9 @@ inline void CommandBuffer<bindingType>::copy_buffer_to_image(vkb::core::Buffer<b
 	}
 	else
 	{
-		this->get_resource().copyBufferToImage(buffer.get_resource(), image.get_resource(), vk::ImageLayout::eTransferDstOptimal,
+		this->get_resource().copyBufferToImage(buffer.get_resource(),
+		                                       image.get_resource(),
+		                                       vk::ImageLayout::eTransferDstOptimal,
 		                                       reinterpret_cast<std::vector<vk::BufferImageCopy> const &>(regions));
 	}
 }
@@ -675,18 +729,23 @@ inline void CommandBuffer<bindingType>::copy_image(ImageType const &src_img, Ima
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		this->get_resource().copyImage(src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal,
-		                               regions);
+		this->get_resource().copyImage(
+		    src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal, regions);
 	}
 	else
 	{
-		this->get_resource().copyImage(src_img.get_resource(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_resource(),
-		                               vk::ImageLayout::eTransferDstOptimal, reinterpret_cast<std::vector<vk::ImageCopy> const &>(regions));
+		this->get_resource().copyImage(src_img.get_resource(),
+		                               vk::ImageLayout::eTransferSrcOptimal,
+		                               dst_img.get_resource(),
+		                               vk::ImageLayout::eTransferDstOptimal,
+		                               reinterpret_cast<std::vector<vk::ImageCopy> const &>(regions));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::copy_image_to_buffer(ImageType const &image, ImageLayoutType image_layout, vkb::core::Buffer<bindingType> const &buffer,
+inline void CommandBuffer<bindingType>::copy_image_to_buffer(ImageType const                        &image,
+                                                             ImageLayoutType                         image_layout,
+                                                             vkb::core::Buffer<bindingType> const   &buffer,
                                                              std::vector<BufferImageCopyType> const &regions)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -695,7 +754,9 @@ inline void CommandBuffer<bindingType>::copy_image_to_buffer(ImageType const &im
 	}
 	else
 	{
-		this->get_resource().copyImageToBuffer(image.get_resource(), static_cast<vk::ImageLayout>(image_layout), buffer.get_resource(),
+		this->get_resource().copyImageToBuffer(image.get_resource(),
+		                                       static_cast<vk::ImageLayout>(image_layout),
+		                                       buffer.get_resource(),
 		                                       reinterpret_cast<std::vector<vk::BufferImageCopy> const &>(regions));
 	}
 }
@@ -729,16 +790,16 @@ inline void CommandBuffer<bindingType>::draw(uint32_t vertex_count, uint32_t ins
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset,
-                                                     uint32_t first_instance)
+inline void CommandBuffer<bindingType>::draw_indexed(
+    uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
 {
 	flush(vk::PipelineBindPoint::eGraphics);
 	this->get_resource().drawIndexed(index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::draw_indexed_indirect(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, uint32_t draw_count,
-                                                              uint32_t stride)
+inline void
+    CommandBuffer<bindingType>::draw_indexed_indirect(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, uint32_t draw_count, uint32_t stride)
 {
 	flush(vk::PipelineBindPoint::eGraphics);
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -813,14 +874,17 @@ inline void
     CommandBuffer<bindingType>::execute_commands_impl(std::vector<std::shared_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> &secondary_command_buffers)
 {
 	std::vector<vk::CommandBuffer> sec_cmd_buf_handles(secondary_command_buffers.size(), nullptr);
-	std::transform(secondary_command_buffers.begin(), secondary_command_buffers.end(), sec_cmd_buf_handles.begin(),
+	std::transform(secondary_command_buffers.begin(),
+	               secondary_command_buffers.end(),
+	               sec_cmd_buf_handles.begin(),
 	               [](auto const &sec_cmd_buf) { return sec_cmd_buf->get_handle(); });
 	this->get_resource().executeCommands(sec_cmd_buf_handles);
 }
 
 template <vkb::BindingType bindingType>
 inline typename vkb::core::CommandBuffer<bindingType>::RenderPassType &
-    CommandBuffer<bindingType>::get_render_pass(RenderTargetType const &render_target, std::vector<LoadStoreInfoType> const &load_store_infos,
+    CommandBuffer<bindingType>::get_render_pass(RenderTargetType const                                                   &render_target,
+                                                std::vector<LoadStoreInfoType> const                                     &load_store_infos,
                                                 std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -829,10 +893,11 @@ inline typename vkb::core::CommandBuffer<bindingType>::RenderPassType &
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderPass &>(get_render_pass_impl(
-		    reinterpret_cast<vkb::core::DeviceCpp &>(this->get_device()), reinterpret_cast<vkb::rendering::HPPRenderTarget const &>(render_target),
-		    reinterpret_cast<std::vector<vkb::common::HPPLoadStoreInfo> const &>(load_store_infos),
-		    reinterpret_cast<std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &>(subpasses)));
+		return reinterpret_cast<vkb::RenderPass &>(
+		    get_render_pass_impl(reinterpret_cast<vkb::core::DeviceCpp &>(this->get_device()),
+		                         reinterpret_cast<vkb::rendering::HPPRenderTarget const &>(render_target),
+		                         reinterpret_cast<std::vector<vkb::common::HPPLoadStoreInfo> const &>(load_store_infos),
+		                         reinterpret_cast<std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &>(subpasses)));
 	}
 }
 
@@ -864,8 +929,8 @@ inline vkb::core::HPPRenderPass &CommandBuffer<bindingType>::get_render_pass_imp
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::image_memory_barrier(RenderTargetType &render_target, uint32_t view_index,
-                                                             ImageMemoryBarrierType const &memory_barrier) const
+inline void
+    CommandBuffer<bindingType>::image_memory_barrier(RenderTargetType &render_target, uint32_t view_index, ImageMemoryBarrierType const &memory_barrier) const
 {
 	auto const &image_view = render_target.get_views()[view_index];
 
@@ -1025,13 +1090,16 @@ inline void CommandBuffer<bindingType>::resolve_image(ImageType const &src_img, 
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		this->get_resource().resolveImage(src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(),
-		                                  vk::ImageLayout::eTransferDstOptimal, regions);
+		this->get_resource().resolveImage(
+		    src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal, regions);
 	}
 	else
 	{
-		this->get_resource().resolveImage(src_img.get_resource(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_resource(),
-		                                  vk::ImageLayout::eTransferDstOptimal, reinterpret_cast<std::vector<vk::ImageResolve> const &>(regions));
+		this->get_resource().resolveImage(src_img.get_resource(),
+		                                  vk::ImageLayout::eTransferSrcOptimal,
+		                                  dst_img.get_resource(),
+		                                  vk::ImageLayout::eTransferDstOptimal,
+		                                  reinterpret_cast<std::vector<vk::ImageResolve> const &>(regions));
 	}
 }
 
@@ -1398,8 +1466,8 @@ inline void CommandBuffer<bindingType>::flush_descriptor_state_impl(vk::Pipeline
 			    descriptor_set_layout, buffer_infos, image_infos, update_after_bind, command_pool.get_thread_index());
 
 			// Bind descriptor set
-			this->get_resource().bindDescriptorSets(pipeline_bind_point, pipeline_layout.get_handle(), descriptor_set_id, descriptor_set_handle,
-			                                        dynamic_offsets);
+			this->get_resource().bindDescriptorSets(
+			    pipeline_bind_point, pipeline_layout.get_handle(), descriptor_set_id, descriptor_set_handle, dynamic_offsets);
 		}
 	}
 }

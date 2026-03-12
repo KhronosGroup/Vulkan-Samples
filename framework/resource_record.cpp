@@ -55,8 +55,10 @@ const std::ostringstream &ResourceRecord::get_stream()
 	return stream;
 }
 
-size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point,
-                                              const ShaderVariant &shader_variant)
+size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage,
+                                              const ShaderSource   &glsl_source,
+                                              const std::string    &entry_point,
+                                              const ShaderVariant  &shader_variant)
 {
 	shader_module_indices.push_back(shader_module_indices.size());
 
@@ -70,7 +72,9 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	pipeline_layout_indices.push_back(pipeline_layout_indices.size());
 
 	std::vector<size_t> shader_indices(shader_modules.size());
-	std::transform(shader_modules.begin(), shader_modules.end(), shader_indices.begin(),
+	std::transform(shader_modules.begin(),
+	               shader_modules.end(),
+	               shader_indices.begin(),
 	               [this](ShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
 
 	write(stream, ResourceType::PipelineLayout, shader_indices);
@@ -78,8 +82,9 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	return pipeline_layout_indices.back();
 }
 
-size_t ResourceRecord::register_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos,
-                                            const std::vector<SubpassInfo> &subpasses)
+size_t ResourceRecord::register_render_pass(const std::vector<Attachment>    &attachments,
+                                            const std::vector<LoadStoreInfo> &load_store_infos,
+                                            const std::vector<SubpassInfo>   &subpasses)
 {
 	render_pass_indices.push_back(render_pass_indices.size());
 
@@ -97,7 +102,10 @@ size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cac
 	auto &pipeline_layout = pipeline_state.get_pipeline_layout();
 	auto  render_pass     = pipeline_state.get_render_pass();
 
-	write(stream, ResourceType::GraphicsPipeline, pipeline_layout_to_index.at(&pipeline_layout), render_pass_to_index.at(render_pass),
+	write(stream,
+	      ResourceType::GraphicsPipeline,
+	      pipeline_layout_to_index.at(&pipeline_layout),
+	      render_pass_to_index.at(render_pass),
 	      pipeline_state.get_subpass_index());
 
 	auto &specialization_constant_state = pipeline_state.get_specialization_constant_state().get_specialization_constant_state();
@@ -108,8 +116,12 @@ size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cac
 
 	write(stream, vertex_input_state.attributes, vertex_input_state.bindings);
 
-	write(stream, pipeline_state.get_input_assembly_state(), pipeline_state.get_rasterization_state(), pipeline_state.get_viewport_state(),
-	      pipeline_state.get_multisample_state(), pipeline_state.get_depth_stencil_state());
+	write(stream,
+	      pipeline_state.get_input_assembly_state(),
+	      pipeline_state.get_rasterization_state(),
+	      pipeline_state.get_viewport_state(),
+	      pipeline_state.get_multisample_state(),
+	      pipeline_state.get_depth_stencil_state());
 
 	auto &color_blend_state = pipeline_state.get_color_blend_state();
 

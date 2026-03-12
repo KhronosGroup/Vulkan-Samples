@@ -184,8 +184,8 @@ void CommandBufferUsage::render(vkb::core::CommandBufferC &primary_command_buffe
 		{
 			// The user will set the number of secondary command buffers used for opaque meshes
 			// There will be additional buffers for transparent meshes and for the GUI
-			get_render_pipeline().draw(primary_command_buffer, get_render_context().get_active_frame().get_render_target(),
-			                           VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+			get_render_pipeline().draw(
+			    primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 		}
 		else
 		{
@@ -248,14 +248,19 @@ void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_comm
 	primary_command_buffer.end_render_pass();
 }
 
-CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
-                                                                     vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene_, vkb::sg::Camera &camera) :
+CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,
+                                                                     vkb::ShaderSource             &&vertex_shader,
+                                                                     vkb::ShaderSource             &&fragment_shader,
+                                                                     vkb::sg::Scene                 &scene_,
+                                                                     vkb::sg::Camera                &camera) :
     vkb::rendering::subpasses::ForwardSubpassC{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
 {}
 
 void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::CommandBufferC                                                   &command_buffer,
                                                               const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
-                                                              uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
+                                                              uint32_t                                                                     mesh_start,
+                                                              uint32_t                                                                     mesh_end,
+                                                              size_t                                                                       thread_index)
 {
 	command_buffer.set_color_blend_state(color_blend_state);
 
@@ -275,7 +280,10 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::core::Command
 std::shared_ptr<vkb::core::CommandBufferC>
     CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::core::CommandBufferC &primary_command_buffer,
                                                                        const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
-                                                                       uint32_t mesh_start, uint32_t mesh_end, uint32_t subpass_index, size_t thread_index)
+                                                                       uint32_t                                                                     mesh_start,
+                                                                       uint32_t                                                                     mesh_end,
+                                                                       uint32_t subpass_index,
+                                                                       size_t   thread_index)
 {
 	const auto &queue = get_render_context().get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -365,9 +373,14 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::core::CommandBufferC
 
 			if (state.multi_threading)
 			{
-				auto fut =
-				    thread_pool.push(std::bind(&CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary, this, std::ref(primary_command_buffer),
-				                               std::cref(sorted_opaque_nodes), mesh_start, mesh_end, cb_count, std::placeholders::_1));
+				auto fut = thread_pool.push(std::bind(&CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary,
+				                                      this,
+				                                      std::ref(primary_command_buffer),
+				                                      std::cref(sorted_opaque_nodes),
+				                                      mesh_start,
+				                                      mesh_end,
+				                                      cb_count,
+				                                      std::placeholders::_1));
 
 				secondary_cmd_buf_futures.push_back(std::move(fut));
 			}

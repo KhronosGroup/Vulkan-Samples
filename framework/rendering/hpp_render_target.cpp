@@ -29,8 +29,11 @@ const HPPRenderTarget::CreateFunc HPPRenderTarget::DEFAULT_CREATE_FUNC = [](core
 {
 	vk::Format depth_format = common::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle());
 
-	core::HPPImage depth_image{swapchain_image.get_device(), swapchain_image.get_extent(), depth_format,
-	                           vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment, VMA_MEMORY_USAGE_GPU_ONLY};
+	core::HPPImage depth_image{swapchain_image.get_device(),
+	                           swapchain_image.get_extent(),
+	                           depth_format,
+	                           vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
+	                           VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<core::HPPImage> images;
 	images.push_back(std::move(swapchain_image));
@@ -54,7 +57,8 @@ HPPRenderTarget::HPPRenderTarget(std::vector<core::HPPImage> &&images_) : device
 	extent.height = images.front().get_extent().height;
 
 	// check that every image has the same extent
-	it = std::find_if(std::next(images.begin()), images.end(),
+	it = std::find_if(std::next(images.begin()),
+	                  images.end(),
 	                  [this](core::HPPImage const &image)
 	                  { return (extent.width != image.get_extent().width) || (extent.height != image.get_extent().height); });
 	if (it != images.end())
@@ -79,7 +83,8 @@ HPPRenderTarget::HPPRenderTarget(std::vector<core::HPPImageView> &&image_views) 
 	extent.height            = views.front().get_image().get_extent().height >> mip_level;
 
 	// check that every image view has the same extent
-	auto it = std::find_if(std::next(views.begin()), views.end(),
+	auto it = std::find_if(std::next(views.begin()),
+	                       views.end(),
 	                       [this](core::HPPImageView const &image_view)
 	                       {
 		                       const uint32_t mip_level = image_view.get_subresource_range().baseMipLevel;

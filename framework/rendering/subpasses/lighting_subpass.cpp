@@ -26,8 +26,8 @@
 
 namespace vkb
 {
-LightingSubpass::LightingSubpass(vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &cam,
-                                 sg::Scene &scene_) :
+LightingSubpass::LightingSubpass(
+    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &cam, sg::Scene &scene_) :
     Subpass{render_context, std::move(vertex_shader), std::move(fragment_shader)}, camera{cam}, scene{scene_}
 {}
 

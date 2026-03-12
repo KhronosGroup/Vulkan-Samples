@@ -187,8 +187,10 @@ class MSAASample : public vkb::VulkanSampleC
 	 *        color_layout is an in-out parameter that holds the last known layout
 	 *        of the resolve attachment, and may be used for any further transitions
 	 */
-	void resolve_color_separate_pass(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::core::ImageView> &views, uint32_t color_destination,
-	                                 VkImageLayout &color_layout);
+	void resolve_color_separate_pass(vkb::core::CommandBufferC               &command_buffer,
+	                                 const std::vector<vkb::core::ImageView> &views,
+	                                 uint32_t                                 color_destination,
+	                                 VkImageLayout                           &color_layout);
 
 	/**
 	 * @brief If true, the platform supports the VK_KHR_depth_stencil_resolve extension

@@ -219,8 +219,10 @@ class MobileNerf : public ApiVulkanSample
 	glm::vec3 camera_pos = glm::vec3(-2.2f, 2.2f, 2.2f);
 
 	// Currently combo mode translation are hard-coded
-	glm::mat4x4 combo_model_transform[4] = {glm::translate(glm::vec3(0.5, 0.75, 0)), glm::translate(glm::vec3(0.5, 0.25, 0)),
-	                                        glm::translate(glm::vec3(0, -0.25, 0.5)), glm::translate(glm::vec3(0, -0.75, -0.5))};
+	glm::mat4x4 combo_model_transform[4] = {glm::translate(glm::vec3(0.5, 0.75, 0)),
+	                                        glm::translate(glm::vec3(0.5, 0.25, 0)),
+	                                        glm::translate(glm::vec3(0, -0.25, 0.5)),
+	                                        glm::translate(glm::vec3(0, -0.75, -0.5))};
 
 	// For instancing
 	InstancingInfo instancing_info;

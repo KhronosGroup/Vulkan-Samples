@@ -83,15 +83,22 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	struct DepthMapSubpass : vkb::rendering::subpasses::ForwardSubpassC
 	{
-		DepthMapSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                vkb::sg::Scene &scene, vkb::sg::Camera &camera);
+		DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
+		                vkb::ShaderSource             &&vertex_shader,
+		                vkb::ShaderSource             &&fragment_shader,
+		                vkb::sg::Scene                 &scene,
+		                vkb::sg::Camera                &camera);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 	};
 
 	struct ShadowMapForwardSubpass : vkb::rendering::subpasses::ForwardSubpassC
 	{
-		ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-		                        vkb::sg::Scene &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera);
+		ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
+		                        vkb::ShaderSource             &&vertex_shader,
+		                        vkb::ShaderSource             &&fragment_shader,
+		                        vkb::sg::Scene                 &scene,
+		                        vkb::sg::Camera                &camera,
+		                        vkb::sg::Camera                &shadow_camera);
 		void         set_shadow_map(const vkb::core::ImageView *view, const vkb::core::Sampler *sampler);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 

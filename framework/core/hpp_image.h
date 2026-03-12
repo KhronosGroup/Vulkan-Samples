@@ -102,14 +102,26 @@ struct HPPImageBuilder : public vkb::allocated::BuilderBaseCpp<HPPImageBuilder, 
 class HPPImage : public vkb::allocated::AllocatedCpp<vk::Image>
 {
   public:
-	HPPImage(vkb::core::DeviceCpp &device, vk::Image handle, const vk::Extent3D &extent, vk::Format format, vk::ImageUsageFlags image_usage,
+	HPPImage(vkb::core::DeviceCpp   &device,
+	         vk::Image               handle,
+	         const vk::Extent3D     &extent,
+	         vk::Format              format,
+	         vk::ImageUsageFlags     image_usage,
 	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
 	//[[deprecated("Use the HPPImageBuilder ctor instead")]]
-	HPPImage(vkb::core::DeviceCpp &device, const vk::Extent3D &extent, vk::Format format, vk::ImageUsageFlags image_usage,
-	         VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO, vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1, uint32_t mip_levels = 1,
-	         uint32_t array_layers = 1, vk::ImageTiling tiling = vk::ImageTiling::eOptimal, vk::ImageCreateFlags flags = {}, uint32_t num_queue_families = 0,
-	         const uint32_t *queue_families = nullptr);
+	HPPImage(vkb::core::DeviceCpp   &device,
+	         const vk::Extent3D     &extent,
+	         vk::Format              format,
+	         vk::ImageUsageFlags     image_usage,
+	         VmaMemoryUsage          memory_usage       = VMA_MEMORY_USAGE_AUTO,
+	         vk::SampleCountFlagBits sample_count       = vk::SampleCountFlagBits::e1,
+	         uint32_t                mip_levels         = 1,
+	         uint32_t                array_layers       = 1,
+	         vk::ImageTiling         tiling             = vk::ImageTiling::eOptimal,
+	         vk::ImageCreateFlags    flags              = {},
+	         uint32_t                num_queue_families = 0,
+	         const uint32_t         *queue_families     = nullptr);
 
 	HPPImage(vkb::core::DeviceCpp &device, HPPImageBuilder const &builder);
 

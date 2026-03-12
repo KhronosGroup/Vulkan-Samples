@@ -190,7 +190,9 @@ vk::DescriptorPool HPPTextureMipMapGeneration::create_descriptor_pool()
 vk::DescriptorSetLayout HPPTextureMipMapGeneration::create_descriptor_set_layout()
 {
 	std::array<vk::DescriptorSetLayoutBinding, 3> set_layout_bindings = {
-	    {{0, vk::DescriptorType::eUniformBuffer, 1,
+	    {{0,
+	      vk::DescriptorType::eUniformBuffer,
+	      1,
 	      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment},              // Binding 0 : Parameter uniform buffer
 	     {1, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment},        // Binding 1 : Fragment shader image sampler
 	     {2, vk::DescriptorType::eSampler, 3, vk::ShaderStageFlagBits::eFragment}}};           // Binding 2 : Sampler array (3 descriptors)
@@ -229,9 +231,19 @@ vk::Pipeline HPPTextureMipMapGeneration::create_pipeline()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, vertex_input_state,
-	                                             vk::PrimitiveTopology::eTriangleList, 0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
-	                                             vk::FrontFace::eCounterClockwise, {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             vertex_input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 void HPPTextureMipMapGeneration::draw()
@@ -327,20 +339,23 @@ void HPPTextureMipMapGeneration::load_assets()
 
 		// Prepare current mip level as image blit destination
 		vk::ImageSubresourceRange image_subresource_range{vk::ImageAspectFlagBits::eColor, i, 1, 0, 1};
-		vkb::common::image_layout_transition(blit_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
-		                                     image_subresource_range);
+		vkb::common::image_layout_transition(
+		    blit_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, image_subresource_range);
 
 		// Blit from previous level
-		blit_command.blitImage(texture.image, vk::ImageLayout::eTransferSrcOptimal, texture.image, vk::ImageLayout::eTransferDstOptimal, image_blit,
-		                       vk::Filter::eLinear);
+		blit_command.blitImage(
+		    texture.image, vk::ImageLayout::eTransferSrcOptimal, texture.image, vk::ImageLayout::eTransferDstOptimal, image_blit, vk::Filter::eLinear);
 
 		// Prepare current mip level as image blit source for next level
-		vkb::common::image_layout_transition(blit_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal,
-		                                     image_subresource_range);
+		vkb::common::image_layout_transition(
+		    blit_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, image_subresource_range);
 	}
 
 	// After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
-	vkb::common::image_layout_transition(blit_command, texture.image, vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
+	vkb::common::image_layout_transition(blit_command,
+	                                     texture.image,
+	                                     vk::ImageLayout::eTransferSrcOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
 	                                     {vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels, 0, 1});
 
 	get_device().flush_command_buffer(blit_command, queue, true);
@@ -349,22 +364,31 @@ void HPPTextureMipMapGeneration::load_assets()
 	// Create samplers for different mip map demonstration cases
 
 	// Without mip mapping
-	samplers[0] = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(), format, vk::Filter::eLinear,
-	                                          vk::SamplerAddressMode::eRepeat, 1.0f, 0.0f);
+	samplers[0] = vkb::common::create_sampler(
+	    get_device().get_gpu().get_handle(), get_device().get_handle(), format, vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat, 1.0f, 0.0f);
 
 	// With mip mapping
-	samplers[1] = vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(), format, vk::Filter::eLinear,
-	                                          vk::SamplerAddressMode::eRepeat, 1.0f, static_cast<float>(texture.mip_levels));
+	samplers[1] = vkb::common::create_sampler(get_device().get_gpu().get_handle(),
+	                                          get_device().get_handle(),
+	                                          format,
+	                                          vk::Filter::eLinear,
+	                                          vk::SamplerAddressMode::eRepeat,
+	                                          1.0f,
+	                                          static_cast<float>(texture.mip_levels));
 
 	// With mip mapping and anisotropic filtering (when supported)
 	samplers[2] = vkb::common::create_sampler(
-	    get_device().get_gpu().get_handle(), get_device().get_handle(), format, vk::Filter::eLinear, vk::SamplerAddressMode::eRepeat,
+	    get_device().get_gpu().get_handle(),
+	    get_device().get_handle(),
+	    format,
+	    vk::Filter::eLinear,
+	    vk::SamplerAddressMode::eRepeat,
 	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(texture.mip_levels));
 
 	// Create image view
-	texture.view = vkb::common::create_image_view(get_device().get_handle(), texture.image, vk::ImageViewType::e2D, format, vk::ImageAspectFlagBits::eColor, 0,
-	                                              texture.mip_levels);
+	texture.view = vkb::common::create_image_view(
+	    get_device().get_handle(), texture.image, vk::ImageViewType::e2D, format, vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels);
 }
 
 void HPPTextureMipMapGeneration::prepare_camera()

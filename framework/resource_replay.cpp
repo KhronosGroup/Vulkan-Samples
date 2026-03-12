@@ -103,7 +103,9 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 	read(stream, shader_indices);
 
 	std::vector<ShaderModule *> shader_stages(shader_indices.size());
-	std::transform(shader_indices.begin(), shader_indices.end(), shader_stages.begin(),
+	std::transform(shader_indices.begin(),
+	               shader_indices.end(),
+	               shader_stages.begin(),
 	               [&](size_t shader_index)
 	               {
 		               assert(shader_index < shader_modules.size());

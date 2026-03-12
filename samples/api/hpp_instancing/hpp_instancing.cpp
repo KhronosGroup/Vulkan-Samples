@@ -247,9 +247,19 @@ vk::Pipeline HPPInstancing::create_planet_pipeline()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, input_state, vk::PrimitiveTopology::eTriangleList, 0,
-	                                             vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, {blend_attachment_state},
-	                                             depth_stencil_state, pipeline_layout, render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eBack,
+	                                             vk::FrontFace::eClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 vk::Pipeline HPPInstancing::create_rocks_pipeline()
@@ -299,9 +309,19 @@ vk::Pipeline HPPInstancing::create_rocks_pipeline()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, input_state, vk::PrimitiveTopology::eTriangleList, 0,
-	                                             vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, {blend_attachment_state},
-	                                             depth_stencil_state, pipeline_layout, render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eBack,
+	                                             vk::FrontFace::eClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 vk::Pipeline HPPInstancing::create_starfield_pipeline()
@@ -338,10 +358,19 @@ vk::Pipeline HPPInstancing::create_starfield_pipeline()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages,
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
 	                                             {},        // Vertices are generated in the vertex shader
-	                                             vk::PrimitiveTopology::eTriangleList, 0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
-	                                             vk::FrontFace::eClockwise, {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 void HPPInstancing::draw()
@@ -393,21 +422,21 @@ void HPPInstancing::prepare_instance_data()
 		float rho, theta;
 
 		// Inner ring
-		rho                       = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring0[0], 2.0f));
-		theta                     = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[i].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[i].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator),
-		                                      glm::pi<float>() * uniform_dist(rnd_generator));
+		rho                  = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring0[0], 2.0f));
+		theta                = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
+		instance_data[i].pos = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[i].rot = glm::vec3(
+		    glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[i].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
 		instance_data[i].texIndex = rnd_texture_index(rnd_generator);
 		instance_data[i].scale *= 0.75f;
 
 		// Outer ring
-		rho                       = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
-		theta                     = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[j].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[j].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator),
-		                                      glm::pi<float>() * uniform_dist(rnd_generator));
+		rho                  = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
+		theta                = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
+		instance_data[j].pos = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[j].rot = glm::vec3(
+		    glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[j].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
 		instance_data[j].texIndex = rnd_texture_index(rnd_generator);
 		instance_data[j].scale *= 0.75f;
@@ -467,7 +496,8 @@ void HPPInstancing::update_planet_descriptor_set()
 {
 	vk::DescriptorBufferInfo buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
 	vk::DescriptorImageInfo  image_descriptor{
-        planet.texture.sampler, planet.texture.image->get_vk_image_view().get_handle(),
+        planet.texture.sampler,
+        planet.texture.image->get_vk_image_view().get_handle(),
         descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, planet.texture.image->get_vk_image_view().get_format())};
 	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = planet.descriptor_set,
 	                                                                 .dstBinding      = 0,
@@ -486,7 +516,8 @@ void HPPInstancing::update_rocks_descriptor_set()
 {
 	vk::DescriptorBufferInfo buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
 	vk::DescriptorImageInfo  image_descriptor{
-        rocks.texture.sampler, rocks.texture.image->get_vk_image_view().get_handle(),
+        rocks.texture.sampler,
+        rocks.texture.image->get_vk_image_view().get_handle(),
         descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, rocks.texture.image->get_vk_image_view().get_format())};
 	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = rocks.descriptor_set,
 	                                                                 .dstBinding      = 0,

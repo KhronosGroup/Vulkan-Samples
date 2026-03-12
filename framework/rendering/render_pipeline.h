@@ -167,7 +167,8 @@ void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &co
 	}
 	else
 	{
-		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer), reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target),
+		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
+		          reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target),
 		          static_cast<vk::SubpassContents>(contents));
 	}
 
@@ -175,8 +176,9 @@ void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &co
 }
 
 template <vkb::BindingType bindingType>
-void RenderPipeline<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target,
-                                            vk::SubpassContents contents)
+void RenderPipeline<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
+                                            vkb::rendering::HPPRenderTarget &render_target,
+                                            vk::SubpassContents              contents)
 {
 	for (size_t i = 0; i < subpasses.size(); ++i)
 	{

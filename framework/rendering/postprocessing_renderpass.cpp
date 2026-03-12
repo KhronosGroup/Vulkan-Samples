@@ -24,8 +24,11 @@ namespace vkb
 constexpr uint32_t DEPTH_RESOLVE_BITMASK = 0x80000000;
 constexpr uint32_t ATTACHMENT_BITMASK    = 0x7FFFFFFF;
 
-PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass *parent, vkb::rendering::RenderContextC &render_context, ShaderSource &&triangle_vs,
-                                             ShaderSource &&fs, ShaderVariant &&fs_variant) :
+PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass       *parent,
+                                             vkb::rendering::RenderContextC &render_context,
+                                             ShaderSource                  &&triangle_vs,
+                                             ShaderSource                  &&fs,
+                                             ShaderVariant                 &&fs_variant) :
     Subpass(render_context, std::move(triangle_vs), std::move(fs)), parent{parent}, fs_variant{std::move(fs_variant)}
 {
 	set_disable_depth_stencil_attachment(true);
@@ -228,8 +231,10 @@ PostProcessingRenderPass::PostProcessingRenderPass(PostProcessingPipeline *paren
 	}
 }
 
-void PostProcessingRenderPass::update_load_stores(const AttachmentSet &input_attachments, const SampledAttachmentSet &sampled_attachments,
-                                                  const AttachmentSet &output_attachments, const RenderTarget &fallback_render_target)
+void PostProcessingRenderPass::update_load_stores(const AttachmentSet        &input_attachments,
+                                                  const SampledAttachmentSet &sampled_attachments,
+                                                  const AttachmentSet        &output_attachments,
+                                                  const RenderTarget         &fallback_render_target)
 {
 	if (!load_stores_dirty)
 	{
@@ -325,9 +330,11 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 	}
 }
 
-void PostProcessingRenderPass::transition_attachments(const AttachmentSet &input_attachments, const SampledAttachmentSet &sampled_attachments,
-                                                      const AttachmentSet &output_attachments, vkb::core::CommandBufferC &command_buffer,
-                                                      RenderTarget &fallback_render_target)
+void PostProcessingRenderPass::transition_attachments(const AttachmentSet        &input_attachments,
+                                                      const SampledAttachmentSet &sampled_attachments,
+                                                      const AttachmentSet        &output_attachments,
+                                                      vkb::core::CommandBufferC  &command_buffer,
+                                                      RenderTarget               &fallback_render_target)
 {
 	auto       &render_target = this->render_target ? *this->render_target : fallback_render_target;
 	const auto &views         = render_target.get_views();

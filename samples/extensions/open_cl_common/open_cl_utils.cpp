@@ -38,14 +38,21 @@ cl_platform_id load_opencl()
 
 #if defined(__ANDROID__)
 	// Try to find the OpenCL library on one of the following paths
-	static const char *libraryPaths[] = {
-	    // Generic
-	    "/system/vendor/lib64/libOpenCL.so", "/system/lib64/libOpenCL.so", "/system/vendor/lib/libOpenCL.so", "/system/lib/libOpenCL.so",
-	    // ARM Mali
-	    "/system/vendor/lib64/egl/libGLES_mali.so", "/system/lib64/egl/libGLES_mali.so", "/system/vendor/lib/egl/libGLES_mali.so",
-	    "/system/lib/egl/libGLES_mali.so",
-	    // PowerVR
-	    "/system/vendor/lib64/libPVROCL.so", "/system/lib64/libPVROCL.so", "/system/vendor/lib/libPVROCL.so", "/system/lib/libPVROCL.so"};
+	static const char *libraryPaths[] = {// Generic
+	                                     "/system/vendor/lib64/libOpenCL.so",
+	                                     "/system/lib64/libOpenCL.so",
+	                                     "/system/vendor/lib/libOpenCL.so",
+	                                     "/system/lib/libOpenCL.so",
+	                                     // ARM Mali
+	                                     "/system/vendor/lib64/egl/libGLES_mali.so",
+	                                     "/system/lib64/egl/libGLES_mali.so",
+	                                     "/system/vendor/lib/egl/libGLES_mali.so",
+	                                     "/system/lib/egl/libGLES_mali.so",
+	                                     // PowerVR
+	                                     "/system/vendor/lib64/libPVROCL.so",
+	                                     "/system/lib64/libPVROCL.so",
+	                                     "/system/vendor/lib/libPVROCL.so",
+	                                     "/system/lib/libPVROCL.so"};
 	for (auto libraryPath : libraryPaths)
 	{
 		handle = dlopen(libraryPath, RTLD_LAZY);

@@ -263,9 +263,13 @@ void MemoryBudget::setup_descriptor_set()
 	VkDescriptorImageInfo  image_descriptor  = create_descriptor(textures.rocks);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets.instanced_rocks));
 	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0,
+	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks,
+	                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                            0,
 	                                            &buffer_descriptor),        // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks,
+	                                            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	                                            1,
 	                                            &image_descriptor)        // Binding 1 : Color map
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
@@ -275,9 +279,13 @@ void MemoryBudget::setup_descriptor_set()
 	image_descriptor  = create_descriptor(textures.planet);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets.planet));
 	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0,
+	    vkb::initializers::write_descriptor_set(descriptor_sets.planet,
+	                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                            0,
 	                                            &buffer_descriptor),        // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+	    vkb::initializers::write_descriptor_set(descriptor_sets.planet,
+	                                            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	                                            1,
 	                                            &image_descriptor)        // Binding 1 : Color map
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
@@ -405,11 +413,11 @@ void MemoryBudget::prepare_instance_data()
 		float rho, theta;
 
 		// Inner ring
-		rho                       = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring0[0], 2.0f));
-		theta                     = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[i].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[i].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator),
-		                                      glm::pi<float>() * uniform_dist(rnd_generator));
+		rho                  = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring0[0], 2.0f));
+		theta                = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
+		instance_data[i].pos = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[i].rot = glm::vec3(
+		    glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[i].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
 		instance_data[i].texIndex = rnd_texture_index(rnd_generator);
 		instance_data[i].scale *= 0.75f;

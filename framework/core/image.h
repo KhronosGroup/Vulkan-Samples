@@ -123,14 +123,26 @@ class ImageView;
 class Image : public vkb::allocated::AllocatedC<VkImage>
 {
   public:
-	Image(vkb::core::DeviceC &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage,
+	Image(vkb::core::DeviceC   &device,
+	      VkImage               handle,
+	      const VkExtent3D     &extent,
+	      VkFormat              format,
+	      VkImageUsageFlags     image_usage,
 	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
 
 	// [[deprecated("Use the ImageBuilder ctor instead")]]
-	Image(vkb::core::DeviceC &device, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage,
-	      VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO, VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT, uint32_t mip_levels = 1,
-	      uint32_t array_layers = 1, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL, VkImageCreateFlags flags = 0, uint32_t num_queue_families = 0,
-	      const uint32_t *queue_families = nullptr);
+	Image(vkb::core::DeviceC   &device,
+	      const VkExtent3D     &extent,
+	      VkFormat              format,
+	      VkImageUsageFlags     image_usage,
+	      VmaMemoryUsage        memory_usage       = VMA_MEMORY_USAGE_AUTO,
+	      VkSampleCountFlagBits sample_count       = VK_SAMPLE_COUNT_1_BIT,
+	      uint32_t              mip_levels         = 1,
+	      uint32_t              array_layers       = 1,
+	      VkImageTiling         tiling             = VK_IMAGE_TILING_OPTIMAL,
+	      VkImageCreateFlags    flags              = 0,
+	      uint32_t              num_queue_families = 0,
+	      const uint32_t       *queue_families     = nullptr);
 
 	Image(vkb::core::DeviceC &device, ImageBuilder const &builder);
 

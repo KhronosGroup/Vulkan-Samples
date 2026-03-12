@@ -108,8 +108,11 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	 * @param scene Scene to render on this subpass
 	 * @param camera Camera used to look at the scene
 	 */
-	GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_shader, ShaderSourceType &&fragment_shader,
-	                SceneType &scene, sg::Camera &camera);
+	GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
+	                ShaderSourceType                          &&vertex_shader,
+	                ShaderSourceType                          &&fragment_shader,
+	                SceneType                                  &scene,
+	                sg::Camera                                 &camera);
 
 	virtual ~GeometrySubpass() = default;
 
@@ -127,8 +130,9 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	void set_thread_index(uint32_t index);
 
   protected:
-	void                           draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh,
-	                                            FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
+	void                           draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer,
+	                                            SubMeshType                           &sub_mesh,
+	                                            FrontFaceType                          front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
 	virtual void                   draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
 	vkb::sg::Camera const         &get_camera() const;
 	std::vector<MeshType *> const &get_meshes() const;
@@ -155,8 +159,9 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 
   private:
 	void draw_impl(vkb::core::CommandBufferCpp &command_buffer);
-	void draw_submesh_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::components::HPPSubMesh &sub_mesh,
-	                       vk::FrontFace front_face = vk::FrontFace::eCounterClockwise);
+	void draw_submesh_impl(vkb::core::CommandBufferCpp              &command_buffer,
+	                       vkb::scene_graph::components::HPPSubMesh &sub_mesh,
+	                       vk::FrontFace                             front_face = vk::FrontFace::eCounterClockwise);
 	void get_sorted_nodes_impl(std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &opaque_nodes,
 	                           std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &transparent_nodes);
 	vkb::core::HPPPipelineLayout &prepare_pipeline_layout_impl(vkb::core::CommandBufferCpp                     &command_buffer,
@@ -179,8 +184,11 @@ using GeometrySubpassCpp = GeometrySubpass<vkb::BindingType::Cpp>;
 // Member function definitions
 
 template <vkb::BindingType bindingType>
-inline GeometrySubpass<bindingType>::GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_source,
-                                                     ShaderSourceType &&fragment_source, SceneType &scene_, sg::Camera &camera) :
+inline GeometrySubpass<bindingType>::GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
+                                                     ShaderSourceType                          &&vertex_source,
+                                                     ShaderSourceType                          &&fragment_source,
+                                                     SceneType                                  &scene_,
+                                                     sg::Camera                                 &camera) :
     Subpass<bindingType>{render_context, std::move(vertex_source), std::move(fragment_source)}, camera{camera}
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -228,7 +236,8 @@ inline void GeometrySubpass<bindingType>::draw_impl(vkb::core::CommandBufferCpp 
 			else
 			{
 				update_uniform(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer),
-				               reinterpret_cast<vkb::scene_graph::NodeC &>(*node_it->second.first), thread_index);
+				               reinterpret_cast<vkb::scene_graph::NodeC &>(*node_it->second.first),
+				               thread_index);
 			}
 
 			// Invert the front face if the mesh was flipped
@@ -267,7 +276,8 @@ inline void GeometrySubpass<bindingType>::draw_impl(vkb::core::CommandBufferCpp 
 				else
 				{
 					update_uniform(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer),
-					               reinterpret_cast<vkb::scene_graph::NodeC &>(*node_it->second.first), thread_index);
+					               reinterpret_cast<vkb::scene_graph::NodeC &>(*node_it->second.first),
+					               thread_index);
 				}
 				draw_submesh_impl(command_buffer, *node_it->second.second);
 			}
@@ -307,7 +317,8 @@ inline void GeometrySubpass<bindingType>::draw_submesh(vkb::core::CommandBuffer<
 	else
 	{
 		draw_submesh_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		                  reinterpret_cast<vkb::scene_graph::components::HPPSubMesh &>(sub_mesh), static_cast<vk::FrontFace>(front_face));
+		                  reinterpret_cast<vkb::scene_graph::components::HPPSubMesh &>(sub_mesh),
+		                  static_cast<vk::FrontFace>(front_face));
 	}
 }
 
@@ -486,8 +497,9 @@ inline std::vector<vkb::scene_graph::components::HPPMesh *> const &GeometrySubpa
 }
 
 template <vkb::BindingType bindingType>
-inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::components::HPPSubMesh &sub_mesh,
-                                                            vk::FrontFace front_face)
+inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBufferCpp              &command_buffer,
+                                                            vkb::scene_graph::components::HPPSubMesh &sub_mesh,
+                                                            vk::FrontFace                             front_face)
 {
 	vkb::core::HPPScopedDebugLabel submesh_debug_label{command_buffer, sub_mesh.get_name().c_str()};
 
@@ -497,8 +509,8 @@ inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBu
 	}
 	else
 	{
-		prepare_pipeline_state(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), static_cast<VkFrontFace>(front_face),
-		                       sub_mesh.get_material()->is_double_sided());
+		prepare_pipeline_state(
+		    reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), static_cast<VkFrontFace>(front_face), sub_mesh.get_material()->is_double_sided());
 	}
 
 	vkb::rendering::HPPMultisampleState multisample_state{.rasterization_samples = this->get_sample_count_impl()};
@@ -534,8 +546,8 @@ inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBu
 	{
 		if (auto layout_binding = descriptor_set_layout.get_layout_binding(texture.first))
 		{
-			command_buffer.bind_image(texture.second->get_image()->get_vk_image_view(), texture.second->get_sampler()->get_core_sampler(), 0,
-			                          layout_binding->binding, 0);
+			command_buffer.bind_image(
+			    texture.second->get_image()->get_vk_image_view(), texture.second->get_sampler()->get_core_sampler(), 0, layout_binding->binding, 0);
 		}
 	}
 
@@ -584,8 +596,9 @@ inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBu
 }
 
 template <vkb::BindingType bindingType>
-inline void GeometrySubpass<bindingType>::prepare_pipeline_state(vkb::core::CommandBuffer<bindingType> &command_buffer, FrontFaceType front_face,
-                                                                 bool double_sided_material)
+inline void GeometrySubpass<bindingType>::prepare_pipeline_state(vkb::core::CommandBuffer<bindingType> &command_buffer,
+                                                                 FrontFaceType                          front_face,
+                                                                 bool                                   double_sided_material)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -593,14 +606,14 @@ inline void GeometrySubpass<bindingType>::prepare_pipeline_state(vkb::core::Comm
 	}
 	else
 	{
-		prepare_pipeline_state_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer), static_cast<vk::FrontFace>(front_face),
-		                            double_sided_material);
+		prepare_pipeline_state_impl(
+		    reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer), static_cast<vk::FrontFace>(front_face), double_sided_material);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void GeometrySubpass<bindingType>::prepare_pipeline_state_impl(vkb::core::CommandBufferCpp &command_buffer, vk::FrontFace front_face,
-                                                                      bool double_sided_material)
+inline void
+    GeometrySubpass<bindingType>::prepare_pipeline_state_impl(vkb::core::CommandBufferCpp &command_buffer, vk::FrontFace front_face, bool double_sided_material)
 {
 	vkb::rendering::HPPRasterizationState rasterization_state = this->base_rasterization_state;
 	rasterization_state.front_face                            = front_face;
@@ -651,8 +664,9 @@ inline void GeometrySubpass<bindingType>::prepare_push_constants_impl(vkb::core:
 }
 
 template <vkb::BindingType bindingType>
-inline void GeometrySubpass<bindingType>::update_uniform(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::scene_graph::Node<bindingType> &node,
-                                                         size_t thread_index)
+inline void GeometrySubpass<bindingType>::update_uniform(vkb::core::CommandBuffer<bindingType> &command_buffer,
+                                                         vkb::scene_graph::Node<bindingType>   &node,
+                                                         size_t                                 thread_index)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{

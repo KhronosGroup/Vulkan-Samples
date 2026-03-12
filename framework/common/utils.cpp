@@ -56,8 +56,8 @@ void screenshot(vkb::rendering::RenderContextC &render_context, const std::strin
 	auto height   = render_context.get_surface_extent().height;
 	auto dst_size = width * height * 4;
 
-	vkb::core::BufferC dst_buffer{render_context.get_device(), dst_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU,
-	                              VMA_ALLOCATION_CREATE_MAPPED_BIT};
+	vkb::core::BufferC dst_buffer{
+	    render_context.get_device(), dst_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU, VMA_ALLOCATION_CREATE_MAPPED_BIT};
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -205,8 +205,12 @@ std::string to_snake_case(const std::string &text)
 	return result.str();
 }
 
-sg::Light &add_light(sg::Scene &scene, sg::LightType type, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props,
-                     vkb::scene_graph::NodeC *parent_node)
+sg::Light &add_light(sg::Scene                 &scene,
+                     sg::LightType              type,
+                     const glm::vec3           &position,
+                     const glm::quat           &rotation,
+                     const sg::LightProperties &props,
+                     vkb::scene_graph::NodeC   *parent_node)
 {
 	auto light_ptr = std::make_unique<sg::Light>("light");
 	auto node      = std::make_unique<vkb::scene_graph::NodeC>(-1, "light node");
@@ -245,8 +249,8 @@ sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, co
 	return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
 }
 
-sg::Light &add_spot_light(sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props,
-                          vkb::scene_graph::NodeC *parent_node)
+sg::Light &add_spot_light(
+    sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
 {
 	return add_light(scene, sg::LightType::Spot, position, rotation, props, parent_node);
 }

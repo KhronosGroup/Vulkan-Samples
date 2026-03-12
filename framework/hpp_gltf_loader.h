@@ -35,8 +35,8 @@ class HPPGLTFLoader : private vkb::GLTFLoader
 	HPPGLTFLoader(vkb::core::DeviceCpp &device) : GLTFLoader(reinterpret_cast<vkb::core::DeviceC &>(device))
 	{}
 
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false,
-	                                                                               vk::BufferUsageFlags additional_buffer_usage_flags = {})
+	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>
+	    read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false, vk::BufferUsageFlags additional_buffer_usage_flags = {})
 	{
 		return std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>(reinterpret_cast<vkb::scene_graph::components::HPPSubMesh *>(
 		    vkb::GLTFLoader::read_model_from_file(file_name, index, storage_buffer, static_cast<VkBufferUsageFlags>(additional_buffer_usage_flags)).release()));

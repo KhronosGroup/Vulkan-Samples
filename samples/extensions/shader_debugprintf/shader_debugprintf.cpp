@@ -26,7 +26,8 @@ std::string ShaderDebugPrintf::debug_output{};
 
 VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
                                                                                VkDebugUtilsMessageTypeFlagsEXT             messageType,
-                                                                               const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+                                                                               const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                                                                               void                                       *pUserData)
 {
 	// Look for Validation Layer message id names: VVL-DEBUG-PRINTF or WARNING-DEBUG-PRINTF or UNASSIGNED-DEBUG-PRINTF (have observed WARNING and UNASSIGNED
 	// with older Vulkan SDKs)
@@ -191,7 +192,11 @@ void ShaderDebugPrintf::build_command_buffers()
 		{
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
 			push_const_block.object_type = 0;
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			vkCmdPushConstants(draw_cmd_buffers[i],
+			                   pipeline_layout,
+			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			                   0,
+			                   sizeof(push_const_block),
 			                   &push_const_block);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.skysphere, 0, nullptr);
 
@@ -216,7 +221,11 @@ void ShaderDebugPrintf::build_command_buffers()
 			push_const_block.object_type = 1;
 			push_const_block.offset      = glm::vec4(mesh_offsets[j], 0.0f);
 			push_const_block.color       = glm::vec4(mesh_colors[j], 0.0f);
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			vkCmdPushConstants(draw_cmd_buffers[i],
+			                   pipeline_layout,
+			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			                   0,
+			                   sizeof(push_const_block),
 			                   &push_const_block);
 			draw_model(models.scene, draw_cmd_buffers[i]);
 		}

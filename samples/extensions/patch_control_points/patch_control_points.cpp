@@ -162,7 +162,8 @@ void PatchControlPoints::create_pipelines()
 	/* Setup for pipelines */
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, /* used in tessellation */
-	                                                                 0, VK_FALSE);
+	                                                                 0,
+	                                                                 VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
@@ -302,8 +303,8 @@ void PatchControlPoints::build_command_buffers()
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.static_tessellation, 0, 1,
-		                        &descriptor_sets.static_tessellation, 0, nullptr);
+		vkCmdBindDescriptorSets(
+		    draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.static_tessellation, 0, 1, &descriptor_sets.static_tessellation, 0, nullptr);
 
 		push_const_block.direction = directions[0];
 		vkCmdPushConstants(draw_cmd_buffer, pipeline_layouts.static_tessellation, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
@@ -313,8 +314,8 @@ void PatchControlPoints::build_command_buffers()
 		draw_model(model, draw_cmd_buffer);
 
 		//	dynamically tessellation
-		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.dynamic_tessellation, 0, 1,
-		                        &descriptor_sets.dynamic_tessellation, 0, nullptr);
+		vkCmdBindDescriptorSets(
+		    draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.dynamic_tessellation, 0, 1, &descriptor_sets.dynamic_tessellation, 0, nullptr);
 
 		push_const_block.direction = directions[1];
 		vkCmdPushConstants(draw_cmd_buffer, pipeline_layouts.dynamic_tessellation, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
@@ -358,9 +359,10 @@ void PatchControlPoints::setup_descriptor_set_layout()
 {
 	/* First descriptor set */
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT |
+	                                                         VK_SHADER_STAGE_VERTEX_BIT,
+	                                                     0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, 1),
 	};
 
@@ -380,9 +382,10 @@ void PatchControlPoints::setup_descriptor_set_layout()
 
 	/* Second descriptor set */
 	set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT |
+	                                                         VK_SHADER_STAGE_VERTEX_BIT,
+	                                                     0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, 1),
 	};
 

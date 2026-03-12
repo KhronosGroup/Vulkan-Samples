@@ -449,13 +449,22 @@ inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::Buf
 	auto result = VK_SUCCESS;
 	if (alignment == 0)
 	{
-		result = vmaCreateBuffer(get_memory_allocator(), reinterpret_cast<VkBufferCreateInfo const *>(&create_info), &allocation_create_info,
-		                         reinterpret_cast<VkBuffer *>(&buffer), &allocation, &allocation_info);
+		result = vmaCreateBuffer(get_memory_allocator(),
+		                         reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		                         &allocation_create_info,
+		                         reinterpret_cast<VkBuffer *>(&buffer),
+		                         &allocation,
+		                         &allocation_info);
 	}
 	else
 	{
-		result = vmaCreateBufferWithAlignment(get_memory_allocator(), reinterpret_cast<VkBufferCreateInfo const *>(&create_info), &allocation_create_info,
-		                                      alignment, reinterpret_cast<VkBuffer *>(&buffer), &allocation, &allocation_info);
+		result = vmaCreateBufferWithAlignment(get_memory_allocator(),
+		                                      reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		                                      &allocation_create_info,
+		                                      alignment,
+		                                      reinterpret_cast<VkBuffer *>(&buffer),
+		                                      &allocation,
+		                                      &allocation_info);
 	}
 
 	if (result != VK_SUCCESS)
@@ -503,8 +512,12 @@ inline vk::Image Allocated<bindingType, HandleType>::create_image_impl(vk::Image
 	}
 #endif
 
-	VkResult result = vmaCreateImage(get_memory_allocator(), reinterpret_cast<VkImageCreateInfo const *>(&create_info), &allocation_create_info,
-	                                 reinterpret_cast<VkImage *>(&image), &allocation, &allocation_info);
+	VkResult result = vmaCreateImage(get_memory_allocator(),
+	                                 reinterpret_cast<VkImageCreateInfo const *>(&create_info),
+	                                 &allocation_create_info,
+	                                 reinterpret_cast<VkImage *>(&image),
+	                                 &allocation,
+	                                 &allocation_info);
 
 	if (result != VK_SUCCESS)
 	{

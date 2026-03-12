@@ -81,9 +81,15 @@ void AsyncComputeSample::prepare_render_targets()
 
 	// Should only really need one depth target, but vkb::RenderTarget needs to own the resource.
 	vkb::core::Image depth_targets[2]{
-	    {get_device(), size, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	    {get_device(),
+	     size,
+	     VK_FORMAT_D32_SFLOAT,
+	     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
-	    {get_device(), size, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	    {get_device(),
+	     size,
+	     VK_FORMAT_D32_SFLOAT,
+	     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	     VMA_MEMORY_USAGE_GPU_ONLY},
 	};
 	depth_targets[0].set_debug_name("depth_targets[0]");
@@ -93,15 +99,23 @@ void AsyncComputeSample::prepare_render_targets()
 	// Min-spec is 4K however, so clamp to that if required.
 	VkExtent3D              shadow_resolution{8 * 1024, 8 * 1024, 1};
 	VkImageFormatProperties depth_properties{};
-	vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(), VK_FORMAT_D16_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
-	                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0, &depth_properties);
+	vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(),
+	                                         VK_FORMAT_D16_UNORM,
+	                                         VK_IMAGE_TYPE_2D,
+	                                         VK_IMAGE_TILING_OPTIMAL,
+	                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	                                         0,
+	                                         &depth_properties);
 	shadow_resolution.width  = std::min(depth_properties.maxExtent.width, shadow_resolution.width);
 	shadow_resolution.height = std::min(depth_properties.maxExtent.height, shadow_resolution.height);
 	shadow_resolution.width  = std::min(get_device().get_gpu().get_properties().limits.maxFramebufferWidth, shadow_resolution.width);
 	shadow_resolution.height = std::min(get_device().get_gpu().get_properties().limits.maxFramebufferHeight, shadow_resolution.height);
 
-	vkb::core::Image shadow_target{get_device(), shadow_resolution, VK_FORMAT_D16_UNORM,
-	                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image shadow_target{get_device(),
+	                               shadow_resolution,
+	                               VK_FORMAT_D16_UNORM,
+	                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	                               VMA_MEMORY_USAGE_GPU_ONLY};
 	shadow_target.set_debug_name("shadow_target");
 
 	// Create a simple mip-chain used for bloom blur.
@@ -109,8 +123,11 @@ void AsyncComputeSample::prepare_render_targets()
 	// but there's no real reason to do it like that.
 	for (uint32_t level = 1; level < 7; level++)
 	{
-		blur_chain.push_back(std::make_unique<vkb::core::Image>(get_device(), downsample_extent(size, level), VK_FORMAT_R16G16B16A16_SFLOAT,
-		                                                        VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_GPU_ONLY));
+		blur_chain.push_back(std::make_unique<vkb::core::Image>(get_device(),
+		                                                        downsample_extent(size, level),
+		                                                        VK_FORMAT_R16G16B16A16_SFLOAT,
+		                                                        VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		                                                        VMA_MEMORY_USAGE_GPU_ONLY));
 		blur_chain_views.push_back(std::make_unique<vkb::core::ImageView>(*blur_chain.back(), VK_IMAGE_VIEW_TYPE_2D));
 	}
 
@@ -750,7 +767,8 @@ void AsyncComputeSample::update(float delta_time)
 
 	forward_subpass->set_shadow_map(&shadow_render_target->get_views()[0], comparison_sampler.get());
 
-	composite_subpass->set_texture(&get_current_forward_render_target().get_views()[0], blur_chain_views[1].get(),
+	composite_subpass->set_texture(&get_current_forward_render_target().get_views()[0],
+	                               blur_chain_views[1].get(),
 	                               linear_sampler.get());        // blur_chain[1] and color_targets[0] will be used by the present queue
 
 	elapsed_time += delta_time;
@@ -825,8 +843,11 @@ std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 	return std::make_unique<AsyncComputeSample>();
 }
 
-AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
-                                                     vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
+                                                     vkb::ShaderSource             &&vertex_shader,
+                                                     vkb::ShaderSource             &&fragment_shader,
+                                                     vkb::sg::Scene                 &scene,
+                                                     vkb::sg::Camera                &camera) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 {
 	// PCF, so need depth bias to avoid (most) shadow acne.
@@ -842,9 +863,12 @@ void AsyncComputeSample::DepthMapSubpass::draw(vkb::core::CommandBufferC &comman
 	vkb::rendering::subpasses::ForwardSubpassC::draw(command_buffer);
 }
 
-AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
-                                                                     vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera,
-                                                                     vkb::sg::Camera &shadow_camera_) :
+AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
+                                                                     vkb::ShaderSource             &&vertex_shader,
+                                                                     vkb::ShaderSource             &&fragment_shader,
+                                                                     vkb::sg::Scene                 &scene,
+                                                                     vkb::sg::Camera                &camera,
+                                                                     vkb::sg::Camera                &shadow_camera_) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera),
     shadow_camera(shadow_camera_)
 {}
@@ -874,13 +898,15 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::core::CommandBufferC
 	vkb::rendering::subpasses::ForwardSubpassC::draw(command_buffer);
 }
 
-AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader,
-                                                       vkb::ShaderSource &&fragment_shader) :
+AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::rendering::RenderContextC &render_context,
+                                                       vkb::ShaderSource             &&vertex_shader,
+                                                       vkb::ShaderSource             &&fragment_shader) :
     vkb::rendering::SubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader))
 {}
 
-void AsyncComputeSample::CompositeSubpass::set_texture(const vkb::core::ImageView *hdr_view_, const vkb::core::ImageView *bloom_view_,
-                                                       const vkb::core::Sampler *sampler_)
+void AsyncComputeSample::CompositeSubpass::set_texture(const vkb::core::ImageView *hdr_view_,
+                                                       const vkb::core::ImageView *bloom_view_,
+                                                       const vkb::core::Sampler   *sampler_)
 {
 	hdr_view   = hdr_view_;
 	bloom_view = bloom_view_;

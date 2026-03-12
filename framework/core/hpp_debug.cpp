@@ -29,8 +29,8 @@ void HPPDebugUtilsExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectTyp
 	device.setDebugUtilsObjectNameEXT(name_info);
 }
 
-void HPPDebugUtilsExtDebugUtils::set_debug_tag(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
-                                               size_t tag_data_size) const
+void HPPDebugUtilsExtDebugUtils::set_debug_tag(
+    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
 	vk::DebugUtilsObjectTagInfoEXT tag_info{
 	    .objectType = object_type, .objectHandle = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
@@ -60,8 +60,8 @@ void HPPDebugMarkerExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectTy
 	device.debugMarkerSetObjectNameEXT(name_info);
 }
 
-void HPPDebugMarkerExtDebugUtils::set_debug_tag(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
-                                                size_t tag_data_size) const
+void HPPDebugMarkerExtDebugUtils::set_debug_tag(
+    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
 	vk::DebugMarkerObjectTagInfoEXT tag_info{
 	    .objectType = vk::debugReportObjectType(object_type), .object = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};

@@ -133,7 +133,8 @@ void ImageCompressionControlSample::create_render_context()
 			VkSurfaceFormatKHR surface_format = {surface_compression_properties.surface_format.surfaceFormat.format,
 			                                     surface_compression_properties.surface_format.surfaceFormat.colorSpace};
 
-			LOGI("  \t{}:\t{}", vkb::to_string(surface_format),
+			LOGI("  \t{}:\t{}",
+			     vkb::to_string(surface_format),
 			     vkb::image_compression_fixed_rate_flags_to_string(surface_compression_properties.compression_properties.imageCompressionFixedRateFlags));
 
 			surface_formats_that_support_compression.push_back(surface_format);
@@ -153,7 +154,8 @@ void ImageCompressionControlSample::create_render_context()
 		std::vector<VkSurfaceFormatKHR> new_surface_priority_list;
 		for (auto const &surface_priority : get_surface_priority_list())
 		{
-			auto it = std::ranges::find_if(surface_formats_that_support_compression, [&](VkSurfaceFormatKHR &sf)
+			auto it = std::ranges::find_if(surface_formats_that_support_compression,
+			                               [&](VkSurfaceFormatKHR &sf)
 			                               { return surface_priority.format == sf.format && surface_priority.colorSpace == sf.colorSpace; });
 			if (it != surface_formats_that_support_compression.end())
 			{
@@ -210,9 +212,18 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 	if (VK_FORMAT_UNDEFINED == color_image_info.format)
 	{
 		// Query fixed-rate compression support for a few candidate formats
-		std::vector<VkFormat> format_list{VK_FORMAT_R8G8B8_UNORM,  VK_FORMAT_R8G8B8_SNORM,   VK_FORMAT_R8G8B8_SRGB,    VK_FORMAT_B8G8R8_UNORM,
-		                                  VK_FORMAT_B8G8R8_SNORM,  VK_FORMAT_B8G8R8_SRGB,    VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SNORM,
-		                                  VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM, VK_FORMAT_B8G8R8A8_SRGB};
+		std::vector<VkFormat> format_list{VK_FORMAT_R8G8B8_UNORM,
+		                                  VK_FORMAT_R8G8B8_SNORM,
+		                                  VK_FORMAT_R8G8B8_SRGB,
+		                                  VK_FORMAT_B8G8R8_UNORM,
+		                                  VK_FORMAT_B8G8R8_SNORM,
+		                                  VK_FORMAT_B8G8R8_SRGB,
+		                                  VK_FORMAT_R8G8B8A8_UNORM,
+		                                  VK_FORMAT_R8G8B8A8_SNORM,
+		                                  VK_FORMAT_R8G8B8A8_SRGB,
+		                                  VK_FORMAT_B8G8R8A8_UNORM,
+		                                  VK_FORMAT_B8G8R8A8_SNORM,
+		                                  VK_FORMAT_B8G8R8A8_SRGB};
 
 		VkFormat chosen_format{VK_FORMAT_UNDEFINED};
 		if (get_device().is_extension_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
@@ -233,10 +244,13 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 				auto fixed_rate_flags = vkb::fixed_rate_compression_flags_to_vector(supported_compression_properties.imageCompressionFixedRateFlags);
 
 				VkImageFormatProperties format_properties;
-				auto result = vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(), color_image_info.format, color_image_info.imageType,
-				                                                       color_image_info.tiling, color_image_info.usage,
-				                                                       0,        // no create flags
-				                                                       &format_properties);
+				auto                    result = vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(),
+                                                                       color_image_info.format,
+                                                                       color_image_info.imageType,
+                                                                       color_image_info.tiling,
+                                                                       color_image_info.usage,
+                                                                       0,        // no create flags
+                                                                       &format_properties);
 
 				// Pick the first format that supports at least 2 or more levels of fixed-rate compression, otherwise
 				// pick the first format that supports at least 1 level
@@ -278,10 +292,11 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 		}
 	}
 
-	vkb::core::Image depth_image{get_device(), vkb::core::ImageBuilder(color_image_info.extent)
-	                                               .with_format(vkb::get_suitable_depth_format(get_device().get_gpu().get_handle()))
-	                                               .with_usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)
-	                                               .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY)};
+	vkb::core::Image depth_image{get_device(),
+	                             vkb::core::ImageBuilder(color_image_info.extent)
+	                                 .with_format(vkb::get_suitable_depth_format(get_device().get_gpu().get_handle()))
+	                                 .with_usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)
+	                                 .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY)};
 
 	vkb::core::ImageBuilder color_image_builder(color_image_info.extent);
 	color_image_builder.with_format(color_image_info.format)
@@ -316,7 +331,8 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 		 * VkImageCompressionPropertiesEXT structure in its pNext chain.
 		 * This structure is then filled with the applied compression flags.
 		 */
-		LOGI("Applied fixed-rate compression for color ({}): {}", vkb::to_string(color_image_info.format),
+		LOGI("Applied fixed-rate compression for color ({}): {}",
+		     vkb::to_string(color_image_info.format),
 		     vkb::image_compression_fixed_rate_flags_to_string(color_image.get_applied_compression().imageCompressionFixedRateFlags));
 	}
 
@@ -459,8 +475,11 @@ namespace
  * @brief Helper function to generate a GUI drop-down options menu
  */
 template <typename T>
-inline T generate_combo(T current_value, const char *combo_label, const std::unordered_map<T, std::string> &enum_to_string, float item_width,
-                        const std::set<T> *skip_values = nullptr)
+inline T generate_combo(T                                         current_value,
+                        const char                               *combo_label,
+                        const std::unordered_map<T, std::string> &enum_to_string,
+                        float                                     item_width,
+                        const std::set<T>                        *skip_values = nullptr)
 {
 	ImGui::PushItemWidth(item_width);
 
@@ -520,9 +539,11 @@ void ImageCompressionControlSample::draw_gui()
 		    ImGui::SameLine();
 
 		    const TargetCompression compression =
-		        generate_combo(gui_target_compression, "##compression",
+		        generate_combo(gui_target_compression,
+		                       "##compression",
 		                       {{TargetCompression::FixedRate, "Fixed-rate"}, {TargetCompression::None, "None"}, {TargetCompression::Default, "Default"}},
-		                       window_width * 0.2f, &gui_skip_compression_values);
+		                       window_width * 0.2f,
+		                       &gui_skip_compression_values);
 
 		    gui_target_compression = compression;
 
@@ -538,8 +559,10 @@ void ImageCompressionControlSample::draw_gui()
 
 			    ImGui::SameLine();
 			    const FixedRateCompressionLevel compression_level =
-			        generate_combo(gui_fixed_rate_compression_level, "##compression-level",
-			                       {{FixedRateCompressionLevel::High, "High"}, {FixedRateCompressionLevel::Low, "Low"}}, window_width * 0.2f);
+			        generate_combo(gui_fixed_rate_compression_level,
+			                       "##compression-level",
+			                       {{FixedRateCompressionLevel::High, "High"}, {FixedRateCompressionLevel::Low, "Low"}},
+			                       window_width * 0.2f);
 
 			    gui_fixed_rate_compression_level = compression_level;
 		    }

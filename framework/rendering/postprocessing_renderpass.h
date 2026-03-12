@@ -71,8 +71,11 @@ class PostProcessingRenderPass;
 class PostProcessingSubpass : public vkb::rendering::SubpassC
 {
   public:
-	PostProcessingSubpass(PostProcessingRenderPass *parent, vkb::rendering::RenderContextC &render_context, ShaderSource &&triangle_vs, ShaderSource &&fs,
-	                      ShaderVariant &&fs_variant = {});
+	PostProcessingSubpass(PostProcessingRenderPass       *parent,
+	                      vkb::rendering::RenderContextC &render_context,
+	                      ShaderSource                  &&triangle_vs,
+	                      ShaderSource                  &&fs,
+	                      ShaderVariant                 &&fs_variant = {});
 
 	PostProcessingSubpass(const PostProcessingSubpass &to_copy)            = delete;
 	PostProcessingSubpass &operator=(const PostProcessingSubpass &to_copy) = delete;
@@ -288,8 +291,11 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	 * @brief Transition input, sampled and output attachments as appropriate.
 	 * @remarks If a RenderTarget is not explicitly set for this pass, fallback_render_target is used.
 	 */
-	void transition_attachments(const AttachmentSet &input_attachments, const SampledAttachmentSet &sampled_attachments,
-	                            const AttachmentSet &output_attachments, vkb::core::CommandBufferC &command_buffer, RenderTarget &fallback_render_target);
+	void transition_attachments(const AttachmentSet        &input_attachments,
+	                            const SampledAttachmentSet &sampled_attachments,
+	                            const AttachmentSet        &output_attachments,
+	                            vkb::core::CommandBufferC  &command_buffer,
+	                            RenderTarget               &fallback_render_target);
 
 	/**
 	 * @brief Select appropriate load/store operations for each buffer of render_target,
@@ -297,8 +303,10 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	 *        in the pipeline.
 	 * @remarks If a RenderTarget is not explicitly set for this pass, fallback_render_target is used.
 	 */
-	void update_load_stores(const AttachmentSet &input_attachments, const SampledAttachmentSet &sampled_attachments, const AttachmentSet &output_attachments,
-	                        const RenderTarget &fallback_render_target);
+	void update_load_stores(const AttachmentSet        &input_attachments,
+	                        const SampledAttachmentSet &sampled_attachments,
+	                        const AttachmentSet        &output_attachments,
+	                        const RenderTarget         &fallback_render_target);
 
 	/**
 	 * @brief Transition images and prepare load/stores before draw()ing.

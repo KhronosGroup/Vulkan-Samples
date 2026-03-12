@@ -330,9 +330,10 @@ void ColorWriteEnable::setup_render_pass()
 		attachments[i].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	}
 
-	std::array<VkAttachmentReference, 4> color_references = {
-	    VkAttachmentReference{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}, VkAttachmentReference{1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-	    VkAttachmentReference{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}, VkAttachmentReference{3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
+	std::array<VkAttachmentReference, 4> color_references = {VkAttachmentReference{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+	                                                         VkAttachmentReference{1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+	                                                         VkAttachmentReference{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+	                                                         VkAttachmentReference{3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
 
 	// Two subpasses are defined:
 	std::array<VkSubpassDescription, 2> subpass_descriptions{};
@@ -546,7 +547,9 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Background color"))
 	{
-		if (drawer.color_op<vkb::Drawer::ColorOp::Pick>("", background_color, 0,
+		if (drawer.color_op<vkb::Drawer::ColorOp::Pick>("",
+		                                                background_color,
+		                                                0,
 		                                                ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_Float |
 		                                                    ImGuiColorEditFlags_HDR))
 		{

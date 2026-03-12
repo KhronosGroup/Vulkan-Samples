@@ -141,11 +141,12 @@ void SimpleTensorAndDataGraph::prepare_input_tensor()
 	// In this case we are going to represent a small RGB image, so have a batch size of 1, a width and height of 10 and 3 channels.
 	std::vector<int64_t> dimensions = {1, 10, 10, 3};
 	// Create tensor and back it with memory. Set linear tiling flags and host-visible VMA flags so the backing memory can updated from the CPU.
-	input_tensor = std::make_unique<Tensor>(get_device(), TensorBuilder(dimensions)
-	                                                          .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
-	                                                          .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
-	                                                          .with_format(VK_FORMAT_R32_SFLOAT)
-	                                                          .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
+	input_tensor = std::make_unique<Tensor>(get_device(),
+	                                        TensorBuilder(dimensions)
+	                                            .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
+	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
+	                                            .with_format(VK_FORMAT_R32_SFLOAT)
+	                                            .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
 	// Upload fixed initial data - smoothly varying colors over the square
 	std::vector<glm::fvec3> input_tensor_data;
 	for (int y = 0; y < dimensions[1]; ++y)
@@ -183,9 +184,10 @@ void SimpleTensorAndDataGraph::prepare_output_tensor()
  */
 void SimpleTensorAndDataGraph::prepare_output_image(uint32_t width, uint32_t height)
 {
-	output_image      = std::make_unique<vkb::core::Image>(get_device(), vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
-                                                                        .with_format(VK_FORMAT_R8G8B8A8_UNORM)
-                                                                        .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+	output_image      = std::make_unique<vkb::core::Image>(get_device(),
+                                                      vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
+                                                          .with_format(VK_FORMAT_R8G8B8A8_UNORM)
+                                                          .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
 	output_image_view = std::make_unique<vkb::core::ImageView>(*output_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 }
 
@@ -318,8 +320,14 @@ void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &comman
 {
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());
-	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline_layout->get_handle(), 0, 1,
-	                        &data_graph_pipeline_descriptor_set, 0, nullptr);
+	vkCmdBindDescriptorSets(command_buffer.get_handle(),
+	                        VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM,
+	                        data_graph_pipeline_layout->get_handle(),
+	                        0,
+	                        1,
+	                        &data_graph_pipeline_descriptor_set,
+	                        0,
+	                        nullptr);
 	vkCmdDispatchDataGraphARM(command_buffer.get_handle(), data_graph_pipeline_session->get_handle(), VK_NULL_HANDLE);
 
 	// Barrier for `output_tensor` (written to by the graph pipeline above, and read from by the visualization compute shader below)
@@ -346,11 +354,21 @@ void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &comman
 
 	// Bind and run visualization compute pipeline
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline->get_handle());
-	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline_layout->get_handle(), 0, 1,
-	                        &visualization_pipeline_descriptor_set, 0, nullptr);
+	vkCmdBindDescriptorSets(command_buffer.get_handle(),
+	                        VK_PIPELINE_BIND_POINT_COMPUTE,
+	                        visualization_pipeline_layout->get_handle(),
+	                        0,
+	                        1,
+	                        &visualization_pipeline_descriptor_set,
+	                        0,
+	                        nullptr);
 
 	// Pass the output_image size as a push constant
-	vkCmdPushConstants(command_buffer.get_handle(), visualization_pipeline_layout->get_handle(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(glm::uvec2),
+	vkCmdPushConstants(command_buffer.get_handle(),
+	                   visualization_pipeline_layout->get_handle(),
+	                   VK_SHADER_STAGE_COMPUTE_BIT,
+	                   0,
+	                   sizeof(glm::uvec2),
 	                   &render_target.get_extent());
 	uint32_t group_count_x = (render_target.get_extent().width + 7) / 8;        // The visualization shader has a group size of 8
 	uint32_t group_count_y = (render_target.get_extent().height + 7) / 8;

@@ -24,7 +24,8 @@
 
 namespace vkb
 {
-VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &requested_stats, const CounterSamplingConfig &sampling_config,
+VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>            &requested_stats,
+                                         const CounterSamplingConfig    &sampling_config,
                                          vkb::rendering::RenderContextC &render_context) :
     render_context(render_context)
 {
@@ -344,8 +345,8 @@ void VulkanStatsProvider::end_sampling(vkb::core::CommandBufferC &cb)
 		// Perform a barrier to ensure all previous commands complete before ending the query
 		// This does not block later commands from executing as we use BOTTOM_OF_PIPE in the
 		// dst stage mask
-		vkCmdPipelineBarrier(cb.get_handle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 0,
-		                     nullptr);
+		vkCmdPipelineBarrier(
+		    cb.get_handle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 0, nullptr);
 		cb.end_query(*query_pool, active_frame_idx);
 
 		++queries_ready;
@@ -394,8 +395,8 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time) const
 
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 
-	VkResult r = timestamp_pool->get_results(active_frame_idx * 2, 2, timestamps.size() * sizeof(uint64_t), timestamps.data(), sizeof(uint64_t),
-	                                         VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT);
+	VkResult r = timestamp_pool->get_results(
+	    active_frame_idx * 2, 2, timestamps.size() * sizeof(uint64_t), timestamps.data(), sizeof(uint64_t), VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT);
 	if (r == VK_SUCCESS)
 	{
 		float elapsed_ns = timestamp_period * static_cast<float>(timestamps[1] - timestamps[0]);

@@ -211,8 +211,9 @@ inline glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 }
 
 template <vkb::BindingType bindingType>
-inline Subpass<bindingType>::Subpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_source,
-                                     ShaderSourceType &&fragment_source) :
+inline Subpass<bindingType>::Subpass(vkb::rendering::RenderContext<bindingType> &render_context,
+                                     ShaderSourceType                          &&vertex_source,
+                                     ShaderSourceType                          &&fragment_source) :
     render_context{reinterpret_cast<vkb::rendering::RenderContextCpp &>(render_context)}
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)

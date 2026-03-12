@@ -33,7 +33,11 @@ namespace fs
 namespace path
 {
 const std::unordered_map<Type, std::string> relative_paths = {
-    {Type::Assets, "assets/"}, {Type::Shaders, "shaders/"}, {Type::Storage, "output/"}, {Type::Screenshots, "output/images/"}, {Type::Logs, "output/logs/"},
+    {Type::Assets, "assets/"},
+    {Type::Shaders, "shaders/"},
+    {Type::Storage, "output/"},
+    {Type::Screenshots, "output/images/"},
+    {Type::Logs, "output/logs/"},
 };
 
 const std::string get(const Type type, const std::string &file)
@@ -129,8 +133,8 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename)
 	vkb::filesystem::get()->write_file(path::get(path::Type::Temp) + filename, data);
 }
 
-void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components,
-                 const uint32_t row_stride)
+void write_image(
+    const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
 {
 	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), width, height, components, data, row_stride);
 }

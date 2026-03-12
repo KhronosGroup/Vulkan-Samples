@@ -139,7 +139,8 @@ void HPPPushDescriptors::build_command_buffers()
 
 			vk::DescriptorBufferInfo cube_buffer_descriptor{cube.uniform_buffer->get_handle(), 0, vk::WholeSize};
 			vk::DescriptorImageInfo  cube_image_descriptor{
-                cube.texture.sampler, cube.texture.image->get_vk_image_view().get_handle(),
+                cube.texture.sampler,
+                cube.texture.image->get_vk_image_view().get_handle(),
                 descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, cube.texture.image->get_vk_image_view().get_format())};
 
 			std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
@@ -224,9 +225,19 @@ void HPPPushDescriptors::create_pipeline()
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{
 	    .depthTestEnable = true, .depthWriteEnable = true, .depthCompareOp = vk::CompareOp::eGreater, .back = {.compareOp = vk::CompareOp::eAlways}};
 
-	pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, vertex_input_state,
-	                                                 vk::PrimitiveTopology::eTriangleList, 0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
-	                                                 vk::FrontFace::eClockwise, {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
+	pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                                 pipeline_cache,
+	                                                 shader_stages,
+	                                                 vertex_input_state,
+	                                                 vk::PrimitiveTopology::eTriangleList,
+	                                                 0,
+	                                                 vk::PolygonMode::eFill,
+	                                                 vk::CullModeFlagBits::eBack,
+	                                                 vk::FrontFace::eClockwise,
+	                                                 {blend_attachment_state},
+	                                                 depth_stencil_state,
+	                                                 pipeline_layout,
+	                                                 render_pass);
 }
 
 void HPPPushDescriptors::create_uniform_buffers()

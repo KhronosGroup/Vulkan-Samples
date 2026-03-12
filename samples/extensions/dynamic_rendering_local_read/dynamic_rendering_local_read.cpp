@@ -667,9 +667,10 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	    Pipeline for the opaque parts of the scene
 	*/
 
-	std::array<VkPipelineColorBlendAttachmentState, 4> blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE), vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE), vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
+	std::array<VkPipelineColorBlendAttachmentState, 4> blend_attachment_states = {vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                                                                              vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                                                                              vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                                                                              vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
 
 	blend_state.attachmentCount = 4;
 	blend_state.pAttachments    = blend_attachment_states.data();
@@ -678,8 +679,8 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 
 #if defined(USE_DYNAMIC_RENDERING)
 	// For dynamic rendering, additional information muss be set at pipeline creation
-	VkFormat color_attachment_formats[4] = {get_render_context().get_format(), attachments.positionDepth.format, attachments.normal.format,
-	                                        attachments.albedo.format};
+	VkFormat color_attachment_formats[4] = {
+	    get_render_context().get_format(), attachments.positionDepth.format, attachments.normal.format, attachments.albedo.format};
 
 	pipeline_rendering_create_info.colorAttachmentCount    = 4;
 	pipeline_rendering_create_info.pColorAttachmentFormats = color_attachment_formats;
@@ -755,9 +756,10 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	pipeline_create_info.subpass = 1;
 #endif
 
-	blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE), vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE), vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
+	blend_attachment_states = {vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                           vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                           vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                           vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
 
 	pipeline_create_info.layout = composition_pass.pipeline_layout;
 
@@ -844,9 +846,15 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		subresource_range_depth.levelCount = VK_REMAINING_MIP_LEVELS;
 		subresource_range_depth.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, subresource_range_color);
+		vkb::image_layout_transition(cmd,
+		                             swapchain_buffers[i].image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             subresource_range_color);
 		vkb::image_layout_transition(cmd, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, subresource_range_depth);
 
 		VkRenderingAttachmentInfoKHR color_attachment_info[4]{};
@@ -941,8 +949,8 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		// Third draw
 		// Render transparent geometry using a forward pass that compares against depth generated during the first draw
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0,
-		                        nullptr);
+		vkCmdBindDescriptorSets(
+		    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
 		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
 
 		// End main rendering
@@ -955,8 +963,8 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		    Dynamic rendering end
 		*/
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		                             subresource_range_color);
+		vkb::image_layout_transition(
+		    cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
 #else
 		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.renderPass = render_pass;
@@ -996,8 +1004,8 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0,
-		                        nullptr);
+		vkCmdBindDescriptorSets(
+		    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
 		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
 
 		draw_ui(draw_cmd_buffers[i]);

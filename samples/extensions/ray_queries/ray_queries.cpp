@@ -217,9 +217,11 @@ void RayQueries::create_top_level_acceleration_structure()
 	acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 	acceleration_structure_instance.accelerationStructureReference         = bottom_level_acceleration_structure->get_device_address();
 
-	std::unique_ptr<vkb::core::BufferC> instances_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(), sizeof(VkAccelerationStructureInstanceKHR),
-	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> instances_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(),
+	                                         sizeof(VkAccelerationStructureInstanceKHR),
+	                                         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
 
 	// Top Level AS with single instance
@@ -256,14 +258,22 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	if (bottom_level_acceleration_structure == nullptr)
 	{
 		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-		bottom_level_acceleration_structure->add_triangle_geometry(
-		    *vertex_buffer, *index_buffer, *transform_matrix_buffer, static_cast<uint32_t>(model.indices.size()),
-		    static_cast<uint32_t>(model.vertices.size()) - 1, sizeof(Vertex), 0, VK_FORMAT_R32G32B32_SFLOAT, VK_INDEX_TYPE_UINT32, VK_GEOMETRY_OPAQUE_BIT_KHR,
-		    get_buffer_device_address(vertex_buffer->get_handle()), get_buffer_device_address(index_buffer->get_handle()));
+		bottom_level_acceleration_structure->add_triangle_geometry(*vertex_buffer,
+		                                                           *index_buffer,
+		                                                           *transform_matrix_buffer,
+		                                                           static_cast<uint32_t>(model.indices.size()),
+		                                                           static_cast<uint32_t>(model.vertices.size()) - 1,
+		                                                           sizeof(Vertex),
+		                                                           0,
+		                                                           VK_FORMAT_R32G32B32_SFLOAT,
+		                                                           VK_INDEX_TYPE_UINT32,
+		                                                           VK_GEOMETRY_OPAQUE_BIT_KHR,
+		                                                           get_buffer_device_address(vertex_buffer->get_handle()),
+		                                                           get_buffer_device_address(index_buffer->get_handle()));
 	}
 	bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
-	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-	                                           VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
+	bottom_level_acceleration_structure->build(
+	    queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
 void RayQueries::load_node(vkb::scene_graph::NodeC &node)
@@ -340,8 +350,8 @@ void RayQueries::create_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-	                                                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
@@ -454,10 +464,10 @@ void RayQueries::create_uniforms()
 
 	const auto vertex_buffer_size = model.vertices.size() * sizeof(model.vertices[0]);
 	const auto index_buffer_size  = model.indices.size() * sizeof(model.indices[0]);
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_buffer  = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer                 = std::make_unique<vkb::core::BufferC>(
+        get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	if (vertex_buffer_size)
 	{
 		vertex_buffer->update(model.vertices.data(), vertex_buffer_size);
@@ -467,9 +477,11 @@ void RayQueries::create_uniforms()
 		index_buffer->update(model.indices.data(), index_buffer_size);
 	}
 
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(), sizeof(global_uniform),
-	    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                      sizeof(global_uniform),
+	                                                      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+	                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 

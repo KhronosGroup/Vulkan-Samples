@@ -25,7 +25,10 @@
 namespace plugins
 {
 GpuSelection::GpuSelection() :
-    GpuSelectionTags("GPU selection", "A collection of flags to select the GPU to run the samples on", {}, {},
+    GpuSelectionTags("GPU selection",
+                     "A collection of flags to select the GPU to run the samples on",
+                     {},
+                     {},
                      {{"gpu", "Zero-based index of the GPU that the sample should use"}})
 {}
 

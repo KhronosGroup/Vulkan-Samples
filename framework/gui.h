@@ -163,8 +163,11 @@ class Gui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	Gui(vkb::rendering::RenderContext<bindingType> &render_context, Window const &window, StatsType const *stats = nullptr, float font_size = 21.0f,
-	    bool explicit_update = false);
+	Gui(vkb::rendering::RenderContext<bindingType> &render_context,
+	    Window const                               &window,
+	    StatsType const                            *stats           = nullptr,
+	    float                                       font_size       = 21.0f,
+	    bool                                        explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
@@ -227,11 +230,15 @@ class Gui
 	void new_frame();
 
 	// Prepare with a render pass
-	void prepare(PipelineCacheType pipeline_cache, RenderPassType render_pass, std::vector<PipelineShaderStageCreateInfoType> const &shader_stages,
-	             uint32_t subpass = 0);
+	void prepare(PipelineCacheType                                     pipeline_cache,
+	             RenderPassType                                        render_pass,
+	             std::vector<PipelineShaderStageCreateInfoType> const &shader_stages,
+	             uint32_t                                              subpass = 0);
 
 	// Prepare for dynamic rendering
-	void prepare(PipelineCacheType pipeline_cache, FormatType color_format, FormatType depth_format,
+	void prepare(PipelineCacheType                                     pipeline_cache,
+	             FormatType                                            color_format,
+	             FormatType                                            depth_format,
 	             std::vector<PipelineShaderStageCreateInfoType> const &shader_stages);
 
 	/**
@@ -287,13 +294,20 @@ class Gui
 	void draw_impl(vk::CommandBuffer command_buffer, vk::Pipeline pipeline, vk::PipelineLayout pipeline_layout, vk::DescriptorSet descriptor_set);
 	void draw_impl(vk::CommandBuffer command_buffer, vk::ImageView swapchain_view, uint32_t width, uint32_t height);
 	void draw_impl(vkb::core::CommandBufferCpp &command_buffer);
-	void prepare_impl(vk::PipelineCache pipeline_cache, vk::RenderPass render_pass, std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages,
-	                  uint32_t subpass);
-	void prepare_impl(vk::PipelineCache pipeline_cache, vk::Format color_format, vk::Format depth_format,
+	void prepare_impl(vk::PipelineCache                                     pipeline_cache,
+	                  vk::RenderPass                                        render_pass,
+	                  std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages,
+	                  uint32_t                                              subpass);
+	void prepare_impl(vk::PipelineCache                                     pipeline_cache,
+	                  vk::Format                                            color_format,
+	                  vk::Format                                            depth_format,
 	                  std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages);
 	void prepare_descriptors();
-	void create_gui_pipeline(vk::PipelineCache pipeline_cache, std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages, vk::RenderPass render_pass,
-	                         uint32_t subpass, void const *pNext);
+	void create_gui_pipeline(vk::PipelineCache                                     pipeline_cache,
+	                         std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages,
+	                         vk::RenderPass                                        render_pass,
+	                         uint32_t                                              subpass,
+	                         void const                                           *pNext);
 
 	Font &get_font(const std::string &font_name = Gui::default_font);
 
@@ -347,8 +361,8 @@ using GuiC   = Gui<vkb::BindingType::C>;
 using GuiCpp = Gui<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline Gui<bindingType>::Gui(vkb::rendering::RenderContext<bindingType> &render_context_, Window const &window, StatsType const *stats, float font_size,
-                             bool explicit_update) :
+inline Gui<bindingType>::Gui(
+    vkb::rendering::RenderContext<bindingType> &render_context_, Window const &window, StatsType const *stats, float font_size, bool explicit_update) :
     render_context{render_context_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},
@@ -419,8 +433,8 @@ inline Gui<bindingType>::Gui(vkb::rendering::RenderContext<bindingType> &render_
 	// Create target image for copy
 	vk::Extent3D font_extent{to_u32(tex_width), to_u32(tex_height), 1u};
 
-	font_image = std::make_unique<vkb::core::HPPImage>(device, font_extent, vk::Format::eR8G8B8A8Unorm,
-	                                                   vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
+	font_image = std::make_unique<vkb::core::HPPImage>(
+	    device, font_extent, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 	font_image->set_debug_name("GUI font image");
 
 	font_image_view = std::make_unique<vkb::core::HPPImageView>(*font_image, vk::ImageViewType::e2D);
@@ -573,8 +587,8 @@ inline void Gui<bindingType>::draw_impl(vk::CommandBuffer command_buffer, vk::Im
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::draw(CommandBufferType command_buffer, PipelineType pipeline, PipelineLayoutType pipeline_layout,
-                                   DescriptorSetType descriptor_set)
+inline void
+    Gui<bindingType>::draw(CommandBufferType command_buffer, PipelineType pipeline, PipelineLayoutType pipeline_layout, DescriptorSetType descriptor_set)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -582,14 +596,16 @@ inline void Gui<bindingType>::draw(CommandBufferType command_buffer, PipelineTyp
 	}
 	else
 	{
-		draw_impl(static_cast<vk::CommandBuffer>(command_buffer), static_cast<vk::Pipeline>(pipeline), static_cast<vk::PipelineLayout>(pipeline_layout),
+		draw_impl(static_cast<vk::CommandBuffer>(command_buffer),
+		          static_cast<vk::Pipeline>(pipeline),
+		          static_cast<vk::PipelineLayout>(pipeline_layout),
 		          static_cast<vk::DescriptorSet>(descriptor_set));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::draw_impl(vk::CommandBuffer command_buffer, vk::Pipeline pipeline, vk::PipelineLayout pipeline_layout,
-                                        vk::DescriptorSet descriptor_set)
+inline void
+    Gui<bindingType>::draw_impl(vk::CommandBuffer command_buffer, vk::Pipeline pipeline, vk::PipelineLayout pipeline_layout, vk::DescriptorSet descriptor_set)
 {
 	if (!visible)
 	{
@@ -991,8 +1007,10 @@ inline void Gui<bindingType>::new_frame()
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::prepare(PipelineCacheType pipeline_cache, RenderPassType render_pass,
-                                      std::vector<PipelineShaderStageCreateInfoType> const &shader_stages, uint32_t subpass)
+inline void Gui<bindingType>::prepare(PipelineCacheType                                     pipeline_cache,
+                                      RenderPassType                                        render_pass,
+                                      std::vector<PipelineShaderStageCreateInfoType> const &shader_stages,
+                                      uint32_t                                              subpass)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1000,13 +1018,17 @@ inline void Gui<bindingType>::prepare(PipelineCacheType pipeline_cache, RenderPa
 	}
 	else
 	{
-		prepare_impl(static_cast<vk::PipelineCache>(pipeline_cache), static_cast<vk::RenderPass>(render_pass),
-		             reinterpret_cast<std::vector<vk::PipelineShaderStageCreateInfo> const &>(shader_stages), subpass);
+		prepare_impl(static_cast<vk::PipelineCache>(pipeline_cache),
+		             static_cast<vk::RenderPass>(render_pass),
+		             reinterpret_cast<std::vector<vk::PipelineShaderStageCreateInfo> const &>(shader_stages),
+		             subpass);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::prepare(PipelineCacheType pipeline_cache, FormatType color_format, FormatType depth_format,
+inline void Gui<bindingType>::prepare(PipelineCacheType                                     pipeline_cache,
+                                      FormatType                                            color_format,
+                                      FormatType                                            depth_format,
                                       std::vector<PipelineShaderStageCreateInfoType> const &shader_stages)
 {
 	if constexpr (bindingType == BindingType::Cpp)
@@ -1015,7 +1037,9 @@ inline void Gui<bindingType>::prepare(PipelineCacheType pipeline_cache, FormatTy
 	}
 	else
 	{
-		prepare_impl(static_cast<vk::PipelineCache>(pipeline_cache), static_cast<vk::Format>(color_format), static_cast<vk::Format>(depth_format),
+		prepare_impl(static_cast<vk::PipelineCache>(pipeline_cache),
+		             static_cast<vk::Format>(color_format),
+		             static_cast<vk::Format>(depth_format),
 		             reinterpret_cast<std::vector<vk::PipelineShaderStageCreateInfo> const &>(shader_stages));
 	}
 }
@@ -1049,8 +1073,11 @@ inline void Gui<bindingType>::prepare_descriptors()
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::create_gui_pipeline(vk::PipelineCache pipeline_cache, std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages,
-                                                  vk::RenderPass render_pass, uint32_t subpass, void const *pNext)
+inline void Gui<bindingType>::create_gui_pipeline(vk::PipelineCache                                     pipeline_cache,
+                                                  std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages,
+                                                  vk::RenderPass                                        render_pass,
+                                                  uint32_t                                              subpass,
+                                                  void const                                           *pNext)
 {
 	vk::Device const &device = render_context.get_device().get_handle();
 
@@ -1117,8 +1144,10 @@ inline void Gui<bindingType>::create_gui_pipeline(vk::PipelineCache pipeline_cac
 
 // Render pass version
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::prepare_impl(vk::PipelineCache pipeline_cache, vk::RenderPass render_pass,
-                                           std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages, uint32_t subpass)
+inline void Gui<bindingType>::prepare_impl(vk::PipelineCache                                     pipeline_cache,
+                                           vk::RenderPass                                        render_pass,
+                                           std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages,
+                                           uint32_t                                              subpass)
 {
 	prepare_descriptors();
 	create_gui_pipeline(pipeline_cache, shader_stages, render_pass, subpass, nullptr);
@@ -1126,7 +1155,9 @@ inline void Gui<bindingType>::prepare_impl(vk::PipelineCache pipeline_cache, vk:
 
 // Dynamic rendering version
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::prepare_impl(vk::PipelineCache pipeline_cache, vk::Format color_format, vk::Format depth_format,
+inline void Gui<bindingType>::prepare_impl(vk::PipelineCache                                     pipeline_cache,
+                                           vk::Format                                            color_format,
+                                           vk::Format                                            depth_format,
                                            std::vector<vk::PipelineShaderStageCreateInfo> const &shader_stages)
 {
 	prepare_descriptors();
@@ -1381,8 +1412,8 @@ inline bool Gui<bindingType>::update_buffers()
 	if (!vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
 	{
 		vertex_buffer.reset();
-		vertex_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer,
-		                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer = std::make_unique<vkb::core::BufferCpp>(
+		    render_context.get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
 		vertex_buffer->set_debug_name("GUI vertex buffer");
 		updated = true;
 	}
@@ -1390,8 +1421,8 @@ inline bool Gui<bindingType>::update_buffers()
 	if (!index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
 	{
 		index_buffer.reset();
-		index_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer,
-		                                                      VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer = std::make_unique<vkb::core::BufferCpp>(
+		    render_context.get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
 		index_buffer->set_debug_name("GUI index buffer");
 		updated = true;
 	}

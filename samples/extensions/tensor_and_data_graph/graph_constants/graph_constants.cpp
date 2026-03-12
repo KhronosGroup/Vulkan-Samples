@@ -146,11 +146,12 @@ void GraphConstants::prepare_input_tensor()
 	// In this case we are going to represent a small RGB image, so have a batch size of 1, a width and height of 20 and 3 channels.
 	std::vector<int64_t> dimensions = {1, 20, 20, 3};
 	// Create tensor and back it with memory. Set linear tiling flags and host-visible VMA flags so the backing memory can updated from the CPU.
-	input_tensor = std::make_unique<Tensor>(get_device(), TensorBuilder(dimensions)
-	                                                          .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
-	                                                          .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
-	                                                          .with_format(VK_FORMAT_R32_SFLOAT)
-	                                                          .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
+	input_tensor = std::make_unique<Tensor>(get_device(),
+	                                        TensorBuilder(dimensions)
+	                                            .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
+	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
+	                                            .with_format(VK_FORMAT_R32_SFLOAT)
+	                                            .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
 
 	// Upload fixed initial data - White square (12 x 12 pixels) with a blue background.
 	std::vector<glm::fvec3> input_tensor_data;
@@ -223,7 +224,8 @@ void GraphConstants::prepare_weights_tensor()
 	// Set up the VkDataGraphPipelineConstantARM and pass the VkTensorDescriptionARM and constant data.
 	// Also set the id, which should match the SPIR-V module.
 	weights_constant_tensor->pipeline_constant = {
-	    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM, &weights_constant_tensor->tensor_description,
+	    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
+	    &weights_constant_tensor->tensor_description,
 	    0,                                                   // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
 	    weights_constant_tensor->constant_data.data()        // Host pointer to raw data
 	};
@@ -259,7 +261,8 @@ void GraphConstants::prepare_bias_tensor()
 	// Set up the VkDataGraphPipelineConstantARM and pass the VkTensorDescriptionARM and constant data.
 	// Also set the id, which should match the SPIR-V module.
 	bias_constant_tensor->pipeline_constant = {
-	    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM, &bias_constant_tensor->tensor_description,
+	    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
+	    &bias_constant_tensor->tensor_description,
 	    1,                                                // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
 	    bias_constant_tensor->constant_data.data()        // Host pointer to raw data
 	};
@@ -287,9 +290,10 @@ void GraphConstants::prepare_output_tensor()
  */
 void GraphConstants::prepare_output_image(uint32_t width, uint32_t height)
 {
-	output_image      = std::make_unique<vkb::core::Image>(get_device(), vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
-                                                                        .with_format(VK_FORMAT_R8G8B8A8_UNORM)
-                                                                        .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+	output_image      = std::make_unique<vkb::core::Image>(get_device(),
+                                                      vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
+                                                          .with_format(VK_FORMAT_R8G8B8A8_UNORM)
+                                                          .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
 	output_image_view = std::make_unique<vkb::core::ImageView>(*output_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 }
 
@@ -322,8 +326,8 @@ void GraphConstants::prepare_data_graph_pipeline()
 
 	VkShaderModule shader_module = vkb::load_shader("tensor_and_data_graph/spirv/conv2d.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
 
-	data_graph_pipeline = std::make_unique<DataGraphPipeline>(get_device(), data_graph_pipeline_layout->get_handle(), shader_module, "main",
-	                                                          tensor_descriptions, data_graph_pipeline_constants);
+	data_graph_pipeline = std::make_unique<DataGraphPipeline>(
+	    get_device(), data_graph_pipeline_layout->get_handle(), shader_module, "main", tensor_descriptions, data_graph_pipeline_constants);
 
 	// Create a Pipeline Session for the Pipeline. Unlike compute and graphics pipelines, data graph pipelines require
 	// additional state to be stored (e.g. for intermediate results). This is stored separately to the pipeline itself in
@@ -426,8 +430,14 @@ void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, 
 {
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());
-	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline_layout->get_handle(), 0, 1,
-	                        &data_graph_pipeline_descriptor_set, 0, nullptr);
+	vkCmdBindDescriptorSets(command_buffer.get_handle(),
+	                        VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM,
+	                        data_graph_pipeline_layout->get_handle(),
+	                        0,
+	                        1,
+	                        &data_graph_pipeline_descriptor_set,
+	                        0,
+	                        nullptr);
 	vkCmdDispatchDataGraphARM(command_buffer.get_handle(), data_graph_pipeline_session->get_handle(), VK_NULL_HANDLE);
 
 	// Barrier for `output_tensor` (written to by the data graph pipeline above, and read from by the visualization compute shader below)
@@ -454,11 +464,21 @@ void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, 
 
 	// Bind and run visualization compute pipeline
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline->get_handle());
-	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline_layout->get_handle(), 0, 1,
-	                        &visualization_pipeline_descriptor_set, 0, nullptr);
+	vkCmdBindDescriptorSets(command_buffer.get_handle(),
+	                        VK_PIPELINE_BIND_POINT_COMPUTE,
+	                        visualization_pipeline_layout->get_handle(),
+	                        0,
+	                        1,
+	                        &visualization_pipeline_descriptor_set,
+	                        0,
+	                        nullptr);
 
 	// Pass the output_image size as a push constant
-	vkCmdPushConstants(command_buffer.get_handle(), visualization_pipeline_layout->get_handle(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(glm::uvec2),
+	vkCmdPushConstants(command_buffer.get_handle(),
+	                   visualization_pipeline_layout->get_handle(),
+	                   VK_SHADER_STAGE_COMPUTE_BIT,
+	                   0,
+	                   sizeof(glm::uvec2),
 	                   &render_target.get_extent());
 	uint32_t group_count_x = (render_target.get_extent().width + 7) / 8;        // The visualization shader has a group size of 8
 	uint32_t group_count_y = (render_target.get_extent().height + 7) / 8;

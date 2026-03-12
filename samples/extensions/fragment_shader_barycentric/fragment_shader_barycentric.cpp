@@ -303,8 +303,8 @@ void FragmentShaderBarycentric::build_command_buffers()
 
 		// object
 		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.object, 0, nullptr);
-		vkCmdPushConstants(draw_cmd_buffer, pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(gui_settings.selected_effect),
-		                   &gui_settings.selected_effect);
+		vkCmdPushConstants(
+		    draw_cmd_buffer, pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(gui_settings.selected_effect), &gui_settings.selected_effect);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.object);
 		draw_model(object, draw_cmd_buffer);
 

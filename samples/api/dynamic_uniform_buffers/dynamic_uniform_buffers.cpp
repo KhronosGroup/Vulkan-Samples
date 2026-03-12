@@ -153,9 +153,14 @@ void DynamicUniformBuffers::generate_cube()
 {
 	// Setup vertices indices for a colored cube
 	std::vector<Vertex> vertices = {
-	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}}, {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},   {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},  {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}}, {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
-	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},  {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
+	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
+	    {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+	    {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	    {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
+	    {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
+	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},
+	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
 	};
 
 	std::vector<uint32_t> indices = {
@@ -371,7 +376,8 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 				rotations[index] += animation_timer * rotation_speeds[index];
 
 				// Update matrices
-				glm::vec3 pos(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x, -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
+				glm::vec3 pos(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x,
+				              -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
 				              -((fdim * offset.z) / 2.0f) + offset.z / 2.0f + fz * offset.z);
 				*model_mat = glm::translate(glm::mat4(1.0f), pos);
 				*model_mat = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));

@@ -94,8 +94,10 @@ RaytracingInvocationReorder::~RaytracingInvocationReorder()
 		// Free raytracing command buffers
 		if (!raytracing_command_buffers.empty())
 		{
-			vkFreeCommandBuffers(get_device().get_handle(), get_device().get_command_pool().get_handle(),
-			                     static_cast<uint32_t>(raytracing_command_buffers.size()), raytracing_command_buffers.data());
+			vkFreeCommandBuffers(get_device().get_handle(),
+			                     get_device().get_command_pool().get_handle(),
+			                     static_cast<uint32_t>(raytracing_command_buffers.size()),
+			                     raytracing_command_buffers.data());
 			raytracing_command_buffers.clear();
 		}
 
@@ -207,8 +209,15 @@ void RaytracingInvocationReorder::create_storage_image()
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &storage_image.view));
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkb::image_layout_transition(command_buffer, storage_image.image, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, {}, {},
-	                             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+	vkb::image_layout_transition(command_buffer,
+	                             storage_image.image,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             {},
+	                             {},
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_GENERAL,
+	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	get_device().flush_command_buffer(command_buffer, queue);
 }
 
@@ -300,8 +309,8 @@ void RaytracingInvocationReorder::create_static_object_buffers()
 		cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 		auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer)
 		{
-			auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(),
-			                                                          buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+			auto output_buffer = std::make_unique<vkb::core::BufferC>(
+			    get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd->copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
 			vkb::BufferMemoryBarrier barrier;
@@ -382,18 +391,32 @@ void RaytracingInvocationReorder::create_bottom_level_acceleration_structure(boo
 			model_buffer.bottom_level_acceleration_structure =
 			    std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
 			model_buffer.object_id = model_buffer.bottom_level_acceleration_structure->add_triangle_geometry(
-			    model_buffer.is_static ? *vertex_buffer : *dynamic_vertex_buffer, model_buffer.is_static ? *index_buffer : *dynamic_index_buffer,
-			    *model_buffer.transform_matrix_buffer, static_cast<uint32_t>(model_buffer.num_triangles), static_cast<uint32_t>(model_buffer.num_vertices) - 1,
-			    sizeof(NewVertex), 0, VK_FORMAT_R32G32B32_SFLOAT, VK_INDEX_TYPE_UINT32, VK_GEOMETRY_OPAQUE_BIT_KHR,
+			    model_buffer.is_static ? *vertex_buffer : *dynamic_vertex_buffer,
+			    model_buffer.is_static ? *index_buffer : *dynamic_index_buffer,
+			    *model_buffer.transform_matrix_buffer,
+			    static_cast<uint32_t>(model_buffer.num_triangles),
+			    static_cast<uint32_t>(model_buffer.num_vertices) - 1,
+			    sizeof(NewVertex),
+			    0,
+			    VK_FORMAT_R32G32B32_SFLOAT,
+			    VK_INDEX_TYPE_UINT32,
+			    VK_GEOMETRY_OPAQUE_BIT_KHR,
 			    model_buffer.vertex_offset + (model_buffer.is_static ? static_vertex_handle : dynamic_vertex_handle),
 			    model_buffer.index_offset + (model_buffer.is_static ? static_index_handle : dynamic_index_handle));
 		}
 		else
 		{
 			model_buffer.bottom_level_acceleration_structure->update_triangle_geometry(
-			    model_buffer.object_id, dynamic_vertex_buffer, dynamic_index_buffer, model_buffer.transform_matrix_buffer,
-			    static_cast<uint32_t>(model_buffer.num_triangles), static_cast<uint32_t>(model_buffer.num_vertices) - 1, sizeof(NewVertex), 0,
-			    VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
+			    model_buffer.object_id,
+			    dynamic_vertex_buffer,
+			    dynamic_index_buffer,
+			    model_buffer.transform_matrix_buffer,
+			    static_cast<uint32_t>(model_buffer.num_triangles),
+			    static_cast<uint32_t>(model_buffer.num_vertices) - 1,
+			    sizeof(NewVertex),
+			    0,
+			    VK_FORMAT_R32G32B32_SFLOAT,
+			    VK_GEOMETRY_OPAQUE_BIT_KHR,
 			    model_buffer.vertex_offset + (model_buffer.is_static ? static_vertex_handle : dynamic_vertex_handle),
 			    model_buffer.index_offset + (model_buffer.is_static ? static_index_handle : dynamic_index_handle));
 		}
@@ -507,9 +530,11 @@ void RaytracingInvocationReorder::create_top_level_acceleration_structure(bool p
 	const size_t instancesDataSize = sizeof(VkAccelerationStructureInstanceKHR) * instances.size();
 	if (!instances_buffer || instances_buffer->get_size() != instancesDataSize)
 	{
-		instances_buffer = std::make_unique<vkb::core::BufferC>(
-		    get_device(), instancesDataSize, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-		    VMA_MEMORY_USAGE_CPU_TO_GPU);
+		instances_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                        instancesDataSize,
+		                                                        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+		                                                            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 	instances_buffer->update(instances.data(), instancesDataSize);
 
@@ -693,17 +718,25 @@ void RaytracingInvocationReorder::create_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &vertex_descriptor);
 	VkWriteDescriptorSet index_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &index_descriptor);
 	VkWriteDescriptorSet data_map_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, &data_map_descriptor);
-	VkWriteDescriptorSet texture_array_write =
-	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, raytracing_scene->imageInfos.data(),
-	                                            static_cast<uint32_t>(raytracing_scene->imageInfos.size()));
+	VkWriteDescriptorSet texture_array_write = vkb::initializers::write_descriptor_set(descriptor_set,
+	                                                                                   VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	                                                                                   7,
+	                                                                                   raytracing_scene->imageInfos.data(),
+	                                                                                   static_cast<uint32_t>(raytracing_scene->imageInfos.size()));
 	VkWriteDescriptorSet dynamic_vertex_buffer_write =
 	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 8, &dynamic_vertex_descriptor);
 	VkWriteDescriptorSet dynamic_index_buffer_write =
 	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 9, &dynamic_index_descriptor);
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {acceleration_structure_write, result_image_write,          uniform_buffer_write,
-	                                                           vertex_buffer_write,          index_buffer_write,          data_map_write,
-	                                                           texture_array_write,          dynamic_vertex_buffer_write, dynamic_index_buffer_write};
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {acceleration_structure_write,
+	                                                           result_image_write,
+	                                                           uniform_buffer_write,
+	                                                           vertex_buffer_write,
+	                                                           index_buffer_write,
+	                                                           data_map_write,
+	                                                           texture_array_write,
+	                                                           dynamic_vertex_buffer_write,
+	                                                           dynamic_index_buffer_write};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
@@ -749,12 +782,14 @@ void RaytracingInvocationReorder::create_dynamic_object_buffers(float time)
 	if (!dynamic_vertex_buffer || !dynamic_index_buffer)
 	{
 		// note these flags are different because they will be read/write, in contrast to static
-		dynamic_vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size,
+		dynamic_vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                             vertex_buffer_size,
 		                                                             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
 		                                                                 VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
 		                                                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
-		dynamic_index_buffer  = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size,
+		dynamic_index_buffer  = std::make_unique<vkb::core::BufferC>(get_device(),
+                                                                    index_buffer_size,
                                                                     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
                                                                         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
                                                                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
@@ -1105,10 +1140,16 @@ void RaytracingInvocationReorder::build_command_buffers()
 		barriers.emplace_back(getBufferBarrier(*instances_buffer));
 		barriers.emplace_back(getBufferBarrier(*ubo));
 
-		vkCmdPipelineBarrier(raytracing_command_buffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-		                     VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_HOST_BIT, 0, 0, VK_NULL_HANDLE,        // memory barrier
-		                     static_cast<uint32_t>(barriers.size()), barriers.data(),                                                // buffer memory barrier
-		                     0, VK_NULL_HANDLE);                                                                                     // image memory barrier
+		vkCmdPipelineBarrier(raytracing_command_buffer,
+		                     VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+		                     VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_HOST_BIT,
+		                     0,
+		                     0,
+		                     VK_NULL_HANDLE,        // memory barrier
+		                     static_cast<uint32_t>(barriers.size()),
+		                     barriers.data(),        // buffer memory barrier
+		                     0,
+		                     VK_NULL_HANDLE);        // image memory barrier
 
 		/*
 		    Dispatch the ray tracing commands
@@ -1116,8 +1157,8 @@ void RaytracingInvocationReorder::build_command_buffers()
 		vkCmdBindPipeline(raytracing_command_buffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
 		vkCmdBindDescriptorSets(raytracing_command_buffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		vkCmdTraceRaysKHR(raytracing_command_buffer, &raygen_shader_sbt_entry, &miss_shader_sbt_entry, &hit_shader_sbt_entry, &callable_shader_sbt_entry, width,
-		                  height, 1);
+		vkCmdTraceRaysKHR(
+		    raytracing_command_buffer, &raygen_shader_sbt_entry, &miss_shader_sbt_entry, &hit_shader_sbt_entry, &callable_shader_sbt_entry, width, height, 1);
 
 		VK_CHECK(vkEndCommandBuffer(raytracing_command_buffer));
 	}
@@ -1241,13 +1282,26 @@ void RaytracingInvocationReorder::draw()
 	    Copy ray tracing output to swap chain image
 	*/
 	// Prepare current swap chain image as transfer destination
-	vkb::image_layout_transition(draw_cmd_buffers[i], get_render_context().get_swapchain().get_images()[i], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-	                             VK_PIPELINE_STAGE_TRANSFER_BIT, {}, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+	vkb::image_layout_transition(draw_cmd_buffers[i],
+	                             get_render_context().get_swapchain().get_images()[i],
+	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                             {},
+	                             VK_ACCESS_TRANSFER_WRITE_BIT,
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Prepare ray tracing output image as transfer source
-	vkb::image_layout_transition(draw_cmd_buffers[i], storage_image.image, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, {},
-	                             VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
+	vkb::image_layout_transition(draw_cmd_buffers[i],
+	                             storage_image.image,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                             {},
+	                             VK_ACCESS_TRANSFER_READ_BIT,
+	                             VK_IMAGE_LAYOUT_GENERAL,
+	                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                             subresource_range);
 
 	VkImageCopy copy_region{};
 	copy_region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -1255,17 +1309,35 @@ void RaytracingInvocationReorder::draw()
 	copy_region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 	copy_region.dstOffset      = {0, 0, 0};
 	copy_region.extent         = {width, height, 1};
-	vkCmdCopyImage(draw_cmd_buffers[i], storage_image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, get_render_context().get_swapchain().get_images()[i],
-	               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+	vkCmdCopyImage(draw_cmd_buffers[i],
+	               storage_image.image,
+	               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	               get_render_context().get_swapchain().get_images()[i],
+	               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	               1,
+	               &copy_region);
 
 	// Transition swap chain image for render pass (render pass expects PRESENT_SRC_KHR as initial layout)
-	vkb::image_layout_transition(draw_cmd_buffers[i], get_render_context().get_swapchain().get_images()[i], VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range);
+	vkb::image_layout_transition(draw_cmd_buffers[i],
+	                             get_render_context().get_swapchain().get_images()[i],
+	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                             VK_ACCESS_TRANSFER_WRITE_BIT,
+	                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+	                             subresource_range);
 
 	// Transition ray tracing output image back to general layout
-	vkb::image_layout_transition(draw_cmd_buffers[i], storage_image.image, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-	                             VK_ACCESS_TRANSFER_READ_BIT, {}, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range);
+	vkb::image_layout_transition(draw_cmd_buffers[i],
+	                             storage_image.image,
+	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             VK_ACCESS_TRANSFER_READ_BIT,
+	                             {},
+	                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_GENERAL,
+	                             subresource_range);
 
 	// Begin render pass for UI rendering
 	// Note: Even though we use ColorAttachmentLoad, the depth attachment still uses CLEAR,
@@ -1420,7 +1492,8 @@ RaytracingInvocationReorder::RaytracingScene::RaytracingScene(vkb::core::DeviceC
 					memcpy(&tempBuffer[0], ptr, sz);
 					for (size_t i = 0; i < nTriangles; ++i)
 					{
-						model.triangles[i] = {static_cast<uint32_t>(tempBuffer[3 * i]), static_cast<uint32_t>(tempBuffer[3 * i + 1]),
+						model.triangles[i] = {static_cast<uint32_t>(tempBuffer[3 * i]),
+						                      static_cast<uint32_t>(tempBuffer[3 * i + 1]),
 						                      static_cast<uint32_t>(tempBuffer[3 * i + 2])};
 					}
 				}

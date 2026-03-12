@@ -231,8 +231,8 @@ static std::vector<Candidate> find_display_candidates(VkPhysicalDevice phys_dev,
 
 		for (const auto &display : supported_displays)
 		{
-			auto props = std::find_if(display_properties.cbegin(), display_properties.cend(),
-			                          [display](const VkDisplayPropertiesKHR &p) { return p.display == display; });
+			auto props = std::find_if(
+			    display_properties.cbegin(), display_properties.cend(), [display](const VkDisplayPropertiesKHR &p) { return p.display == display; });
 			if (props == display_properties.end())
 			{
 				continue;

@@ -161,9 +161,15 @@ void OITLinkedLists::build_command_buffers()
 			}
 
 			VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-			vkb::image_layout_transition(draw_cmd_buffers[i], linked_list_head_image->get_handle(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL,
-			                             VK_IMAGE_LAYOUT_GENERAL, subresource_range);
+			vkb::image_layout_transition(draw_cmd_buffers[i],
+			                             linked_list_head_image->get_handle(),
+			                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			                             VK_ACCESS_SHADER_WRITE_BIT,
+			                             VK_ACCESS_SHADER_READ_BIT,
+			                             VK_IMAGE_LAYOUT_GENERAL,
+			                             VK_IMAGE_LAYOUT_GENERAL,
+			                             subresource_range);
 
 			// Combine pass
 			{
@@ -247,10 +253,13 @@ void OITLinkedLists::create_fragment_resources(const uint32_t width, const uint3
 {
 	{
 		const VkExtent3D image_extent = {width, height, 1};
-		linked_list_head_image =
-		    std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-		                                       VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
-		linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
+		linked_list_head_image        = std::make_unique<vkb::core::Image>(get_device(),
+                                                                    image_extent,
+                                                                    VK_FORMAT_R32_UINT,
+                                                                    VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                                                                    VMA_MEMORY_USAGE_GPU_ONLY,
+                                                                    VK_SAMPLE_COUNT_1_BIT);
+		linked_list_head_image_view   = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
 	}
 
 	{
@@ -278,8 +287,14 @@ void OITLinkedLists::clear_sized_resources()
 		vkCmdFillBuffer(command_buffer, fragment_counter->get_handle(), 0, sizeof(glm::uint), 0);
 
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		vkb::image_layout_transition(command_buffer, linked_list_head_image->get_handle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-		                             VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+		vkb::image_layout_transition(command_buffer,
+		                             linked_list_head_image->get_handle(),
+		                             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             VK_ACCESS_MEMORY_WRITE_BIT,
+		                             VK_ACCESS_TRANSFER_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_GENERAL,
 		                             subresource_range);
 
 		VkClearColorValue linked_lists_clear_value;

@@ -66,8 +66,11 @@ class CommandPool : private vkb::core::CommandPoolBase
 	using CommandPoolType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
 
   public:
-	CommandPool(vkb::core::Device<bindingType> &device, uint32_t queue_family_index, vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
-	            size_t thread_index = 0, vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetIndividually);
+	CommandPool(vkb::core::Device<bindingType>           &device,
+	            uint32_t                                  queue_family_index,
+	            vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
+	            size_t                                    thread_index = 0,
+	            vkb::CommandBufferResetMode               reset_mode   = vkb::CommandBufferResetMode::ResetIndividually);
 	CommandPool(CommandPool<bindingType> const &)            = delete;
 	CommandPool(CommandPool<bindingType> &&other)            = default;
 	CommandPool &operator=(CommandPool<bindingType> const &) = delete;
@@ -89,11 +92,16 @@ using CommandPoolC   = CommandPool<vkb::BindingType::C>;
 using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandPool<bindingType>::CommandPool(vkb::core::Device<bindingType> &device, uint32_t queue_family_index,
-                                                        vkb::rendering::RenderFrame<bindingType> *render_frame, size_t thread_index,
-                                                        vkb::CommandBufferResetMode reset_mode) :
-    CommandPoolBase(reinterpret_cast<vkb::core::DeviceCpp &>(device), queue_family_index, reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame),
-                    thread_index, reset_mode)
+inline vkb::core::CommandPool<bindingType>::CommandPool(vkb::core::Device<bindingType>           &device,
+                                                        uint32_t                                  queue_family_index,
+                                                        vkb::rendering::RenderFrame<bindingType> *render_frame,
+                                                        size_t                                    thread_index,
+                                                        vkb::CommandBufferResetMode               reset_mode) :
+    CommandPoolBase(reinterpret_cast<vkb::core::DeviceCpp &>(device),
+                    queue_family_index,
+                    reinterpret_cast<vkb::rendering::RenderFrameCpp *>(render_frame),
+                    thread_index,
+                    reset_mode)
 {}
 
 template <vkb::BindingType bindingType>

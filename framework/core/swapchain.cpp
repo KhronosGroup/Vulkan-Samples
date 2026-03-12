@@ -45,8 +45,8 @@ inline uint32_t choose_image_array_layers(uint32_t request_image_array_layers, u
 	return request_image_array_layers;
 }
 
-inline VkExtent2D choose_extent(VkExtent2D request_extent, const VkExtent2D &min_image_extent, const VkExtent2D &max_image_extent,
-                                const VkExtent2D &current_extent)
+inline VkExtent2D
+    choose_extent(VkExtent2D request_extent, const VkExtent2D &min_image_extent, const VkExtent2D &max_image_extent, const VkExtent2D &current_extent)
 {
 	if (current_extent.width == 0xFFFFFFFF)
 	{
@@ -55,7 +55,10 @@ inline VkExtent2D choose_extent(VkExtent2D request_extent, const VkExtent2D &min
 
 	if (request_extent.width < 1 || request_extent.height < 1)
 	{
-		LOGW("(Swapchain) Image extent ({}, {}) not supported. Selecting ({}, {}).", request_extent.width, request_extent.height, current_extent.width,
+		LOGW("(Swapchain) Image extent ({}, {}) not supported. Selecting ({}, {}).",
+		     request_extent.width,
+		     request_extent.height,
+		     current_extent.width,
 		     current_extent.height);
 		return current_extent;
 	}
@@ -69,7 +72,8 @@ inline VkExtent2D choose_extent(VkExtent2D request_extent, const VkExtent2D &min
 	return request_extent;
 }
 
-inline VkPresentModeKHR choose_present_mode(VkPresentModeKHR request_present_mode, const std::vector<VkPresentModeKHR> &available_present_modes,
+inline VkPresentModeKHR choose_present_mode(VkPresentModeKHR                     request_present_mode,
+                                            const std::vector<VkPresentModeKHR> &available_present_modes,
                                             const std::vector<VkPresentModeKHR> &present_mode_priority_list)
 {
 	auto present_mode_it = std::ranges::find(available_present_modes, request_present_mode);
@@ -149,7 +153,8 @@ inline VkSurfaceFormatKHR choose_surface_format(const VkSurfaceFormatKHR        
 	return *surface_format_it;
 }
 
-inline VkSurfaceTransformFlagBitsKHR choose_transform(VkSurfaceTransformFlagBitsKHR request_transform, VkSurfaceTransformFlagsKHR supported_transform,
+inline VkSurfaceTransformFlagBitsKHR choose_transform(VkSurfaceTransformFlagBitsKHR request_transform,
+                                                      VkSurfaceTransformFlagsKHR    supported_transform,
                                                       VkSurfaceTransformFlagBitsKHR current_transform)
 {
 	if (request_transform & supported_transform)
@@ -170,7 +175,8 @@ inline VkCompositeAlphaFlagBitsKHR choose_composite_alpha(VkCompositeAlphaFlagBi
 		return request_composite_alpha;
 	}
 
-	static const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags = {VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+	static const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags = {VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+	                                                                               VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
 	                                                                               VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
 	                                                                               VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
 
@@ -198,7 +204,8 @@ inline bool validate_format_feature(VkImageUsageFlagBits image_usage, VkFormatFe
 }
 
 inline std::set<VkImageUsageFlagBits> choose_image_usage(const std::set<VkImageUsageFlagBits> &requested_image_usage_flags,
-                                                         VkImageUsageFlags supported_image_usage, VkFormatFeatureFlags supported_features)
+                                                         VkImageUsageFlags                     supported_image_usage,
+                                                         VkFormatFeatureFlags                  supported_features)
 {
 	std::set<VkImageUsageFlagBits> validated_image_usage_flags;
 	for (auto flag : requested_image_usage_flags)
@@ -216,8 +223,8 @@ inline std::set<VkImageUsageFlagBits> choose_image_usage(const std::set<VkImageU
 	if (validated_image_usage_flags.empty())
 	{
 		// Pick the first format from list of defaults, if supported
-		static const std::vector<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_STORAGE_BIT,
-		                                                                    VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
+		static const std::vector<VkImageUsageFlagBits> image_usage_flags = {
+		    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
 
 		for (VkImageUsageFlagBits image_usage : image_usage_flags)
 		{
@@ -319,7 +326,8 @@ Swapchain::Swapchain(Swapchain &old_swapchain, const VkExtent2D &extent, const V
               old_swapchain.requested_compression_fixed_rate}
 {}
 
-Swapchain::Swapchain(Swapchain &old_swapchain, const VkImageCompressionFlagsEXT requested_compression,
+Swapchain::Swapchain(Swapchain                                &old_swapchain,
+                     const VkImageCompressionFlagsEXT          requested_compression,
                      const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
     Swapchain{old_swapchain,
               old_swapchain.device,
@@ -335,18 +343,31 @@ Swapchain::Swapchain(Swapchain &old_swapchain, const VkImageCompressionFlagsEXT 
               requested_compression_fixed_rate}
 {}
 
-Swapchain::Swapchain(vkb::core::DeviceC &device, VkSurfaceKHR surface, const VkPresentModeKHR present_mode,
-                     std::vector<VkPresentModeKHR> const &present_mode_priority_list, const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list,
-                     const VkExtent2D &extent, const uint32_t image_count, const VkSurfaceTransformFlagBitsKHR transform,
-                     const std::set<VkImageUsageFlagBits> &image_usage_flags, const VkImageCompressionFlagsEXT requested_compression,
+Swapchain::Swapchain(vkb::core::DeviceC                       &device,
+                     VkSurfaceKHR                              surface,
+                     const VkPresentModeKHR                    present_mode,
+                     std::vector<VkPresentModeKHR> const      &present_mode_priority_list,
+                     const std::vector<VkSurfaceFormatKHR>    &surface_format_priority_list,
+                     const VkExtent2D                         &extent,
+                     const uint32_t                            image_count,
+                     const VkSurfaceTransformFlagBitsKHR       transform,
+                     const std::set<VkImageUsageFlagBits>     &image_usage_flags,
+                     const VkImageCompressionFlagsEXT          requested_compression,
                      const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
     Swapchain{*this, device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, extent, image_count, transform, image_usage_flags}
 {}
 
-Swapchain::Swapchain(Swapchain &old_swapchain, vkb::core::DeviceC &device, VkSurfaceKHR surface, const VkPresentModeKHR present_mode,
-                     std::vector<VkPresentModeKHR> const &present_mode_priority_list, const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list,
-                     const VkExtent2D &extent, const uint32_t image_count, const VkSurfaceTransformFlagBitsKHR transform,
-                     const std::set<VkImageUsageFlagBits> &image_usage_flags, const VkImageCompressionFlagsEXT requested_compression,
+Swapchain::Swapchain(Swapchain                                &old_swapchain,
+                     vkb::core::DeviceC                       &device,
+                     VkSurfaceKHR                              surface,
+                     const VkPresentModeKHR                    present_mode,
+                     std::vector<VkPresentModeKHR> const      &present_mode_priority_list,
+                     const std::vector<VkSurfaceFormatKHR>    &surface_format_priority_list,
+                     const VkExtent2D                         &extent,
+                     const uint32_t                            image_count,
+                     const VkSurfaceTransformFlagBitsKHR       transform,
+                     const std::set<VkImageUsageFlagBits>     &image_usage_flags,
+                     const VkImageCompressionFlagsEXT          requested_compression,
                      const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate) :
     device{device}, surface{surface}, requested_compression{requested_compression}, requested_compression_fixed_rate{requested_compression_fixed_rate}
 {

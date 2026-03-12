@@ -311,8 +311,11 @@ void VertexDynamicState::build_command_buffers()
 		/* First set of vertex input dynamic data (Vertex structure) */
 		vertex_bindings_description_ext[0].stride  = sizeof(Vertex);
 		vertex_attribute_description_ext[1].offset = offsetof(Vertex, normal);
-		vkCmdSetVertexInputEXT(draw_cmd_buffer, static_cast<uint32_t>(vertex_bindings_description_ext.size()), vertex_bindings_description_ext.data(),
-		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()), vertex_attribute_description_ext.data());
+		vkCmdSetVertexInputEXT(draw_cmd_buffer,
+		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
+		                       vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
+		                       vertex_attribute_description_ext.data());
 
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
 		draw_model(skybox, draw_cmd_buffer);
@@ -324,8 +327,11 @@ void VertexDynamicState::build_command_buffers()
 		/* Second set of vertex input dynamic data (SampleVertex structure) */
 		vertex_bindings_description_ext[0].stride  = sizeof(SampleVertex);
 		vertex_attribute_description_ext[1].offset = offsetof(SampleVertex, normal);
-		vkCmdSetVertexInputEXT(draw_cmd_buffer, static_cast<uint32_t>(vertex_bindings_description_ext.size()), vertex_bindings_description_ext.data(),
-		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()), vertex_attribute_description_ext.data());
+		vkCmdSetVertexInputEXT(draw_cmd_buffer,
+		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
+		                       vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
+		                       vertex_attribute_description_ext.data());
 
 		draw_created_model(draw_cmd_buffer);
 
@@ -472,11 +478,11 @@ void VertexDynamicState::model_data_creation()
 	vkb::core::BufferC vertex_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
 	vkb::core::BufferC index_staging  = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	cube.vertices = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                     VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.vertices = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	cube.indices = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                    VMA_MEMORY_USAGE_GPU_ONLY);
+	cube.indices = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	/* Copy from staging buffers */
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);

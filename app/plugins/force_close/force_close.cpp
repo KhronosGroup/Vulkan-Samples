@@ -23,7 +23,10 @@
 namespace plugins
 {
 ForceClose::ForceClose() :
-    ForceCloseTags("Force Close", "Force the application to close if it has been halted before exiting", {}, {},
+    ForceCloseTags("Force Close",
+                   "Force the application to close if it has been halted before exiting",
+                   {},
+                   {},
                    {{"force-close", "Force the close of the application if halted before exiting"}})
 {}
 

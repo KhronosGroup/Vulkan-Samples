@@ -275,8 +275,12 @@ class SparseImage : public ApiVulkanSample
 		VkExtent2D texture_base_dim;
 		VkExtent2D screen_base_dim;
 
-		CalculateMipLevelData(const glm::mat4 &mvp_transform, const VkExtent2D &texture_base_dim, const VkExtent2D &screen_base_dim,
-		                      uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels) :
+		CalculateMipLevelData(const glm::mat4  &mvp_transform,
+		                      const VkExtent2D &texture_base_dim,
+		                      const VkExtent2D &screen_base_dim,
+		                      uint32_t          vertical_num_blocks,
+		                      uint32_t          horizontal_num_blocks,
+		                      uint8_t           mip_levels) :
 		    mesh(vertical_num_blocks + 1U),
 		    vertical_num_blocks(vertical_num_blocks),
 		    horizontal_num_blocks(horizontal_num_blocks),

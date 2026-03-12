@@ -212,9 +212,19 @@ vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, vertex_input_state,
-	                                             vk::PrimitiveTopology::eTriangleList, 0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
-	                                             vk::FrontFace::eCounterClockwise, {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             vertex_input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 void HPPDynamicUniformBuffers::draw()
@@ -232,9 +242,14 @@ void HPPDynamicUniformBuffers::generate_cube()
 {
 	// Setup vertices indices for a colored cube
 	std::vector<Vertex> vertices = {
-	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}}, {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},   {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},  {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}}, {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
-	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},  {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
+	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
+	    {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+	    {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	    {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
+	    {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
+	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},
+	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
 	};
 
 	// clang-format off
@@ -365,7 +380,8 @@ void HPPDynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, b
 				rotations[index] += animation_timer * rotation_speeds[index];
 
 				// Update matrices
-				glm::vec3 pos(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x, -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
+				glm::vec3 pos(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x,
+				              -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
 				              -((fdim * offset.z) / 2.0f) + offset.z / 2.0f + fz * offset.z);
 				*model_mat = glm::translate(glm::mat4(1.0f), pos);
 				*model_mat = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));

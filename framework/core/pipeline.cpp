@@ -77,8 +77,8 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC &device, VkPipelineCache pip
 		throw VulkanException{result};
 	}
 
-	device.get_debug_utils().set_debug_name(device.get_handle(), VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage.module),
-	                                        shader_module->get_debug_name().c_str());
+	device.get_debug_utils().set_debug_name(
+	    device.get_handle(), VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage.module), shader_module->get_debug_name().c_str());
 
 	// Create specialization info from tracked state.
 	std::vector<uint8_t>                  data{};
@@ -158,8 +158,8 @@ GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device, VkPipelineCache p
 			throw VulkanException{result};
 		}
 
-		device.get_debug_utils().set_debug_name(device.get_handle(), VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage_create_info.module),
-		                                        shader_module->get_debug_name().c_str());
+		device.get_debug_utils().set_debug_name(
+		    device.get_handle(), VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage_create_info.module), shader_module->get_debug_name().c_str());
 
 		stage_create_info.pSpecializationInfo = &specialization_info;
 
@@ -249,8 +249,14 @@ GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device, VkPipelineCache p
 	color_blend_state.blendConstants[3] = 1.0f;
 
 	std::array<VkDynamicState, 9> dynamic_states{
-	    VK_DYNAMIC_STATE_VIEWPORT,          VK_DYNAMIC_STATE_SCISSOR,      VK_DYNAMIC_STATE_LINE_WIDTH,           VK_DYNAMIC_STATE_DEPTH_BIAS,
-	    VK_DYNAMIC_STATE_BLEND_CONSTANTS,   VK_DYNAMIC_STATE_DEPTH_BOUNDS, VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK, VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
+	    VK_DYNAMIC_STATE_VIEWPORT,
+	    VK_DYNAMIC_STATE_SCISSOR,
+	    VK_DYNAMIC_STATE_LINE_WIDTH,
+	    VK_DYNAMIC_STATE_DEPTH_BIAS,
+	    VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+	    VK_DYNAMIC_STATE_DEPTH_BOUNDS,
+	    VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,
+	    VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
 	    VK_DYNAMIC_STATE_STENCIL_REFERENCE,
 	};
 

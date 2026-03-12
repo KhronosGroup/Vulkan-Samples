@@ -22,8 +22,11 @@
 
 namespace vkb
 {
-DescriptorSet::DescriptorSet(vkb::core::DeviceC &device, const DescriptorSetLayout &descriptor_set_layout, DescriptorPool &descriptor_pool,
-                             const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos) :
+DescriptorSet::DescriptorSet(vkb::core::DeviceC                       &device,
+                             const DescriptorSetLayout                &descriptor_set_layout,
+                             DescriptorPool                           &descriptor_pool,
+                             const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
+                             const BindingMap<VkDescriptorImageInfo>  &image_infos) :
     device{device},
     descriptor_set_layout{descriptor_set_layout},
     descriptor_pool{descriptor_pool},
@@ -83,16 +86,22 @@ void DescriptorSet::prepare()
 				     binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) &&
 				    buffer_range_limit > uniform_buffer_range_limit)
 				{
-					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the uniform buffer range limit {}", descriptor_set_layout.get_index(),
-					     binding_index, buffer_info.range, uniform_buffer_range_limit);
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the uniform buffer range limit {}",
+					     descriptor_set_layout.get_index(),
+					     binding_index,
+					     buffer_info.range,
+					     uniform_buffer_range_limit);
 					buffer_range_limit = uniform_buffer_range_limit;
 				}
 				else if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ||
 				          binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) &&
 				         buffer_range_limit > storage_buffer_range_limit)
 				{
-					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the storage buffer range limit {}", descriptor_set_layout.get_index(),
-					     binding_index, buffer_info.range, storage_buffer_range_limit);
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the storage buffer range limit {}",
+					     descriptor_set_layout.get_index(),
+					     binding_index,
+					     buffer_info.range,
+					     storage_buffer_range_limit);
 					buffer_range_limit = storage_buffer_range_limit;
 				}
 

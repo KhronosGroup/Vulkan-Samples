@@ -114,8 +114,8 @@ void ComputeNBody::build_command_buffers()
 			                                        0,
 			                                        compute.storage_buffer->get_size()};
 
-			vkCmdPipelineBarrier(draw_cmd_buffers[i], VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1,
-			                     &buffer_barrier, 0, nullptr);
+			vkCmdPipelineBarrier(
+			    draw_cmd_buffers[i], VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0, nullptr);
 		}
 
 		// Draw the particle system using the update vertex buffer
@@ -145,8 +145,8 @@ void ComputeNBody::build_command_buffers()
 			                                        0,
 			                                        compute.storage_buffer->get_size()};
 
-			vkCmdPipelineBarrier(draw_cmd_buffers[i], VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1,
-			                     &buffer_barrier, 0, nullptr);
+			vkCmdPipelineBarrier(
+			    draw_cmd_buffers[i], VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0, nullptr);
 		}
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
@@ -172,8 +172,8 @@ void ComputeNBody::build_compute_command_buffer()
 		                                        0,
 		                                        compute.storage_buffer->get_size()};
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0,
-		                     nullptr);
+		vkCmdPipelineBarrier(
+		    compute.command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0, nullptr);
 	}
 
 	// First pass: Calculate particle movement
@@ -191,8 +191,16 @@ void ComputeNBody::build_compute_command_buffer()
 	memory_barrier.srcQueueFamilyIndex   = VK_QUEUE_FAMILY_IGNORED;
 	memory_barrier.dstQueueFamilyIndex   = VK_QUEUE_FAMILY_IGNORED;
 
-	vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_FLAGS_NONE, 0, nullptr, 1,
-	                     &memory_barrier, 0, nullptr);
+	vkCmdPipelineBarrier(compute.command_buffer,
+	                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	                     VK_FLAGS_NONE,
+	                     0,
+	                     nullptr,
+	                     1,
+	                     &memory_barrier,
+	                     0,
+	                     nullptr);
 
 	// Second pass: Integrate particles
 	// -------------------------------------------------------------------------------------------------------
@@ -202,12 +210,18 @@ void ComputeNBody::build_compute_command_buffer()
 	// Release
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
-		VkBufferMemoryBarrier buffer_barrier = {
-		    VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER, nullptr, VK_ACCESS_SHADER_WRITE_BIT,        0, compute.queue_family_index, graphics.queue_family_index,
-		    compute.storage_buffer->get_handle(),    0,       compute.storage_buffer->get_size()};
+		VkBufferMemoryBarrier buffer_barrier = {VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+		                                        nullptr,
+		                                        VK_ACCESS_SHADER_WRITE_BIT,
+		                                        0,
+		                                        compute.queue_family_index,
+		                                        graphics.queue_family_index,
+		                                        compute.storage_buffer->get_handle(),
+		                                        0,
+		                                        compute.storage_buffer->get_size()};
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0,
-		                     nullptr);
+		vkCmdPipelineBarrier(
+		    compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0, nullptr);
 	}
 
 	vkEndCommandBuffer(compute.command_buffer);
@@ -223,8 +237,12 @@ void ComputeNBody::prepare_storage_buffers()
 	};
 #else
 	std::vector<glm::vec3> attractors = {
-	    glm::vec3(5.0f, 0.0f, 0.0f),  glm::vec3(-5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 5.0f),
-	    glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 4.0f, 0.0f),  glm::vec3(0.0f, -8.0f, 0.0f),
+	    glm::vec3(5.0f, 0.0f, 0.0f),
+	    glm::vec3(-5.0f, 0.0f, 0.0f),
+	    glm::vec3(0.0f, 0.0f, 5.0f),
+	    glm::vec3(0.0f, 0.0f, -5.0f),
+	    glm::vec3(0.0f, 4.0f, 0.0f),
+	    glm::vec3(0.0f, -8.0f, 0.0f),
 	};
 #endif
 
@@ -278,9 +296,11 @@ void ComputeNBody::prepare_storage_buffers()
 	// SSBO won't be changed on the host after upload so copy to device local memory
 	vkb::core::BufferC staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), particle_buffer);
 
-	compute.storage_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(), storage_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	    VMA_MEMORY_USAGE_GPU_ONLY);
+	compute.storage_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(),
+	                                         storage_buffer_size,
+	                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffer to storage buffer
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -290,12 +310,18 @@ void ComputeNBody::prepare_storage_buffers()
 	// Execute a transfer to the compute queue, if necessary
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
-		VkBufferMemoryBarrier buffer_barrier = {
-		    VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER, nullptr, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT, 0, graphics.queue_family_index, compute.queue_family_index,
-		    compute.storage_buffer->get_handle(),    0,       compute.storage_buffer->get_size()};
+		VkBufferMemoryBarrier buffer_barrier = {VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+		                                        nullptr,
+		                                        VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+		                                        0,
+		                                        graphics.queue_family_index,
+		                                        compute.queue_family_index,
+		                                        compute.storage_buffer->get_handle(),
+		                                        0,
+		                                        compute.storage_buffer->get_size()};
 
-		vkCmdPipelineBarrier(copy_command, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0,
-		                     nullptr);
+		vkCmdPipelineBarrier(
+		    copy_command, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &buffer_barrier, 0, nullptr);
 	}
 
 	get_device().flush_command_buffer(copy_command, queue, true);
@@ -469,8 +495,8 @@ void ComputeNBody::prepare_compute()
 	    // Binding 1 : Uniform buffer
 	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &uniform_buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0,
-	                       NULL);
+	vkUpdateDescriptorSets(
+	    get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, NULL);
 
 	// Create pipelines
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);
@@ -573,14 +599,20 @@ void ComputeNBody::prepare_compute()
 		                                                compute.storage_buffer->get_handle(),
 		                                                0,
 		                                                compute.storage_buffer->get_size()};
-		vkCmdPipelineBarrier(transfer_command, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &acquire_buffer_barrier,
-		                     0, nullptr);
+		vkCmdPipelineBarrier(
+		    transfer_command, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &acquire_buffer_barrier, 0, nullptr);
 
-		VkBufferMemoryBarrier release_buffer_barrier = {
-		    VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER, nullptr, VK_ACCESS_SHADER_WRITE_BIT,        0, compute.queue_family_index, graphics.queue_family_index,
-		    compute.storage_buffer->get_handle(),    0,       compute.storage_buffer->get_size()};
-		vkCmdPipelineBarrier(transfer_command, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &release_buffer_barrier,
-		                     0, nullptr);
+		VkBufferMemoryBarrier release_buffer_barrier = {VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+		                                                nullptr,
+		                                                VK_ACCESS_SHADER_WRITE_BIT,
+		                                                0,
+		                                                compute.queue_family_index,
+		                                                graphics.queue_family_index,
+		                                                compute.storage_buffer->get_handle(),
+		                                                0,
+		                                                compute.storage_buffer->get_size()};
+		vkCmdPipelineBarrier(
+		    transfer_command, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &release_buffer_barrier, 0, nullptr);
 
 		// Copied from Device::flush_command_buffer, which we can't use because it would be
 		// working with the wrong command pool

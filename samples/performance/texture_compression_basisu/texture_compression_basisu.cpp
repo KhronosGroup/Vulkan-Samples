@@ -230,13 +230,17 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 	// Copy mip levels from staging buffer
-	vkCmdCopyBufferToImage(copy_command, staging_buffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(buffer_copy_regions.size()),
+	vkCmdCopyBufferToImage(copy_command,
+	                       staging_buffer,
+	                       texture.image,
+	                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                       static_cast<uint32_t>(buffer_copy_regions.size()),
 	                       buffer_copy_regions.data());
 
 	// Once the data has been uploaded we transfer to the texture image to the shader read layout, so it can be sampled from
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	                             subresource_range);
+	vkb::image_layout_transition(
+	    copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
 	// Store current layout for later reuse
 	texture.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -378,12 +382,12 @@ void TextureCompressionBasisu::generate_quad()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
 }
@@ -534,8 +538,14 @@ bool TextureCompressionBasisu::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 	get_available_target_formats();
-	texture_file_names = {"kodim23_UASTC.ktx2", "kodim23_ETC1S.ktx2", "kodim20_UASTC.ktx2", "kodim20_ETC1S.ktx2",
-	                      "kodim05_UASTC.ktx2", "kodim05_ETC1S.ktx2", "kodim03_UASTC.ktx2", "kodim03_ETC1S.ktx2"};
+	texture_file_names = {"kodim23_UASTC.ktx2",
+	                      "kodim23_ETC1S.ktx2",
+	                      "kodim20_UASTC.ktx2",
+	                      "kodim20_ETC1S.ktx2",
+	                      "kodim05_UASTC.ktx2",
+	                      "kodim05_ETC1S.ktx2",
+	                      "kodim03_UASTC.ktx2",
+	                      "kodim03_ETC1S.ktx2"};
 	transcode_texture(texture_file_names[selected_input_texture], available_target_formats[selected_transcode_target_format]);
 	generate_quad();
 	prepare_uniform_buffers();

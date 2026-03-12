@@ -176,8 +176,8 @@ void TimestampQueries::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0,
-			                        NULL);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, NULL);
 
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
@@ -218,8 +218,8 @@ void TimestampQueries::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0,
-			                        NULL);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, NULL);
 
 			// Scene
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
@@ -866,8 +866,14 @@ void TimestampQueries::get_time_stamp_results()
 	// A note on the flags used:
 	//	VK_QUERY_RESULT_64_BIT: Results will have 64 bits. As time stamp values are on nano-seconds, this flag should always be used to avoid 32 bit overflows
 	//  VK_QUERY_RESULT_WAIT_BIT: Since we want to immediately display the results, we use this flag to have the CPU wait until the results are available
-	vkGetQueryPoolResults(get_device().get_handle(), query_pool_timestamps, 0, count, time_stamps.size() * sizeof(uint64_t), time_stamps.data(),
-	                      sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+	vkGetQueryPoolResults(get_device().get_handle(),
+	                      query_pool_timestamps,
+	                      0,
+	                      count,
+	                      time_stamps.size() * sizeof(uint64_t),
+	                      time_stamps.data(),
+	                      sizeof(uint64_t),
+	                      VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 }
 
 void TimestampQueries::update_uniform_buffers()
@@ -983,7 +989,8 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 		float timestampFrequency = get_device().get_gpu().get_properties().limits.timestampPeriod;
 
 		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", static_cast<float>(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"),
+		drawer.text("Pass 2: %s %.3f ms",
+		            (bloom ? "First bloom pass" : "Scene display"),
 		            static_cast<float>(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
 		if (bloom)
 		{

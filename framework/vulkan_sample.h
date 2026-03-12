@@ -456,14 +456,16 @@ inline std::unique_ptr<typename vkb::core::Device<bindingType>> VulkanSample<bin
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		return std::make_unique<vkb::core::DeviceCpp>(gpu, surface, std::move(debug_utils), get_device_extensions(),
-		                                              [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
+		return std::make_unique<vkb::core::DeviceCpp>(
+		    gpu, surface, std::move(debug_utils), get_device_extensions(), [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
 	}
 	else
 	{
-		return std::make_unique<vkb::core::DeviceC>(gpu, static_cast<VkSurfaceKHR>(surface),
+		return std::make_unique<vkb::core::DeviceC>(gpu,
+		                                            static_cast<VkSurfaceKHR>(surface),
 		                                            std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
-		                                            get_device_extensions(), [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); });
+		                                            get_device_extensions(),
+		                                            [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); });
 	}
 }
 
@@ -475,7 +477,10 @@ inline std::unique_ptr<vkb::core::Instance<bindingType>> VulkanSample<bindingTyp
 	request_instance_extensions(requested_extensions);
 
 	return std::make_unique<vkb::core::Instance<bindingType>>(
-	    get_name(), get_api_version(), requested_layers, requested_extensions,
+	    get_name(),
+	    get_api_version(),
+	    requested_layers,
+	    requested_extensions,
 	    [this](std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions)
 	    { return get_instance_create_info_extensions(enabled_layers, enabled_extensions); },
 	    [this](std::vector<std::string> const &enabled_extensions)
@@ -689,13 +694,14 @@ inline uint32_t VulkanSample<bindingType>::get_api_version() const
 	return VK_API_VERSION_1_1;
 }
 
-inline bool enable_layer_setting(vk::LayerSettingEXT const &requested_layer_setting, std::vector<std::string> const &enabled_layers,
+inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_layer_setting,
+                                 std::vector<std::string> const   &enabled_layers,
                                  std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
 {
 	// We are checking if the layer is available.
 	// Vulkan does not provide a reflection API for layer settings. Layer settings are described in each layer JSON manifest.
-	bool is_available = std::ranges::any_of(enabled_layers, [&requested_layer_setting](auto const &enabled_layer)
-	                                        { return enabled_layer == requested_layer_setting.pLayerName; });
+	bool is_available = std::ranges::any_of(
+	    enabled_layers, [&requested_layer_setting](auto const &enabled_layer) { return enabled_layer == requested_layer_setting.pLayerName; });
 
 #if defined(PLATFORM__MACOS)
 	// On Apple the MoltenVK driver configuration layer is implicitly enabled and available, and cannot be explicitly added or checked via enabled_layers.
@@ -703,7 +709,8 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const &requested_layer_sett
 	{
 		// Check for VK_EXT_layer_settings extension in the driver which indicates MoltenVK vs. KosmicKrisp (note: VK_MVK_moltenvk extension is deprecated).
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		if (std::ranges::any_of(available_instance_extensions, [](vk::ExtensionProperties const &extension)
+		if (std::ranges::any_of(available_instance_extensions,
+		                        [](vk::ExtensionProperties const &extension)
 		                        { return strcmp(extension.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; }))
 		{
 			is_available = true;
@@ -735,7 +742,8 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const &requested_layer_sett
 	return true;
 }
 
-inline bool enable_layer_setting(VkLayerSettingEXT const &requested_layer_setting, std::vector<std::string> const &enabled_layers,
+inline bool enable_layer_setting(VkLayerSettingEXT const          &requested_layer_setting,
+                                 std::vector<std::string> const   &enabled_layers,
                                  std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
 {
 	return enable_layer_setting(reinterpret_cast<vk::LayerSettingEXT const &>(requested_layer_setting), enabled_layers, enabled_layer_settings);
@@ -1150,8 +1158,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 #ifdef VKB_VULKAN_DEBUG
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		auto                                 debugExtensionIt = std::ranges::find_if(available_instance_extensions, [](vk::ExtensionProperties const &ep)
-		                                                                             { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+		auto                                 debugExtensionIt              = std::ranges::find_if(
+            available_instance_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_instance_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -1217,8 +1225,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	if (!debug_utils)
 	{
 		std::vector<vk::ExtensionProperties> available_device_extensions = physical_device->get_handle().enumerateDeviceExtensionProperties();
-		auto                                 debugExtensionIt = std::ranges::find_if(available_device_extensions, [](vk::ExtensionProperties const &ep)
-		                                                                             { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+		auto                                 debugExtensionIt            = std::ranges::find_if(
+            available_device_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_device_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
@@ -1271,8 +1279,11 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 	}
 	else
 	{
-		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::RenderContextCpp &>(get_render_context()), window,
-		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats), font_size, explicit_update);
+		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::RenderContextCpp &>(get_render_context()),
+		                                    window,
+		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats),
+		                                    font_size,
+		                                    explicit_update);
 	}
 }
 
@@ -1579,9 +1590,10 @@ inline void VulkanSample<bindingType>::update_debug_window()
 	get_debug_info().template insert<field::Static, std::string>("driver_version", driver_version_str);
 	get_debug_info().template insert<field::Static, std::string>("resolution",
 	                                                             to_string(static_cast<VkExtent2D const &>(render_context->get_swapchain().get_extent())));
-	get_debug_info().template insert<field::Static, std::string>(
-	    "surface_format", to_string(render_context->get_swapchain().get_format()) + " (" +
-	                          to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bpp)");
+	get_debug_info().template insert<field::Static, std::string>("surface_format",
+	                                                             to_string(render_context->get_swapchain().get_format()) + " (" +
+	                                                                 to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) +
+	                                                                 "bpp)");
 
 	if (scene != nullptr)
 	{

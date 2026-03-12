@@ -91,8 +91,8 @@ VkPipelineLayout BufferDeviceAddress::create_pipeline_layout(bool graphics)
 	VkPipelineLayoutCreateInfo layout_create_info = vkb::initializers::pipeline_layout_create_info(nullptr, 0);
 
 	const std::vector<VkPushConstantRange> ranges = {
-	    vkb::initializers::push_constant_range(graphics ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_COMPUTE_BIT,
-	                                           graphics ? sizeof(PushVertex) : sizeof(PushCompute), 0),
+	    vkb::initializers::push_constant_range(
+	        graphics ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_COMPUTE_BIT, graphics ? sizeof(PushVertex) : sizeof(PushCompute), 0),
 	};
 	layout_create_info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
 	layout_create_info.pPushConstantRanges    = ranges.data();
@@ -170,8 +170,8 @@ std::unique_ptr<vkb::core::BufferC> BufferDeviceAddress::create_index_buffer()
 
 	// Build a simple subdivided quad mesh. We can tweak the vertices later in compute to create a simple cloth-y/wave-like effect.
 
-	auto index_buffer = std::make_unique<vkb::core::BufferC>(get_device(), size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                         VMA_MEMORY_USAGE_GPU_ONLY);
+	auto index_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	auto  staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), size, nullptr);
 	auto *buffer         = reinterpret_cast<uint16_t *>(staging_buffer.map());
@@ -307,8 +307,16 @@ void BufferDeviceAddress::update_pointer_buffer(VkCommandBuffer cmd)
 	VkMemoryBarrier global_memory_barrier = vkb::initializers::memory_barrier();
 	global_memory_barrier.srcAccessMask   = VK_ACCESS_TRANSFER_WRITE_BIT;
 	global_memory_barrier.dstAccessMask   = VK_ACCESS_SHADER_READ_BIT;
-	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 1,
-	                     &global_memory_barrier, 0, nullptr, 0, nullptr);
+	vkCmdPipelineBarrier(cmd,
+	                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+	                     0,
+	                     1,
+	                     &global_memory_barrier,
+	                     0,
+	                     nullptr,
+	                     0,
+	                     nullptr);
 }
 
 void BufferDeviceAddress::update_meshlets(VkCommandBuffer cmd)

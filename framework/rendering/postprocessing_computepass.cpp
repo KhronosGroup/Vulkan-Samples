@@ -21,7 +21,9 @@
 
 namespace vkb
 {
-PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant,
+PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline          *parent,
+                                                     const ShaderSource              &cs_source,
+                                                     const ShaderVariant             &cs_variant,
                                                      std::shared_ptr<core::Sampler> &&default_sampler) :
     PostProcessingPass{parent}, cs_source{cs_source}, cs_variant{cs_variant}, default_sampler{std::move(default_sampler)}
 {
@@ -148,7 +150,8 @@ void PostProcessingComputePass::transition_images(vkb::core::CommandBufferC &com
 			// A storage image is either readonly or writeonly;
 			// use shader reflection to figure out which case, then transition
 			// NOTE: Could add a <name -> readonly?> cache to make this faster?
-			auto resource = std::find_if(pipeline_layout.get_resources().begin(), pipeline_layout.get_resources().end(),
+			auto resource = std::find_if(pipeline_layout.get_resources().begin(),
+			                             pipeline_layout.get_resources().end(),
 			                             [&storage](const auto &res) { return res.set == 0 && res.name == storage.first; });
 			if (resource == pipeline_layout.get_resources().end())
 			{

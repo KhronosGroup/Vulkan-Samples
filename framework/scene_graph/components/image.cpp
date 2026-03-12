@@ -186,8 +186,16 @@ void Image::create_vk_image(vkb::core::DeviceC &device, VkImageViewType image_vi
 {
 	assert(!vk_image && !vk_image_view && "Vulkan image already constructed");
 
-	vk_image = std::make_unique<core::Image>(device, get_extent(), format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-	                                         VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT, to_u32(mipmaps.size()), layers, VK_IMAGE_TILING_OPTIMAL, flags);
+	vk_image = std::make_unique<core::Image>(device,
+	                                         get_extent(),
+	                                         format,
+	                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+	                                         VMA_MEMORY_USAGE_GPU_ONLY,
+	                                         VK_SAMPLE_COUNT_1_BIT,
+	                                         to_u32(mipmaps.size()),
+	                                         layers,
+	                                         VK_IMAGE_TILING_OPTIMAL,
+	                                         flags);
 	vk_image->set_debug_name(get_name());
 
 	vk_image_view = std::make_unique<core::ImageView>(*vk_image, image_view_type);
@@ -263,8 +271,15 @@ void Image::generate_mipmaps()
 		next_mipmap.extent = {next_width, next_height, 1u};
 
 		// Fill next mipmap memory
-		stbir_resize_uint8(data.data() + prev_mipmap.offset, prev_mipmap.extent.width, prev_mipmap.extent.height, 0, data.data() + next_mipmap.offset,
-		                   next_mipmap.extent.width, next_mipmap.extent.height, 0, channels);
+		stbir_resize_uint8(data.data() + prev_mipmap.offset,
+		                   prev_mipmap.extent.width,
+		                   prev_mipmap.extent.height,
+		                   0,
+		                   data.data() + next_mipmap.offset,
+		                   next_mipmap.extent.width,
+		                   next_mipmap.extent.height,
+		                   0,
+		                   channels);
 
 		mipmaps.emplace_back(std::move(next_mipmap));
 

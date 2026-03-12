@@ -97,9 +97,15 @@ void DynamicBlending::initialize_operator_names()
 void DynamicBlending::prepare_scene()
 {
 	vertices = {
-	    {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}},  {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f}},  {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},  {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+	    {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}},
+	    {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f}},
+	    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-	    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}}, {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}}, {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f}}, {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}},
+	    {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}},
+	    {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}},
+	    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f}},
+	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}},
 	};
 
 	std::vector<uint32_t> indices = {6, 5, 4, 4, 7, 6, 0, 1, 2, 2, 3, 0};
@@ -565,15 +571,27 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 					if (drawer.header("BlendEquationEXT"))
 					{
 						add_combo_with_button("Color operator", current_blend_color_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
-						add_combo_with_button("SrcColorBlendFactor", current_src_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						add_combo_with_button("SrcColorBlendFactor",
+						                      current_src_color_blend_factor,
+						                      VK_BLEND_FACTOR_ZERO,
+						                      VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
 						                      blend_factor_names);
-						add_combo_with_button("DstColorBlendFactor", current_dst_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						add_combo_with_button("DstColorBlendFactor",
+						                      current_dst_color_blend_factor,
+						                      VK_BLEND_FACTOR_ZERO,
+						                      VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
 						                      blend_factor_names);
 
 						add_combo_with_button("Alpha operator", current_blend_alpha_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
-						add_combo_with_button("SrcAlphaBlendFactor", current_src_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						add_combo_with_button("SrcAlphaBlendFactor",
+						                      current_src_alpha_blend_factor,
+						                      VK_BLEND_FACTOR_ZERO,
+						                      VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
 						                      blend_factor_names);
-						add_combo_with_button("DstAlphaBlendFactor", current_dst_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+						add_combo_with_button("DstAlphaBlendFactor",
+						                      current_dst_alpha_blend_factor,
+						                      VK_BLEND_FACTOR_ZERO,
+						                      VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
 						                      blend_factor_names);
 					}
 				}
@@ -583,8 +601,8 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 				{
 					if (drawer.header("BlendAdvancedEXT"))
 					{
-						add_combo_with_button("Operator", current_advanced_blend_operator_index, VK_BLEND_OP_ZERO_EXT, VK_BLEND_OP_BLUE_EXT,
-						                      advanced_blend_operator.names);
+						add_combo_with_button(
+						    "Operator", current_advanced_blend_operator_index, VK_BLEND_OP_ZERO_EXT, VK_BLEND_OP_BLUE_EXT, advanced_blend_operator.names);
 						if (drawer.checkbox("Src premultiplied", &src_premultiplied))
 						{
 							update_color_uniform();

@@ -108,9 +108,12 @@ class RenderFrame
 	RenderTargetType const         &get_render_target() const;
 	SemaphorePoolType              &get_semaphore_pool();
 	SemaphorePoolType const        &get_semaphore_pool() const;
-	DescriptorSetType request_descriptor_set(DescriptorSetLayoutType const &descriptor_set_layout, BindingMap<DescriptorBufferInfoType> const &buffer_infos,
-	                                         BindingMap<DescriptorImageInfoType> const &image_infos, bool update_after_bind, size_t thread_index = 0);
-	void              reset();
+	DescriptorSetType               request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
+	                                                       BindingMap<DescriptorBufferInfoType> const &buffer_infos,
+	                                                       BindingMap<DescriptorImageInfoType> const  &image_infos,
+	                                                       bool                                        update_after_bind,
+	                                                       size_t                                      thread_index = 0);
+	void                            reset();
 
 	/**
 	 * @brief Sets a new buffer allocation strategy
@@ -150,7 +153,9 @@ class RenderFrame
 
 	vk::DescriptorSet request_descriptor_set_impl(vkb::core::HPPDescriptorSetLayout const    &descriptor_set_layout,
 	                                              BindingMap<vk::DescriptorBufferInfo> const &buffer_infos,
-	                                              BindingMap<vk::DescriptorImageInfo> const &image_infos, bool update_after_bind, size_t thread_index = 0);
+	                                              BindingMap<vk::DescriptorImageInfo> const  &image_infos,
+	                                              bool                                        update_after_bind,
+	                                              size_t                                      thread_index = 0);
 
   private:
 	vkb::core::DeviceCpp                                                                             &device;
@@ -304,8 +309,8 @@ inline std::vector<vkb::core::CommandPoolCpp> &RenderFrame<bindingType>::get_com
 }
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandPool<bindingType> &RenderFrame<bindingType>::get_command_pool(QueueType const &queue, vkb::CommandBufferResetMode reset_mode,
-                                                                                       size_t thread_index)
+inline vkb::core::CommandPool<bindingType> &
+    RenderFrame<bindingType>::get_command_pool(QueueType const &queue, vkb::CommandBufferResetMode reset_mode, size_t thread_index)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -319,8 +324,8 @@ inline vkb::core::CommandPool<bindingType> &RenderFrame<bindingType>::get_comman
 }
 
 template <vkb::BindingType bindingType>
-inline vkb::core::CommandPoolCpp &RenderFrame<bindingType>::get_command_pool_impl(vkb::core::HPPQueue const &queue, vkb::CommandBufferResetMode reset_mode,
-                                                                                  size_t thread_index)
+inline vkb::core::CommandPoolCpp &
+    RenderFrame<bindingType>::get_command_pool_impl(vkb::core::HPPQueue const &queue, vkb::CommandBufferResetMode reset_mode, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
@@ -428,7 +433,9 @@ template <vkb::BindingType bindingType>
 inline typename RenderFrame<bindingType>::DescriptorSetType
     RenderFrame<bindingType>::request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
                                                      BindingMap<DescriptorBufferInfoType> const &buffer_infos,
-                                                     BindingMap<DescriptorImageInfoType> const &image_infos, bool update_after_bind, size_t thread_index)
+                                                     BindingMap<DescriptorImageInfoType> const  &image_infos,
+                                                     bool                                        update_after_bind,
+                                                     size_t                                      thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 	assert(thread_index < descriptor_pools.size());
@@ -442,15 +449,17 @@ inline typename RenderFrame<bindingType>::DescriptorSetType
 		return static_cast<VkDescriptorSet>(request_descriptor_set_impl(reinterpret_cast<vkb::core::HPPDescriptorSetLayout const &>(descriptor_set_layout),
 		                                                                reinterpret_cast<BindingMap<vk::DescriptorBufferInfo> const &>(buffer_infos),
 		                                                                reinterpret_cast<BindingMap<vk::DescriptorImageInfo> const &>(image_infos),
-		                                                                update_after_bind, thread_index));
+		                                                                update_after_bind,
+		                                                                thread_index));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline vk::DescriptorSet RenderFrame<bindingType>::request_descriptor_set_impl(vkb::core::HPPDescriptorSetLayout const    &descriptor_set_layout,
                                                                                BindingMap<vk::DescriptorBufferInfo> const &buffer_infos,
-                                                                               BindingMap<vk::DescriptorImageInfo> const &image_infos, bool update_after_bind,
-                                                                               size_t thread_index)
+                                                                               BindingMap<vk::DescriptorImageInfo> const  &image_infos,
+                                                                               bool                                        update_after_bind,
+                                                                               size_t                                      thread_index)
 {
 	auto &descriptor_pool = vkb::common::request_resource(device, nullptr, descriptor_pools[thread_index], descriptor_set_layout);
 	if (descriptor_management_strategy == DescriptorManagementStrategy::StoreInCache)

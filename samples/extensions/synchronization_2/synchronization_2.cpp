@@ -252,8 +252,12 @@ void Synchronization2::build_compute_command_buffer()
 void Synchronization2::prepare_storage_buffers()
 {
 	std::vector<glm::vec3> attractors = {
-	    glm::vec3(5.0f, 0.0f, 0.0f),  glm::vec3(-5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 5.0f),
-	    glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 4.0f, 0.0f),  glm::vec3(0.0f, -8.0f, 0.0f),
+	    glm::vec3(5.0f, 0.0f, 0.0f),
+	    glm::vec3(-5.0f, 0.0f, 0.0f),
+	    glm::vec3(0.0f, 0.0f, 5.0f),
+	    glm::vec3(0.0f, 0.0f, -5.0f),
+	    glm::vec3(0.0f, 4.0f, 0.0f),
+	    glm::vec3(0.0f, -8.0f, 0.0f),
 	};
 
 	num_particles = static_cast<uint32_t>(attractors.size()) * PARTICLES_PER_ATTRACTOR;
@@ -307,9 +311,11 @@ void Synchronization2::prepare_storage_buffers()
 	// SSBO won't be changed on the host after upload so copy to device local memory
 	vkb::core::BufferC staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), particle_buffer);
 
-	compute.storage_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(), storage_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	    VMA_MEMORY_USAGE_GPU_ONLY);
+	compute.storage_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(),
+	                                         storage_buffer_size,
+	                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffer to storage buffer
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -507,8 +513,8 @@ void Synchronization2::prepare_compute()
 	    // Binding 1 : Uniform buffer
 	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &uniform_buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0,
-	                       NULL);
+	vkUpdateDescriptorSets(
+	    get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, NULL);
 
 	// Create pipelines
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);

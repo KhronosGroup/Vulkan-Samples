@@ -34,11 +34,19 @@ AccelerationStructure::~AccelerationStructure()
 	}
 }
 
-uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::BufferC &vertex_buffer, vkb::core::BufferC &index_buffer, vkb::core::BufferC &transform_buffer,
-                                                      uint32_t triangle_count, uint32_t max_vertex, VkDeviceSize vertex_stride, uint32_t transform_offset,
-                                                      VkFormat vertex_format, VkIndexType index_type, VkGeometryFlagsKHR flags,
-                                                      uint64_t vertex_buffer_data_address, uint64_t index_buffer_data_address,
-                                                      uint64_t transform_buffer_data_address)
+uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::BufferC &vertex_buffer,
+                                                      vkb::core::BufferC &index_buffer,
+                                                      vkb::core::BufferC &transform_buffer,
+                                                      uint32_t            triangle_count,
+                                                      uint32_t            max_vertex,
+                                                      VkDeviceSize        vertex_stride,
+                                                      uint32_t            transform_offset,
+                                                      VkFormat            vertex_format,
+                                                      VkIndexType         index_type,
+                                                      VkGeometryFlagsKHR  flags,
+                                                      uint64_t            vertex_buffer_data_address,
+                                                      uint64_t            index_buffer_data_address,
+                                                      uint64_t            transform_buffer_data_address)
 {
 	VkAccelerationStructureGeometryKHR geometry{};
 	geometry.sType                                       = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -59,11 +67,19 @@ uint64_t AccelerationStructure::add_triangle_geometry(vkb::core::BufferC &vertex
 	return index;
 }
 
-void AccelerationStructure::update_triangle_geometry(uint64_t triangleUUID, std::unique_ptr<vkb::core::BufferC> &vertex_buffer,
-                                                     std::unique_ptr<vkb::core::BufferC> &index_buffer, std::unique_ptr<vkb::core::BufferC> &transform_buffer,
-                                                     uint32_t triangle_count, uint32_t max_vertex, VkDeviceSize vertex_stride, uint32_t transform_offset,
-                                                     VkFormat vertex_format, VkGeometryFlagsKHR flags, uint64_t vertex_buffer_data_address,
-                                                     uint64_t index_buffer_data_address, uint64_t transform_buffer_data_address)
+void AccelerationStructure::update_triangle_geometry(uint64_t                             triangleUUID,
+                                                     std::unique_ptr<vkb::core::BufferC> &vertex_buffer,
+                                                     std::unique_ptr<vkb::core::BufferC> &index_buffer,
+                                                     std::unique_ptr<vkb::core::BufferC> &transform_buffer,
+                                                     uint32_t                             triangle_count,
+                                                     uint32_t                             max_vertex,
+                                                     VkDeviceSize                         vertex_stride,
+                                                     uint32_t                             transform_offset,
+                                                     VkFormat                             vertex_format,
+                                                     VkGeometryFlagsKHR                   flags,
+                                                     uint64_t                             vertex_buffer_data_address,
+                                                     uint64_t                             index_buffer_data_address,
+                                                     uint64_t                             transform_buffer_data_address)
 {
 	VkAccelerationStructureGeometryKHR *geometry          = &geometries[triangleUUID].geometry;
 	geometry->sType                                       = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -83,8 +99,10 @@ void AccelerationStructure::update_triangle_geometry(uint64_t triangleUUID, std:
 	geometries[triangleUUID].updated          = true;
 }
 
-uint64_t AccelerationStructure::add_instance_geometry(std::unique_ptr<vkb::core::BufferC> &instance_buffer, uint32_t instance_count, uint32_t transform_offset,
-                                                      VkGeometryFlagsKHR flags)
+uint64_t AccelerationStructure::add_instance_geometry(std::unique_ptr<vkb::core::BufferC> &instance_buffer,
+                                                      uint32_t                             instance_count,
+                                                      uint32_t                             transform_offset,
+                                                      VkGeometryFlagsKHR                   flags)
 {
 	VkAccelerationStructureGeometryKHR geometry{};
 	geometry.sType                                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -99,8 +117,8 @@ uint64_t AccelerationStructure::add_instance_geometry(std::unique_ptr<vkb::core:
 	return index;
 }
 
-void AccelerationStructure::update_instance_geometry(uint64_t instance_UID, std::unique_ptr<vkb::core::BufferC> &instance_buffer, uint32_t instance_count,
-                                                     uint32_t transform_offset, VkGeometryFlagsKHR flags)
+void AccelerationStructure::update_instance_geometry(
+    uint64_t instance_UID, std::unique_ptr<vkb::core::BufferC> &instance_buffer, uint32_t instance_count, uint32_t transform_offset, VkGeometryFlagsKHR flags)
 {
 	VkAccelerationStructureGeometryKHR *geometry    = &geometries[instance_UID].geometry;
 	geometry->sType                                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -154,13 +172,14 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 
 	// Get required build sizes
 	build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-	vkGetAccelerationStructureBuildSizesKHR(device.get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &build_geometry_info, primitive_counts.data(),
-	                                        &build_sizes_info);
+	vkGetAccelerationStructureBuildSizesKHR(
+	    device.get_handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &build_geometry_info, primitive_counts.data(), &build_sizes_info);
 
 	// Create a buffer for the acceleration structure
 	if (!buffer || buffer->get_size() != build_sizes_info.accelerationStructureSize)
 	{
-		buffer = std::make_unique<vkb::core::BufferC>(device, build_sizes_info.accelerationStructureSize,
+		buffer = std::make_unique<vkb::core::BufferC>(device,
+		                                              build_sizes_info.accelerationStructureSize,
 		                                              VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 		                                              VMA_MEMORY_USAGE_GPU_ONLY);
 
@@ -184,11 +203,11 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	device_address                                         = vkGetAccelerationStructureDeviceAddressKHR(device.get_handle(), &acceleration_device_address_info);
 
 	// Create a scratch buffer as a temporary storage for the acceleration structure build
-	scratch_buffer =
-	    std::make_unique<vkb::core::BufferC>(device, BufferBuilderC(build_sizes_info.buildScratchSize)
-	                                                     .with_usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
-	                                                     .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY)
-	                                                     .with_alignment(scratch_buffer_alignment));
+	scratch_buffer = std::make_unique<vkb::core::BufferC>(device,
+	                                                      BufferBuilderC(build_sizes_info.buildScratchSize)
+	                                                          .with_usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+	                                                          .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY)
+	                                                          .with_alignment(scratch_buffer_alignment));
 
 	build_geometry_info.scratchData.deviceAddress = scratch_buffer->get_device_address();
 	build_geometry_info.dstAccelerationStructure  = handle;

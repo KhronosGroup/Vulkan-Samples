@@ -468,7 +468,8 @@ inline bool PhysicalDevice<bindingType>::has_high_priority_graphics_queue() cons
 template <vkb::BindingType bindingType>
 inline bool PhysicalDevice<bindingType>::is_extension_supported(const std::string &requested_extension) const
 {
-	return std::ranges::find_if(device_extensions, [requested_extension](auto &device_extension)
+	return std::ranges::find_if(device_extensions,
+	                            [requested_extension](auto &device_extension)
 	                            { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
 }
 
@@ -506,8 +507,8 @@ inline void PhysicalDevice<bindingType>::request_required_feature(Bool32Type Fea
 	}
 	else
 	{
-		request_required_feature_impl<typename vkb::detail::HPPType<Feature>::Type>(reinterpret_cast<vk::Bool32 vkb::detail::HPPType<Feature>::Type::*>(flag),
-		                                                                            featureName, flagName);
+		request_required_feature_impl<typename vkb::detail::HPPType<Feature>::Type>(
+		    reinterpret_cast<vk::Bool32 vkb::detail::HPPType<Feature>::Type::*>(flag), featureName, flagName);
 	}
 }
 

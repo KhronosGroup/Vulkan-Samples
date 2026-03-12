@@ -65,9 +65,15 @@ bool DynamicLineRasterization::prepare(const vkb::ApplicationOptions &options)
 
 void DynamicLineRasterization::prepare_scene()
 {
-	std::vector<glm::vec3> vertices = {{-1.0f, -1.0f, 1.0f},  {1.0f, -1.0f, 1.0f},  {1.0f, 1.0f, 1.0f},  {-1.0f, 1.0f, 1.0f},
+	std::vector<glm::vec3> vertices = {{-1.0f, -1.0f, 1.0f},
+	                                   {1.0f, -1.0f, 1.0f},
+	                                   {1.0f, 1.0f, 1.0f},
+	                                   {-1.0f, 1.0f, 1.0f},
 
-	                                   {-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f}};
+	                                   {-1.0f, -1.0f, -1.0f},
+	                                   {1.0f, -1.0f, -1.0f},
+	                                   {1.0f, 1.0f, -1.0f},
+	                                   {-1.0f, 1.0f, -1.0f}};
 
 	std::vector<uint32_t> cube_indices = {0, 1, 2, 2, 3, 0,
 

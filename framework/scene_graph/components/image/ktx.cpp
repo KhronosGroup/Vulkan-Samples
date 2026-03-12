@@ -36,8 +36,8 @@ struct CallbackData final
 /// Row padding is different between KTX (pad to 4) and Vulkan (none).
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
-static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int mip_level, int face, int width, int height, int depth, ktx_uint64_t face_lod_size,
-                                                             void *pixels, void *user_data)
+static ktx_error_code_e KTX_APIENTRY
+    optimal_tiling_callback(int mip_level, int face, int width, int height, int depth, ktx_uint64_t face_lod_size, void *pixels, void *user_data)
 {
 	auto *callback_data = reinterpret_cast<CallbackData *>(user_data);
 	assert(static_cast<size_t>(mip_level) < callback_data->mipmaps->size() && "Not enough space in the mipmap vector");

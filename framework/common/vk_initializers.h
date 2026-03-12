@@ -99,8 +99,10 @@ inline VkRenderingAttachmentInfoKHR rendering_attachment_info()
 }
 
 /** @brief Initialize VkRenderingInfoKHR, e.g. for use with dynamic rendering extension */
-inline VkRenderingInfoKHR rendering_info(VkRect2D render_area = {}, uint32_t color_attachment_count = 0,
-                                         const VkRenderingAttachmentInfoKHR *pColorAttachments = VK_NULL_HANDLE, VkRenderingFlagsKHR flags = 0)
+inline VkRenderingInfoKHR rendering_info(VkRect2D                            render_area            = {},
+                                         uint32_t                            color_attachment_count = 0,
+                                         const VkRenderingAttachmentInfoKHR *pColorAttachments      = VK_NULL_HANDLE,
+                                         VkRenderingFlagsKHR                 flags                  = 0)
 {
 	VkRenderingInfoKHR rendering_info   = {};
 	rendering_info.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
@@ -310,8 +312,8 @@ inline VkPipelineLayoutCreateInfo pipeline_layout_create_info(uint32_t set_layou
 	return pipeline_layout_create_info;
 }
 
-inline VkDescriptorSetAllocateInfo descriptor_set_allocate_info(VkDescriptorPool descriptor_pool, const VkDescriptorSetLayout *set_layouts,
-                                                                uint32_t descriptor_set_count)
+inline VkDescriptorSetAllocateInfo
+    descriptor_set_allocate_info(VkDescriptorPool descriptor_pool, const VkDescriptorSetLayout *set_layouts, uint32_t descriptor_set_count)
 {
 	VkDescriptorSetAllocateInfo descriptor_set_allocate_info{};
 	descriptor_set_allocate_info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -330,8 +332,8 @@ inline VkDescriptorImageInfo descriptor_image_info(VkSampler sampler, VkImageVie
 	return descriptor_image_info;
 }
 
-inline VkWriteDescriptorSet write_descriptor_set(VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *buffer_info,
-                                                 uint32_t descriptor_count = 1)
+inline VkWriteDescriptorSet
+    write_descriptor_set(VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *buffer_info, uint32_t descriptor_count = 1)
 {
 	VkWriteDescriptorSet write_descriptor_set{};
 	write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -343,8 +345,8 @@ inline VkWriteDescriptorSet write_descriptor_set(VkDescriptorSet dst_set, VkDesc
 	return write_descriptor_set;
 }
 
-inline VkWriteDescriptorSet write_descriptor_set(VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *image_info,
-                                                 uint32_t descriptor_count = 1)
+inline VkWriteDescriptorSet
+    write_descriptor_set(VkDescriptorSet dst_set, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *image_info, uint32_t descriptor_count = 1)
 {
 	VkWriteDescriptorSet write_descriptor_set{};
 	write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -365,8 +367,8 @@ inline VkVertexInputBindingDescription vertex_input_binding_description(uint32_t
 	return vertex_input_binding_description;
 }
 
-inline VkVertexInputBindingDescription2EXT vertex_input_binding_description2ext(uint32_t binding, uint32_t stride, VkVertexInputRate input_rate,
-                                                                                uint32_t divisor)
+inline VkVertexInputBindingDescription2EXT
+    vertex_input_binding_description2ext(uint32_t binding, uint32_t stride, VkVertexInputRate input_rate, uint32_t divisor)
 {
 	VkVertexInputBindingDescription2EXT vertex_input_binding_description2ext{};
 	vertex_input_binding_description2ext.sType     = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT;
@@ -416,7 +418,8 @@ inline VkPipelineInputAssemblyStateCreateInfo
 	return pipeline_input_assembly_state_create_info;
 }
 
-inline VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_create_info(VkPolygonMode polygon_mode, VkCullModeFlags cull_mode,
+inline VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_create_info(VkPolygonMode                           polygon_mode,
+                                                                                       VkCullModeFlags                         cull_mode,
                                                                                        VkFrontFace                             front_face,
                                                                                        VkPipelineRasterizationStateCreateFlags flags = 0)
 {
@@ -449,8 +452,8 @@ inline VkPipelineColorBlendStateCreateInfo pipeline_color_blend_state_create_inf
 	return pipeline_color_blend_state_create_info;
 }
 
-inline VkPipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_create_info(VkBool32 depth_test_enable, VkBool32 depth_write_enable,
-                                                                                      VkCompareOp depth_compare_op)
+inline VkPipelineDepthStencilStateCreateInfo
+    pipeline_depth_stencil_state_create_info(VkBool32 depth_test_enable, VkBool32 depth_write_enable, VkCompareOp depth_compare_op)
 {
 	VkPipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_create_info{};
 	pipeline_depth_stencil_state_create_info.sType            = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -462,8 +465,8 @@ inline VkPipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_create
 	return pipeline_depth_stencil_state_create_info;
 }
 
-inline VkPipelineViewportStateCreateInfo pipeline_viewport_state_create_info(uint32_t viewport_count, uint32_t scissor_count,
-                                                                             VkPipelineViewportStateCreateFlags flags = 0)
+inline VkPipelineViewportStateCreateInfo
+    pipeline_viewport_state_create_info(uint32_t viewport_count, uint32_t scissor_count, VkPipelineViewportStateCreateFlags flags = 0)
 {
 	VkPipelineViewportStateCreateInfo pipeline_viewport_state_create_info{};
 	pipeline_viewport_state_create_info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -483,8 +486,8 @@ inline VkPipelineMultisampleStateCreateInfo pipeline_multisample_state_create_in
 	return pipeline_multisample_state_create_info;
 }
 
-inline VkPipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(const VkDynamicState *dynamic_states, uint32_t dynamicStateCount,
-                                                                           VkPipelineDynamicStateCreateFlags flags = 0)
+inline VkPipelineDynamicStateCreateInfo
+    pipeline_dynamic_state_create_info(const VkDynamicState *dynamic_states, uint32_t dynamicStateCount, VkPipelineDynamicStateCreateFlags flags = 0)
 {
 	VkPipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info{};
 	pipeline_dynamic_state_create_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -580,8 +583,8 @@ inline VkSpecializationInfo specialization_info(uint32_t map_entry_count, const 
 	return specialization_info;
 }
 
-inline VkTimelineSemaphoreSubmitInfo timeline_semaphore_submit_info(uint32_t wait_value_count, uint64_t *wait_values, uint32_t signal_value_count,
-                                                                    uint64_t *signal_values)
+inline VkTimelineSemaphoreSubmitInfo
+    timeline_semaphore_submit_info(uint32_t wait_value_count, uint64_t *wait_values, uint32_t signal_value_count, uint64_t *signal_values)
 {
 	return VkTimelineSemaphoreSubmitInfo{
 	    VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO, NULL, wait_value_count, wait_values, signal_value_count, signal_values};

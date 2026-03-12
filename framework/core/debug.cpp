@@ -37,8 +37,8 @@ void DebugUtilsExtDebugUtils::set_debug_name(VkDevice device, VkObjectType objec
 	vkSetDebugUtilsObjectNameEXT(device, &name_info);
 }
 
-void DebugUtilsExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
-                                            size_t tag_data_size) const
+void DebugUtilsExtDebugUtils::set_debug_tag(
+    VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
 	VkDebugUtilsObjectTagInfoEXT tag_info{};
 	tag_info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT;
@@ -128,8 +128,8 @@ void DebugMarkerExtDebugUtils::set_debug_name(VkDevice device, VkObjectType obje
 	vkDebugMarkerSetObjectNameEXT(device, &name_info);
 }
 
-void DebugMarkerExtDebugUtils::set_debug_tag(VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data,
-                                             size_t tag_data_size) const
+void DebugMarkerExtDebugUtils::set_debug_tag(
+    VkDevice device, VkObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
 	VkDebugMarkerObjectTagInfoEXT tag_info{};
 	tag_info.sType      = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;

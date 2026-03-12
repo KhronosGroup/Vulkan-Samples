@@ -96,12 +96,21 @@ void DynamicMultisampleRasterization::prepare_supported_sample_count_list()
 
 	// All possible sample counts are listed here from most to least preferred as default
 	// On Mali GPUs 4X MSAA is recommended as best performance/quality trade-off
-	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT,  VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_16_BIT,
-	                                             VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_1_BIT};
+	std::vector<VkSampleCountFlagBits> counts = {VK_SAMPLE_COUNT_4_BIT,
+	                                             VK_SAMPLE_COUNT_2_BIT,
+	                                             VK_SAMPLE_COUNT_8_BIT,
+	                                             VK_SAMPLE_COUNT_16_BIT,
+	                                             VK_SAMPLE_COUNT_32_BIT,
+	                                             VK_SAMPLE_COUNT_64_BIT,
+	                                             VK_SAMPLE_COUNT_1_BIT};
 
-	std::copy_if(counts.begin(), counts.end(), std::back_inserter(supported_sample_count_list),
+	std::copy_if(counts.begin(),
+	             counts.end(),
+	             std::back_inserter(supported_sample_count_list),
 	             [&supported_by_depth_and_color](auto count) { return supported_by_depth_and_color & count; });
-	std::transform(supported_sample_count_list.begin(), supported_sample_count_list.end(), std::back_inserter(gui_settings.sample_counts),
+	std::transform(supported_sample_count_list.begin(),
+	               supported_sample_count_list.end(),
+	               std::back_inserter(gui_settings.sample_counts),
 	               [](auto count) { return to_string(count); });
 	if (!supported_sample_count_list.empty())
 	{
@@ -233,16 +242,28 @@ void DynamicMultisampleRasterization::build_command_buffers()
 		render_info.layerCount       = 1;
 		render_info.pDepthAttachment = &attachments[1];
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             swapchain_buffers[i].image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             range);
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-		                             depth_range);
+		vkb::image_layout_transition(
+		    draw_cmd_buffers[i], depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, depth_range);
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], color_attachment.image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             color_attachment.image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             range);
 
 		vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
 		vkCmdSetRasterizationSamplesEXT(draw_cmd_buffers[i], sample_count);        // VK_EXT_extended_dynamic_state3
@@ -295,8 +316,8 @@ void DynamicMultisampleRasterization::build_command_buffers()
 
 		vkCmdEndRenderingKHR(draw_cmd_buffers[i]);
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		                             range);
+		vkb::image_layout_transition(
+		    draw_cmd_buffers[i], swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, range);
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
@@ -376,8 +397,8 @@ void DynamicMultisampleRasterization::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,
-	                                                     static_cast<uint32_t>(image_infos.size())),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, static_cast<uint32_t>(image_infos.size())),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =

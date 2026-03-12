@@ -118,7 +118,8 @@ class RaytracingExtended : public ApiVulkanSample
 
 		void update_particles(float time_delta)
 		{
-			particles.erase(std::remove_if(particles.begin(), particles.end(),
+			particles.erase(std::remove_if(particles.begin(),
+			                               particles.end(),
 			                               [this, lifetime{this->lifetime}](const FlameParticle &particle)
 			                               { return particle.duration > (generate_random() * lifetime); }),
 			                particles.end());

@@ -141,8 +141,8 @@ void CalibratedTimestamps::build_command_buffers()
 			if (display_skybox)
 			{
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0,
-				                        nullptr);
+				vkCmdBindDescriptorSets(
+				    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
 				draw_model(models.skybox, draw_cmd_buffers[i]);
 			}
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
@@ -156,8 +156,8 @@ void CalibratedTimestamps::build_command_buffers()
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &filter_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &filter_viewport);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &filter_scissor);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0,
-			                        nullptr);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, nullptr);
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
@@ -169,8 +169,8 @@ void CalibratedTimestamps::build_command_buffers()
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &bloom_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &bloom_viewport);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &bloom_scissor);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0,
-			                        nullptr);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
@@ -828,8 +828,8 @@ VkResult CalibratedTimestamps::get_timestamps()
 	if (is_time_domain_init)
 	{
 		// Get calibrated timestamps:
-		return vkGetCalibratedTimestampsEXT(get_device().get_handle(), static_cast<uint32_t>(time_domains.size()), timestamps_info.data(), timestamps.data(),
-		                                    &max_deviation);
+		return vkGetCalibratedTimestampsEXT(
+		    get_device().get_handle(), static_cast<uint32_t>(time_domains.size()), timestamps_info.data(), timestamps.data(), &max_deviation);
 	}
 	return VK_ERROR_UNKNOWN;
 }
@@ -918,8 +918,8 @@ void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		for (const auto &delta_timestamp : delta_timestamps)
 		{
-			drawer.text("%s:\n %.1f Microseconds", delta_timestamp.second.tag.c_str(),
-			            static_cast<float>(delta_timestamp.second.delta) * timestamp_period * 0.001f);
+			drawer.text(
+			    "%s:\n %.1f Microseconds", delta_timestamp.second.tag.c_str(), static_cast<float>(delta_timestamp.second.delta) * timestamp_period * 0.001f);
 		}
 	}
 }

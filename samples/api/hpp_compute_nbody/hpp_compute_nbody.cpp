@@ -102,8 +102,8 @@ void HPPComputeNBody::build_command_buffers()
 			                                       .buffer              = compute.storage_buffer->get_handle(),
 			                                       .size                = compute.storage_buffer->get_size()};
 
-			command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eVertexInput, {}, nullptr, buffer_barrier,
-			                               nullptr);
+			command_buffer.pipelineBarrier(
+			    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eVertexInput, {}, nullptr, buffer_barrier, nullptr);
 		}
 
 		// Draw the particle system using the update vertex buffer
@@ -126,8 +126,8 @@ void HPPComputeNBody::build_command_buffers()
 			                                       .buffer              = compute.storage_buffer->get_handle(),
 			                                       .size                = compute.storage_buffer->get_size()};
 
-			command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier,
-			                               nullptr);
+			command_buffer.pipelineBarrier(
+			    vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
 		}
 
 		command_buffer.end();
@@ -167,8 +167,8 @@ void HPPComputeNBody::build_compute_command_buffer()
 		                                       .buffer              = compute.storage_buffer->get_handle(),
 		                                       .size                = compute.storage_buffer->get_size()};
 
-		compute.command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier,
-		                                       nullptr);
+		compute.command_buffer.pipelineBarrier(
+		    vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
 	}
 
 	// First pass: Calculate particle movement
@@ -185,8 +185,8 @@ void HPPComputeNBody::build_compute_command_buffer()
 	                                       .buffer              = compute.storage_buffer->get_handle(),
 	                                       .size                = compute.storage_buffer->get_size()};
 
-	compute.command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, memory_barrier,
-	                                       nullptr);
+	compute.command_buffer.pipelineBarrier(
+	    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, memory_barrier, nullptr);
 
 	// Second pass: Integrate particles
 	// -------------------------------------------------------------------------------------------------------
@@ -202,8 +202,8 @@ void HPPComputeNBody::build_compute_command_buffer()
 		                                       .buffer              = compute.storage_buffer->get_handle(),
 		                                       .size                = compute.storage_buffer->get_size()};
 
-		compute.command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, buffer_barrier,
-		                                       nullptr);
+		compute.command_buffer.pipelineBarrier(
+		    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, buffer_barrier, nullptr);
 	}
 
 	compute.command_buffer.end();
@@ -218,16 +218,16 @@ void HPPComputeNBody::build_compute_transfer_command_buffer(vk::CommandBuffer co
 	                                               .dstQueueFamilyIndex = compute.queue_family_index,
 	                                               .buffer              = compute.storage_buffer->get_handle(),
 	                                               .size                = compute.storage_buffer->get_size()};
-	command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, acquire_buffer_barrier,
-	                               nullptr);
+	command_buffer.pipelineBarrier(
+	    vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, acquire_buffer_barrier, nullptr);
 
 	vk::BufferMemoryBarrier release_buffer_barrier{.srcAccessMask       = vk::AccessFlagBits::eShaderWrite,
 	                                               .srcQueueFamilyIndex = compute.queue_family_index,
 	                                               .dstQueueFamilyIndex = graphics.queue_family_index,
 	                                               .buffer              = compute.storage_buffer->get_handle(),
 	                                               .size                = compute.storage_buffer->get_size()};
-	command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, release_buffer_barrier,
-	                               nullptr);
+	command_buffer.pipelineBarrier(
+	    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, release_buffer_barrier, nullptr);
 
 	// Copied from Device::flush_command_buffer, which we can't use because it would be
 	// working with the wrong command pool
@@ -247,8 +247,8 @@ void HPPComputeNBody::build_copy_command_buffer(vk::CommandBuffer command_buffer
 		                                       .buffer              = compute.storage_buffer->get_handle(),
 		                                       .size                = compute.storage_buffer->get_size()};
 
-		command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier,
-		                               nullptr);
+		command_buffer.pipelineBarrier(
+		    vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
 	}
 	command_buffer.end();
 }
@@ -324,9 +324,19 @@ vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 
-	return vkb::common::create_graphics_pipeline(
-	    get_device().get_handle(), pipeline_cache, shader_stages, vertex_input_state, vk::PrimitiveTopology::ePointList, 0, vk::PolygonMode::eFill,
-	    vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, {blend_attachment_state}, depth_stencil_state, graphics.pipeline_layout, render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             vertex_input_state,
+	                                             vk::PrimitiveTopology::ePointList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             graphics.pipeline_layout,
+	                                             render_pass);
 }
 
 void HPPComputeNBody::draw()
@@ -430,7 +440,8 @@ void HPPComputeNBody::prepare_compute()
 		MovementSpecializationData movement_specialization_data{compute.work_group_size, compute.shared_data_size, 0.002f, 0.75f, 0.05f};
 
 		vk::SpecializationInfo specialization_info{static_cast<uint32_t>(movement_specialization_map_entries.size()),
-		                                           movement_specialization_map_entries.data(), sizeof(movement_specialization_data),
+		                                           movement_specialization_map_entries.data(),
+		                                           sizeof(movement_specialization_data),
 		                                           &movement_specialization_data};
 
 		stage.pSpecializationInfo = &specialization_info;
@@ -495,8 +506,12 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 	};
 #else
 	std::vector<glm::vec3> attractors = {
-	    glm::vec3(5.0f, 0.0f, 0.0f),  glm::vec3(-5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 5.0f),
-	    glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 4.0f, 0.0f),  glm::vec3(0.0f, -8.0f, 0.0f),
+	    glm::vec3(5.0f, 0.0f, 0.0f),
+	    glm::vec3(-5.0f, 0.0f, 0.0f),
+	    glm::vec3(0.0f, 0.0f, 5.0f),
+	    glm::vec3(0.0f, 0.0f, -5.0f),
+	    glm::vec3(0.0f, 4.0f, 0.0f),
+	    glm::vec3(0.0f, -8.0f, 0.0f),
 	};
 #endif
 
@@ -548,9 +563,11 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 	// SSBO won't be changed on the host after upload so copy to device local memory
 	vkb::core::BufferCpp staging_buffer = vkb::core::BufferCpp::create_staging_buffer(get_device(), particle_buffer);
 
-	compute.storage_buffer = std::make_unique<vkb::core::BufferCpp>(
-	    get_device(), storage_buffer_size,
-	    vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
+	compute.storage_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
+	                                                                storage_buffer_size,
+	                                                                vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer |
+	                                                                    vk::BufferUsageFlagBits::eTransferDst,
+	                                                                VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffer to storage buffer
 	vk::Device device = get_device().get_handle();
@@ -617,10 +634,12 @@ void HPPComputeNBody::update_graphics_descriptor_set()
 	vk::DescriptorBufferInfo buffer_descriptor{graphics.uniform_buffer->get_handle(), 0, vk::WholeSize};
 
 	vk::DescriptorImageInfo particle_image_descriptor{
-	    textures.particle.sampler, textures.particle.image->get_vk_image_view().get_handle(),
+	    textures.particle.sampler,
+	    textures.particle.image->get_vk_image_view().get_handle(),
 	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.particle.image->get_vk_image_view().get_format())};
 	vk::DescriptorImageInfo gradient_image_descriptor{
-	    textures.gradient.sampler, textures.gradient.image->get_vk_image_view().get_handle(),
+	    textures.gradient.sampler,
+	    textures.gradient.image->get_vk_image_view().get_handle(),
 	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.gradient.image->get_vk_image_view().get_format())};
 
 	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {{{.dstSet          = graphics.descriptor_set,

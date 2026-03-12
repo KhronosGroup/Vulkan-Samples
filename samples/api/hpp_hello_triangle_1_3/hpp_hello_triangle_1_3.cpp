@@ -25,7 +25,8 @@
 /// @brief A debug callback called from Vulkan validation layers.
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
                                                        vk::DebugUtilsMessageTypeFlagsEXT             message_types,
-                                                       vk::DebugUtilsMessengerCallbackDataEXT const *callback_data, void *user_data)
+                                                       vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
+                                                       void                                         *user_data)
 {
 	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
 	{
@@ -388,7 +389,8 @@ void HPPHelloTriangleV13::init_device()
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
-	if (std::ranges::any_of(device_extensions, [](vk::ExtensionProperties const &extension)
+	if (std::ranges::any_of(device_extensions,
+	                        [](vk::ExtensionProperties const &extension)
 	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
 	{
 		required_device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
@@ -460,9 +462,9 @@ void HPPHelloTriangleV13::init_instance()
 	std::vector<const char *> required_instance_extensions{VK_KHR_SURFACE_EXTENSION_NAME};
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	bool has_debug_utils =
-	    std::ranges::any_of(available_instance_extensions, [](auto const &ep)
-	                        { return strncmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME, strlen(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) == 0; });
+	bool has_debug_utils = std::ranges::any_of(
+	    available_instance_extensions,
+	    [](auto const &ep) { return strncmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME, strlen(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) == 0; });
 	if (has_debug_utils)
 	{
 		required_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -475,9 +477,9 @@ void HPPHelloTriangleV13::init_instance()
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	required_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	bool portability_enumeration_available =
-	    std::ranges::any_of(available_instance_extensions, [](VkExtensionProperties const &extension)
-	                        { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; });
+	bool portability_enumeration_available = std::ranges::any_of(
+	    available_instance_extensions,
+	    [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; });
 	if (portability_enumeration_available)
 	{
 		required_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
@@ -623,8 +625,11 @@ void HPPHelloTriangleV13::init_pipeline()
 	vk::PipelineRasterizationStateCreateInfo raster{.polygonMode = vk::PolygonMode::eFill, .lineWidth = 1.0f};
 
 	// Specify that these states will be dynamic, i.e. not part of pipeline state object.
-	std::vector<vk::DynamicState> dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor, vk::DynamicState::eCullMode,
-	                                                vk::DynamicState::eFrontFace, vk::DynamicState::ePrimitiveTopology};
+	std::vector<vk::DynamicState> dynamic_states = {vk::DynamicState::eViewport,
+	                                                vk::DynamicState::eScissor,
+	                                                vk::DynamicState::eCullMode,
+	                                                vk::DynamicState::eFrontFace,
+	                                                vk::DynamicState::ePrimitiveTopology};
 
 	// Our attachment will write to all color channels, but no blending is enabled.
 	vk::PipelineColorBlendAttachmentState blend_attachment{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
@@ -848,10 +853,10 @@ void HPPHelloTriangleV13::init_vertex_buffer()
 	vk::MemoryRequirements memory_requirements = context.device.getBufferMemoryRequirements(context.vertex_buffer);
 
 	// Allocate memory for the buffer
-	vk::MemoryAllocateInfo alloc_info{.allocationSize = memory_requirements.size,
-	                                  .memoryTypeIndex =
-	                                      find_memory_type(context.gpu, memory_requirements.memoryTypeBits,
-	                                                       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
+	vk::MemoryAllocateInfo alloc_info{
+	    .allocationSize  = memory_requirements.size,
+	    .memoryTypeIndex = find_memory_type(
+	        context.gpu, memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
 
 	context.vertex_buffer_memory = context.device.allocateMemory(alloc_info);
 
@@ -923,7 +928,10 @@ void HPPHelloTriangleV13::render_triangle(uint32_t swapchain_index)
 	cmd.begin(begin_info);
 
 	// Before starting rendering, transition the swapchain image to COLOR_ATTACHMENT_OPTIMAL
-	transition_image_layout(cmd, context.swapchain_images[swapchain_index], vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
+	transition_image_layout(cmd,
+	                        context.swapchain_images[swapchain_index],
+	                        vk::ImageLayout::eUndefined,
+	                        vk::ImageLayout::eColorAttachmentOptimal,
 	                        {},                                                       // srcAccessMask (no need to wait for previous operations)
 	                        vk::AccessFlagBits2::eColorAttachmentWrite,               // dstAccessMask
 	                        vk::PipelineStageFlagBits2::eTopOfPipe,                   // srcStage
@@ -999,7 +1007,10 @@ void HPPHelloTriangleV13::render_triangle(uint32_t swapchain_index)
 	cmd.endRendering();
 
 	// After rendering , transition the swapchain image to PRESENT_SRC
-	transition_image_layout(cmd, context.swapchain_images[swapchain_index], vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
+	transition_image_layout(cmd,
+	                        context.swapchain_images[swapchain_index],
+	                        vk::ImageLayout::eColorAttachmentOptimal,
+	                        vk::ImageLayout::ePresentSrcKHR,
 	                        vk::AccessFlagBits2::eColorAttachmentWrite,                // srcAccessMask
 	                        {},                                                        // dstAccessMask
 	                        vk::PipelineStageFlagBits2::eColorAttachmentOutput,        // srcStage
@@ -1076,8 +1087,13 @@ void HPPHelloTriangleV13::teardown_per_frame(PerFrame &per_frame)
  * @param srcStage The pipeline stage that must happen before the transition.
  * @param dstStage The pipeline stage that must happen after the transition.
  */
-void HPPHelloTriangleV13::transition_image_layout(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
-                                                  vk::AccessFlags2 srcAccessMask, vk::AccessFlags2 dstAccessMask, vk::PipelineStageFlags2 srcStage,
+void HPPHelloTriangleV13::transition_image_layout(vk::CommandBuffer       cmd,
+                                                  vk::Image               image,
+                                                  vk::ImageLayout         oldLayout,
+                                                  vk::ImageLayout         newLayout,
+                                                  vk::AccessFlags2        srcAccessMask,
+                                                  vk::AccessFlags2        dstAccessMask,
+                                                  vk::PipelineStageFlags2 srcStage,
                                                   vk::PipelineStageFlags2 dstStage)
 {
 	// Initialize the VkImageMemoryBarrier2 structure
@@ -1131,8 +1147,8 @@ bool HPPHelloTriangleV13::validate_extensions(const std::vector<const char *> &r
 	return std::ranges::all_of(required,
 	                           [&available](auto const &extension_name)
 	                           {
-		                           bool found = std::ranges::any_of(available, [&extension_name](auto const &ep)
-		                                                            { return strcmp(ep.extensionName, extension_name) == 0; });
+		                           bool found = std::ranges::any_of(
+		                               available, [&extension_name](auto const &ep) { return strcmp(ep.extensionName, extension_name) == 0; });
 		                           if (!found)
 		                           {
 			                           // Output an error message for the missing extension

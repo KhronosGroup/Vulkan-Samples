@@ -347,12 +347,18 @@ void DynamicRendering::build_command_buffers()
 
 		if (enable_dynamic)
 		{
-			vkb::image_layout_transition(draw_cmd_buffer, swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
+			vkb::image_layout_transition(draw_cmd_buffer,
+			                             swapchain_buffers[i].image,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                             0,
+			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                             VK_IMAGE_LAYOUT_UNDEFINED,
+			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                             range);
 
-			vkb::image_layout_transition(draw_cmd_buffer, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-			                             depth_range);
+			vkb::image_layout_transition(
+			    draw_cmd_buffer, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, depth_range);
 
 			VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
 			color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
@@ -385,8 +391,8 @@ void DynamicRendering::build_command_buffers()
 
 			draw_ui(draw_cmd_buffer, i);
 
-			vkb::image_layout_transition(draw_cmd_buffer, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			                             range);
+			vkb::image_layout_transition(
+			    draw_cmd_buffer, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, range);
 		}
 		else
 		{

@@ -211,7 +211,8 @@ void Stats::update(float delta_time)
 			StatsProvider::Counters frame_time_sample = frame_time_provider->sample(delta_time);
 
 			// Push the samples to circular buffers
-			std::for_each(pending_samples.begin(), pending_samples.begin() + sample_count,
+			std::for_each(pending_samples.begin(),
+			              pending_samples.begin() + sample_count,
 			              [this, frame_time_sample](auto &s)
 			              {
 				              // Write the correct frame time into the continuous stats

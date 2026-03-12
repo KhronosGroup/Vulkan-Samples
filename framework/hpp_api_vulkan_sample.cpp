@@ -423,8 +423,8 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 	return vk::PipelineShaderStageCreateInfo{.stage = stage, .module = shader_modules.back(), .pName = "main"};
 }
 
-vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename,
-                                                                  vk::ShaderStageFlagBits stage)
+vk::PipelineShaderStageCreateInfo
+    HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage)
 {
 	std::string full_file_name = sample_folder_name + "/" + get_shader_folder() + "/" + shader_filename;
 
@@ -632,9 +632,12 @@ void HPPApiVulkanSample::create_command_pool()
 
 void HPPApiVulkanSample::setup_depth_stencil()
 {
-	std::tie(depth_stencil.image, depth_stencil.mem) = get_device().create_image(
-	    depth_format, get_render_context().get_surface_extent(), 1, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc,
-	    vk::MemoryPropertyFlagBits::eDeviceLocal);
+	std::tie(depth_stencil.image, depth_stencil.mem) =
+	    get_device().create_image(depth_format,
+	                              get_render_context().get_surface_extent(),
+	                              1,
+	                              vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+	                              vk::MemoryPropertyFlagBits::eDeviceLocal);
 
 	vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eDepth;
 	// Stencil aspect should only be set on depth + stencil formats
@@ -819,7 +822,11 @@ void HPPApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 vk::Sampler HPPApiVulkanSample::create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count, vk::Format format)
 {
 	return vkb::common::create_sampler(
-	    get_device().get_gpu().get_handle(), get_device().get_handle(), format, vk::Filter::eLinear, address_mode,
+	    get_device().get_gpu().get_handle(),
+	    get_device().get_handle(),
+	    format,
+	    vk::Filter::eLinear,
+	    address_mode,
 	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(mipmaps_count));
 }
@@ -839,8 +846,9 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 		swapchain_buffers.reserve(images.size());
 		for (auto &image : images)
 		{
-			swapchain_buffers.push_back({image, vkb::common::create_image_view(get_device().get_handle(), image, vk::ImageViewType::e2D,
-			                                                                   get_render_context().get_swapchain().get_format())});
+			swapchain_buffers.push_back(
+			    {image,
+			     vkb::common::create_image_view(get_device().get_handle(), image, vk::ImageViewType::e2D, get_render_context().get_swapchain().get_format())});
 		}
 	}
 	else
@@ -891,8 +899,9 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	}
 }
 
-HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type,
-                                            vk::SamplerAddressMode address_mode)
+HPPTexture HPPApiVulkanSample::load_texture(const std::string                                  &file,
+                                            vkb::scene_graph::components::HPPImage::ContentType content_type,
+                                            vk::SamplerAddressMode                              address_mode)
 {
 	HPPTexture texture;
 
@@ -929,16 +938,19 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::common::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined,
-	                                     vk::ImageLayout::eTransferDstOptimal, subresource_range);
+	vkb::common::image_layout_transition(
+	    command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresource_range);
 
 	// Copy mip levels from staging buffer
-	command_buffer.copyBufferToImage(stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal,
-	                                 bufferCopyRegions);
+	command_buffer.copyBufferToImage(
+	    stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal, bufferCopyRegions);
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::common::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal,
-	                                     vk::ImageLayout::eShaderReadOnlyOptimal, subresource_range);
+	vkb::common::image_layout_transition(command_buffer,
+	                                     texture.image->get_vk_image().get_handle(),
+	                                     vk::ImageLayout::eTransferDstOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -947,8 +959,9 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type,
-                                                  vk::SamplerAddressMode address_mode)
+HPPTexture HPPApiVulkanSample::load_texture_array(const std::string                                  &file,
+                                                  vkb::scene_graph::components::HPPImage::ContentType content_type,
+                                                  vk::SamplerAddressMode                              address_mode)
 {
 	HPPTexture texture{};
 
@@ -991,16 +1004,19 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::common::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined,
-	                                     vk::ImageLayout::eTransferDstOptimal, subresource_range);
+	vkb::common::image_layout_transition(
+	    command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresource_range);
 
 	// Copy mip levels from staging buffer
-	command_buffer.copyBufferToImage(stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal,
-	                                 buffer_copy_regions);
+	command_buffer.copyBufferToImage(
+	    stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal, buffer_copy_regions);
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::common::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal,
-	                                     vk::ImageLayout::eShaderReadOnlyOptimal, subresource_range);
+	vkb::common::image_layout_transition(command_buffer,
+	                                     texture.image->get_vk_image().get_handle(),
+	                                     vk::ImageLayout::eTransferDstOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1052,16 +1068,19 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::common::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined,
-	                                     vk::ImageLayout::eTransferDstOptimal, subresource_range);
+	vkb::common::image_layout_transition(
+	    command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresource_range);
 
 	// Copy mip levels from staging buffer
-	command_buffer.copyBufferToImage(stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal,
-	                                 buffer_copy_regions);
+	command_buffer.copyBufferToImage(
+	    stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal, buffer_copy_regions);
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::common::image_layout_transition(command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal,
-	                                     vk::ImageLayout::eShaderReadOnlyOptimal, subresource_range);
+	vkb::common::image_layout_transition(command_buffer,
+	                                     texture.image->get_vk_image().get_handle(),
+	                                     vk::ImageLayout::eTransferDstOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     subresource_range);
 
 	get_device().flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1070,8 +1089,8 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 	return texture;
 }
 
-std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> HPPApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer,
-                                                                                         vk::BufferUsageFlags additional_buffer_usage_flags)
+std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>
+    HPPApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer, vk::BufferUsageFlags additional_buffer_usage_flags)
 {
 	vkb::HPPGLTFLoader loader{get_device()};
 

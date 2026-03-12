@@ -203,9 +203,19 @@ vk::Pipeline HPPTextureLoading::create_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
 
-	return vkb::common::create_graphics_pipeline(get_device().get_handle(), pipeline_cache, shader_stages, vertex_input_state,
-	                                             vk::PrimitiveTopology::eTriangleList, 0, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
-	                                             vk::FrontFace::eCounterClockwise, {blend_attachment_state}, depth_stencil_state, pipeline_layout, render_pass);
+	return vkb::common::create_graphics_pipeline(get_device().get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             vertex_input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 void HPPTextureLoading::draw()
@@ -400,8 +410,8 @@ void HPPTextureLoading::load_texture()
 		// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
 		// Source pipeline stage stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
 		// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr,
-		                             image_memory_barrier);
+		copy_command.pipelineBarrier(
+		    vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, image_memory_barrier);
 
 		// Store current layout for later reuse
 		texture.image_layout = vk::ImageLayout::eShaderReadOnlyOptimal;
@@ -495,9 +505,13 @@ void HPPTextureLoading::load_texture()
 		maxAnisotropy = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 	}
 
-	texture.sampler =
-	    vkb::common::create_sampler(get_device().get_gpu().get_handle(), get_device().get_handle(), format, vk::Filter::eLinear,
-	                                vk::SamplerAddressMode::eClampToEdge, maxAnisotropy, (use_staging) ? static_cast<float>(texture.mip_levels) : 0.0f);
+	texture.sampler = vkb::common::create_sampler(get_device().get_gpu().get_handle(),
+	                                              get_device().get_handle(),
+	                                              format,
+	                                              vk::Filter::eLinear,
+	                                              vk::SamplerAddressMode::eClampToEdge,
+	                                              maxAnisotropy,
+	                                              (use_staging) ? static_cast<float>(texture.mip_levels) : 0.0f);
 
 	// Create image view
 	// Textures are not directly accessed by the shaders and
