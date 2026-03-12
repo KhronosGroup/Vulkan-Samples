@@ -69,6 +69,7 @@ bool Frustum::check_sphere(glm::vec3 pos, float radius)
 	}
 	return true;
 }
+
 const std::array<glm::vec4, 6> &Frustum::get_planes() const
 {
 	return planes;

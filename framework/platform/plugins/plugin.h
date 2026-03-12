@@ -53,16 +53,20 @@ namespace tags
 {
 struct Entrypoint
 {};
+
 struct FullControl
 {};
+
 struct Stopping
 {};
+
 struct Passive
 {};
 }        // namespace tags
 
 /**
- * @brief Associate how plugins can interact with each other. This interoperability is decided by comparing tags of different plugins. The plugins inclusion and exclusion lists are populated by this function
+ * @brief Associate how plugins can interact with each other. This interoperability is decided by comparing tags of different plugins. The plugins inclusion and
+ * exclusion lists are populated by this function
  *
  * @param plugins A list of plugins which are used together
  * @return std::vector<Plugin *> A list of plugins which are used together

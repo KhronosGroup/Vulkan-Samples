@@ -100,6 +100,7 @@ class FragmentDensityMap : public ApiVulkanSample
 	struct
 	{
 		ImageData image{};
+
 		struct
 		{
 			PipelineData    pipeline{};

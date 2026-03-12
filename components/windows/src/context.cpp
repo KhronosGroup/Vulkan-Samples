@@ -80,8 +80,7 @@ inline std::vector<std::string> get_args()
 	return args;
 }
 
-WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow) :
-    PlatformContext{}
+WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow) : PlatformContext{}
 {
 	_external_storage_directory = "";
 	_temp_directory             = get_temp_path_from_environment();

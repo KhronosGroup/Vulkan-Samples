@@ -81,8 +81,7 @@ sg::Light &add_light(sg::Scene                 &scene,
  * @param parent_node The parent node for the line, defaults to root
  * @return The newly created light component
  */
-sg::Light &
-    add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg::LightProperties &props = {}, vkb::scene_graph::NodeC *parent_node = nullptr);
+sg::Light &add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg::LightProperties &props = {}, vkb::scene_graph::NodeC *parent_node = nullptr);
 
 /**
  * @brief Adds a directional light to the scene with the specified parameters
@@ -92,10 +91,8 @@ sg::Light &
  * @param parent_node The parent node for the line, defaults to root
  * @return The newly created light component
  */
-sg::Light &add_directional_light(sg::Scene                 &scene,
-                                 const glm::quat           &rotation,
-                                 const sg::LightProperties &props       = {},
-                                 vkb::scene_graph::NodeC   *parent_node = nullptr);
+sg::Light &
+    add_directional_light(sg::Scene &scene, const glm::quat &rotation, const sg::LightProperties &props = {}, vkb::scene_graph::NodeC *parent_node = nullptr);
 
 /**
  * @brief Adds a spot light to the scene with the specified parameters

@@ -53,7 +53,8 @@ class ColorWriteEnable : public ApiVulkanSample
 		VkDeviceMemory mem;
 		VkImageView    view;
 		VkFormat       format;
-		void           destroy(VkDevice device)
+
+		void destroy(VkDevice device)
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);

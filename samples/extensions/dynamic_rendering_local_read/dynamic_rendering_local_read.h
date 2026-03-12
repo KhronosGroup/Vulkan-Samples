@@ -98,6 +98,7 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 		VkImageView    view{VK_NULL_HANDLE};
 		VkFormat       format{VK_FORMAT_UNDEFINED};
 	};
+
 	struct Attachments
 	{
 		FrameBufferAttachment positionDepth, normal, albedo;

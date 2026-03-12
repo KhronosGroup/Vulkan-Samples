@@ -25,7 +25,7 @@
 
 #include "api_vulkan_sample.h"
 
-#define MESH_DENSITY 2048
+#define MESH_DENSITY      2048
 #define MESH_DENSITY_HALF 1024
 
 class MemoryBudget : public ApiVulkanSample
@@ -94,6 +94,7 @@ class MemoryBudget : public ApiVulkanSample
 	} uniform_buffers;
 
 	VkPipelineLayout pipeline_layout{};
+
 	struct Pipelines
 	{
 		VkPipeline instanced_rocks{};
@@ -102,6 +103,7 @@ class MemoryBudget : public ApiVulkanSample
 	} pipelines;
 
 	VkDescriptorSetLayout descriptor_set_layout{};
+
 	struct DescriptorSets
 	{
 		VkDescriptorSet instanced_rocks{};

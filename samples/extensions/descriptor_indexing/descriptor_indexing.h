@@ -71,6 +71,7 @@ class DescriptorIndexing : public ApiVulkanSample
 		VkImageView    image_view{};
 		VkDeviceMemory memory{};
 	};
+
 	std::vector<TestImage> test_images;
 	void                   create_images();
 	TestImage              create_image(const float rgb[3], unsigned image_seed);

@@ -34,8 +34,7 @@ BatchMode::BatchMode() :
                    {"skip", "Skip a sample by id"},
                    {"tag", "Filter samples by tags"},
                    {"wrap-to-start", "Once all configurations have run wrap to the start"}})
-{
-}
+{}
 
 bool BatchMode::handle_command(std::deque<std::string> &arguments) const
 {

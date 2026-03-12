@@ -251,9 +251,9 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	template <typename... ConstructorArgs>
 	PostProcessingSubpass &add_subpass(ConstructorArgs &&...args)
 	{
-		ShaderSource vs_copy         = get_triangle_vs();
-		auto         new_subpass     = std::make_unique<PostProcessingSubpass>(this, get_render_context(), std::move(vs_copy), std::forward<ConstructorArgs>(args)...);
-		auto        &new_subpass_ref = *new_subpass;
+		ShaderSource vs_copy  = get_triangle_vs();
+		auto  new_subpass     = std::make_unique<PostProcessingSubpass>(this, get_render_context(), std::move(vs_copy), std::forward<ConstructorArgs>(args)...);
+		auto &new_subpass_ref = *new_subpass;
 
 		pipeline.add_subpass(std::move(new_subpass));
 

@@ -27,10 +27,8 @@
 
 namespace plugins
 {
-FileLogger::FileLogger() :
-    FileLoggerTags("File Logger", "Enable log output to a file.", {}, {}, {{"log-file", "Write log messages to the given file name"}})
-{
-}
+FileLogger::FileLogger() : FileLoggerTags("File Logger", "Enable log output to a file.", {}, {}, {{"log-file", "Write log messages to the given file name"}})
+{}
 
 bool FileLogger::handle_option(std::deque<std::string> &arguments)
 {

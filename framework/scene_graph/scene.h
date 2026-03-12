@@ -74,10 +74,10 @@ class Scene
 	void set_components(std::vector<std::unique_ptr<T>> &&components)
 	{
 		std::vector<std::unique_ptr<Component>> result(components.size());
-		std::transform(components.begin(), components.end(), result.begin(),
-		               [](std::unique_ptr<T> &component) -> std::unique_ptr<Component> {
-			               return std::unique_ptr<Component>(std::move(component));
-		               });
+		std::transform(components.begin(),
+		               components.end(),
+		               result.begin(),
+		               [](std::unique_ptr<T> &component) -> std::unique_ptr<Component> { return std::unique_ptr<Component>(std::move(component)); });
 		set_components(typeid(T), std::move(result));
 	}
 
@@ -102,10 +102,10 @@ class Scene
 			auto &scene_components = get_components(typeid(T));
 
 			result.resize(scene_components.size());
-			std::transform(scene_components.begin(), scene_components.end(), result.begin(),
-			               [](const std::unique_ptr<Component> &component) -> T * {
-				               return dynamic_cast<T *>(component.get());
-			               });
+			std::transform(scene_components.begin(),
+			               scene_components.end(),
+			               result.begin(),
+			               [](const std::unique_ptr<Component> &component) -> T * { return dynamic_cast<T *>(component.get()); });
 		}
 
 		return result;

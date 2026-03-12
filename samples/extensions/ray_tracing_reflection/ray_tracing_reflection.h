@@ -63,7 +63,8 @@ class RaytracingReflection : public ApiVulkanSample
   public:
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR    ray_tracing_pipeline_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR   acceleration_structure_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR};
-	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{
+	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
 
 	std::vector<AccelerationStructure> bottom_level_acceleration_structure;
 	AccelerationStructure              top_level_acceleration_structure;
@@ -91,6 +92,7 @@ class RaytracingReflection : public ApiVulkanSample
 		glm::mat4 view_inverse;
 		glm::mat4 proj_inverse;
 	} uniform_data;
+
 	std::unique_ptr<vkb::core::BufferC> ubo;
 
 	struct ObjBuffers
@@ -100,6 +102,7 @@ class RaytracingReflection : public ApiVulkanSample
 		VkDeviceAddress materials;
 		VkDeviceAddress materialIndices;
 	} obj_buffers;
+
 	std::unique_ptr<vkb::core::BufferC> scene_desc;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};

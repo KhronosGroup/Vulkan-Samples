@@ -24,7 +24,7 @@
 #include <CL/opencl.h>
 #include <functional>
 
-#define OPENCL_EXPORTED_FUNCTION(func_name) extern std::function<decltype(func_name)> func_name##_ptr
+#define OPENCL_EXPORTED_FUNCTION(func_name)           extern std::function<decltype(func_name)> func_name##_ptr
 #define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) extern std::function<decltype(func_name)> func_name##_ptr
 #include "open_cl_functions.inl"
 #undef OPENCL_EXPORTED_FUNCTION
@@ -35,30 +35,30 @@ void           unload_opencl();
 
 #ifdef CL_FUNCTION_DEFINITIONS
 
-#	define clCreateContext clCreateContext_ptr
-#	define clGetDeviceIDs clGetDeviceIDs_ptr
-#	define clGetPlatformIDs clGetPlatformIDs_ptr
-#	define clCreateBuffer clCreateBuffer_ptr
-#	define clReleaseMemObject clReleaseMemObject_ptr
-#	define clCreateProgramWithSource clCreateProgramWithSource_ptr
-#	define clBuildProgram clBuildProgram_ptr
-#	define clCreateKernel clCreateKernel_ptr
-#	define clSetKernelArg clSetKernelArg_ptr
-#	define clEnqueueNDRangeKernel clEnqueueNDRangeKernel_ptr
-#	define clFlush clFlush_ptr
-#	define clFinish clFinish_ptr
-#	define clCreateCommandQueue clCreateCommandQueue_ptr
-#	define clReleaseContext clReleaseContext_ptr
-#	define clGetPlatformInfo clGetPlatformInfo_ptr
+#	define clCreateContext                          clCreateContext_ptr
+#	define clGetDeviceIDs                           clGetDeviceIDs_ptr
+#	define clGetPlatformIDs                         clGetPlatformIDs_ptr
+#	define clCreateBuffer                           clCreateBuffer_ptr
+#	define clReleaseMemObject                       clReleaseMemObject_ptr
+#	define clCreateProgramWithSource                clCreateProgramWithSource_ptr
+#	define clBuildProgram                           clBuildProgram_ptr
+#	define clCreateKernel                           clCreateKernel_ptr
+#	define clSetKernelArg                           clSetKernelArg_ptr
+#	define clEnqueueNDRangeKernel                   clEnqueueNDRangeKernel_ptr
+#	define clFlush                                  clFlush_ptr
+#	define clFinish                                 clFinish_ptr
+#	define clCreateCommandQueue                     clCreateCommandQueue_ptr
+#	define clReleaseContext                         clReleaseContext_ptr
+#	define clGetPlatformInfo                        clGetPlatformInfo_ptr
 #	define clGetExtensionFunctionAddressForPlatform clGetExtensionFunctionAddressForPlatform_ptr
-#	define clImportMemoryARM clImportMemoryARM_ptr
-#	define clCreateImageWithProperties clCreateImageWithProperties_ptr
-#	define clEnqueueWaitSemaphoresKHR clEnqueueWaitSemaphoresKHR_ptr
-#	define clEnqueueSignalSemaphoresKHR clEnqueueSignalSemaphoresKHR_ptr
-#	define clEnqueueAcquireExternalMemObjectsKHR clEnqueueAcquireExternalMemObjectsKHR_ptr
-#	define clEnqueueReleaseExternalMemObjectsKHR clEnqueueReleaseExternalMemObjectsKHR_ptr
-#	define clCreateSemaphoreWithPropertiesKHR clCreateSemaphoreWithPropertiesKHR_ptr
-#	define clReleaseSemaphoreKHR clReleaseSemaphoreKHR_ptr
-#	define clGetDeviceInfo clGetDeviceInfo_ptr
+#	define clImportMemoryARM                        clImportMemoryARM_ptr
+#	define clCreateImageWithProperties              clCreateImageWithProperties_ptr
+#	define clEnqueueWaitSemaphoresKHR               clEnqueueWaitSemaphoresKHR_ptr
+#	define clEnqueueSignalSemaphoresKHR             clEnqueueSignalSemaphoresKHR_ptr
+#	define clEnqueueAcquireExternalMemObjectsKHR    clEnqueueAcquireExternalMemObjectsKHR_ptr
+#	define clEnqueueReleaseExternalMemObjectsKHR    clEnqueueReleaseExternalMemObjectsKHR_ptr
+#	define clCreateSemaphoreWithPropertiesKHR       clCreateSemaphoreWithPropertiesKHR_ptr
+#	define clReleaseSemaphoreKHR                    clReleaseSemaphoreKHR_ptr
+#	define clGetDeviceInfo                          clGetDeviceInfo_ptr
 
 #endif

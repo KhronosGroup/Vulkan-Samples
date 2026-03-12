@@ -72,17 +72,20 @@ class RenderContext
 	using RenderTargetType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 	using SwapchainType    = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPSwapchain, vkb::Swapchain>::type;
 
-	using Extent2DType                       = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
-	using FormatType                         = typename std::conditional<bindingType == BindingType::Cpp, vk::Format, VkFormat>::type;
-	using ImageCompressionFixedRateFlagsType = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFixedRateFlagsEXT, VkImageCompressionFixedRateFlagsEXT>::type;
-	using ImageCompressionFlagsType          = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFlagsEXT, VkImageCompressionFlagsEXT>::type;
-	using ImageUsageFlagBitsType             = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageUsageFlagBits, VkImageUsageFlagBits>::type;
-	using PipelineStageFlagsType             = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineStageFlags, VkPipelineStageFlags>::type;
-	using PresentModeType                    = typename std::conditional<bindingType == BindingType::Cpp, vk::PresentModeKHR, VkPresentModeKHR>::type;
-	using SemaphoreType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
-	using SurfaceFormatType                  = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
-	using SurfaceTransformFlagBitsType       = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceTransformFlagBitsKHR, VkSurfaceTransformFlagBitsKHR>::type;
-	using SurfaceType                        = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using Extent2DType = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using FormatType   = typename std::conditional<bindingType == BindingType::Cpp, vk::Format, VkFormat>::type;
+	using ImageCompressionFixedRateFlagsType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFixedRateFlagsEXT, VkImageCompressionFixedRateFlagsEXT>::type;
+	using ImageCompressionFlagsType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vk::ImageCompressionFlagsEXT, VkImageCompressionFlagsEXT>::type;
+	using ImageUsageFlagBitsType = typename std::conditional<bindingType == BindingType::Cpp, vk::ImageUsageFlagBits, VkImageUsageFlagBits>::type;
+	using PipelineStageFlagsType = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineStageFlags, VkPipelineStageFlags>::type;
+	using PresentModeType        = typename std::conditional<bindingType == BindingType::Cpp, vk::PresentModeKHR, VkPresentModeKHR>::type;
+	using SemaphoreType          = typename std::conditional<bindingType == BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
+	using SurfaceFormatType      = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
+	using SurfaceTransformFlagBitsType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceTransformFlagBitsKHR, VkSurfaceTransformFlagBitsKHR>::type;
+	using SurfaceType = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
 	/**
 	 * @brief Constructor
@@ -263,7 +266,10 @@ class RenderContext
 	virtual void wait_frame();
 
   private:
-	void          initialize_swapchain(vk::SurfaceKHR surface, vk::PresentModeKHR present_movde, std::vector<vk::PresentModeKHR> const &present_mode_priority_list, std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list);
+	void          initialize_swapchain(vk::SurfaceKHR                           surface,
+	                                   vk::PresentModeKHR                       present_movde,
+	                                   std::vector<vk::PresentModeKHR> const   &present_mode_priority_list,
+	                                   std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list);
 	void          submit_impl(const std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> &command_buffers);
 	vk::Semaphore submit_impl(vkb::core::HPPQueue const                                       &queue,
 	                          std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> const &command_buffers,
@@ -281,12 +287,12 @@ class RenderContext
 	std::vector<std::unique_ptr<vkb::rendering::RenderFrameCpp>> frames;
 	vk::SurfaceTransformFlagBitsKHR                              pre_transform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
 	bool                                                         prepared      = false;
-	const vkb::core::HPPQueue                                   &queue;        // If swapchain exists, then this will be a present supported queue, else a graphics queue
-	vk::Extent2D                                                 surface_extent;
-	std::unique_ptr<vkb::core::HPPSwapchain>                     swapchain;
-	vkb::core::HPPSwapchainProperties                            swapchain_properties;
-	size_t                                                       thread_count = 1;
-	const vkb::Window                                           &window;
+	const vkb::core::HPPQueue               &queue;        // If swapchain exists, then this will be a present supported queue, else a graphics queue
+	vk::Extent2D                             surface_extent;
+	std::unique_ptr<vkb::core::HPPSwapchain> swapchain;
+	vkb::core::HPPSwapchainProperties        swapchain_properties;
+	size_t                                   thread_count = 1;
+	const vkb::Window                       &window;
 };
 
 using RenderContextC   = RenderContext<vkb::BindingType::C>;
@@ -339,8 +345,8 @@ inline void RenderContext<bindingType>::initialize_swapchain(vk::SurfaceKHR     
 
 		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 		{
-			swapchain =
-			    std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
+			swapchain = std::make_unique<vkb::core::HPPSwapchain>(
+			    device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
 		}
 		else
 		{

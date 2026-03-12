@@ -112,8 +112,7 @@ void MultiDrawIndirect::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 
 	// Query whether the device supports buffer device addresses
-	m_supports_buffer_device =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, bufferDeviceAddress);
+	m_supports_buffer_device = REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, bufferDeviceAddress);
 
 	// This sample references 128 objects. We need to check whether this is supported by the device
 	VkPhysicalDeviceProperties physical_device_properties;
@@ -121,7 +120,8 @@ void MultiDrawIndirect::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 
 	if (physical_device_properties.limits.maxPerStageDescriptorSamplers < 128)
 	{
-		throw std::runtime_error(fmt::format(FMT_STRING("This sample requires at least 128 descriptor samplers, but device only supports {:d}"), physical_device_properties.limits.maxPerStageDescriptorSamplers));
+		throw std::runtime_error(fmt::format(FMT_STRING("This sample requires at least 128 descriptor samplers, but device only supports {:d}"),
+		                                     physical_device_properties.limits.maxPerStageDescriptorSamplers));
 	}
 }
 
@@ -166,7 +166,8 @@ void MultiDrawIndirect::build_command_buffers()
 
 		if (m_enable_mdi && m_supports_mdi)
 		{
-			vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, static_cast<uint32_t>(cpu_commands.size()), sizeof(cpu_commands[0]));
+			vkCmdDrawIndexedIndirect(
+			    draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, static_cast<uint32_t>(cpu_commands.size()), sizeof(cpu_commands[0]));
 		}
 		else
 		{
@@ -365,9 +366,7 @@ void MultiDrawIndirect::load_scene()
 		VkDescriptorImageInfo image_descriptor;
 		image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		image_descriptor.imageView   = texture.image_view->get_handle();
-		image_descriptor.sampler     = (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) ?
-		                                   sampler_linear :
-		                                   sampler_nearest;
+		image_descriptor.sampler     = (fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) ? sampler_linear : sampler_nearest;
 		image_descriptors.push_back(image_descriptor);
 		textures.emplace_back(std::move(texture));
 
@@ -401,10 +400,9 @@ void MultiDrawIndirect::load_scene()
 				model.triangles.resize(nTriangles);
 				for (size_t i = 0; i < nTriangles; ++i)
 				{
-					model.triangles[i] = {
-					    static_cast<uint16_t>(temp_buffer[3 * i]),
-					    static_cast<uint16_t>(temp_buffer[3 * i + 1]),
-					    static_cast<uint16_t>(temp_buffer[3 * i + 2])};
+					model.triangles[i] = {static_cast<uint16_t>(temp_buffer[3 * i]),
+					                      static_cast<uint16_t>(temp_buffer[3 * i + 1]),
+					                      static_cast<uint16_t>(temp_buffer[3 * i + 2])};
 				}
 			}
 			model.bounding_sphere = BoundingSphere(pts);
@@ -448,18 +446,25 @@ void MultiDrawIndirect::initialize_resources()
 	auto staging_model_buffer  = vkb::core::BufferC::create_staging_buffer(get_device(), model_buffer_size, nullptr);
 
 	// We will store the GPU commands in the indirect call buffer
-	constexpr auto default_indirect_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-	auto           indirect_flags         = default_indirect_flags;
+	constexpr auto default_indirect_flags =
+	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	auto indirect_flags = default_indirect_flags;
 	if (m_supports_buffer_device)
 	{
 		indirect_flags |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	}
-	indirect_call_buffer = std::make_unique<vkb::core::BufferC>(get_device(), models.size() * sizeof(VkDrawIndexedIndirectCommand), indirect_flags, VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
+	indirect_call_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                            models.size() * sizeof(VkDrawIndexedIndirectCommand),
+	                                                            indirect_flags,
+	                                                            VMA_MEMORY_USAGE_GPU_ONLY,
+	                                                            VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	                                                            queue_families);
 
 	// Create a buffer containing the addresses of the indirect calls.
 	// In this sample, the order of the addresses will match that of the other buffers, but in general they could be in any order
-	const size_t address_buffer_size    = sizeof(VkDeviceAddress);
-	auto         staging_address_buffer = std::make_unique<vkb::core::BufferC>(get_device(), address_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	const size_t address_buffer_size = sizeof(VkDeviceAddress);
+	auto         staging_address_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), address_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	if (m_supports_buffer_device)
 	{
 		auto *destPtr = (uint64_t *) staging_address_buffer->get_data();
@@ -492,8 +497,14 @@ void MultiDrawIndirect::initialize_resources()
 
 	auto cmd = get_device().get_command_pool().request_command_buffer();
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer, VkBufferUsageFlags buffer_usage_flags) {
-		auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
+	auto copy = [this, &cmd](vkb::core::BufferC &staging_buffer, VkBufferUsageFlags buffer_usage_flags)
+	{
+		auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                          staging_buffer.get_size(),
+		                                                          buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		                                                          VMA_MEMORY_USAGE_GPU_ONLY,
+		                                                          VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		                                                          queue_families);
 		cmd->copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
 		vkb::BufferMemoryBarrier barrier;
@@ -523,11 +534,10 @@ void MultiDrawIndirect::initialize_resources()
 
 void MultiDrawIndirect::create_pipeline()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6},
-	    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 * static_cast<uint32_t>(textures.size())},
-	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6}};
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 3);
+	std::vector<VkDescriptorPoolSize> pool_sizes                  = {{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6},
+	                                                                 {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 * static_cast<uint32_t>(textures.size())},
+	                                                                 {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6}};
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 3);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
 	// The model information will be used to index textures in the fragment shader,
@@ -558,20 +568,22 @@ void MultiDrawIndirect::create_pipeline()
 	command_buffer_binding.stageFlags      = VK_SHADER_STAGE_COMPUTE_BIT;
 
 	// Create descriptors
-	auto create_descriptors = [this](const std::vector<VkDescriptorSetLayoutBinding> &set_layout_bindings, VkDescriptorSetLayout &_descriptor_set_layout, VkPipelineLayout &_pipeline_layout) {
-		VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	auto create_descriptors = [this](const std::vector<VkDescriptorSetLayoutBinding> &set_layout_bindings,
+	                                 VkDescriptorSetLayout                           &_descriptor_set_layout,
+	                                 VkPipelineLayout                                &_pipeline_layout)
+	{
+		VkDescriptorSetLayoutCreateInfo descriptor_layout =
+		    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &_descriptor_set_layout));
 
-		VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-		    vkb::initializers::pipeline_layout_create_info(
-		        &_descriptor_set_layout,
-		        1);
+		VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&_descriptor_set_layout, 1);
 
 		VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &_pipeline_layout));
 	};
 
 	// Render pipeline
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {model_information_binding, image_array_binding, scene_uniform_binding, command_buffer_binding};
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+	    model_information_binding, image_array_binding, scene_uniform_binding, command_buffer_binding};
 	create_descriptors(set_layout_bindings, descriptor_set_layout, pipeline_layout);
 
 	// Compute pipeline
@@ -593,29 +605,27 @@ void MultiDrawIndirect::create_pipeline()
 		create_descriptors(device_address_layout_bindings, device_address_descriptor_set_layout, device_address_pipeline_layout);
 	}
 
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
-	depth_stencil_state.depthBoundsTestEnable                 = VK_FALSE;
-	depth_stencil_state.minDepthBounds                        = 0.f;
-	depth_stencil_state.maxDepthBounds                        = 1.f;
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
+	depth_stencil_state.depthBoundsTestEnable = VK_FALSE;
+	depth_stencil_state.minDepthBounds        = 0.f;
+	depth_stencil_state.maxDepthBounds        = 1.f;
 
 	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
@@ -659,7 +669,8 @@ void MultiDrawIndirect::create_pipeline()
 
 void MultiDrawIndirect::create_compute_pipeline()
 {
-	auto create = [this](VkPipelineLayout &layout, VkPipeline &_pipeline, const char *filename) {
+	auto create = [this](VkPipelineLayout &layout, VkPipeline &_pipeline, const char *filename)
+	{
 		VkComputePipelineCreateInfo compute_create_info = vkb::initializers::compute_pipeline_create_info(layout, 0);
 		compute_create_info.stage                       = load_shader(filename, VK_SHADER_STAGE_COMPUTE_BIT);
 
@@ -683,27 +694,32 @@ void MultiDrawIndirect::initialize_descriptors()
 		AddressPipeline
 	};
 
-	auto bind = [this](VkDescriptorSet &_descriptor_set, VkDescriptorSetLayout &_descriptor_set_layout, Target target) {
+	auto bind = [this](VkDescriptorSet &_descriptor_set, VkDescriptorSetLayout &_descriptor_set_layout, Target target)
+	{
 		VkDescriptorSetAllocateInfo descriptor_set_allocate_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &_descriptor_set_layout, 1);
 		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_allocate_info, &_descriptor_set));
 
 		VkDescriptorBufferInfo model_buffer_descriptor = create_descriptor(*model_information_buffer);
-		VkWriteDescriptorSet   model_write             = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, &model_buffer_descriptor, 1);
+		VkWriteDescriptorSet   model_write =
+		    vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, &model_buffer_descriptor, 1);
 
-		VkWriteDescriptorSet texture_array_write = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, image_descriptors.data(), static_cast<uint32_t>(image_descriptors.size()));
+		VkWriteDescriptorSet texture_array_write = vkb::initializers::write_descriptor_set(
+		    _descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, image_descriptors.data(), static_cast<uint32_t>(image_descriptors.size()));
 
 		VkDescriptorBufferInfo scene_descriptor = create_descriptor(*scene_uniform_buffer);
-		VkWriteDescriptorSet   scene_write      = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &scene_descriptor, 1);
+		VkWriteDescriptorSet scene_write = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &scene_descriptor, 1);
 
 		VkDescriptorBufferInfo draw_command_descriptor = create_descriptor(*indirect_call_buffer);
-		VkWriteDescriptorSet   draw_command_write      = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &draw_command_descriptor, 1);
+		VkWriteDescriptorSet   draw_command_write =
+		    vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &draw_command_descriptor, 1);
 
 		VkDescriptorBufferInfo device_address_descriptor;
 		VkWriteDescriptorSet   device_address_write;
 		if (m_supports_buffer_device && device_address_buffer)
 		{
 			device_address_descriptor = create_descriptor(*device_address_buffer);
-			device_address_write      = vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &device_address_descriptor, 1);
+			device_address_write =
+			    vkb::initializers::write_descriptor_set(_descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &device_address_descriptor, 1);
 		}
 
 		std::vector<VkWriteDescriptorSet> write_descriptor_sets;
@@ -740,8 +756,12 @@ void MultiDrawIndirect::update_scene_uniform()
 {
 	if (!scene_uniform_buffer)
 	{
-		scene_uniform_buffer = std::make_unique<vkb::core::BufferC>(
-		    get_device(), sizeof(SceneUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
+		scene_uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                            sizeof(SceneUniform),
+		                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                            VMA_MEMORY_USAGE_CPU_TO_GPU,
+		                                                            VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		                                                            queue_families);
 	}
 	scene_uniform.proj        = camera.matrices.perspective;
 	scene_uniform.view        = camera.matrices.view;
@@ -798,8 +818,7 @@ void MultiDrawIndirect::render(float delta_time)
 }
 
 void MultiDrawIndirect::finish()
-{
-}
+{}
 
 void MultiDrawIndirect::run_cull()
 {
@@ -822,7 +841,8 @@ void MultiDrawIndirect::run_gpu_cull()
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 
 	vkBeginCommandBuffer(cmd, &begin);
-	auto bind = [&cmd](VkPipeline &_pipeline, VkPipelineLayout &_pipeline_layout, VkDescriptorSet &_descriptor_set) {
+	auto bind = [&cmd](VkPipeline &_pipeline, VkPipelineLayout &_pipeline_layout, VkDescriptorSet &_descriptor_set)
+	{
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _pipeline_layout, 0, 1, &_descriptor_set, 0, nullptr);
 	};
@@ -859,9 +879,9 @@ namespace
  */
 struct VisibilityTester
 {
-	explicit VisibilityTester(glm::mat4x4 view_matrix) :
-	    planes(get_view_planes(view_matrix))
+	explicit VisibilityTester(glm::mat4x4 view_matrix) : planes(get_view_planes(view_matrix))
 	{}
+
 	std::array<glm::vec4, 6> planes;
 
 	static std::array<glm::vec4, 6> get_view_planes(const glm::mat4x4 &mat)
@@ -892,10 +912,12 @@ struct VisibilityTester
 	{
 		using namespace glm;
 		std::array<int, 4> V{0, 1, 4, 5};
-		return std::ranges::all_of(V, [this, origin, radius](size_t i) {
-			const auto &plane = planes[i];
-			return dot(origin, vec3(plane.xyz)) + plane.w + radius >= 0;
-		});
+		return std::ranges::all_of(V,
+		                           [this, origin, radius](size_t i)
+		                           {
+			                           const auto &plane = planes[i];
+			                           return dot(origin, vec3(plane.xyz)) + plane.w + radius >= 0;
+		                           });
 	}
 };
 
@@ -924,7 +946,10 @@ void MultiDrawIndirect::cpu_cull()
 
 	if (!cpu_staging_buffer || cpu_staging_buffer->get_size() != call_buffer_size)
 	{
-		cpu_staging_buffer = std::make_unique<vkb::core::BufferC>(get_device(), models.size() * sizeof(VkDrawIndexedIndirectCommand), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		cpu_staging_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                          models.size() * sizeof(VkDrawIndexedIndirectCommand),
+		                                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	cpu_staging_buffer->update(cpu_commands.data(), call_buffer_size, 0);

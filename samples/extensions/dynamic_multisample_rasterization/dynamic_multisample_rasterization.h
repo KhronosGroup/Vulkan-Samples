@@ -38,6 +38,7 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 		vkb::scene_graph::NodeC *node;
 		vkb::sg::SubMesh        *sub_mesh;
 	};
+
 	std::vector<SceneNode> scene_nodes_opaque;
 	std::vector<SceneNode> scene_nodes_opaque_flipped;
 	std::vector<SceneNode> scene_nodes_transparent;
@@ -48,6 +49,7 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 view;
 	} uniform_data;
+
 	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
 	VkPipeline            pipeline_opaque{VK_NULL_HANDLE};

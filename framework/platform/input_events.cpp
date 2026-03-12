@@ -19,22 +19,16 @@
 
 namespace vkb
 {
-InputEvent::InputEvent(EventSource source) :
-    source{source}
-{
-}
+InputEvent::InputEvent(EventSource source) : source{source}
+{}
 
 EventSource InputEvent::get_source() const
 {
 	return source;
 }
 
-KeyInputEvent::KeyInputEvent(KeyCode code, KeyAction action) :
-    InputEvent{EventSource::Keyboard},
-    code{code},
-    action{action}
-{
-}
+KeyInputEvent::KeyInputEvent(KeyCode code, KeyAction action) : InputEvent{EventSource::Keyboard}, code{code}, action{action}
+{}
 
 KeyCode KeyInputEvent::get_code() const
 {
@@ -47,13 +41,8 @@ KeyAction KeyInputEvent::get_action() const
 }
 
 MouseButtonInputEvent::MouseButtonInputEvent(MouseButton button, MouseAction action, float pos_x, float pos_y) :
-    InputEvent{EventSource::Mouse},
-    button{button},
-    action{action},
-    pos_x{pos_x},
-    pos_y{pos_y}
-{
-}
+    InputEvent{EventSource::Mouse}, button{button}, action{action}, pos_x{pos_x}, pos_y{pos_y}
+{}
 
 MouseButton MouseButtonInputEvent::get_button() const
 {
@@ -76,14 +65,8 @@ float MouseButtonInputEvent::get_pos_y() const
 }
 
 TouchInputEvent::TouchInputEvent(int32_t pointer_id, std::size_t touch_points, TouchAction action, float pos_x, float pos_y) :
-    InputEvent{EventSource::Touchscreen},
-    action{action},
-    pointer_id{pointer_id},
-    touch_points{touch_points},
-    pos_x{pos_x},
-    pos_y{pos_y}
-{
-}
+    InputEvent{EventSource::Touchscreen}, action{action}, pointer_id{pointer_id}, touch_points{touch_points}, pos_x{pos_x}, pos_y{pos_y}
+{}
 
 TouchAction TouchInputEvent::get_action() const
 {

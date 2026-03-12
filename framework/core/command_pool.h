@@ -44,11 +44,13 @@ namespace
 // type trait to get the default value for request_command_buffer
 template <typename T>
 struct DefaultCommandBufferLevelValue;
+
 template <>
 struct DefaultCommandBufferLevelValue<vk::CommandBufferLevel>
 {
 	static constexpr vk::CommandBufferLevel value = vk::CommandBufferLevel::ePrimary;
 };
+
 template <>
 struct DefaultCommandBufferLevelValue<VkCommandBufferLevel>
 {
@@ -75,14 +77,15 @@ class CommandPool : private vkb::core::CommandPoolBase
 	CommandPool &operator=(CommandPool<bindingType> &&other) = default;
 	~CommandPool()                                           = default;
 
-	vkb::core::Device<bindingType>                        &get_device();
-	CommandPoolType                                        get_handle() const;
-	uint32_t                                               get_queue_family_index() const;
-	vkb::rendering::RenderFrame<bindingType>              *get_render_frame();
-	vkb::CommandBufferResetMode                            get_reset_mode() const;
-	size_t                                                 get_thread_index() const;
-	std::shared_ptr<vkb::core::CommandBuffer<bindingType>> request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
-	void                                                   reset_pool();
+	vkb::core::Device<bindingType>           &get_device();
+	CommandPoolType                           get_handle() const;
+	uint32_t                                  get_queue_family_index() const;
+	vkb::rendering::RenderFrame<bindingType> *get_render_frame();
+	vkb::CommandBufferResetMode               get_reset_mode() const;
+	size_t                                    get_thread_index() const;
+	std::shared_ptr<vkb::core::CommandBuffer<bindingType>>
+	     request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
+	void reset_pool();
 };
 
 using CommandPoolC   = CommandPool<vkb::BindingType::C>;

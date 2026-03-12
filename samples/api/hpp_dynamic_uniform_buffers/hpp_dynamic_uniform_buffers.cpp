@@ -171,9 +171,8 @@ void HPPDynamicUniformBuffers::render(float delta_time)
 vk::DescriptorPool HPPDynamicUniformBuffers::create_descriptor_pool()
 {
 	// Example uses one ubo, on dynamic ubo, and one combined image sampler
-	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1},
-	                                                     {vk::DescriptorType::eUniformBufferDynamic, 1},
-	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
+	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eUniformBufferDynamic, 1}, {vk::DescriptorType::eCombinedImageSampler, 1}}};
 	return get_device().get_handle().createDescriptorPool(
 	    {.maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
 }
@@ -189,8 +188,9 @@ vk::DescriptorSetLayout HPPDynamicUniformBuffers::create_descriptor_set_layout()
 vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
 {
 	// Load shaders
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers", "base.vert.spv", vk::ShaderStageFlagBits::eVertex),
-	                                                                load_shader("dynamic_uniform_buffers", "base.frag.spv", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
+	    load_shader("dynamic_uniform_buffers", "base.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("dynamic_uniform_buffers", "base.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(Vertex), vk::VertexInputRate::eVertex};

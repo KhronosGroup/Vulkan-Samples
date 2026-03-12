@@ -45,6 +45,7 @@ class PushDescriptors : public ApiVulkanSample
 		glm::vec3                           rotation;
 		glm::mat4                           model_mat;
 	};
+
 	std::array<Cube, 2> cubes;
 
 	struct Models

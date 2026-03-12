@@ -117,6 +117,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 		vkb::scene_graph::NodeC *node;
 		vkb::sg::SubMesh        *sub_mesh;
 	};
+
 	std::vector<SceneNode> scene_elements_baseline;
 	std::vector<SceneNode> scene_elements_tess;
 

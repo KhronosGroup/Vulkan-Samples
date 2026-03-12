@@ -28,23 +28,23 @@ class RenderTarget;
 namespace core
 {
 /**
-* @brief A reference to a vkb::core::ImageView, plus an optional sampler for it
-*        - either coming from a vkb::RenderTarget or from a user-created Image.
-*/
+ * @brief A reference to a vkb::core::ImageView, plus an optional sampler for it
+ *        - either coming from a vkb::RenderTarget or from a user-created Image.
+ */
 class SampledImage
 {
   public:
 	/**
-	* @brief Constructs a SampledImage referencing the given image and with the given sampler.
-	* @remarks If the sampler is null, a default sampler will be used.
-	*/
+	 * @brief Constructs a SampledImage referencing the given image and with the given sampler.
+	 * @remarks If the sampler is null, a default sampler will be used.
+	 */
 	SampledImage(const ImageView &image_view, Sampler *sampler = nullptr);
 
 	/**
-	* @brief Constructs a SampledImage referencing a certain attachment of a render target.
-	* @remarks If the render target is null, the default is assumed.
-	*          If the sampler is null, a default sampler is used.
-	*/
+	 * @brief Constructs a SampledImage referencing a certain attachment of a render target.
+	 * @remarks If the render target is null, the default is assumed.
+	 *          If the sampler is null, a default sampler is used.
+	 */
 	SampledImage(uint32_t target_attachment, RenderTarget *render_target = nullptr, Sampler *sampler = nullptr, bool isDepthResolve = false);
 
 	SampledImage(const SampledImage &to_copy);
@@ -134,8 +134,8 @@ class SampledImage
   private:
 	const ImageView *image_view;
 	uint32_t         target_attachment;
-	RenderTarget *   render_target;
-	Sampler *        sampler;
+	RenderTarget    *render_target;
+	Sampler         *sampler;
 	bool             isDepthResolve;
 };
 

@@ -83,8 +83,7 @@ template <typename Handle>
 using VulkanResourceCpp = VulkanResource<vkb::BindingType::Cpp, Handle>;
 
 template <vkb::BindingType bindingType, typename Handle>
-inline VulkanResource<bindingType, Handle>::VulkanResource(Handle handle_, Device<bindingType> *device_) :
-    handle{handle_}
+inline VulkanResource<bindingType, Handle>::VulkanResource(Handle handle_, Device<bindingType> *device_) : handle{handle_}
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -98,9 +97,7 @@ inline VulkanResource<bindingType, Handle>::VulkanResource(Handle handle_, Devic
 
 template <vkb::BindingType bindingType, typename Handle>
 inline VulkanResource<bindingType, Handle>::VulkanResource(VulkanResource &&other) :
-    handle(std::exchange(other.handle, {})),
-    device(std::exchange(other.device, {})),
-    debug_name(std::exchange(other.debug_name, {}))
+    handle(std::exchange(other.handle, {})), device(std::exchange(other.device, {})), debug_name(std::exchange(other.debug_name, {}))
 {}
 
 template <vkb::BindingType bindingType, typename Handle>

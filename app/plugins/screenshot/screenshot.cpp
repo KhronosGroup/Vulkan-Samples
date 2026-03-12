@@ -32,8 +32,7 @@ Screenshot::Screenshot() :
                    {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart, vkb::Hook::PostDraw},
                    {},
                    {{"screenshot", "Take a screenshot at a given frame"}, {"screenshot-output", "Declare an output name for the image"}})
-{
-}
+{}
 
 bool Screenshot::handle_option(std::deque<std::string> &arguments)
 {

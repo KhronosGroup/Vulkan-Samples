@@ -53,6 +53,7 @@ class ComputeNBody : public ApiVulkanSample
 		VkPipeline                          pipeline;                     // Particle rendering pipeline
 		VkSemaphore                         semaphore;                    // Execution dependency between compute & graphic submission
 		uint32_t                            queue_family_index;
+
 		struct
 		{
 			glm::mat4 projection;
@@ -64,10 +65,10 @@ class ComputeNBody : public ApiVulkanSample
 	// Resources for the compute part of the example
 	struct
 	{
-		std::unique_ptr<vkb::core::BufferC> storage_buffer;               // (Shader) storage buffer object containing the particles
-		std::unique_ptr<vkb::core::BufferC> uniform_buffer;               // Uniform buffer object containing particle system parameters
-		VkQueue                             queue;                        // Separate queue for compute commands (queue family may differ from the one used for graphics)
-		VkCommandPool                       command_pool;                 // Use a separate command pool (queue family may differ from the one used for graphics)
+		std::unique_ptr<vkb::core::BufferC> storage_buffer;        // (Shader) storage buffer object containing the particles
+		std::unique_ptr<vkb::core::BufferC> uniform_buffer;        // Uniform buffer object containing particle system parameters
+		VkQueue                             queue;               // Separate queue for compute commands (queue family may differ from the one used for graphics)
+		VkCommandPool                       command_pool;        // Use a separate command pool (queue family may differ from the one used for graphics)
 		VkCommandBuffer                     command_buffer;               // Command buffer storing the dispatch commands and barriers
 		VkFence                             fence;                        // Fence to wait for compute dispatch completion before UBO update
 		VkSemaphore                         semaphore;                    // Execution dependency between compute & graphic submission
@@ -81,6 +82,7 @@ class ComputeNBody : public ApiVulkanSample
 		VkDescriptorSetLayout               descriptor_set_layout_blur;
 		VkDescriptorSet                     descriptor_set_blur;
 		uint32_t                            queue_family_index;
+
 		struct ComputeUBO
 		{                              // Compute shader uniform block object
 			float   delta_time;        //		Frame delta time

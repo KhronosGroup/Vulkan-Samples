@@ -41,9 +41,7 @@ class DescriptorPool
   public:
 	static const uint32_t MAX_SETS_PER_POOL = 16;
 
-	DescriptorPool(vkb::core::DeviceC        &device,
-	               const DescriptorSetLayout &descriptor_set_layout,
-	               uint32_t                   pool_size = MAX_SETS_PER_POOL);
+	DescriptorPool(vkb::core::DeviceC &device, const DescriptorSetLayout &descriptor_set_layout, uint32_t pool_size = MAX_SETS_PER_POOL);
 
 	DescriptorPool(const DescriptorPool &) = delete;
 

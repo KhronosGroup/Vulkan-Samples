@@ -19,11 +19,8 @@
 
 namespace vkb
 {
-Timer::Timer() :
-    start_time{Clock::now()},
-    previous_tick{Clock::now()}
-{
-}
+Timer::Timer() : start_time{Clock::now()}, previous_tick{Clock::now()}
+{}
 
 void Timer::start()
 {

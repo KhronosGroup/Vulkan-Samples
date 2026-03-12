@@ -52,8 +52,9 @@ bool DescriptorManagement::prepare(const vkb::ApplicationOptions &options)
 
 	vkb::ShaderSource vert_shader("base.vert.spv");
 	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_subpass   = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
-	auto              render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
+	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(
+        get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
 	set_render_pipeline(std::move(render_pipeline));
 
@@ -80,15 +81,13 @@ void DescriptorManagement::update(float delta_time)
 	update_stats(delta_time);
 
 	// Process GUI input
-	auto buffer_alloc_strategy = (buffer_allocation.value == 0) ?
-	                                 vkb::rendering::BufferAllocationStrategy::OneAllocationPerBuffer :
-	                                 vkb::rendering::BufferAllocationStrategy::MultipleAllocationsPerBuffer;
+	auto buffer_alloc_strategy = (buffer_allocation.value == 0) ? vkb::rendering::BufferAllocationStrategy::OneAllocationPerBuffer :
+	                                                              vkb::rendering::BufferAllocationStrategy::MultipleAllocationsPerBuffer;
 
 	render_context.get_active_frame().set_buffer_allocation_strategy(buffer_alloc_strategy);
 
-	auto descriptor_management_strategy = (descriptor_caching.value == 0) ?
-	                                          vkb::rendering::DescriptorManagementStrategy::CreateDirectly :
-	                                          vkb::rendering::DescriptorManagementStrategy::StoreInCache;
+	auto descriptor_management_strategy = (descriptor_caching.value == 0) ? vkb::rendering::DescriptorManagementStrategy::CreateDirectly :
+	                                                                        vkb::rendering::DescriptorManagementStrategy::StoreInCache;
 
 	render_context.get_active_frame().set_descriptor_management_strategy(descriptor_management_strategy);
 
@@ -113,7 +112,9 @@ void DescriptorManagement::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, lines]() {
+	    /* body = */
+	    [this, lines]()
+	    {
 		    // For every option set
 		    for (size_t i = 0; i < radio_buttons.size(); ++i)
 		    {

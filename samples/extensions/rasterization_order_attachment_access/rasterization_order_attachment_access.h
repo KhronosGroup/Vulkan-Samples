@@ -47,6 +47,7 @@ class RasterizationOrderAttachmentAccess : public ApiVulkanSample
 	// Dynamic rendering bypasses render passes and framebuffers
 	void setup_render_pass() override
 	{}
+
 	void setup_framebuffer() override
 	{}
 
@@ -54,10 +55,11 @@ class RasterizationOrderAttachmentAccess : public ApiVulkanSample
 	// Runtime
 	// ============================================================================
 
-	void     render(float delta_time) override;
-	void     build_command_buffers() override;
-	bool     resize(const uint32_t width, const uint32_t height) override;
-	void     on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void render(float delta_time) override;
+	void build_command_buffers() override;
+	bool resize(const uint32_t width, const uint32_t height) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+
 	uint32_t get_api_version() const override
 	{
 		return VK_API_VERSION_1_2;
@@ -142,22 +144,19 @@ class RasterizationOrderAttachmentAccess : public ApiVulkanSample
 	// Maps color attachment 0 to input_attachment_index 0 in the fragment shader
 	static constexpr uint32_t                               COLOR_ATTACHMENT_INPUT_INDEX = 0;
 	static inline const VkRenderingInputAttachmentIndexInfo INPUT_ATTACHMENT_INDEX_INFO{
-	    VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO_KHR,
-	    nullptr,
-	    1,
-	    &COLOR_ATTACHMENT_INPUT_INDEX,
-	    nullptr,
-	    nullptr};
+	    VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO_KHR, nullptr, 1, &COLOR_ATTACHMENT_INPUT_INDEX, nullptr, nullptr};
 
 	// ============================================================================
 	// Performance measurement
 	// ============================================================================
 
 	VkQueryPool timestamp_query_pool = VK_NULL_HANDLE;
-	bool        supports_timestamp_queries() const
+
+	bool supports_timestamp_queries() const
 	{
 		return timestamp_query_pool != VK_NULL_HANDLE;
 	}
+
 	std::vector<uint64_t> timestamp_results;
 	float                 gpu_draw_time_ms = 0.0f;
 	uint32_t              draw_call_count  = 0;

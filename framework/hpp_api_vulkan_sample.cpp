@@ -72,9 +72,8 @@ void HPPApiVulkanSample::prepare_gui()
 {
 	create_gui(*window, nullptr, 15.0f, true);
 
-	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	if (uses_dynamic_rendering())
 	{
@@ -424,7 +423,8 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 	return vk::PipelineShaderStageCreateInfo{.stage = stage, .module = shader_modules.back(), .pName = "main"};
 }
 
-vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage)
+vk::PipelineShaderStageCreateInfo
+    HPPApiVulkanSample::load_shader(const std::string &sample_folder_name, const std::string &shader_filename, vk::ShaderStageFlagBits stage)
 {
 	std::string full_file_name = sample_folder_name + "/" + get_shader_folder() + "/" + shader_filename;
 
@@ -625,7 +625,7 @@ void HPPApiVulkanSample::create_synchronization_primitives()
 
 void HPPApiVulkanSample::create_command_pool()
 {
-	uint32_t                  queue_family_index = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
+	uint32_t queue_family_index = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
 	vk::CommandPoolCreateInfo command_pool_info{.queueFamilyIndex = queue_family_index};
 	cmd_pool = get_device().get_handle().createCommandPool(command_pool_info);
 }
@@ -718,16 +718,16 @@ void HPPApiVulkanSample::setup_render_pass()
 	     .dstStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
 	     .srcAccessMask = vk::AccessFlagBits::eNoneKHR,
-	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
-	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	    {.srcSubpass = 0,
 	     .dstSubpass = vk::SubpassExternal,
 	     .srcStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
 	     .dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe,
-	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
-	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	}};
@@ -792,16 +792,16 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	     .dstStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
 	     .srcAccessMask = vk::AccessFlagBits::eNoneKHR,
-	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
-	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	    {.srcSubpass = 0,
 	     .dstSubpass = vk::SubpassExternal,
 	     .srcStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
 	     .dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe,
-	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead |
-	                      vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	}};
@@ -899,7 +899,9 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	}
 }
 
-HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type, vk::SamplerAddressMode address_mode)
+HPPTexture HPPApiVulkanSample::load_texture(const std::string                                  &file,
+                                            vkb::scene_graph::components::HPPImage::ContentType content_type,
+                                            vk::SamplerAddressMode                              address_mode)
 {
 	HPPTexture texture;
 
@@ -957,7 +959,9 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type, vk::SamplerAddressMode address_mode)
+HPPTexture HPPApiVulkanSample::load_texture_array(const std::string                                  &file,
+                                                  vkb::scene_graph::components::HPPImage::ContentType content_type,
+                                                  vk::SamplerAddressMode                              address_mode)
 {
 	HPPTexture texture{};
 

@@ -47,8 +47,7 @@ ShaderModule::ShaderModule(vkb::core::DeviceC   &device,
 
 	// Generate a unique id, determined by source and variant
 	std::hash<std::string> hasher{};
-	id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()),
-	                        reinterpret_cast<const char *>(spirv.data() + spirv.size())});
+	id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()), reinterpret_cast<const char *>(spirv.data() + spirv.size())});
 }
 
 ShaderModule::ShaderModule(ShaderModule &&other) :
@@ -149,9 +148,7 @@ void ShaderVariant::clear()
 	id = 0;
 }
 
-ShaderSource::ShaderSource(const std::string &filename) :
-    filename{filename},
-    source{fs::read_text_file(filename)}
+ShaderSource::ShaderSource(const std::string &filename) : filename{filename}, source{fs::read_text_file(filename)}
 {
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});

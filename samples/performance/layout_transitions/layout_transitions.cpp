@@ -68,8 +68,7 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	get_stats().request_stats({vkb::StatIndex::gpu_killed_tiles,
-	                           vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::gpu_killed_tiles, vkb::StatIndex::gpu_ext_write_bytes});
 
 	create_gui(*window, &get_stats());
 
@@ -110,11 +109,8 @@ std::unique_ptr<vkb::RenderTarget> LayoutTransitions::create_render_target(vkb::
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device,
-	                              extent,
-	                              VK_FORMAT_R8G8B8A8_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image albedo_image{
+	    device, extent, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	vkb::core::Image normal_image{device,
 	                              extent,
@@ -141,9 +137,7 @@ std::unique_ptr<vkb::RenderTarget> LayoutTransitions::create_render_target(vkb::
 
 VkImageLayout LayoutTransitions::pick_old_layout(VkImageLayout last_layout)
 {
-	return (layout_transition_type == LayoutTransitionType::UNDEFINED) ?
-	           VK_IMAGE_LAYOUT_UNDEFINED :
-	           last_layout;
+	return (layout_transition_type == LayoutTransitionType::UNDEFINED) ? VK_IMAGE_LAYOUT_UNDEFINED : last_layout;
 }
 
 void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
@@ -263,7 +257,9 @@ void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::Ren
 void LayoutTransitions::draw_gui()
 {
 	get_gui().show_options_window(
-	    /* body = */ [this]() {
+	    /* body = */
+	    [this]()
+	    {
 		    ImGui::Text("Transition images from:");
 		    ImGui::RadioButton("Undefined layout", reinterpret_cast<int *>(&layout_transition_type), LayoutTransitionType::UNDEFINED);
 		    ImGui::SameLine();

@@ -28,8 +28,7 @@ BenchmarkMode::BenchmarkMode() :
                       {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart, vkb::Hook::OnAppClose},
                       {},
                       {{"benchmark", "Enable benchmark mode"}})
-{
-}
+{}
 
 bool BenchmarkMode::handle_option(std::deque<std::string> &arguments)
 {

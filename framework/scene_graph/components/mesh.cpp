@@ -21,8 +21,7 @@ namespace vkb
 {
 namespace sg
 {
-Mesh::Mesh(const std::string &name) :
-    Component{name}
+Mesh::Mesh(const std::string &name) : Component{name}
 {}
 
 void Mesh::update_bounds(const std::vector<glm::vec3> &vertex_data, const std::vector<uint16_t> &index_data)

@@ -130,15 +130,12 @@ void MeshShaderCulling::build_command_buffers()
 
 void MeshShaderCulling::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)};
+	std::vector<VkDescriptorPoolSize> pool_sizes = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)};
 
 	uint32_t number_of_descriptor_sets = 1;
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()),
-	                                                   pool_sizes.data(),
-	                                                   number_of_descriptor_sets);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), number_of_descriptor_sets);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -146,25 +143,21 @@ void MeshShaderCulling::setup_descriptor_pool()
 void MeshShaderCulling::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	                                                     VK_SHADER_STAGE_TASK_BIT_EXT,
-	                                                     0)};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 0)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
 	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
 void MeshShaderCulling::setup_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	// Task shader descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
@@ -172,10 +165,7 @@ void MeshShaderCulling::setup_descriptor_sets()
 	VkDescriptorBufferInfo uniform_buffer_descriptor = create_descriptor(*uniform_buffer);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_set,
-	                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	                                            0,
-	                                            &uniform_buffer_descriptor)};
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniform_buffer_descriptor)};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
@@ -187,25 +177,18 @@ void MeshShaderCulling::prepare_pipelines()
 
 	// Rasterization state
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL,
-	                                                                VK_CULL_MODE_NONE,
-	                                                                VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	                                                                0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 	// Color blend state
-	VkPipelineColorBlendAttachmentState blend_attachment =
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
 
 	// Multisample state
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
 	// Viewport state
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
 	// Depth stencil state
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
@@ -215,9 +198,7 @@ void MeshShaderCulling::prepare_pipelines()
 	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(),
-	                                                          static_cast<uint32_t>(dynamic_state_enables.size()),
-	                                                          0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Shader state
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};
@@ -242,10 +223,7 @@ void MeshShaderCulling::prepare_pipelines()
 
 void MeshShaderCulling::prepare_uniform_buffers()
 {
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                      sizeof(ubo_cull),
-	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_cull), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -364,9 +342,7 @@ void MeshShaderCulling::setup_query_result_buffer()
 	VkMemoryRequirements memory_requirements;
 	VkMemoryAllocateInfo memory_allocation = vkb::initializers::memory_allocate_info();
 	VkBufferCreateInfo   buffer_create_info =
-	    vkb::initializers::buffer_create_info(
-	        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	        buffer_size);
+	    vkb::initializers::buffer_create_info(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, buffer_size);
 
 	// Results are saved in a host visible buffer for easy access by the application
 	VK_CHECK(vkCreateBuffer(get_device().get_handle(), &buffer_create_info, nullptr, &query_result.buffer));
@@ -383,10 +359,9 @@ void MeshShaderCulling::setup_query_result_buffer()
 		VkQueryPoolCreateInfo query_pool_info = {};
 		query_pool_info.sType                 = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 		query_pool_info.queryType             = VK_QUERY_TYPE_PIPELINE_STATISTICS;
-		query_pool_info.pipelineStatistics =
-		    VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT |
-		    VK_QUERY_PIPELINE_STATISTIC_TASK_SHADER_INVOCATIONS_BIT_EXT |
-		    VK_QUERY_PIPELINE_STATISTIC_MESH_SHADER_INVOCATIONS_BIT_EXT;
+		query_pool_info.pipelineStatistics    = VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT |
+		                                     VK_QUERY_PIPELINE_STATISTIC_TASK_SHADER_INVOCATIONS_BIT_EXT |
+		                                     VK_QUERY_PIPELINE_STATISTIC_MESH_SHADER_INVOCATIONS_BIT_EXT;
 		query_pool_info.queryCount = 3;
 		VK_CHECK(vkCreateQueryPool(get_device().get_handle(), &query_pool_info, nullptr, &query_pool));
 	}
@@ -396,13 +371,5 @@ void MeshShaderCulling::setup_query_result_buffer()
 void MeshShaderCulling::get_query_results()
 {
 	// We use vkGetQueryResults to copy the results into a host visible buffer
-	vkGetQueryPoolResults(
-	    get_device().get_handle(),
-	    query_pool,
-	    0,
-	    1,
-	    sizeof(pipeline_stats),
-	    pipeline_stats,
-	    sizeof(uint64_t),
-	    VK_QUERY_RESULT_64_BIT);
+	vkGetQueryPoolResults(get_device().get_handle(), query_pool, 0, 1, sizeof(pipeline_stats), pipeline_stats, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
 }

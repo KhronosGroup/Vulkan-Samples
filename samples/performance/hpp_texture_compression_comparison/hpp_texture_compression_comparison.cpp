@@ -82,14 +82,20 @@ HPPTextureCompressionComparison::HPPTextureCompressionComparison()
 	    {nullptr, "", vk::Format::eR8G8B8A8Srgb, KTX_TTF_RGBA32, "KTX_TTF_RGBA32", "RGBA 32", true},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc7SrgbBlock, KTX_TTF_BC7_RGBA, "KTX_TTF_BC7_RGBA", "BC7"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionBC, "", vk::Format::eBc3SrgbBlock, KTX_TTF_BC3_RGBA, "KTX_TTF_BC3_RGBA", "BC3"},
-	    {&vk::PhysicalDeviceFeatures::textureCompressionASTC_LDR, "", vk::Format::eAstc4x4SrgbBlock, KTX_TTF_ASTC_4x4_RGBA, "KTX_TTF_ASTC_4x4_RGBA", "ASTC 4x4"},
+	    {&vk::PhysicalDeviceFeatures::textureCompressionASTC_LDR,
+	     "",
+	     vk::Format::eAstc4x4SrgbBlock,
+	     KTX_TTF_ASTC_4x4_RGBA,
+	     "KTX_TTF_ASTC_4x4_RGBA",
+	     "ASTC 4x4"},
 	    {&vk::PhysicalDeviceFeatures::textureCompressionETC2, "", vk::Format::eEtc2R8G8B8A8SrgbBlock, KTX_TTF_ETC2_RGBA, "KTX_TTF_ETC2_RGBA", "ETC2"}};
 }
 
 void HPPTextureCompressionComparison::draw_gui()
 {
 	get_gui().show_options_window(
-	    [this]() {
+	    [this]()
+	    {
 		    if (ImGui::Combo(
 		            "Compressed Format",
 		            &current_gui_format,

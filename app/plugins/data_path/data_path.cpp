@@ -28,8 +28,7 @@ DataPath::DataPath() :
                  {vkb::Hook::OnAppStart},
                  {},
                  {{"data-path", "Folder containing data files"}})
-{
-}
+{}
 
 bool DataPath::handle_option(std::deque<std::string> &arguments)
 {

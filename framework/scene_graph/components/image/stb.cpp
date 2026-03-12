@@ -24,8 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-Stb::Stb(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type) :
-    Image{name}
+Stb::Stb(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type) : Image{name}
 {
 	int width;
 	int height;

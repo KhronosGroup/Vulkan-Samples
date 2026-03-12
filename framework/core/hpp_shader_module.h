@@ -85,8 +85,8 @@ class HPPShaderSource : private vkb::ShaderSource
 {
   public:
 	HPPShaderSource() = default;
-	HPPShaderSource(const std::string &filename) :
-	    vkb::ShaderSource(filename)
+
+	HPPShaderSource(const std::string &filename) : vkb::ShaderSource(filename)
 	{}
 };
 

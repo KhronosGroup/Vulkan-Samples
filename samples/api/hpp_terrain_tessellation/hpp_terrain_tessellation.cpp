@@ -209,11 +209,10 @@ vk::DescriptorPool HPPTerrainTessellation::create_descriptor_pool()
 
 vk::DescriptorSetLayout HPPTerrainTessellation::create_sky_sphere_descriptor_set_layout()
 {
-	std::array<vk::DescriptorSetLayoutBinding, 2> layout_bindings = {
-	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-	vk::DescriptorSetLayoutCreateInfo skysphere_descriptor_layout{.bindingCount = static_cast<uint32_t>(layout_bindings.size()),
-	                                                              .pBindings    = layout_bindings.data()};
+	std::array<vk::DescriptorSetLayoutBinding, 2> layout_bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                                  {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+	vk::DescriptorSetLayoutCreateInfo             skysphere_descriptor_layout{.bindingCount = static_cast<uint32_t>(layout_bindings.size()),
+	                                                                          .pBindings    = layout_bindings.data()};
 
 	return get_device().get_handle().createDescriptorSetLayout(skysphere_descriptor_layout);
 }
@@ -336,9 +335,8 @@ void HPPTerrainTessellation::draw()
 	if (statistics.query_supported)
 	{
 		// Read query results for displaying in next frame
-		auto result = get_device()
-		                  .get_handle()
-		                  .getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64);
+		auto result = get_device().get_handle().getQueryPoolResult<std::array<uint64_t, 2>>(
+		    statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64);
 		if (result.result == vk::Result::eSuccess)
 		{
 			statistics.results = result.value;
@@ -448,10 +446,12 @@ void HPPTerrainTessellation::load_assets()
 	sky_sphere.texture  = load_texture("textures/skysphere_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 
 	// Terrain textures are stored in a texture array with layers corresponding to terrain height; create a repeating sampler
-	terrain.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::scene_graph::components::HPPImage::Color, vk::SamplerAddressMode::eRepeat);
+	terrain.terrain_array =
+	    load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::scene_graph::components::HPPImage::Color, vk::SamplerAddressMode::eRepeat);
 
 	// Height data is stored in a one-channel texture; create a mirroring sampler
-	terrain.height_map = load_texture("textures/terrain_heightmap_r16.ktx", vkb::scene_graph::components::HPPImage::Other, vk::SamplerAddressMode::eMirroredRepeat);
+	terrain.height_map =
+	    load_texture("textures/terrain_heightmap_r16.ktx", vkb::scene_graph::components::HPPImage::Other, vk::SamplerAddressMode::eMirroredRepeat);
 }
 
 void HPPTerrainTessellation::prepare_camera()
@@ -504,12 +504,12 @@ void HPPTerrainTessellation::prepare_terrain()
 void HPPTerrainTessellation::prepare_uniform_buffers()
 {
 	// Shared tessellation shader stages uniform buffer
-	terrain.tessellation_buffer =
-	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	terrain.tessellation_buffer = std::make_unique<vkb::core::BufferCpp>(
+	    get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Skysphere vertex shader uniform buffer
-	sky_sphere.transform_buffer =
-	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	sky_sphere.transform_buffer = std::make_unique<vkb::core::BufferCpp>(
+	    get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -557,10 +557,10 @@ void HPPTerrainTessellation::update_sky_sphere_descriptor_set()
 {
 	vk::DescriptorBufferInfo skysphere_buffer_descriptor{sky_sphere.transform_buffer->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo skysphere_image_descriptor{sky_sphere.texture.sampler,
-	                                                   sky_sphere.texture.image->get_vk_image_view().get_handle(),
-	                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                   sky_sphere.texture.image->get_vk_image_view().get_format())};
+	vk::DescriptorImageInfo skysphere_image_descriptor{
+	    sky_sphere.texture.sampler,
+	    sky_sphere.texture.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, sky_sphere.texture.image->get_vk_image_view().get_format())};
 
 	std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {{{.dstSet          = sky_sphere.descriptor_set,
 	                                                                           .dstBinding      = 0,
@@ -580,15 +580,15 @@ void HPPTerrainTessellation::update_terrain_descriptor_set()
 {
 	vk::DescriptorBufferInfo terrain_buffer_descriptor{terrain.tessellation_buffer->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo heightmap_image_descriptor{terrain.height_map.sampler,
-	                                                   terrain.height_map.image->get_vk_image_view().get_handle(),
-	                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                   terrain.height_map.image->get_vk_image_view().get_format())};
+	vk::DescriptorImageInfo heightmap_image_descriptor{
+	    terrain.height_map.sampler,
+	    terrain.height_map.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, terrain.height_map.image->get_vk_image_view().get_format())};
 
-	vk::DescriptorImageInfo terrainmap_image_descriptor{terrain.terrain_array.sampler,
-	                                                    terrain.terrain_array.image->get_vk_image_view().get_handle(),
-	                                                    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                    terrain.terrain_array.image->get_vk_image_view().get_format())};
+	vk::DescriptorImageInfo terrainmap_image_descriptor{
+	    terrain.terrain_array.sampler,
+	    terrain.terrain_array.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, terrain.terrain_array.image->get_vk_image_view().get_format())};
 
 	std::array<vk::WriteDescriptorSet, 3> terrain_write_descriptor_sets = {{{.dstSet          = terrain.descriptor_set,
 	                                                                         .dstBinding      = 0,

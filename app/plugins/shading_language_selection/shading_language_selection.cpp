@@ -30,8 +30,7 @@ ShadingLanguageSelection::ShadingLanguageSelection() :
                                  {},
                                  {},
                                  {{"shading-language", "Shading language to use (glsl, hlsl or slang)"}})
-{
-}
+{}
 
 bool ShadingLanguageSelection::handle_option(std::deque<std::string> &arguments)
 {

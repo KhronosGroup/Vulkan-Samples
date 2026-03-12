@@ -28,8 +28,7 @@ ForceClose::ForceClose() :
                    {},
                    {},
                    {{"force-close", "Force the close of the application if halted before exiting"}})
-{
-}
+{}
 
 bool ForceClose::handle_option(std::deque<std::string> &arguments)
 {

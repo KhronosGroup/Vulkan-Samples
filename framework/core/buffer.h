@@ -57,7 +57,8 @@ struct BufferBuilder
 	BufferBuilder         &with_flags(BufferCreateFlagsType flags);
 	BufferBuilder         &with_usage(BufferUsageFlagsType usage);
 	BufferBuilder         &with_alignment(DeviceSizeType align);
-	DeviceSizeType         get_alignment() const
+
+	DeviceSizeType get_alignment() const
 	{
 		return alignment;
 	}
@@ -70,10 +71,8 @@ using BufferBuilderC   = BufferBuilder<vkb::BindingType::C>;
 using BufferBuilderCpp = BufferBuilder<vkb::BindingType::Cpp>;
 
 template <>
-inline BufferBuilder<vkb::BindingType::Cpp>::BufferBuilder(vk::DeviceSize size) :
-    ParentType(BufferCreateInfoType{.size = size})
-{
-}
+inline BufferBuilder<vkb::BindingType::Cpp>::BufferBuilder(vk::DeviceSize size) : ParentType(BufferCreateInfoType{.size = size})
+{}
 
 template <>
 inline BufferBuilder<vkb::BindingType::C>::BufferBuilder(VkDeviceSize size) :
@@ -116,8 +115,7 @@ inline BufferBuilder<bindingType> &BufferBuilder<bindingType>::with_alignment(De
 /*=========================================================*/
 
 template <vkb::BindingType bindingType>
-class Buffer
-    : public vkb::allocated::Allocated<bindingType, typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type>
+class Buffer : public vkb::allocated::Allocated<bindingType, typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type>
 {
   public:
 	using BufferType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type;

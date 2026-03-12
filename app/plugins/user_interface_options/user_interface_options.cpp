@@ -30,8 +30,7 @@ UserInterfaceOptions::UserInterfaceOptions() :
                              {},
                              {},
                              {{"hideui", "If flag is set, hides the user interface at startup"}})
-{
-}
+{}
 
 bool UserInterfaceOptions::handle_option(std::deque<std::string> &arguments)
 {

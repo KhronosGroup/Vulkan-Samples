@@ -111,8 +111,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>            &request
 			else
 			{
 				counter_indices.emplace_back(div_idx);
-				stat_data[index] = StatData(ctr_idx, counters[ctr_idx].storage, init.scaling,
-				                            div_idx, counters[div_idx].storage);
+				stat_data[index] = StatData(ctr_idx, counters[ctr_idx].storage, init.scaling, div_idx, counters[div_idx].storage);
 			}
 		}
 	}
@@ -328,8 +327,7 @@ void VulkanStatsProvider::begin_sampling(vkb::core::CommandBufferC &cb)
 		// delta time is a frame-to-frame s/w measure. A timestamp query in the the cmd
 		// buffer gives the actual elapsed time where the counters were measured.
 		cb.reset_query_pool(*timestamp_pool, active_frame_idx * 2, 1);
-		cb.write_timestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, *timestamp_pool,
-		                   active_frame_idx * 2);
+		cb.write_timestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, *timestamp_pool, active_frame_idx * 2);
 	}
 
 	if (query_pool)
@@ -347,10 +345,8 @@ void VulkanStatsProvider::end_sampling(vkb::core::CommandBufferC &cb)
 		// Perform a barrier to ensure all previous commands complete before ending the query
 		// This does not block later commands from executing as we use BOTTOM_OF_PIPE in the
 		// dst stage mask
-		vkCmdPipelineBarrier(cb.get_handle(),
-		                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-		                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-		                     0, 0, nullptr, 0, nullptr, 0, nullptr);
+		vkCmdPipelineBarrier(
+		    cb.get_handle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 0, nullptr);
 		cb.end_query(*query_pool, active_frame_idx);
 
 		++queries_ready;
@@ -359,13 +355,11 @@ void VulkanStatsProvider::end_sampling(vkb::core::CommandBufferC &cb)
 	if (timestamp_pool)
 	{
 		cb.reset_query_pool(*timestamp_pool, active_frame_idx * 2 + 1, 1);
-		cb.write_timestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, *timestamp_pool,
-		                   active_frame_idx * 2 + 1);
+		cb.write_timestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, *timestamp_pool, active_frame_idx * 2 + 1);
 	}
 }
 
-static double get_counter_value(const VkPerformanceCounterResultKHR &result,
-                                VkPerformanceCounterStorageKHR       storage)
+static double get_counter_value(const VkPerformanceCounterResultKHR &result, VkPerformanceCounterStorageKHR storage)
 {
 	switch (storage)
 	{
@@ -401,10 +395,8 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time) const
 
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 
-	VkResult r = timestamp_pool->get_results(active_frame_idx * 2, 2,
-	                                         timestamps.size() * sizeof(uint64_t),
-	                                         timestamps.data(), sizeof(uint64_t),
-	                                         VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT);
+	VkResult r = timestamp_pool->get_results(
+	    active_frame_idx * 2, 2, timestamps.size() * sizeof(uint64_t), timestamps.data(), sizeof(uint64_t), VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT);
 	if (r == VK_SUCCESS)
 	{
 		float elapsed_ns = timestamp_period * static_cast<float>(timestamps[1] - timestamps[0]);
@@ -428,9 +420,8 @@ StatsProvider::Counters VulkanStatsProvider::sample(float delta_time)
 
 	std::vector<VkPerformanceCounterResultKHR> results(counter_indices.size());
 
-	VkResult r = query_pool->get_results(active_frame_idx, 1,
-	                                     results.size() * sizeof(VkPerformanceCounterResultKHR),
-	                                     results.data(), stride, VK_QUERY_RESULT_WAIT_BIT);
+	VkResult r =
+	    query_pool->get_results(active_frame_idx, 1, results.size() * sizeof(VkPerformanceCounterResultKHR), results.data(), stride, VK_QUERY_RESULT_WAIT_BIT);
 	if (r != VK_SUCCESS)
 	{
 		return out;

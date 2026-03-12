@@ -92,14 +92,12 @@ void HPPOITDepthPeeling::build_command_buffers()
 {
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
-	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-	                                               vk::ClearDepthStencilValue{0.0f, 0}}};
+	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})), vk::ClearDepthStencilValue{0.0f, 0}}};
 
-	vk::RenderPassBeginInfo render_pass_begin_info{.renderArea      = {{0, 0}, extent},
-	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
-	                                               .pClearValues    = clear_values.data()};
-	vk::Viewport            viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
-	vk::Rect2D              scissor{{0, 0}, extent};
+	vk::RenderPassBeginInfo render_pass_begin_info{
+	    .renderArea = {{0, 0}, extent}, .clearValueCount = static_cast<uint32_t>(clear_values.size()), .pClearValues = clear_values.data()};
+	vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
+	vk::Rect2D   scissor{{0, 0}, extent};
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
@@ -159,7 +157,8 @@ void HPPOITDepthPeeling::build_command_buffers()
 					command_buffer.setViewport(0, viewport);
 					command_buffer.setScissor(0, scissor);
 
-					command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, gatherPass.pipeline_layout, 0, depths[l % kDepthCount].gather_descriptor_set, {});
+					command_buffer.bindDescriptorSets(
+					    vk::PipelineBindPoint::eGraphics, gatherPass.pipeline_layout, 0, depths[l % kDepthCount].gather_descriptor_set, {});
 
 					command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, l == 0 ? gatherPass.first_pipeline : gatherPass.pipeline);
 					draw_model(model, command_buffer);
@@ -239,8 +238,8 @@ void HPPOITDepthPeeling::create_background_pipeline()
 	                                                                load_shader("oit_depth_peeling/background.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
-	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
-	                                                                               {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
+	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)}, {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags};
 
@@ -269,7 +268,8 @@ void HPPOITDepthPeeling::create_combine_pass()
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment},
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
 	     {2, vk::DescriptorType::eCombinedImageSampler, kLayerMaxCount, vk::ShaderStageFlagBits::eFragment}}};
-	combinePass.descriptor_set_layout = device.createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()), .pBindings = set_layout_bindings.data()});
+	combinePass.descriptor_set_layout =
+	    device.createDescriptorSetLayout({.bindingCount = static_cast<uint32_t>(set_layout_bindings.size()), .pBindings = set_layout_bindings.data()});
 
 	combinePass.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, combinePass.descriptor_set_layout);
 
@@ -284,8 +284,8 @@ void HPPOITDepthPeeling::create_combine_pass_pipeline()
 	                                                                load_shader("oit_depth_peeling/combine.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
-	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
-	                                                                               {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
+	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)}, {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state{true,
 	                                                             vk::BlendFactor::eSrcAlpha,
@@ -321,16 +321,15 @@ void HPPOITDepthPeeling::create_descriptor_pool()
 	const uint32_t num_combine_pass_combined_image_sampler = kLayerMaxCount + 1;
 	const uint32_t num_combine_pass_uniform_buffer         = 1;
 
-	const uint32_t                        num_uniform_buffer_descriptors         = num_gather_pass_uniform_buffer + num_combine_pass_uniform_buffer;
-	const uint32_t                        num_combined_image_sampler_descriptors = num_gather_pass_combined_image_sampler + num_combine_pass_combined_image_sampler;
-	std::array<vk::DescriptorPoolSize, 2> pool_sizes                             = {{{vk::DescriptorType::eUniformBuffer, num_uniform_buffer_descriptors},
-	                                                                                 {vk::DescriptorType::eCombinedImageSampler, num_combined_image_sampler_descriptors}}};
-	const uint32_t                        num_gather_descriptor_sets             = 2;
-	const uint32_t                        num_combine_descriptor_sets            = 1;
-	const uint32_t                        num_descriptor_sets                    = num_gather_descriptor_sets + num_combine_descriptor_sets;
-	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info{.maxSets       = num_descriptor_sets,
-	                                                                  .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
-	                                                                  .pPoolSizes    = pool_sizes.data()};
+	const uint32_t num_uniform_buffer_descriptors                     = num_gather_pass_uniform_buffer + num_combine_pass_uniform_buffer;
+	const uint32_t num_combined_image_sampler_descriptors             = num_gather_pass_combined_image_sampler + num_combine_pass_combined_image_sampler;
+	std::array<vk::DescriptorPoolSize, 2> pool_sizes                  = {{{vk::DescriptorType::eUniformBuffer, num_uniform_buffer_descriptors},
+	                                                                      {vk::DescriptorType::eCombinedImageSampler, num_combined_image_sampler_descriptors}}};
+	const uint32_t                        num_gather_descriptor_sets  = 2;
+	const uint32_t                        num_combine_descriptor_sets = 1;
+	const uint32_t                        num_descriptor_sets         = num_gather_descriptor_sets + num_combine_descriptor_sets;
+	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info{
+	             .maxSets = num_descriptor_sets, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()};
 
 	descriptor_pool = get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
@@ -388,12 +387,12 @@ void HPPOITDepthPeeling::create_gather_pass_pipelines()
 	                                                                load_shader("oit_depth_peeling/gather_first.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::VertexInputBindingDescription                  vertex_input_binding{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex};
-	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)},
-	                                                                               {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
-	vk::PipelineVertexInputStateCreateInfo             vertex_input_state{.vertexBindingDescriptionCount   = 1,
-	                                                                      .pVertexBindingDescriptions      = &vertex_input_binding,
-	                                                                      .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
-	                                                                      .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
+	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(HPPVertex, pos)}, {1, 0, vk::Format::eR32G32Sfloat, offsetof(HPPVertex, uv)}}};
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
+	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
+	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::FlagTraits<vk::ColorComponentFlagBits>::allFlags};
 
@@ -496,8 +495,13 @@ void HPPOITDepthPeeling::create_images(const uint32_t width, const uint32_t heig
 
 void HPPOITDepthPeeling::create_point_sampler()
 {
-	point_sampler = vkb::common::create_sampler(
-	    get_device().get_handle(), vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
+	point_sampler = vkb::common::create_sampler(get_device().get_handle(),
+	                                            vk::Filter::eNearest,
+	                                            vk::Filter::eNearest,
+	                                            vk::SamplerMipmapMode::eNearest,
+	                                            vk::SamplerAddressMode::eClampToEdge,
+	                                            1.0f,
+	                                            1.0f);
 }
 
 void HPPOITDepthPeeling::create_scene_constants_buffer()
@@ -528,9 +532,8 @@ void HPPOITDepthPeeling::update_descriptors()
 
 	for (uint32_t i = 0; i < kDepthCount; ++i)
 	{
-		vk::DescriptorImageInfo depth_texture_descriptor{point_sampler,
-		                                                 depths[(i + 1) % kDepthCount].image_view->get_handle(),
-		                                                 vk::ImageLayout::eDepthStencilReadOnlyOptimal};
+		vk::DescriptorImageInfo depth_texture_descriptor{
+		    point_sampler, depths[(i + 1) % kDepthCount].image_view->get_handle(), vk::ImageLayout::eDepthStencilReadOnlyOptimal};
 
 		std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = depths[i].gather_descriptor_set,
 		                                                                 .dstBinding      = 0,
@@ -545,9 +548,8 @@ void HPPOITDepthPeeling::update_descriptors()
 		device.updateDescriptorSets(write_descriptor_sets, {});
 	}
 
-	vk::DescriptorImageInfo background_texture_descriptor{background.texture.sampler,
-	                                                      background.texture.image->get_vk_image_view().get_handle(),
-	                                                      vk::ImageLayout::eShaderReadOnlyOptimal};
+	vk::DescriptorImageInfo background_texture_descriptor{
+	    background.texture.sampler, background.texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal};
 
 	std::array<vk::DescriptorImageInfo, kLayerMaxCount> layer_texture_descriptor;
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)

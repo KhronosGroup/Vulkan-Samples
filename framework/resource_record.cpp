@@ -55,7 +55,10 @@ const std::ostringstream &ResourceRecord::get_stream()
 	return stream;
 }
 
-size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant)
+size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage,
+                                              const ShaderSource   &glsl_source,
+                                              const std::string    &entry_point,
+                                              const ShaderVariant  &shader_variant)
 {
 	shader_module_indices.push_back(shader_module_indices.size());
 
@@ -69,24 +72,23 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	pipeline_layout_indices.push_back(pipeline_layout_indices.size());
 
 	std::vector<size_t> shader_indices(shader_modules.size());
-	std::transform(shader_modules.begin(), shader_modules.end(), shader_indices.begin(),
+	std::transform(shader_modules.begin(),
+	               shader_modules.end(),
+	               shader_indices.begin(),
 	               [this](ShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
 
-	write(stream,
-	      ResourceType::PipelineLayout,
-	      shader_indices);
+	write(stream, ResourceType::PipelineLayout, shader_indices);
 
 	return pipeline_layout_indices.back();
 }
 
-size_t ResourceRecord::register_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
+size_t ResourceRecord::register_render_pass(const std::vector<Attachment>    &attachments,
+                                            const std::vector<LoadStoreInfo> &load_store_infos,
+                                            const std::vector<SubpassInfo>   &subpasses)
 {
 	render_pass_indices.push_back(render_pass_indices.size());
 
-	write(stream,
-	      ResourceType::RenderPass,
-	      attachments,
-	      load_store_infos);
+	write(stream, ResourceType::RenderPass, attachments, load_store_infos);
 
 	write_subpass_info(stream, subpasses);
 
@@ -108,14 +110,11 @@ size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cac
 
 	auto &specialization_constant_state = pipeline_state.get_specialization_constant_state().get_specialization_constant_state();
 
-	write(stream,
-	      specialization_constant_state);
+	write(stream, specialization_constant_state);
 
 	auto &vertex_input_state = pipeline_state.get_vertex_input_state();
 
-	write(stream,
-	      vertex_input_state.attributes,
-	      vertex_input_state.bindings);
+	write(stream, vertex_input_state.attributes, vertex_input_state.bindings);
 
 	write(stream,
 	      pipeline_state.get_input_assembly_state(),
@@ -126,10 +125,7 @@ size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cac
 
 	auto &color_blend_state = pipeline_state.get_color_blend_state();
 
-	write(stream,
-	      color_blend_state.logic_op,
-	      color_blend_state.logic_op_enable,
-	      color_blend_state.attachments);
+	write(stream, color_blend_state.logic_op, color_blend_state.logic_op_enable, color_blend_state.attachments);
 
 	return graphics_pipeline_indices.back();
 }

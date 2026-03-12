@@ -21,10 +21,8 @@
 
 namespace vkb
 {
-SemaphorePool::SemaphorePool(vkb::core::DeviceC &device) :
-    device{device}
-{
-}
+SemaphorePool::SemaphorePool(vkb::core::DeviceC &device) : device{device}
+{}
 
 SemaphorePool::~SemaphorePool()
 {

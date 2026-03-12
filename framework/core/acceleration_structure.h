@@ -40,8 +40,7 @@ class AccelerationStructure
 	 * @param device A valid Vulkan device
 	 * @param type The type of the acceleration structure (top- or bottom-level)
 	 */
-	AccelerationStructure(vkb::core::DeviceC            &device,
-	                      VkAccelerationStructureTypeKHR type);
+	AccelerationStructure(vkb::core::DeviceC &device, VkAccelerationStructureTypeKHR type);
 
 	~AccelerationStructure();
 
@@ -76,7 +75,8 @@ class AccelerationStructure
 	                               uint64_t            index_buffer_data_address     = 0,
 	                               uint64_t            transform_buffer_data_address = 0);
 
-	void update_triangle_geometry(uint64_t triangleUUID, std::unique_ptr<vkb::core::BufferC> &vertex_buffer,
+	void update_triangle_geometry(uint64_t                             triangleUUID,
+	                              std::unique_ptr<vkb::core::BufferC> &vertex_buffer,
 	                              std::unique_ptr<vkb::core::BufferC> &index_buffer,
 	                              std::unique_ptr<vkb::core::BufferC> &transform_buffer,
 	                              uint32_t                             triangle_count,
@@ -102,10 +102,11 @@ class AccelerationStructure
 	                               uint32_t                             transform_offset = 0,
 	                               VkGeometryFlagsKHR                   flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
 
-	void update_instance_geometry(uint64_t instance_UID, std::unique_ptr<vkb::core::BufferC> &instance_buffer,
-	                              uint32_t           instance_count,
-	                              uint32_t           transform_offset = 0,
-	                              VkGeometryFlagsKHR flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
+	void update_instance_geometry(uint64_t                             instance_UID,
+	                              std::unique_ptr<vkb::core::BufferC> &instance_buffer,
+	                              uint32_t                             instance_count,
+	                              uint32_t                             transform_offset = 0,
+	                              VkGeometryFlagsKHR                   flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
 
 	/**
 	 * @brief Builds the acceleration structure on the device (requires at least one geometry to be added)

@@ -30,12 +30,14 @@ class ConditionalRendering : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC> index_buffer  = nullptr;
 
 	std::unique_ptr<vkb::sg::Scene> scene;
+
 	struct SceneNode
 	{
 		std::string              name;
 		vkb::scene_graph::NodeC *node;
 		vkb::sg::SubMesh        *sub_mesh;
 	};
+
 	std::vector<SceneNode> linear_scene_nodes;
 
 	struct UniformData
@@ -43,6 +45,7 @@ class ConditionalRendering : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 view;
 	} uniform_data;
+
 	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
 	VkPipeline            pipeline;

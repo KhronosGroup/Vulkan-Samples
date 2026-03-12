@@ -69,17 +69,9 @@ std::unique_ptr<vkb::RenderTarget> Subpasses::create_render_target(vkb::core::Im
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device,
-	                              extent,
-	                              albedo_format,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image albedo_image{device, extent, albedo_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags, VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image normal_image{device,
-	                              extent,
-	                              normal_format,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image normal_image{device, extent, normal_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<vkb::core::Image> images;
 
@@ -202,8 +194,7 @@ void Subpasses::update(float delta_time)
 	}
 
 	// Check whether the user switched the attachment or the G-buffer option
-	if (configs[Config::TransientAttachments].value != last_transient_attachment ||
-	    configs[Config::GBufferSize].value != last_g_buffer_size)
+	if (configs[Config::TransientAttachments].value != last_transient_attachment || configs[Config::GBufferSize].value != last_g_buffer_size)
 	{
 		// If attachment option has changed
 		if (configs[Config::TransientAttachments].value != last_transient_attachment)
@@ -264,7 +255,9 @@ void Subpasses::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, lines]() {
+	    /* body = */
+	    [this, lines]()
+	    {
 		    // Create a line for every config
 		    for (size_t i = 0; i < configs.size(); ++i)
 		    {

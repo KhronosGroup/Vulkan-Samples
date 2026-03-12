@@ -67,6 +67,7 @@ class FragmentShadingRate : public ApiVulkanSample
 	} ubo_scene;
 
 	VkPipelineLayout pipeline_layout;
+
 	struct Pipelines
 	{
 		VkPipeline skysphere;

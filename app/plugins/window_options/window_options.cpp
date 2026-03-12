@@ -37,8 +37,7 @@ WindowOptions::WindowOptions() :
                        {"stretch", "Stretch window to fullscreen (direct-to-display only)"},
                        {"vsync", "Force vsync {ON | OFF}. If not set samples decide how vsync is set"},
                        {"width", "Initial window width"}})
-{
-}
+{}
 
 bool WindowOptions::handle_option(std::deque<std::string> &arguments)
 {

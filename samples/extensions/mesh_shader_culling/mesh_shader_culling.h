@@ -39,6 +39,7 @@ class MeshShaderCulling : public ApiVulkanSample
 		VkBuffer       buffer;
 		VkDeviceMemory memory;
 	} query_result{};
+
 	VkQueryPool query_pool        = VK_NULL_HANDLE;
 	uint64_t    pipeline_stats[3] = {0};
 
@@ -50,6 +51,7 @@ class MeshShaderCulling : public ApiVulkanSample
 		float cull_radius     = 1.0f;
 		float meshlet_density = 2.0f;
 	} ubo_cull{};
+
 	MeshShaderCulling();
 	~MeshShaderCulling() override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;

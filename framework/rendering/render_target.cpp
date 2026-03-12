@@ -32,16 +32,15 @@ struct CompareExtent2D
 };
 }        // namespace
 
-Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage) :
-    format{format},
-    samples{samples},
-    usage{usage}
+Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage) : format{format}, samples{samples}, usage{usage}
+{}
+
+const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget>
 {
-}
-const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget> {
 	VkFormat depth_format = get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle());
 
-	core::Image depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
+	core::Image depth_image{swapchain_image.get_device(),
+	                        swapchain_image.get_extent(),
 	                        depth_format,
 	                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
 	                        VMA_MEMORY_USAGE_GPU_ONLY};
@@ -53,9 +52,7 @@ const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Imag
 	return std::make_unique<RenderTarget>(std::move(images));
 };
 
-vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
-    device{images.back().get_device()},
-    images{std::move(images)}
+vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) : device{images.back().get_device()}, images{std::move(images)}
 {
 	assert(!this->images.empty() && "Should specify at least 1 image");
 
@@ -89,16 +86,15 @@ vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
 }
 
 vkb::RenderTarget::RenderTarget(std::vector<core::ImageView> &&image_views) :
-    device{const_cast<core::Image &>(image_views.back().get_image()).get_device()},
-    images{},
-    views{std::move(image_views)}
+    device{const_cast<core::Image &>(image_views.back().get_image()).get_device()}, images{}, views{std::move(image_views)}
 {
 	assert(!views.empty() && "Should specify at least 1 image view");
 
 	std::set<VkExtent2D, CompareExtent2D> unique_extent;
 
 	// Returns the extent of the base mip level pointed at by a view
-	auto get_view_extent = [](const core::ImageView &view) {
+	auto get_view_extent = [](const core::ImageView &view)
+	{
 		const VkExtent3D mip0_extent = view.get_image().get_extent();
 		const uint32_t   mip_level   = view.get_subresource_range().baseMipLevel;
 		return VkExtent2D{mip0_extent.width >> mip_level, mip0_extent.height >> mip_level};

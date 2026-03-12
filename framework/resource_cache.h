@@ -117,8 +117,7 @@ class ResourceCache
 	                                const std::vector<LoadStoreInfo> &load_store_infos,
 	                                const std::vector<SubpassInfo>   &subpasses);
 
-	Framebuffer &request_framebuffer(const RenderTarget &render_target,
-	                                 const RenderPass   &render_pass);
+	Framebuffer &request_framebuffer(const RenderTarget &render_target, const RenderPass &render_pass);
 
 	void clear_pipelines();
 

@@ -23,15 +23,11 @@ namespace vkb
 {
 namespace sg
 {
-Animation::Animation(const std::string &name) :
-    Script{name}
-{
-}
+Animation::Animation(const std::string &name) : Script{name}
+{}
 
-Animation::Animation(const Animation &other) :
-    channels{other.channels}
-{
-}
+Animation::Animation(const Animation &other) : channels{other.channels}
+{}
 
 void Animation::add_channel(vkb::scene_graph::NodeC &node, const AnimationTarget &target, const AnimationSampler &sampler)
 {
@@ -62,9 +58,7 @@ void Animation::update(float delta_time)
 					{
 						case Translation:
 						{
-							transform.set_translation(glm::vec3(glm::mix(channel.sampler.outputs[i],
-							                                             channel.sampler.outputs[i + 1],
-							                                             time)));
+							transform.set_translation(glm::vec3(glm::mix(channel.sampler.outputs[i], channel.sampler.outputs[i + 1], time)));
 							break;
 						}
 						case Rotation:
@@ -87,9 +81,7 @@ void Animation::update(float delta_time)
 
 						case Scale:
 						{
-							transform.set_scale(glm::vec3(glm::mix(channel.sampler.outputs[i],
-							                                       channel.sampler.outputs[i + 1],
-							                                       time)));
+							transform.set_scale(glm::vec3(glm::mix(channel.sampler.outputs[i], channel.sampler.outputs[i + 1], time)));
 						}
 					}
 				}
@@ -130,8 +122,11 @@ void Animation::update(float delta_time)
 					glm::vec4 m0 = delta * channel.sampler.outputs[i * 3 + 2];              // Delta time * out tangent
 					glm::vec4 m1 = delta * channel.sampler.outputs[(i + 1) * 3 + 0];        // Delta time * in tangent of next point
 
-					// This equation is taken from the GLTF 2.0 specification Appendix C (https://github.com/KhronosGroup/glTF/tree/main/specification/2.0#appendix-c-spline-interpolation)
-					glm::vec4 result = (2.0f * glm::pow(time, 3.0f) - 3.0f * glm::pow(time, 2.0f) + 1.0f) * p0 + (glm::pow(time, 3.0f) - 2.0f * glm::pow(time, 2.0f) + time) * m0 + (-2.0f * glm::pow(time, 3.0f) + 3.0f * glm::pow(time, 2.0f)) * p1 + (glm::pow(time, 3.0f) - glm::pow(time, 2.0f)) * m1;
+					// This equation is taken from the GLTF 2.0 specification Appendix C
+					// (https://github.com/KhronosGroup/glTF/tree/main/specification/2.0#appendix-c-spline-interpolation)
+					glm::vec4 result = (2.0f * glm::pow(time, 3.0f) - 3.0f * glm::pow(time, 2.0f) + 1.0f) * p0 +
+					                   (glm::pow(time, 3.0f) - 2.0f * glm::pow(time, 2.0f) + time) * m0 +
+					                   (-2.0f * glm::pow(time, 3.0f) + 3.0f * glm::pow(time, 2.0f)) * p1 + (glm::pow(time, 3.0f) - glm::pow(time, 2.0f)) * m1;
 
 					auto &transform = channel.node.get_transform();
 
