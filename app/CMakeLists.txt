@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -49,6 +49,8 @@ elseif(IOS)
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/main.mm
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.h
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.m
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/SceneDelegate.h
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/SceneDelegate.m
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.h
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.mm
 	)

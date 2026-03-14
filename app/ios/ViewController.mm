@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Holochip Inc.
+/* Copyright (c) 2024-2026, Holochip Inc.
 *
 * SPDX-License-Identifier: Apache-2.0
 *
@@ -45,6 +45,10 @@ int platform_main(const vkb::PlatformContext &);
         NSString *s = args[i];
         argv[i] = s.UTF8String;
     }
+
+	// Allocate and add a Metal-compatible sub-view for Vulkan to use
+	self.vulkan_view = [[VulkanView alloc] initWithFrame:self.view.bounds];
+	[self.view addSubview:self.vulkan_view];
 
 	self.vulkan_view.contentScaleFactor = UIScreen.mainScreen.nativeScale;
 
