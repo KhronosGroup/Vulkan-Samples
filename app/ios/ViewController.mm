@@ -62,6 +62,13 @@ int platform_main(const vkb::PlatformContext &);
    [_displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSDefaultRunLoopMode];
 }
 
+- (void)viewDidLayoutSubviews {
+	[super viewDidLayoutSubviews];
+	
+	// Update the Vulkan sub-view to match parent view dimensions following rotation events
+	self.vulkan_view.layer.frame = self.view.bounds;
+}
+
 -(void) renderLoop {
     if(!_displayLink.isPaused && [UIApplication sharedApplication].applicationState == UIApplicationStateActive) {
 		if(_code == vkb::ExitCode::Success) {
