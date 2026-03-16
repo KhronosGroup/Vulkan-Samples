@@ -5,11 +5,11 @@
 
  SPDX-License-Identifier: BSD-3-Clause-Clear
 
- Licensed under the Apache License, Version 2.0 the "License";
+ Licensed under the BSD-3-Clause-Clear License the "License";
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+     https://spdx.org/licenses/BSD-3-Clause-Clear.html
 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
