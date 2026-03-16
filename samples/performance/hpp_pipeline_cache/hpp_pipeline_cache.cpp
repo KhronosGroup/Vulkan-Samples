@@ -40,7 +40,10 @@ HPPPipelineCache::~HPPPipelineCache()
 		get_device().get_handle().destroyPipelineCache(pipeline_cache);
 	}
 
-	vkb::fs::write_temp(get_device().get_resource_cache().serialize(), "hpp_cache.data");
+	if (has_device())
+	{
+		vkb::fs::write_temp(get_device().get_resource_cache().serialize(), "hpp_cache.data");
+	}
 }
 
 bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
