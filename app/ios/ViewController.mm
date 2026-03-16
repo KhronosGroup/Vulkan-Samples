@@ -20,6 +20,7 @@
 #include "core/platform/entrypoint.hpp"
 #include "platform/ios/ios_platform.h"
 #include "platform/ios/ios_window.h"
+#include "platform/input_events.h"
 
 int platform_main(const vkb::PlatformContext &);
 
@@ -28,15 +29,15 @@ int platform_main(const vkb::PlatformContext &);
     std::unique_ptr<vkb::PlatformContext> context;
     vkb::IosPlatformContext* _context;
     vkb::ExitCode _code;
+	UITouch* _activeTouch;
 }
 @property (retain, nonatomic) IBOutlet VulkanView *vulkan_view;
 
 @end
 
 @implementation ViewController
-- (void)viewDidLoad {
+- (void) viewDidLoad {
     [super viewDidLoad];
-
 
     // Convert incoming args to "C" argc/argv strings
     NSArray *args = [[NSProcessInfo processInfo] arguments];
@@ -62,7 +63,7 @@ int platform_main(const vkb::PlatformContext &);
    [_displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSDefaultRunLoopMode];
 }
 
-- (void)viewDidLayoutSubviews {
+- (void) viewDidLayoutSubviews {
 	[super viewDidLayoutSubviews];
 	
 	// Update the Vulkan sub-view to match parent view dimensions following rotation events
@@ -84,4 +85,63 @@ int platform_main(const vkb::PlatformContext &);
 		}
     }
 }
+
+-(CGPoint) getTouchLocalPoint:(UITouch*) touch {
+	CGPoint point = [touch locationInView:self.vulkan_view];
+	point.x *= self.vulkan_view.contentScaleFactor;
+	point.y *= self.vulkan_view.contentScaleFactor;
+	return point;
+}
+
+// Handle touch events for selection and dragging within the display and GUI overlay
+-(void) touchesBegan:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch == nil) {
+		_activeTouch = [touches anyObject];
+
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Down,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+	}
+}
+
+-(void) touchesMoved:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch && [touches containsObject:_activeTouch]) {
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Move,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+	}
+}
+
+-(void) touchesEnded:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch && [touches containsObject:_activeTouch]) {
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Up,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+
+		_activeTouch = nil;
+	}
+}
+
+-(void) touchesCancelled:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch && [touches containsObject:_activeTouch]) {
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Cancel,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+
+		_activeTouch = nil;
+	}
+}
+
 @end
