@@ -1,9 +1,9 @@
 #[[
 
- Copyright (c) 2026, Francesco Giancane
+ Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  Copyright (c) 2026, Stephen Saunders
 
- SPDX-License-Identifier: Apache-2.0
+ SPDX-License-Identifier: BSD-3-Clause-Clear
 
  Licensed under the Apache License, Version 2.0 the "License";
  you may not use this file except in compliance with the License.
@@ -16,6 +16,11 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
+
+ ------------------------------------------------------------------------
+ 
+ Co-Authored-By: (Qualcomm) Giancane, Francesco <fgiancan@qti.qualcomm.com>
+ Co-Authored-By: Stephen Saunders
 
  ]]
 
