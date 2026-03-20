@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +16,7 @@
  */
 
 #include "sampled_image.h"
-
+#include "core/image_view.h"
 #include "rendering/render_target.h"
 
 namespace vkb
@@ -31,7 +31,7 @@ SampledImage::SampledImage(const core::ImageView &image_view, Sampler *sampler) 
     isDepthResolve{false}
 {}
 
-SampledImage::SampledImage(uint32_t target_attachment, RenderTarget *render_target, Sampler *sampler, bool isDepthResolve) :
+SampledImage::SampledImage(uint32_t target_attachment, vkb::rendering::RenderTargetC *render_target, Sampler *sampler, bool isDepthResolve) :
     image_view{nullptr},
     target_attachment{target_attachment},
     render_target{render_target},
@@ -75,7 +75,7 @@ SampledImage &SampledImage::operator=(SampledImage &&to_move)
 	return *this;
 }
 
-const core::ImageView &SampledImage::get_image_view(const RenderTarget &default_target) const
+const core::ImageView &SampledImage::get_image_view(const vkb::rendering::RenderTargetC &default_target) const
 {
 	if (image_view != nullptr)
 	{

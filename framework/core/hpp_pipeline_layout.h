@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,6 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice;
 class HPPDescriptorSetLayout;
 
 /**

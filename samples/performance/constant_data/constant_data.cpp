@@ -134,7 +134,7 @@ void ConstantData::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 }
 
-void ConstantData::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void ConstantData::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	auto &extent = render_target.get_extent();
 

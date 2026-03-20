@@ -216,7 +216,7 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 
 	void render(vkb::core::CommandBufferC &command_buffer) override;
 
-	void draw_renderpass(vkb::core::CommandBufferC &primary_command_buffer, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::core::CommandBufferC &primary_command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	void draw_gui() override;
 

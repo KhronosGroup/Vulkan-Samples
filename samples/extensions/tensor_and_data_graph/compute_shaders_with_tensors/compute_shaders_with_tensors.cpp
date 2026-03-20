@@ -528,7 +528,7 @@ bool ComputeShadersWithTensors::resize(uint32_t width, uint32_t height)
 /**
  * @brief Overridden to do the main rendering on each frame - dispatch our neural network inference and visualize the results.
  */
-void ComputeShadersWithTensors::draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target)
+void ComputeShadersWithTensors::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	// Get the number of elapsed seconds, since start of program.
 	// This is used in the compute shaders.

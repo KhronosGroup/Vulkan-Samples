@@ -441,7 +441,7 @@ bool GraphConstants::resize(uint32_t width, uint32_t height)
 /**
  * @brief Overridden to do the main rendering on each frame - dispatch our neural network inference and visualize the results.
  */
-void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target)
+void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());

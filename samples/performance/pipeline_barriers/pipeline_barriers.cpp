@@ -134,7 +134,7 @@ void PipelineBarriers::prepare_render_context()
 	get_render_context().prepare(1, [this](vkb::core::Image &&swapchain_image) { return create_render_target(std::move(swapchain_image)); });
 }
 
-std::unique_ptr<vkb::RenderTarget> PipelineBarriers::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::rendering::RenderTargetC> PipelineBarriers::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
@@ -171,10 +171,10 @@ std::unique_ptr<vkb::RenderTarget> PipelineBarriers::create_render_target(vkb::c
 	// Attachment 3
 	images.push_back(std::move(normal_image));
 
-	return std::make_unique<vkb::RenderTarget>(std::move(images));
+	return std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
-void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	// POI
 	//

@@ -52,7 +52,7 @@ Subpasses::Subpasses()
 	config.insert<vkb::IntSetting>(3, configs[Config::GBufferSize].value, 1);
 }
 
-std::unique_ptr<vkb::RenderTarget> Subpasses::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::rendering::RenderTargetC> Subpasses::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
@@ -95,7 +95,7 @@ std::unique_ptr<vkb::RenderTarget> Subpasses::create_render_target(vkb::core::Im
 	// Attachment 3
 	images.push_back(std::move(normal_image));
 
-	return std::make_unique<vkb::RenderTarget>(std::move(images));
+	return std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
 void Subpasses::prepare_render_context()
@@ -379,7 +379,7 @@ std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_lighting_rend
 }
 
 void draw_pipeline(vkb::core::CommandBufferC       &command_buffer,
-                   vkb::RenderTarget               &render_target,
+                   vkb::rendering::RenderTargetC   &render_target,
                    vkb::rendering::RenderPipelineC &render_pipeline,
                    vkb::GuiC                       *gui = nullptr)
 {
@@ -406,12 +406,12 @@ void draw_pipeline(vkb::core::CommandBufferC       &command_buffer,
 	command_buffer.end_render_pass();
 }
 
-void Subpasses::draw_subpasses(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_subpasses(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	draw_pipeline(command_buffer, render_target, *render_pipeline, &get_gui());
 }
 
-void Subpasses::draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	// First render pass (no gui)
 	draw_pipeline(command_buffer, render_target, *geometry_render_pipeline);
@@ -451,7 +451,7 @@ void Subpasses::draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb
 	draw_pipeline(command_buffer, render_target, *lighting_render_pipeline, &get_gui());
 }
 
-void Subpasses::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	if (configs[Config::RenderTechnique].value == 0)
 	{

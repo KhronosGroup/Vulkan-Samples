@@ -93,7 +93,7 @@ void MultithreadingRenderPasses::prepare_render_context()
 	get_render_context().prepare(2);
 }
 
-std::unique_ptr<vkb::RenderTarget> MultithreadingRenderPasses::create_shadow_render_target(uint32_t size)
+std::unique_ptr<vkb::rendering::RenderTargetC> MultithreadingRenderPasses::create_shadow_render_target(uint32_t size)
 {
 	VkExtent3D extent{size, size, 1};
 
@@ -107,7 +107,7 @@ std::unique_ptr<vkb::RenderTarget> MultithreadingRenderPasses::create_shadow_ren
 
 	images.push_back(std::move(depth_image));
 
-	return std::make_unique<vkb::RenderTarget>(std::move(images));
+	return std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
 std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_shadow_renderpass()
@@ -441,13 +441,13 @@ void MultithreadingRenderPasses::draw_main_pass(vkb::core::CommandBufferC &comma
 	}
 }
 
-MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderContextC                  &render_context,
-                                                     vkb::ShaderSource                              &&vertex_source,
-                                                     vkb::ShaderSource                              &&fragment_source,
-                                                     vkb::sg::Scene                                  &scene,
-                                                     vkb::sg::Camera                                 &camera,
-                                                     vkb::sg::Camera                                 &shadowmap_camera,
-                                                     std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets) :
+MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderContextC                              &render_context,
+                                                     vkb::ShaderSource                                          &&vertex_source,
+                                                     vkb::ShaderSource                                          &&fragment_source,
+                                                     vkb::sg::Scene                                              &scene,
+                                                     vkb::sg::Camera                                             &camera,
+                                                     vkb::sg::Camera                                             &shadowmap_camera,
+                                                     std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets) :
     shadowmap_camera{shadowmap_camera},
     shadow_render_targets{shadow_render_targets},
     vkb::rendering::subpasses::ForwardSubpassC{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}

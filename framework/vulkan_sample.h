@@ -106,7 +106,6 @@ class Stats;
 
 namespace core
 {
-class HPPDevice;
 class HPPInstance;
 class HPPPhysicalDevice;
 }        // namespace core
@@ -115,8 +114,6 @@ namespace rendering
 {
 template <vkb::BindingType bindingType>
 class RenderContext;
-
-class HPPRenderTarget;
 }        // namespace rendering
 
 namespace stats
@@ -136,9 +133,8 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using RenderTargetType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
-	using SceneType        = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
-	using StatsType        = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
+	using SceneType = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
+	using StatsType = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
 	using Extent2DType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
 	using DebugReportCallbackCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugReportCallbackCreateInfoEXT, VkDebugReportCallbackCreateInfoEXT>::type;
@@ -188,7 +184,7 @@ class VulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target);
+	virtual void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
 	/**
 	 * @brief Samples should override this function to draw their interface
@@ -200,7 +196,7 @@ class VulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target);
+	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
 	virtual uint32_t                                 get_api_version() const;
 	virtual DebugReportCallbackCreateInfoType const *get_debug_report_callback_create_info() const;
@@ -338,8 +334,8 @@ class VulkanSample : public vkb::Application
   private:
 	void        create_render_context_impl(const std::vector<vk::SurfaceFormatKHR> &surface_priority_list);
 	size_t      determine_physical_device_score_impl(vk::PhysicalDevice const &gpu) const;
-	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
-	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
+	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
+	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
 	void        render_impl(vkb::core::CommandBufferCpp &command_buffer);
 	void        request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings) const;
 	static void set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer, vk::Extent2D const &extent);
@@ -576,7 +572,7 @@ inline size_t VulkanSample<bindingType>::determine_physical_device_score_impl(vk
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target)
+inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -585,13 +581,13 @@ inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType
 	else
 	{
 		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		          reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
+		          reinterpret_cast<vkb::rendering::RenderTargetCpp &>(render_target));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                                 vkb::rendering::HPPRenderTarget &render_target)
+                                                 vkb::rendering::RenderTargetCpp &render_target)
 {
 	auto &views = render_target.get_views();
 
@@ -636,7 +632,7 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp    
 	}
 	else
 	{
-		draw_renderpass(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), reinterpret_cast<vkb::RenderTarget &>(render_target));
+		draw_renderpass(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), reinterpret_cast<vkb::rendering::RenderTargetC &>(render_target));
 	}
 
 	{
@@ -658,7 +654,7 @@ inline void VulkanSample<bindingType>::draw_gui()
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target)
+inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -667,13 +663,13 @@ inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<
 	else
 	{
 		draw_renderpass_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		                     reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
+		                     reinterpret_cast<vkb::rendering::RenderTargetCpp &>(render_target));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::draw_renderpass_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                                            vkb::rendering::HPPRenderTarget &render_target)
+                                                            vkb::rendering::RenderTargetCpp &render_target)
 {
 	set_viewport_and_scissor_impl(command_buffer, render_target.get_extent());
 
@@ -1658,7 +1654,7 @@ inline void VulkanSample<bindingType>::update(float delta_time)
 	else
 	{
 		draw(reinterpret_cast<vkb::core::CommandBufferC &>(*command_buffer),
-		     reinterpret_cast<vkb::RenderTarget &>(render_context->get_active_frame().get_render_target()));
+		     reinterpret_cast<vkb::rendering::RenderTargetC &>(render_context->get_active_frame().get_render_target()));
 	}
 
 	stats->end_sampling(*command_buffer);

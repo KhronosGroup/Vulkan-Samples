@@ -128,7 +128,7 @@ bool RenderPassesSample::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void RenderPassesSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void RenderPassesSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	std::vector<vkb::LoadStoreInfo> load_store{2};
 

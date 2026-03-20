@@ -259,7 +259,7 @@ class ConstantData : public vkb::VulkanSampleC
   private:
 	virtual void draw_gui() override;
 
-	virtual void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
+	virtual void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
