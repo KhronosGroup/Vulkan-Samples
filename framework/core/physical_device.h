@@ -229,7 +229,7 @@ template <typename FeatureType>
 inline FeatureType &PhysicalDevice<bindingType>::add_extension_features_impl()
 {
 	// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
-	if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+	if (!instance.is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
 		throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
 		                         " isn't enabled!");
@@ -320,7 +320,7 @@ template <typename FeatureType>
 inline FeatureType PhysicalDevice<bindingType>::get_extension_features_impl()
 {
 	// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
-	if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+	if (!instance.is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
 		throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
 		                         " isn't enabled!");
