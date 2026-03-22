@@ -56,10 +56,10 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 	void        setup_queues();
 
 	void                                               prepare_render_targets();
-	std::unique_ptr<vkb::RenderTarget>                 forward_render_targets[2];
-	std::unique_ptr<vkb::RenderTarget>                 shadow_render_target;
-	vkb::RenderPipeline                                shadow_render_pipeline;
-	vkb::RenderPipeline                                forward_render_pipeline;
+	std::unique_ptr<vkb::rendering::RenderTargetC>     forward_render_targets[2];
+	std::unique_ptr<vkb::rendering::RenderTargetC>     shadow_render_target;
+	vkb::rendering::RenderPipelineC                    shadow_render_pipeline;
+	vkb::rendering::RenderPipelineC                    forward_render_pipeline;
 	std::unique_ptr<vkb::core::Sampler>                comparison_sampler;
 	std::unique_ptr<vkb::core::Sampler>                linear_sampler;
 	std::vector<std::unique_ptr<vkb::core::Image>>     blur_chain;
@@ -121,7 +121,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 		vkb::PipelineLayout        *layout{nullptr};
 	};
 
-	vkb::RenderTarget &get_current_forward_render_target();
+	vkb::rendering::RenderTargetC &get_current_forward_render_target();
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_async_compute();

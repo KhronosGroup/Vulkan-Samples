@@ -113,7 +113,7 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	vkb::ShaderSource scene_vs{"base.vert.spv"};
 	vkb::ShaderSource scene_fs{"base.frag.spv"};
 	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
-	scene_pipeline                  = std::make_unique<vkb::RenderPipeline>();
+	scene_pipeline                  = std::make_unique<vkb::rendering::RenderPipelineC>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
 	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
@@ -140,7 +140,7 @@ void MSAASample::prepare_render_context()
 	get_render_context().prepare(1, std::bind(&MSAASample::create_render_target, this, std::placeholders::_1));
 }
 
-std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::rendering::RenderTargetC> MSAASample::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
@@ -267,7 +267,7 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 	color_atts = {i_swapchain, i_color_ms, i_color_resolve};
 	depth_atts = {i_depth, i_depth_resolve};
 
-	return std::make_unique<vkb::RenderTarget>(std::move(images));
+	return std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
 void MSAASample::update(float delta_time)
@@ -473,7 +473,7 @@ void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering:
 	subpass->set_depth_stencil_resolve_mode(VK_RESOLVE_MODE_NONE);
 }
 
-void MSAASample::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void MSAASample::draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	auto &views = render_target.get_views();
 
@@ -580,10 +580,10 @@ void MSAASample::draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarg
 	}
 }
 
-void MSAASample::postprocessing(vkb::core::CommandBufferC &command_buffer,
-                                vkb::RenderTarget         &render_target,
-                                VkImageLayout             &swapchain_layout,
-                                bool                       msaa_enabled)
+void MSAASample::postprocessing(vkb::core::CommandBufferC     &command_buffer,
+                                vkb::rendering::RenderTargetC &render_target,
+                                VkImageLayout                 &swapchain_layout,
+                                bool                           msaa_enabled)
 {
 	auto        depth_attachment   = (msaa_enabled && depth_writeback_resolve_supported && resolve_depth_on_writeback) ? i_depth_resolve : i_depth;
 	bool        multisampled_depth = msaa_enabled && !(depth_writeback_resolve_supported && resolve_depth_on_writeback);
@@ -731,7 +731,7 @@ void MSAASample::prepare_supported_sample_count_list()
 
 void MSAASample::prepare_depth_resolve_mode_list()
 {
-	if (get_instance().is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+	if (get_instance().is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
 		VkPhysicalDeviceProperties2KHR gpu_properties{};
 		gpu_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;

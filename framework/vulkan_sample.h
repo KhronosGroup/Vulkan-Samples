@@ -20,11 +20,12 @@
 
 #include "common/hpp_utils.h"
 #include "core/debug.h"
+#include "core/hpp_debug.h"
 #include "gui.h"
 #include "hpp_gltf_loader.h"
 #include "platform/application.h"
 #include "platform/window.h"
-#include "rendering/hpp_render_pipeline.h"
+#include "rendering/render_pipeline.h"
 #include "stats/hpp_stats.h"
 
 #if defined(PLATFORM__MACOS)
@@ -101,12 +102,10 @@ namespace vkb
  * - Core classes: Classes in vkb::core wrap Vulkan objects for indexing and hashing.
  */
 
-class RenderPipeline;
 class Stats;
 
 namespace core
 {
-class HPPDevice;
 class HPPInstance;
 class HPPPhysicalDevice;
 }        // namespace core
@@ -115,8 +114,6 @@ namespace rendering
 {
 template <vkb::BindingType bindingType>
 class RenderContext;
-
-class HPPRenderTarget;
 }        // namespace rendering
 
 namespace stats
@@ -136,18 +133,18 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using RenderPipelineType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderPipeline, vkb::RenderPipeline>::type;
-	using RenderTargetType   = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
-	using SceneType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
-	using StatsType          = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
+	using SceneType = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
+	using StatsType = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
-	using Extent2DType                = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
-	using InstanceCreateFlagsType     = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
-	using LayerSettingType            = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
-	using PhysicalDeviceType          = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
-	using SurfaceFormatType           = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
-	using SurfaceType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
-	using ValidationFeatureEnableType = typename std::conditional<bindingType == BindingType::Cpp, vk::ValidationFeatureEnableEXT, VkValidationFeatureEnableEXT>::type;
+	using Extent2DType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using DebugReportCallbackCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugReportCallbackCreateInfoEXT, VkDebugReportCallbackCreateInfoEXT>::type;
+	using DebugUtilsMessengerCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugUtilsMessengerCreateInfoEXT, VkDebugUtilsMessengerCreateInfoEXT>::type;
+	using InstanceCreateFlagsType           = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
+	using LayerSettingType                  = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
+	using PhysicalDeviceType                = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
+	using SurfaceFormatType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
+	using SurfaceType                       = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using ValidationFeatureEnableType       = typename std::conditional<bindingType == BindingType::Cpp, vk::ValidationFeatureEnableEXT, VkValidationFeatureEnableEXT>::type;
 
 	Configuration                                    &get_configuration();
 	vkb::rendering::RenderContext<bindingType>       &get_render_context();
@@ -187,7 +184,7 @@ class VulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target);
+	virtual void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
 	/**
 	 * @brief Samples should override this function to draw their interface
@@ -199,11 +196,13 @@ class VulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target);
+	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
-	virtual uint32_t                get_api_version() const;
-	virtual InstanceCreateFlagsType get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
-	virtual void                   *get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) const;
+	virtual uint32_t                                 get_api_version() const;
+	virtual DebugReportCallbackCreateInfoType const *get_debug_report_callback_create_info() const;
+	virtual DebugUtilsMessengerCreateInfoType const *get_debug_utils_messenger_create_info() const;
+	virtual InstanceCreateFlagsType                  get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
+	virtual void const                              *get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) const;
 
 	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -255,24 +254,24 @@ class VulkanSample : public vkb::Application
 	 */
 	void create_render_context(const std::vector<SurfaceFormatType> &surface_priority_list);
 
-	vkb::core::Device<bindingType>         &get_device();
-	vkb::core::Device<bindingType> const   &get_device() const;
-	vkb::Gui<bindingType>                  &get_gui();
-	vkb::Gui<bindingType> const            &get_gui() const;
-	vkb::core::Instance<bindingType>       &get_instance();
-	vkb::core::Instance<bindingType> const &get_instance() const;
-	RenderPipelineType                     &get_render_pipeline();
-	RenderPipelineType const               &get_render_pipeline() const;
-	SceneType                              &get_scene();
-	StatsType                              &get_stats();
-	SurfaceType                             get_surface() const;
-	std::vector<SurfaceFormatType>         &get_surface_priority_list();
-	std::vector<SurfaceFormatType> const   &get_surface_priority_list() const;
-	bool                                    has_device() const;
-	bool                                    has_instance() const;
-	bool                                    has_gui() const;
-	bool                                    has_render_pipeline() const;
-	bool                                    has_scene();
+	vkb::core::Device<bindingType>                    &get_device();
+	vkb::core::Device<bindingType> const              &get_device() const;
+	vkb::Gui<bindingType>                             &get_gui();
+	vkb::Gui<bindingType> const                       &get_gui() const;
+	vkb::core::Instance<bindingType>                  &get_instance();
+	vkb::core::Instance<bindingType> const            &get_instance() const;
+	vkb::rendering::RenderPipeline<bindingType>       &get_render_pipeline();
+	vkb::rendering::RenderPipeline<bindingType> const &get_render_pipeline() const;
+	SceneType                                         &get_scene();
+	StatsType                                         &get_stats();
+	SurfaceType                                        get_surface() const;
+	std::vector<SurfaceFormatType>                    &get_surface_priority_list();
+	std::vector<SurfaceFormatType> const              &get_surface_priority_list() const;
+	bool                                               has_device() const;
+	bool                                               has_instance() const;
+	bool                                               has_gui() const;
+	bool                                               has_render_pipeline() const;
+	bool                                               has_scene();
 
 	/**
 	 * @brief Loads the scene
@@ -299,7 +298,7 @@ class VulkanSample : public vkb::Application
 
 	void set_render_context(std::unique_ptr<vkb::rendering::RenderContext<bindingType>> &&render_context);
 
-	void set_render_pipeline(std::unique_ptr<RenderPipelineType> &&render_pipeline);
+	void set_render_pipeline(std::unique_ptr<vkb::rendering::RenderPipeline<bindingType>> &&render_pipeline);
 
 	/**
 	 * @brief Main loop sample events
@@ -335,8 +334,8 @@ class VulkanSample : public vkb::Application
   private:
 	void        create_render_context_impl(const std::vector<vk::SurfaceFormatKHR> &surface_priority_list);
 	size_t      determine_physical_device_score_impl(vk::PhysicalDevice const &gpu) const;
-	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
-	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::HPPRenderTarget &render_target);
+	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
+	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
 	void        render_impl(vkb::core::CommandBufferCpp &command_buffer);
 	void        request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings) const;
 	static void set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer, vk::Extent2D const &extent);
@@ -357,6 +356,9 @@ class VulkanSample : public vkb::Application
 	 */
 	std::unique_ptr<vkb::core::InstanceCpp> instance;
 
+	vk::DebugReportCallbackEXT debug_report_callback;
+	vk::DebugUtilsMessengerEXT debug_utils_messenger;
+
 	/**
 	 * @brief The physical device selected for this sample
 	 */
@@ -375,7 +377,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Pipeline used for rendering, it should be set up by the concrete sample
 	 */
-	std::unique_ptr<vkb::rendering::HPPRenderPipeline> render_pipeline;
+	std::unique_ptr<vkb::rendering::RenderPipelineCpp> render_pipeline;
 
 	/**
 	 * @brief Holds all scene information
@@ -442,6 +444,14 @@ inline VulkanSample<bindingType>::~VulkanSample()
 	if (surface)
 	{
 		instance->get_handle().destroySurfaceKHR(surface);
+	}
+	if (debug_utils_messenger)
+	{
+		instance->get_handle().destroyDebugUtilsMessengerEXT(debug_utils_messenger);
+	}
+	if (debug_report_callback)
+	{
+		instance->get_handle().destroyDebugReportCallbackEXT(debug_report_callback);
 	}
 
 	instance.reset();
@@ -562,7 +572,7 @@ inline size_t VulkanSample<bindingType>::determine_physical_device_score_impl(vk
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target)
+inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -571,13 +581,13 @@ inline void VulkanSample<bindingType>::draw(vkb::core::CommandBuffer<bindingType
 	else
 	{
 		draw_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		          reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
+		          reinterpret_cast<vkb::rendering::RenderTargetCpp &>(render_target));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                                 vkb::rendering::HPPRenderTarget &render_target)
+                                                 vkb::rendering::RenderTargetCpp &render_target)
 {
 	auto &views = render_target.get_views();
 
@@ -622,7 +632,7 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp    
 	}
 	else
 	{
-		draw_renderpass(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), reinterpret_cast<vkb::RenderTarget &>(render_target));
+		draw_renderpass(reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), reinterpret_cast<vkb::rendering::RenderTargetC &>(render_target));
 	}
 
 	{
@@ -644,7 +654,7 @@ inline void VulkanSample<bindingType>::draw_gui()
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, RenderTargetType &render_target)
+inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -653,13 +663,13 @@ inline void VulkanSample<bindingType>::draw_renderpass(vkb::core::CommandBuffer<
 	else
 	{
 		draw_renderpass_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		                     reinterpret_cast<vkb::rendering::HPPRenderTarget &>(render_target));
+		                     reinterpret_cast<vkb::rendering::RenderTargetCpp &>(render_target));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::draw_renderpass_impl(vkb::core::CommandBufferCpp     &command_buffer,
-                                                            vkb::rendering::HPPRenderTarget &render_target)
+                                                            vkb::rendering::RenderTargetCpp &render_target)
 {
 	set_viewport_and_scissor_impl(command_buffer, render_target.get_extent());
 
@@ -752,6 +762,45 @@ inline bool enable_layer_setting(VkLayerSettingEXT const          &requested_lay
 }
 
 template <vkb::BindingType bindingType>
+inline typename VulkanSample<bindingType>::DebugReportCallbackCreateInfoType const *VulkanSample<bindingType>::get_debug_report_callback_create_info() const
+{
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	static vk::DebugReportCallbackCreateInfoEXT debug_report_callback_createInfo{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+	                                                                             .pfnCallback = vkb::core::debug_callback};
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return &debug_report_callback_createInfo;
+	}
+	else
+	{
+		return reinterpret_cast<VkDebugReportCallbackCreateInfoEXT *>(&debug_report_callback_createInfo);
+	}
+#else
+	return nullptr;
+#endif
+}
+
+template <vkb::BindingType bindingType>
+inline typename VulkanSample<bindingType>::DebugUtilsMessengerCreateInfoType const *VulkanSample<bindingType>::get_debug_utils_messenger_create_info() const
+{
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	                                                                              .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	                                                                              .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		return &debug_utils_messenger_create_info;
+	}
+	else
+	{
+		return reinterpret_cast<VkDebugUtilsMessengerCreateInfoEXT *>(&debug_utils_messenger_create_info);
+	}
+#else
+	return nullptr;
+#endif
+}
+
+template <vkb::BindingType bindingType>
 inline typename VulkanSample<bindingType>::InstanceCreateFlagsType VulkanSample<bindingType>::get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const
 {
 	vk::InstanceCreateFlags flags;
@@ -773,25 +822,19 @@ inline typename VulkanSample<bindingType>::InstanceCreateFlagsType VulkanSample<
 }
 
 template <vkb::BindingType bindingType>
-inline void *VulkanSample<bindingType>::get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers,
-                                                                            std::vector<std::string> const &enabled_extensions) const
+inline void const *VulkanSample<bindingType>::get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers,
+                                                                                  std::vector<std::string> const &enabled_extensions) const
 {
-	void *pNext = nullptr;
+	void const *pNext = nullptr;
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	if (contains(enabled_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		static vk::DebugReportCallbackCreateInfoEXT debug_report_create_info = vkb::core::getDefaultDebugReportCallbackCreateInfoEXT();
-		debug_report_create_info.pNext                                       = pNext;
-		pNext                                                                = &debug_report_create_info;
+		pNext = get_debug_utils_messenger_create_info();
 	}
 	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 	{
-		static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vkb::core::getDefaultDebugUtilsMessengerCreateInfoEXT();
-		debug_utils_create_info.pNext                                       = pNext;
-		pNext                                                               = &debug_utils_create_info;
+		pNext = get_debug_report_callback_create_info();
 	}
-#endif
 
 	if (contains(enabled_extensions, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME))
 	{
@@ -799,6 +842,8 @@ inline void *VulkanSample<bindingType>::get_instance_create_info_extensions(std:
 		request_layer_settings(requested_layer_settings);
 
 		static std::vector<vk::LayerSettingEXT> enabled_layer_settings;
+		// since enabled_layer_settings is static, clear on every get_instance_create_info_extensions() call to support batch mode
+		enabled_layer_settings.clear();
 		for (auto const &layer_setting : requested_layer_settings)
 		{
 			enable_layer_setting(layer_setting, enabled_layers, enabled_layer_settings);
@@ -976,7 +1021,7 @@ inline vkb::rendering::RenderContext<bindingType> &VulkanSample<bindingType>::ge
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::RenderPipelineType const &VulkanSample<bindingType>::get_render_pipeline() const
+inline vkb::rendering::RenderPipeline<bindingType> const &VulkanSample<bindingType>::get_render_pipeline() const
 {
 	assert(render_pipeline && "Render pipeline was not created");
 	if constexpr (bindingType == BindingType::Cpp)
@@ -985,12 +1030,12 @@ inline typename VulkanSample<bindingType>::RenderPipelineType const &VulkanSampl
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderPipeline const &>(*render_pipeline);
+		return reinterpret_cast<vkb::rendering::RenderPipelineC const &>(*render_pipeline);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::RenderPipelineType &VulkanSample<bindingType>::get_render_pipeline()
+inline vkb::rendering::RenderPipeline<bindingType> &VulkanSample<bindingType>::get_render_pipeline()
 {
 	assert(render_pipeline && "Render pipeline was not created");
 	if constexpr (bindingType == BindingType::Cpp)
@@ -999,7 +1044,7 @@ inline typename VulkanSample<bindingType>::RenderPipelineType &VulkanSample<bind
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderPipeline &>(*render_pipeline);
+		return reinterpret_cast<vkb::rendering::RenderPipelineC &>(*render_pipeline);
 	}
 }
 
@@ -1180,6 +1225,38 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		instance.reset(reinterpret_cast<vkb::core::InstanceCpp *>(create_instance().release()));
 	}
 
+	// initialize debug utils or report callback based on enabled extensions, if any
+	if (instance->is_extension_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	{
+		auto const *debug_utils_messenger_create_info = get_debug_utils_messenger_create_info();
+		if (debug_utils_messenger_create_info)
+		{
+			if constexpr (bindingType == BindingType::Cpp)
+			{
+				debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(*debug_utils_messenger_create_info);
+			}
+			else
+			{
+				debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(*reinterpret_cast<vk::DebugUtilsMessengerCreateInfoEXT const *>(debug_utils_messenger_create_info));
+			}
+		}
+	}
+	else if (instance->is_extension_enabled(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+	{
+		auto const *debug_report_callback_create_info = get_debug_report_callback_create_info();
+		if (debug_report_callback_create_info)
+		{
+			if constexpr (bindingType == BindingType::Cpp)
+			{
+				debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(*debug_report_callback_create_info);
+			}
+			else
+			{
+				debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(*reinterpret_cast<vk::DebugReportCallbackCreateInfoEXT const *>(debug_report_callback_create_info));
+			}
+		}
+	}
+
 	// Getting a valid vulkan surface from the platform
 	surface = static_cast<vk::SurfaceKHR>(window->create_surface(reinterpret_cast<vkb::core::InstanceC &>(*instance)));
 	if (!surface)
@@ -1202,7 +1279,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-		if (instance->is_enabled(VK_KHR_DISPLAY_EXTENSION_NAME))
+		if (instance->is_extension_enabled(VK_KHR_DISPLAY_EXTENSION_NAME))
 		{
 			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
 		}
@@ -1342,7 +1419,8 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 #endif
 
 #if defined(VKB_ENABLE_PORTABILITY)
-	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Required;
+	// VK_KHR_portability_enumeration must be optional to support MoltenVK standalone on macOS and iOS Simulator
+	requested_extensions[VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME] = vkb::RequestMode::Optional;
 #endif
 
 	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
@@ -1518,7 +1596,7 @@ inline void VulkanSample<bindingType>::set_render_context(std::unique_ptr<vkb::r
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::set_render_pipeline(std::unique_ptr<RenderPipelineType> &&rp)
+inline void VulkanSample<bindingType>::set_render_pipeline(std::unique_ptr<vkb::rendering::RenderPipeline<bindingType>> &&rp)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1526,7 +1604,7 @@ inline void VulkanSample<bindingType>::set_render_pipeline(std::unique_ptr<Rende
 	}
 	else
 	{
-		render_pipeline.reset(reinterpret_cast<vkb::rendering::HPPRenderPipeline *>(rp.release()));
+		render_pipeline.reset(reinterpret_cast<vkb::rendering::RenderPipelineCpp *>(rp.release()));
 	}
 }
 
@@ -1576,7 +1654,7 @@ inline void VulkanSample<bindingType>::update(float delta_time)
 	else
 	{
 		draw(reinterpret_cast<vkb::core::CommandBufferC &>(*command_buffer),
-		     reinterpret_cast<vkb::RenderTarget &>(render_context->get_active_frame().get_render_target()));
+		     reinterpret_cast<vkb::rendering::RenderTargetC &>(render_context->get_active_frame().get_render_target()));
 	}
 
 	stats->end_sampling(*command_buffer);

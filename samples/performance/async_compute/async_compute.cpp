@@ -84,7 +84,7 @@ void AsyncComputeSample::prepare_render_targets()
 	color_targets[0].set_debug_name("color_targets[0]");
 	color_targets[1].set_debug_name("color_targets[1]");
 
-	// Should only really need one depth target, but vkb::RenderTarget needs to own the resource.
+	// Should only really need one depth target, but RenderTarget needs to own the resource.
 	vkb::core::Image depth_targets[2]{
 	    {get_device(), size, VK_FORMAT_D32_SFLOAT,
 	     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -151,12 +151,12 @@ void AsyncComputeSample::prepare_render_targets()
 		std::vector<vkb::core::Image> color_attachments;
 		color_attachments.push_back(std::move(color_targets[i]));
 		color_attachments.push_back(std::move(depth_targets[i]));
-		forward_render_targets[i] = std::make_unique<vkb::RenderTarget>(std::move(color_attachments));
+		forward_render_targets[i] = std::make_unique<vkb::rendering::RenderTargetC>(std::move(color_attachments));
 	}
 
 	std::vector<vkb::core::Image> shadow_attachments;
 	shadow_attachments.push_back(std::move(shadow_target));
-	shadow_render_target = std::make_unique<vkb::RenderTarget>(std::move(shadow_attachments));
+	shadow_render_target = std::make_unique<vkb::rendering::RenderTargetC>(std::move(shadow_attachments));
 }
 
 void AsyncComputeSample::setup_queues()
@@ -286,7 +286,7 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	forward_render_pipeline.set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
 	                                        {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
 
-	auto blit_render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto blit_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	blit_render_pipeline->add_subpass(std::move(composite_scene_subpass));
 	blit_render_pipeline->set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
 	                                      {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE}});
@@ -363,7 +363,7 @@ void AsyncComputeSample::render_shadow_pass()
 	get_render_context().submit(queue, {command_buffer});
 }
 
-vkb::RenderTarget &AsyncComputeSample::get_current_forward_render_target()
+vkb::rendering::RenderTargetC &AsyncComputeSample::get_current_forward_render_target()
 {
 	return *forward_render_targets[forward_render_target_index];
 }

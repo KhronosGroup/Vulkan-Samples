@@ -68,7 +68,7 @@ bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 	auto              scene_subpass =
 	    std::make_unique<ForwardSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
-	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
@@ -200,7 +200,7 @@ void CommandBufferUsage::render(vkb::core::CommandBufferC &primary_command_buffe
 	}
 }
 
-void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_command_buffer, vkb::RenderTarget &render_target)
+void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	const auto &subpass = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get());
 	auto       &extent  = render_target.get_extent();

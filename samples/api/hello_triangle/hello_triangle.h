@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2025, Sascha Willems
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2025-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -172,8 +172,6 @@ class HelloTriangle : public vkb::Application
 
   private:
 	Context context;
-
-	std::unique_ptr<vkb::core::InstanceC> vk_instance;
 };
 
 std::unique_ptr<vkb::Application> create_hello_triangle();

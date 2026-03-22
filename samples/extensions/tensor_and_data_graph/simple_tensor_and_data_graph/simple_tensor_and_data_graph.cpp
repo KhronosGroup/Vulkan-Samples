@@ -104,7 +104,7 @@ bool SimpleTensorAndDataGraph::prepare(const vkb::ApplicationOptions &options)
 	prepare_visualization_pipeline_descriptor_set();
 
 	// Create a RenderPipeline to blit `output_image` to the swapchain
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::make_unique<BlitSubpass>(get_render_context()));
 	set_render_pipeline(std::move(render_pipeline));
 
@@ -323,7 +323,7 @@ bool SimpleTensorAndDataGraph::resize(uint32_t width, uint32_t height)
 /**
  * @brief Overridden to do the main rendering on each frame - dispatch our neural network inference and visualize the results.
  */
-void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target)
+void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());
