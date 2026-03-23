@@ -53,7 +53,7 @@ class TensorImageAliasing : public vkb::VulkanSampleC
 
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
-	void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	void draw_gui() override;
 
@@ -98,7 +98,7 @@ class TensorImageAliasing : public vkb::VulkanSampleC
 
 	bool enable_neural_network = true;
 
-	std::unique_ptr<vkb::RenderTarget> scene_render_target;
+	std::unique_ptr<vkb::rendering::RenderTargetC> scene_render_target;
 
 #if !TENSOR_IMAGE_ALIASING_RENDER_TO_ALIASED_IMAGE
 	std::unique_ptr<vkb::core::Image> input_image;

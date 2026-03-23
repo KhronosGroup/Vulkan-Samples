@@ -172,7 +172,7 @@ void TensorImageAliasing::prepare_scene_render_target(uint32_t width, uint32_t h
 	images.push_back(std::move(colour_image));
 	images.push_back(std::move(depth_image));
 
-	scene_render_target = std::make_unique<vkb::RenderTarget>(std::move(images));
+	scene_render_target = std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
 #if !TENSOR_IMAGE_ALIASING_RENDER_TO_ALIASED_IMAGE
@@ -388,7 +388,7 @@ void TensorImageAliasing::prepare_data_graph_pipeline_descriptor_set()
 	write_descriptor_set(get_device().get_handle(), data_graph_pipeline_descriptor_set, {}, tensor_bindings);
 }
 
-void TensorImageAliasing::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void TensorImageAliasing::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	if (!enable_neural_network)
 	{
