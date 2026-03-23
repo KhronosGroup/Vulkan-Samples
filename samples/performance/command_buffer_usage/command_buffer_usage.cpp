@@ -200,7 +200,7 @@ void CommandBufferUsage::render(vkb::core::CommandBufferC &primary_command_buffe
 	}
 }
 
-void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_command_buffer, vkb::RenderTarget &render_target)
+void CommandBufferUsage::draw_renderpass(vkb::core::CommandBufferC &primary_command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	const auto &subpass = static_cast<ForwardSubpassSecondary *>(get_render_pipeline().get_active_subpass().get());
 	auto       &extent  = render_target.get_extent();

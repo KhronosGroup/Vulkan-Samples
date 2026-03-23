@@ -48,11 +48,11 @@ class PipelineBarriers : public vkb::VulkanSampleC
 
 	vkb::sg::Camera *camera{nullptr};
 
-	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
+	std::unique_ptr<vkb::rendering::RenderTargetC> create_render_target(vkb::core::Image &&swapchain_image);
 
 	virtual void prepare_render_context() override;
 
-	void draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	virtual void draw_gui() override;
 

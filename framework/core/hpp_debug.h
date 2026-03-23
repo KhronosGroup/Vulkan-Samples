@@ -166,13 +166,6 @@ inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::Debug
 	return false;
 }
 
-inline vk::DebugUtilsMessengerCreateInfoEXT getDefaultDebugUtilsMessengerCreateInfoEXT()
-{
-	return vk::DebugUtilsMessengerCreateInfoEXT{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-	                                            .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-	                                            .pfnUserCallback = debug_utils_messenger_callback};
-}
-
 inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT flags,
                                                        vk::DebugReportObjectTypeEXT /*type*/,
                                                        uint64_t /*object*/,
@@ -200,13 +193,6 @@ inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT f
 	}
 	return false;
 }
-
-inline vk::DebugReportCallbackCreateInfoEXT getDefaultDebugReportCallbackCreateInfoEXT()
-{
-	return vk::DebugReportCallbackCreateInfoEXT{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
-	                                            .pfnCallback = debug_callback};
-}
-
 #endif
 }        // namespace core
 }        // namespace vkb

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Huawei Technologies Co., Ltd.
+/* Copyright (c) 2024-2026, Huawei Technologies Co., Ltd.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1198,8 +1198,6 @@ HelloTriangleV13::~HelloTriangleV13()
 		vkDestroyDebugUtilsMessengerEXT(context.instance, context.debug_callback, nullptr);
 		context.debug_callback = VK_NULL_HANDLE;
 	}
-
-	vk_instance.reset();
 }
 
 bool HelloTriangleV13::prepare(const vkb::ApplicationOptions &options)
@@ -1208,9 +1206,7 @@ bool HelloTriangleV13::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance();
 
-	vk_instance = std::make_unique<vkb::core::InstanceC>(context.instance);
-
-	context.surface                     = options.window->create_surface(*vk_instance);
+	context.surface                     = options.window->create_surface(context.instance, nullptr);
 	auto &extent                        = options.window->get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;

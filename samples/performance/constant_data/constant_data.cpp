@@ -88,7 +88,7 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	// If descriptor indexing and its dependencies were enabled, then we can mark the update after bind method as supported
-	if (get_instance().is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) &&
+	if (get_instance().is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) &&
 	    get_device().is_extension_enabled(VK_KHR_MAINTENANCE3_EXTENSION_NAME) &&
 	    get_device().is_extension_enabled(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
 	{
@@ -134,7 +134,7 @@ void ConstantData::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 }
 
-void ConstantData::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void ConstantData::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	auto &extent = render_target.get_extent();
 

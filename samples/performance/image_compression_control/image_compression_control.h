@@ -60,7 +60,7 @@ class ImageCompressionControlSample : public vkb::VulkanSampleC
 
 	virtual void create_render_context() override;
 
-	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
+	std::unique_ptr<vkb::rendering::RenderTargetC> create_render_target(vkb::core::Image &&swapchain_image);
 
 	enum class Attachments : int
 	{

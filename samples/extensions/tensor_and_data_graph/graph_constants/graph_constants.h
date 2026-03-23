@@ -59,7 +59,7 @@ class GraphConstants : public vkb::VulkanSampleC
 
 	bool resize(uint32_t width, uint32_t height) override;
 
-	void draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target) override;
+	void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	void draw_gui() override;
 
