@@ -387,12 +387,15 @@ if (VKB_PROFILING)
 endif()
 
 # ai-ml-sdk-vgf-library
-set(FLATBUFFERS_PATH "${CMAKE_SOURCE_DIR}/third_party/flatbuffers")
-set(ML_SDK_VGF_LIB_BUILD_TOOLS OFF)
-add_subdirectory(ai-ml-sdk-vgf-library)
+if(NOT IOS)
+    set(FLATBUFFERS_PATH "${CMAKE_SOURCE_DIR}/third_party/flatbuffers")
+    set(ML_SDK_VGF_LIB_BUILD_TOOLS OFF)
+    add_subdirectory(ai-ml-sdk-vgf-library)
 
-# The DEBUG define set in global_options.cmake clashes with an enum value defined in ai-ml-sdk-vgf-library/include/vgf/logging.hpp,
-# work around this by disabling the DEBUG define for this target.
-target_compile_options(vgf PRIVATE -UDEBUG)
+    # The DEBUG define set in global_options.cmake clashes with an enum value defined in ai-ml-sdk-vgf-library/include/vgf/logging.hpp,
+    # work around this by disabling the DEBUG define for this target.
+    target_compile_options(vgf PRIVATE -UDEBUG)
 
-set_target_properties(vgf PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(vgf PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+endif()
+
