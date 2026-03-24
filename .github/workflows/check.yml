@@ -72,6 +72,7 @@ jobs:
       - name: Run Clang Format diff
         id: clang-diff
         run: |
+          /user/bin/clang-format.exe --version
           echo "changes=$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> $GITHUB_OUTPUT
           echo "$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> clang-issues.diff
       - name: Count Diff Lines
