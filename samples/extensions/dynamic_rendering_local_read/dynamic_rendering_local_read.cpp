@@ -772,7 +772,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &composition_pass.pipeline));
 }
 
-void DynamicRenderingLocalRead::draw_scene(std::unique_ptr<vkb::sg::Scene> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout)
+void DynamicRenderingLocalRead::draw_scene(std::unique_ptr<vkb::scene_graph::SceneC> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout)
 {
 	for (auto &mesh : scene->get_components<vkb::sg::Mesh>())
 	{

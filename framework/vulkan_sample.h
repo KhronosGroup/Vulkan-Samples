@@ -26,6 +26,9 @@
 #include "platform/application.h"
 #include "platform/window.h"
 #include "rendering/render_pipeline.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/script.h"
+#include "scene_graph/scripts/animation.h"
 #include "stats/hpp_stats.h"
 
 #if defined(PLATFORM__MACOS)
@@ -133,7 +136,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using SceneType = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using StatsType = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
 	using Extent2DType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
@@ -262,7 +264,7 @@ class VulkanSample : public vkb::Application
 	vkb::core::Instance<bindingType> const            &get_instance() const;
 	vkb::rendering::RenderPipeline<bindingType>       &get_render_pipeline();
 	vkb::rendering::RenderPipeline<bindingType> const &get_render_pipeline() const;
-	SceneType                                         &get_scene();
+	vkb::scene_graph::Scene<bindingType>              &get_scene();
 	StatsType                                         &get_stats();
 	SurfaceType                                        get_surface() const;
 	std::vector<SurfaceFormatType>                    &get_surface_priority_list();
@@ -382,7 +384,7 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Holds all scene information
 	 */
-	std::unique_ptr<vkb::scene_graph::HPPScene> scene;
+	std::unique_ptr<vkb::scene_graph::SceneCpp> scene;
 
 	std::unique_ptr<vkb::GuiCpp> gui;
 
@@ -1049,7 +1051,7 @@ inline vkb::rendering::RenderPipeline<bindingType> &VulkanSample<bindingType>::g
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::SceneType &VulkanSample<bindingType>::get_scene()
+inline vkb::scene_graph::Scene<bindingType> &VulkanSample<bindingType>::get_scene()
 {
 	assert(scene && "Scene not loaded");
 	if constexpr (bindingType == BindingType::Cpp)
@@ -1058,7 +1060,7 @@ inline typename VulkanSample<bindingType>::SceneType &VulkanSample<bindingType>:
 	}
 	else
 	{
-		return reinterpret_cast<vkb::sg::Scene &>(*scene);
+		return reinterpret_cast<vkb::scene_graph::SceneC &>(*scene);
 	}
 }
 

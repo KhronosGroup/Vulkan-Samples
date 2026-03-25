@@ -108,7 +108,7 @@ class ConstantData : public vkb::VulkanSampleC
 		ConstantDataSubpass(vkb::rendering::RenderContextC &render_context,
 		                    vkb::ShaderSource             &&vertex_shader,
 		                    vkb::ShaderSource             &&fragment_shader,
-		                    vkb::sg::Scene                 &scene,
+		                    vkb::scene_graph::SceneC       &scene,
 		                    vkb::sg::Camera                &camera) :
 		    vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
@@ -129,7 +129,7 @@ class ConstantData : public vkb::VulkanSampleC
 		PushConstantSubpass(vkb::rendering::RenderContextC &render_context,
 		                    vkb::ShaderSource             &&vertex_shader,
 		                    vkb::ShaderSource             &&fragment_shader,
-		                    vkb::sg::Scene                 &scene,
+		                    vkb::scene_graph::SceneC       &scene,
 		                    vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
@@ -166,7 +166,7 @@ class ConstantData : public vkb::VulkanSampleC
 		DescriptorSetSubpass(vkb::rendering::RenderContextC &render_context,
 		                     vkb::ShaderSource             &&vertex_shader,
 		                     vkb::ShaderSource             &&fragment_shader,
-		                     vkb::sg::Scene                 &scene,
+		                     vkb::scene_graph::SceneC       &scene,
 		                     vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
@@ -203,7 +203,7 @@ class ConstantData : public vkb::VulkanSampleC
 		BufferArraySubpass(vkb::rendering::RenderContextC &render_context,
 		                   vkb::ShaderSource             &&vertex_shader,
 		                   vkb::ShaderSource             &&fragment_shader,
-		                   vkb::sg::Scene                 &scene,
+		                   vkb::scene_graph::SceneC       &scene,
 		                   vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 		{}
