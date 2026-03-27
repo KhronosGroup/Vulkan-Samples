@@ -315,27 +315,23 @@ if(DEFINED ENV{VULKAN_SDK} AND IS_DIRECTORY "$ENV{VULKAN_SDK}")
         "$ENV{VULKAN_SDK}/lib${_Vulkan_arch_suffix}"
     )
     unset(_Vulkan_arch_suffix)
-    if(APPLE)
-        cmake_path(SET _MoltenVK_path NORMALIZE "$ENV{VULKAN_SDK}/../MoltenVK")
-        if(IS_DIRECTORY "${_MoltenVK_path}")
-            list(APPEND _Vulkan_hint_include_search_paths
-                "${_MoltenVK_path}/include"
-            )
-            if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-                list(APPEND _Vulkan_hint_library_search_paths
-                    "${_MoltenVK_path}/dylib/iOS"
-                )
-            elseif(CMAKE_SYSTEM_NAME STREQUAL "tvOS")
-                list(APPEND _Vulkan_hint_library_search_paths
-                    "${_MoltenVK_path}/dylib/tvOS"
-                )
-            else()
-                list(APPEND _Vulkan_hint_library_search_paths
-                    "${_MoltenVK_path}/dylib/macOS"
-                )
-            endif()
-        endif()
-        unset(_MoltenVK_path)
+endif()
+if(APPLE AND DEFINED Vulkan_Target_SDK)
+    list(APPEND _Vulkan_hint_include_search_paths
+            "${Vulkan_Target_SDK}/macOS/include"
+    )
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        list(APPEND _Vulkan_hint_library_search_paths
+                "${Vulkan_Target_SDK}/iOS/lib"
+        )
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "tvOS")
+        list(APPEND _Vulkan_hint_library_search_paths
+                "${Vulkan_Target_SDK}/tvOS/lib"
+        )
+    else()
+        list(APPEND _Vulkan_hint_library_search_paths
+                "${Vulkan_Target_SDK}/lib"
+        )
     endif()
 endif()
 
