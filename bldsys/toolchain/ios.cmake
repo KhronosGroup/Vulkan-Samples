@@ -3,13 +3,13 @@
  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  Copyright (c) 2026, Stephen Saunders
 
- SPDX-License-Identifier: BSD-3-Clause-Clear
+ SPDX-License-Identifier: Apache-2.0
 
- Licensed under the BSD-3-Clause-Clear License the "License";
+ Licensed under the Apache License, Version 2.0 the "License";
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
 
-     https://spdx.org/licenses/BSD-3-Clause-Clear.html
+     http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@
  ]]
 
 # As per upstream CMake recommendation in https://gitlab.kitware.com/cmake/cmake/-/issues/27661
-# for iOS we can use a toolchain file to augment search paths and simplify command line
+# for iOS we can use a toolchain file to set up search paths and simplify the command line
 #
 # iOS/setup-env.sh will first take care of defining the VULKAN_SDK environment variable
 # Toolchain file shall define:
@@ -34,11 +34,11 @@
 # - Build only the active arch for devices and simulator
 # - Export the $ENV{VULKAN_SDK} variable to `CMAKE_FIND_ROOT_PATH`
 #
-# Note: We augment CMAKE_FIND_ROOT_PATH to find the iOS Vulkan frameworks from the SDK.
+# Note: We define CMAKE_FIND_ROOT_PATH to locate the iOS Vulkan frameworks from the SDK.
 # We don't define CMAKE_OSX_SYSROOT here since we need to build for both physical devices
 # (iphoneos) and simulator (iphonesimulator) - do that instead on the cmake command line.
 
 set(CMAKE_SYSTEM_NAME iOS)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 16.3)
 set(CMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH YES)
-list(APPEND CMAKE_FIND_ROOT_PATH "$ENV{VULKAN_SDK}")
+set(CMAKE_FIND_ROOT_PATH "$ENV{VULKAN_SDK}")
