@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Google
+/* Copyright (c) 2023-2026, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,9 @@
 
 OITLinkedLists::OITLinkedLists()
 {
+	title = "OIT linked lists";
+
+	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 }
 
 OITLinkedLists::~OITLinkedLists()
@@ -115,6 +118,8 @@ void OITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		throw std::runtime_error("This sample requires support for buffers and images stores and atomic operations in the fragment shader stage");
 	}
+
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 }
 
 void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -161,13 +166,19 @@ void OITLinkedLists::build_command_buffers()
 				vkCmdEndRenderPass(draw_cmd_buffers[i]);
 			}
 
-			VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-			vkb::image_layout_transition(
-			    draw_cmd_buffers[i], linked_list_head_image->get_handle(),
-			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			    VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-			    VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
-			    subresource_range);
+			// Insert a pipeline barrier to ensure that all writes to the fragment buffer performed in the gather pass are made available before reading from it in the combine pass
+			VkBufferMemoryBarrier2 buffer_barrier{.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+			                                      .srcStageMask        = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+			                                      .srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+			                                      .dstStageMask        = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+			                                      .dstAccessMask       = VK_ACCESS_2_SHADER_STORAGE_READ_BIT,
+			                                      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			                                      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			                                      .buffer              = fragment_buffer->get_handle(),
+			                                      .offset              = 0,
+			                                      .size                = VK_WHOLE_SIZE};
+			VkDependencyInfo       dependency_info{.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO, .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, .bufferMemoryBarrierCount = 1, .pBufferMemoryBarriers = &buffer_barrier};
+			vkCmdPipelineBarrier2KHR(draw_cmd_buffers[i], &dependency_info);
 
 			// Combine pass
 			{
@@ -252,17 +263,22 @@ void OITLinkedLists::create_fragment_resources(const uint32_t width, const uint3
 	{
 		const VkExtent3D image_extent = {width, height, 1};
 		linked_list_head_image        = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
-		linked_list_head_image_view   = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
+		linked_list_head_image->set_debug_name("linked_list_head_image");
+
+		linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
+		linked_list_head_image_view->set_debug_name("linked_list_head_image_view");
 	}
 
 	{
 		fragment_max_count                  = width * height * kFragmentsPerPixelAverage;
 		const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
 		fragment_buffer                     = std::make_unique<vkb::core::BufferC>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		fragment_buffer->set_debug_name("fragment_buffer");
 	}
 
 	{
 		fragment_counter = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		fragment_counter->set_debug_name("fragment_counter");
 	}
 }
 
