@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025 Holochip Corporation
+/* Copyright (c) 2021-2026 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -197,10 +197,10 @@ class RaytracingExtended : public ApiVulkanSample
 		RaytracingScene()  = default;
 		~RaytracingScene() = default;
 		RaytracingScene(vkb::core::DeviceC &device, const std::vector<SceneLoadInfo> &scenesToLoad);
-		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
-		std::vector<VkDescriptorImageInfo>           imageInfos;
-		std::vector<Model>                           models;
-		std::vector<ModelBuffer>                     model_buffers;
+		std::vector<std::unique_ptr<vkb::scene_graph::SceneC>> scenes;
+		std::vector<VkDescriptorImageInfo>                     imageInfos;
+		std::vector<Model>                                     models;
+		std::vector<ModelBuffer>                               model_buffers;
 	};
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;

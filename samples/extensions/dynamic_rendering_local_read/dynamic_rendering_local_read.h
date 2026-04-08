@@ -46,8 +46,8 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
   private:
 	struct Scenes
 	{
-		std::unique_ptr<vkb::sg::Scene> opaque;
-		std::unique_ptr<vkb::sg::Scene> transparent;
+		std::unique_ptr<vkb::scene_graph::SceneC> opaque;
+		std::unique_ptr<vkb::scene_graph::SceneC> transparent;
 	} scenes;
 
 	struct
@@ -124,7 +124,7 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	void update_uniform_buffer();
 	void prepare_layouts_and_descriptors();
 
-	void draw_scene(std::unique_ptr<vkb::sg::Scene> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout);
+	void draw_scene(std::unique_ptr<vkb::scene_graph::SceneC> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout);
 };
 
 std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering_local_read();

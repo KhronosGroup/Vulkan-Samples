@@ -55,7 +55,7 @@ class SpecializationConstants : public vkb::VulkanSampleC
 		ForwardSubpassCustomLights(vkb::rendering::RenderContextC &render_context,
 		                           vkb::ShaderSource             &&vertex_source,
 		                           vkb::ShaderSource             &&fragment_source,
-		                           vkb::sg::Scene                 &scene,
+		                           vkb::scene_graph::SceneC       &scene,
 		                           vkb::sg::Camera                &camera);
 
 		virtual void prepare() override;

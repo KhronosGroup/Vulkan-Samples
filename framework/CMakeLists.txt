@@ -131,10 +131,8 @@ set(SCENE_GRAPH_FILES
     scene_graph/node.h
     scene_graph/scene.h
     scene_graph/script.h
-    scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
-    scene_graph/scene.cpp
     scene_graph/script.cpp)
 
 set(SCENE_GRAPH_COMPONENT_FILES
