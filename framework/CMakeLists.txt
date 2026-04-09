@@ -194,10 +194,8 @@ set(STATS_FILES
     stats/stats_provider.h
     stats/frame_time_stats_provider.h
     stats/vulkan_stats_provider.h
-    stats/hpp_stats.h
 
     # Source Files
-    stats/stats.cpp
     stats/stats_provider.cpp
     stats/frame_time_stats_provider.cpp
     stats/vulkan_stats_provider.cpp)
