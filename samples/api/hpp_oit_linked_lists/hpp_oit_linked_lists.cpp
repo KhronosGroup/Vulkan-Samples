@@ -147,7 +147,7 @@ void HPPOITLinkedLists::build_command_buffers()
 			                                        .offset              = 0,
 			                                        .size                = vk::WholeSize};
 			vk::DependencyInfo       dependency_info{.dependencyFlags = vk::DependencyFlagBits::eByRegion, .bufferMemoryBarrierCount = 1, .pBufferMemoryBarriers = &buffer_barrier};
-			command_buffer.pipelineBarrier2(dependency_info);
+			command_buffer.pipelineBarrier2KHR(dependency_info);
 
 			// Combine pass
 			combine_render_pass_begin_info.framebuffer = framebuffers[i];
