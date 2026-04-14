@@ -168,6 +168,7 @@ void OITLinkedLists::build_command_buffers()
 
 			// Insert a pipeline barrier to ensure that all writes to the fragment buffer performed in the gather pass are made available before reading from it in the combine pass
 			VkBufferMemoryBarrier2 buffer_barrier{.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+			                                      .pNext               = nullptr,
 			                                      .srcStageMask        = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
 			                                      .srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
 			                                      .dstStageMask        = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
