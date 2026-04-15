@@ -1,6 +1,6 @@
-# Copyright (c) 2020-2025, Arm Limited and Contributors
-# Copyright (c) 2024-2025, Mobica Limited
-# Copyright (c) 2024-2025, Sascha Willems
+# Copyright (c) 2020-2026, Arm Limited and Contributors
+# Copyright (c) 2024-2026, Mobica Limited
+# Copyright (c) 2024-2026, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -40,6 +40,11 @@ project(vulkan_samples)
 if(VKB_GENERATE_ANTORA_SITE)
     add_subdirectory(antora)
 else ()
+# On IOS we define CMAKE_FIND_ROOT_PATH to allow find_package(Vulkan) to locate the Vulkan frameworks for iOS
+if(IOS)
+	set(CMAKE_FIND_ROOT_PATH "$ENV{VULKAN_SDK}")
+endif()
+
 # search for Vulkan SDK
 find_package(Vulkan)
 
