@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -408,10 +408,13 @@ void TextureLoading::load_texture()
 // Free all Vulkan resources used by a texture object
 void TextureLoading::destroy_texture(Texture texture)
 {
-	vkDestroyImageView(get_device().get_handle(), texture.view, nullptr);
-	vkDestroyImage(get_device().get_handle(), texture.image, nullptr);
-	vkDestroySampler(get_device().get_handle(), texture.sampler, nullptr);
-	vkFreeMemory(get_device().get_handle(), texture.device_memory, nullptr);
+	if (has_device())
+	{
+		vkDestroyImageView(get_device().get_handle(), texture.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), texture.image, nullptr);
+		vkDestroySampler(get_device().get_handle(), texture.sampler, nullptr);
+		vkFreeMemory(get_device().get_handle(), texture.device_memory, nullptr);
+	}
 }
 
 void TextureLoading::build_command_buffers()
