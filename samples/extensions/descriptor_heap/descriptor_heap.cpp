@@ -158,17 +158,18 @@ void DescriptorHeap::create_descriptor_heaps()
 {
 	// Descriptor heaps have varying offset, size and alignment requirements, so we store it's properties for later user
 	descriptor_heap_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_PROPERTIES_EXT;
-	VkPhysicalDeviceProperties2 deviceProps2{
+	VkPhysicalDeviceProperties2 device_props_2{
 	    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
 	    .pNext = &descriptor_heap_properties};
-	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &deviceProps2);
+	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_props_2);
 
 	// There are two descriptor heap types: One that can store resources (buffers, images) and one that can store samplers
 	// We create heaps with a fixed size that's guaranteed to fit in the few descriptors we use
 	const VkDeviceSize heap_buffer_size = aligned_size(2048 + descriptor_heap_properties.minResourceHeapReservedRange, descriptor_heap_properties.resourceHeapAlignment);
 
-	descriptor_heap_resources = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                 heap_buffer_size,
+	descriptor_heap_resources
+		= std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                            heap_buffer_size,
 	                                                                 VK_BUFFER_USAGE_DESCRIPTOR_HEAP_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
 
@@ -232,33 +233,33 @@ void DescriptorHeap::create_descriptor_heaps()
 	std::vector<VkHostAddressRangeEXT>       host_address_ranges_resources(vector_size);
 	std::vector<VkResourceDescriptorInfoEXT> resource_descriptor_infos(vector_size);
 
-	size_t heapResIndex{0};
+	size_t resource_heap_index{0};
 
 	// Buffer
 	std::vector<VkDeviceAddressRangeEXT> device_address_ranges_uniform_buffer(uniform_buffers.size());
 	for (auto i = 0; i < uniform_buffers.size(); i++)
 	{
 		device_address_ranges_uniform_buffer[i] = {.address = uniform_buffers[i]->get_device_address(), .size = uniform_buffers[i]->get_size()};
-		resource_descriptor_infos[heapResIndex] = {
+		resource_descriptor_infos[resource_heap_index] = {
 		    .sType = VK_STRUCTURE_TYPE_RESOURCE_DESCRIPTOR_INFO_EXT,
 		    .type  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		    .data  = {
 		         .pAddressRange = &device_address_ranges_uniform_buffer[i]}};
-		host_address_ranges_resources[heapResIndex] = {
+		host_address_ranges_resources[resource_heap_index] = {
 		    .address = (uint8_t *) (descriptor_heap_resources->get_data()) + buffer_descriptor_size * i,
 		    .size    = buffer_descriptor_size};
 
-		heapResIndex++;
+		resource_heap_index++;
 	}
 
 	// Images
-	std::array<VkImageViewCreateInfo, 2>    imageViewCreateInfos{};
-	std::array<VkImageDescriptorInfoEXT, 2> imageDescriptorInfo{};
+	std::array<VkImageViewCreateInfo, 2>    image_view_create_infos{};
+	std::array<VkImageDescriptorInfoEXT, 2> image_descriptor_info{};
 
 	// @offset
 	for (auto i = 0; i < cubes.size(); i++)
 	{
-		imageViewCreateInfos[i] = {
+		image_view_create_infos[i] = {
 		    .sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 		    .image            = cubes[i].texture.image->get_vk_image().get_handle(),
 		    .viewType         = VK_IMAGE_VIEW_TYPE_2D,
@@ -266,23 +267,23 @@ void DescriptorHeap::create_descriptor_heaps()
 		    .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = static_cast<uint32_t>(cubes[i].texture.image->get_mipmaps().size()), .baseArrayLayer = 0, .layerCount = 1},
 		};
 
-		imageDescriptorInfo[i] = {
+		image_descriptor_info[i] = {
 		    .sType  = VK_STRUCTURE_TYPE_IMAGE_DESCRIPTOR_INFO_EXT,
-		    .pView  = &imageViewCreateInfos[i],
+		    .pView  = &image_view_create_infos[i],
 		    .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		};
 
-		resource_descriptor_infos[heapResIndex] = {
+		resource_descriptor_infos[resource_heap_index] = {
 		    .sType = VK_STRUCTURE_TYPE_RESOURCE_DESCRIPTOR_INFO_EXT,
 		    .type  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
 		    .data  = {
-		         .pImage = &imageDescriptorInfo[i]}};
+		         .pImage = &image_descriptor_info[i]}};
 
-		host_address_ranges_resources[heapResIndex] = {
+		host_address_ranges_resources[resource_heap_index] = {
 		    .address = (uint8_t *) (descriptor_heap_resources->get_data()) + image_heap_offset + image_descriptor_size * i,
 		    .size    = image_descriptor_size};
 
-		heapResIndex++;
+		resource_heap_index++;
 	}
 
 	vkWriteResourceDescriptorsEXT(get_device().get_handle(), static_cast<uint32_t>(resource_descriptor_infos.size()), resource_descriptor_infos.data(), host_address_ranges_resources.data());
@@ -322,10 +323,10 @@ void DescriptorHeap::create_pipeline()
 	// This is done by specifiying the bindings and their types at the shader stage level
 	// As samplers require a different heap (than images), we can't use combined images
 
-	std::array<VkDescriptorSetAndBindingMappingEXT, 3> setAndBindingMappings{};
+	std::array<VkDescriptorSetAndBindingMappingEXT, 3> set_binding_mappings{};
 
 	// Buffer binding
-	setAndBindingMappings[0] = {
+	set_binding_mappings[0] = {
 	    .sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_AND_BINDING_MAPPING_EXT,
 	    .descriptorSet = 0,
 	    .firstBinding  = 0,
@@ -337,7 +338,7 @@ void DescriptorHeap::create_pipeline()
 	               .heapArrayStride = static_cast<uint32_t>(buffer_descriptor_size)}}};
 
 	// We are using multiple images, which requires us to set heapArrayStride to let the implementation know where image n+1 starts
-	setAndBindingMappings[1] = {
+	set_binding_mappings[1] = {
 	    .sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_AND_BINDING_MAPPING_EXT,
 	    .descriptorSet = 1,
 	    .firstBinding  = 0,
@@ -349,7 +350,7 @@ void DescriptorHeap::create_pipeline()
 	               .heapOffset = static_cast<uint32_t>(image_heap_offset), .heapArrayStride = static_cast<uint32_t>(image_descriptor_size)}}};
 
 	// As samplers require a different heap (than images), we can't use combined images but split image and sampler
-	setAndBindingMappings[2] = {
+	set_binding_mappings[2] = {
 	    .sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_AND_BINDING_MAPPING_EXT,
 	    .descriptorSet = 2,
 	    .firstBinding  = 0,
@@ -360,13 +361,13 @@ void DescriptorHeap::create_pipeline()
 	           .constantOffset = {
 	               .heapOffset = static_cast<uint32_t>(sampler_heap_offset), .heapArrayStride = static_cast<uint32_t>(sampler_descriptor_size)}}};
 
-	VkShaderDescriptorSetAndBindingMappingInfoEXT descriptorSetAndBindingMappingInfo{
+	VkShaderDescriptorSetAndBindingMappingInfoEXT descriptor_set_binding_mapping_info{
 	    .sType        = VK_STRUCTURE_TYPE_SHADER_DESCRIPTOR_SET_AND_BINDING_MAPPING_INFO_EXT,
-	    .mappingCount = static_cast<uint32_t>(setAndBindingMappings.size()),
-	    .pMappings    = setAndBindingMappings.data()};
+	    .mappingCount = static_cast<uint32_t>(set_binding_mappings.size()),
+	    .pMappings    = set_binding_mappings.data()};
 
-	shader_stages[0].pNext = &descriptorSetAndBindingMappingInfo;
-	shader_stages[1].pNext = &descriptorSetAndBindingMappingInfo;
+	shader_stages[0].pNext = &descriptor_set_binding_mapping_info;
+	shader_stages[1].pNext = &descriptor_set_binding_mapping_info;
 
 	// Create graphics pipeline for dynamic rendering
 	VkFormat color_rendering_format = get_render_context().get_format();
