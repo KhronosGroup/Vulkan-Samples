@@ -93,10 +93,7 @@ void DescriptorHeap::setup_framebuffer()
 
 void DescriptorHeap::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.combo_box("Sampler type", &selected_sampler, sampler_names))
-	{
-		rebuild_command_buffers();
-	}
+	drawer.combo_box("Sampler type", &selected_sampler, sampler_names);
 }
 
 uint32_t DescriptorHeap::get_api_version() const
@@ -522,6 +519,7 @@ void DescriptorHeap::build_command_buffer()
 	    .heapRange{
 	        .address = descriptor_heap_resources->get_device_address(),
 	        .size    = descriptor_heap_resources->get_size()},
+	    .reservedRangeOffset = descriptor_heap_resources->get_size() - descriptor_heap_properties.minResourceHeapReservedRange,
 	    .reservedRangeSize = descriptor_heap_properties.minResourceHeapReservedRange,
 	};
 	vkCmdBindResourceHeapEXT(draw_cmd_buffer, &bind_heap_info_res);
@@ -532,6 +530,7 @@ void DescriptorHeap::build_command_buffer()
 	    .heapRange{
 	        .address = descriptor_heap_samplers->get_device_address(),
 	        .size    = descriptor_heap_samplers->get_size()},
+	    .reservedRangeOffset = descriptor_heap_samplers->get_size() - descriptor_heap_properties.minSamplerHeapReservedRange,
 	    .reservedRangeSize = descriptor_heap_properties.minSamplerHeapReservedRange};
 	vkCmdBindSamplerHeapEXT(draw_cmd_buffer, &bind_heap_info_samplers);
 
