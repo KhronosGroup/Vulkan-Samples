@@ -497,12 +497,12 @@ void DescriptorHeap::build_command_buffer()
 	// Pass options as push data
 	struct PushData
 	{
-		int32_t samplerIndex;
-		int32_t frameIndex;
+		int32_t sampler_index;
+		int32_t frame_index;
 	} push_data = {
-	    .samplerIndex = selected_sampler,
+	    .sampler_index = selected_sampler,
 	    // Samples do not support frames-in-flight yet, so frameIndex never changes
-	    .frameIndex = 0};
+	    .frame_index = 0};
 	VkPushDataInfoEXT push_data_info{
 	    .sType = VK_STRUCTURE_TYPE_PUSH_DATA_INFO_EXT,
 	    .data  = {.address = &push_data, .size = sizeof(PushData)}};
