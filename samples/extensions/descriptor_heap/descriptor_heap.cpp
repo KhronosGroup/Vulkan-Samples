@@ -499,14 +499,15 @@ void DescriptorHeap::build_command_buffer()
 	{
 		int32_t samplerIndex;
 		int32_t frameIndex;
-	} pushData = {
+	} push_data = {
 	    .samplerIndex = selected_sampler,
-	    // .frameIndex   = static_cast<int32_t>(currentBuffer),
+		// Samples do not support frames-in-flight yet, so frameIndex never changes
+		.frameIndex = 0
 	};
-	VkPushDataInfoEXT pushDataInfo{
+	VkPushDataInfoEXT push_data_info{
 	    .sType = VK_STRUCTURE_TYPE_PUSH_DATA_INFO_EXT,
-	    .data  = {.address = &pushData, .size = sizeof(PushData)}};
-	vkCmdPushDataEXT(draw_cmd_buffer, &pushDataInfo);
+	    .data  = {.address = &push_data, .size = sizeof(PushData)}};
+	vkCmdPushDataEXT(draw_cmd_buffer, &push_data_info);
 
 	// Bind the heap containing resources (buffers and images)
 	VkBindHeapInfoEXT bind_heap_info_res{

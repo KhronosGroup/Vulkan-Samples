@@ -156,6 +156,19 @@ vkCmdDrawIndexed(draw_cmd_buffer, cube->vertex_indices, 2, 0, 0, 0);
 
 **Note:** One important difference (compared to other buffers) is the **reserved range** (e.g. `reservedRangeOffset` and `reservedRangeSize`). Implementations, to varying degrees, need additional space for some descriptor related operations. This space mustn't be used by the application so we both need to allocate and mark those regions as reserved. For this sample, we put the reserved range after the space where we've copy the descriptors to.
 
+== Push data (instead of push constants)
+
+This extension also adds a more direct way to push data state to the command buffer. With no more need for pipeline layouts this is now much simpler and done via a single call to link:https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPushDataEXT.html[vkCmdPushDataEXT]:
+
+[,cpp]
+----
+PushData push_data{ ... };
+VkPushDataInfoEXT push_data_info{
+    .sType = VK_STRUCTURE_TYPE_PUSH_DATA_INFO_EXT,
+    .data  = {.address = &push_data, .size = sizeof(PushData)}};
+vkCmdPushDataEXT(draw_cmd_buffer, &push_data_info);
+----
+
 == Accessing heaps
 
 The extension lets us access data in shaders via two different ways:
