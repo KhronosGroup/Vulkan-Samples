@@ -167,16 +167,15 @@ void DescriptorHeap::create_descriptor_heaps()
 	// We create heaps with a fixed size that's guaranteed to fit in the few descriptors we use
 	const VkDeviceSize heap_buffer_size = aligned_size(2048 + descriptor_heap_properties.minResourceHeapReservedRange, descriptor_heap_properties.resourceHeapAlignment);
 
-	descriptor_heap_resources
-		= std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                            heap_buffer_size,
+	descriptor_heap_resources = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                                 heap_buffer_size,
 	                                                                 VK_BUFFER_USAGE_DESCRIPTOR_HEAP_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	const VkDeviceSize heap_sampler_size = aligned_size(2048 + descriptor_heap_properties.minSamplerHeapReservedRange, descriptor_heap_properties.samplerHeapAlignment);
 
 	descriptor_heap_samplers = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                heap_buffer_size,
+	                                                                heap_sampler_size,
 	                                                                VK_BUFFER_USAGE_DESCRIPTOR_HEAP_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
 
@@ -221,7 +220,7 @@ void DescriptorHeap::create_descriptor_heaps()
 		    .size    = sampler_descriptor_size};
 	}
 
-	vkWriteSamplerDescriptorsEXT(get_device().get_handle(), static_cast<uint32_t>(host_address_ranges_samplers.size()), sampler_create_infos.data(), host_address_ranges_samplers.data());
+	VK_CHECK(vkWriteSamplerDescriptorsEXT(get_device().get_handle(), static_cast<uint32_t>(host_address_ranges_samplers.size()), sampler_create_infos.data(), host_address_ranges_samplers.data()));
 
 	// Resource heap (buffers and images)
 	buffer_descriptor_size = aligned_size(descriptor_heap_properties.bufferDescriptorSize, descriptor_heap_properties.bufferDescriptorAlignment);
@@ -239,7 +238,7 @@ void DescriptorHeap::create_descriptor_heaps()
 	std::vector<VkDeviceAddressRangeEXT> device_address_ranges_uniform_buffer(uniform_buffers.size());
 	for (auto i = 0; i < uniform_buffers.size(); i++)
 	{
-		device_address_ranges_uniform_buffer[i] = {.address = uniform_buffers[i]->get_device_address(), .size = uniform_buffers[i]->get_size()};
+		device_address_ranges_uniform_buffer[i]        = {.address = uniform_buffers[i]->get_device_address(), .size = uniform_buffers[i]->get_size()};
 		resource_descriptor_infos[resource_heap_index] = {
 		    .sType = VK_STRUCTURE_TYPE_RESOURCE_DESCRIPTOR_INFO_EXT,
 		    .type  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -286,7 +285,7 @@ void DescriptorHeap::create_descriptor_heaps()
 		resource_heap_index++;
 	}
 
-	vkWriteResourceDescriptorsEXT(get_device().get_handle(), static_cast<uint32_t>(resource_descriptor_infos.size()), resource_descriptor_infos.data(), host_address_ranges_resources.data());
+	VK_CHECK(vkWriteResourceDescriptorsEXT(get_device().get_handle(), static_cast<uint32_t>(resource_descriptor_infos.size()), resource_descriptor_infos.data(), host_address_ranges_resources.data()));
 }
 
 void DescriptorHeap::create_pipeline()
@@ -521,7 +520,7 @@ void DescriptorHeap::build_command_buffer()
 	        .address = descriptor_heap_resources->get_device_address(),
 	        .size    = descriptor_heap_resources->get_size()},
 	    .reservedRangeOffset = descriptor_heap_resources->get_size() - descriptor_heap_properties.minResourceHeapReservedRange,
-	    .reservedRangeSize = descriptor_heap_properties.minResourceHeapReservedRange,
+	    .reservedRangeSize   = descriptor_heap_properties.minResourceHeapReservedRange,
 	};
 	vkCmdBindResourceHeapEXT(draw_cmd_buffer, &bind_heap_info_res);
 
@@ -532,7 +531,7 @@ void DescriptorHeap::build_command_buffer()
 	        .address = descriptor_heap_samplers->get_device_address(),
 	        .size    = descriptor_heap_samplers->get_size()},
 	    .reservedRangeOffset = descriptor_heap_samplers->get_size() - descriptor_heap_properties.minSamplerHeapReservedRange,
-	    .reservedRangeSize = descriptor_heap_properties.minSamplerHeapReservedRange};
+	    .reservedRangeSize   = descriptor_heap_properties.minSamplerHeapReservedRange};
 	vkCmdBindSamplerHeapEXT(draw_cmd_buffer, &bind_heap_info_samplers);
 
 	VkDeviceSize offsets[1] = {0};
