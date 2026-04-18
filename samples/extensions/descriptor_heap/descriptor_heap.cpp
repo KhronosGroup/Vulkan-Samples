@@ -180,11 +180,7 @@ void DescriptorHeap::create_descriptor_heaps()
 	                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Sampler heap
-	// We need to calculate some aligned offsets, heaps and strides to make sure we properly accress the descriptors
 	sampler_descriptor_size = aligned_size(descriptor_heap_properties.samplerDescriptorSize, descriptor_heap_properties.samplerDescriptorAlignment);
-
-	auto sampler_start  = aligned_size(descriptor_heap_properties.minSamplerHeapReservedRange, descriptor_heap_properties.samplerDescriptorAlignment);
-	sampler_heap_offset = aligned_size(sampler_start, descriptor_heap_properties.samplerDescriptorSize);
 
 	std::array<VkHostAddressRangeEXT, 2> host_address_ranges_samplers{};
 
@@ -224,8 +220,8 @@ void DescriptorHeap::create_descriptor_heaps()
 
 	// Resource heap (buffers and images)
 	buffer_descriptor_size = aligned_size(descriptor_heap_properties.bufferDescriptorSize, descriptor_heap_properties.bufferDescriptorAlignment);
-	// Images are storted after the last buffer (aligned)
-	image_heap_offset     = aligned_size(buffer_descriptor_size, descriptor_heap_properties.imageDescriptorAlignment);
+	// Images are stored after the last buffer (aligned)
+	image_heap_offset     = aligned_size(buffer_descriptor_size * uniform_buffers.size(), descriptor_heap_properties.imageDescriptorAlignment);
 	image_descriptor_size = aligned_size(descriptor_heap_properties.imageDescriptorSize, descriptor_heap_properties.imageDescriptorAlignment);
 
 	auto                                     vector_size{cubes.size() + uniform_buffers.size()};
@@ -234,7 +230,7 @@ void DescriptorHeap::create_descriptor_heaps()
 
 	size_t resource_heap_index{0};
 
-	// Buffer
+	// Buffers
 	std::vector<VkDeviceAddressRangeEXT> device_address_ranges_uniform_buffer(uniform_buffers.size());
 	for (auto i = 0; i < uniform_buffers.size(); i++)
 	{
@@ -253,9 +249,8 @@ void DescriptorHeap::create_descriptor_heaps()
 
 	// Images
 	std::array<VkImageViewCreateInfo, 2>    image_view_create_infos{};
-	std::array<VkImageDescriptorInfoEXT, 2> image_descriptor_info{};
+	std::array<VkImageDescriptorInfoEXT, 2> image_descriptor_infos{};
 
-	// @offset
 	for (auto i = 0; i < cubes.size(); i++)
 	{
 		image_view_create_infos[i] = {
@@ -266,7 +261,7 @@ void DescriptorHeap::create_descriptor_heaps()
 		    .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = static_cast<uint32_t>(cubes[i].texture.image->get_mipmaps().size()), .baseArrayLayer = 0, .layerCount = 1},
 		};
 
-		image_descriptor_info[i] = {
+		image_descriptor_infos[i] = {
 		    .sType  = VK_STRUCTURE_TYPE_IMAGE_DESCRIPTOR_INFO_EXT,
 		    .pView  = &image_view_create_infos[i],
 		    .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -276,7 +271,7 @@ void DescriptorHeap::create_descriptor_heaps()
 		    .sType = VK_STRUCTURE_TYPE_RESOURCE_DESCRIPTOR_INFO_EXT,
 		    .type  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
 		    .data  = {
-		         .pImage = &image_descriptor_info[i]}};
+		         .pImage = &image_descriptor_infos[i]}};
 
 		host_address_ranges_resources[resource_heap_index] = {
 		    .address = (uint8_t *) (descriptor_heap_resources->get_data()) + image_heap_offset + image_descriptor_size * i,
