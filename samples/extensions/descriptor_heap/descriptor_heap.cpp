@@ -532,7 +532,7 @@ void DescriptorHeap::build_command_buffer()
 	VkDeviceSize offsets[1] = {0};
 
 	const auto &vertex_buffer = cube->vertex_buffers.at("vertex_buffer");
-	auto       &index_buffer  = cube->index_buffer;
+	const auto &index_buffer  = cube->index_buffer;
 
 	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, vertex_buffer.get(), offsets);
 	vkCmdBindIndexBuffer(draw_cmd_buffer, index_buffer->get_handle(), 0, cube->index_type);
