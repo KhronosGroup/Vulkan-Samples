@@ -33,7 +33,7 @@ In Vulkan, descriptor state is built around several explicit objects and binding
 
 Descriptor heaps replace most of that object-centric workflow with a memory-centric one. Instead of allocating descriptor sets and binding them per draw or dispatch, the application writes descriptor data directly into heap memory and binds the heaps themselves. Shaders then access descriptors either through set-and-binding mappings, which can be used with existing shaders, or more directly via untyped pointers. In practice, this moves descriptor handling closer to how applications already think about buffers: allocate memory, write data into it, and provide an addressable view to the GPU.
 
-So the shift is not only about reducing API objects. It is also about changing the mental model from "create and bind descriptor objects" to "manage descriptor memory.
+So the shift is not only about reducing API objects. It is also about changing the mental model from "create and bind descriptor objects" to "manage descriptor memory".
 
 To sum it up: descriptor heaps greatly simplify descriptor management and make it much more flexible.
 
