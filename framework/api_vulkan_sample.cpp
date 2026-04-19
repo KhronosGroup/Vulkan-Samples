@@ -89,7 +89,7 @@ void ApiVulkanSample::prepare_gui()
 	if (uses_dynamic_rendering())
 	{
 		VkFormat color_format = get_render_context().get_swapchain().get_format();
-		VkFormat depth_fmt    = depth_format;
+		VkFormat depth_fmt    = VK_FORMAT_UNDEFINED;
 		get_gui().prepare(pipeline_cache, color_format, depth_fmt, shader_stages);
 	}
 	else
