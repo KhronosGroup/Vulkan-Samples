@@ -37,6 +37,30 @@ So the shift is not only about reducing API objects. It is also about changing t
 
 To sum it up: descriptor heaps greatly simplify descriptor management and make it much more flexible.
 
+== Key benefits
+
+Understanding why descriptor heaps matter in practice comes down to a handful of concrete advantages over the traditional model.
+
+=== No descriptor pools or descriptor sets
+
+In traditional Vulkan, applications must pre-allocate descriptor pools, specify counts per descriptor type, and allocate descriptor sets from those pools. Getting pool sizes wrong leads to out-of-memory errors, and fragmentation can become a problem over time. With descriptor heaps, there are no pools and no sets - just heap buffers. Allocation is as straightforward as sizing a buffer for the number of descriptors you need.
+
+=== No pipeline layout compatibility constraints
+
+Traditional descriptor sets are bound against a specific pipeline layout, and the layout of the bound sets must be compatible with the pipeline being used. With descriptor heaps, there are no pipeline layouts for descriptor data. The same heap bindings work across all pipelines.
+
+=== Descriptors as plain memory
+
+Updating descriptors in the traditional model requires a `vkUpdateDescriptorSets` call, and the set must not be in use by the GPU at the time. With descriptor heaps, updating a descriptor is just a memory write via the `vkWrite*DescriptorsEXT` functions. This removes the "in-use" constraint at the descriptor object level and reduces the CPU-side API overhead per update.
+
+=== Natural fit for bindless rendering
+
+Descriptor indexing (link:https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html[VK_EXT_descriptor_indexing]) made bindless rendering possible in Vulkan by treating descriptor sets as large arrays. Descriptor heaps take that idea further: an offset into heap memory is all that is needed to address any resource. There is no large descriptor set to maintain or bind — just a heap and an index.
+
+=== Simplified command buffer state management
+
+With heaps bound once per command buffer, there is no need to rebind descriptor sets when switching pipelines that share the same resource layout. This reduces the number of binding commands recorded per frame, which can meaningfully lower CPU overhead in draw-call-heavy workloads.
+
 == Heap types
 
 Implementations require two distinct heap types, so this extension differentiates between:
