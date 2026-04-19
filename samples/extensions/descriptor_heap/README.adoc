@@ -25,11 +25,15 @@ endif::[]
 
 Managing descriptors is one of the harder parts of Vulkan. The link:https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_descriptor_buffer.html[VK_EXT_descriptor_buffer] extension aimed to simplify this, but it came with a few caveats.
 
-The link:https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_descriptor_heap.html[VK_EXT_descriptor_heap] extension addresses these caveats and completely overhauls Vulkan's descriptor system by providing direct access to descriptor memory using heaps, while still preserving compatibility with shaders that use legacy descriptor sets (optionally) or, more forward-looking, untyped pointers.
+The link:https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_descriptor_heap.html[VK_EXT_descriptor_heap] extension addresses these caveats and completely overhauls Vulkan's descriptor.
 
 This extension is intended to completely replace Vulkan's existing descriptor set mechanism and, if available, supersedes descriptor buffers. It is meant to be the way forward for passing data to shaders.
 
-Instead of having to create and bind individual descriptors, descriptor information is stored in heaps, which are just buffers. Descriptors effectively become memory. This also no longer requires the use of descriptor layouts.
+In Vulkan, descriptor state is built around several explicit objects and binding steps. Applications define descriptor set layouts, create compatible pipeline layouts, allocate descriptor sets from descriptor pools, update those sets with resource information, and bind them during command buffer generation. This model is very explicit and works well, but it also means that descriptor management tends to become one of the more rigid and verbose parts of using Vulkan.
+
+Descriptor heaps replace most of that object-centric workflow with a memory-centric one. Instead of allocating descriptor sets and binding them per draw or dispatch, the application writes descriptor data directly into heap memory and binds the heaps themselves. Shaders then access descriptors either through set-and-binding mappings, which can be used with existing shaders, or more directly via untyped pointers. In practice, this moves descriptor handling closer to how applications already think about buffers: allocate memory, write data into it, and provide an addressable view to the GPU.
+
+So the shift is not only about reducing API objects. It is also about changing the mental model from "create and bind descriptor objects" to "manage descriptor memory.
 
 To sum it up: descriptor heaps greatly simplify descriptor management and make it much more flexible.
 
