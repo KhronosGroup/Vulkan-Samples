@@ -1,4 +1,4 @@
-; Copyright (c) 2024-2025, Arm Limited and Contributors
+; Copyright (c) 2024-2026, Arm Limited and Contributors
 ;
 ; SPDX-License-Identifier: Apache-2.0
 ;
@@ -68,7 +68,7 @@
                                    ; Parameters for pooling layer
                 %avg_pool_kernel = OpConstantComposite %uint_tensor_r1_s2 %uint_3 %uint_3
                 %avg_pool_stride = OpConstantComposite %uint_tensor_r1_s2 %uint_2 %uint_2
-                   %avg_pool_pad = OpConstantComposite %uint_tensor_r1_s4 %uint_0 %uint_0 %uint_0 %uint_0
+                   %avg_pool_pad = OpConstantComposite %uint_tensor_r1_s4 %uint_1 %uint_0 %uint_1 %uint_0
       %avg_pool_input_zero_point = OpConstantComposite %float_tensor_r1_s1 %float_0
      %avg_pool_output_zero_point = OpConstantComposite %float_tensor_r1_s1 %float_0
 
@@ -81,6 +81,6 @@
                                    OpGraphEntryPointARM %graph "main" %input_tensor_ptr %output_tensor_ptr
                           %graph = OpGraphARM %graph_type
                              %in = OpGraphInputARM %float_tensor_r4_s_1_ih_iw_3 %uint_0
-                            %out = OpExtInst %float_tensor_r4_s_1_oh_ow_3 %tosa AVG_POOL2D %avg_pool_kernel %avg_pool_stride %avg_pool_pad %uint_2 %in %avg_pool_input_zero_point %avg_pool_output_zero_point
+                            %out = OpExtInst %float_tensor_r4_s_1_oh_ow_3 %tosa AVG_POOL2D %avg_pool_kernel %avg_pool_stride %avg_pool_pad %uint_3 %in %avg_pool_input_zero_point %avg_pool_output_zero_point
                                    OpGraphSetOutputARM %out %uint_0
                                    OpGraphEndARM
