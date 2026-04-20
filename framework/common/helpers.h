@@ -41,9 +41,14 @@
 
 namespace vkb
 {
+inline bool contains(uint32_t range_count, char const *const *range, char const *value)
+{
+	return std::any_of(range, range + range_count, [value](char const *range_value) { return strcmp(range_value, value) == 0; });
+}
+
 inline bool contains(std::vector<std::string> const &range, char const *value)
 {
-	return std::ranges::find_if(range, [value](std::string const &range_value) { return range_value == value; }) != range.end();
+	return std::ranges::any_of(range, [value](std::string const &range_value) { return range_value == value; });
 }
 
 template <typename T>

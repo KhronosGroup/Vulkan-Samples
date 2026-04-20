@@ -49,6 +49,7 @@ set(FRAMEWORK_FILES
     hpp_resource_record.h
     hpp_resource_replay.h
     hpp_semaphore_pool.h
+    structure_chain_builder.h
     # Source Files
     drawer.cpp
     spirv_reflection.cpp
