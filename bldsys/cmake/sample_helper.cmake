@@ -1,7 +1,7 @@
 #[[
- Copyright (c) 2019-2025, Arm Limited and Contributors
- Copyright (c) 2024-2025, Mobica Limited
- Copyright (c) 2024-2025, Sascha Willems
+ Copyright (c) 2019-2026, Arm Limited and Contributors
+ Copyright (c) 2024-2026, Mobica Limited
+ Copyright (c) 2024-2026, Sascha Willems
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -197,7 +197,7 @@ endif()
     endif()
 
     # HLSL compilation via DXC
-    if(Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
+    if(VKB_BUILD_SHADERS AND Vulkan_dxc_EXECUTABLE AND DEFINED SHADERS_HLSL)
         set(OUTPUT_FILES "")
         set(HLSL_TARGET_NAME ${PROJECT_NAME}-HLSL)
         foreach(SHADER_FILE_HLSL ${TARGET_SHADERS_HLSL})
@@ -256,16 +256,7 @@ endif()
     endif()
 
     # Slang shader compilation
-    # Skip on MacOS/iOS due to CI/CD using potentially broken slang compiler versions from the SDK
-    # Might revisit once Slang shipped with the SDK is usable
-    set(SLANG_SKIP_COMPILE false)
-    if (($ENV{CI} MATCHES true) AND ((CMAKE_SYSTEM_NAME MATCHES "Darwin") OR (CMAKE_SYSTEM_NAME MATCHES "iOS")))
-        set(SLANG_SKIP_COMPILE true)
-    endif()
-    if(VKB_SKIP_SLANG_SHADER_COMPILATION)
-        set(SLANG_SKIP_COMPILE true)
-    endif()
-    if(NOT SLANG_SKIP_COMPILE AND Vulkan_slang_EXECUTABLE AND DEFINED SHADERS_SLANG)
+    if(VKB_BUILD_SHADERS AND NOT VKB_SKIP_SLANG_SHADER_COMPILATION AND Vulkan_slang_EXECUTABLE AND DEFINED SHADERS_SLANG)
         set(OUTPUT_FILES "")
         set(SLANG_TARGET_NAME ${PROJECT_NAME}-SLANG)
         foreach(SHADER_FILE_SLANG ${TARGET_SHADERS_SLANG})
@@ -297,7 +288,7 @@ endif()
     endif()
 
     # GLSL shader compilation
-    if(Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)
+    if(VKB_BUILD_SHADERS AND Vulkan_glslc_EXECUTABLE AND DEFINED SHADERS_GLSL)
         set(GLSL_TARGET_NAME ${PROJECT_NAME}-GLSL)
         set(OUTPUT_FILES "")
         foreach(SHADER_FILE_GLSL ${TARGET_SHADERS_GLSL})
@@ -343,7 +334,7 @@ endif()
     endif()
 
     # spvasm shader compilation
-    if(Vulkan_spirvas_EXECUTABLE AND DEFINED SHADERS_SPVASM)
+    if(VKB_BUILD_SHADERS AND Vulkan_spirvas_EXECUTABLE AND DEFINED SHADERS_SPVASM)
         set(SPVASM_TARGET_NAME ${PROJECT_NAME}-SPVASM)
         set(OUTPUT_FILES "")
         foreach(SHADER_FILE_SPVASM ${TARGET_SHADERS_SPVASM})
