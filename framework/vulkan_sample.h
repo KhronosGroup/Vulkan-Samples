@@ -131,7 +131,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using StatsType = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 	template <typename AnchorStructType>
 	using StructureChainBuilderType = typename std::conditional<bindingType == BindingType::Cpp, vkb::StructureChainBuilder<BindingType::Cpp, AnchorStructType>, vkb::StructureChainBuilder<BindingType::C, AnchorStructType>>::type;
 
