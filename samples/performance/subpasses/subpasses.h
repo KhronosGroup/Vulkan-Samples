@@ -36,6 +36,8 @@ class Subpasses : public vkb::VulkanSampleC
 	bool prepare(const vkb::ApplicationOptions &options) override;
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+	void request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+	                            vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
 #endif
 
 	void update(float delta_time) override;
@@ -51,43 +53,43 @@ class Subpasses : public vkb::VulkanSampleC
 	 * @brief Draws to a render target using the right pipeline based on the sample selection
 	 *        Not to be confused with `draw_renderpasses` which uses the bad practice
 	 */
-	virtual void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
+	virtual void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	/**
 	 * @return A good pipeline
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_one_renderpass_two_subpasses();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_one_renderpass_two_subpasses();
 
 	/**
 	 * @return A geometry render pass which should run first
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_geometry_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_geometry_renderpass();
 
 	/**
 	 * @return A lighting render pass which should run second
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_lighting_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_lighting_renderpass();
 
 	/**
 	 * @brief Draws using the good pipeline: one render pass with two subpasses
 	 */
-	void draw_subpasses(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target);
+	void draw_subpasses(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target);
 
 	/**
 	 * @brief Draws using the bad practice: two separate render passes
 	 */
-	void draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target);
+	void draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target);
 
-	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
+	std::unique_ptr<vkb::rendering::RenderTargetC> create_render_target(vkb::core::Image &&swapchain_image);
 
 	/// Good pipeline with two subpasses within one render pass
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> render_pipeline{};
 
 	/// 1. Bad pipeline with a geometry subpass in the first render pass
-	std::unique_ptr<vkb::RenderPipeline> geometry_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> geometry_render_pipeline{};
 
 	/// 2. Bad pipeline with a lighting subpass in the second render pass
-	std::unique_ptr<vkb::RenderPipeline> lighting_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> lighting_render_pipeline{};
 
 	vkb::sg::PerspectiveCamera *camera{};
 

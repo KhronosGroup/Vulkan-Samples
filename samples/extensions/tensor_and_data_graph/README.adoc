@@ -33,6 +33,8 @@ The samples in this folder are:
 * xref:./simple_tensor_and_data_graph/README.adoc[Simple tensor and data graph]
 * xref:./graph_constants/README.adoc[Graph constants]
 * xref:./compute_shaders_with_tensors/README.adoc[Compute shaders with tensors]
+* xref:./tensor_image_aliasing/README.adoc[Tensor image aliasing]
+* xref:./postprocessing_with_vgf/README.adoc[Postprocessing with VGF]
 
 == Setup
 

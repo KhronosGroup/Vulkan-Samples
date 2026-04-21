@@ -261,7 +261,7 @@ static std::vector<T> get_props(F func, Targs... args)
 
 VkSurfaceKHR DirectWindow::create_surface(vkb::core::InstanceC &instance)
 {
-	return create_surface(instance.get_handle(), get_props<VkPhysicalDevice>(vkEnumeratePhysicalDevices, instance.get_handle()).front());
+	return create_surface(instance.get_handle(), VK_NULL_HANDLE);
 }
 
 // Local structure for holding display candidate information
@@ -366,9 +366,14 @@ static std::vector<Candidate> find_display_candidates(VkPhysicalDevice phys_dev,
 
 VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice phys_dev)
 {
-	if (instance == VK_NULL_HANDLE || phys_dev == VK_NULL_HANDLE)
+	if (instance == VK_NULL_HANDLE)
 	{
 		return VK_NULL_HANDLE;
+	}
+
+	if (phys_dev == VK_NULL_HANDLE)
+	{
+		phys_dev = get_props<VkPhysicalDevice>(vkEnumeratePhysicalDevices, instance).front();
 	}
 
 	// Find possible display config candidates

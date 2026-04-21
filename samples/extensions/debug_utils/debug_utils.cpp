@@ -71,7 +71,7 @@ DebugUtils::~DebugUtils()
  */
 void DebugUtils::debug_check_extension()
 {
-	std::vector<std::string> enabled_instance_extensions = get_instance().get_extensions();
+	std::vector<std::string> enabled_instance_extensions = get_instance().get_enabled_extensions();
 	for (auto &enabled_extension : enabled_instance_extensions)
 	{
 		if (enabled_extension == VK_EXT_DEBUG_UTILS_EXTENSION_NAME)

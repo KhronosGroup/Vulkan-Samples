@@ -54,7 +54,6 @@ template <vkb::BindingType bindingType>
 class ForwardSubpass : public vkb::rendering::subpasses::GeometrySubpass<bindingType>
 {
   public:
-	using SceneType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using ShaderSourceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
 
   public:
@@ -69,7 +68,7 @@ class ForwardSubpass : public vkb::rendering::subpasses::GeometrySubpass<binding
 	ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context,
 	               ShaderSourceType                          &&vertex_shader,
 	               ShaderSourceType                          &&fragment_shader,
-	               SceneType                                  &scene,
+	               vkb::scene_graph::Scene<bindingType>       &scene,
 	               sg::Camera                                 &camera);
 
 	virtual ~ForwardSubpass() = default;
@@ -88,7 +87,7 @@ template <vkb::BindingType bindingType>
 inline ForwardSubpass<bindingType>::ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context,
                                                    ShaderSourceType                          &&vertex_source,
                                                    ShaderSourceType                          &&fragment_source,
-                                                   SceneType                                  &scene_,
+                                                   vkb::scene_graph::Scene<bindingType>       &scene_,
                                                    sg::Camera                                 &camera) :
     GeometrySubpass<bindingType>{render_context, std::move(vertex_source), std::move(fragment_source), scene_, camera}
 {}

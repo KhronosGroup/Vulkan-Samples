@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,20 +47,20 @@ class PostProcessingPassBase
   protected:
 	/**
 	 * @brief Prepares this pass, recording commands into the given command buffer.
-	 * @remarks Passes that that do not explicitly have a vkb::RenderTarget set will render
+	 * @remarks Passes that that do not explicitly have a RenderTarget set will render
 	 *          to default_render_target.
 	 */
-	virtual void prepare(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)
+	virtual void prepare(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &default_render_target)
 	{
 		prepared = true;
 	}
 
 	/**
 	 * @brief Runs this pass, recording commands into the given command buffer.
-	 * @remarks Passes that that do not explicitly have a vkb::RenderTarget set will render
+	 * @remarks Passes that that do not explicitly have a RenderTarget set will render
 	 *          to default_render_target.
 	 */
-	virtual void draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)
+	virtual void draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &default_render_target)
 	{}
 
 	/**
@@ -75,7 +75,7 @@ class PostProcessingPassBase
 
 	std::string debug_name{};
 
-	RenderTarget                  *render_target{nullptr};
+	vkb::rendering::RenderTargetC *render_target{nullptr};
 	std::shared_ptr<core::Sampler> default_sampler{};
 
 	HookFunc pre_draw{};
@@ -160,7 +160,7 @@ class PostProcessingPass : public PostProcessingPassBase
 	 * @brief Render target to output to.
 	 *        If set, this pass will output to the given render target instead of the one passed to draw().
 	 */
-	inline RenderTarget *get_render_target() const
+	inline vkb::rendering::RenderTargetC *get_render_target() const
 	{
 		return render_target;
 	}
@@ -170,7 +170,7 @@ class PostProcessingPass : public PostProcessingPassBase
 	 *        If set, this pass will output to the given render target instead of the one passed to draw().
 	 * @param new_render_target the new render target to output too
 	 */
-	inline Self &set_render_target(RenderTarget *new_render_target)
+	inline Self &set_render_target(vkb::rendering::RenderTargetC *new_render_target)
 	{
 		render_target = new_render_target;
 

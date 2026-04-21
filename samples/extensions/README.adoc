@@ -44,6 +44,12 @@ Read the blog post here for discussion: (https://www.khronos.org/blog/streamlini
 Demonstrates how to use Dynamic Rendering with local reads to fully replace render passses with multiple subpasses.
 See this https://www.khronos.org/blog/streamlining-subpasses[this blogpost].
 
+=== xref:./{extension_samplespath}rasterization_order_attachment_access/README.adoc[Rasterization Order Attachment Access]
+
+*Extensions*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_rasterization_order_attachment_access[`VK_EXT_rasterization_order_attachment_access`], https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_dynamic_rendering[`VK_KHR_dynamic_rendering`], https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_dynamic_rendering_local_read[`VK_KHR_dynamic_rendering_local_read`]
+
+Demonstrates how to use rasterization order attachment access with dynamic rendering local read to implement framebuffer fetch with guaranteed fragment ordering. A runtime toggle compares single-draw ROAA blending against multi-draw fallback with pipeline barriers.
+
 === xref:./{extension_samplespath}push_descriptors/README.adoc[Push Descriptors]
 
 *Extension*: https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_KHR_push_descriptor[`VK_KHR_push_descriptor`]
@@ -318,6 +324,12 @@ Demonstrate how to build data graph pipelines and execute neural networks:
 
 * xref:./{extension_samplespath}tensor_and_data_graph/compute_shaders_with_tensors/README.adoc[compute_shaders_with_tensors]
 - Explains how compute shaders can be used to write input tensors and read output tensors from a simple convolutional neural network.
+
+* xref:./{extension_samplespath}tensor_and_data_graph/tensor_image_aliasing/README.adoc[tensor_image_aliasing]
+- Explains how to implement zero-copy data exchange between tensors and images through aliasing.
+
+* xref:./{extension_samplespath}tensor_and_data_graph/postprocessing_with_vgf/README.adoc[postprocessing_with_vgf]
+- Explains how to load and run a VGF file defining a neural network model. A VGF file contains information regarding input, output and constant tensors along with the SPIR-V code which defines the model, which can then be used to run a data graph pipeline.
 
 === xref:./{extension_samplespath}ray_tracing_invocation_reorder/README.adoc[Ray Tracing Invocation Reorder]
 

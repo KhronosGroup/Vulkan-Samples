@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,11 +69,10 @@ class RenderFrame
 	using DescriptorSetLayoutType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDescriptorSetLayout, vkb::DescriptorSetLayout>::type;
 	using FencePoolType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
 	using QueueType               = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
-	using RenderTargetType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 	using SemaphorePoolType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPSemaphorePool, vkb::SemaphorePool>::type;
 
   public:
-	RenderFrame(vkb::core::Device<bindingType> &device, std::unique_ptr<RenderTargetType> &&render_target, size_t thread_count = 1);
+	RenderFrame(vkb::core::Device<bindingType> &device, std::unique_ptr<vkb::rendering::RenderTarget<bindingType>> &&render_target, size_t thread_count = 1);
 	RenderFrame(RenderFrame<bindingType> const &)            = delete;
 	RenderFrame(RenderFrame<bindingType> &&)                 = default;
 	RenderFrame &operator=(RenderFrame<bindingType> const &) = delete;
@@ -100,19 +99,19 @@ class RenderFrame
 	vkb::core::CommandPool<bindingType> &get_command_pool(
 	    QueueType const &queue, vkb::CommandBufferResetMode reset_mode = vkb::CommandBufferResetMode::ResetPool, size_t thread_index = 0);
 
-	vkb::core::Device<bindingType> &get_device();
-	FencePoolType                  &get_fence_pool();
-	FencePoolType const            &get_fence_pool() const;
-	RenderTargetType               &get_render_target();
-	RenderTargetType const         &get_render_target() const;
-	SemaphorePoolType              &get_semaphore_pool();
-	SemaphorePoolType const        &get_semaphore_pool() const;
-	DescriptorSetType               request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
-	                                                       BindingMap<DescriptorBufferInfoType> const &buffer_infos,
-	                                                       BindingMap<DescriptorImageInfoType> const  &image_infos,
-	                                                       bool                                        update_after_bind,
-	                                                       size_t                                      thread_index = 0);
-	void                            reset();
+	vkb::core::Device<bindingType>                  &get_device();
+	FencePoolType                                   &get_fence_pool();
+	FencePoolType const                             &get_fence_pool() const;
+	vkb::rendering::RenderTarget<bindingType>       &get_render_target();
+	vkb::rendering::RenderTarget<bindingType> const &get_render_target() const;
+	SemaphorePoolType                               &get_semaphore_pool();
+	SemaphorePoolType const                         &get_semaphore_pool() const;
+	DescriptorSetType                                request_descriptor_set(DescriptorSetLayoutType const              &descriptor_set_layout,
+	                                                                        BindingMap<DescriptorBufferInfoType> const &buffer_infos,
+	                                                                        BindingMap<DescriptorImageInfoType> const  &image_infos,
+	                                                                        bool                                        update_after_bind,
+	                                                                        size_t                                      thread_index = 0);
+	void                                             reset();
 
 	/**
 	 * @brief Sets a new buffer allocation strategy
@@ -135,7 +134,7 @@ class RenderFrame
 	 * @brief Called when the swapchain changes
 	 * @param render_target A new render target with updated images
 	 */
-	void update_render_target(std::unique_ptr<RenderTargetType> &&render_target);
+	void update_render_target(std::unique_ptr<vkb::rendering::RenderTarget<bindingType>> &&render_target);
 
   private:
 	vkb::BufferAllocationCpp   allocate_buffer_impl(vk::BufferUsageFlags usage, vk::DeviceSize size, size_t thread_index);
@@ -164,7 +163,7 @@ class RenderFrame
 	std::vector<std::unordered_map<std::size_t, vkb::core::HPPDescriptorSet>>                         descriptor_sets;         // Descriptor sets per thread
 	vkb::HPPFencePool                                                                                 fence_pool;
 	vkb::HPPSemaphorePool                                                                             semaphore_pool;
-	std::unique_ptr<vkb::rendering::HPPRenderTarget>                                                  swapchain_render_target;
+	std::unique_ptr<vkb::rendering::RenderTargetCpp>                                                  swapchain_render_target;
 	size_t                                                                                            thread_count;
 	BufferAllocationStrategy                                                                          buffer_allocation_strategy     = BufferAllocationStrategy::MultipleAllocationsPerBuffer;
 	DescriptorManagementStrategy                                                                      descriptor_management_strategy = DescriptorManagementStrategy::StoreInCache;
@@ -174,9 +173,9 @@ using RenderFrameC   = RenderFrame<vkb::BindingType::C>;
 using RenderFrameCpp = RenderFrame<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-inline RenderFrame<bindingType>::RenderFrame(vkb::core::Device<bindingType>     &device_,
-                                             std::unique_ptr<RenderTargetType> &&render_target,
-                                             size_t                              thread_count) :
+inline RenderFrame<bindingType>::RenderFrame(vkb::core::Device<bindingType>                              &device_,
+                                             std::unique_ptr<vkb::rendering::RenderTarget<bindingType>> &&render_target,
+                                             size_t                                                       thread_count) :
     device(reinterpret_cast<vkb::core::DeviceCpp &>(device_)), fence_pool{device}, semaphore_pool{device}, thread_count{thread_count}, descriptor_pools(thread_count), descriptor_sets(thread_count)
 {
 	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;        // Block size of a buffer pool in kilobytes
@@ -373,7 +372,7 @@ inline typename RenderFrame<bindingType>::FencePoolType const &RenderFrame<bindi
 }
 
 template <vkb::BindingType bindingType>
-inline typename RenderFrame<bindingType>::RenderTargetType &RenderFrame<bindingType>::get_render_target()
+inline vkb::rendering::RenderTarget<bindingType> &RenderFrame<bindingType>::get_render_target()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -381,12 +380,12 @@ inline typename RenderFrame<bindingType>::RenderTargetType &RenderFrame<bindingT
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderTarget &>(*swapchain_render_target);
+		return reinterpret_cast<vkb::rendering::RenderTargetC &>(*swapchain_render_target);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename RenderFrame<bindingType>::RenderTargetType const &RenderFrame<bindingType>::get_render_target() const
+inline vkb::rendering::RenderTarget<bindingType> const &RenderFrame<bindingType>::get_render_target() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -394,7 +393,7 @@ inline typename RenderFrame<bindingType>::RenderTargetType const &RenderFrame<bi
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RenderTarget const &>(*swapchain_render_target);
+		return reinterpret_cast<vkb::rendering::RenderTargetC const &>(*swapchain_render_target);
 	}
 }
 
@@ -548,7 +547,7 @@ inline void RenderFrame<bindingType>::update_descriptor_sets(size_t thread_index
 }
 
 template <vkb::BindingType bindingType>
-inline void RenderFrame<bindingType>::update_render_target(std::unique_ptr<RenderTargetType> &&render_target)
+inline void RenderFrame<bindingType>::update_render_target(std::unique_ptr<vkb::rendering::RenderTarget<bindingType>> &&render_target)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -556,7 +555,7 @@ inline void RenderFrame<bindingType>::update_render_target(std::unique_ptr<Rende
 	}
 	else
 	{
-		swapchain_render_target.reset(reinterpret_cast<vkb::rendering::HPPRenderTarget *>(render_target.release()));
+		swapchain_render_target.reset(reinterpret_cast<vkb::rendering::RenderTargetCpp *>(render_target.release()));
 	}
 }
 }        // namespace rendering
