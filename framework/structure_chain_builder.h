@@ -25,9 +25,9 @@ namespace vkb
 template <vkb::BindingType bindingType, typename AnchorStructType>
 class StructureChainBuilder
 {
-  public:
-	StructureChainBuilder();
+	static_assert((offsetof(AnchorStructType, sType) == 0) && (offsetof(AnchorStructType, pNext) == sizeof(void *)));
 
+  public:
 	template <typename T>
 	T &add_chain_data(T const &data_to_add = {});        // Adds data to the structure chain builder that is not part of the structure chain itself, but is used by the
 	                                                     // structures in the chain (e.g. pointed to by a member of a struct in the structure chain)
@@ -67,13 +67,6 @@ T &StructureChainBuilder<bindingType, AnchorStructType>::add_chain_data(T const 
 }
 
 template <vkb::BindingType bindingType, typename AnchorStructType>
-inline StructureChainBuilder<bindingType, AnchorStructType>::StructureChainBuilder()
-{
-	static_assert((offsetof(AnchorStructType, sType) == 0) && (offsetof(AnchorStructType, pNext) == sizeof(void *)));
-	structure_chain.push_back(std::make_unique<std::any>(std::make_any<AnchorStructType>()));
-}
-
-template <vkb::BindingType bindingType, typename AnchorStructType>
 template <typename StructType>
 inline StructType &StructureChainBuilder<bindingType, AnchorStructType>::add_struct(StructType const &struct_to_add)
 {
@@ -92,6 +85,11 @@ template <vkb::BindingType bindingType, typename AnchorStructType>
 template <typename StructType>
 inline StructType &StructureChainBuilder<bindingType, AnchorStructType>::add_struct_impl(StructType const &struct_to_add)
 {
+	if (structure_chain.empty())
+	{
+		structure_chain.push_back(std::make_unique<std::any>(std::make_any<AnchorStructType>()));
+	}
+
 #if !defined(NDEBUG)
 	auto it = std::ranges::find_if(structure_chain, [](auto const &chain_element) {
 		return std::any_cast<StructType>(chain_element.get()) != nullptr;
@@ -115,7 +113,7 @@ inline StructType const *StructureChainBuilder<bindingType, AnchorStructType>::g
 	}
 	else
 	{
-		return reinterpret_cast<StructType const *>(get_struct_impl<vk::CppType<StructType>::Type>(skip));
+		return reinterpret_cast<StructType const *>(get_struct_impl<typename vk::CppType<StructType>::Type>(skip));
 	}
 }
 
@@ -146,7 +144,7 @@ inline void StructureChainBuilder<bindingType, AnchorStructType>::set_anchor_str
 	}
 	else
 	{
-		return reinterpret_cast<StructureChainBuilder<vkb::BindingType::Cpp, typename vk::CppType<AnchorStructType>::Type> *>(this)->add_anchor_struct(
+		reinterpret_cast<StructureChainBuilder<vkb::BindingType::Cpp, typename vk::CppType<AnchorStructType>::Type> *>(this)->set_anchor_struct(
 		    reinterpret_cast<typename vk::CppType<AnchorStructType>::Type const &>(anchor_struct));
 	}
 }
@@ -154,9 +152,16 @@ inline void StructureChainBuilder<bindingType, AnchorStructType>::set_anchor_str
 template <vkb::BindingType bindingType, typename AnchorStructType>
 inline void StructureChainBuilder<bindingType, AnchorStructType>::set_anchor_struct_impl(AnchorStructType const &anchor_struct)
 {
-	void const *pNext                                                     = std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext;
-	*std::any_cast<AnchorStructType>(structure_chain.front().get())       = anchor_struct;
-	std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext = pNext;
+	if (structure_chain.empty())
+	{
+		structure_chain.push_back(std::make_unique<std::any>(std::make_any<AnchorStructType>(anchor_struct)));
+	}
+	else
+	{
+		void const *pNext                                                     = std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext;
+		*std::any_cast<AnchorStructType>(structure_chain.front().get())       = anchor_struct;
+		std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext = pNext;
+	}
 }
 
 }        // namespace vkb
