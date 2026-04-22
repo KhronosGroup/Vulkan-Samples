@@ -25,7 +25,6 @@
 #include "core/hpp_image.h"
 #include "core/hpp_image_view.h"
 #include "core/image.h"
-#include <vulkan/vulkan_hash.hpp>        // provides std::hash specializations for Vulkan handle types, used in std::unordered_map and std::unordered_set
 
 namespace vkb
 {
@@ -233,23 +232,20 @@ inline RenderTarget<bindingType>::RenderTarget(std::vector<ImageType> &&images)
 template <vkb::BindingType bindingType>
 inline void RenderTarget<bindingType>::init(std::vector<vkb::core::HPPImage> &&images_)
 {
+	assert(!images_.empty());
+
 	device = &images_.back().get_device();
 	images = std::move(images_);
 
 	// Returns the image extent as a vk::Extent2D structure from a vk::Extent3D
 	auto get_image_extent = [](const vkb::core::HPPImage &image) { return vk::Extent2D{image.get_extent().width, image.get_extent().height}; };
 
-	// Constructs a set of unique image extents given a vector of images
-	std::unordered_set<vk::Extent2D> unique_extent;
-	std::ranges::transform(images, std::inserter(unique_extent, unique_extent.end()), get_image_extent);
-
-	// Allow only one extent size for a render target
-	if (unique_extent.size() != 1)
+	extent = get_image_extent(images.front());
+	if (std::ranges::find_if(images,
+	                         [extent = this->extent, &get_image_extent](const vkb::core::HPPImage &image) { return get_image_extent(image) != extent; }) != images.end())
 	{
 		throw vkb::common::HPPVulkanException{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
 	}
-
-	extent = *unique_extent.begin();
 
 	for (auto &image : images)
 	{
@@ -282,6 +278,8 @@ inline RenderTarget<bindingType>::RenderTarget(std::vector<ImageViewType> &&imag
 template <vkb::BindingType bindingType>
 inline void RenderTarget<bindingType>::init(std::vector<vkb::core::HPPImageView> &&image_views)
 {
+	assert(!image_views.empty());
+
 	device = &image_views.back().get_image().get_device();
 	views  = std::move(image_views);
 
@@ -292,15 +290,13 @@ inline void RenderTarget<bindingType>::init(std::vector<vkb::core::HPPImageView>
 		return vk::Extent2D{mip0_extent.width >> mip_level, mip0_extent.height >> mip_level};
 	};
 
-	// Constructs a set of unique image extents given a vector of image views;
 	// allow only one extent size for a render target
-	std::unordered_set<vk::Extent2D> unique_extent;
-	std::ranges::transform(views, std::inserter(unique_extent, unique_extent.end()), get_view_extent);
-	if (unique_extent.size() != 1)
+	extent = get_view_extent(views.front());
+	if (std::ranges::find_if(views,
+	                         [extent = this->extent, &get_view_extent](const vkb::core::HPPImageView &view) { return get_view_extent(view) != extent; }) != views.end())
 	{
 		throw vkb::common::HPPVulkanException{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
 	}
-	extent = *unique_extent.begin();
 
 	for (auto &view : views)
 	{
