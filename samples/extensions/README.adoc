@@ -250,11 +250,19 @@ Demonstrate how to use patch control points dynamically, which can reduce the nu
 
 Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment.
 
-=== xref:./{extension_samplespath}descriptor_buffer_basic/README.adoc[Basic descriptor buffer]
+=== xref:./{extension_samplespath}descriptor_buffer_basic/README.adoc[Descriptor buffer]
 
 *Extension*: https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_ext_descriptor_buffer[`VK_EXT_descriptor_buffer`]
 
-Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
+**Note:** If available, `VK_EXT_descriptor_heap` should be preferred.
+
+Demonstrate how to use the resource descriptor buffers to replace descriptor sets
+
+=== xref:./{extension_samplespath}descriptor_heap/README.adoc[Descriptor heap]
+
+*Extension*: https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_ext_descriptor_heap[`VK_EXT_descriptor_heap`]
+
+Demonstrate how to use descriptor heaps that completely rework how descriptors are handled in Vulkan
 
 === xref:./{extension_samplespath}color_write_enable/README.adoc[Color write enable]
 
