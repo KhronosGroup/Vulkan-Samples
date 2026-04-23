@@ -40,10 +40,10 @@ class PushDescriptors : public ApiVulkanSample
 
 	struct Cube
 	{
-		Texture                             texture;
-		std::unique_ptr<vkb::core::BufferC> uniform_buffer;
-		glm::vec3                           rotation;
-		glm::mat4                           model_mat;
+		Texture                                                                texture;
+		std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers;
+		glm::vec3                                                              rotation;
+		glm::mat4                                                              model_mat;
 	};
 	std::array<Cube, 2> cubes;
 
@@ -52,10 +52,7 @@ class PushDescriptors : public ApiVulkanSample
 		std::unique_ptr<vkb::sg::SubMesh> cube;
 	} models;
 
-	struct UniformBuffers
-	{
-		std::unique_ptr<vkb::core::BufferC> scene;
-	} uniform_buffers;
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers;
 
 	struct UboScene
 	{
@@ -70,14 +67,14 @@ class PushDescriptors : public ApiVulkanSample
 	PushDescriptors();
 	~PushDescriptors();
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
-	void         build_command_buffers() override;
+	void         build_command_buffer();
 	void         load_assets();
 	void         setup_descriptor_set_layout();
 	void         prepare_pipelines();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
 	void         update_cube_uniform_buffers(float delta_time);
-	void         draw();
+	void         draw(float delta_time);
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;

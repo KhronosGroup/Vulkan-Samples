@@ -33,7 +33,8 @@
 
 PushDescriptors::PushDescriptors()
 {
-	title = "Push descriptors";
+	title        = "Push descriptors";
+	use_new_sync = true;
 
 	// Enable extension required for push descriptors
 	add_device_extension(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
@@ -48,11 +49,17 @@ PushDescriptors::~PushDescriptors()
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 		for (auto &cube : cubes)
 		{
-			cube.uniform_buffer.reset();
+			for (auto &uniform_buffer : cube.uniform_buffers)
+			{
+				uniform_buffer.reset();
+			}
 			cube.texture.image.reset();
 			vkDestroySampler(get_device().get_handle(), cube.texture.sampler, nullptr);
 		}
-		uniform_buffers.scene.reset();
+		for (auto &uniform_buffer : uniform_buffers)
+		{
+			uniform_buffer.reset();
+		}
 	}
 }
 
@@ -65,8 +72,11 @@ void PushDescriptors::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 }
 
-void PushDescriptors::build_command_buffers()
+void PushDescriptors::build_command_buffer()
 {
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
@@ -81,77 +91,73 @@ void PushDescriptors::build_command_buffers()
 	render_pass_begin_info.renderArea.extent.height = height;
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_buffer_begin_info));
+
+	vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
+
+	VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
+
+	const auto &vertex_buffer = models.cube->vertex_buffers.at("vertex_buffer");
+	auto       &index_buffer  = models.cube->index_buffer;
+
+	VkDeviceSize offsets[1] = {0};
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, vertex_buffer.get(), offsets);
+	vkCmdBindIndexBuffer(draw_cmd_buffer, index_buffer->get_handle(), 0, models.cube->index_type);
+
+	// Render two cubes using different descriptor sets using push descriptors
+	for (auto &cube : cubes)
 	{
-		render_pass_begin_info.framebuffer = framebuffers[i];
+		// Instead of preparing the descriptor sets up-front, using push descriptors we can set (push) them inside of a command buffer
+		// This allows a more dynamic approach without the need to create descriptor sets for each model
+		// Note: dstSet for each descriptor set write is left at zero as this is ignored when using push descriptors
 
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+		std::array<VkWriteDescriptorSet, 3> write_descriptor_sets{};
 
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		// Scene matrices
+		VkDescriptorBufferInfo scene_buffer_descriptor = create_descriptor(*uniform_buffers[current_buffer]);
+		write_descriptor_sets[0].sType                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write_descriptor_sets[0].dstSet                = 0;
+		write_descriptor_sets[0].dstBinding            = 0;
+		write_descriptor_sets[0].descriptorCount       = 1;
+		write_descriptor_sets[0].descriptorType        = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		write_descriptor_sets[0].pBufferInfo           = &scene_buffer_descriptor;
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		// Model matrices
+		VkDescriptorBufferInfo cube_buffer_descriptor = create_descriptor(*cube.uniform_buffers[current_buffer]);
+		write_descriptor_sets[1].sType                = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write_descriptor_sets[1].dstSet               = 0;
+		write_descriptor_sets[1].dstBinding           = 1;
+		write_descriptor_sets[1].descriptorCount      = 1;
+		write_descriptor_sets[1].descriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		write_descriptor_sets[1].pBufferInfo          = &cube_buffer_descriptor;
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+		// Texture
+		VkDescriptorImageInfo image_descriptor   = create_descriptor(cube.texture);
+		write_descriptor_sets[2].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write_descriptor_sets[2].dstSet          = 0;
+		write_descriptor_sets[2].dstBinding      = 2;
+		write_descriptor_sets[2].descriptorCount = 1;
+		write_descriptor_sets[2].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		write_descriptor_sets[2].pImageInfo      = &image_descriptor;
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+		vkCmdPushDescriptorSetKHR(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 3, write_descriptor_sets.data());
 
-		const auto &vertex_buffer = models.cube->vertex_buffers.at("vertex_buffer");
-		auto       &index_buffer  = models.cube->index_buffer;
-
-		VkDeviceSize offsets[1] = {0};
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer.get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, models.cube->index_type);
-
-		// Render two cubes using different descriptor sets using push descriptors
-		for (auto &cube : cubes)
-		{
-			// Instead of preparing the descriptor sets up-front, using push descriptors we can set (push) them inside of a command buffer
-			// This allows a more dynamic approach without the need to create descriptor sets for each model
-			// Note: dstSet for each descriptor set write is left at zero as this is ignored when using push descriptors
-
-			std::array<VkWriteDescriptorSet, 3> write_descriptor_sets{};
-
-			// Scene matrices
-			VkDescriptorBufferInfo scene_buffer_descriptor = create_descriptor(*uniform_buffers.scene);
-			write_descriptor_sets[0].sType                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_descriptor_sets[0].dstSet                = 0;
-			write_descriptor_sets[0].dstBinding            = 0;
-			write_descriptor_sets[0].descriptorCount       = 1;
-			write_descriptor_sets[0].descriptorType        = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			write_descriptor_sets[0].pBufferInfo           = &scene_buffer_descriptor;
-
-			// Model matrices
-			VkDescriptorBufferInfo cube_buffer_descriptor = create_descriptor(*cube.uniform_buffer);
-			write_descriptor_sets[1].sType                = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_descriptor_sets[1].dstSet               = 0;
-			write_descriptor_sets[1].dstBinding           = 1;
-			write_descriptor_sets[1].descriptorCount      = 1;
-			write_descriptor_sets[1].descriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			write_descriptor_sets[1].pBufferInfo          = &cube_buffer_descriptor;
-
-			// Texture
-			VkDescriptorImageInfo image_descriptor   = create_descriptor(cube.texture);
-			write_descriptor_sets[2].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_descriptor_sets[2].dstSet          = 0;
-			write_descriptor_sets[2].dstBinding      = 2;
-			write_descriptor_sets[2].descriptorCount = 1;
-			write_descriptor_sets[2].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			write_descriptor_sets[2].pImageInfo      = &image_descriptor;
-
-			vkCmdPushDescriptorSetKHR(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 3, write_descriptor_sets.data());
-
-			draw_model(models.cube, draw_cmd_buffers[i]);
-		}
-
-		draw_ui(draw_cmd_buffers[i]);
-
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+		draw_model(models.cube, draw_cmd_buffer);
 	}
+
+	draw_ui(draw_cmd_buffer);
+
+	vkCmdEndRenderPass(draw_cmd_buffer);
+
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 void PushDescriptors::load_assets()
@@ -247,19 +253,15 @@ void PushDescriptors::prepare_pipelines()
 
 void PushDescriptors::prepare_uniform_buffers()
 {
-	// Vertex shader scene uniform buffer block
-	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                             sizeof(UboScene),
-	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	// Vertex shader cube model uniform buffer blocks
-	for (auto &cube : cubes)
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
 	{
-		cube.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-		                                                           sizeof(glm::mat4),
-		                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
+		// Vertex shader scene uniform buffer block
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(UboScene), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		// Vertex shader cube model uniform buffer blocks
+		for (auto &cube : cubes)
+		{
+			cube.uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		}
 	}
 
 	update_uniform_buffers();
@@ -270,7 +272,7 @@ void PushDescriptors::update_uniform_buffers()
 {
 	ubo_scene.projection = camera.matrices.perspective;
 	ubo_scene.view       = camera.matrices.view;
-	uniform_buffers.scene->convert_and_update(ubo_scene);
+	uniform_buffers[current_buffer]->convert_and_update(ubo_scene);
 }
 
 void PushDescriptors::update_cube_uniform_buffers(float delta_time)
@@ -283,7 +285,7 @@ void PushDescriptors::update_cube_uniform_buffers(float delta_time)
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-		cube.uniform_buffer->convert_and_update(cube.model_mat);
+		cube.uniform_buffers[current_buffer]->convert_and_update(cube.model_mat);
 	}
 
 	if (animate)
@@ -301,12 +303,12 @@ void PushDescriptors::update_cube_uniform_buffers(float delta_time)
 	}
 }
 
-void PushDescriptors::draw()
+void PushDescriptors::draw(float delta_time)
 {
 	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	update_cube_uniform_buffers(delta_time);
+	update_uniform_buffers();
+	build_command_buffer();
 	ApiVulkanSample::submit_frame();
 }
 
@@ -366,15 +368,7 @@ void PushDescriptors::render(float delta_time)
 	{
 		return;
 	}
-	draw();
-	if (animate)
-	{
-		update_cube_uniform_buffers(delta_time);
-	}
-	if (camera.updated)
-	{
-		update_uniform_buffers();
-	}
+	draw(delta_time);
 }
 
 void PushDescriptors::on_update_ui_overlay(vkb::Drawer &drawer)
