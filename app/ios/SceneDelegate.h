@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2026, Holochip Inc.
+/* Copyright (c) 2026, Stephen Saunders
 *
 * SPDX-License-Identifier: Apache-2.0
 *
@@ -15,21 +15,11 @@
 * limitations under the License.
 */
 
-#include <TargetConditionals.h>
-#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
-#else
-#include <AppKit/AppKit.h>
-#endif
 
-#if TARGET_OS_IOS
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface SceneDelegate : UIResponder <UIWindowSceneDelegate>
 
-#else
-@interface AppDelegate : NSResponder <NSApplicationDelegate>
-
-@property (strong, nonatomic) NSWindow *window;
-#endif
+@property (strong, nonatomic) UIWindow *window;
 
 @end
 

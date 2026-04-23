@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Holochip Inc.
+/* Copyright (c) 2024-2026, Holochip Inc.
 *
 * SPDX-License-Identifier: Apache-2.0
 *
@@ -20,6 +20,7 @@
 #include "core/platform/entrypoint.hpp"
 #include "platform/ios/ios_platform.h"
 #include "platform/ios/ios_window.h"
+#include "platform/input_events.h"
 
 int platform_main(const vkb::PlatformContext &);
 
@@ -28,15 +29,15 @@ int platform_main(const vkb::PlatformContext &);
     std::unique_ptr<vkb::PlatformContext> context;
     vkb::IosPlatformContext* _context;
     vkb::ExitCode _code;
+	UITouch* _activeTouch;
 }
 @property (retain, nonatomic) IBOutlet VulkanView *vulkan_view;
 
 @end
 
 @implementation ViewController
-- (void)viewDidLoad {
+- (void) viewDidLoad {
     [super viewDidLoad];
-
 
     // Convert incoming args to "C" argc/argv strings
     NSArray *args = [[NSProcessInfo processInfo] arguments];
@@ -45,6 +46,10 @@ int platform_main(const vkb::PlatformContext &);
         NSString *s = args[i];
         argv[i] = s.UTF8String;
     }
+
+	// Allocate and add a Metal-compatible sub-view for Vulkan to use
+	self.vulkan_view = [[VulkanView alloc] initWithFrame:self.view.bounds];
+	[self.view addSubview:self.vulkan_view];
 
 	self.vulkan_view.contentScaleFactor = UIScreen.mainScreen.nativeScale;
 
@@ -56,6 +61,13 @@ int platform_main(const vkb::PlatformContext &);
    _displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(renderLoop)];
    [_displayLink setPreferredFramesPerSecond:fps];
    [_displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSDefaultRunLoopMode];
+}
+
+- (void) viewDidLayoutSubviews {
+	[super viewDidLayoutSubviews];
+	
+	// Update the Vulkan sub-view to match parent view dimensions following rotation events
+	self.vulkan_view.layer.frame = self.view.bounds;
 }
 
 -(void) renderLoop {
@@ -73,4 +85,63 @@ int platform_main(const vkb::PlatformContext &);
 		}
     }
 }
+
+-(CGPoint) getTouchLocalPoint:(UITouch*) touch {
+	CGPoint point = [touch locationInView:self.vulkan_view];
+	point.x *= self.vulkan_view.contentScaleFactor;
+	point.y *= self.vulkan_view.contentScaleFactor;
+	return point;
+}
+
+// Handle touch events for selection and dragging within the display and GUI overlay
+-(void) touchesBegan:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch == nil) {
+		_activeTouch = [touches anyObject];
+
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Down,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+	}
+}
+
+-(void) touchesMoved:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch && [touches containsObject:_activeTouch]) {
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Move,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+	}
+}
+
+-(void) touchesEnded:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch && [touches containsObject:_activeTouch]) {
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Up,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+
+		_activeTouch = nil;
+	}
+}
+
+-(void) touchesCancelled:(NSSet*) touches withEvent:(UIEvent*) theEvent {
+	if (_activeTouch && [touches containsObject:_activeTouch]) {
+		auto point = [self getTouchLocalPoint:_activeTouch];
+		((vkb::IosPlatform*)_context->userPlatform)->input_event(vkb::TouchInputEvent{
+			0, 1,
+			vkb::TouchAction::Cancel,
+			static_cast<float>(point.x),
+			static_cast<float>(point.y)});
+
+		_activeTouch = nil;
+	}
+}
+
 @end

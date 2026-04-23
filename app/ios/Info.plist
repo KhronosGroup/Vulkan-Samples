@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2024, Holochip Inc.
+Copyright (c) 2024-2026, Holochip Inc.
 
 SPDX-License-Identifier: Apache-2.0
 
@@ -47,6 +47,25 @@ limitations under the License.
     <string>Storyboard</string>
     <key>UILaunchStoryboardName</key>
     <string>launch</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Storyboard</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
