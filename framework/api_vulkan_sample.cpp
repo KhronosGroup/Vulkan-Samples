@@ -585,7 +585,7 @@ void ApiVulkanSample::submit_frame()
 		    .pCommandBuffers      = &draw_cmd_buffers[current_buffer],
 		    .signalSemaphoreCount = 1,
 		    .pSignalSemaphores    = &render_complete_semaphores[current_image_index]};
-		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, wait_fences[current_buffer]));
 
 	}
 	if (get_render_context().has_swapchain())
@@ -599,7 +599,7 @@ void ApiVulkanSample::submit_frame()
 		present_info.pNext            = NULL;
 		present_info.swapchainCount   = 1;
 		present_info.pSwapchains      = &sc;
-		present_info.pImageIndices    = &current_buffer;
+		present_info.pImageIndices    = use_new_sync ? &current_image_index : &current_buffer;
 
 		VkDisplayPresentInfoKHR disp_present_info{};
 		if (get_device().get_gpu().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
