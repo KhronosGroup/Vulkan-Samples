@@ -699,6 +699,18 @@ ApiVulkanSample::~ApiVulkanSample()
 		{
 			vkDestroyFence(get_device().get_handle(), fence, nullptr);
 		}
+
+		if (use_new_sync)
+		{
+			for (auto &semaphore : acquired_image_ready_semaphores)
+			{
+				vkDestroySemaphore(get_device().get_handle(), semaphore, nullptr);
+			}
+			for (auto &semaphore : render_complete_semaphores)
+			{
+				vkDestroySemaphore(get_device().get_handle(), semaphore, nullptr);
+			}
+		}
 	}
 }
 
