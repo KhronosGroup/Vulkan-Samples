@@ -84,6 +84,12 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 	};
 
   protected:
+	// @todo
+	bool use_new_sync = false;
+
+	// @todo
+	constexpr static uint32_t max_concurrent_frames = 2;
+
 	/// Stores the swapchain image buffers
 	std::vector<HPPSwapchainBuffer> swapchain_buffers;
 
@@ -120,6 +126,9 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 	// List of available frame buffers (same as number of swap chain images)
 	std::vector<vk::Framebuffer> framebuffers;
 
+	// @todo
+	uint32_t current_image_index = 0;
+
 	// Active frame buffer index
 	uint32_t current_buffer = 0;
 
@@ -144,6 +153,12 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 
 	// Synchronization fences
 	std::vector<vk::Fence> wait_fences;
+
+	// Synchronization primitives
+	std::array<vk::Semaphore, max_concurrent_frames> acquired_image_ready_semaphores{};
+	std::vector<vk::Semaphore>                           render_complete_semaphores{};
+	// @todo: use this
+	// std::array<VkFence, max_concurrent_frames>     wait_fences;
 
 	/**
 	 * @brief Creates a vulkan sampler
@@ -246,7 +261,7 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 	 * @brief To be overridden by the derived class. Records the relevant commands to the rendering command buffers
 	 *        Called when the framebuffers need to be rebuilt
 	 */
-	virtual void build_command_buffers() = 0;
+	virtual void build_command_buffers();
 
 	/**
 	 * @brief Rebuild the command buffers by first resetting the corresponding command pool and then building the command buffers.

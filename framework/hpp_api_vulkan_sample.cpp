@@ -402,7 +402,7 @@ void HPPApiVulkanSample::create_command_buffers()
 	// Create one command buffer for each swap chain image and reuse for rendering
 	vk::CommandBufferAllocateInfo allocate_info{.commandPool        = cmd_pool,
 	                                            .level              = vk::CommandBufferLevel::ePrimary,
-	                                            .commandBufferCount = static_cast<uint32_t>(get_render_context().get_render_frames().size())};
+	                                            .commandBufferCount = use_new_sync ? max_concurrent_frames : static_cast<uint32_t>(get_render_context().get_render_frames().size()) };
 
 	draw_cmd_buffers = get_device().get_handle().allocateCommandBuffers(allocate_info);
 }
@@ -484,38 +484,91 @@ void HPPApiVulkanSample::prepare_frame()
 {
 	if (get_render_context().has_swapchain())
 	{
-		handle_surface_changes();
-		// Acquire the next image from the swap chain
-		// Shows how to filter an error code from a vulkan function, which is mapped to an exception but should be handled here!
-		vk::Result result;
-		try
+		if (use_new_sync)
 		{
-			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
+			vk::Result result;
+
+			// Ensure command buffer execution has finished
+			result = get_device().get_handle().waitForFences(wait_fences[current_buffer], true, UINT64_MAX);
+			if (result != vk::Result::eSuccess)
+			{
+				LOGE("Vulkan error on waitForFences: {}", vk::to_string(result));
+				abort();
+			}
+			get_device().get_handle().resetFences(wait_fences[current_buffer]);
+
+			handle_surface_changes();
+			// Acquire the next image from the swap chain
+			// Shows how to filter an error code from a vulkan function, which is mapped to an exception but should be handled here!
+			try
+			{
+				std::tie(result, current_image_index) = get_render_context().get_swapchain().acquire_next_image(acquired_image_ready_semaphores[current_buffer]);
+			}
+			// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR)
+			// Don't catch other failures here, they are propagated up the calling hierarchy
+			catch (vk::OutOfDateKHRError & /*err*/)
+			{
+				resize(extent.width, extent.height);
+			}
+			// VK_SUBOPTIMAL_KHR is a success code and means that acquire was successful and semaphore is signaled but image is suboptimal
+			// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
 		}
-		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR)
-		// Don't catch other failures here, they are propagated up the calling hierarchy
-		catch (vk::OutOfDateKHRError & /*err*/)
+		else
 		{
-			resize(extent.width, extent.height);
+			handle_surface_changes();
+			// Acquire the next image from the swap chain
+			// Shows how to filter an error code from a vulkan function, which is mapped to an exception but should be handled here!
+			vk::Result result;
+			try
+			{
+				std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
+			}
+			// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR)
+			// Don't catch other failures here, they are propagated up the calling hierarchy
+			catch (vk::OutOfDateKHRError & /*err*/)
+			{
+				resize(extent.width, extent.height);
+			}
+			// VK_SUBOPTIMAL_KHR is a success code and means that acquire was successful and semaphore is signaled but image is suboptimal
+			// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
 		}
-		// VK_SUBOPTIMAL_KHR is a success code and means that acquire was successful and semaphore is signaled but image is suboptimal
-		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
 	}
 }
 
 void HPPApiVulkanSample::submit_frame()
 {
+	if (use_new_sync)
+	{
+		vk::SubmitInfo submit_info{
+		    .waitSemaphoreCount   = 1,
+		    .pWaitSemaphores      = &acquired_image_ready_semaphores[current_buffer],
+		    .pWaitDstStageMask    = &submit_pipeline_stages,
+		    .commandBufferCount   = 1,
+		    .pCommandBuffers      = &draw_cmd_buffers[current_buffer],
+		    .signalSemaphoreCount = 1,
+		    .pSignalSemaphores    = &render_complete_semaphores[current_image_index]};
+		queue.submit(submit_info, wait_fences[current_buffer]);
+	}
+
 	if (get_render_context().has_swapchain())
 	{
 		const auto &queue = get_device().get_queue_by_present(0);
 
 		vk::SwapchainKHR swapchain = get_render_context().get_swapchain().get_handle();
 
-		vk::PresentInfoKHR present_info{.swapchainCount = 1, .pSwapchains = &swapchain, .pImageIndices = &current_buffer};
+		vk::PresentInfoKHR present_info{.swapchainCount = 1, .pSwapchains = &swapchain};
+		present_info.pImageIndices = use_new_sync ? &current_image_index : &current_buffer;
 		// Check if a wait semaphore has been specified to wait for before presenting the image
-		if (semaphores.render_complete)
+		if (use_new_sync)
 		{
-			present_info.setWaitSemaphores(semaphores.render_complete);
+			present_info.setWaitSemaphores(render_complete_semaphores[current_image_index]);
+		}
+		else
+		{
+			if (semaphores.render_complete)
+			{
+				present_info.setWaitSemaphores(semaphores.render_complete);
+			}
 		}
 
 		vk::DisplayPresentInfoKHR disp_present_info;
@@ -548,10 +601,18 @@ void HPPApiVulkanSample::submit_frame()
 		}
 	}
 
-	// DO NOT USE
-	// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
-	// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
-	get_device().get_queue_by_present(0).get_handle().waitIdle();
+	if (use_new_sync)
+	{
+		// Select the next frame to render to, based on the max. no. of concurrent frames
+		current_buffer = (current_buffer + 1) % max_concurrent_frames;
+	}
+	else
+	{
+		// DO NOT USE
+		// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
+		// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
+		get_device().get_queue_by_present(0).get_handle().waitIdle();
+	}
 }
 
 HPPApiVulkanSample::~HPPApiVulkanSample()
@@ -597,6 +658,18 @@ HPPApiVulkanSample::~HPPApiVulkanSample()
 		{
 			device.destroyFence(fence);
 		}
+
+		if (use_new_sync)
+		{
+			for (auto &semaphore : acquired_image_ready_semaphores)
+			{
+				device.destroySemaphore(semaphore);
+			}
+			for (auto &semaphore : render_complete_semaphores)
+			{
+				device.destroySemaphore(semaphore);
+			}
+		}
 	}
 }
 
@@ -608,18 +681,46 @@ void HPPApiVulkanSample::build_command_buffers()
 
 void HPPApiVulkanSample::rebuild_command_buffers()
 {
-	get_device().get_handle().resetCommandPool(cmd_pool);
-	build_command_buffers();
+	if (!use_new_sync)
+	{
+		get_device().get_handle().resetCommandPool(cmd_pool);
+		build_command_buffers();
+	}
 }
 
 void HPPApiVulkanSample::create_synchronization_primitives()
 {
-	// Wait fences to sync command buffer access
-	vk::FenceCreateInfo fence_create_info{.flags = vk::FenceCreateFlagBits::eSignaled};
-	wait_fences.resize(draw_cmd_buffers.size());
-	for (auto &fence : wait_fences)
+	if (use_new_sync)
 	{
-		fence = get_device().get_handle().createFence(fence_create_info);
+		// Wait fences to sync command buffer access
+		wait_fences.resize(max_concurrent_frames);
+		vk::FenceCreateInfo fence_create_info{.flags = vk::FenceCreateFlagBits::eSignaled};
+		for (auto &fence : wait_fences)
+		{
+			fence = get_device().get_handle().createFence(fence_create_info);
+		}
+		vk::SemaphoreCreateInfo semaphore_create_info{};
+		// Used to ensure that image presentation is complete before starting to submit again
+		for (auto &semaphore : acquired_image_ready_semaphores)
+		{
+			semaphore = get_device().get_handle().createSemaphore(semaphore_create_info);
+		}
+		// Semaphore used to ensure that all commands submitted have been finished before submitting the image to the queue
+		render_complete_semaphores.resize(swapchain_buffers.size());
+		for (auto &semaphore : render_complete_semaphores)
+		{
+			semaphore = get_device().get_handle().createSemaphore(semaphore_create_info);
+		}
+	}
+	else
+	{
+		// Wait fences to sync command buffer access
+		vk::FenceCreateInfo fence_create_info{.flags = vk::FenceCreateFlagBits::eSignaled};
+		wait_fences.resize(draw_cmd_buffers.size());
+		for (auto &fence : wait_fences)
+		{
+			fence = get_device().get_handle().createFence(fence_create_info);
+		}
 	}
 }
 
@@ -627,6 +728,10 @@ void HPPApiVulkanSample::create_command_pool()
 {
 	uint32_t                  queue_family_index = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
 	vk::CommandPoolCreateInfo command_pool_info{.queueFamilyIndex = queue_family_index};
+	if (use_new_sync)
+	{
+		command_pool_info.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+	}
 	cmd_pool = get_device().get_handle().createCommandPool(command_pool_info);
 }
 

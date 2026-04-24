@@ -735,23 +735,22 @@ void ApiVulkanSample::create_synchronization_primitives()
 	{
 		// Wait fences to sync command buffer access
 		wait_fences.resize(max_concurrent_frames);
-		VkFenceCreateInfo fenceCreateInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = VK_FENCE_CREATE_SIGNALED_BIT};
+		VkFenceCreateInfo fence_create_info{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = VK_FENCE_CREATE_SIGNALED_BIT};
 		for (auto &fence : wait_fences)
 		{
-			VK_CHECK(vkCreateFence(get_device().get_handle(), &fenceCreateInfo, nullptr, &fence));
+			VK_CHECK(vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &fence));
 		}
+		VkSemaphoreCreateInfo semaphore_create_info{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
 		// Used to ensure that image presentation is complete before starting to submit again
 		for (auto &semaphore : acquired_image_ready_semaphores)
 		{
-			VkSemaphoreCreateInfo semaphoreCI{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-			VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphoreCI, nullptr, &semaphore));
+			VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &semaphore));
 		}
 		// Semaphore used to ensure that all commands submitted have been finished before submitting the image to the queue
 		render_complete_semaphores.resize(swapchain_buffers.size());
 		for (auto &semaphore : render_complete_semaphores)
 		{
-			VkSemaphoreCreateInfo semaphoreCI{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-			VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphoreCI, nullptr, &semaphore));
+			VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &semaphore));
 		}
 	}
 	else

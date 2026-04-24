@@ -96,9 +96,6 @@ struct Meshlet
 	uint32_t index_count;
 };
 
-// @todo
-constexpr uint32_t max_concurrent_frames = 2;
-
 /**
  * @brief Sascha Willems base class for use in his ported samples into the framework
  *
@@ -129,6 +126,9 @@ class ApiVulkanSample : public vkb::VulkanSampleC
   protected:
 	// @todo
 	bool use_new_sync = false;
+
+	// @todo
+	constexpr static uint32_t max_concurrent_frames = 2;
 
 	// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
