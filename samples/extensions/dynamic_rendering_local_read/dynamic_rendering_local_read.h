@@ -125,7 +125,8 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	void prepare_layouts_and_descriptors();
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const override;
+	void request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+	                            vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
 #endif
 
 	void draw_scene(std::unique_ptr<vkb::scene_graph::SceneC> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout);

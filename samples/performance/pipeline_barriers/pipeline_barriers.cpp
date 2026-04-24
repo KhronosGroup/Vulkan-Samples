@@ -114,16 +114,15 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 void PipelineBarriers::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
-	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
 	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void PipelineBarriers::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vbk::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+void PipelineBarriers::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
+	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise blank display
 	vkb::VulkanSampleC::request_layer_settings(requested_layer_settings, scb);
-	requested_layer_settings.push_back(
-	    {"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &scb.add_chain_data<int32_t>(0)});
+	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &scb.add_chain_data<int32_t>(0)});
 }
 #endif
 
