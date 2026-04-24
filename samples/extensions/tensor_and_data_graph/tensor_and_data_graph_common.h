@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -306,7 +306,7 @@ class ComputePipelineWithTensors : public vkb::core::VulkanResourceC<VkPipeline>
 };
 
 /*
- * @brief Simple subpass for use with vkb::RenderPipeline, which blits an image to the render target (stretching to fit).
+ * @brief Simple subpass for use with vkb::rendering::RenderPipelineC, which blits an image to the render target (stretching to fit).
  */
 class BlitSubpass : public vkb::rendering::SubpassC
 {
