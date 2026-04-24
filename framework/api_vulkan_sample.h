@@ -197,7 +197,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	std::array<VkSemaphore, max_concurrent_frames> acquired_image_ready_semaphores{};
 	std::vector<VkSemaphore>                       render_complete_semaphores{};
 	// @todo: use this
-	//std::array<VkFence, max_concurrent_frames>     wait_fences;
+	// std::array<VkFence, max_concurrent_frames>     wait_fences;
 
 	/**
 	 * @brief Populates the swapchain_buffers vector with the image and imageviews

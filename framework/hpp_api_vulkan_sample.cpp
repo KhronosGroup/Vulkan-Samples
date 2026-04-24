@@ -402,7 +402,7 @@ void HPPApiVulkanSample::create_command_buffers()
 	// Create one command buffer for each swap chain image and reuse for rendering
 	vk::CommandBufferAllocateInfo allocate_info{.commandPool        = cmd_pool,
 	                                            .level              = vk::CommandBufferLevel::ePrimary,
-	                                            .commandBufferCount = use_new_sync ? max_concurrent_frames : static_cast<uint32_t>(get_render_context().get_render_frames().size()) };
+	                                            .commandBufferCount = use_new_sync ? max_concurrent_frames : static_cast<uint32_t>(get_render_context().get_render_frames().size())};
 
 	draw_cmd_buffers = get_device().get_handle().allocateCommandBuffers(allocate_info);
 }

@@ -156,7 +156,7 @@ class HPPApiVulkanSample : public vkb::VulkanSampleCpp
 
 	// Synchronization primitives
 	std::array<vk::Semaphore, max_concurrent_frames> acquired_image_ready_semaphores{};
-	std::vector<vk::Semaphore>                           render_complete_semaphores{};
+	std::vector<vk::Semaphore>                       render_complete_semaphores{};
 	// @todo: use this
 	// std::array<VkFence, max_concurrent_frames>     wait_fences;
 

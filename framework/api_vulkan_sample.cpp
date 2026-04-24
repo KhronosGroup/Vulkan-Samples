@@ -586,7 +586,6 @@ void ApiVulkanSample::submit_frame()
 		    .signalSemaphoreCount = 1,
 		    .pSignalSemaphores    = &render_complete_semaphores[current_image_index]};
 		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, wait_fences[current_buffer]));
-
 	}
 	if (get_render_context().has_swapchain())
 	{
@@ -762,7 +761,7 @@ void ApiVulkanSample::create_synchronization_primitives()
 		{
 			VK_CHECK(vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &fence));
 		}
-	}	
+	}
 }
 
 void ApiVulkanSample::create_command_pool()
