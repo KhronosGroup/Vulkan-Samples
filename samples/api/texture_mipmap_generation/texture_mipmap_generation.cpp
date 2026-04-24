@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -285,9 +285,12 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 // Free all Vulkan resources used by a texture object
 void TextureMipMapGeneration::destroy_texture(Texture texture)
 {
-	vkDestroyImageView(get_device().get_handle(), texture.view, nullptr);
-	vkDestroyImage(get_device().get_handle(), texture.image, nullptr);
-	vkFreeMemory(get_device().get_handle(), texture.device_memory, nullptr);
+	if (has_device())
+	{
+		vkDestroyImageView(get_device().get_handle(), texture.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), texture.image, nullptr);
+		vkFreeMemory(get_device().get_handle(), texture.device_memory, nullptr);
+	}
 }
 
 void TextureMipMapGeneration::load_assets()

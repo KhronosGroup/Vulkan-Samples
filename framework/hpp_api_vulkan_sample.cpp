@@ -79,7 +79,7 @@ void HPPApiVulkanSample::prepare_gui()
 	if (uses_dynamic_rendering())
 	{
 		vk::Format color_format = get_render_context().get_swapchain().get_format();
-		vk::Format depth_fmt    = depth_format;
+		vk::Format depth_fmt    = vk::Format::eUndefined;
 		get_gui().prepare(pipeline_cache, color_format, depth_fmt, shader_stages);
 	}
 	else
