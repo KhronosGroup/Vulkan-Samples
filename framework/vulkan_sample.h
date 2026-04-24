@@ -1470,8 +1470,10 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	// VK_LAYER_KHRONOS_validation must be optional in case layer not available for debug builds (e.g. running with no SDK installed or on iOS Simulator)
+#if defined(VKB_VALIDATION_LAYERS)
+	requested_layers["VK_LAYER_KHRONOS_validation"] = vkb::RequestMode::Required;
+#elif defined(VKB_DEBUG)
+	// VK_LAYER_KHRONOS_validation must be optional for debug builds in case layer not available (e.g. running with no SDK installed or on iOS Simulator)
 	requested_layers["VK_LAYER_KHRONOS_validation"] = vkb::RequestMode::Optional;
 #endif
 }
