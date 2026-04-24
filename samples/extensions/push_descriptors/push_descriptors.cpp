@@ -263,9 +263,6 @@ void PushDescriptors::prepare_uniform_buffers()
 			cube.uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		}
 	}
-
-	update_uniform_buffers();
-	update_cube_uniform_buffers(0.0f);
 }
 
 void PushDescriptors::update_uniform_buffers()
@@ -357,7 +354,6 @@ bool PushDescriptors::prepare(const vkb::ApplicationOptions &options)
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
-	build_command_buffers();
 	prepared = true;
 	return true;
 }

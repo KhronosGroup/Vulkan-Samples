@@ -31,7 +31,8 @@
 
 HPPPushDescriptors::HPPPushDescriptors()
 {
-	title = "Push descriptors";
+	title        = "Push descriptors";
+	use_new_sync = true;
 
 	// Enable extension required for push descriptors
 	add_device_extension(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
@@ -92,7 +93,27 @@ void HPPPushDescriptors::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 	}
 }
 
-void HPPPushDescriptors::build_command_buffers()
+void HPPPushDescriptors::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	if (drawer.header("Settings"))
+	{
+		drawer.checkbox("Animate", &animate);
+	}
+	if (drawer.header("Device properties"))
+	{
+		drawer.text("maxPushDescriptors: %d", max_push_descriptors);
+	}
+}
+
+void HPPPushDescriptors::render(float delta_time)
+{
+	if (prepared)
+	{
+		draw(delta_time);
+	}
+}
+
+void HPPPushDescriptors::build_command_buffer()
 {
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
@@ -113,79 +134,48 @@ void HPPPushDescriptors::build_command_buffers()
 
 	vk::DeviceSize offset = 0;
 
-	vk::DescriptorBufferInfo scene_buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
+	vk::DescriptorBufferInfo scene_buffer_descriptor{uniform_buffers[current_buffer]->get_handle(), 0, vk::WholeSize};
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	render_pass_begin_info.framebuffer = framebuffers[current_image_index];
+	vk::CommandBuffer &command_buffer  = draw_cmd_buffers[current_buffer];
+
+	command_buffer.begin(command_buffer_begin_info);
+	command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+	command_buffer.setViewport(0, viewport);
+	command_buffer.setScissor(0, scissor);
+
+	command_buffer.bindVertexBuffers(0, vertex_buffer, offset);
+	command_buffer.bindIndexBuffer(index_buffer, 0, models.cube->get_index_type());
+
+	// Render two cubes using different descriptor sets using push descriptors
+	for (auto &cube : cubes)
 	{
-		render_pass_begin_info.framebuffer = framebuffers[i];
-		vk::CommandBuffer &command_buffer  = draw_cmd_buffers[i];
+		// Instead of preparing the descriptor sets up-front, using push descriptors we can set (push) them inside of a command buffer
+		// This allows a more dynamic approach without the need to create descriptor sets for each model
+		// Note: dstSet for each descriptor set write is left at nullptr as this is ignored when using push descriptors
 
-		command_buffer.begin(command_buffer_begin_info);
-		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-		command_buffer.setViewport(0, viewport);
-		command_buffer.setScissor(0, scissor);
+		vk::DescriptorBufferInfo cube_buffer_descriptor{cube.uniform_buffers[current_buffer]->get_handle(), 0, vk::WholeSize};
+		vk::DescriptorImageInfo  cube_image_descriptor{cube.texture.sampler,
+                                                      cube.texture.image->get_vk_image_view().get_handle(),
+                                                      descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+		                                                                               cube.texture.image->get_vk_image_view().get_format())};
 
-		command_buffer.bindVertexBuffers(0, vertex_buffer, offset);
-		command_buffer.bindIndexBuffer(index_buffer, 0, models.cube->get_index_type());
+		std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
+		    {{.dstBinding = 0, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &scene_buffer_descriptor},
+		     {.dstBinding = 1, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &cube_buffer_descriptor},
+		     {.dstBinding = 2, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eCombinedImageSampler, .pImageInfo = &cube_image_descriptor}}};
 
-		// Render two cubes using different descriptor sets using push descriptors
-		for (auto &cube : cubes)
-		{
-			// Instead of preparing the descriptor sets up-front, using push descriptors we can set (push) them inside of a command buffer
-			// This allows a more dynamic approach without the need to create descriptor sets for each model
-			// Note: dstSet for each descriptor set write is left at nullptr as this is ignored when using push descriptors
+		command_buffer.pushDescriptorSetKHR(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, write_descriptor_sets);
 
-			vk::DescriptorBufferInfo cube_buffer_descriptor{cube.uniform_buffer->get_handle(), 0, vk::WholeSize};
-			vk::DescriptorImageInfo  cube_image_descriptor{cube.texture.sampler,
-                                                          cube.texture.image->get_vk_image_view().get_handle(),
-                                                          descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-			                                                                               cube.texture.image->get_vk_image_view().get_format())};
-
-			std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
-			    {{.dstBinding = 0, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &scene_buffer_descriptor},
-			     {.dstBinding = 1, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &cube_buffer_descriptor},
-			     {.dstBinding = 2, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eCombinedImageSampler, .pImageInfo = &cube_image_descriptor}}};
-
-			command_buffer.pushDescriptorSetKHR(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, write_descriptor_sets);
-
-			draw_model(models.cube, command_buffer);
-		}
-
-		draw_ui(command_buffer);
-
-		command_buffer.endRenderPass();
-
-		command_buffer.end();
+		draw_model(models.cube, command_buffer);
 	}
-}
 
-void HPPPushDescriptors::on_update_ui_overlay(vkb::Drawer &drawer)
-{
-	if (drawer.header("Settings"))
-	{
-		drawer.checkbox("Animate", &animate);
-	}
-	if (drawer.header("Device properties"))
-	{
-		drawer.text("maxPushDescriptors: %d", max_push_descriptors);
-	}
-}
+	draw_ui(command_buffer);
 
-void HPPPushDescriptors::render(float delta_time)
-{
-	if (prepared)
-	{
-		draw();
-		if (animate)
-		{
-			update_cube_uniform_buffers(delta_time);
-		}
-		if (camera.updated)
-		{
-			update_uniform_buffers();
-		}
-	}
+	command_buffer.endRenderPass();
+
+	command_buffer.end();
 }
 
 void HPPPushDescriptors::create_descriptor_set_layout()
@@ -240,23 +230,23 @@ void HPPPushDescriptors::create_pipeline()
 
 void HPPPushDescriptors::create_uniform_buffers()
 {
-	// Vertex shader scene uniform buffer block
-	uniform_buffers.scene = std::make_unique<vkb::core::BufferCpp>(get_device(),
-	                                                               sizeof(UboScene),
-	                                                               vk::BufferUsageFlagBits::eUniformBuffer,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	// Vertex shader cube model uniform buffer blocks
-	for (auto &cube : cubes)
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
 	{
-		cube.uniform_buffer = std::make_unique<vkb::core::BufferCpp>(get_device(),
-		                                                             sizeof(glm::mat4),
-		                                                             vk::BufferUsageFlagBits::eUniformBuffer,
-		                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
-	}
+		// Vertex shader scene uniform buffer block
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferCpp>(get_device(),
+		                                                            sizeof(UboScene),
+		                                                            vk::BufferUsageFlagBits::eUniformBuffer,
+		                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	update_uniform_buffers();
-	update_cube_uniform_buffers(0.0f);
+		// Vertex shader cube model uniform buffer blocks
+		for (auto &cube : cubes)
+		{
+			cube.uniform_buffers[i] = std::make_unique<vkb::core::BufferCpp>(get_device(),
+			                                                                 sizeof(glm::mat4),
+			                                                                 vk::BufferUsageFlagBits::eUniformBuffer,
+			                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
+		}
+	}
 }
 
 void HPPPushDescriptors::create_pipeline_layout()
@@ -265,14 +255,12 @@ void HPPPushDescriptors::create_pipeline_layout()
 	pipeline_layout = get_device().get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 
-void HPPPushDescriptors::draw()
+void HPPPushDescriptors::draw(float delta_time)
 {
 	HPPApiVulkanSample::prepare_frame();
-
-	// Submit to queue
-	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
-	queue.submit(submit_info);
-
+	update_cube_uniform_buffers(delta_time);
+	update_uniform_buffers();
+	build_command_buffer();
 	HPPApiVulkanSample::submit_frame();
 }
 
@@ -302,7 +290,7 @@ void HPPPushDescriptors::update_cube_uniform_buffers(float delta_time)
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-		cube.uniform_buffer->convert_and_update(cube.model_mat);
+		cube.uniform_buffers[current_buffer]->convert_and_update(cube.model_mat);
 	}
 
 	if (animate)
@@ -324,7 +312,7 @@ void HPPPushDescriptors::update_uniform_buffers()
 {
 	ubo_scene.projection = camera.matrices.perspective;
 	ubo_scene.view       = camera.matrices.view;
-	uniform_buffers.scene->convert_and_update(ubo_scene);
+	uniform_buffers[current_buffer]->convert_and_update(ubo_scene);
 }
 
 std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_push_descriptors()
