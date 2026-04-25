@@ -162,6 +162,7 @@ class Gui
 	 * @param stats A statistics object (null if no statistics are used)
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
+	 * @param use_new_sync If true, uses frames-in-flight
 	 */
 	Gui(vkb::rendering::RenderContext<bindingType> &render_context,
 	    Window const                               &window,
@@ -179,6 +180,7 @@ class Gui
 	/**
 	 * @brief Draws the Gui
 	 * @param command_buffer Command buffer to register draw-commands
+	 * @param current_buffer Index of the vertex and index buffers (only if using new sync)
 	 */
 	void draw(CommandBufferType command_buffer, uint32_t current_buffer = 0);
 
