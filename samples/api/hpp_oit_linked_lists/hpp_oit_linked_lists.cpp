@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA
+/* Copyright (c) 2023-2026, NVIDIA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,8 @@
 HPPOITLinkedLists::HPPOITLinkedLists()
 {
 	title = "HPP OIT linked lists";
+
+	add_device_extension(vk::KHRSynchronization2ExtensionName);
 }
 
 HPPOITLinkedLists::~HPPOITLinkedLists()
@@ -94,6 +96,8 @@ void HPPOITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 	{
 		requested_features.samplerAnisotropy = true;
 	}
+
+	REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 }
 
 void HPPOITLinkedLists::build_command_buffers()
@@ -132,15 +136,18 @@ void HPPOITLinkedLists::build_command_buffers()
 			}
 			command_buffer.endRenderPass();
 
-			vkb::common::image_layout_transition(command_buffer,
-			                                     linked_list_head_image->get_handle(),
-			                                     vk::PipelineStageFlagBits::eFragmentShader,
-			                                     vk::PipelineStageFlagBits::eFragmentShader,
-			                                     vk::AccessFlagBits::eShaderWrite,
-			                                     vk::AccessFlagBits::eShaderRead,
-			                                     vk::ImageLayout::eGeneral,
-			                                     vk::ImageLayout::eGeneral,
-			                                     {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+			// Insert a pipeline barrier to ensure that all writes to the fragment buffer performed in the gather pass are made available before reading from it in the combine pass
+			vk::BufferMemoryBarrier2 buffer_barrier{.srcStageMask        = vk::PipelineStageFlagBits2::eFragmentShader,
+			                                        .srcAccessMask       = vk::AccessFlagBits2::eShaderStorageWrite,
+			                                        .dstStageMask        = vk::PipelineStageFlagBits2::eFragmentShader,
+			                                        .dstAccessMask       = vk::AccessFlagBits2::eShaderStorageRead,
+			                                        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+			                                        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+			                                        .buffer              = fragment_buffer->get_handle(),
+			                                        .offset              = 0,
+			                                        .size                = vk::WholeSize};
+			vk::DependencyInfo       dependency_info{.dependencyFlags = vk::DependencyFlagBits::eByRegion, .bufferMemoryBarrierCount = 1, .pBufferMemoryBarriers = &buffer_barrier};
+			command_buffer.pipelineBarrier2KHR(dependency_info);
 
 			// Combine pass
 			combine_render_pass_begin_info.framebuffer = framebuffers[i];
@@ -270,21 +277,26 @@ void HPPOITLinkedLists::create_fragment_resources(vk::Extent2D const &extent)
 {
 	const vk::Extent3D image_extent{extent.width, extent.height, 1};
 	const vk::Format   image_format{vk::Format::eR32Uint};
-	linked_list_head_image      = std::make_unique<vkb::core::HPPImage>(get_device(),
-                                                                   image_extent,
-                                                                   image_format,
-                                                                   vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferDst,
-                                                                   VMA_MEMORY_USAGE_GPU_ONLY,
-                                                                   vk::SampleCountFlagBits::e1);
+	linked_list_head_image = std::make_unique<vkb::core::HPPImage>(get_device(),
+	                                                               image_extent,
+	                                                               image_format,
+	                                                               vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferDst,
+	                                                               VMA_MEMORY_USAGE_GPU_ONLY,
+	                                                               vk::SampleCountFlagBits::e1);
+	linked_list_head_image->set_debug_name("linked_list_head_image");
+
 	linked_list_head_image_view = std::make_unique<vkb::core::HPPImageView>(*linked_list_head_image, vk::ImageViewType::e2D, image_format);
+	linked_list_head_image_view->set_debug_name("linked_list_head_image_view");
 
 	fragment_max_count                  = extent.width * extent.height * kFragmentsPerPixelAverage;
 	const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
 	fragment_buffer =
 	    std::make_unique<vkb::core::BufferCpp>(get_device(), fragment_buffer_size, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+	fragment_buffer->set_debug_name("fragment_buffer");
 
 	fragment_counter = std::make_unique<vkb::core::BufferCpp>(
 	    get_device(), sizeof(glm::uint), vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
+	fragment_counter->set_debug_name("fragment_counter");
 }
 
 void HPPOITLinkedLists::create_gather_pass_objects(vk::Extent2D const &extent)
