@@ -80,7 +80,7 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 void ApiVulkanSample::prepare_gui()
 {
-	create_gui(*window, nullptr, 15.0f, true);
+	create_gui(*window, nullptr, 15.0f, true, use_new_sync);
 
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
 	    load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),

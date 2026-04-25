@@ -167,7 +167,8 @@ class Gui
 	    Window const                               &window,
 	    StatsType const                            *stats           = nullptr,
 	    float                                       font_size       = 21.0f,
-	    bool                                        explicit_update = false);
+	    bool                                        explicit_update = false,
+	    bool                                        use_new_sync    = false);
 
 	/**
 	 * @brief Destroys the Gui
@@ -179,7 +180,7 @@ class Gui
 	 * @brief Draws the Gui
 	 * @param command_buffer Command buffer to register draw-commands
 	 */
-	void draw(CommandBufferType command_buffer);
+	void draw(CommandBufferType command_buffer, uint32_t current_buffer = 0);
 
 	/**
 	 * @brief Draws the Gui using an external pipeline
@@ -333,7 +334,6 @@ class Gui
 	std::vector<Font>                        fonts;
 	std::unique_ptr<vkb::core::HPPImage>     font_image;
 	std::unique_ptr<vkb::core::HPPImageView> font_image_view;
-	std::unique_ptr<vkb::core::BufferCpp>    index_buffer;
 	vk::Pipeline                             pipeline;
 	vkb::core::HPPPipelineLayout            *pipeline_layout = nullptr;
 	bool                                     prev_visible    = true;
@@ -342,7 +342,22 @@ class Gui
 	StatsView                                stats_view;
 	Timer                                    timer;                         // Used to measure duration of input events
 	bool                                     two_finger_tap = false;        // Whether or not the GUI has detected a multi touch gesture
+	std::unique_ptr<vkb::core::BufferCpp>    index_buffer;
 	std::unique_ptr<vkb::core::BufferCpp>    vertex_buffer;
+
+	// @todo
+	bool     use_new_sync{false};
+	uint32_t max_concurrent_frames = 2;
+	uint32_t current_buffer;
+
+	struct Buffers
+	{
+		std::unique_ptr<vkb::core::BufferCpp> index_buffer;
+		std::unique_ptr<vkb::core::BufferCpp> vertex_buffer;
+		uint32_t                              index_count{0};
+		uint32_t                              vertex_count{0};
+	};
+	std::vector<Buffers> buffers;
 };
 
 using GuiC   = Gui<vkb::BindingType::C>;
@@ -350,11 +365,12 @@ using GuiCpp = Gui<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
 inline Gui<bindingType>::Gui(
-    vkb::rendering::RenderContext<bindingType> &render_context_, Window const &window, StatsType const *stats, float font_size, bool explicit_update) :
+    vkb::rendering::RenderContext<bindingType> &render_context_, Window const &window, StatsType const *stats, float font_size, bool explicit_update, bool use_new_sync) :
     render_context{render_context_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},
     explicit_update{explicit_update},
+    use_new_sync{use_new_sync},
     stats_view(stats)
 {
 	ImGui::CreateContext();
@@ -532,8 +548,10 @@ inline Gui<bindingType>::~Gui()
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::draw(CommandBufferType command_buffer)
+inline void Gui<bindingType>::draw(CommandBufferType command_buffer, uint32_t current_buffer)
 {
+	// @todo
+	this->current_buffer = current_buffer;
 	draw(command_buffer, pipeline, pipeline_layout->get_handle(), descriptor_set);
 }
 
@@ -623,11 +641,10 @@ inline void
 	push_transform       = glm::scale(push_transform, glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
 	command_buffer.pushConstants(pipeline_layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4), &push_transform);
 
-	vk::DeviceSize vertex_offsets[1]    = {0};
-	vk::Buffer     vertex_buffer_handle = vertex_buffer->get_handle();
-	command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
+	vk::DeviceSize vertex_offsets[1] = {0};
+	command_buffer.bindVertexBuffers(0, use_new_sync ? buffers[current_buffer].vertex_buffer->get_handle() : vertex_buffer->get_handle(), vertex_offsets);
 
-	command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint16);
+	command_buffer.bindIndexBuffer(use_new_sync ? buffers[current_buffer].index_buffer->get_handle() : index_buffer->get_handle(), 0, vk::IndexType::eUint16);
 
 	int32_t vertex_offset = 0;
 	int32_t index_offset  = 0;
@@ -1409,34 +1426,83 @@ inline bool Gui<bindingType>::update_buffers()
 	}
 
 	bool updated = false;
-	if (!vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
+
+	if (use_new_sync)
 	{
-		vertex_buffer.reset();
-		vertex_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), vertex_buffer_size,
-		                                                       vk::BufferUsageFlagBits::eVertexBuffer,
-		                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
-		vertex_buffer->set_debug_name("GUI vertex buffer");
-		updated = true;
-	}
+		// @todo
+		if (buffers.size() < max_concurrent_frames)
+		{
+			buffers.resize(max_concurrent_frames);
+		}
 
-	if (!index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
+		// Create buffers with multiple of a chunk size to minimize the need to recreate them
+		const VkDeviceSize chunkSize = 16384;
+		vertex_buffer_size           = ((vertex_buffer_size + chunkSize - 1) / chunkSize) * chunkSize;
+		index_buffer_size            = ((index_buffer_size + chunkSize - 1) / chunkSize) * chunkSize;
+
+		if (!buffers[current_buffer].vertex_buffer || !buffers[current_buffer].vertex_buffer->get_handle() || (vertex_buffer_size < buffers[current_buffer].vertex_buffer->get_size()))
+		{
+			if (buffers[current_buffer].vertex_buffer)
+			{
+				buffers[current_buffer].vertex_buffer.reset();
+			}
+			buffers[current_buffer].vertex_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+			buffers[current_buffer].vertex_buffer->set_debug_name("GUI vertex buffer");
+			updated = true;
+		}
+
+		if (!buffers[current_buffer].index_buffer || !buffers[current_buffer].index_buffer->get_handle() || (index_buffer_size < buffers[current_buffer].index_buffer->get_size()))
+		{
+			if (buffers[current_buffer].index_buffer)
+			{
+				buffers[current_buffer].index_buffer.reset();
+			}
+			buffers[current_buffer].index_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+			buffers[current_buffer].index_buffer->set_debug_name("GUI index buffer");
+			updated = true;
+		}
+
+		// Upload data
+		upload_draw_data(draw_data, buffers[current_buffer].vertex_buffer->map(), buffers[current_buffer].index_buffer->map());
+
+		buffers[current_buffer].vertex_buffer->flush();
+		buffers[current_buffer].index_buffer->flush();
+
+		// @todo: unmap here seems unnecessary
+		// buffers[current_buffer].vertex_buffer->unmap();
+		// buffers[current_buffer].index_buffer->unmap();
+	}
+	else
 	{
-		index_buffer.reset();
-		index_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), index_buffer_size,
-		                                                      vk::BufferUsageFlagBits::eIndexBuffer,
-		                                                      VMA_MEMORY_USAGE_GPU_TO_CPU);
-		index_buffer->set_debug_name("GUI index buffer");
-		updated = true;
+		if (!vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
+		{
+			vertex_buffer.reset();
+			vertex_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), vertex_buffer_size,
+			                                                       vk::BufferUsageFlagBits::eVertexBuffer,
+			                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+			vertex_buffer->set_debug_name("GUI vertex buffer");
+			updated = true;
+		}
+
+		if (!index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
+		{
+			index_buffer.reset();
+			index_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), index_buffer_size,
+			                                                      vk::BufferUsageFlagBits::eIndexBuffer,
+			                                                      VMA_MEMORY_USAGE_GPU_TO_CPU);
+			index_buffer->set_debug_name("GUI index buffer");
+			updated = true;
+		}
+
+		// Upload data
+		upload_draw_data(draw_data, vertex_buffer->map(), index_buffer->map());
+
+		vertex_buffer->flush();
+		index_buffer->flush();
+
+		vertex_buffer->unmap();
+		index_buffer->unmap();
 	}
-
-	// Upload data
-	upload_draw_data(draw_data, vertex_buffer->map(), index_buffer->map());
-
-	vertex_buffer->flush();
-	index_buffer->flush();
-
-	vertex_buffer->unmap();
-	index_buffer->unmap();
 
 	return updated;
 }

@@ -252,7 +252,7 @@ class VulkanSample : public vkb::Application
 	 */
 	void add_device_extension(const char *extension, bool optional = false);
 
-	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
+	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false, bool use_new_sync = false);
 
 	/**
 	 * @brief A helper to create a render context
@@ -539,8 +539,8 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
-	vk::PresentModeKHR               present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR>  present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
+	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
@@ -1381,11 +1381,11 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsType const *stats, const float font_size, bool explicit_update)
+inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsType const *stats, const float font_size, bool explicit_update, bool use_new_sync)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
-		gui = std::make_unique<vkb::GuiCpp>(get_render_context(), window, stats, font_size, explicit_update);
+		gui = std::make_unique<vkb::GuiCpp>(get_render_context(), window, stats, font_size, explicit_update, use_new_sync);
 	}
 	else
 	{
@@ -1393,7 +1393,8 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 		                                    window,
 		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats),
 		                                    font_size,
-		                                    explicit_update);
+		                                    explicit_update,
+		                                    use_new_sync);
 	}
 }
 
