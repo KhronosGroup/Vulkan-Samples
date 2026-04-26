@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2025, Arm Limited and Contributors
+ Copyright (c) 2019-2026, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -120,6 +120,7 @@ set(VKB_VALIDATION_LAYERS_BEST_PRACTICES OFF CACHE BOOL "Enable best practices v
 set(VKB_VALIDATION_LAYERS_SYNCHRONIZATION OFF CACHE BOOL "Enable synchronization validation layers for every application (implicitly enables VKB_VALIDATION_LAYERS).")
 set(VKB_VULKAN_DEBUG ON CACHE BOOL "Enable VK_EXT_debug_utils or VK_EXT_debug_marker if supported.")
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
+set(VKB_BUILD_SHADERS ON CACHE BOOL "Enable shader compilation for all supported shading languages.")
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 set(VKB_CLANG_TIDY OFF CACHE STRING "Use CMake Clang Tidy integration")
