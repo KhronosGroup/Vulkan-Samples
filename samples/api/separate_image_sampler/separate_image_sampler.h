@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,8 +46,6 @@ class SeparateImageSampler : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC> index_buffer;
 	uint32_t                            index_count;
 
-	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
-
 	struct
 	{
 		glm::mat4 projection;
@@ -55,9 +53,11 @@ class SeparateImageSampler : public ApiVulkanSample
 		glm::vec4 view_pos;
 	} ubo_vs;
 
-	VkPipeline       pipeline            = VK_NULL_HANDLE;
-	VkPipelineLayout pipeline_layout     = VK_NULL_HANDLE;
-	VkDescriptorSet  base_descriptor_set = VK_NULL_HANDLE;
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers{};
+	std::array<VkDescriptorSet, max_concurrent_frames>                     base_descriptor_sets{};
+
+	VkPipeline       pipeline        = VK_NULL_HANDLE;
+	VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
 
 	VkDescriptorSetLayout base_descriptor_set_layout;
 	VkDescriptorSetLayout sampler_descriptor_set_layout;
@@ -65,7 +65,7 @@ class SeparateImageSampler : public ApiVulkanSample
 	SeparateImageSampler();
 	~SeparateImageSampler() override;
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
-	void         build_command_buffers() override;
+	void         build_command_buffer();
 	void         setup_samplers();
 	void         load_assets();
 	void         draw();
@@ -78,7 +78,6 @@ class SeparateImageSampler : public ApiVulkanSample
 	void         update_uniform_buffers();
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 

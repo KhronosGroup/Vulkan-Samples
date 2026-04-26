@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,7 +53,7 @@ class HPPSeparateImageSampler : public HPPApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
+	void build_command_buffer();
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
 	void view_changed() override;
@@ -73,20 +73,20 @@ class HPPSeparateImageSampler : public HPPApiVulkanSample
 	void                    update_uniform_buffers();
 
   private:
-	vk::DescriptorSet                     base_descriptor_set;
-	vk::DescriptorSetLayout               base_descriptor_set_layout;
-	std::unique_ptr<vkb::core::BufferCpp> index_buffer;
-	uint32_t                              index_count = 0;
-	vk::Pipeline                          pipeline;
-	vk::PipelineLayout                    pipeline_layout;
-	vk::DescriptorSetLayout               sampler_descriptor_set_layout;
-	std::array<vk::DescriptorSet, 2>      sampler_descriptor_sets;
-	std::array<vk::Sampler, 2>            samplers;
-	int32_t                               selected_sampler = 0;
-	HPPTexture                            texture;
-	UBO                                   ubo_vs;
-	std::unique_ptr<vkb::core::BufferCpp> uniform_buffer_vs;
-	std::unique_ptr<vkb::core::BufferCpp> vertex_buffer;
+	vk::DescriptorSet                                                        base_descriptor_set;
+	vk::DescriptorSetLayout                                                  base_descriptor_set_layout;
+	std::unique_ptr<vkb::core::BufferCpp>                                    index_buffer;
+	uint32_t                                                                 index_count = 0;
+	vk::Pipeline                                                             pipeline;
+	vk::PipelineLayout                                                       pipeline_layout;
+	vk::DescriptorSetLayout                                                  sampler_descriptor_set_layout;
+	std::array<vk::DescriptorSet, 2>                                         sampler_descriptor_sets;
+	std::array<vk::Sampler, 2>                                               samplers;
+	int32_t                                                                  selected_sampler = 0;
+	HPPTexture                                                               texture;
+	UBO                                                                      ubo_vs;
+	std::array<std::unique_ptr<vkb::core::BufferCpp>, max_concurrent_frames> uniform_buffers;
+	std::unique_ptr<vkb::core::BufferCpp>                                    vertex_buffer;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_separate_image_sampler();

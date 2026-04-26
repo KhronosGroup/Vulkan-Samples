@@ -124,7 +124,13 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	};
 
   protected:
-	/// Stores the swapchain image buffers
+	// @todo
+	bool use_new_sync = false;
+
+	// @todo
+	constexpr static uint32_t max_concurrent_frames = 2;
+
+	// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
 
 	virtual void create_render_context() override;
@@ -159,6 +165,9 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	// List of available frame buffers (same as number of swap chain images)
 	std::vector<VkFramebuffer> framebuffers;
 
+	// @todo
+	uint32_t current_image_index = 0;
+
 	// Active frame buffer index
 	uint32_t current_buffer = 0;
 
@@ -183,6 +192,12 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 
 	// Synchronization fences
 	std::vector<VkFence> wait_fences;
+
+	// Synchronization primitives
+	std::array<VkSemaphore, max_concurrent_frames> acquired_image_ready_semaphores{};
+	std::vector<VkSemaphore>                       render_complete_semaphores{};
+	// @todo: use this
+	// std::array<VkFence, max_concurrent_frames>     wait_fences;
 
 	/**
 	 * @brief Populates the swapchain_buffers vector with the image and imageviews
@@ -284,7 +299,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	 * @brief To be overridden by the derived class. Records the relevant commands to the rendering command buffers
 	 *        Called when the framebuffers need to be rebuilt
 	 */
-	virtual void build_command_buffers() = 0;
+	virtual void build_command_buffers();
 
 	/**
 	 * @brief Rebuild the command buffers by first resetting the corresponding command pool and then building the command buffers.

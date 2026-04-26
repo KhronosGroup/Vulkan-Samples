@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Sascha Willems
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Sascha Willems
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,15 +44,16 @@ class HPPPushDescriptors : public HPPApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
+
+	void build_command_buffer();
 
 	void create_descriptor_set_layout();
 	void create_pipeline();
 	void create_pipeline_layout();
 	void create_uniform_buffers();
-	void draw();
+	void draw(float delta_time);
 	void initializeCamera();
 	void load_assets();
 	void update_cube_uniform_buffers(float delta_time);
@@ -61,10 +62,10 @@ class HPPPushDescriptors : public HPPApiVulkanSample
   private:
 	struct Cube
 	{
-		HPPTexture                            texture;
-		std::unique_ptr<vkb::core::BufferCpp> uniform_buffer;
-		glm::vec3                             rotation;
-		glm::mat4                             model_mat;
+		HPPTexture                                                               texture;
+		std::array<std::unique_ptr<vkb::core::BufferCpp>, max_concurrent_frames> uniform_buffers;
+		glm::vec3                                                                rotation;
+		glm::mat4                                                                model_mat;
 	};
 
 	struct Models
@@ -78,21 +79,16 @@ class HPPPushDescriptors : public HPPApiVulkanSample
 		glm::mat4 view;
 	};
 
-	struct UniformBuffers
-	{
-		std::unique_ptr<vkb::core::BufferCpp> scene;
-	};
-
   private:
-	bool                    animate = true;
-	std::array<Cube, 2>     cubes;
-	vk::DescriptorSetLayout descriptor_set_layout;
-	uint32_t                max_push_descriptors = 0;
-	Models                  models;
-	vk::Pipeline            pipeline;
-	vk::PipelineLayout      pipeline_layout;
-	UboScene                ubo_scene;
-	UniformBuffers          uniform_buffers;
+	bool                                                                     animate = true;
+	std::array<Cube, 2>                                                      cubes;
+	vk::DescriptorSetLayout                                                  descriptor_set_layout;
+	uint32_t                                                                 max_push_descriptors = 0;
+	Models                                                                   models;
+	vk::Pipeline                                                             pipeline;
+	vk::PipelineLayout                                                       pipeline_layout;
+	UboScene                                                                 ubo_scene;
+	std::array<std::unique_ptr<vkb::core::BufferCpp>, max_concurrent_frames> uniform_buffers;
 };
 
 std::unique_ptr<vkb::VulkanSampleCpp> create_hpp_push_descriptors();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,10 +69,7 @@ class Instancing : public ApiVulkanSample
 		float     glob_speed = 0.0f;
 	} ubo_vs;
 
-	struct UniformBuffers
-	{
-		std::unique_ptr<vkb::core::BufferC> scene;
-	} uniform_buffers;
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers{};
 
 	VkPipelineLayout pipeline_layout;
 	struct Pipelines
@@ -87,12 +84,13 @@ class Instancing : public ApiVulkanSample
 	{
 		VkDescriptorSet instanced_rocks;
 		VkDescriptorSet planet;
-	} descriptor_sets;
+	};
+	std::array<DescriptorSets, max_concurrent_frames> descriptor_sets;
 
 	Instancing();
 	~Instancing();
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
-	void         build_command_buffers() override;
+	void         build_command_buffer();
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
@@ -100,12 +98,11 @@ class Instancing : public ApiVulkanSample
 	void         prepare_pipelines();
 	void         prepare_instance_data();
 	void         prepare_uniform_buffers();
-	void         update_uniform_buffer(float delta_time);
-	void         draw();
+	void         update_uniform_buffers(float delta_time);
+	void         draw(float delta_time);
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual bool resize(const uint32_t width, const uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_instancing();

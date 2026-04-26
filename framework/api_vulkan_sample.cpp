@@ -80,7 +80,7 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 void ApiVulkanSample::prepare_gui()
 {
-	create_gui(*window, nullptr, 15.0f, true);
+	create_gui(*window, nullptr, 15.0f, true, use_new_sync);
 
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
 	    load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
@@ -408,8 +408,15 @@ bool ApiVulkanSample::check_command_buffers()
 
 void ApiVulkanSample::create_command_buffers()
 {
-	// Create one command buffer for each swap chain image and reuse for rendering
-	draw_cmd_buffers.resize(get_render_context().get_render_frames().size());
+	if (use_new_sync)
+	{
+		draw_cmd_buffers.resize(max_concurrent_frames);
+	}
+	else
+	{
+		// Create one command buffer for each swap chain image and reuse for rendering
+		draw_cmd_buffers.resize(get_render_context().get_render_frames().size());
+	}
 
 	VkCommandBufferAllocateInfo allocate_info =
 	    vkb::initializers::command_buffer_allocate_info(
@@ -525,25 +532,61 @@ void ApiVulkanSample::prepare_frame()
 {
 	if (get_render_context().has_swapchain())
 	{
-		handle_surface_changes();
-		// Acquire the next image from the swap chain
-		VkResult result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
-		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
-		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		if (use_new_sync)
 		{
-			resize(width, height);
+			// Ensure command buffer execution has finished
+			VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
+			VK_CHECK(vkResetFences(get_device().get_handle(), 1, &wait_fences[current_buffer]));
+			handle_surface_changes();
+			// Acquire the next image from the swap chain
+			VkResult result = get_render_context().get_swapchain().acquire_next_image(current_image_index, acquired_image_ready_semaphores[current_buffer], VK_NULL_HANDLE);
+			// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
+			if (result == VK_ERROR_OUT_OF_DATE_KHR)
+			{
+				resize(width, height);
+			}
+			// VK_SUBOPTIMAL_KHR means that acquire was successful and semaphore is signaled but image is suboptimal
+			// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
+			else if (result != VK_SUBOPTIMAL_KHR)
+			{
+				VK_CHECK(result);
+			}
 		}
-		// VK_SUBOPTIMAL_KHR means that acquire was successful and semaphore is signaled but image is suboptimal
-		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
-		else if (result != VK_SUBOPTIMAL_KHR)
+		else
 		{
-			VK_CHECK(result);
+			handle_surface_changes();
+			// Acquire the next image from the swap chain
+			VkResult result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
+			// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
+			if (result == VK_ERROR_OUT_OF_DATE_KHR)
+			{
+				resize(width, height);
+			}
+			// VK_SUBOPTIMAL_KHR means that acquire was successful and semaphore is signaled but image is suboptimal
+			// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
+			else if (result != VK_SUBOPTIMAL_KHR)
+			{
+				VK_CHECK(result);
+			}
 		}
 	}
 }
 
 void ApiVulkanSample::submit_frame()
 {
+	if (use_new_sync)
+	{
+		VkSubmitInfo submit_info{
+		    .sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		    .waitSemaphoreCount   = 1,
+		    .pWaitSemaphores      = &acquired_image_ready_semaphores[current_buffer],
+		    .pWaitDstStageMask    = &submit_pipeline_stages,
+		    .commandBufferCount   = 1,
+		    .pCommandBuffers      = &draw_cmd_buffers[current_buffer],
+		    .signalSemaphoreCount = 1,
+		    .pSignalSemaphores    = &render_complete_semaphores[current_image_index]};
+		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, wait_fences[current_buffer]));
+	}
 	if (get_render_context().has_swapchain())
 	{
 		const auto &queue = get_device().get_queue_by_present(0);
@@ -555,7 +598,7 @@ void ApiVulkanSample::submit_frame()
 		present_info.pNext            = NULL;
 		present_info.swapchainCount   = 1;
 		present_info.pSwapchains      = &sc;
-		present_info.pImageIndices    = &current_buffer;
+		present_info.pImageIndices    = use_new_sync ? &current_image_index : &current_buffer;
 
 		VkDisplayPresentInfoKHR disp_present_info{};
 		if (get_device().get_gpu().is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
@@ -566,10 +609,18 @@ void ApiVulkanSample::submit_frame()
 		}
 
 		// Check if a wait semaphore has been specified to wait for before presenting the image
-		if (semaphores.render_complete != VK_NULL_HANDLE)
+		if (use_new_sync)
 		{
-			present_info.pWaitSemaphores    = &semaphores.render_complete;
+			present_info.pWaitSemaphores    = &render_complete_semaphores[current_image_index];
 			present_info.waitSemaphoreCount = 1;
+		}
+		else
+		{
+			if (semaphores.render_complete != VK_NULL_HANDLE)
+			{
+				present_info.pWaitSemaphores    = &semaphores.render_complete;
+				present_info.waitSemaphoreCount = 1;
+			}
 		}
 
 		VkResult present_result = queue.present(present_info);
@@ -589,10 +640,18 @@ void ApiVulkanSample::submit_frame()
 		}
 	}
 
-	// DO NOT USE
-	// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
-	// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
-	VK_CHECK(get_device().get_queue_by_present(0).wait_idle());
+	if (use_new_sync)
+	{
+		// Select the next frame to render to, based on the max. no. of concurrent frames
+		current_buffer = (current_buffer + 1) % max_concurrent_frames;
+	}
+	else
+	{
+		// DO NOT USE
+		// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
+		// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
+		VK_CHECK(get_device().get_queue_by_present(0).wait_idle());
+	}
 }
 
 ApiVulkanSample::~ApiVulkanSample()
@@ -639,6 +698,18 @@ ApiVulkanSample::~ApiVulkanSample()
 		{
 			vkDestroyFence(get_device().get_handle(), fence, nullptr);
 		}
+
+		if (use_new_sync)
+		{
+			for (auto &semaphore : acquired_image_ready_semaphores)
+			{
+				vkDestroySemaphore(get_device().get_handle(), semaphore, nullptr);
+			}
+			for (auto &semaphore : render_complete_semaphores)
+			{
+				vkDestroySemaphore(get_device().get_handle(), semaphore, nullptr);
+			}
+		}
 	}
 }
 
@@ -650,18 +721,46 @@ void ApiVulkanSample::build_command_buffers()
 
 void ApiVulkanSample::rebuild_command_buffers()
 {
-	vkResetCommandPool(get_device().get_handle(), cmd_pool, 0);
-	build_command_buffers();
+	if (!use_new_sync)
+	{
+		vkResetCommandPool(get_device().get_handle(), cmd_pool, 0);
+		build_command_buffers();
+	}
 }
 
 void ApiVulkanSample::create_synchronization_primitives()
 {
-	// Wait fences to sync command buffer access
-	VkFenceCreateInfo fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-	wait_fences.resize(draw_cmd_buffers.size());
-	for (auto &fence : wait_fences)
+	if (use_new_sync)
 	{
-		VK_CHECK(vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &fence));
+		// Wait fences to sync command buffer access
+		wait_fences.resize(max_concurrent_frames);
+		VkFenceCreateInfo fence_create_info{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = VK_FENCE_CREATE_SIGNALED_BIT};
+		for (auto &fence : wait_fences)
+		{
+			VK_CHECK(vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &fence));
+		}
+		VkSemaphoreCreateInfo semaphore_create_info{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+		// Used to ensure that image presentation is complete before starting to submit again
+		for (auto &semaphore : acquired_image_ready_semaphores)
+		{
+			VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &semaphore));
+		}
+		// Semaphore used to ensure that all commands submitted have been finished before submitting the image to the queue
+		render_complete_semaphores.resize(swapchain_buffers.size());
+		for (auto &semaphore : render_complete_semaphores)
+		{
+			VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &semaphore));
+		}
+	}
+	else
+	{
+		// Wait fences to sync command buffer access
+		VkFenceCreateInfo fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+		wait_fences.resize(draw_cmd_buffers.size());
+		for (auto &fence : wait_fences)
+		{
+			VK_CHECK(vkCreateFence(get_device().get_handle(), &fence_create_info, nullptr, &fence));
+		}
 	}
 }
 
@@ -670,6 +769,10 @@ void ApiVulkanSample::create_command_pool()
 	VkCommandPoolCreateInfo command_pool_info = {};
 	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	command_pool_info.queueFamilyIndex        = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
+	if (use_new_sync)
+	{
+		command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	}
 	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_info, nullptr, &cmd_pool));
 }
 
