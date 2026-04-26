@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,8 @@
 Instancing::Instancing()
 {
 	title = "Instanced mesh rendering";
+
+	use_new_sync = true;
 }
 
 Instancing::~Instancing()
@@ -66,8 +68,11 @@ void Instancing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 };
 
-void Instancing::build_command_buffers()
+void Instancing::build_command_buffer()
 {
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
@@ -80,72 +85,60 @@ void Instancing::build_command_buffers()
 	render_pass_begin_info.renderArea.extent.height = height;
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		// Set target frame buffer
-		render_pass_begin_info.framebuffer = framebuffers[i];
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_buffer_begin_info));
 
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+	vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+	VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+	VkDeviceSize offsets[1] = {0};
 
-		VkDeviceSize offsets[1] = {0};
+	// Star field
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[current_buffer].planet, 0, NULL);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.starfield);
+	vkCmdDraw(draw_cmd_buffer, 4, 1, 0, 0);
 
-		// Star field
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, NULL);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.starfield);
-		vkCmdDraw(draw_cmd_buffers[i], 4, 1, 0, 0);
+	// Planet
+	auto &planet_vertex_buffer = models.planet->vertex_buffers.at("vertex_buffer");
+	auto &planet_index_buffer  = models.planet->index_buffer;
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[current_buffer].planet, 0, NULL);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.planet);
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, planet_vertex_buffer.get(), offsets);
+	vkCmdBindIndexBuffer(draw_cmd_buffer, planet_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(draw_cmd_buffer, models.planet->vertex_indices, 1, 0, 0, 0);
 
-		// Planet
-		auto &planet_vertex_buffer = models.planet->vertex_buffers.at("vertex_buffer");
-		auto &planet_index_buffer  = models.planet->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, NULL);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.planet);
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, planet_vertex_buffer.get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], planet_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(draw_cmd_buffers[i], models.planet->vertex_indices, 1, 0, 0, 0);
+	// Instanced rocks
+	auto &rock_vertex_buffer = models.rock->vertex_buffers.at("vertex_buffer");
+	auto &rock_index_buffer  = models.rock->index_buffer;
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[current_buffer].instanced_rocks, 0, NULL);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.instanced_rocks);
+	// Binding point 0 : Mesh vertex buffer
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, rock_vertex_buffer.get(), offsets);
+	// Binding point 1 : Instance data buffer
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 1, 1, &instance_buffer.buffer->get_handle(), offsets);
+	vkCmdBindIndexBuffer(draw_cmd_buffer, rock_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+	// Render instances
+	vkCmdDrawIndexed(draw_cmd_buffer, models.rock->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
 
-		// Instanced rocks
-		auto &rock_vertex_buffer = models.rock->vertex_buffers.at("vertex_buffer");
-		auto &rock_index_buffer  = models.rock->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.instanced_rocks, 0, NULL);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.instanced_rocks);
-		// Binding point 0 : Mesh vertex buffer
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, rock_vertex_buffer.get(), offsets);
-		// Binding point 1 : Instance data buffer
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, &instance_buffer.buffer->get_handle(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], rock_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
-		// Render instances
-		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
+	draw_ui(draw_cmd_buffer);
 
-		draw_ui(draw_cmd_buffers[i]);
+	vkCmdEndRenderPass(draw_cmd_buffer);
 
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
-	}
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 void Instancing::load_assets()
 {
-	models.rock   = load_model("scenes/rock.gltf");
-	models.planet = load_model("scenes/planet.gltf");
-
-	// models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
-	// models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
-
+	models.rock     = load_model("scenes/rock.gltf");
+	models.planet   = load_model("scenes/planet.gltf");
 	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
 	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
-
-	// textures.rocks.loadFromFile(getAssetPath() + "textures/texturearray_rocks_color_rgba.ktx", device.get(), queue);
-	// textures.planet.loadFromFile(getAssetPath() + "textures/lavaplanet_color_rgba.ktx", device.get(), queue);
 }
 
 void Instancing::setup_descriptor_pool()
@@ -153,15 +146,15 @@ void Instancing::setup_descriptor_pool()
 	// Example uses one ubo
 	std::vector<VkDescriptorPoolSize> pool_sizes =
 	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_concurrent_frames * 2),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, max_concurrent_frames * 2),
 	    };
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
 	        vkb::to_u32(pool_sizes.size()),
 	        pool_sizes.data(),
-	        2);
+	        max_concurrent_frames * 2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -204,25 +197,27 @@ void Instancing::setup_descriptor_set()
 
 	descriptor_set_alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
-	// Instanced rocks
-	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffers.scene);
-	VkDescriptorImageInfo  image_descriptor  = create_descriptor(textures.rocks);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets.instanced_rocks));
-	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
-	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	for (auto i = 0; i < uniform_buffers.size(); i++)
+	{
+		// Instanced rocks
+		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffers[i]);
+		VkDescriptorImageInfo  image_descriptor  = create_descriptor(textures.rocks);
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets[i].instanced_rocks));
+		write_descriptor_sets = {
+		    vkb::initializers::write_descriptor_set(descriptor_sets[i].instanced_rocks, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
+		    vkb::initializers::write_descriptor_set(descriptor_sets[i].instanced_rocks, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
+		};
+		vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 
-	// Planet
-	buffer_descriptor = create_descriptor(*uniform_buffers.scene);
-	image_descriptor  = create_descriptor(textures.planet);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets.planet));
-	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
-	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+		// Planet
+		image_descriptor = create_descriptor(textures.planet);
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets[i].planet));
+		write_descriptor_sets = {
+		    vkb::initializers::write_descriptor_set(descriptor_sets[i].planet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
+		    vkb::initializers::write_descriptor_set(descriptor_sets[i].planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
+		};
+		vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	}
 }
 
 void Instancing::prepare_pipelines()
@@ -427,15 +422,13 @@ void Instancing::prepare_instance_data()
 
 void Instancing::prepare_uniform_buffers()
 {
-	uniform_buffers.scene = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                             sizeof(ubo_vs),
-	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffer(0.0f);
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
-void Instancing::update_uniform_buffer(float delta_time)
+void Instancing::update_uniform_buffers(float delta_time)
 {
 	ubo_vs.projection = camera.matrices.perspective;
 	ubo_vs.view       = camera.matrices.view;
@@ -446,20 +439,14 @@ void Instancing::update_uniform_buffer(float delta_time)
 		ubo_vs.glob_speed += delta_time * 0.01f;
 	}
 
-	uniform_buffers.scene->convert_and_update(ubo_vs);
+	uniform_buffers[current_buffer]->convert_and_update(ubo_vs);
 }
 
-void Instancing::draw()
+void Instancing::draw(float delta_time)
 {
 	ApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-
-	// Submit to queue
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-
+	update_uniform_buffers(delta_time);
+	build_command_buffer();
 	ApiVulkanSample::submit_frame();
 }
 
@@ -483,7 +470,6 @@ bool Instancing::prepare(const vkb::ApplicationOptions &options)
 	prepare_pipelines();
 	setup_descriptor_pool();
 	setup_descriptor_set();
-	build_command_buffers();
 	prepared = true;
 	return true;
 }
@@ -494,11 +480,7 @@ void Instancing::render(float delta_time)
 	{
 		return;
 	}
-	draw();
-	if (!paused || camera.updated)
-	{
-		update_uniform_buffer(delta_time);
-	}
+	draw(delta_time);
 }
 
 void Instancing::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -507,13 +489,6 @@ void Instancing::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		drawer.text("Instances: %d", INSTANCE_COUNT);
 	}
-}
-
-bool Instancing::resize(const uint32_t width, const uint32_t height)
-{
-	ApiVulkanSample::resize(width, height);
-	rebuild_command_buffers();
-	return true;
 }
 
 std::unique_ptr<vkb::Application> create_instancing()
