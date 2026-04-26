@@ -188,7 +188,7 @@ vk::DescriptorPool HPPSeparateImageSampler::create_descriptor_pool()
 	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
 	    {{vk::DescriptorType::eUniformBuffer, max_concurrent_frames}, {vk::DescriptorType::eSampledImage, max_concurrent_frames}, {vk::DescriptorType::eSampler, 2}}};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets                                              = max_concurrent_frames + static_cast<uint32_t>(samplers.size()),
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets       = max_concurrent_frames + static_cast<uint32_t>(samplers.size()),
 	                                                         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
 	                                                         .pPoolSizes    = pool_sizes.data()};
 
