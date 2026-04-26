@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,11 +46,11 @@ class HostImageCopy : public ApiVulkanSample
 		float     lod_bias = 0.0f;
 	} ubo_vs;
 
-	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers{};
+	std::array<VkDescriptorSet, max_concurrent_frames>                     descriptor_sets{};
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
-	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
 	HostImageCopy();
@@ -59,7 +59,7 @@ class HostImageCopy : public ApiVulkanSample
 	void         load_texture();
 	void         load_assets();
 	void         destroy_texture(Texture texture);
-	void         build_command_buffers() override;
+	void         build_command_buffer();
 	void         draw();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
@@ -69,7 +69,6 @@ class HostImageCopy : public ApiVulkanSample
 	void         update_uniform_buffers();
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 

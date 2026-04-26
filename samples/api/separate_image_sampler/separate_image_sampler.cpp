@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,8 @@ SeparateImageSampler::SeparateImageSampler()
 	zoom     = -0.5f;
 	rotation = {45.0f, 0.0f, 0.0f};
 	title    = "Separate sampler and image";
+
+	use_new_sync = true;
 }
 
 SeparateImageSampler::~SeparateImageSampler()
@@ -59,8 +61,11 @@ void SeparateImageSampler::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 }
 
-void SeparateImageSampler::build_command_buffers()
+void SeparateImageSampler::build_command_buffer()
 {
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
@@ -75,40 +80,35 @@ void SeparateImageSampler::build_command_buffers()
 	render_pass_begin_info.renderArea.extent.height = height;
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		// Set target frame buffer
-		render_pass_begin_info.framebuffer = framebuffers[i];
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_buffer_begin_info));
 
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+	vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+	VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+	// Bind the uniform buffer and sampled image to set 0
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &base_descriptor_sets[current_buffer], 0, nullptr);
+	// Bind the selected sampler to set 1
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &sampler_descriptor_sets[selected_sampler], 0, nullptr);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-		// Bind the uniform buffer and sampled image to set 0
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &base_descriptor_set, 0, nullptr);
-		// Bind the selected sampler to set 1
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &sampler_descriptor_sets[selected_sampler], 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	VkDeviceSize offsets[1] = {0};
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, vertex_buffer->get(), offsets);
+	vkCmdBindIndexBuffer(draw_cmd_buffer, index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
-		VkDeviceSize offsets[1] = {0};
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(draw_cmd_buffer, index_count, 1, 0, 0, 0);
 
-		vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
+	draw_ui(draw_cmd_buffer);
 
-		draw_ui(draw_cmd_buffers[i]);
+	vkCmdEndRenderPass(draw_cmd_buffer);
 
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
-	}
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 void SeparateImageSampler::setup_samplers()
@@ -156,14 +156,8 @@ void SeparateImageSampler::load_assets()
 void SeparateImageSampler::draw()
 {
 	ApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-
-	// Submit to queue
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-
+	update_uniform_buffers();
+	build_command_buffer();
 	ApiVulkanSample::submit_frame();
 }
 
@@ -204,15 +198,15 @@ void SeparateImageSampler::generate_quad()
 void SeparateImageSampler::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_concurrent_frames),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, max_concurrent_frames),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLER, 2)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
-	        3);
+	        max_concurrent_frames + static_cast<uint32_t>(samplers.size()));
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -266,42 +260,35 @@ void SeparateImageSampler::setup_descriptor_set_layout()
 void SeparateImageSampler::setup_descriptor_set()
 {
 	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-	VkDescriptorSetAllocateInfo descriptor_set_alloc_info{};
+	VkDescriptorSetAllocateInfo descriptor_set_alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &base_descriptor_set_layout, 1);
+	for (auto i = 0; i < uniform_buffers.size(); i++)
+	{
+		// Descriptors set for the uniform buffer and the image
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &base_descriptor_sets[i]));
 
-	// Descriptors set for the uniform buffer and the image
-	descriptor_set_alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &base_descriptor_set_layout,
-	        1);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &base_descriptor_set));
+		// Uniform buffer
+		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffers[i]);
 
-	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
+		// Sampled image
+		VkDescriptorImageInfo image_info{};
+		image_info.imageView   = texture.image->get_vk_image_view().get_handle();
+		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	// Image info only references the image
-	VkDescriptorImageInfo image_info{};
-	image_info.imageView   = texture.image->get_vk_image_view().get_handle();
-	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		// Sampled image descriptor
+		VkWriteDescriptorSet image_write_descriptor_set{};
+		image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		image_write_descriptor_set.dstBinding      = 1;
+		image_write_descriptor_set.descriptorCount = 1;
+		image_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		image_write_descriptor_set.pImageInfo      = &image_info;
+		image_write_descriptor_set.dstSet          = base_descriptor_sets[i];
 
-	// Sampled image descriptor
-	VkWriteDescriptorSet image_write_descriptor_set{};
-	image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	image_write_descriptor_set.dstSet          = base_descriptor_set;
-	image_write_descriptor_set.dstBinding      = 1;
-	image_write_descriptor_set.descriptorCount = 1;
-	image_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-	image_write_descriptor_set.pImageInfo      = &image_info;
+		std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+		    vkb::initializers::write_descriptor_set(base_descriptor_sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),
+		    vkb::initializers::write_descriptor_set(base_descriptor_sets[i], VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, &image_info)};
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-	    // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(
-	        base_descriptor_set,
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        0,
-	        &buffer_descriptor),
-	    // Binding 1 : Fragment shader sampled image
-	    image_write_descriptor_set};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	}
 
 	// Sets for each of the sampler
 	descriptor_set_alloc_info.pSetLayouts = &sampler_descriptor_set_layout;
@@ -418,13 +405,11 @@ void SeparateImageSampler::prepare_pipelines()
 // Prepare and initialize uniform buffer containing shader uniforms
 void SeparateImageSampler::prepare_uniform_buffers()
 {
-	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         sizeof(ubo_vs),
-	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		// Vertex shader uniform buffer block
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void SeparateImageSampler::update_uniform_buffers()
@@ -440,7 +425,7 @@ void SeparateImageSampler::update_uniform_buffers()
 
 	ubo_vs.view_pos = glm::vec4(0.0f, 0.0f, -zoom, 0.0f);
 
-	uniform_buffer_vs->convert_and_update(ubo_vs);
+	uniform_buffers[current_buffer]->convert_and_update(ubo_vs);
 }
 
 bool SeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
@@ -457,7 +442,6 @@ bool SeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
 	prepare_pipelines();
 	setup_descriptor_pool();
 	setup_descriptor_set();
-	build_command_buffers();
 	prepared = true;
 	return true;
 }
@@ -471,21 +455,13 @@ void SeparateImageSampler::render(float delta_time)
 	draw();
 }
 
-void SeparateImageSampler::view_changed()
-{
-	update_uniform_buffers();
-}
-
 void SeparateImageSampler::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
 		const std::vector<std::string> sampler_names = {"Linear filtering",
 		                                                "Nearest filtering"};
-		if (drawer.combo_box("Sampler", &selected_sampler, sampler_names))
-		{
-			update_uniform_buffers();
-		}
+		drawer.combo_box("Sampler", &selected_sampler, sampler_names);
 	}
 }
 

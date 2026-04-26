@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,6 +27,8 @@ HPPSeparateImageSampler::HPPSeparateImageSampler()
 
 	zoom     = -0.5f;
 	rotation = {45.0f, 0.0f, 0.0f};
+
+	use_new_sync = true;
 }
 
 HPPSeparateImageSampler::~HPPSeparateImageSampler()
@@ -85,8 +87,6 @@ bool HPPSeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
 		pipeline_layout = create_pipeline_layout({base_descriptor_set_layout, sampler_descriptor_set_layout});
 		pipeline        = create_graphics_pipeline();
 
-		build_command_buffers();
-
 		prepared = true;
 	}
 
@@ -103,50 +103,45 @@ void HPPSeparateImageSampler::request_gpu_features(vkb::core::PhysicalDeviceCpp 
 	}
 }
 
-void HPPSeparateImageSampler::build_command_buffers()
+void HPPSeparateImageSampler::build_command_buffer()
 {
 	vk::CommandBufferBeginInfo    command_buffer_begin_info;
 	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue{0.0f, 0}}};
 
 	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .framebuffer     = framebuffers[current_image_index],
 	                                               .renderArea      = {{0, 0}, extent},
 	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
 	                                               .pClearValues    = clear_values.data()};
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		// Set target frame buffer
-		render_pass_begin_info.framebuffer = framebuffers[i];
+	auto command_buffer = draw_cmd_buffers[current_buffer];
+	command_buffer.begin(command_buffer_begin_info);
 
-		auto command_buffer = draw_cmd_buffers[i];
-		command_buffer.begin(command_buffer_begin_info);
+	command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+	vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
+	command_buffer.setViewport(0, viewport);
 
-		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
-		command_buffer.setViewport(0, viewport);
+	vk::Rect2D scissor{{0, 0}, extent};
+	command_buffer.setScissor(0, scissor);
 
-		vk::Rect2D scissor{{0, 0}, extent};
-		command_buffer.setScissor(0, scissor);
+	// Bind the uniform buffer and sampled image to set 0
+	command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, base_descriptor_set, {});
+	// Bind the selected sampler to set 1
+	command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 1, sampler_descriptor_sets[selected_sampler], {});
+	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
-		// Bind the uniform buffer and sampled image to set 0
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, base_descriptor_set, {});
-		// Bind the selected sampler to set 1
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 1, sampler_descriptor_sets[selected_sampler], {});
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+	vk::DeviceSize offset = 0;
+	command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
+	command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
 
-		vk::DeviceSize offset = 0;
-		command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
-		command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
+	command_buffer.drawIndexed(index_count, 1, 0, 0, 0);
 
-		command_buffer.drawIndexed(index_count, 1, 0, 0, 0);
+	draw_ui(command_buffer);
 
-		draw_ui(command_buffer);
+	command_buffer.endRenderPass();
 
-		command_buffer.endRenderPass();
-
-		command_buffer.end();
-	}
+	command_buffer.end();
 }
 
 void HPPSeparateImageSampler::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -191,9 +186,9 @@ vk::DescriptorSetLayout HPPSeparateImageSampler::create_base_descriptor_set_layo
 vk::DescriptorPool HPPSeparateImageSampler::create_descriptor_pool()
 {
 	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
-	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eSampledImage, 1}, {vk::DescriptorType::eSampler, 2}}};
+	    {{vk::DescriptorType::eUniformBuffer, max_concurrent_frames}, {vk::DescriptorType::eSampledImage, max_concurrent_frames}, {vk::DescriptorType::eSampler, 2}}};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets       = 3,
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets                                              = max_concurrent_frames + static_cast<uint32_t>(samplers.size()),
 	                                                         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
 	                                                         .pPoolSizes    = pool_sizes.data()};
 
@@ -276,13 +271,8 @@ vk::DescriptorSetLayout HPPSeparateImageSampler::create_sampler_descriptor_set_l
 void HPPSeparateImageSampler::draw()
 {
 	HPPApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
-
-	// Submit to queue
-	queue.submit(submit_info);
-
+	update_uniform_buffers();
+	build_command_buffer();
 	HPPApiVulkanSample::submit_frame();
 }
 
@@ -327,35 +317,37 @@ void HPPSeparateImageSampler::load_assets()
 // Prepare and initialize uniform buffer containing shader uniforms
 void HPPSeparateImageSampler::prepare_uniform_buffers()
 {
-	// Vertex shader uniform buffer block
-	uniform_buffer_vs =
-	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void HPPSeparateImageSampler::update_base_descriptor_set()
 {
-	vk::DescriptorBufferInfo buffer_descriptor{uniform_buffer_vs->get_handle(), 0, vk::WholeSize};
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		vk::DescriptorBufferInfo buffer_descriptor{uniform_buffers[i]->get_handle(), 0, vk::WholeSize};
 
-	// Image info only references the image
-	vk::DescriptorImageInfo image_info{{}, texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal};
+		// Image info only references the image
+		vk::DescriptorImageInfo image_info{{}, texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal};
 
-	// Sampled image descriptor
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-	    {
-	        {.dstSet          = base_descriptor_set,
-	         .dstBinding      = 0,
-	         .descriptorCount = 1,
-	         .descriptorType  = vk::DescriptorType::eUniformBuffer,
-	         .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
-	        {.dstSet          = base_descriptor_set,
-	         .dstBinding      = 1,
-	         .descriptorCount = 1,
-	         .descriptorType  = vk::DescriptorType::eSampledImage,
-	         .pImageInfo      = &image_info}        // Binding 1 : Fragment shader sampled image
-	    }};
-	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+		// Sampled image descriptor
+		std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
+		    {
+		        {.dstSet          = base_descriptor_set,
+		         .dstBinding      = 0,
+		         .descriptorCount = 1,
+		         .descriptorType  = vk::DescriptorType::eUniformBuffer,
+		         .pBufferInfo     = &buffer_descriptor},        // Binding 0 : Vertex shader uniform buffer
+		        {.dstSet          = base_descriptor_set,
+		         .dstBinding      = 1,
+		         .descriptorCount = 1,
+		         .descriptorType  = vk::DescriptorType::eSampledImage,
+		         .pImageInfo      = &image_info}        // Binding 1 : Fragment shader sampled image
+		    }};
+		get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	}
 }
 
 void HPPSeparateImageSampler::update_sampler_descriptor_set(size_t index)
@@ -384,7 +376,7 @@ void HPPSeparateImageSampler::update_uniform_buffers()
 
 	ubo_vs.view_pos = glm::vec4(0.0f, 0.0f, -zoom, 0.0f);
 
-	uniform_buffer_vs->convert_and_update(ubo_vs);
+	uniform_buffers[current_buffer]->convert_and_update(ubo_vs);
 }
 
 std::unique_ptr<vkb::Application> create_hpp_separate_image_sampler()
