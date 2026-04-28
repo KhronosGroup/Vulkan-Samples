@@ -73,7 +73,8 @@ class SpecializationConstants : public vkb::VulkanSampleC
 		 * @return BufferAllocation A buffer allocation created for use in shaders
 		 */
 		template <typename T>
-		vkb::BufferAllocationC allocate_custom_lights(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
+		vkb::BufferAllocationC
+		    allocate_custom_lights(vkb::core::CommandBufferC &command_buffer, const std::vector<vkb::sg::Light *> &scene_lights, size_t light_count)
 		{
 			T light_info;
 			light_info.count = vkb::to_u32(light_count);

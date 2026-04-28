@@ -101,9 +101,7 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	get_stats().request_stats({vkb::StatIndex::frame_times,
-	                           vkb::StatIndex::gpu_vertex_cycles,
-	                           vkb::StatIndex::gpu_fragment_cycles},
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_vertex_cycles, vkb::StatIndex::gpu_fragment_cycles},
 	                          vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
 
 	create_gui(*window, &get_stats());
@@ -119,7 +117,8 @@ void PipelineBarriers::request_instance_extensions(std::unordered_map<std::strin
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void PipelineBarriers::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vbk::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+void PipelineBarriers::request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+                                              vbk::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
 	vkb::VulkanSampleC::request_layer_settings(requested_layer_settings, scb);
 	requested_layer_settings.push_back(
@@ -143,11 +142,8 @@ std::unique_ptr<vkb::rendering::RenderTargetC> PipelineBarriers::create_render_t
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device,
-	                              extent,
-	                              VK_FORMAT_R8G8B8A8_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image albedo_image{
+	    device, extent, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	vkb::core::Image normal_image{device,
 	                              extent,
@@ -345,7 +341,8 @@ void PipelineBarriers::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, portrait_mode]() {
+	    /* body = */
+	    [this, portrait_mode]() {
 		    ImGui::Text("Pipeline barrier stages:");
 		    ImGui::RadioButton("Bottom to top", reinterpret_cast<int *>(&dependency_type), DependencyType::BOTTOM_TO_TOP);
 		    ImGui::SameLine();

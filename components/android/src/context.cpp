@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Thomas Atkinson
+/* Copyright (c) 2023-2026, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,8 +22,7 @@
 extern "C"
 {
 	// TODO: Arguments can be parsed from the bundle
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
+	JNIEXPORT void JNICALL Java_com_khronos_vulkan_1samples_SampleLauncherActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
 	{
 		std::vector<std::string> args;
 
@@ -75,8 +74,7 @@ namespace vkb
 {
 std::vector<std::string> AndroidPlatformContext::android_arguments = {};
 
-AndroidPlatformContext::AndroidPlatformContext(android_app *app) :
-    PlatformContext{}, app{app}
+AndroidPlatformContext::AndroidPlatformContext(android_app *app) : PlatformContext{}, app{app}
 {
 	_external_storage_directory = details::get_external_storage_directory(app);
 	_temp_directory             = details::get_external_cache_directory(app);

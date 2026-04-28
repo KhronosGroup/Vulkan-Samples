@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
- * Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
+ * Copyright (c) 2021-2026, Sascha Willems
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -27,11 +27,11 @@ using FileLoggerTags = vkb::PluginBase<vkb::tags::Passive>;
 
 /**
  * @brief File Logger
- * 
+ *
  * Enables writing log messages to a file
- * 
+ *
  * Usage: vulkan_sample --log-file filename.txt
- * 
+ *
  */
 class FileLogger : public FileLoggerTags
 {

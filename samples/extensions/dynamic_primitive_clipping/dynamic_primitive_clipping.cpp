@@ -59,7 +59,15 @@ bool DynamicPrimitiveClipping::prepare(const vkb::ApplicationOptions &options)
 	load_assets();
 
 	// Setup parameters used on CPU.
-	visualization_names = {"World space X", "World space Y", "Half-space in world space coordinates", "Half-space in clip space coordinates", "Clip space X", "Clip space Y", "Euclidean distance to center", "Manhattan distance to center", "Chebyshev distance to center"};
+	visualization_names = {"World space X",
+	                       "World space Y",
+	                       "Half-space in world space coordinates",
+	                       "Half-space in clip space coordinates",
+	                       "Clip space X",
+	                       "Clip space Y",
+	                       "Euclidean distance to center",
+	                       "Manhattan distance to center",
+	                       "Chebyshev distance to center"};
 
 	// Setup Vulkan objects required by GPU.
 	prepare_uniform_buffers();
@@ -240,10 +248,7 @@ void DynamicPrimitiveClipping::setup_layouts()
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.models));
 
 	// Pipeline layout contains above defined descriptor set layout.
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layouts.models,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.models, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.models));
 }
@@ -269,13 +274,16 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 	vertex_input.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	// Specify we will use triangle lists to draw geometry.
-	VkPipelineInputAssemblyStateCreateInfo input_assembly = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	VkPipelineInputAssemblyStateCreateInfo input_assembly =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	// Specify rasterization state.
-	VkPipelineRasterizationStateCreateInfo raster = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+	VkPipelineRasterizationStateCreateInfo raster =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
 
 	// Our attachment will write to all color channels, but no blending is enabled.
-	VkPipelineColorBlendAttachmentState blend_attachment = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
 
 	VkPipelineColorBlendStateCreateInfo blend = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
 
@@ -318,14 +326,10 @@ void DynamicPrimitiveClipping::prepare_pipelines()
 void DynamicPrimitiveClipping::prepare_uniform_buffers()
 {
 	// We will render the same object twice using two different sets of parameters called "positive" and "negative".
-	uniform_buffers.buffer_positive = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                       sizeof(UBOVS),
-	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.buffer_negative = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                       sizeof(UBOVS),
-	                                                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_positive =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(UBOVS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.buffer_negative =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(UBOVS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -351,29 +355,23 @@ void DynamicPrimitiveClipping::update_uniform_buffers()
 
 void DynamicPrimitiveClipping::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 * 4)};
-	uint32_t                   num_descriptor_sets = 2 * 2 * 4;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	std::vector<VkDescriptorPoolSize> pool_sizes          = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 * 4)};
+	uint32_t                          num_descriptor_sets = 2 * 2 * 4;
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void DynamicPrimitiveClipping::setup_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layouts.models,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.descriptor_positive));
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.descriptor_negative));
 
-	std::vector<VkDescriptorBufferInfo> descriptor_buffer_infos = {
-	    create_descriptor(*uniform_buffers.buffer_positive),
-	    create_descriptor(*uniform_buffers.buffer_negative)};
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	std::vector<VkDescriptorBufferInfo> descriptor_buffer_infos = {create_descriptor(*uniform_buffers.buffer_positive),
+	                                                               create_descriptor(*uniform_buffers.buffer_negative)};
+	std::vector<VkWriteDescriptorSet>   write_descriptor_sets   = {
 	    vkb::initializers::write_descriptor_set(descriptor_sets.descriptor_positive, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptor_buffer_infos[0]),
 	    vkb::initializers::write_descriptor_set(descriptor_sets.descriptor_negative, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptor_buffer_infos[1])};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);

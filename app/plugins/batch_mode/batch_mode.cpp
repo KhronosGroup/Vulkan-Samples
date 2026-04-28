@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -34,8 +34,7 @@ BatchMode::BatchMode() :
                    {"skip", "Skip a sample by id"},
                    {"tag", "Filter samples by tags"},
                    {"wrap-to-start", "Once all configurations have run wrap to the start"}})
-{
-}
+{}
 
 bool BatchMode::handle_command(std::deque<std::string> &arguments) const
 {

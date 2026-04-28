@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,14 +21,11 @@
 
 namespace vkb
 {
-Window::Window(const Properties &properties) :
-    properties{properties}
-{
-}
+Window::Window(const Properties &properties) : properties{properties}
+{}
 
 void Window::process_events()
-{
-}
+{}
 
 Window::Extent Window::resize(const Extent &new_extent)
 {
@@ -56,8 +53,7 @@ Window::Mode Window::get_window_mode() const
 	return properties.mode;
 }
 
-bool Window::get_display_present_info(VkDisplayPresentInfoKHR *info,
-                                      uint32_t src_width, uint32_t src_height) const
+bool Window::get_display_present_info(VkDisplayPresentInfoKHR *info, uint32_t src_width, uint32_t src_height) const
 {
 	// Default is to not use the extra present info
 	return false;

@@ -78,8 +78,7 @@ void HPPComputeNBody::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 
 void HPPComputeNBody::build_command_buffers()
 {
-	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 1.0f}})),
-	                                               vk::ClearDepthStencilValue{0.0f, 0}}};
+	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 1.0f}})), vk::ClearDepthStencilValue{0.0f, 0}}};
 
 	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
 	                                               .renderArea      = {{0, 0}, extent},
@@ -248,7 +247,8 @@ void HPPComputeNBody::build_copy_command_buffer(vk::CommandBuffer command_buffer
 		                                       .buffer              = compute.storage_buffer->get_handle(),
 		                                       .size                = compute.storage_buffer->get_size()};
 
-		command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
+		command_buffer.pipelineBarrier(
+		    vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
 	}
 	command_buffer.end();
 }
@@ -275,9 +275,8 @@ vk::Pipeline HPPComputeNBody::create_compute_pipeline(vk::PipelineShaderStageCre
 
 vk::DescriptorPool HPPComputeNBody::create_descriptor_pool()
 {
-	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 2},
-	                                                     {vk::DescriptorType::eStorageBuffer, 1},
-	                                                     {vk::DescriptorType::eCombinedImageSampler, 2}}};
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
+	    {{vk::DescriptorType::eUniformBuffer, 2}, {vk::DescriptorType::eStorageBuffer, 1}, {vk::DescriptorType::eCombinedImageSampler, 2}}};
 
 	return get_device().get_handle().createDescriptorPool(
 	    {.maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
@@ -317,7 +316,7 @@ vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 	                                                             .dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha,
 	                                                             .alphaBlendOp        = vk::BlendOp::eAdd,
 	                                                             .colorWriteMask      = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
+	                                                                                    vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthTestEnable  = false;
@@ -539,8 +538,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 			else
 			{
 				// Position
-				glm::vec3 position(attractors[i] +
-				                   glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine)) * 0.75f);
+				glm::vec3 position(attractors[i] + glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine)) * 0.75f);
 				float     len = glm::length(glm::normalize(position - attractors[i]));
 				position.y *= 2.0f - (len * len);
 
@@ -635,14 +633,14 @@ void HPPComputeNBody::update_graphics_descriptor_set()
 {
 	vk::DescriptorBufferInfo buffer_descriptor{graphics.uniform_buffer->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo particle_image_descriptor{textures.particle.sampler,
-	                                                  textures.particle.image->get_vk_image_view().get_handle(),
-	                                                  descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                  textures.particle.image->get_vk_image_view().get_format())};
-	vk::DescriptorImageInfo gradient_image_descriptor{textures.gradient.sampler,
-	                                                  textures.gradient.image->get_vk_image_view().get_handle(),
-	                                                  descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                  textures.gradient.image->get_vk_image_view().get_format())};
+	vk::DescriptorImageInfo particle_image_descriptor{
+	    textures.particle.sampler,
+	    textures.particle.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.particle.image->get_vk_image_view().get_format())};
+	vk::DescriptorImageInfo gradient_image_descriptor{
+	    textures.gradient.sampler,
+	    textures.gradient.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.gradient.image->get_vk_image_view().get_format())};
 
 	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {{{.dstSet          = graphics.descriptor_set,
 	                                                                 .dstBinding      = 0,

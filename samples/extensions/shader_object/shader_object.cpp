@@ -250,12 +250,14 @@ void ShaderObject::setup_render_pass()
 	VkSubpassDependency dependency{};
 
 	// Setup color destination stages for output, early, and late frag test so scene drawing finishes before drawing up
-	dependency.srcSubpass      = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass      = 0;
-	dependency.srcStageMask    = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	dependency.dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependency.srcSubpass   = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass   = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	dependency.dstStageMask =
+	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	dependency.srcAccessMask   = VK_ACCESS_TRANSFER_WRITE_BIT;
-	dependency.dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependency.dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Setup create info for the render pass for the UI
@@ -293,7 +295,8 @@ void ShaderObject::create_default_sampler()
 	// Note that for simplicity always use max. available anisotropy level for the current device
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+	sampler_create_info.maxAnisotropy =
+	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &standard_sampler));
@@ -339,8 +342,7 @@ void ShaderObject::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		VkImageFormatProperties2 image_properties;
 		image_properties.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
 		image_properties.pNext = nullptr;
-		VkResult format_result = vkGetPhysicalDeviceImageFormatProperties2(gpu.get_handle(), &image_format,
-		                                                                   &image_properties);
+		VkResult format_result = vkGetPhysicalDeviceImageFormatProperties2(gpu.get_handle(), &image_format, &image_properties);
 
 		// Add supported depth formats
 		if (format_result == VK_SUCCESS)
@@ -364,8 +366,7 @@ void ShaderObject::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		VkImageFormatProperties2 image_properties;
 		image_properties.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
 		image_properties.pNext = nullptr;
-		VkResult format_result = vkGetPhysicalDeviceImageFormatProperties2(gpu.get_handle(), &image_format,
-		                                                                   &image_properties);
+		VkResult format_result = vkGetPhysicalDeviceImageFormatProperties2(gpu.get_handle(), &image_format, &image_properties);
 
 		// Add supported output formats
 		if (format_result == VK_SUCCESS)
@@ -443,7 +444,8 @@ void ShaderObject::load_assets()
 
 void ShaderObject::prepare_uniform_buffers()
 {
-	camera_mats_ubo_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(camera_mats_ubo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_mats_ubo_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(camera_mats_ubo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void ShaderObject::update_uniform_buffers()
@@ -469,48 +471,41 @@ void ShaderObject::create_descriptor_pool()
 
 void ShaderObject::setup_descriptor_set_layout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings[ShaderTypeCOUNT] =
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings[ShaderTypeCOUNT] = {
+	    {// ShaderTypeBasic
+	     vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	     vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+	     vkb::initializers::descriptor_set_layout_binding(
+	         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 2),
+	     vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)},
 	    {
-	        {// ShaderTypeBasic
-	         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
-	         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 2),
-	         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)},
-	        {
-	            // ShaderTypeMaterial
-	            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-	            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
-	            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
-	        },
-	        {// ShaderTypePostProcess
-	         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0)}};
+	        // ShaderTypeMaterial
+	        vkb::initializers::descriptor_set_layout_binding(
+	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
+	    },
+	    {// ShaderTypePostProcess
+	     vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0)}};
 
 	// Set push constant for basic shader types to be in the vertex shader
-	push_constant_ranges[ShaderTypeBasic] = vkb::initializers::push_constant_range(
-	    VK_SHADER_STAGE_VERTEX_BIT,
-	    sizeof(BasicPushConstant),
-	    0);
+	push_constant_ranges[ShaderTypeBasic] = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(BasicPushConstant), 0);
 
 	// Set push constant for material shader types to be in the vertex, geometry, and fragment shader
 	push_constant_ranges[ShaderTypeMaterial] = vkb::initializers::push_constant_range(
-	    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-	    sizeof(MaterialPushConstant),
-	    0);
+	    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(MaterialPushConstant), 0);
 
 	// Set push constant for post processing shader types to be in the vertex and fragment shader
-	push_constant_ranges[ShaderTypePostProcess] = vkb::initializers::push_constant_range(
-	    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-	    sizeof(PostProcessPushConstant),
-	    0);
+	push_constant_ranges[ShaderTypePostProcess] =
+	    vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PostProcessPushConstant), 0);
 
 	// Create the pipeline layout for each of the shader types
 	for (int i = 0; i < ShaderTypeCOUNT; ++i)
 	{
-		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = {vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings[i].data(), static_cast<uint32_t>(set_layout_bindings[i].size()))};
+		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = {
+		    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings[i].data(), static_cast<uint32_t>(set_layout_bindings[i].size()))};
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts[i]));
-		VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(
-		    &descriptor_set_layouts[i],
-		    1);
+		VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts[i], 1);
 
 		// Create pipeline layouts for each shader type
 		pipeline_layout_create_info.pushConstantRangeCount = 1;
@@ -524,11 +519,7 @@ void ShaderObject::create_descriptor_sets()
 	for (int i = 0; i < ShaderTypeCOUNT; ++i)
 	{
 		// Allocate descriptor set for each shader type
-		VkDescriptorSetAllocateInfo alloc_info =
-		    vkb::initializers::descriptor_set_allocate_info(
-		        descriptor_pool,
-		        &descriptor_set_layouts[i],
-		        1);
+		VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts[i], 1);
 
 		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets[i]));
 	}
@@ -568,12 +559,8 @@ void ShaderObject::create_shaders()
 		                                vert_shader_data,
 		                                &descriptor_set_layouts[ShaderTypeBasic],
 		                                &push_constant_ranges[ShaderTypeBasic]);
-		skybox_frag_shader = new Shader(VK_SHADER_STAGE_FRAGMENT_BIT,
-		                                0,
-		                                "skybox frag",
-		                                frag_shader_data,
-		                                &descriptor_set_layouts[ShaderTypeBasic],
-		                                &push_constant_ranges[ShaderTypeBasic]);
+		skybox_frag_shader = new Shader(
+		    VK_SHADER_STAGE_FRAGMENT_BIT, 0, "skybox frag", frag_shader_data, &descriptor_set_layouts[ShaderTypeBasic], &push_constant_ranges[ShaderTypeBasic]);
 
 		// Set the fragment shader as linked to build them linked and build the shader
 		build_linked_shaders(device, skybox_vert_shader, skybox_frag_shader);
@@ -661,12 +648,8 @@ void ShaderObject::create_shaders()
 		                                           &push_constant_ranges[ShaderTypeBasic]));
 
 		// Create shaders with current and next stage bits and set the GLSL shader data, descriptor sets, and push constants
-		basic_frag_shaders.emplace_back(new Shader(VK_SHADER_STAGE_FRAGMENT_BIT,
-		                                           0,
-		                                           shader_name,
-		                                           frag_shader_data,
-		                                           &descriptor_set_layouts[ShaderTypeBasic],
-		                                           &push_constant_ranges[ShaderTypeBasic]));
+		basic_frag_shaders.emplace_back(new Shader(
+		    VK_SHADER_STAGE_FRAGMENT_BIT, 0, shader_name, frag_shader_data, &descriptor_set_layouts[ShaderTypeBasic], &push_constant_ranges[ShaderTypeBasic]));
 
 		// Set the fragment shader as linked to build them linked and build the shader
 		build_linked_shaders(device, basic_vert_shaders.back(), basic_frag_shaders.back());
@@ -780,21 +763,26 @@ void ShaderObject::create_images()
 	depth_images.reserve(supported_depth_formats.size());
 
 	// Create image and set sampler for the post process image
-	post_process_image                 = create_output_image(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+	post_process_image = create_output_image(VK_FORMAT_R8G8B8A8_UNORM,
+	                                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+	                                             VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	post_process_input_sampler.sampler = standard_sampler;
 
 	// Create an output image for all supported formats
 	for (auto format : supported_output_formats)
 	{
 		LOGI("Creating output image format of type {}", format.name);
-		output_images.emplace_back(create_output_image(format.format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT));
+		output_images.emplace_back(create_output_image(format.format,
+		                                               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+		                                                   VK_IMAGE_USAGE_TRANSFER_DST_BIT));
 	}
 
 	// Create a depth output image for all supported formats
 	for (auto format : supported_depth_formats)
 	{
 		LOGI("Creating output image format of type {}", format.name);
-		depth_images.emplace_back(create_output_image(format.format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_DEPTH_BIT));
+		depth_images.emplace_back(
+		    create_output_image(format.format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_DEPTH_BIT));
 	}
 }
 
@@ -815,15 +803,19 @@ void ShaderObject::initialize_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeBasic], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeBasic], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
 	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeBasic], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &heightmap_image_descriptor),
-	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeBasic], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3, &texture_array_image_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_sets[ShaderTypeBasic], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3, &texture_array_image_descriptor),
 
 	    // Buffer initial descriptor set data for ShaderTypeMaterial
 	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeMaterial], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeMaterial], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &checkerboard_image_descriptor),
-	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeMaterial], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &environment_image_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_sets[ShaderTypeMaterial], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &checkerboard_image_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_sets[ShaderTypeMaterial], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &environment_image_descriptor),
 
 	    // Buffer initial descriptor set data for ShaderTypePostProcess
-	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypePostProcess], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &post_process_image_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_sets[ShaderTypePostProcess], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &post_process_image_descriptor),
 	};
 
 	// Update descriptor sets
@@ -906,15 +898,11 @@ void ShaderObject::generate_terrain()
 	vkb::core::BufferC vertex_staging = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
 	vkb::core::BufferC index_staging  = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 
-	terrain.vertices = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                        vertex_buffer_size,
-	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
+	terrain.vertices = std::make_unique<vkb::core::BufferC>(
+	    get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	terrain.indices = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                       index_buffer_size,
-	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+	terrain.indices = std::make_unique<vkb::core::BufferC>(
+	    get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -922,20 +910,10 @@ void ShaderObject::generate_terrain()
 	VkBufferCopy copy_region = {};
 
 	copy_region.size = vertex_buffer_size;
-	vkCmdCopyBuffer(
-	    copy_command,
-	    vertex_staging.get_handle(),
-	    terrain.vertices->get_handle(),
-	    1,
-	    &copy_region);
+	vkCmdCopyBuffer(copy_command, vertex_staging.get_handle(), terrain.vertices->get_handle(), 1, &copy_region);
 
 	copy_region.size = index_buffer_size;
-	vkCmdCopyBuffer(
-	    copy_command,
-	    index_staging.get_handle(),
-	    terrain.indices->get_handle(),
-	    1,
-	    &copy_region);
+	vkCmdCopyBuffer(copy_command, index_staging.get_handle(), terrain.indices->get_handle(), 1, &copy_region);
 
 	get_device().flush_command_buffer(copy_command, queue, true);
 }
@@ -974,7 +952,8 @@ void ShaderObject::build_command_buffers()
 		                             0,
 		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             range);
 
 		vkb::image_layout_transition(draw_cmd_buffer,
 		                             depth_images[current_depth_format].image,
@@ -983,7 +962,8 @@ void ShaderObject::build_command_buffers()
 		                             0,
 		                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, depth_range);
+		                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		                             depth_range);
 
 		// Setup dynamic rendering attachment info and begin rendering
 		{
@@ -1043,7 +1023,8 @@ void ShaderObject::build_command_buffers()
 
 			// Bind descriptors and push constants for the skybox draw
 			glm::mat4 model_matrix = glm::mat4(1.0f);
-			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypeBasic], 0, 1, &descriptor_sets[ShaderTypeBasic], 0, nullptr);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypeBasic], 0, 1, &descriptor_sets[ShaderTypeBasic], 0, nullptr);
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for the skybox
@@ -1087,7 +1068,8 @@ void ShaderObject::build_command_buffers()
 			vkCmdSetCullModeEXT(draw_cmd_buffer, VK_CULL_MODE_FRONT_BIT);
 
 			// Bind descriptors for models
-			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypeMaterial], 0, 1, &descriptor_sets[ShaderTypeMaterial], 0, nullptr);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypeMaterial], 0, 1, &descriptor_sets[ShaderTypeMaterial], 0, nullptr);
 
 			// Setup and initialize push constants for material shader types
 			MaterialPushConstant material_push_constant;
@@ -1095,10 +1077,14 @@ void ShaderObject::build_command_buffers()
 			material_push_constant.camera_pos   = camera.position;
 
 			// Update and push constants for torus
-			material_push_constant.model = glm::translate(glm::vec3(1.2f, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.015f));
-			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
+			material_push_constant.model =
+			    glm::translate(glm::vec3(1.2f, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.015f));
+			vkCmdPushConstants(draw_cmd_buffer,
+			                   pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			                   0, sizeof(MaterialPushConstant), &material_push_constant);
+			                   0,
+			                   sizeof(MaterialPushConstant),
+			                   &material_push_constant);
 
 			// Bind shaders for the torus
 			bind_material_shader(draw_cmd_buffer, 0);
@@ -1107,10 +1093,14 @@ void ShaderObject::build_command_buffers()
 			draw_model(torus, draw_cmd_buffer);
 
 			// Update and push constants for rock 1
-			material_push_constant.model = glm::translate(glm::vec3(1.2f, 1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(4.0f));
-			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
+			material_push_constant.model =
+			    glm::translate(glm::vec3(1.2f, 1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(4.0f));
+			vkCmdPushConstants(draw_cmd_buffer,
+			                   pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			                   0, sizeof(MaterialPushConstant), &material_push_constant);
+			                   0,
+			                   sizeof(MaterialPushConstant),
+			                   &material_push_constant);
 
 			// Bind shaders for rock 1
 			bind_material_shader(draw_cmd_buffer, 1);
@@ -1119,10 +1109,14 @@ void ShaderObject::build_command_buffers()
 			draw_model(rock, draw_cmd_buffer);
 
 			// Update and push constants for cube 1
-			material_push_constant.model = glm::translate(glm::vec3(1.2f, -1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.05f));
-			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
+			material_push_constant.model =
+			    glm::translate(glm::vec3(1.2f, -1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.05f));
+			vkCmdPushConstants(draw_cmd_buffer,
+			                   pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			                   0, sizeof(MaterialPushConstant), &material_push_constant);
+			                   0,
+			                   sizeof(MaterialPushConstant),
+			                   &material_push_constant);
 
 			// Bind shaders for cube 1
 			bind_material_shader(draw_cmd_buffer, 2);
@@ -1131,10 +1125,14 @@ void ShaderObject::build_command_buffers()
 			draw_model(cube, draw_cmd_buffer);
 
 			// Update and push constants for torus 2
-			material_push_constant.model = glm::translate(glm::vec3(-1.2f, 1.0f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.015f));
-			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
+			material_push_constant.model =
+			    glm::translate(glm::vec3(-1.2f, 1.0f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.015f));
+			vkCmdPushConstants(draw_cmd_buffer,
+			                   pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			                   0, sizeof(MaterialPushConstant), &material_push_constant);
+			                   0,
+			                   sizeof(MaterialPushConstant),
+			                   &material_push_constant);
 
 			// Bind shaders for torus 2
 			bind_material_shader(draw_cmd_buffer, 3);
@@ -1143,10 +1141,14 @@ void ShaderObject::build_command_buffers()
 			draw_model(torus, draw_cmd_buffer);
 
 			// Update and push constants for rock 2
-			material_push_constant.model = glm::translate(glm::vec3(-1.2f, -1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(4.0f));
-			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
+			material_push_constant.model =
+			    glm::translate(glm::vec3(-1.2f, -1.f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(4.0f));
+			vkCmdPushConstants(draw_cmd_buffer,
+			                   pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			                   0, sizeof(MaterialPushConstant), &material_push_constant);
+			                   0,
+			                   sizeof(MaterialPushConstant),
+			                   &material_push_constant);
 
 			// Bind shaders for rock 2
 			bind_material_shader(draw_cmd_buffer, 4);
@@ -1155,10 +1157,14 @@ void ShaderObject::build_command_buffers()
 			draw_model(rock, draw_cmd_buffer);
 
 			// Update and push constants for cube 2
-			material_push_constant.model = glm::translate(glm::vec3(-1.2f, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.05f));
-			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeMaterial],
+			material_push_constant.model =
+			    glm::translate(glm::vec3(-1.2f, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.05f));
+			vkCmdPushConstants(draw_cmd_buffer,
+			                   pipeline_layout[ShaderTypeMaterial],
 			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			                   0, sizeof(MaterialPushConstant), &material_push_constant);
+			                   0,
+			                   sizeof(MaterialPushConstant),
+			                   &material_push_constant);
 
 			// Bind shaders for cube 2
 			bind_material_shader(draw_cmd_buffer, 5);
@@ -1174,7 +1180,8 @@ void ShaderObject::build_command_buffers()
 		// Basic Shaders
 		{
 			// Bind basic shader descriptor set
-			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypeBasic], 0, 1, &descriptor_sets[ShaderTypeBasic], 0, nullptr);
+			vkCmdBindDescriptorSets(
+			    draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypeBasic], 0, 1, &descriptor_sets[ShaderTypeBasic], 0, nullptr);
 
 			// Update and push constants for rock
 			glm::mat4 model_matrix = glm::translate(glm::vec3(0, 0, -1.2f)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(4.0f));
@@ -1187,7 +1194,8 @@ void ShaderObject::build_command_buffers()
 			draw_model(rock, draw_cmd_buffer);
 
 			// Update and push constants for teapot 1
-			model_matrix = glm::translate(glm::vec3(0, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
+			model_matrix = glm::translate(glm::vec3(0, 0, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 1, 0)) *
+			               glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for teapot 1
@@ -1197,7 +1205,8 @@ void ShaderObject::build_command_buffers()
 			draw_model(teapot, draw_cmd_buffer);
 
 			// Update and push constants for teapot 2
-			model_matrix = glm::translate(glm::vec3(0, -1.2f, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
+			model_matrix = glm::translate(glm::vec3(0, -1.2f, 0)) * glm::rotate(elapsed_time, glm::vec3(1, 0, 0)) *
+			               glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for teapot 2
@@ -1207,7 +1216,8 @@ void ShaderObject::build_command_buffers()
 			draw_model(teapot, draw_cmd_buffer);
 
 			// Update and push constants for teapot 3
-			model_matrix = glm::translate(glm::vec3(0, 1.2f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) * glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
+			model_matrix = glm::translate(glm::vec3(0, 1.2f, 0)) * glm::rotate(elapsed_time, glm::vec3(0, 0, 1)) *
+			               glm::rotate(glm::radians(180.0f), glm::vec3(1, 0, 0)) * glm::scale(glm::vec3(0.2f));
 			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypeBasic], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(BasicPushConstant), &model_matrix);
 
 			// Bind shaders for teapot 3
@@ -1283,7 +1293,8 @@ void ShaderObject::build_command_buffers()
 			                             0,
 			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			                             VK_IMAGE_LAYOUT_UNDEFINED,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
+			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                             range);
 
 			{
 				// Setup rendering information for post processing pass
@@ -1310,8 +1321,20 @@ void ShaderObject::build_command_buffers()
 			vkCmdSetDepthWriteEnableEXT(draw_cmd_buffer, VK_FALSE);
 
 			// Bind post-process descriptor and push constants
-			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout[ShaderTypePostProcess], 0, 1, &descriptor_sets[ShaderTypePostProcess], 0, nullptr);
-			vkCmdPushConstants(draw_cmd_buffer, pipeline_layout[ShaderTypePostProcess], VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PostProcessPushConstant), &elapsed_time);
+			vkCmdBindDescriptorSets(draw_cmd_buffer,
+			                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+			                        pipeline_layout[ShaderTypePostProcess],
+			                        0,
+			                        1,
+			                        &descriptor_sets[ShaderTypePostProcess],
+			                        0,
+			                        nullptr);
+			vkCmdPushConstants(draw_cmd_buffer,
+			                   pipeline_layout[ShaderTypePostProcess],
+			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			                   0,
+			                   sizeof(PostProcessPushConstant),
+			                   &elapsed_time);
 
 			// Bind shaders for post processing
 			bind_shader(draw_cmd_buffer, post_process_vert_shader);
@@ -1411,7 +1434,8 @@ void ShaderObject::update_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypeMaterial], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
 
 	    // Buffer changing descriptor set data for ShaderTypePostProcess
-	    vkb::initializers::write_descriptor_set(descriptor_sets[ShaderTypePostProcess], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &post_process_image_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_sets[ShaderTypePostProcess], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &post_process_image_descriptor),
 	};
 
 	// Update descriptor sets
@@ -1438,30 +1462,20 @@ void ShaderObject::set_initial_state(VkCommandBuffer cmd)
 
 	{
 		// Setup vertex input with position, normals, and uv
-		const VkVertexInputBindingDescription2EXT vertex_binding[] =
-		    {
-		        vkb::initializers::vertex_input_binding_description2ext(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX, 1)};
+		const VkVertexInputBindingDescription2EXT vertex_binding[] = {
+		    vkb::initializers::vertex_input_binding_description2ext(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX, 1)};
 
-		const VkVertexInputAttributeDescription2EXT vertex_attribute_description_ext[] =
-		    {
-		        vkb::initializers::vertex_input_attribute_description2ext(
-		            0,
-		            0,
-		            VK_FORMAT_R32G32B32_SFLOAT,
-		            offsetof(Vertex, pos)),
-		        vkb::initializers::vertex_input_attribute_description2ext(
-		            0,
-		            1,
-		            VK_FORMAT_R32G32B32_SFLOAT,
-		            offsetof(Vertex, normal)),
-		        vkb::initializers::vertex_input_attribute_description2ext(
-		            0,
-		            2,
-		            VK_FORMAT_R32G32_SFLOAT,
-		            offsetof(Vertex, uv)),
-		    };
+		const VkVertexInputAttributeDescription2EXT vertex_attribute_description_ext[] = {
+		    vkb::initializers::vertex_input_attribute_description2ext(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
+		    vkb::initializers::vertex_input_attribute_description2ext(0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)),
+		    vkb::initializers::vertex_input_attribute_description2ext(0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)),
+		};
 
-		vkCmdSetVertexInputEXT(cmd, sizeof(vertex_binding) / sizeof(vertex_binding[0]), vertex_binding, sizeof(vertex_attribute_description_ext) / sizeof(vertex_attribute_description_ext[0]), vertex_attribute_description_ext);
+		vkCmdSetVertexInputEXT(cmd,
+		                       sizeof(vertex_binding) / sizeof(vertex_binding[0]),
+		                       vertex_binding,
+		                       sizeof(vertex_attribute_description_ext) / sizeof(vertex_attribute_description_ext[0]),
+		                       vertex_attribute_description_ext);
 	}
 
 	// Set the topology to triangles, don't restart primitives, set samples to only 1 per pixel
@@ -1506,7 +1520,8 @@ void ShaderObject::set_initial_state(VkCommandBuffer cmd)
 
 	{
 		// Use RGBA color write mask
-		VkColorComponentFlags color_component_flags[] = {VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_A_BIT};
+		VkColorComponentFlags color_component_flags[] = {VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_G_BIT |
+		                                                 VK_COLOR_COMPONENT_A_BIT};
 		vkCmdSetColorWriteMaskEXT(cmd, 0, 1, color_component_flags);
 	}
 }
@@ -1710,7 +1725,13 @@ void ShaderObject::randomize_current()
 }
 
 // Helper function for imgui slider for togglable sliders
-void imgui_slider(bool *enabled, std::string formatted_slider, std::string shader_name, int *slider_int, int num_shaders, const int alignment = 290, const int checkbox_alignment = 30)
+void imgui_slider(bool       *enabled,
+                  std::string formatted_slider,
+                  std::string shader_name,
+                  int        *slider_int,
+                  int         num_shaders,
+                  const int   alignment          = 290,
+                  const int   checkbox_alignment = 30)
 {
 	ImGui::Checkbox(fmt::format("##{}", formatted_slider.c_str()).c_str(), enabled);
 	ImGui::SameLine(checkbox_alignment);
@@ -1761,42 +1782,63 @@ void ShaderObject::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		ImGui::SliderInt("Selected Basic Object:", &selected_basic_object, 0, num_basic_objects - 1);
 
-		imgui_slider(&iterate_basic, "Basic Linked Shader Set:",
+		imgui_slider(&iterate_basic,
+		             "Basic Linked Shader Set:",
 		             basic_vert_shaders[current_basic_linked_shaders[selected_basic_object]]->get_name(),
-		             &current_basic_linked_shaders[selected_basic_object], static_cast<uint32_t>(basic_vert_shaders.size() - 1),
-		             slider_spacing, checkbox_spacing);
+		             &current_basic_linked_shaders[selected_basic_object],
+		             static_cast<uint32_t>(basic_vert_shaders.size() - 1),
+		             slider_spacing,
+		             checkbox_spacing);
 
 		ImGui::SliderInt("Selected Material Object:", &selected_material_object, 0, num_material_objects - 1);
 
-		imgui_slider(&iterate_material_vert, "Material Vert Shader:",
+		imgui_slider(&iterate_material_vert,
+		             "Material Vert Shader:",
 		             material_vert_shaders[current_material_shaders[selected_material_object].vert]->get_name(),
-		             &current_material_shaders[selected_material_object].vert, static_cast<uint32_t>(material_vert_shaders.size() - 1),
-		             slider_spacing, checkbox_spacing);
+		             &current_material_shaders[selected_material_object].vert,
+		             static_cast<uint32_t>(material_vert_shaders.size() - 1),
+		             slider_spacing,
+		             checkbox_spacing);
 
-		imgui_slider(&iterate_material_geo, "Material Geo Shader:",
+		imgui_slider(&iterate_material_geo,
+		             "Material Geo Shader:",
 		             material_geo_shaders[current_material_shaders[selected_material_object].geo]->get_name(),
-		             &current_material_shaders[selected_material_object].geo, static_cast<uint32_t>(material_geo_shaders.size() - 1),
-		             slider_spacing, checkbox_spacing);
+		             &current_material_shaders[selected_material_object].geo,
+		             static_cast<uint32_t>(material_geo_shaders.size() - 1),
+		             slider_spacing,
+		             checkbox_spacing);
 
-		imgui_slider(&iterate_material_frag, "Material Frag Shader:",
+		imgui_slider(&iterate_material_frag,
+		             "Material Frag Shader:",
 		             material_frag_shaders[current_material_shaders[selected_material_object].frag]->get_name(),
-		             &current_material_shaders[selected_material_object].frag, static_cast<uint32_t>(material_frag_shaders.size() - 1),
-		             slider_spacing, checkbox_spacing);
+		             &current_material_shaders[selected_material_object].frag,
+		             static_cast<uint32_t>(material_frag_shaders.size() - 1),
+		             slider_spacing,
+		             checkbox_spacing);
 
-		imgui_slider(&iterate_post_process, "Post Process Frag Shader:",
+		imgui_slider(&iterate_post_process,
+		             "Post Process Frag Shader:",
 		             post_process_frag_shaders[current_post_process_shader]->get_name(),
-		             &current_post_process_shader, static_cast<uint32_t>(post_process_frag_shaders.size() - 1),
-		             slider_spacing, checkbox_spacing);
+		             &current_post_process_shader,
+		             static_cast<uint32_t>(post_process_frag_shaders.size() - 1),
+		             slider_spacing,
+		             checkbox_spacing);
 
-		imgui_slider(&iterate_output, "Output Format:",
+		imgui_slider(&iterate_output,
+		             "Output Format:",
 		             supported_output_formats[current_output_format].name.c_str(),
-		             &current_output_format, static_cast<uint32_t>(supported_output_formats.size() - 1),
-		             slider_spacing, checkbox_spacing);
+		             &current_output_format,
+		             static_cast<uint32_t>(supported_output_formats.size() - 1),
+		             slider_spacing,
+		             checkbox_spacing);
 
-		imgui_slider(&iterate_depth, "Depth Format:",
+		imgui_slider(&iterate_depth,
+		             "Depth Format:",
 		             supported_depth_formats[current_depth_format].name,
-		             &current_depth_format, static_cast<uint32_t>(supported_depth_formats.size() - 1),
-		             slider_spacing, checkbox_spacing);
+		             &current_depth_format,
+		             static_cast<uint32_t>(supported_depth_formats.size() - 1),
+		             slider_spacing,
+		             checkbox_spacing);
 
 		if (drawer.button("Randomize All"))
 		{
@@ -1814,15 +1856,22 @@ void ShaderObject::on_update_ui_overlay(vkb::Drawer &drawer)
 	ImGui::SetNextWindowSize(ImVec2(width, window_height));
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
 
-	if (ImGui::Begin("Histograms of CPU Frame time in (ms) of last 2000 frames", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs))
+	if (ImGui::Begin(
+	        "Histograms of CPU Frame time in (ms) of last 2000 frames", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs))
 	{
 		float max_value = *std::max_element(timestamp_values.begin(), timestamp_values.end());
 
 		ImGui::Text("16.667 ms");
 		ImGui::SameLine(-font_size);
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
-		ImGui::PlotLines("##Frame Times", timestamp_values.data(), static_cast<uint32_t>(timestamp_values.size()), current_timestamp + 1, 0, 0.0f,
-		                 16.667f, ImVec2(1.08f * width * dpi_factor, graph_height));
+		ImGui::PlotLines("##Frame Times",
+		                 timestamp_values.data(),
+		                 static_cast<uint32_t>(timestamp_values.size()),
+		                 current_timestamp + 1,
+		                 0,
+		                 0.0f,
+		                 16.667f,
+		                 ImVec2(1.08f * width * dpi_factor, graph_height));
 
 		ImGui::PopStyleColor();
 		ImGui::Text("CPU Frame Time: %f ms (max %f ms)", timestamp_values[current_timestamp], max_value);
@@ -1948,11 +1997,7 @@ void ShaderObject::build_linked_shaders(VkDevice device, ShaderObject::Shader *v
 	VkShaderEXT shaderEXTs[2];
 
 	// Create the shader objects
-	VkResult result = vkCreateShadersEXT(device,
-	                                     2,
-	                                     shader_create_infos,
-	                                     nullptr,
-	                                     shaderEXTs);
+	VkResult result = vkCreateShadersEXT(device, 2, shader_create_infos, nullptr, shaderEXTs);
 
 	if (result != VK_SUCCESS)
 	{

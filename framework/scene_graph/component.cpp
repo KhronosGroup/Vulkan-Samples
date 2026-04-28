@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,8 +25,7 @@ namespace vkb
 {
 namespace sg
 {
-Component::Component(const std::string &name) :
-    name{name}
+Component::Component(const std::string &name) : name{name}
 {}
 
 const std::string &Component::get_name() const

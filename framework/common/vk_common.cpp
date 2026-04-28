@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -67,15 +67,12 @@ namespace vkb
 {
 bool is_depth_only_format(VkFormat format)
 {
-	return format == VK_FORMAT_D16_UNORM ||
-	       format == VK_FORMAT_D32_SFLOAT;
+	return format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT;
 }
 
 bool is_depth_stencil_format(VkFormat format)
 {
-	return format == VK_FORMAT_D16_UNORM_S8_UINT ||
-	       format == VK_FORMAT_D24_UNORM_S8_UINT ||
-	       format == VK_FORMAT_D32_SFLOAT_S8_UINT;
+	return format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT;
 }
 
 bool is_depth_format(VkFormat format)
@@ -152,14 +149,12 @@ void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFil
 
 bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
 {
-	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ||
-	       descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC || descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 }
 
 bool is_buffer_descriptor_type(VkDescriptorType descriptor_type)
 {
-	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ||
-	       descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
+	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
 	       is_dynamic_buffer_descriptor_type(descriptor_type);
 }
 
@@ -442,11 +437,8 @@ void image_layout_transition(VkCommandBuffer                command_buffer,
 	vkCmdPipelineBarrier(command_buffer, src_stage_mask, dst_stage_mask, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 }
 
-void image_layout_transition(VkCommandBuffer                command_buffer,
-                             VkImage                        image,
-                             VkImageLayout                  old_layout,
-                             VkImageLayout                  new_layout,
-                             VkImageSubresourceRange const &subresource_range)
+void image_layout_transition(
+    VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkImageSubresourceRange const &subresource_range)
 {
 	VkPipelineStageFlags src_stage_mask  = getPipelineStageFlags(old_layout);
 	VkPipelineStageFlags dst_stage_mask  = getPipelineStageFlags(new_layout);
@@ -457,10 +449,7 @@ void image_layout_transition(VkCommandBuffer                command_buffer,
 }
 
 // Fixed sub resource on first mip level and layer
-void image_layout_transition(VkCommandBuffer command_buffer,
-                             VkImage         image,
-                             VkImageLayout   old_layout,
-                             VkImageLayout   new_layout)
+void image_layout_transition(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout)
 {
 	VkImageSubresourceRange subresource_range = {};
 	subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -513,18 +502,15 @@ void image_layout_transition(VkCommandBuffer                                    
 
 std::vector<VkImageCompressionFixedRateFlagBitsEXT> fixed_rate_compression_flags_to_vector(VkImageCompressionFixedRateFlagsEXT flags)
 {
-	const std::vector<VkImageCompressionFixedRateFlagBitsEXT> all_flags = {VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT,
-	                                                                       VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT};
+	const std::vector<VkImageCompressionFixedRateFlagBitsEXT> all_flags = {
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT,  VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT,  VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT,
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT,  VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT,  VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT,
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT,  VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT,  VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT,
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT,
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT,
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT,
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT,
+	    VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT};
 
 	std::vector<VkImageCompressionFixedRateFlagBitsEXT> flags_vector;
 
@@ -585,11 +571,9 @@ VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice gpu, VkSurfaceKHR surf
 	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, supported_surface_formats.data());
 
-	auto it = std::ranges::find_if(supported_surface_formats,
-	                               [&preferred_formats](VkSurfaceFormatKHR surface_format) {
-		                               return std::ranges::any_of(preferred_formats,
-		                                                          [&surface_format](VkFormat format) { return format == surface_format.format; });
-	                               });
+	auto it = std::ranges::find_if(supported_surface_formats, [&preferred_formats](VkSurfaceFormatKHR surface_format) {
+		return std::ranges::any_of(preferred_formats, [&surface_format](VkFormat format) { return format == surface_format.format; });
+	});
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
@@ -688,8 +672,9 @@ uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queu
 	// Try to find a queue family index that supports compute but not graphics
 	if (queue_flag & VK_QUEUE_COMPUTE_BIT)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties,
-		                                       [queue_flag](const VkQueueFamilyProperties &property) { return (property.queueFlags & queue_flag) && !(property.queueFlags & VK_QUEUE_GRAPHICS_BIT); });
+		auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const VkQueueFamilyProperties &property) {
+			return (property.queueFlags & queue_flag) && !(property.queueFlags & VK_QUEUE_GRAPHICS_BIT);
+		});
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
@@ -700,11 +685,9 @@ uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queu
 	// Try to find a queue family index that supports transfer but not graphics and compute
 	if (queue_flag & VK_QUEUE_TRANSFER_BIT)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties,
-		                                       [queue_flag](const VkQueueFamilyProperties &property) {
-			                                       return (property.queueFlags & queue_flag) && !(property.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
-			                                              !(property.queueFlags & VK_QUEUE_COMPUTE_BIT);
-		                                       });
+		auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const VkQueueFamilyProperties &property) {
+			return (property.queueFlags & queue_flag) && !(property.queueFlags & VK_QUEUE_GRAPHICS_BIT) && !(property.queueFlags & VK_QUEUE_COMPUTE_BIT);
+		});
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
@@ -712,8 +695,8 @@ uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queu
 	}
 
 	// For other queue types or if no separate compute queue is present, return the first one to support the requested flags
-	auto propertyIt = std::ranges::find_if(
-	    queue_family_properties, [queue_flag](const VkQueueFamilyProperties &property) { return (property.queueFlags & queue_flag) == queue_flag; });
+	auto propertyIt = std::ranges::find_if(queue_family_properties,
+	                                       [queue_flag](const VkQueueFamilyProperties &property) { return (property.queueFlags & queue_flag) == queue_flag; });
 	if (propertyIt != queue_family_properties.end())
 	{
 		return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));

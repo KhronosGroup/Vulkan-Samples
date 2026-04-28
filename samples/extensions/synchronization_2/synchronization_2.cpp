@@ -265,7 +265,8 @@ void Synchronization2::prepare_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(num_particles);
 
-	std::default_random_engine      rnd_engine((lock_simulation_speed || window->get_window_mode() == vkb::Window::Mode::Headless) ? 0 : static_cast<unsigned>(time(nullptr)));
+	std::default_random_engine rnd_engine(
+	    (lock_simulation_speed || window->get_window_mode() == vkb::Window::Mode::Headless) ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -289,7 +290,8 @@ void Synchronization2::prepare_storage_buffers()
 
 				// Velocity
 				glm::vec3 angular  = glm::vec3(0.5f, 1.5f, 0.5f) * (((i % 2) == 0) ? 1.0f : -1.0f);
-				glm::vec3 velocity = glm::cross((position - attractors[i]), angular) + glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine) * 0.025f);
+				glm::vec3 velocity = glm::cross((position - attractors[i]), angular) +
+				                     glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine) * 0.025f);
 
 				float mass   = (rnd_distribution(rnd_engine) * 0.5f + 0.5f) * 75.0f;
 				particle.pos = glm::vec4(position, mass);
@@ -309,10 +311,11 @@ void Synchronization2::prepare_storage_buffers()
 	// SSBO won't be changed on the host after upload so copy to device local memory
 	vkb::core::BufferC staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), particle_buffer);
 
-	compute.storage_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                              storage_buffer_size,
-	                                                              VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                              VMA_MEMORY_USAGE_GPU_ONLY);
+	compute.storage_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(),
+	                                         storage_buffer_size,
+	                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffer to storage buffer
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -344,17 +347,12 @@ void Synchronization2::prepare_storage_buffers()
 
 void Synchronization2::setup_descriptor_pool()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
+	std::vector<VkDescriptorPoolSize> pool_sizes = {vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	                                                vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1),
+	                                                vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -369,27 +367,18 @@ void Synchronization2::setup_descriptor_set_layout()
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &graphics.descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &graphics.descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&graphics.descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &graphics.pipeline_layout));
 }
 
 void Synchronization2::setup_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &graphics.descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &graphics.descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &graphics.descriptor_set));
 
@@ -408,50 +397,25 @@ void Synchronization2::setup_descriptor_set()
 void Synchronization2::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
-	        0,
-	        VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_POINT_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_FALSE,
-	        VK_FALSE,
-	        VK_COMPARE_OP_ALWAYS);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_ALWAYS);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamicState =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Rendering pipeline
 	// Load shaders
@@ -473,11 +437,7 @@ void Synchronization2::prepare_pipelines()
 	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        graphics.pipeline_layout,
-	        render_pass,
-	        0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(graphics.pipeline_layout, render_pass, 0);
 
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -527,57 +487,34 @@ void Synchronization2::prepare_compute()
 
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    // Binding 0 : Particle position storage buffer
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-	        VK_SHADER_STAGE_COMPUTE_BIT,
-	        0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 0),
 	    // Binding 1 : Uniform buffer
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_COMPUTE_BIT,
-	        1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &compute.descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &compute.descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&compute.descriptor_set_layout, 1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &compute.pipeline_layout));
 
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &compute.descriptor_set_layout,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &compute.descriptor_set_layout, 1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &compute.descriptor_set));
 
-	VkDescriptorBufferInfo            storage_buffer_descriptor = create_descriptor(*compute.storage_buffer);
-	VkDescriptorBufferInfo            uniform_buffer_descriptor = create_descriptor(*compute.uniform_buffer);
-	std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets =
-	    {
-	        // Binding 0 : Particle position storage buffer
-	        vkb::initializers::write_descriptor_set(
-	            compute.descriptor_set,
-	            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-	            0,
-	            &storage_buffer_descriptor),
-	        // Binding 1 : Uniform buffer
-	        vkb::initializers::write_descriptor_set(
-	            compute.descriptor_set,
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            1,
-	            &uniform_buffer_descriptor)};
+	VkDescriptorBufferInfo            storage_buffer_descriptor     = create_descriptor(*compute.storage_buffer);
+	VkDescriptorBufferInfo            uniform_buffer_descriptor     = create_descriptor(*compute.uniform_buffer);
+	std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets = {
+	    // Binding 0 : Particle position storage buffer
+	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, &storage_buffer_descriptor),
+	    // Binding 1 : Uniform buffer
+	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &uniform_buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(
+	    get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, NULL);
 
 	// Create pipelines
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);
@@ -608,8 +545,8 @@ void Synchronization2::prepare_compute()
 	specialization_data.power            = 0.8f;
 	specialization_data.soften           = 0.7f;
 
-	VkSpecializationInfo specialization_info =
-	    vkb::initializers::specialization_info(static_cast<uint32_t>(specialization_map_entries.size()), specialization_map_entries.data(), sizeof(specialization_data), &specialization_data);
+	VkSpecializationInfo specialization_info = vkb::initializers::specialization_info(
+	    static_cast<uint32_t>(specialization_map_entries.size()), specialization_map_entries.data(), sizeof(specialization_data), &specialization_data);
 	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
 
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
@@ -619,8 +556,7 @@ void Synchronization2::prepare_compute()
 
 	specialization_map_entries.clear();
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t)));
-	specialization_info =
-	    vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(work_group_size), &work_group_size);
+	specialization_info = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(work_group_size), &work_group_size);
 
 	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_integrate));
@@ -634,10 +570,7 @@ void Synchronization2::prepare_compute()
 
 	// Create a command buffer for compute operations
 	VkCommandBufferAllocateInfo command_buffer_allocate_info =
-	    vkb::initializers::command_buffer_allocate_info(
-	        compute.command_pool,
-	        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	        1);
+	    vkb::initializers::command_buffer_allocate_info(compute.command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
 
 	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &compute.command_buffer));
 
@@ -668,10 +601,7 @@ void Synchronization2::prepare_compute()
 
 		// Create a transient command buffer for setting up the initial buffer transfer state
 		VkCommandBufferAllocateInfo command_buffer_allocate_info =
-		    vkb::initializers::command_buffer_allocate_info(
-		        compute.command_pool,
-		        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		        1);
+		    vkb::initializers::command_buffer_allocate_info(compute.command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
 
 		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &transfer_command));
 
@@ -736,16 +666,12 @@ void Synchronization2::prepare_compute()
 void Synchronization2::prepare_uniform_buffers()
 {
 	// Compute shader uniform buffer block
-	compute.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                              sizeof(compute.ubo),
-	                                                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+	compute.uniform_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(compute.ubo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Vertex shader uniform buffer block
-	graphics.uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                               sizeof(graphics.ubo),
-	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
+	graphics.uniform_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(graphics.ubo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_compute_uniform_buffers(1.0f);
 	update_graphics_uniform_buffers();
@@ -836,7 +762,8 @@ bool Synchronization2::prepare(const vkb::ApplicationOptions &options)
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
 	work_group_size = std::min(static_cast<uint32_t>(256), get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
 	// Same for shared data size for passing data between shader invocations
-	shared_data_size = std::min(static_cast<uint32_t>(1024), static_cast<uint32_t>(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
+	shared_data_size = std::min(static_cast<uint32_t>(1024),
+	                            static_cast<uint32_t>(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
 	load_assets();
 	setup_descriptor_pool();

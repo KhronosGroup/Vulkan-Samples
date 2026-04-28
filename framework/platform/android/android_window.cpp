@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,11 +22,8 @@
 namespace vkb
 {
 AndroidWindow::AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, const Window::Properties &properties) :
-    Window(properties),
-    handle{window},
-    platform{platform}
-{
-}
+    Window(properties), handle{window}, platform{platform}
+{}
 
 VkSurfaceKHR AndroidWindow::create_surface(vkb::core::InstanceC &instance)
 {

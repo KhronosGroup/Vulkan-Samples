@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Holochip
+/* Copyright (c) 2021-2026, Holochip
  * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -68,14 +68,14 @@ class HPPTextureCompressionComparison : public vkb::VulkanSample<vkb::BindingTyp
 	};
 
   private:
-	std::pair<std::unique_ptr<vkb::scene_graph::components::HPPImage>, HPPTextureBenchmark> compress(
-	    const std::string &filename, HPPTextureCompressionData texture_format, const std::string &name);
+	std::pair<std::unique_ptr<vkb::scene_graph::components::HPPImage>, HPPTextureBenchmark>
+	    compress(const std::string &filename, HPPTextureCompressionData texture_format, const std::string &name);
 	std::unique_ptr<vkb::scene_graph::components::HPPImage> create_image(ktxTexture2 *ktx_texture, const std::string &name);
 	void                                                    create_subpass();
-	bool                                                    is_texture_format_supported(const HPPTextureCompressionData &tcd, vk::PhysicalDeviceFeatures const &device_features);
-	void                                                    load_assets();
-	void                                                    prepare_gui();
-	HPPTextureBenchmark                                     update_textures(const HPPTextureCompressionData &new_format);
+	bool                is_texture_format_supported(const HPPTextureCompressionData &tcd, vk::PhysicalDeviceFeatures const &device_features);
+	void                load_assets();
+	void                prepare_gui();
+	HPPTextureBenchmark update_textures(const HPPTextureCompressionData &new_format);
 
   private:
 	vkb::sg::Camera                                                                *camera             = nullptr;

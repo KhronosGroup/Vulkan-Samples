@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,33 +37,15 @@ namespace sg
 {
 bool is_astc(const VkFormat format)
 {
-	return (format == VK_FORMAT_ASTC_4x4_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_4x4_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_5x4_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_5x4_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_5x5_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_5x5_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_6x5_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_6x5_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_6x6_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_6x6_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_8x5_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_8x5_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_8x6_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_8x6_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_8x8_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_8x8_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x5_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x5_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x6_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x6_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x8_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x8_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x10_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_10x10_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_12x10_UNORM_BLOCK ||
-	        format == VK_FORMAT_ASTC_12x10_SRGB_BLOCK ||
-	        format == VK_FORMAT_ASTC_12x12_UNORM_BLOCK ||
+	return (format == VK_FORMAT_ASTC_4x4_UNORM_BLOCK || format == VK_FORMAT_ASTC_4x4_SRGB_BLOCK || format == VK_FORMAT_ASTC_5x4_UNORM_BLOCK ||
+	        format == VK_FORMAT_ASTC_5x4_SRGB_BLOCK || format == VK_FORMAT_ASTC_5x5_UNORM_BLOCK || format == VK_FORMAT_ASTC_5x5_SRGB_BLOCK ||
+	        format == VK_FORMAT_ASTC_6x5_UNORM_BLOCK || format == VK_FORMAT_ASTC_6x5_SRGB_BLOCK || format == VK_FORMAT_ASTC_6x6_UNORM_BLOCK ||
+	        format == VK_FORMAT_ASTC_6x6_SRGB_BLOCK || format == VK_FORMAT_ASTC_8x5_UNORM_BLOCK || format == VK_FORMAT_ASTC_8x5_SRGB_BLOCK ||
+	        format == VK_FORMAT_ASTC_8x6_UNORM_BLOCK || format == VK_FORMAT_ASTC_8x6_SRGB_BLOCK || format == VK_FORMAT_ASTC_8x8_UNORM_BLOCK ||
+	        format == VK_FORMAT_ASTC_8x8_SRGB_BLOCK || format == VK_FORMAT_ASTC_10x5_UNORM_BLOCK || format == VK_FORMAT_ASTC_10x5_SRGB_BLOCK ||
+	        format == VK_FORMAT_ASTC_10x6_UNORM_BLOCK || format == VK_FORMAT_ASTC_10x6_SRGB_BLOCK || format == VK_FORMAT_ASTC_10x8_UNORM_BLOCK ||
+	        format == VK_FORMAT_ASTC_10x8_SRGB_BLOCK || format == VK_FORMAT_ASTC_10x10_UNORM_BLOCK || format == VK_FORMAT_ASTC_10x10_SRGB_BLOCK ||
+	        format == VK_FORMAT_ASTC_12x10_UNORM_BLOCK || format == VK_FORMAT_ASTC_12x10_SRGB_BLOCK || format == VK_FORMAT_ASTC_12x12_UNORM_BLOCK ||
 	        format == VK_FORMAT_ASTC_12x12_SRGB_BLOCK);
 }
 
@@ -148,10 +130,7 @@ static VkFormat maybe_coerce_to_srgb(VkFormat fmt)
 }
 
 Image::Image(const std::string &name, std::vector<uint8_t> &&d, std::vector<Mipmap> &&m) :
-    Component{name},
-    data{std::move(d)},
-    format{VK_FORMAT_R8G8B8A8_UNORM},
-    mipmaps{std::move(m)}
+    Component{name}, data{std::move(d)}, format{VK_FORMAT_R8G8B8A8_UNORM}, mipmaps{std::move(m)}
 {
 	update_hash();
 }
@@ -292,8 +271,15 @@ void Image::generate_mipmaps()
 		next_mipmap.extent = {next_width, next_height, 1u};
 
 		// Fill next mipmap memory
-		stbir_resize_uint8(data.data() + prev_mipmap.offset, prev_mipmap.extent.width, prev_mipmap.extent.height, 0,
-		                   data.data() + next_mipmap.offset, next_mipmap.extent.width, next_mipmap.extent.height, 0, channels);
+		stbir_resize_uint8(data.data() + prev_mipmap.offset,
+		                   prev_mipmap.extent.width,
+		                   prev_mipmap.extent.height,
+		                   0,
+		                   data.data() + next_mipmap.offset,
+		                   next_mipmap.extent.width,
+		                   next_mipmap.extent.height,
+		                   0,
+		                   channels);
 
 		mipmaps.emplace_back(std::move(next_mipmap));
 
@@ -374,8 +360,7 @@ void Image::coerce_format_to_srgb()
 	format = maybe_coerce_to_srgb(format);
 }
 
-std::unique_ptr<Image> Image::load(const std::string &name, const std::string &uri,
-                                   ContentType content_type)
+std::unique_ptr<Image> Image::load(const std::string &name, const std::string &uri, ContentType content_type)
 {
 	std::unique_ptr<Image> image{nullptr};
 

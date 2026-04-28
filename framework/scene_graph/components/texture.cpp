@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,8 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-Texture::Texture(const std::string &name) :
-    Component{name}
+Texture::Texture(const std::string &name) : Component{name}
 {}
 
 std::type_index Texture::get_type()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,8 +21,7 @@ namespace vkb
 {
 namespace sg
 {
-Script::Script(const std::string &name) :
-    Component{name}
+Script::Script(const std::string &name) : Component{name}
 {}
 
 std::type_index Script::get_type()
@@ -31,18 +30,13 @@ std::type_index Script::get_type()
 }
 
 void Script::input_event(const InputEvent & /*input_event*/)
-{
-}
+{}
 
 void Script::resize(uint32_t /*width*/, uint32_t /*height*/)
-{
-}
+{}
 
-NodeScript::NodeScript(vkb::scene_graph::NodeC &node, const std::string &name) :
-    Script{name},
-    node{node}
-{
-}
+NodeScript::NodeScript(vkb::scene_graph::NodeC &node, const std::string &name) : Script{name}, node{node}
+{}
 
 vkb::scene_graph::NodeC &NodeScript::get_node()
 {

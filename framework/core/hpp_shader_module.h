@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -85,8 +85,7 @@ class HPPShaderSource : private vkb::ShaderSource
 {
   public:
 	HPPShaderSource() = default;
-	HPPShaderSource(const std::string &filename) :
-	    vkb::ShaderSource(filename)
+	HPPShaderSource(const std::string &filename) : vkb::ShaderSource(filename)
 	{}
 };
 

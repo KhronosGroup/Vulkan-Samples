@@ -39,8 +39,7 @@ T &request_resource(
 }
 }        // namespace
 
-HPPResourceCache::HPPResourceCache(vkb::core::DeviceCpp &device) :
-    device{device}
+HPPResourceCache::HPPResourceCache(vkb::core::DeviceCpp &device) : device{device}
 {}
 
 void HPPResourceCache::clear()
