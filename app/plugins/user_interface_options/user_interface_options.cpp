@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Sascha Willems
+/* Copyright (c) 2023-2026, Sascha Willems
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -30,8 +30,7 @@ UserInterfaceOptions::UserInterfaceOptions() :
                              {},
                              {},
                              {{"hideui", "If flag is set, hides the user interface at startup"}})
-{
-}
+{}
 
 bool UserInterfaceOptions::handle_option(std::deque<std::string> &arguments)
 {

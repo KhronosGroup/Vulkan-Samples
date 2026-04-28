@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
- * Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
+ * Copyright (c) 2021-2026, Sascha Willems
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -27,10 +27,8 @@
 
 namespace plugins
 {
-FileLogger::FileLogger() :
-    FileLoggerTags("File Logger", "Enable log output to a file.", {}, {}, {{"log-file", "Write log messages to the given file name"}})
-{
-}
+FileLogger::FileLogger() : FileLoggerTags("File Logger", "Enable log output to a file.", {}, {}, {{"log-file", "Write log messages to the given file name"}})
+{}
 
 bool FileLogger::handle_option(std::deque<std::string> &arguments)
 {

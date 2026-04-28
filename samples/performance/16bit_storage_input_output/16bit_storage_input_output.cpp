@@ -57,28 +57,26 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 	std::default_random_engine            rng(42);        // Use a fixed seed, makes rendering deterministic from run to run.
 	std::uniform_real_distribution<float> float_distribution{-1.0f, 1.0f};
 	const auto                            get_random_axis = [&]() -> glm::vec3 {
-        glm::vec3 axis;
+		glm::vec3 axis;
 
-        for (unsigned i = 0; i < 3; i++)
-        {
-            axis[i] = float_distribution(rng);
-        }
+		for (unsigned i = 0; i < 3; i++)
+		{
+			axis[i] = float_distribution(rng);
+		}
 
-        if (glm::all(glm::equal(axis, glm::vec3(0.0f))))
-        {
-            axis = glm::vec3(1.0f, 0.0f, 0.0f);
-        }
-        else
-        {
-            axis = glm::normalize(axis);
-        }
+		if (glm::all(glm::equal(axis, glm::vec3(0.0f))))
+		{
+			axis = glm::vec3(1.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			axis = glm::normalize(axis);
+		}
 
-        return axis;
+		return axis;
 	};
 
-	const auto get_random_angular_freq = [&]() -> float {
-		return 1.0f + 0.2f * float_distribution(rng);
-	};
+	const auto get_random_angular_freq = [&]() -> float { return 1.0f + 0.2f * float_distribution(rng); };
 
 	auto &root_node = get_scene().get_root_node();
 	for (auto *child : root_node.get_children())
@@ -156,7 +154,8 @@ void KHR16BitStorageInputOutputSample::update_pipeline()
 
 	vkb::ShaderSource vert_shader(base_path + vertex_path);
 	vkb::ShaderSource frag_shader(base_path + fragment_path);
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
+	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(
+	    get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
@@ -227,9 +226,7 @@ void KHR16BitStorageInputOutputSample::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, label]() {
-		    ImGui::Checkbox(label, &khr_16bit_storage_input_output_enabled);
-	    },
+	    /* body = */ [this, label]() { ImGui::Checkbox(label, &khr_16bit_storage_input_output_enabled); },
 	    /* lines = */ 1);
 }
 

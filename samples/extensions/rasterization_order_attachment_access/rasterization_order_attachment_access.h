@@ -142,12 +142,7 @@ class RasterizationOrderAttachmentAccess : public ApiVulkanSample
 	// Maps color attachment 0 to input_attachment_index 0 in the fragment shader
 	static constexpr uint32_t                               COLOR_ATTACHMENT_INPUT_INDEX = 0;
 	static inline const VkRenderingInputAttachmentIndexInfo INPUT_ATTACHMENT_INDEX_INFO{
-	    VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO_KHR,
-	    nullptr,
-	    1,
-	    &COLOR_ATTACHMENT_INPUT_INDEX,
-	    nullptr,
-	    nullptr};
+	    VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO_KHR, nullptr, 1, &COLOR_ATTACHMENT_INPUT_INDEX, nullptr, nullptr};
 
 	// ============================================================================
 	// Performance measurement

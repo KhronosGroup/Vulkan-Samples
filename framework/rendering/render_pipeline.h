@@ -67,7 +67,9 @@ class RenderPipeline
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
-	void draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target, SubpassContentsType contents = {});
+	void draw(vkb::core::CommandBuffer<bindingType>     &command_buffer,
+	          vkb::rendering::RenderTarget<bindingType> &render_target,
+	          SubpassContentsType                        contents = {});
 
 	/**
 	 * @return Subpass currently being recorded, or the first one if drawing has not started
@@ -102,14 +104,15 @@ class RenderPipeline
 	void set_load_store(const std::vector<LoadStoreInfoType> &load_store);
 
   private:
-	void draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
-	               vkb::rendering::RenderTargetCpp &render_target,
-	               vk::SubpassContents              contents);
+	void draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target, vk::SubpassContents contents);
 
   private:
-	size_t                                                   active_subpass_index = 0;
-	std::vector<vk::ClearValue>                              clear_value{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}, vk::ClearDepthStencilValue{0.0f, ~0U}};                                                    // Defaults for swapchain and depth attachment
-	std::vector<vkb::common::HPPLoadStoreInfo>               load_store{{vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore}, {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare}};        // Defaults for swapchain and depth attachment
+	size_t                                     active_subpass_index = 0;
+	std::vector<vk::ClearValue>                clear_value{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f},
+	                                                       vk::ClearDepthStencilValue{0.0f, ~0U}};        // Defaults for swapchain and depth attachment
+	std::vector<vkb::common::HPPLoadStoreInfo> load_store{
+	    {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore},
+	    {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare}};        // Defaults for swapchain and depth attachment
 	std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> subpasses;
 };
 
@@ -148,7 +151,9 @@ void RenderPipeline<bindingType>::add_subpass(std::unique_ptr<vkb::rendering::Su
 }
 
 template <vkb::BindingType bindingType>
-void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target, SubpassContentsType contents)
+void RenderPipeline<bindingType>::draw(vkb::core::CommandBuffer<bindingType>     &command_buffer,
+                                       vkb::rendering::RenderTarget<bindingType> &render_target,
+                                       SubpassContentsType                        contents)
 {
 	assert(!subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 

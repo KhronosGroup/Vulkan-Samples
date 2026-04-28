@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2023, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,22 +38,21 @@ cl_platform_id load_opencl()
 
 #if defined(__ANDROID__)
 	// Try to find the OpenCL library on one of the following paths
-	static const char *libraryPaths[] = {
-	    // Generic
-	    "/system/vendor/lib64/libOpenCL.so",
-	    "/system/lib64/libOpenCL.so",
-	    "/system/vendor/lib/libOpenCL.so",
-	    "/system/lib/libOpenCL.so",
-	    // ARM Mali
-	    "/system/vendor/lib64/egl/libGLES_mali.so",
-	    "/system/lib64/egl/libGLES_mali.so",
-	    "/system/vendor/lib/egl/libGLES_mali.so",
-	    "/system/lib/egl/libGLES_mali.so",
-	    // PowerVR
-	    "/system/vendor/lib64/libPVROCL.so",
-	    "/system/lib64/libPVROCL.so",
-	    "/system/vendor/lib/libPVROCL.so",
-	    "/system/lib/libPVROCL.so"};
+	static const char *libraryPaths[] = {// Generic
+	                                     "/system/vendor/lib64/libOpenCL.so",
+	                                     "/system/lib64/libOpenCL.so",
+	                                     "/system/vendor/lib/libOpenCL.so",
+	                                     "/system/lib/libOpenCL.so",
+	                                     // ARM Mali
+	                                     "/system/vendor/lib64/egl/libGLES_mali.so",
+	                                     "/system/lib64/egl/libGLES_mali.so",
+	                                     "/system/vendor/lib/egl/libGLES_mali.so",
+	                                     "/system/lib/egl/libGLES_mali.so",
+	                                     // PowerVR
+	                                     "/system/vendor/lib64/libPVROCL.so",
+	                                     "/system/lib64/libPVROCL.so",
+	                                     "/system/vendor/lib/libPVROCL.so",
+	                                     "/system/lib/libPVROCL.so"};
 	for (auto libraryPath : libraryPaths)
 	{
 		handle = dlopen(libraryPath, RTLD_LAZY);
@@ -64,19 +63,18 @@ cl_platform_id load_opencl()
 	}
 #elif defined(__linux__)
 	// Try to find the OpenCL library on one of the following paths
-	static const char *libraryPaths[] = {
-	    "libOpenCL.so",
-	    "/usr/lib/libOpenCL.so",
-	    "/usr/local/lib/libOpenCL.so",
-	    "/usr/local/lib/libpocl.so",
-	    "/usr/lib64/libOpenCL.so",
-	    "/usr/lib32/libOpenCL.so",
-	    "libOpenCL.so.1",
-	    "/usr/lib/libOpenCL.so.1",
-	    "/usr/local/lib/libOpenCL.so.1",
-	    "/usr/local/lib/libpocl.so.1",
-	    "/usr/lib64/libOpenCL.so.1",
-	    "/usr/lib32/libOpenCL.so.1"};
+	static const char *libraryPaths[] = {"libOpenCL.so",
+	                                     "/usr/lib/libOpenCL.so",
+	                                     "/usr/local/lib/libOpenCL.so",
+	                                     "/usr/local/lib/libpocl.so",
+	                                     "/usr/lib64/libOpenCL.so",
+	                                     "/usr/lib32/libOpenCL.so",
+	                                     "libOpenCL.so.1",
+	                                     "/usr/lib/libOpenCL.so.1",
+	                                     "/usr/local/lib/libOpenCL.so.1",
+	                                     "/usr/local/lib/libpocl.so.1",
+	                                     "/usr/lib64/libOpenCL.so.1",
+	                                     "/usr/lib32/libOpenCL.so.1"};
 	for (auto libraryPath : libraryPaths)
 	{
 		handle = dlopen(libraryPath, RTLD_LAZY);
@@ -105,8 +103,8 @@ cl_platform_id load_opencl()
 	cl_uint        num_platforms;
 	clGetPlatformIDs_ptr(1, &platform_id, &num_platforms);
 
-#define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) func_name##_ptr = \
-	                                                      reinterpret_cast<decltype(func_name) *>(clGetExtensionFunctionAddressForPlatform_ptr(platform_id, #func_name))
+#define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) \
+	func_name##_ptr = reinterpret_cast<decltype(func_name) *>(clGetExtensionFunctionAddressForPlatform_ptr(platform_id, #func_name))
 #include "open_cl_functions.inl"
 
 	return platform_id;

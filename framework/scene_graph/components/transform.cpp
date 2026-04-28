@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,10 +26,8 @@ namespace vkb
 {
 namespace sg
 {
-Transform::Transform(vkb::scene_graph::NodeC &n) :
-    node{n}
-{
-}
+Transform::Transform(vkb::scene_graph::NodeC &n) : node{n}
+{}
 
 vkb::scene_graph::NodeC &Transform::get_node()
 {
@@ -88,9 +86,7 @@ void Transform::set_matrix(const glm::mat4 &matrix)
 
 glm::mat4 Transform::get_matrix() const
 {
-	return glm::translate(glm::mat4(1.0), translation) *
-	       glm::mat4_cast(rotation) *
-	       glm::scale(glm::mat4(1.0), scale);
+	return glm::translate(glm::mat4(1.0), translation) * glm::mat4_cast(rotation) * glm::scale(glm::mat4(1.0), scale);
 }
 
 glm::mat4 Transform::get_world_matrix()

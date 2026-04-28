@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,12 +26,12 @@ typedef void (*TagID)();
 
 /**
  * @brief Tag acts as a unique identifier to categories objects
- * 
+ *
  * Tags are uniquely defined using different type names. The easiest way of creating a new tag is to use an empty struct
  * struct TagName{};
  * struct DifferentTag{};
  * Tag<TagName>::ID == Tag<TagName>::member != Tag<DifferentTag>:ID
- * 
+ *
  * @tparam TAGS A set of tags
  */
 template <typename... TAGS>
@@ -43,7 +43,7 @@ class Tag
 		tags = {Tag<TAGS>::ID...};
 	}
 
-	static void member(){};
+	static void member() {};
 
 	/**
 	 * @brief Unique TagID for a given Tag<TagName>

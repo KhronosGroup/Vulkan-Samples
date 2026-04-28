@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,10 +19,8 @@
 
 namespace vkb
 {
-HeadlessWindow::HeadlessWindow(const Window::Properties &properties) :
-    Window(properties)
-{
-}
+HeadlessWindow::HeadlessWindow(const Window::Properties &properties) : Window(properties)
+{}
 
 VkSurfaceKHR HeadlessWindow::create_surface(vkb::core::InstanceC &instance)
 {

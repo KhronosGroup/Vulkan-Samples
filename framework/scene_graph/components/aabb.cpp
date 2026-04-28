@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,11 +28,8 @@ AABB::AABB()
 	reset();
 }
 
-AABB::AABB(const glm::vec3 &min, const glm::vec3 &max) :
-    min{min},
-    max{max}
-{
-}
+AABB::AABB(const glm::vec3 &min, const glm::vec3 &max) : min{min}, max{max}
+{}
 
 std::type_index AABB::get_type()
 {

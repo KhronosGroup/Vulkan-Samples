@@ -29,8 +29,7 @@
 class ThreadPool
 {
   public:
-	explicit ThreadPool() :
-	    stop_flag(false)
+	explicit ThreadPool() : stop_flag(false)
 	{}
 
 	~ThreadPool()
@@ -41,9 +40,10 @@ class ThreadPool
 	template <class F, class... Args>
 	auto push(F &&f, Args &&...args) -> std::future<std::invoke_result_t<F, Args..., size_t>>
 	{
-		using return_type                 = std::invoke_result_t<F, Args..., size_t>;
-		auto                     task_ptr = std::make_shared<std::packaged_task<return_type(size_t)>>(std::bind(std::forward<F>(f), std::forward<Args>(args)..., std::placeholders::_1));
-		std::future<return_type> res      = task_ptr->get_future();
+		using return_type = std::invoke_result_t<F, Args..., size_t>;
+		auto task_ptr =
+		    std::make_shared<std::packaged_task<return_type(size_t)>>(std::bind(std::forward<F>(f), std::forward<Args>(args)..., std::placeholders::_1));
+		std::future<return_type> res = task_ptr->get_future();
 		{
 			std::unique_lock<std::mutex> lock(queue_mutex);
 			tasks.emplace([task_ptr](size_t thread_index) { (*task_ptr)(thread_index); });
@@ -187,12 +187,12 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 		 * @param thread_index Identifies the resources allocated for this thread
 		 * @return a pointer to the recorded secondary command buffer
 		 */
-		std::shared_ptr<vkb::core::CommandBufferC> record_draw_secondary(vkb::core::CommandBufferC                                                   &primary_command_buffer,
+		std::shared_ptr<vkb::core::CommandBufferC> record_draw_secondary(vkb::core::CommandBufferC &primary_command_buffer,
 		                                                                 const std::vector<std::pair<vkb::scene_graph::NodeC *, vkb::sg::SubMesh *>> &nodes,
-		                                                                 uint32_t                                                                     mesh_start,
-		                                                                 uint32_t                                                                     mesh_end,
-		                                                                 uint32_t                                                                     subpass_index,
-		                                                                 size_t                                                                       thread_index = 0);
+		                                                                 uint32_t mesh_start,
+		                                                                 uint32_t mesh_end,
+		                                                                 uint32_t subpass_index,
+		                                                                 size_t   thread_index = 0);
 
 		VkViewport viewport{};
 

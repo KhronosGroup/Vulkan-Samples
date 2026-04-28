@@ -184,8 +184,7 @@ void ComputeShadersWithTensors::prepare_weights_tensor()
 	// Set the constant data for the weights.
 	// This is the kernel that will be multiplied against the input to produce the output.
 	weights_constant_tensor->constant_data.resize(3 * 3 * 3 * 3);
-	MultidimensionalArrayView<float> array_view(
-	    weights_constant_tensor->constant_data.data(), weights_constant_tensor->dimensions);
+	MultidimensionalArrayView<float> array_view(weights_constant_tensor->constant_data.data(), weights_constant_tensor->dimensions);
 	for (int i = 0; i < 3; ++i)
 	{
 		// First row of the 3x3 kernel
@@ -205,26 +204,23 @@ void ComputeShadersWithTensors::prepare_weights_tensor()
 	}
 
 	// Set up the VkTensorDescriptionARM and pass the dimensions.
-	weights_constant_tensor->tensor_description =
-	    {
-	        VK_STRUCTURE_TYPE_TENSOR_DESCRIPTION_ARM,
-	        nullptr,
-	        VK_TENSOR_TILING_LINEAR_ARM,
-	        VK_FORMAT_R32_SFLOAT,
-	        4,        // dimensions
-	        weights_constant_tensor->dimensions.data(),
-	        nullptr,        // pStrides
-	        VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM};
+	weights_constant_tensor->tensor_description = {VK_STRUCTURE_TYPE_TENSOR_DESCRIPTION_ARM,
+	                                               nullptr,
+	                                               VK_TENSOR_TILING_LINEAR_ARM,
+	                                               VK_FORMAT_R32_SFLOAT,
+	                                               4,        // dimensions
+	                                               weights_constant_tensor->dimensions.data(),
+	                                               nullptr,        // pStrides
+	                                               VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM};
 
 	// Set up the VkDataGraphPipelineConstantARM and pass the VkTensorDescriptionARM and constant data.
 	// Also set the id, which should match the SPIR-V module.
-	weights_constant_tensor->pipeline_constant =
-	    {
-	        VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
-	        &weights_constant_tensor->tensor_description,
-	        0,                                                   // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
-	        weights_constant_tensor->constant_data.data()        // Host pointer to raw data
-	    };
+	weights_constant_tensor->pipeline_constant = {
+	    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
+	    &weights_constant_tensor->tensor_description,
+	    0,                                                   // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
+	    weights_constant_tensor->constant_data.data()        // Host pointer to raw data
+	};
 }
 
 /*
@@ -245,26 +241,23 @@ void ComputeShadersWithTensors::prepare_bias_tensor()
 	bias_constant_tensor->constant_data = {0, 0, 0};
 
 	// Set up the VkTensorDescriptionARM and pass the dimensions.
-	bias_constant_tensor->tensor_description =
-	    {
-	        VK_STRUCTURE_TYPE_TENSOR_DESCRIPTION_ARM,
-	        nullptr,
-	        VK_TENSOR_TILING_LINEAR_ARM,
-	        VK_FORMAT_R32_SFLOAT,
-	        1,        // dimensions
-	        bias_constant_tensor->dimensions.data(),
-	        nullptr,        // pStrides
-	        VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM};
+	bias_constant_tensor->tensor_description = {VK_STRUCTURE_TYPE_TENSOR_DESCRIPTION_ARM,
+	                                            nullptr,
+	                                            VK_TENSOR_TILING_LINEAR_ARM,
+	                                            VK_FORMAT_R32_SFLOAT,
+	                                            1,        // dimensions
+	                                            bias_constant_tensor->dimensions.data(),
+	                                            nullptr,        // pStrides
+	                                            VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM};
 
 	// Set up the VkDataGraphPipelineConstantARM and pass the VkTensorDescriptionARM and constant data.
 	// Also set the id, which should match the SPIR-V module.
-	bias_constant_tensor->pipeline_constant =
-	    {
-	        VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
-	        &bias_constant_tensor->tensor_description,
-	        1,                                                // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
-	        bias_constant_tensor->constant_data.data()        // Host pointer to raw data
-	    };
+	bias_constant_tensor->pipeline_constant = {
+	    VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_CONSTANT_ARM,
+	    &bias_constant_tensor->tensor_description,
+	    1,                                                // Matches the unique identifier encoded in OpGraphConstantARM in the SPIR-V module
+	    bias_constant_tensor->constant_data.data()        // Host pointer to raw data
+	};
 }
 
 /*
@@ -276,19 +269,16 @@ void ComputeShadersWithTensors::prepare_output_tensors()
 	// The output of the network is determined by the kernel size (2 x 2),
 	// strides (1, 1), dilation (1, 1) and padding (0, 0, 0, 0).
 	std::vector<int64_t> dimensions = {1, 100, 100, 3};
-	output_tensor                   = std::make_unique<Tensor>(get_device(),
-                                             TensorBuilder(dimensions)
-                                                 .with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM | VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM)
-                                                 .with_format(VK_FORMAT_R32_SFLOAT));
+	output_tensor                   = std::make_unique<Tensor>(
+	    get_device(),
+	    TensorBuilder(dimensions).with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM | VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM).with_format(VK_FORMAT_R32_SFLOAT));
 
 	output_tensor_view = std::make_unique<TensorView>(*output_tensor);
 
 	// Also create second output tensor which is used by the visualization pipeline.
 	// It contains a copy of output_tensor, which is copied in the postprocessing compute shader.
-	postprocessed_tensor = std::make_unique<Tensor>(get_device(),
-	                                                TensorBuilder(dimensions)
-	                                                    .with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM)
-	                                                    .with_format(VK_FORMAT_R32_SFLOAT));
+	postprocessed_tensor =
+	    std::make_unique<Tensor>(get_device(), TensorBuilder(dimensions).with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM).with_format(VK_FORMAT_R32_SFLOAT));
 
 	postprocessed_tensor_view = std::make_unique<TensorView>(*postprocessed_tensor);
 }
@@ -300,9 +290,9 @@ void ComputeShadersWithTensors::prepare_output_tensors()
 void ComputeShadersWithTensors::prepare_output_image(uint32_t width, uint32_t height)
 {
 	output_image      = std::make_unique<vkb::core::Image>(get_device(),
-                                                      vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
-                                                          .with_format(VK_FORMAT_R8G8B8A8_UNORM)
-                                                          .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+	                                                       vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
+	                                                           .with_format(VK_FORMAT_R8G8B8A8_UNORM)
+	                                                           .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
 	output_image_view = std::make_unique<vkb::core::ImageView>(*output_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 }
 
@@ -323,12 +313,10 @@ void ComputeShadersWithTensors::prepare_data_graph_pipeline()
 	// be bound to the pipeline.
 	std::map<uint32_t, std::map<uint32_t, const VkTensorDescriptionARM *>> tensor_descriptions;
 	// All bindings are in set 0
-	tensor_descriptions[0] =
-	    {
-	        // Binding 0 is the input tensor
-	        {0, &input_tensor->get_description()},
-	        // Binding 1 is the output tensor
-	        {1, &output_tensor->get_description()}};
+	tensor_descriptions[0] = {// Binding 0 is the input tensor
+	                          {0, &input_tensor->get_description()},
+	                          // Binding 1 is the output tensor
+	                          {1, &output_tensor->get_description()}};
 
 	// Add weights and bias constant tensors, which were prepared and stored earlier.
 	std::vector<VkDataGraphPipelineConstantARM *> data_graph_pipeline_constants;
@@ -337,12 +325,8 @@ void ComputeShadersWithTensors::prepare_data_graph_pipeline()
 
 	VkShaderModule shader_module = vkb::load_shader("tensor_and_data_graph/spirv/conv2d.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
 
-	data_graph_pipeline = std::make_unique<DataGraphPipeline>(get_device(),
-	                                                          data_graph_pipeline_layout->get_handle(),
-	                                                          shader_module,
-	                                                          "main",
-	                                                          tensor_descriptions,
-	                                                          data_graph_pipeline_constants);
+	data_graph_pipeline = std::make_unique<DataGraphPipeline>(
+	    get_device(), data_graph_pipeline_layout->get_handle(), shader_module, "main", tensor_descriptions, data_graph_pipeline_constants);
 
 	// Create a Pipeline Session for the Pipeline. Unlike compute and graphics pipelines, data graph pipelines require
 	// additional state to be stored (e.g. for intermediate results). This is stored separately to the pipeline itself in
@@ -365,23 +349,23 @@ void ComputeShadersWithTensors::prepare_data_graph_pipeline_descriptor_set()
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &data_graph_pipeline_descriptor_set));
 
 	// Write bindings to it, telling it which tensors to use as input and output
-	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings =
-	    {
-	        // Binding 0 is the input tensor
-	        {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
-	        // Binding 1 is the output tensor
-	        {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}}};
+	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings = {
+	    // Binding 0 is the input tensor
+	    {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
+	    // Binding 1 is the output tensor
+	    {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}}};
 	write_descriptor_set(get_device().get_handle(), data_graph_pipeline_descriptor_set, {}, tensor_bindings);
 }
 
 /*
- * Creates the Pipeline Layout and a Compute Pipeline used to run the compute shader, which generates a pattern and is written to a tensor to be consumed by the data graph pipeline.
+ * Creates the Pipeline Layout and a Compute Pipeline used to run the compute shader, which generates a pattern and is written to a tensor to be consumed by the
+ * data graph pipeline.
  */
 void ComputeShadersWithTensors::prepare_preprocessing_pipeline()
 {
 	// Load the compute shader
-	vkb::ShaderModule &input_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/preprocessing.comp.spv"});
+	vkb::ShaderModule &input_comp = get_device().get_resource_cache().request_shader_module(
+	    VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/preprocessing.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.
@@ -396,7 +380,8 @@ void ComputeShadersWithTensors::prepare_preprocessing_pipeline()
  */
 void ComputeShadersWithTensors::prepare_preprocessing_pipeline_descriptor_set()
 {
-	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than allocating a new one)
+	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than
+	// allocating a new one)
 	if (preprocessing_pipeline_descriptor_set == VK_NULL_HANDLE)
 	{
 		VkDescriptorSetAllocateInfo alloc_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -407,21 +392,21 @@ void ComputeShadersWithTensors::prepare_preprocessing_pipeline_descriptor_set()
 	}
 
 	// Write binding 0, which is the input tensor.
-	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings =
-	    {
-	        {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}}};
+	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings = {
+	    {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}}};
 
 	write_descriptor_set(get_device().get_handle(), preprocessing_pipeline_descriptor_set, {}, tensor_bindings);
 }
 
 /*
- * Creates the Pipeline Layout and a Compute Pipeline used to run the compute shader which copies the data graph pipeline output to another tensor to be consumed by the visualization pipeline.
+ * Creates the Pipeline Layout and a Compute Pipeline used to run the compute shader which copies the data graph pipeline output to another tensor to be
+ * consumed by the visualization pipeline.
  */
 void ComputeShadersWithTensors::prepare_postprocessing_pipeline()
 {
 	// Load the compute shader
-	vkb::ShaderModule &output_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/postprocessing.comp.spv"});
+	vkb::ShaderModule &output_comp = get_device().get_resource_cache().request_shader_module(
+	    VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/postprocessing.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.
@@ -436,7 +421,8 @@ void ComputeShadersWithTensors::prepare_postprocessing_pipeline()
  */
 void ComputeShadersWithTensors::prepare_postprocessing_pipeline_descriptor_set()
 {
-	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than allocating a new one)
+	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than
+	// allocating a new one)
 	if (postprocessing_pipeline_descriptor_set == VK_NULL_HANDLE)
 	{
 		VkDescriptorSetAllocateInfo alloc_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -447,12 +433,11 @@ void ComputeShadersWithTensors::prepare_postprocessing_pipeline_descriptor_set()
 	}
 
 	// Write bindings
-	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings =
-	    {
-	        // Binding 0 is the output tensor from the data graph pipeline
-	        {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}},
-	        // Binding 1 is the postprocessed tensor, which is written to.
-	        {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &postprocessed_tensor_view->get_handle()}}};
+	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings = {
+	    // Binding 0 is the output tensor from the data graph pipeline
+	    {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}},
+	    // Binding 1 is the postprocessed tensor, which is written to.
+	    {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &postprocessed_tensor_view->get_handle()}}};
 
 	write_descriptor_set(get_device().get_handle(), postprocessing_pipeline_descriptor_set, {}, tensor_bindings);
 }
@@ -464,8 +449,8 @@ void ComputeShadersWithTensors::prepare_postprocessing_pipeline_descriptor_set()
 void ComputeShadersWithTensors::prepare_visualization_pipeline()
 {
 	// Load the compute shader
-	vkb::ShaderModule &visualization_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/visualization_three_tensors.comp.spv"});
+	vkb::ShaderModule &visualization_comp = get_device().get_resource_cache().request_shader_module(
+	    VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/visualization_three_tensors.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.
@@ -480,7 +465,8 @@ void ComputeShadersWithTensors::prepare_visualization_pipeline()
  */
 void ComputeShadersWithTensors::prepare_visualization_pipeline_descriptor_set()
 {
-	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than allocating a new one)
+	// Allocate descriptor set (if not already allocated; when this function is called due to window resize we just update the existing set rather than
+	// allocating a new one)
 	if (visualization_pipeline_descriptor_set == VK_NULL_HANDLE)
 	{
 		VkDescriptorSetAllocateInfo alloc_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -491,19 +477,17 @@ void ComputeShadersWithTensors::prepare_visualization_pipeline_descriptor_set()
 	}
 
 	// Write bindings to it
-	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings =
-	    {
-	        // Binding 0 is the input tensor
-	        {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
-	        // Binding 1 is the output tensor
-	        {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}},
-	        // Binding 2 is the postprocessed tensor
-	        {2, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &postprocessed_tensor_view->get_handle()}}};
+	std::map<uint32_t, VkWriteDescriptorSetTensorARM> tensor_bindings = {
+	    // Binding 0 is the input tensor
+	    {0, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &input_tensor_view->get_handle()}},
+	    // Binding 1 is the output tensor
+	    {1, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &output_tensor_view->get_handle()}},
+	    // Binding 2 is the postprocessed tensor
+	    {2, VkWriteDescriptorSetTensorARM{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_TENSOR_ARM, nullptr, 1, &postprocessed_tensor_view->get_handle()}}};
 
-	std::map<uint32_t, VkDescriptorImageInfo> image_bindings =
-	    {
-	        // Binding 3 is the output image
-	        {3, VkDescriptorImageInfo{VK_NULL_HANDLE, output_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL}}};
+	std::map<uint32_t, VkDescriptorImageInfo> image_bindings = {
+	    // Binding 3 is the output image
+	    {3, VkDescriptorImageInfo{VK_NULL_HANDLE, output_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL}}};
 
 	write_descriptor_set(get_device().get_handle(), visualization_pipeline_descriptor_set, image_bindings, tensor_bindings);
 }
@@ -554,12 +538,22 @@ void ComputeShadersWithTensors::draw_renderpass(vkb::core::CommandBufferC &comma
 	{
 		// Bind preprocessing pipeline
 		vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, preprocessing_pipeline->get_handle());
-		vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, preprocessing_pipeline_layout->get_handle(),
-		                        0, 1, &preprocessing_pipeline_descriptor_set, 0, nullptr);
+		vkCmdBindDescriptorSets(command_buffer.get_handle(),
+		                        VK_PIPELINE_BIND_POINT_COMPUTE,
+		                        preprocessing_pipeline_layout->get_handle(),
+		                        0,
+		                        1,
+		                        &preprocessing_pipeline_descriptor_set,
+		                        0,
+		                        nullptr);
 
 		// Pass seconds as a push constant and run/dispatch preprocessing shader
-		vkCmdPushConstants(command_buffer.get_handle(), preprocessing_pipeline_layout->get_handle(), VK_SHADER_STAGE_COMPUTE_BIT, 0,
-		                   sizeof(glm::float32), &elapsed_seconds_num);
+		vkCmdPushConstants(command_buffer.get_handle(),
+		                   preprocessing_pipeline_layout->get_handle(),
+		                   VK_SHADER_STAGE_COMPUTE_BIT,
+		                   0,
+		                   sizeof(glm::float32),
+		                   &elapsed_seconds_num);
 		uint32_t group_count_x = input_tensor->get_description().pDimensions[2];        // The preprocessing shader has a group size of 1
 		uint32_t group_count_y = input_tensor->get_description().pDimensions[1];
 		vkCmdDispatch(command_buffer.get_handle(), group_count_x, group_count_y, 1);
@@ -594,8 +588,14 @@ void ComputeShadersWithTensors::draw_renderpass(vkb::core::CommandBufferC &comma
 
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());
-	vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline_layout->get_handle(),
-	                        0, 1, &data_graph_pipeline_descriptor_set, 0, nullptr);
+	vkCmdBindDescriptorSets(command_buffer.get_handle(),
+	                        VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM,
+	                        data_graph_pipeline_layout->get_handle(),
+	                        0,
+	                        1,
+	                        &data_graph_pipeline_descriptor_set,
+	                        0,
+	                        nullptr);
 	vkCmdDispatchDataGraphARM(command_buffer.get_handle(), data_graph_pipeline_session->get_handle(), VK_NULL_HANDLE);
 
 	// Barrier for `output_tensor` (written to by the data graph pipeline above, and read from by the postprocess compute shader below)
@@ -627,10 +627,20 @@ void ComputeShadersWithTensors::draw_renderpass(vkb::core::CommandBufferC &comma
 	// Run post-processing shader
 	{
 		vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, postprocessing_pipeline->get_handle());
-		vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, postprocessing_pipeline_layout->get_handle(),
-		                        0, 1, &postprocessing_pipeline_descriptor_set, 0, nullptr);
-		vkCmdPushConstants(command_buffer.get_handle(), postprocessing_pipeline_layout->get_handle(), VK_SHADER_STAGE_COMPUTE_BIT, 0,
-		                   sizeof(glm::float32), &elapsed_seconds_num);
+		vkCmdBindDescriptorSets(command_buffer.get_handle(),
+		                        VK_PIPELINE_BIND_POINT_COMPUTE,
+		                        postprocessing_pipeline_layout->get_handle(),
+		                        0,
+		                        1,
+		                        &postprocessing_pipeline_descriptor_set,
+		                        0,
+		                        nullptr);
+		vkCmdPushConstants(command_buffer.get_handle(),
+		                   postprocessing_pipeline_layout->get_handle(),
+		                   VK_SHADER_STAGE_COMPUTE_BIT,
+		                   0,
+		                   sizeof(glm::float32),
+		                   &elapsed_seconds_num);
 		uint32_t group_count_x = postprocessed_tensor->get_description().pDimensions[2];        // The postprocessing shader has a group size of 1
 		uint32_t group_count_y = postprocessed_tensor->get_description().pDimensions[1];
 		vkCmdDispatch(command_buffer.get_handle(), group_count_x, group_count_y, 1);
@@ -689,12 +699,22 @@ void ComputeShadersWithTensors::draw_renderpass(vkb::core::CommandBufferC &comma
 	// Run visualization compute pipeline
 	{
 		vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline->get_handle());
-		vkCmdBindDescriptorSets(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, visualization_pipeline_layout->get_handle(),
-		                        0, 1, &visualization_pipeline_descriptor_set, 0, nullptr);
+		vkCmdBindDescriptorSets(command_buffer.get_handle(),
+		                        VK_PIPELINE_BIND_POINT_COMPUTE,
+		                        visualization_pipeline_layout->get_handle(),
+		                        0,
+		                        1,
+		                        &visualization_pipeline_descriptor_set,
+		                        0,
+		                        nullptr);
 
 		// Pass the output_image size as a push constant
-		vkCmdPushConstants(command_buffer.get_handle(), visualization_pipeline_layout->get_handle(), VK_SHADER_STAGE_COMPUTE_BIT, 0,
-		                   sizeof(glm::uvec2), &render_target.get_extent());
+		vkCmdPushConstants(command_buffer.get_handle(),
+		                   visualization_pipeline_layout->get_handle(),
+		                   VK_SHADER_STAGE_COMPUTE_BIT,
+		                   0,
+		                   sizeof(glm::uvec2),
+		                   &render_target.get_extent());
 		uint32_t group_count_x = (render_target.get_extent().width + 7) / 8;        // The visualization shader has a group size of 8
 		uint32_t group_count_y = (render_target.get_extent().height + 7) / 8;
 		vkCmdDispatch(command_buffer.get_handle(), group_count_x, group_count_y, 1);

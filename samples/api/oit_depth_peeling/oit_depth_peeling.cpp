@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Google
+/* Copyright (c) 2024-2026, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,8 +19,7 @@
 #include <algorithm>
 
 OITDepthPeeling::OITDepthPeeling()
-{
-}
+{}
 
 OITDepthPeeling::~OITDepthPeeling()
 {
@@ -159,30 +158,39 @@ void OITDepthPeeling::build_command_buffers()
 				// It is bound as texture and read in the shader to discard fragments from the
 				// previous layers.
 				VkImageSubresourceRange depth_subresource_range = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
-				vkb::image_layout_transition(
-				    draw_cmd_buffers[i], depth_image[l % kDepthCount]->get_handle(),
-				    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-				    VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-				    l <= 1 ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-				    depth_subresource_range);
+				vkb::image_layout_transition(draw_cmd_buffers[i],
+				                             depth_image[l % kDepthCount]->get_handle(),
+				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				                             VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+				                             VK_ACCESS_SHADER_READ_BIT,
+				                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				                             l <= 1 ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+				                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+				                             depth_subresource_range);
 				if (l > 0)
 				{
-					vkb::image_layout_transition(
-					    draw_cmd_buffers[i], depth_image[(l + 1) % kDepthCount]->get_handle(),
-					    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-					    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-					    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-					    depth_subresource_range);
+					vkb::image_layout_transition(draw_cmd_buffers[i],
+					                             depth_image[(l + 1) % kDepthCount]->get_handle(),
+					                             VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+					                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+					                             VK_ACCESS_SHADER_READ_BIT,
+					                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+					                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+					                             depth_subresource_range);
 				}
 
 				// Set one of the layer textures as color attachment, as the gather pass will render to it.
 				VkImageSubresourceRange layer_subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-				vkb::image_layout_transition(
-				    draw_cmd_buffers[i], layer_image[l]->get_handle(),
-				    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-				    VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-				    VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-				    layer_subresource_range);
+				vkb::image_layout_transition(draw_cmd_buffers[i],
+				                             layer_image[l]->get_handle(),
+				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				                             VK_ACCESS_SHADER_READ_BIT,
+				                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				                             VK_IMAGE_LAYOUT_UNDEFINED,
+				                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				                             layer_subresource_range);
 
 				render_pass_begin_info.framebuffer = gather_framebuffer[l];
 				render_pass_begin_info.renderPass  = gather_render_pass;
@@ -195,7 +203,8 @@ void OITDepthPeeling::build_command_buffers()
 					VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 					vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-					vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline_layout, 0, 1, &gather_descriptor_set[l % kDepthCount], 0, NULL);
+					vkCmdBindDescriptorSets(
+					    draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline_layout, 0, 1, &gather_descriptor_set[l % kDepthCount], 0, NULL);
 
 					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, l == 0 ? gather_first_pipeline : gather_pipeline);
 					draw_model(object, draw_cmd_buffers[i]);
@@ -203,12 +212,15 @@ void OITDepthPeeling::build_command_buffers()
 				vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
 				// Get the layer texture ready to be read by the combine pass.
-				vkb::image_layout_transition(
-				    draw_cmd_buffers[i], layer_image[l]->get_handle(),
-				    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-				    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				    layer_subresource_range);
+				vkb::image_layout_transition(draw_cmd_buffers[i],
+				                             layer_image[l]->get_handle(),
+				                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				                             VK_ACCESS_SHADER_READ_BIT,
+				                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				                             layer_subresource_range);
 			}
 
 			// Combine pass
@@ -310,9 +322,9 @@ void OITDepthPeeling::create_gather_pass_objects(const uint32_t width, const uin
 	{
 		framebuffer_create_info.renderPass = gather_render_pass;
 		const VkImageView attachments[]    = {
-            layer_image_view[i]->get_handle(),
-            depth_image_view[i % kDepthCount]->get_handle(),
-        };
+		    layer_image_view[i]->get_handle(),
+		    depth_image_view[i % kDepthCount]->get_handle(),
+		};
 		framebuffer_create_info.pAttachments = attachments;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, gather_framebuffer + i));
 	}
@@ -323,13 +335,23 @@ void OITDepthPeeling::create_images(const uint32_t width, const uint32_t height)
 	const VkExtent3D image_extent = {width, height, 1};
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)
 	{
-		layer_image[i]      = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
+		layer_image[i]      = std::make_unique<vkb::core::Image>(get_device(),
+		                                                         image_extent,
+		                                                         VK_FORMAT_R8G8B8A8_UNORM,
+		                                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		                                                         VMA_MEMORY_USAGE_GPU_ONLY,
+		                                                         VK_SAMPLE_COUNT_1_BIT);
 		layer_image_view[i] = std::make_unique<vkb::core::ImageView>(*layer_image[i], VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 	}
 
 	for (uint32_t i = 0; i < kDepthCount; ++i)
 	{
-		depth_image[i]      = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
+		depth_image[i]      = std::make_unique<vkb::core::Image>(get_device(),
+		                                                         image_extent,
+		                                                         VK_FORMAT_D32_SFLOAT,
+		                                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		                                                         VMA_MEMORY_USAGE_GPU_ONLY,
+		                                                         VK_SAMPLE_COUNT_1_BIT);
 		depth_image_view[i] = std::make_unique<vkb::core::ImageView>(*depth_image[i], VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_D32_SFLOAT);
 	}
 }
@@ -361,7 +383,8 @@ void OITDepthPeeling::create_samplers()
 
 void OITDepthPeeling::create_constant_buffers()
 {
-	scene_constants = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	scene_constants =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void OITDepthPeeling::create_descriptors()
@@ -371,7 +394,8 @@ void OITDepthPeeling::create_descriptors()
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 		};
-		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
+		    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &gather_descriptor_set_layout));
 	}
 
@@ -381,7 +405,8 @@ void OITDepthPeeling::create_descriptors()
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, kLayerMaxCount),
 		};
-		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
+		    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &combine_descriptor_set_layout));
 	}
 
@@ -392,16 +417,17 @@ void OITDepthPeeling::create_descriptors()
 		const uint32_t num_combine_pass_combined_image_sampler = kLayerMaxCount + 1;
 		const uint32_t num_combine_pass_uniform_buffer         = 1;
 
-		const uint32_t                    num_uniform_buffer_descriptors         = num_gather_pass_uniform_buffer + num_combine_pass_uniform_buffer;
-		const uint32_t                    num_combined_image_sampler_descriptors = num_gather_pass_combined_image_sampler + num_combine_pass_combined_image_sampler;
-		std::vector<VkDescriptorPoolSize> pool_sizes                             = {
-            vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, num_uniform_buffer_descriptors),
-            vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, num_combined_image_sampler_descriptors),
-        };
+		const uint32_t num_uniform_buffer_descriptors         = num_gather_pass_uniform_buffer + num_combine_pass_uniform_buffer;
+		const uint32_t num_combined_image_sampler_descriptors = num_gather_pass_combined_image_sampler + num_combine_pass_combined_image_sampler;
+		std::vector<VkDescriptorPoolSize> pool_sizes          = {
+		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, num_uniform_buffer_descriptors),
+		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, num_combined_image_sampler_descriptors),
+		};
 		const uint32_t             num_gather_descriptor_sets  = 2;
 		const uint32_t             num_combine_descriptor_sets = 1;
 		const uint32_t             num_descriptor_sets         = num_gather_descriptor_sets + num_combine_descriptor_sets;
-		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
+		VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+		    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 	}
 
@@ -438,10 +464,12 @@ void OITDepthPeeling::update_descriptors()
 	{
 		std::vector<VkWriteDescriptorSet> write_descriptor_sets(3);
 
-		write_descriptor_sets[0] = vkb::initializers::write_descriptor_set(combine_descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor);
+		write_descriptor_sets[0] =
+		    vkb::initializers::write_descriptor_set(combine_descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor);
 
 		VkDescriptorImageInfo background_texture_descriptor = create_descriptor(background_texture);
-		write_descriptor_sets[1]                            = vkb::initializers::write_descriptor_set(combine_descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &background_texture_descriptor);
+		write_descriptor_sets[1] =
+		    vkb::initializers::write_descriptor_set(combine_descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &background_texture_descriptor);
 
 		VkDescriptorImageInfo layer_texture_descriptor[kLayerMaxCount];
 		for (uint32_t i = 0; i < kLayerMaxCount; ++i)
@@ -450,7 +478,8 @@ void OITDepthPeeling::update_descriptors()
 			layer_texture_descriptor[i].imageView   = layer_image_view[i]->get_handle();
 			layer_texture_descriptor[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		}
-		write_descriptor_sets[2] = vkb::initializers::write_descriptor_set(combine_descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, layer_texture_descriptor, kLayerMaxCount);
+		write_descriptor_sets[2] = vkb::initializers::write_descriptor_set(
+		    combine_descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, layer_texture_descriptor, kLayerMaxCount);
 
 		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 	}
@@ -470,9 +499,11 @@ void OITDepthPeeling::create_pipelines()
 	{
 		VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 
-		VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+		VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+		    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-		VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+		VkPipelineRasterizationStateCreateInfo rasterization_state =
+		    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 		VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xF, VK_FALSE);
 		VkPipelineColorBlendStateCreateInfo color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
@@ -481,10 +512,12 @@ void OITDepthPeeling::create_pipelines()
 
 		VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-		VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
+		VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+		    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
 		std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-		VkPipelineDynamicStateCreateInfo dynamicState          = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
+		VkPipelineDynamicStateCreateInfo dynamicState =
+		    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 		std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
