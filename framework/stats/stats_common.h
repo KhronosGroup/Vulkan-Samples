@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
- * Copyright (c) 2020-2022, Broadcom Inc.
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2020-2026, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -119,11 +119,7 @@ class StatGraphData
 	 * @param has_fixed_max Whether the data should have a fixed max value
 	 * @param max_value The maximum value to use
 	 */
-	StatGraphData(const std::string &name,
-	              const std::string &format,
-	              float              scale_factor  = 1.0f,
-	              bool               has_fixed_max = false,
-	              float              max_value     = 0.0f);
+	StatGraphData(const std::string &name, const std::string &format, float scale_factor = 1.0f, bool has_fixed_max = false, float max_value = 0.0f);
 
 	StatGraphData() = default;
 

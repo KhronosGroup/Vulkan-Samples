@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,8 @@ class HPPTextureLoading : public HPPApiVulkanSample
 
   private:
 	// Contains all Vulkan objects that are required to store and use a texture
-	// Note that this repository contains a texture class (vulkan_texture.h) that encapsulates texture loading functionality in a class that is used in subsequent demos
+	// Note that this repository contains a texture class (vulkan_texture.h) that encapsulates texture loading functionality in a class that is used in
+	// subsequent demos
 	struct Texture
 	{
 		vk::DeviceMemory device_memory;

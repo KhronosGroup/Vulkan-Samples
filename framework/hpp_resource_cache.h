@@ -95,10 +95,11 @@ class HPPResourceCache
 	vkb::core::HPPRenderPass          &request_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
 	                                                       const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
 	                                                       const std::vector<vkb::core::HPPSubpassInfo>     &subpasses);
-	vkb::core::HPPShaderModule        &request_shader_module(
-	           vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source, const vkb::core::HPPShaderVariant &shader_variant = {});
-	std::vector<uint8_t> serialize();
-	void                 set_pipeline_cache(vk::PipelineCache pipeline_cache);
+	vkb::core::HPPShaderModule        &request_shader_module(vk::ShaderStageFlagBits            stage,
+	                                                         const vkb::core::HPPShaderSource  &glsl_source,
+	                                                         const vkb::core::HPPShaderVariant &shader_variant = {});
+	std::vector<uint8_t>               serialize();
+	void                               set_pipeline_cache(vk::PipelineCache pipeline_cache);
 
 	/// @brief Update those descriptor sets referring to old views
 	/// @param old_views Old image views referred by descriptor sets

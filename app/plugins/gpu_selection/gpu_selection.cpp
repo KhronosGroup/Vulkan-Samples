@@ -30,8 +30,7 @@ GpuSelection::GpuSelection() :
                      {},
                      {},
                      {{"gpu", "Zero-based index of the GPU that the sample should use"}})
-{
-}
+{}
 
 bool GpuSelection::handle_option(std::deque<std::string> &arguments)
 {

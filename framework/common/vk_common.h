@@ -93,9 +93,7 @@ bool is_depth_format(VkFormat format);
 VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
                                    bool                         depth_only                 = false,
                                    const std::vector<VkFormat> &depth_format_priority_list = {
-                                       VK_FORMAT_D32_SFLOAT,
-                                       VK_FORMAT_D24_UNORM_S8_UINT,
-                                       VK_FORMAT_D16_UNORM});
+                                       VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM});
 
 /**
  * @brief Helper function to pick a blendable format from a priority ordered list
@@ -242,11 +240,8 @@ void image_layout_transition(VkCommandBuffer                command_buffer,
  * @param new_layout The VkImageLayout to transition to.
  * @param subresource_range The VkImageSubresourceRange to use with the transition.
  */
-void image_layout_transition(VkCommandBuffer                command_buffer,
-                             VkImage                        image,
-                             VkImageLayout                  old_layout,
-                             VkImageLayout                  new_layout,
-                             VkImageSubresourceRange const &subresource_range);
+void image_layout_transition(
+    VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkImageSubresourceRange const &subresource_range);
 
 /**
  * @brief Put an image memory barrier for a layout transition of an image, on a fixed subresource with first mip level and layer.
@@ -258,10 +253,7 @@ void image_layout_transition(VkCommandBuffer                command_buffer,
  * @param old_layout The VkImageLayout to transition from.
  * @param new_layout The VkImageLayout to transition to.
  */
-void image_layout_transition(VkCommandBuffer command_buffer,
-                             VkImage         image,
-                             VkImageLayout   old_layout,
-                             VkImageLayout   new_layout);
+void image_layout_transition(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 
 /**
  * @brief Put an image memory barrier for a layout transition of a vector of images, with a given subresource range per image.

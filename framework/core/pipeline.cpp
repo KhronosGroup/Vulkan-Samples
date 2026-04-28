@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,14 +24,10 @@
 
 namespace vkb
 {
-Pipeline::Pipeline(vkb::core::DeviceC &device) :
-    device{device}
+Pipeline::Pipeline(vkb::core::DeviceC &device) : device{device}
 {}
 
-Pipeline::Pipeline(Pipeline &&other) :
-    device{other.device},
-    handle{other.handle},
-    state{other.state}
+Pipeline::Pipeline(Pipeline &&other) : device{other.device}, handle{other.handle}, state{other.state}
 {
 	other.handle = VK_NULL_HANDLE;
 }
@@ -55,10 +51,7 @@ const PipelineState &Pipeline::get_state() const
 	return state;
 }
 
-ComputePipeline::ComputePipeline(vkb::core::DeviceC &device,
-                                 VkPipelineCache     pipeline_cache,
-                                 PipelineState      &pipeline_state) :
-    Pipeline{device}
+ComputePipeline::ComputePipeline(vkb::core::DeviceC &device, VkPipelineCache pipeline_cache, PipelineState &pipeline_state) : Pipeline{device}
 {
 	const ShaderModule *shader_module = pipeline_state.get_pipeline_layout().get_shader_modules().front();
 
@@ -84,9 +77,8 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC &device,
 		throw VulkanException{result};
 	}
 
-	device.get_debug_utils().set_debug_name(device.get_handle(),
-	                                        VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage.module),
-	                                        shader_module->get_debug_name().c_str());
+	device.get_debug_utils().set_debug_name(
+	    device.get_handle(), VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage.module), shader_module->get_debug_name().c_str());
 
 	// Create specialization info from tracked state.
 	std::vector<uint8_t>                  data{};
@@ -123,10 +115,7 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC &device,
 	vkDestroyShaderModule(device.get_handle(), stage.module, nullptr);
 }
 
-GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device,
-                                   VkPipelineCache     pipeline_cache,
-                                   PipelineState      &pipeline_state) :
-    Pipeline{device}
+GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device, VkPipelineCache pipeline_cache, PipelineState &pipeline_state) : Pipeline{device}
 {
 	std::vector<VkShaderModule> shader_modules;
 
@@ -169,9 +158,8 @@ GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device,
 			throw VulkanException{result};
 		}
 
-		device.get_debug_utils().set_debug_name(device.get_handle(),
-		                                        VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage_create_info.module),
-		                                        shader_module->get_debug_name().c_str());
+		device.get_debug_utils().set_debug_name(
+		    device.get_handle(), VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage_create_info.module), shader_module->get_debug_name().c_str());
 
 		stage_create_info.pSpecializationInfo = &specialization_info;
 
@@ -251,10 +239,10 @@ GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device,
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state{VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
 
-	color_blend_state.logicOpEnable     = pipeline_state.get_color_blend_state().logic_op_enable;
-	color_blend_state.logicOp           = pipeline_state.get_color_blend_state().logic_op;
-	color_blend_state.attachmentCount   = to_u32(pipeline_state.get_color_blend_state().attachments.size());
-	color_blend_state.pAttachments      = reinterpret_cast<const VkPipelineColorBlendAttachmentState *>(pipeline_state.get_color_blend_state().attachments.data());
+	color_blend_state.logicOpEnable   = pipeline_state.get_color_blend_state().logic_op_enable;
+	color_blend_state.logicOp         = pipeline_state.get_color_blend_state().logic_op;
+	color_blend_state.attachmentCount = to_u32(pipeline_state.get_color_blend_state().attachments.size());
+	color_blend_state.pAttachments = reinterpret_cast<const VkPipelineColorBlendAttachmentState *>(pipeline_state.get_color_blend_state().attachments.data());
 	color_blend_state.blendConstants[0] = 1.0f;
 	color_blend_state.blendConstants[1] = 1.0f;
 	color_blend_state.blendConstants[2] = 1.0f;

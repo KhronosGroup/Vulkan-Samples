@@ -72,29 +72,29 @@ class ShaderDebugPrintf : public ApiVulkanSample
 
 	static std::string debug_output;
 
-	VKAPI_ATTR static VkBool32 VKAPI_CALL debug_utils_message_callback(
-	    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-	    VkDebugUtilsMessageTypeFlagsEXT             messageType,
-	    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-	    void                                       *pUserData);
+	VKAPI_ATTR static VkBool32 VKAPI_CALL debug_utils_message_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+	                                                                   VkDebugUtilsMessageTypeFlagsEXT             messageType,
+	                                                                   const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+	                                                                   void                                       *pUserData);
 
 	ShaderDebugPrintf();
 	~ShaderDebugPrintf();
-	void                                              request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
-	void                                              request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void                                              request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
-	void                                              request_validation_feature_enables(std::vector<ValidationFeatureEnableType> &requested_layer_settings) const override;
-	void                                              build_command_buffers() override;
-	void                                              load_assets();
-	void                                              setup_descriptor_pool();
-	void                                              setup_descriptor_set_layout();
-	void                                              setup_descriptor_sets();
-	void                                              prepare_pipelines();
-	void                                              prepare_uniform_buffers();
-	void                                              update_uniform_buffers();
-	void                                              draw();
-	bool                                              prepare(const vkb::ApplicationOptions &options) override;
-	virtual void                                      extend_instance_create_info(vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
+	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	void         request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+	void         request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+	                                    vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
+	void         request_validation_feature_enables(std::vector<ValidationFeatureEnableType> &requested_layer_settings) const override;
+	void         build_command_buffers() override;
+	void         load_assets();
+	void         setup_descriptor_pool();
+	void         setup_descriptor_set_layout();
+	void         setup_descriptor_sets();
+	void         prepare_pipelines();
+	void         prepare_uniform_buffers();
+	void         update_uniform_buffers();
+	void         draw();
+	bool         prepare(const vkb::ApplicationOptions &options) override;
+	virtual void extend_instance_create_info(vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
 	virtual VkDebugUtilsMessengerCreateInfoEXT const *get_debug_utils_messenger_create_info() const override;
 	virtual void                                      render(float delta_time) override;
 	virtual void                                      on_update_ui_overlay(vkb::Drawer &drawer) override;

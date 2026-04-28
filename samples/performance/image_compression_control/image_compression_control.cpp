@@ -72,7 +72,8 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 
 	vkb::ShaderSource scene_vs("base.vert.spv");
 	vkb::ShaderSource scene_fs("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
+	auto              scene_subpass =
+	    std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
 	scene_subpass->set_output_attachments({static_cast<int>(Attachments::Color)});
 
 	// Forward rendering pass
@@ -89,8 +90,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	// Trigger recreation of Swapchain and render targets, with initial compression parameters
 	update_render_targets();
 
-	get_stats().request_stats({vkb::StatIndex::frame_times,
-	                           vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_write_bytes});
 
 	create_gui(*window, &get_stats());
 
@@ -154,9 +154,9 @@ void ImageCompressionControlSample::create_render_context()
 		std::vector<VkSurfaceFormatKHR> new_surface_priority_list;
 		for (auto const &surface_priority : get_surface_priority_list())
 		{
-			auto it = std::ranges::find_if(surface_formats_that_support_compression,
-			                               [&](VkSurfaceFormatKHR &sf) { return surface_priority.format == sf.format &&
-				                                                                surface_priority.colorSpace == sf.colorSpace; });
+			auto it = std::ranges::find_if(surface_formats_that_support_compression, [&](VkSurfaceFormatKHR &sf) {
+				return surface_priority.format == sf.format && surface_priority.colorSpace == sf.colorSpace;
+			});
 			if (it != surface_formats_that_support_compression.end())
 			{
 				new_surface_priority_list.push_back(*it);
@@ -184,8 +184,8 @@ void ImageCompressionControlSample::create_render_context()
 		if (selected_surface_format.format == surface_compression_properties_list[i].surface_format.surfaceFormat.format &&
 		    selected_surface_format.colorSpace == surface_compression_properties_list[i].surface_format.surfaceFormat.colorSpace)
 		{
-			supported_fixed_rate_flags_swapchain = vkb::fixed_rate_compression_flags_to_vector(
-			    surface_compression_properties_list[i].compression_properties.imageCompressionFixedRateFlags);
+			supported_fixed_rate_flags_swapchain =
+			    vkb::fixed_rate_compression_flags_to_vector(surface_compression_properties_list[i].compression_properties.imageCompressionFixedRateFlags);
 			break;
 		}
 	}
@@ -212,10 +212,18 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 	if (VK_FORMAT_UNDEFINED == color_image_info.format)
 	{
 		// Query fixed-rate compression support for a few candidate formats
-		std::vector<VkFormat> format_list{VK_FORMAT_R8G8B8_UNORM, VK_FORMAT_R8G8B8_SNORM, VK_FORMAT_R8G8B8_SRGB,
-		                                  VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_B8G8R8_SNORM, VK_FORMAT_B8G8R8_SRGB,
-		                                  VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SNORM, VK_FORMAT_R8G8B8A8_SRGB,
-		                                  VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM, VK_FORMAT_B8G8R8A8_SRGB};
+		std::vector<VkFormat> format_list{VK_FORMAT_R8G8B8_UNORM,
+		                                  VK_FORMAT_R8G8B8_SNORM,
+		                                  VK_FORMAT_R8G8B8_SRGB,
+		                                  VK_FORMAT_B8G8R8_UNORM,
+		                                  VK_FORMAT_B8G8R8_SNORM,
+		                                  VK_FORMAT_B8G8R8_SRGB,
+		                                  VK_FORMAT_R8G8B8A8_UNORM,
+		                                  VK_FORMAT_R8G8B8A8_SNORM,
+		                                  VK_FORMAT_R8G8B8A8_SRGB,
+		                                  VK_FORMAT_B8G8R8A8_UNORM,
+		                                  VK_FORMAT_B8G8R8A8_SNORM,
+		                                  VK_FORMAT_B8G8R8A8_SRGB};
 
 		VkFormat chosen_format{VK_FORMAT_UNDEFINED};
 		if (get_device().is_extension_enabled(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
@@ -230,7 +238,8 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 				 * calling vkGetPhysicalDeviceImageFormatProperties2KHR.
 				 * See the implementation of this helper function in vkb::core::Image.
 				 */
-				VkImageCompressionPropertiesEXT supported_compression_properties = vkb::query_supported_fixed_rate_compression(get_device().get_gpu().get_handle(), color_image_info);
+				VkImageCompressionPropertiesEXT supported_compression_properties =
+				    vkb::query_supported_fixed_rate_compression(get_device().get_gpu().get_handle(), color_image_info);
 
 				auto fixed_rate_flags = vkb::fixed_rate_compression_flags_to_vector(supported_compression_properties.imageCompressionFixedRateFlags);
 
@@ -245,8 +254,7 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 
 				// Pick the first format that supports at least 2 or more levels of fixed-rate compression, otherwise
 				// pick the first format that supports at least 1 level
-				if (result != VK_ERROR_FORMAT_NOT_SUPPORTED &&
-				    fixed_rate_flags.size() > 0)
+				if (result != VK_ERROR_FORMAT_NOT_SUPPORTED && fixed_rate_flags.size() > 0)
 				{
 					if ((VK_FORMAT_UNDEFINED == chosen_format) || (fixed_rate_flags.size() > 1))
 					{
@@ -303,8 +311,7 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 	{
 		color_compression_control.flags = compression_flag;
 
-		if (VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == compression_flag &&
-		    VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT != compression_fixed_rate_flag_color)
+		if (VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == compression_flag && VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT != compression_fixed_rate_flag_color)
 		{
 			color_compression_control.compressionControlPlaneCount = 1;
 			color_compression_control.pFixedRateFlags              = &compression_fixed_rate_flag_color;
@@ -324,7 +331,8 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 		 * VkImageCompressionPropertiesEXT structure in its pNext chain.
 		 * This structure is then filled with the applied compression flags.
 		 */
-		LOGI("Applied fixed-rate compression for color ({}): {}", vkb::to_string(color_image_info.format),
+		LOGI("Applied fixed-rate compression for color ({}): {}",
+		     vkb::to_string(color_image_info.format),
 		     vkb::image_compression_fixed_rate_flags_to_string(color_image.get_applied_compression().imageCompressionFixedRateFlags));
 	}
 
@@ -355,8 +363,7 @@ void ImageCompressionControlSample::update(float delta_time)
 {
 	elapsed_time += delta_time;
 
-	if ((gui_target_compression != last_gui_target_compression) ||
-	    (gui_fixed_rate_compression_level != last_gui_fixed_rate_compression_level))
+	if ((gui_target_compression != last_gui_target_compression) || (gui_fixed_rate_compression_level != last_gui_fixed_rate_compression_level))
 	{
 		update_render_targets();
 
@@ -410,9 +417,9 @@ void ImageCompressionControlSample::update_render_targets()
 	get_render_context().update_swapchain(compression_flag, compression_fixed_rate_flag_swapchain);
 }
 
-VkImageCompressionFixedRateFlagBitsEXT ImageCompressionControlSample::select_fixed_rate_compression_flag(
-    std::vector<VkImageCompressionFixedRateFlagBitsEXT> &supported_fixed_rate_flags,
-    FixedRateCompressionLevel                            compression_level)
+VkImageCompressionFixedRateFlagBitsEXT
+    ImageCompressionControlSample::select_fixed_rate_compression_flag(std::vector<VkImageCompressionFixedRateFlagBitsEXT> &supported_fixed_rate_flags,
+                                                                      FixedRateCompressionLevel                            compression_level)
 {
 	if (!supported_fixed_rate_flags.empty())
 	{
@@ -468,7 +475,11 @@ namespace
  * @brief Helper function to generate a GUI drop-down options menu
  */
 template <typename T>
-inline T generate_combo(T current_value, const char *combo_label, const std::unordered_map<T, std::string> &enum_to_string, float item_width, const std::set<T> *skip_values = nullptr)
+inline T generate_combo(T                                         current_value,
+                        const char                               *combo_label,
+                        const std::unordered_map<T, std::string> &enum_to_string,
+                        float                                     item_width,
+                        const std::set<T>                        *skip_values = nullptr)
 {
 	ImGui::PushItemWidth(item_width);
 
@@ -526,10 +537,12 @@ void ImageCompressionControlSample::draw_gui()
 		    ImGui::Text("Compression:");
 		    ImGui::SameLine();
 
-		    const TargetCompression compression = generate_combo(gui_target_compression, "##compression",
-		                                                         {{TargetCompression::FixedRate, "Fixed-rate"}, {TargetCompression::None, "None"}, {TargetCompression::Default, "Default"}},
-		                                                         window_width * 0.2f,
-		                                                         &gui_skip_compression_values);
+		    const TargetCompression compression =
+		        generate_combo(gui_target_compression,
+		                       "##compression",
+		                       {{TargetCompression::FixedRate, "Fixed-rate"}, {TargetCompression::None, "None"}, {TargetCompression::Default, "Default"}},
+		                       window_width * 0.2f,
+		                       &gui_skip_compression_values);
 
 		    gui_target_compression = compression;
 
@@ -544,9 +557,11 @@ void ImageCompressionControlSample::draw_gui()
 			    ImGui::Text("Level:");
 
 			    ImGui::SameLine();
-			    const FixedRateCompressionLevel compression_level = generate_combo(gui_fixed_rate_compression_level, "##compression-level",
-			                                                                       {{FixedRateCompressionLevel::High, "High"}, {FixedRateCompressionLevel::Low, "Low"}},
-			                                                                       window_width * 0.2f);
+			    const FixedRateCompressionLevel compression_level =
+			        generate_combo(gui_fixed_rate_compression_level,
+			                       "##compression-level",
+			                       {{FixedRateCompressionLevel::High, "High"}, {FixedRateCompressionLevel::Low, "Low"}},
+			                       window_width * 0.2f);
 
 			    gui_fixed_rate_compression_level = compression_level;
 		    }

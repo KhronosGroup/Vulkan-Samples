@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,8 @@ class HostImageCopy : public ApiVulkanSample
 {
   public:
 	// Contains all Vulkan objects that are required to store and use a texture
-	// Note that this repository contains a texture class (vulkan_texture.h) that encapsulates texture loading functionality in a class that is used in subsequent demos
+	// Note that this repository contains a texture class (vulkan_texture.h) that encapsulates texture loading functionality in a class that is used in
+	// subsequent demos
 	struct Texture
 	{
 		VkSampler      sampler;

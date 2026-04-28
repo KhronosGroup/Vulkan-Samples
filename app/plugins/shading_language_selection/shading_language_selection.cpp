@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024-2026, Sascha Willems
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -30,8 +30,7 @@ ShadingLanguageSelection::ShadingLanguageSelection() :
                                  {},
                                  {},
                                  {{"shading-language", "Shading language to use (glsl, hlsl or slang)"}})
-{
-}
+{}
 
 bool ShadingLanguageSelection::handle_option(std::deque<std::string> &arguments)
 {

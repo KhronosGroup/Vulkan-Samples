@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,7 +39,8 @@ HPPImageView::HPPImageView(vkb::core::HPPImage &img,
 		this->format = format = image->get_format();
 	}
 
-	subresource_range = vk::ImageSubresourceRange{.aspectMask     = (std::string(vk::componentName(format, 0)) == "D") ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor,
+	subresource_range = vk::ImageSubresourceRange{.aspectMask     = (std::string(vk::componentName(format, 0)) == "D") ? vk::ImageAspectFlagBits::eDepth :
+	                                                                                                                     vk::ImageAspectFlagBits::eColor,
 	                                              .baseMipLevel   = mip_level,
 	                                              .levelCount     = n_mip_levels == 0 ? image->get_subresource().mipLevel : n_mip_levels,
 	                                              .baseArrayLayer = array_layer,

@@ -133,7 +133,10 @@ class MSAASample : public vkb::VulkanSampleC
 	 *        and depth attachments and uses them to apply a screen-based effect
 	 *        It also draws the GUI
 	 */
-	void postprocessing(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target, VkImageLayout &swapchain_layout, bool msaa_enabled);
+	void postprocessing(vkb::core::CommandBufferC     &command_buffer,
+	                    vkb::rendering::RenderTargetC &render_target,
+	                    VkImageLayout                 &swapchain_layout,
+	                    bool                           msaa_enabled);
 
 	/**
 	 * @brief Enables MSAA if set to more than 1 sample per pixel
@@ -172,18 +175,14 @@ class MSAASample : public vkb::VulkanSampleC
 	 *        renderpass since it only renders a texture on single full-screen
 	 *        triangle and MSAA only works on primitive edges
 	 */
-	void use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-	                            std::vector<vkb::LoadStoreInfo>           &load_store,
-	                            uint32_t                                   resolve_attachment);
+	void use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t resolve_attachment);
 
 	/**
 	 * @brief Sets the single-sampled output_attachment as the output attachment,
 	 *        disables color resolve and updates the load/store operations of
 	 *        color attachments
 	 */
-	void use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-	                             std::vector<vkb::LoadStoreInfo>           &load_store,
-	                             uint32_t                                   output_attachment);
+	void use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t output_attachment);
 
 	/**
 	 * @brief Submits a transfer operation to resolve the multisampled color attachment

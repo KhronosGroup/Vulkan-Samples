@@ -68,8 +68,7 @@ bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	get_stats().request_stats({vkb::StatIndex::gpu_killed_tiles,
-	                           vkb::StatIndex::gpu_ext_write_bytes});
+	get_stats().request_stats({vkb::StatIndex::gpu_killed_tiles, vkb::StatIndex::gpu_ext_write_bytes});
 
 	create_gui(*window, &get_stats());
 
@@ -84,10 +83,12 @@ void LayoutTransitions::request_instance_extensions(std::unordered_map<std::stri
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void LayoutTransitions::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+void LayoutTransitions::request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+                                               vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
 	vkb::VulkanSampleC::request_layer_settings(requested_layer_settings, scb);
-	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &scb.add_chain_data<int32_t>(0)});
+	requested_layer_settings.push_back(
+	    {"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &scb.add_chain_data<int32_t>(0)});
 }
 #endif
 
@@ -107,11 +108,8 @@ std::unique_ptr<vkb::rendering::RenderTargetC> LayoutTransitions::create_render_
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device,
-	                              extent,
-	                              VK_FORMAT_R8G8B8A8_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image albedo_image{
+	    device, extent, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	vkb::core::Image normal_image{device,
 	                              extent,
@@ -138,9 +136,7 @@ std::unique_ptr<vkb::rendering::RenderTargetC> LayoutTransitions::create_render_
 
 VkImageLayout LayoutTransitions::pick_old_layout(VkImageLayout last_layout)
 {
-	return (layout_transition_type == LayoutTransitionType::UNDEFINED) ?
-	           VK_IMAGE_LAYOUT_UNDEFINED :
-	           last_layout;
+	return (layout_transition_type == LayoutTransitionType::UNDEFINED) ? VK_IMAGE_LAYOUT_UNDEFINED : last_layout;
 }
 
 void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
@@ -260,7 +256,8 @@ void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::ren
 void LayoutTransitions::draw_gui()
 {
 	get_gui().show_options_window(
-	    /* body = */ [this]() {
+	    /* body = */
+	    [this]() {
 		    ImGui::Text("Transition images from:");
 		    ImGui::RadioButton("Undefined layout", reinterpret_cast<int *>(&layout_transition_type), LayoutTransitionType::UNDEFINED);
 		    ImGui::SameLine();
