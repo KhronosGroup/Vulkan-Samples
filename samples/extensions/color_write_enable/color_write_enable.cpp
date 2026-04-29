@@ -325,7 +325,11 @@ void ColorWriteEnable::setup_render_pass()
 		attachments[i].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[i].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[i].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		// Per-attachment final layouts:
+		// - attachment 0 is the swapchain image; first use is subpass 1 (color), so the finalLayout must be PRESENT.
+		// - attachments 1..3 are written in subpass 0 (color) and read in subpass 1
+		//   as input attachments, so they should end as SHADER_READ_ONLY_OPTIMAL.
+		attachments[i].finalLayout = (i == 0) ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
 	std::array<VkAttachmentReference, 4> color_references = {
@@ -378,13 +382,15 @@ void ColorWriteEnable::setup_render_pass()
 	dependencies[1].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	// Color pass to composition pass.
+	// Color pass -> composition pass (make color attachment writes visible to input-attachment reads)
+	// Also include COLOR_ATTACHMENT_OUTPUT/COLOR_ATTACHMENT_WRITE on the dst side so the layout
+	// transition performed at vkCmdNextSubpass is ordered with prior color writes and the final store.
 	dependencies[2].srcSubpass      = 0;
 	dependencies[2].dstSubpass      = 1;
 	dependencies[2].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[2].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[2].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependencies[2].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[2].dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+	dependencies[2].dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Composition pass to external.
