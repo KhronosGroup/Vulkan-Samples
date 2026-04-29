@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2024, Holochip
+/* Copyright (c) 2021-2026, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,20 +65,21 @@ class TextureCompressionComparison : public vkb::VulkanSampleC
 	};
 
   private:
-	static const std::vector<CompressedTexture_t>               &get_texture_formats();
-	bool                                                         is_texture_format_supported(const CompressedTexture_t &format);
-	void                                                         load_assets();
-	void                                                         create_subpass();
-	TextureBenchmark                                             update_textures(const CompressedTexture_t &new_format);
-	std::unique_ptr<vkb::sg::Image>                              create_image(ktxTexture2 *ktx_texture, const std::string &name);
-	std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark> compress(const std::string &filename, CompressedTexture_t texture_format, const std::string &name);
-	std::vector<std::string>                                     gui_texture_names;
-	std::unordered_map<std::string, SampleTexture>               texture_raw_data;
-	std::vector<std::pair<vkb::sg::Texture *, std::string>>      textures;
-	vkb::sg::Camera                                             *camera{VK_NULL_HANDLE};
-	TextureBenchmark                                             current_benchmark{};
-	int                                                          current_format = 0, current_gui_format = 0;
-	bool                                                         require_redraw = true;
+	static const std::vector<CompressedTexture_t> &get_texture_formats();
+	bool                                           is_texture_format_supported(const CompressedTexture_t &format);
+	void                                           load_assets();
+	void                                           create_subpass();
+	TextureBenchmark                               update_textures(const CompressedTexture_t &new_format);
+	std::unique_ptr<vkb::sg::Image>                create_image(ktxTexture2 *ktx_texture, const std::string &name);
+	std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark>
+	                                                        compress(const std::string &filename, CompressedTexture_t texture_format, const std::string &name);
+	std::vector<std::string>                                gui_texture_names;
+	std::unordered_map<std::string, SampleTexture>          texture_raw_data;
+	std::vector<std::pair<vkb::sg::Texture *, std::string>> textures;
+	vkb::sg::Camera                                        *camera{VK_NULL_HANDLE};
+	TextureBenchmark                                        current_benchmark{};
+	int                                                     current_format = 0, current_gui_format = 0;
+	bool                                                    require_redraw = true;
 };
 
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison();

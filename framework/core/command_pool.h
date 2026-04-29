@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,14 +75,15 @@ class CommandPool : private vkb::core::CommandPoolBase
 	CommandPool &operator=(CommandPool<bindingType> &&other) = default;
 	~CommandPool()                                           = default;
 
-	vkb::core::Device<bindingType>                        &get_device();
-	CommandPoolType                                        get_handle() const;
-	uint32_t                                               get_queue_family_index() const;
-	vkb::rendering::RenderFrame<bindingType>              *get_render_frame();
-	vkb::CommandBufferResetMode                            get_reset_mode() const;
-	size_t                                                 get_thread_index() const;
-	std::shared_ptr<vkb::core::CommandBuffer<bindingType>> request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
-	void                                                   reset_pool();
+	vkb::core::Device<bindingType>           &get_device();
+	CommandPoolType                           get_handle() const;
+	uint32_t                                  get_queue_family_index() const;
+	vkb::rendering::RenderFrame<bindingType> *get_render_frame();
+	vkb::CommandBufferResetMode               get_reset_mode() const;
+	size_t                                    get_thread_index() const;
+	std::shared_ptr<vkb::core::CommandBuffer<bindingType>>
+	     request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
+	void reset_pool();
 };
 
 using CommandPoolC   = CommandPool<vkb::BindingType::C>;

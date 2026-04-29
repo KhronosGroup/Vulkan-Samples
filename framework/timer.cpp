@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,11 +19,8 @@
 
 namespace vkb
 {
-Timer::Timer() :
-    start_time{Clock::now()},
-    previous_tick{Clock::now()}
-{
-}
+Timer::Timer() : start_time{Clock::now()}, previous_tick{Clock::now()}
+{}
 
 void Timer::start()
 {

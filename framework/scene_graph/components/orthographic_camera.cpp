@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Arm Limited and Contributors
+/* Copyright (c) 2023-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,20 +23,12 @@ namespace vkb
 {
 namespace sg
 {
-OrthographicCamera::OrthographicCamera(const std::string &name) :
-    Camera{name}
+OrthographicCamera::OrthographicCamera(const std::string &name) : Camera{name}
 {}
 
 OrthographicCamera::OrthographicCamera(const std::string &name, float left, float right, float bottom, float top, float near_plane, float far_plane) :
-    Camera{name},
-    left{left},
-    right{right},
-    top{top},
-    bottom{bottom},
-    near_plane{near_plane},
-    far_plane{far_plane}
-{
-}
+    Camera{name}, left{left}, right{right}, top{top}, bottom{bottom}, near_plane{near_plane}, far_plane{far_plane}
+{}
 
 void OrthographicCamera::set_left(float new_left)
 {

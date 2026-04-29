@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,10 +27,8 @@
 
 namespace vkb
 {
-WindowsPlatform::WindowsPlatform(const PlatformContext &context) :
-    Platform(context)
-{
-}
+WindowsPlatform::WindowsPlatform(const PlatformContext &context) : Platform(context)
+{}
 
 void WindowsPlatform::create_window(const Window::Properties &properties)
 {

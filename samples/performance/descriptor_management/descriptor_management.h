@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,15 +44,9 @@ class DescriptorManagement : public vkb::VulkanSampleC
 		int                       value;
 	};
 
-	RadioButtonGroup descriptor_caching{
-	    "Descriptor set caching",
-	    {"Disabled", "Enabled"},
-	    0};
+	RadioButtonGroup descriptor_caching{"Descriptor set caching", {"Disabled", "Enabled"}, 0};
 
-	RadioButtonGroup buffer_allocation{
-	    "Single large VkBuffer",
-	    {"Disabled", "Enabled"},
-	    0};
+	RadioButtonGroup buffer_allocation{"Single large VkBuffer", {"Disabled", "Enabled"}, 0};
 
 	std::vector<RadioButtonGroup *> radio_buttons = {&descriptor_caching, &buffer_allocation};
 

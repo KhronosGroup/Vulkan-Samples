@@ -35,7 +35,8 @@ class DescriptorIndexing : public ApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 #if defined(PLATFORM__MACOS)
 	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
+	void request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+	                            vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
 #endif
 
 	void create_bindless_descriptors();

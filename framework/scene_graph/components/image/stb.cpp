@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,8 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-Stb::Stb(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type) :
-    Image{name}
+Stb::Stb(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type) : Image{name}
 {
 	int width;
 	int height;

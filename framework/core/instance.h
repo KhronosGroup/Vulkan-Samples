@@ -29,7 +29,8 @@ namespace core
 namespace
 {
 template <vkb::BindingType bindingType>
-typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type get_default_create_flags(std::vector<std::string> const &)
+typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type
+    get_default_create_flags(std::vector<std::string> const &)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -69,11 +70,12 @@ class Instance
 	 */
 	Instance(
 	    std::string const                                                                            &application_name,
-	    uint32_t                                                                                      api_version                 = VK_API_VERSION_1_1,
-	    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_layers            = {},
-	    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_extensions        = {},
-	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const               &get_create_flags            = get_default_create_flags,
-	    std::function<void(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &)> const &extend_instance_create_info = [](vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> const &) {});
+	    uint32_t                                                                                      api_version          = VK_API_VERSION_1_1,
+	    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_layers     = {},
+	    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_extensions = {},
+	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const               &get_create_flags     = get_default_create_flags,
+	    std::function<void(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &)> const &extend_instance_create_info =
+	        [](vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> const &) {});
 
 	Instance(vk::Instance instance, std::vector<char const *> const &externally_enabled_extensions = {}, bool needsToInitializeDispatcher = false);
 	Instance(VkInstance instance, std::vector<char const *> const &externally_enabled_extensions = {});
@@ -130,8 +132,7 @@ inline bool enable_extension(std::string const                          &request
 	return is_available;
 }
 
-inline bool
-    enable_layer(std::string const &requested_layer, std::vector<vk::LayerProperties> const &available_layers, std::vector<std::string> &enabled_layers)
+inline bool enable_layer(std::string const &requested_layer, std::vector<vk::LayerProperties> const &available_layers, std::vector<std::string> &enabled_layers)
 {
 	bool is_available =
 	    std::ranges::any_of(available_layers, [&requested_layer](auto const &available_layer) { return requested_layer == available_layer.layerName; });
@@ -155,12 +156,13 @@ inline bool
 }        // namespace
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(std::string const                                                                            &application_name,
-                                       uint32_t                                                                                      api_version,
-                                       std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_layers,
-                                       std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_extensions,
-                                       std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const               &get_create_flags,
-                                       std::function<void(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &)> const &extend_instance_create_info)
+inline Instance<bindingType>::Instance(
+    std::string const                                                                            &application_name,
+    uint32_t                                                                                      api_version,
+    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_layers,
+    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_extensions,
+    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const               &get_create_flags,
+    std::function<void(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &)> const &extend_instance_create_info)
 {
 	// check API version
 	LOGI("Requesting Vulkan API version {}.{}", VK_VERSION_MAJOR(api_version), VK_VERSION_MINOR(api_version));
@@ -212,9 +214,7 @@ inline Instance<bindingType>::Instance(std::string const                        
 	{
 		std::string const                    validation_layer_name               = "VK_LAYER_KHRONOS_validation";
 		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(validation_layer_name);
-		available_extensions.insert(available_extensions.end(),
-		                            available_layer_instance_extensions.begin(),
-		                            available_layer_instance_extensions.end());
+		available_extensions.insert(available_extensions.end(), available_layer_instance_extensions.begin(), available_layer_instance_extensions.end());
 	}
 
 	for (auto const &requested_extension : requested_extensions)
@@ -269,7 +269,9 @@ inline Instance<bindingType>::Instance(std::string const                        
 }
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(vk::Instance instance, std::vector<char const *> const &externally_enabled_extensions, bool needsToInitializeDispatcher) :
+inline Instance<bindingType>::Instance(vk::Instance                     instance,
+                                       std::vector<char const *> const &externally_enabled_extensions,
+                                       bool                             needsToInitializeDispatcher) :
     handle{instance}
 {
 	if (needsToInitializeDispatcher)

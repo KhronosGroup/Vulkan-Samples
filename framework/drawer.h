@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Mobica Limited
+/* Copyright (c) 2024-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -96,7 +96,7 @@ class Drawer
 	 * @param precision The precision
 	 * @returns True if adding item was successful
 	 */
-	bool input_float(const char *caption, float *value, float step, const char* precision);
+	bool input_float(const char *caption, float *value, float step, const char *precision);
 
 	/**
 	 * @brief Adds a slide bar to the gui for floating points to the gui

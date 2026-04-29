@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2020-2025, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2020-2026, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,8 +44,7 @@ const float FreeCamera::TRANSLATION_MOVE_STEP = 50.0f;
 
 const uint32_t FreeCamera::TRANSLATION_MOVE_SPEED = 4;
 
-FreeCamera::FreeCamera(vkb::scene_graph::NodeC &node) :
-    NodeScript{node, "FreeCamera"}
+FreeCamera::FreeCamera(vkb::scene_graph::NodeC &node) : NodeScript{node, "FreeCamera"}
 {}
 
 void FreeCamera::update(float delta_time)
@@ -162,8 +161,7 @@ void FreeCamera::input_event(const InputEvent &input_event)
 	{
 		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
 
-		if (key_event.get_action() == KeyAction::Down ||
-		    key_event.get_action() == KeyAction::Repeat)
+		if (key_event.get_action() == KeyAction::Down || key_event.get_action() == KeyAction::Repeat)
 		{
 			key_pressed[key_event.get_code()] = true;
 		}

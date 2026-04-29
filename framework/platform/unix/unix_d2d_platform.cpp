@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,10 +22,8 @@
 
 namespace vkb
 {
-UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) :
-    Platform{context}
-{
-}
+UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) : Platform{context}
+{}
 
 void UnixD2DPlatform::create_window(const Window::Properties &properties)
 {

@@ -79,8 +79,7 @@ using SceneCpp = Scene<vkb::BindingType::Cpp>;
 // Member function definitions
 
 template <vkb::BindingType bindingType>
-inline Scene<bindingType>::Scene(std::string const &name) :
-    name{name}
+inline Scene<bindingType>::Scene(std::string const &name) : name{name}
 {}
 
 template <vkb::BindingType bindingType>
@@ -179,10 +178,9 @@ inline std::vector<T *> Scene<bindingType>::get_components() const
 		auto &scene_components = components.at(get_type_index<T>());
 
 		result.resize(scene_components.size());
-		std::transform(scene_components.begin(), scene_components.end(), result.begin(),
-		               [](std::unique_ptr<vkb::sg::Component> const &component) -> T * {
-			               return reinterpret_cast<T *>(component.get());
-		               });
+		std::transform(scene_components.begin(), scene_components.end(), result.begin(), [](std::unique_ptr<vkb::sg::Component> const &component) -> T * {
+			return reinterpret_cast<T *>(component.get());
+		});
 	}
 
 	return result;
@@ -219,17 +217,10 @@ template <typename T>
 inline std::type_index Scene<bindingType>::get_type_index() const
 {
 	// please add a type check here for types never encountered before
-	static_assert(std::is_same<T, vkb::scene_graph::components::HPPMesh>::value ||
-	              std::is_same<T, vkb::scene_graph::components::SamplerC>::value ||
-	              std::is_same<T, vkb::sg::Animation>::value ||
-	              std::is_same<T, vkb::sg::Camera>::value ||
-	              std::is_same<T, vkb::sg::Image>::value ||
-	              std::is_same<T, vkb::sg::Light>::value ||
-	              std::is_same<T, vkb::sg::Mesh>::value ||
-	              std::is_same<T, vkb::sg::PBRMaterial>::value ||
-	              std::is_same<T, vkb::sg::Script>::value ||
-	              std::is_same<T, vkb::sg::SubMesh>::value ||
-	              std::is_same<T, vkb::sg::Texture>::value);
+	static_assert(std::is_same<T, vkb::scene_graph::components::HPPMesh>::value || std::is_same<T, vkb::scene_graph::components::SamplerC>::value ||
+	              std::is_same<T, vkb::sg::Animation>::value || std::is_same<T, vkb::sg::Camera>::value || std::is_same<T, vkb::sg::Image>::value ||
+	              std::is_same<T, vkb::sg::Light>::value || std::is_same<T, vkb::sg::Mesh>::value || std::is_same<T, vkb::sg::PBRMaterial>::value ||
+	              std::is_same<T, vkb::sg::Script>::value || std::is_same<T, vkb::sg::SubMesh>::value || std::is_same<T, vkb::sg::Texture>::value);
 
 	return map_type_index(typeid(T));
 }
@@ -264,10 +255,9 @@ template <class T>
 inline void Scene<bindingType>::set_components(std::vector<std::unique_ptr<T>> &&new_components)
 {
 	std::vector<std::unique_ptr<vkb::sg::Component>> result(new_components.size());
-	std::ranges::transform(new_components, result.begin(),
-	                       [](std::unique_ptr<T> &component) -> std::unique_ptr<vkb::sg::Component> {
-		                       return std::unique_ptr<vkb::sg::Component>(std::move(component));
-	                       });
+	std::ranges::transform(new_components, result.begin(), [](std::unique_ptr<T> &component) -> std::unique_ptr<vkb::sg::Component> {
+		return std::unique_ptr<vkb::sg::Component>(std::move(component));
+	});
 	components[get_type_index<T>()] = std::move(result);
 }
 

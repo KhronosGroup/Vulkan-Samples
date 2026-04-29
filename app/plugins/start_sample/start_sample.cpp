@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -29,8 +29,7 @@ StartSample::StartSample() :
                     {{"sample", "Run a specific sample"},
                      {"samples", "List available samples with descriptions"},
                      {"samples-oneline", "List available samples, one per line"}})
-{
-}
+{}
 
 void StartSample::launch_sample(apps::SampleInfo const *sample) const
 {
