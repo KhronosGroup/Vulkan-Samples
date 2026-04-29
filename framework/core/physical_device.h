@@ -163,6 +163,7 @@ class PhysicalDevice
 	template <typename FeatureType>
 	FeatureType get_extension_features_impl();
 	uint32_t    get_memory_type_impl(uint32_t bits, vk::MemoryPropertyFlags properties, vk::Bool32 *memory_type_found = nullptr) const;
+	void        init();
 	template <typename FeatureType>
 	void request_required_feature_impl(vk::Bool32 FeatureType::*flag, std::string const &featureName, std::string const &flagName);
 
@@ -187,15 +188,28 @@ using PhysicalDeviceCpp = PhysicalDevice<vkb::BindingType::Cpp>;
 #define REQUEST_OPTIONAL_FEATURE(gpu, Feature, flag) gpu.request_optional_feature<Feature>(&Feature::flag, #Feature, #flag)
 #define REQUEST_REQUIRED_FEATURE(gpu, Feature, flag) gpu.request_required_feature<Feature>(&Feature::flag, #Feature, #flag)
 
-template <vkb::BindingType bindingType>
-inline PhysicalDevice<bindingType>::PhysicalDevice(vkb::core::Instance<bindingType> &instance, PhysicalDeviceType physical_device) :
+template <>
+inline PhysicalDeviceC::PhysicalDevice(vkb::core::InstanceC &instance, VkPhysicalDevice physical_device) :
+    instance{reinterpret_cast<vkb::core::InstanceCpp &>(instance)}, handle{physical_device}
+{
+	init();
+}
+
+template <>
+inline PhysicalDeviceCpp::PhysicalDevice(vkb::core::InstanceCpp &instance, vk::PhysicalDevice physical_device) :
     instance{instance}, handle{physical_device}
 {
-	features                = physical_device.getFeatures();
-	properties              = physical_device.getProperties();
-	memory_properties       = physical_device.getMemoryProperties();
-	queue_family_properties = physical_device.getQueueFamilyProperties();
-	device_extensions       = physical_device.enumerateDeviceExtensionProperties();
+	init();
+}
+
+template <vkb::BindingType bindingType>
+inline void PhysicalDevice<bindingType>::init()
+{
+	features                = handle.getFeatures();
+	properties              = handle.getProperties();
+	memory_properties       = handle.getMemoryProperties();
+	queue_family_properties = handle.getQueueFamilyProperties();
+	device_extensions       = handle.enumerateDeviceExtensionProperties();
 
 	LOGI("Found GPU: {}", properties.deviceName.data());
 
