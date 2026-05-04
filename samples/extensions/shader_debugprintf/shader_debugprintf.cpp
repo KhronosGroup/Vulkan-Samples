@@ -481,15 +481,11 @@ void ShaderDebugPrintf::extend_debug_utils_messenger_create_info(vkb::StructureC
 	ApiVulkanSample::extend_debug_utils_messenger_create_info(scb);
 
 	// Register a sample specific debug utils callback in addition to the one registered by the base class
-#if 0
-	scb.add_struct(get_debug_utils_messenger_create_info());
-#else
 	// for some unknown reason, this VkDebugUtilsMessengerCreateInfoEXT needs to be the first one!
 	// That is, we need to replace the current anchor with this one, and add the current anchor as the second struct in the chain.
 	VkDebugUtilsMessengerCreateInfoEXT tmp = *scb.get_struct<VkDebugUtilsMessengerCreateInfoEXT>();
 	scb.set_anchor_struct(get_debug_utils_messenger_create_info());
 	scb.add_struct(tmp);
-#endif
 }
 
 void ShaderDebugPrintf::render(float delta_time)
