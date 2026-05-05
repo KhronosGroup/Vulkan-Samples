@@ -280,7 +280,6 @@ void SwapchainPresentTiming::query_past_presentation_timing()
 	{
 		query_swapchain_timing_properties();
 		select_target_present_duration();
-		timing_properties_counter = past_presentation_properties.timingPropertiesCounter;
 	}
 
 	if (past_presentation_properties.timeDomainsCounter != time_domains_counter)
@@ -294,8 +293,6 @@ void SwapchainPresentTiming::query_past_presentation_timing()
 		{
 			invalidate_timing_history();
 		}
-
-		time_domains_counter = past_presentation_properties.timeDomainsCounter;
 	}
 }
 
