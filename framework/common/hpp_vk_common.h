@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -86,8 +86,7 @@ inline bool is_depth_only_format(vk::Format format)
 inline bool is_depth_stencil_format(vk::Format format)
 {
 	assert(vkb::is_depth_stencil_format(static_cast<VkFormat>(format)) ==
-	       ((vk::componentCount(format) == 2) && (std::string(vk::componentName(format, 0)) == "D") &&
-	        (std::string(vk::componentName(format, 1)) == "S")));
+	       ((vk::componentCount(format) == 2) && (std::string(vk::componentName(format, 0)) == "D") && (std::string(vk::componentName(format, 1)) == "S")));
 	return vkb::is_depth_stencil_format(static_cast<VkFormat>(format));
 }
 
@@ -107,10 +106,7 @@ inline vk::ShaderModule load_shader(const std::string &filename, vk::Device devi
 	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
 }
 
-inline void image_layout_transition(vk::CommandBuffer command_buffer,
-                                    vk::Image         image,
-                                    vk::ImageLayout   old_layout,
-                                    vk::ImageLayout   new_layout)
+inline void image_layout_transition(vk::CommandBuffer command_buffer, vk::Image image, vk::ImageLayout old_layout, vk::ImageLayout new_layout)
 {
 	vkb::image_layout_transition(static_cast<VkCommandBuffer>(command_buffer),
 	                             static_cast<VkImage>(image),
@@ -118,11 +114,8 @@ inline void image_layout_transition(vk::CommandBuffer command_buffer,
 	                             static_cast<VkImageLayout>(new_layout));
 }
 
-inline void image_layout_transition(vk::CommandBuffer         command_buffer,
-                                    vk::Image                 image,
-                                    vk::ImageLayout           old_layout,
-                                    vk::ImageLayout           new_layout,
-                                    vk::ImageSubresourceRange subresource_range)
+inline void image_layout_transition(
+    vk::CommandBuffer command_buffer, vk::Image image, vk::ImageLayout old_layout, vk::ImageLayout new_layout, vk::ImageSubresourceRange subresource_range)
 {
 	vkb::image_layout_transition(static_cast<VkCommandBuffer>(command_buffer),
 	                             static_cast<VkImage>(image),
@@ -180,11 +173,9 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice            
 	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
 	assert(!supported_surface_formats.empty());
 
-	auto it = std::ranges::find_if(supported_surface_formats,
-	                               [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
-		                               return std::ranges::any_of(preferred_formats,
-		                                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
-	                               });
+	auto it = std::ranges::find_if(supported_surface_formats, [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
+		return std::ranges::any_of(preferred_formats, [&surface_format](vk::Format format) { return format == surface_format.format; });
+	});
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
@@ -205,8 +196,7 @@ inline vk::Format choose_blendable_format(vk::PhysicalDevice gpu, const std::vec
 
 inline vk::ImageCompressionPropertiesEXT query_applied_compression(vk::Device device, vk::Image image)
 {
-	vk::ImageSubresource2EXT image_subresource{
-	    .imageSubresource = {.aspectMask = vk::ImageAspectFlagBits::eColor, .mipLevel = 0, .arrayLayer = 0}};
+	vk::ImageSubresource2EXT image_subresource{.imageSubresource = {.aspectMask = vk::ImageAspectFlagBits::eColor, .mipLevel = 0, .arrayLayer = 0}};
 
 	auto imageSubresourceLayout = device.getImageSubresourceLayout2EXT<vk::SubresourceLayout2EXT, vk::ImageCompressionPropertiesEXT>(image, image_subresource);
 
@@ -223,9 +213,8 @@ inline vk::CommandBuffer
 
 inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::DescriptorPool descriptor_pool, vk::DescriptorSetLayout descriptor_set_layout)
 {
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info{.descriptorPool     = descriptor_pool,
-	                                                           .descriptorSetCount = 1,
-	                                                           .pSetLayouts        = &descriptor_set_layout};
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info{
+	    .descriptorPool = descriptor_pool, .descriptorSetCount = 1, .pSetLayouts = &descriptor_set_layout};
 	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
 }
 
@@ -317,7 +306,8 @@ inline vk::ImageView create_image_view(vk::Device           device,
 	return device.createImageView(image_view_create_info);
 }
 
-inline vk::QueryPool create_query_pool(vk::Device device, vk::QueryType query_type, uint32_t query_count, vk::QueryPipelineStatisticFlags pipeline_statistics = {})
+inline vk::QueryPool
+    create_query_pool(vk::Device device, vk::QueryType query_type, uint32_t query_count, vk::QueryPipelineStatisticFlags pipeline_statistics = {})
 {
 	vk::QueryPoolCreateInfo query_pool_create_info{.queryType = query_type, .queryCount = query_count, .pipelineStatistics = pipeline_statistics};
 	return device.createQueryPool(query_pool_create_info);
@@ -425,8 +415,9 @@ inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> co
 	// Try to find a queue family index that supports compute but not graphics
 	if (queue_flag & vk::QueueFlagBits::eCompute)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties,
-		                                       [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics); });
+		auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) {
+			return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics);
+		});
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
@@ -437,11 +428,10 @@ inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> co
 	// Try to find a queue family index that supports transfer but not graphics and compute
 	if (queue_flag & vk::QueueFlagBits::eTransfer)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties,
-		                                       [queue_flag](const vk::QueueFamilyProperties &property) {
-			                                       return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
-			                                              !(property.queueFlags & vk::QueueFlagBits::eCompute);
-		                                       });
+		auto propertyIt = std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) {
+			return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
+			       !(property.queueFlags & vk::QueueFlagBits::eCompute);
+		});
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));

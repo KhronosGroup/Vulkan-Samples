@@ -69,17 +69,9 @@ std::unique_ptr<vkb::rendering::RenderTargetC> Subpasses::create_render_target(v
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image albedo_image{device,
-	                              extent,
-	                              albedo_format,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image albedo_image{device, extent, albedo_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags, VMA_MEMORY_USAGE_GPU_ONLY};
 
-	vkb::core::Image normal_image{device,
-	                              extent,
-	                              normal_format,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-	                              VMA_MEMORY_USAGE_GPU_ONLY};
+	vkb::core::Image normal_image{device, extent, normal_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<vkb::core::Image> images;
 
@@ -176,8 +168,7 @@ void Subpasses::request_instance_extensions(std::unordered_map<std::string, vkb:
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void Subpasses::request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
-                                       vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+void Subpasses::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
 	vkb::VulkanSampleC::request_layer_settings(requested_layer_settings, scb);
 	requested_layer_settings.push_back(
@@ -201,8 +192,7 @@ void Subpasses::update(float delta_time)
 	}
 
 	// Check whether the user switched the attachment or the G-buffer option
-	if (configs[Config::TransientAttachments].value != last_transient_attachment ||
-	    configs[Config::GBufferSize].value != last_g_buffer_size)
+	if (configs[Config::TransientAttachments].value != last_transient_attachment || configs[Config::GBufferSize].value != last_g_buffer_size)
 	{
 		// If attachment option has changed
 		if (configs[Config::TransientAttachments].value != last_transient_attachment)
@@ -263,7 +253,8 @@ void Subpasses::draw_gui()
 	}
 
 	get_gui().show_options_window(
-	    /* body = */ [this, lines]() {
+	    /* body = */
+	    [this, lines]() {
 		    // Create a line for every config
 		    for (size_t i = 0; i < configs.size(); ++i)
 		    {

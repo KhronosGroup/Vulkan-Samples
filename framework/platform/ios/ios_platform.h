@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Inc.
+/* Copyright (c) 2023-2026, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,15 +24,15 @@ namespace vkb
 
 class IosPlatform : public Platform
 {
-public:
-    IosPlatform(const PlatformContext &context);
-    
-    virtual ~IosPlatform() = default;
-    
-    virtual const char *get_surface_extension();
-    void* view;
+  public:
+	IosPlatform(const PlatformContext &context);
 
-protected:
-    virtual void create_window(const Window::Properties &properties) override;
+	virtual ~IosPlatform() = default;
+
+	virtual const char *get_surface_extension();
+	void               *view;
+
+  protected:
+	virtual void create_window(const Window::Properties &properties) override;
 };
 }        // namespace vkb

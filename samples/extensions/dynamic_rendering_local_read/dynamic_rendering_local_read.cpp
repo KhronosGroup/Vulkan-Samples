@@ -122,9 +122,11 @@ void DynamicRenderingLocalRead::setup_framebuffer()
 
 		for (size_t i = 0; i < descriptor_image_infos.size(); i++)
 		{
-			write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, i, &descriptor_image_infos[i]));
+			write_descriptor_sets.push_back(
+			    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, i, &descriptor_image_infos[i]));
 		}
-		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &descriptor_image_infos[0]));
+		write_descriptor_sets.push_back(
+		    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &descriptor_image_infos[0]));
 		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 	}
 
@@ -220,14 +222,12 @@ void DynamicRenderingLocalRead::setup_render_pass()
 	// First subpass: Fill G-Buffer components
 	// ----------------------------------------------------------------------------------------
 
-	VkAttachmentReference color_references[4] = {
-	    {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-	    {1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-	    {2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-	    {3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
+	VkAttachmentReference color_references[4] = {{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+	                                             {1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+	                                             {2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+	                                             {3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
 
-	VkAttachmentReference depth_reference =
-	    {4, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+	VkAttachmentReference depth_reference = {4, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
 	subpass_descriptions[0].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass_descriptions[0].colorAttachmentCount    = 4;
@@ -434,8 +434,10 @@ void DynamicRenderingLocalRead::create_attachments()
 
 void DynamicRenderingLocalRead::prepare_buffers()
 {
-	buffers.ubo_vs      = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(shader_data_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	buffers.ssbo_lights = std::make_unique<vkb::core::BufferC>(get_device(), lights.size() * sizeof(Light), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	buffers.ubo_vs =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(shader_data_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	buffers.ssbo_lights =
+	    std::make_unique<vkb::core::BufferC>(get_device(), lights.size() * sizeof(Light), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffer();
 	update_lights_buffer();
@@ -451,9 +453,10 @@ void DynamicRenderingLocalRead::update_lights_buffer()
 
 	for (auto &light : lights)
 	{
-		light.position = glm::vec4(rnd_dist(rnd_gen) * light_range.x, 1.0f + std::abs(rnd_dist(rnd_gen)) * light_range.y, rnd_dist(rnd_gen) * light_range.z, 1.0f);
-		light.radius   = 1.0f + std::abs(rnd_dist(rnd_gen)) * 3.0f;
-		light.color    = glm::vec3(rnd_col(rnd_gen), rnd_col(rnd_gen), rnd_col(rnd_gen)) * 2.0f;
+		light.position =
+		    glm::vec4(rnd_dist(rnd_gen) * light_range.x, 1.0f + std::abs(rnd_dist(rnd_gen)) * light_range.y, rnd_dist(rnd_gen) * light_range.z, 1.0f);
+		light.radius = 1.0f + std::abs(rnd_dist(rnd_gen)) * 3.0f;
+		light.color  = glm::vec3(rnd_col(rnd_gen), rnd_col(rnd_gen), rnd_col(rnd_gen)) * 2.0f;
 	}
 
 	buffers.ssbo_lights->convert_and_update(lights);
@@ -478,7 +481,8 @@ void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
 	};
 
-	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &scene_opaque_pass.descriptor_set_layout));
 
 	// Transparent scene rendering (forward pass)
@@ -488,7 +492,8 @@ void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
 	};
 
-	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &scene_transparent_pass.descriptor_set_layout));
 
 	// Composition pass
@@ -499,7 +504,8 @@ void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 3),
 	};
 
-	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	descriptor_layout_create_info =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &composition_pass.descriptor_set_layout));
 
 	// Pool
@@ -593,15 +599,20 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &composition_pass.pipeline_layout));
 
 	// Pipelines
-	VkPipelineInputAssemblyStateCreateInfo         input_assembly_state   = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
-	VkPipelineRasterizationStateCreateInfo         raster_state           = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-	VkPipelineColorBlendAttachmentState            blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo            blend_state            = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
-	VkPipelineViewportStateCreateInfo              viewport_state         = vkb::initializers::pipeline_viewport_state_create_info(1, 1);
-	VkPipelineDepthStencilStateCreateInfo          depth_stencil_state    = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
-	VkPipelineMultisampleStateCreateInfo           multisample_state      = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
-	std::array<VkDynamicState, 2>                  dynamic_states{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	VkPipelineDynamicStateCreateInfo               dynamic_state = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states.data(), vkb::to_u32(dynamic_states.size()));
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	VkPipelineRasterizationStateCreateInfo raster_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
+	VkPipelineColorBlendStateCreateInfo   blend_state    = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+	VkPipelineViewportStateCreateInfo     viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1);
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
+	std::array<VkDynamicState, 2>        dynamic_states{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	VkPipelineDynamicStateCreateInfo     dynamic_state =
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states.data(), vkb::to_u32(dynamic_states.size()));
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	// Vertex bindings an attributes for model rendering
@@ -656,11 +667,10 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	    Pipeline for the opaque parts of the scene
 	*/
 
-	std::array<VkPipelineColorBlendAttachmentState, 4> blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
+	std::array<VkPipelineColorBlendAttachmentState, 4> blend_attachment_states = {vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                                                                              vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                                                                              vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                                                                              vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
 
 	blend_state.attachmentCount = 4;
 	blend_state.pAttachments    = blend_attachment_states.data();
@@ -670,10 +680,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 #if defined(USE_DYNAMIC_RENDERING)
 	// For dynamic rendering, additional information muss be set at pipeline creation
 	VkFormat color_attachment_formats[4] = {
-	    get_render_context().get_format(),
-	    attachments.positionDepth.format,
-	    attachments.normal.format,
-	    attachments.albedo.format};
+	    get_render_context().get_format(), attachments.positionDepth.format, attachments.normal.format, attachments.albedo.format};
 
 	pipeline_rendering_create_info.colorAttachmentCount    = 4;
 	pipeline_rendering_create_info.pColorAttachmentFormats = color_attachment_formats;
@@ -723,7 +730,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount = 1;
+	blend_state.attachmentCount  = 1;
 	pipeline_create_info.subpass = 2;
 #endif
 
@@ -745,15 +752,14 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount = 1;
+	blend_state.attachmentCount  = 1;
 	pipeline_create_info.subpass = 1;
 #endif
 
-	blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
+	blend_attachment_states = {vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                           vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                           vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	                           vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE)};
 
 	pipeline_create_info.layout = composition_pass.pipeline_layout;
 
@@ -840,7 +846,15 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		subresource_range_depth.levelCount = VK_REMAINING_MIP_LEVELS;
 		subresource_range_depth.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, subresource_range_color);
+		vkb::image_layout_transition(cmd,
+		                             swapchain_buffers[i].image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             subresource_range_color);
 		vkb::image_layout_transition(cmd, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, subresource_range_depth);
 
 		VkRenderingAttachmentInfoKHR color_attachment_info[4]{};
@@ -903,7 +917,8 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline_layout, 0, 1, &scene_opaque_pass.descriptor_set, 0, nullptr);
 		draw_scene(scenes.opaque, cmd, scene_opaque_pass.pipeline_layout);
 
-		// We want to read the input attachments in the next pass, with dynamic rendering local read this requires use of a barrier with the "by region" flag set
+		// We want to read the input attachments in the next pass, with dynamic rendering local read this requires use of a barrier with the "by region" flag
+		// set
 
 		// A new feature of the dynamic rendering local read extension is the ability to use pipeline barriers in the dynamic render pass
 		// to allow framebuffer-local dependencies (i.e. read-after-write) between draw calls using the "by region" flag
@@ -934,7 +949,8 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		// Third draw
 		// Render transparent geometry using a forward pass that compares against depth generated during the first draw
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
+		vkCmdBindDescriptorSets(
+		    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
 		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
 
 		// End main rendering
@@ -947,17 +963,18 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		    Dynamic rendering end
 		*/
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
+		vkb::image_layout_transition(
+		    cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
 #else
-		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-		render_pass_begin_info.renderPass = render_pass;
-		render_pass_begin_info.renderArea.offset.x = 0;
-		render_pass_begin_info.renderArea.offset.y = 0;
-		render_pass_begin_info.renderArea.extent.width = width;
+		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.renderPass               = render_pass;
+		render_pass_begin_info.renderArea.offset.x      = 0;
+		render_pass_begin_info.renderArea.offset.y      = 0;
+		render_pass_begin_info.renderArea.extent.width  = width;
 		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.clearValueCount = 5;
-		render_pass_begin_info.pClearValues = clear_values;
-		render_pass_begin_info.framebuffer = framebuffers[i];
+		render_pass_begin_info.clearValueCount          = 5;
+		render_pass_begin_info.pClearValues             = clear_values;
+		render_pass_begin_info.framebuffer              = framebuffers[i];
 
 		// Start our render pass, which contains multiple sub passes
 		vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -987,7 +1004,8 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
+		vkCmdBindDescriptorSets(
+		    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
 		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
 
 		draw_ui(draw_cmd_buffers[i]);

@@ -63,7 +63,8 @@ class RaytracingReflection : public ApiVulkanSample
   public:
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR    ray_tracing_pipeline_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR   acceleration_structure_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR};
-	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{
+	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
 
 	std::vector<AccelerationStructure> bottom_level_acceleration_structure;
 	AccelerationStructure              top_level_acceleration_structure;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,8 +73,7 @@ class DescriptorSet
 	 * @param new_buffer_infos A map of buffer descriptors and their respective bindings
 	 * @param new_image_infos A map of image descriptors and their respective bindings
 	 */
-	void reset(const BindingMap<VkDescriptorBufferInfo> &new_buffer_infos = {},
-	           const BindingMap<VkDescriptorImageInfo>  &new_image_infos  = {});
+	void reset(const BindingMap<VkDescriptorBufferInfo> &new_buffer_infos = {}, const BindingMap<VkDescriptorImageInfo> &new_image_infos = {});
 
 	/**
 	 * @brief Updates the contents of the DescriptorSet by performing the write operations

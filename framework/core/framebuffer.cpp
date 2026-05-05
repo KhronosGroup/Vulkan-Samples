@@ -33,8 +33,7 @@ const VkExtent2D &Framebuffer::get_extent() const
 }
 
 Framebuffer::Framebuffer(vkb::core::DeviceC &device, const vkb::rendering::RenderTargetC &render_target, const RenderPass &render_pass) :
-    device{device},
-    extent{render_target.get_extent()}
+    device{device}, extent{render_target.get_extent()}
 {
 	std::vector<VkImageView> attachments;
 
@@ -60,10 +59,7 @@ Framebuffer::Framebuffer(vkb::core::DeviceC &device, const vkb::rendering::Rende
 	}
 }
 
-Framebuffer::Framebuffer(Framebuffer &&other) :
-    device{other.device},
-    handle{other.handle},
-    extent{other.extent}
+Framebuffer::Framebuffer(Framebuffer &&other) : device{other.device}, handle{other.handle}, extent{other.extent}
 {
 	other.handle = VK_NULL_HANDLE;
 }

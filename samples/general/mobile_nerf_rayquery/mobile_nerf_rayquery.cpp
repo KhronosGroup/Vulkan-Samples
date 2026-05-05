@@ -391,7 +391,8 @@ void MobileNerfRayQuery::read_json_map()
 
 	if (instacing_map["interval"].is_array() && instacing_map["interval"].size() == 3)
 	{
-		instancing_info.interval = glm::vec3(instacing_map["interval"][0].get<float>(), instacing_map["interval"][1].get<float>(), instacing_map["interval"][2].get<float>());
+		instancing_info.interval =
+		    glm::vec3(instacing_map["interval"][0].get<float>(), instacing_map["interval"][1].get<float>(), instacing_map["interval"][2].get<float>());
 	}
 	else
 	{
@@ -399,7 +400,8 @@ void MobileNerfRayQuery::read_json_map()
 		exit(1);
 	}
 
-	if (instancing_info.dim.x <= 0 || instancing_info.dim.y <= 0 || instancing_info.dim.z <= 0 || instancing_info.interval.x <= 0.f || instancing_info.interval.y <= 0.f || instancing_info.interval.z <= 0.f)
+	if (instancing_info.dim.x <= 0 || instancing_info.dim.y <= 0 || instancing_info.dim.z <= 0 || instancing_info.interval.x <= 0.f ||
+	    instancing_info.interval.y <= 0.f || instancing_info.interval.z <= 0.f)
 	{
 		LOGE("Instancing settings must be positive. Terminating...");
 		exit(1);
@@ -532,8 +534,7 @@ void MobileNerfRayQuery::initialize_mlp_uniform_buffers(int model_index)
 
 	for (int ii = 0; ii < BIAS_1_COUNT; ii++)
 	{
-		model_mlp.data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT +
-		               BIAS_0_COUNT + ii] = bias_1_array[ii];
+		model_mlp.data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT + BIAS_0_COUNT + ii] = bias_1_array[ii];
 	}
 
 	// We need to pad the layer 2's bias with zeros for every 3 weights to make it 16 bytes aligned
@@ -541,13 +542,11 @@ void MobileNerfRayQuery::initialize_mlp_uniform_buffers(int model_index)
 	{
 		if ((ii + 1) % 4 == 0)
 		{
-			model_mlp.data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT +
-			               BIAS_0_COUNT + BIAS_1_COUNT + ii] = 0.0f;
+			model_mlp.data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT + BIAS_0_COUNT + BIAS_1_COUNT + ii] = 0.0f;
 		}
 		else
 		{
-			model_mlp.data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT +
-			               BIAS_0_COUNT + BIAS_1_COUNT + ii] = bias_2_array[ii];
+			model_mlp.data[WEIGHTS_0_COUNT + WEIGHTS_1_COUNT + WEIGHTS_2_COUNT + BIAS_0_COUNT + BIAS_1_COUNT + ii] = bias_2_array[ii];
 		}
 	}
 
@@ -561,11 +560,8 @@ void MobileNerfRayQuery::initialize_mlp_uniform_buffers(int model_index)
 void MobileNerfRayQuery::load_shaders()
 {
 	shader_stages[0] = load_shader("mobile_nerf_rayquery/quad.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader(
-	    combo_mode ?
-	        "mobile_nerf_rayquery/rayquery_morpheus_combo.frag.spv" :
-	        "mobile_nerf_rayquery/rayquery_morpheus.frag.spv",
-	    VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[1] = load_shader(combo_mode ? "mobile_nerf_rayquery/rayquery_morpheus_combo.frag.spv" : "mobile_nerf_rayquery/rayquery_morpheus.frag.spv",
+	                               VK_SHADER_STAGE_FRAGMENT_BIT);
 }
 
 void MobileNerfRayQuery::load_scene(int model_index, int sub_model_index, int models_entry)
@@ -685,36 +681,25 @@ void MobileNerfRayQuery::create_static_object_buffers(int models_entry)
 
 	// Note that in contrast to a typical pipeline, our vertex/index buffer requires the acceleration structure build flag in rayquery
 	// Create a staging buffer
-	const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-	const VkBufferUsageFlags staging_flags      = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	const VkBufferUsageFlags buffer_usage_flags =
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	const VkBufferUsageFlags staging_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 	// Create destination buffers
 	model.vertex_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(),
-	    vertex_buffer_size,
-	    buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	    VMA_MEMORY_USAGE_GPU_ONLY);
+	    get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 	model.vertex_buffer->set_debug_name(fmt::format("Model #{} vertices", models_entry));
-	model.index_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(),
-	    index_buffer_size,
-	    buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	    VMA_MEMORY_USAGE_GPU_ONLY);
+	model.index_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 	model.index_buffer->set_debug_name(fmt::format("Model #{} indices", models_entry));
 
 	// Create staging buffers
-	std::unique_ptr<vkb::core::BufferC> staging_vertex_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(),
-	    vertex_buffer_size,
-	    staging_flags,
-	    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> staging_vertex_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), vertex_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_vertex_buffer->update(model.vertices);
 
-	std::unique_ptr<vkb::core::BufferC> staging_index_buffer = std::make_unique<vkb::core::BufferC>(
-	    get_device(),
-	    index_buffer_size,
-	    staging_flags,
-	    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> staging_index_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), index_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_index_buffer->update(model.indices);
 
 	// Copy over the data for each of the models
@@ -731,18 +716,14 @@ void MobileNerfRayQuery::create_uniforms()
 	weights_buffers.resize(num_models);
 
 	LOGI("Creating camera view uniform buffer");
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                      sizeof(global_uniform),
-	                                                      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer = std::make_unique<vkb::core::BufferC>(
+	    get_device(), sizeof(global_uniform), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	for (int i = 0; i < num_models; i++)
 	{
 		LOGI("Creating mlp weights uniform buffer for model {}", i);
-		weights_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(),
-		                                                          sizeof(MLP_Weights),
-		                                                          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+		weights_buffers[i] = std::make_unique<vkb::core::BufferC>(
+		    get_device(), sizeof(MLP_Weights), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	update_uniform_buffer();
@@ -785,15 +766,16 @@ void MobileNerfRayQuery::create_top_level_acceleration_structure()
 {
 	std::vector<VkAccelerationStructureInstanceKHR> acceleration_structure_instances;
 	auto                                            add_instance = [&](Model &model, const VkTransformMatrixKHR &transform_matrix, uint32_t instance_index) {
-        VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
-        acceleration_structure_instance.transform           = transform_matrix;
-        acceleration_structure_instance.instanceCustomIndex = instance_index;        // this is the model index instead of the instance index in instancing rendering.
-                                                                                     // need this to index correct weights and vertex & index buffer in shader.
-        acceleration_structure_instance.mask                                   = 0xFF;
-        acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
-        acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-        acceleration_structure_instance.accelerationStructureReference         = model.bottom_level_acceleration_structure->get_device_address();
-        acceleration_structure_instances.emplace_back(acceleration_structure_instance);
+		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
+		acceleration_structure_instance.transform = transform_matrix;
+		acceleration_structure_instance.instanceCustomIndex =
+		    instance_index;        // this is the model index instead of the instance index in instancing rendering.
+		                           // need this to index correct weights and vertex & index buffer in shader.
+		acceleration_structure_instance.mask                                   = 0xFF;
+		acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
+		acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+		acceleration_structure_instance.accelerationStructureReference         = model.bottom_level_acceleration_structure->get_device_address();
+		acceleration_structure_instances.emplace_back(acceleration_structure_instance);
 	};
 
 	auto     &ii = instancing_info;
@@ -833,10 +815,11 @@ void MobileNerfRayQuery::create_top_level_acceleration_structure()
 	LOGI("model num: {}", models.size());
 
 	const size_t                        instancesDataSize = sizeof(VkAccelerationStructureInstanceKHR) * acceleration_structure_instances.size();
-	std::unique_ptr<vkb::core::BufferC> instances_buffer  = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                                                                instancesDataSize,
-                                                                                                VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                                                                                                VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> instances_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(),
+	                                         instancesDataSize,
+	                                         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(acceleration_structure_instances.data(), instancesDataSize);
 
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
@@ -851,42 +834,41 @@ void MobileNerfRayQuery::create_bottom_level_acceleration_structure(int model_en
 
 	// Create buffers for the bottom level geometry
 	// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
-	const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	const VkBufferUsageFlags buffer_usage_flags =
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
 	// Set up a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
-	VkTransformMatrixKHR transform_matrix = {
-	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, 1.0f, 0.0f, 0.0f,
-	    0.0f, 0.0f, 1.0f, 0.0f};
+	VkTransformMatrixKHR transform_matrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
 	if (combo_mode)
 	{
 		// Use hard-coded transformation under combo mode
 		glm::mat4x4 &M   = combo_model_transform[model_entry];
-		transform_matrix = {
-		    M[0][0], M[1][0], M[2][0], M[3][0],
-		    M[0][1], M[1][1], M[2][1], -M[3][1],
-		    M[0][2], M[1][2], M[2][2], M[3][2]};
+		transform_matrix = {M[0][0], M[1][0], M[2][0], M[3][0], M[0][1], M[1][1], M[2][1], -M[3][1], M[0][2], M[1][2], M[2][2], M[3][2]};
 	}
-	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::BufferC> transform_matrix_buffer =
+	    std::make_unique<vkb::core::BufferC>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
 	if (model.bottom_level_acceleration_structure == nullptr)
 	{
-		model.bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
-		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-		model.bottom_level_acceleration_structure->add_triangle_geometry(
-		    *model.vertex_buffer,
-		    *model.index_buffer,
-		    *transform_matrix_buffer,
-		    model.indices.size(),
-		    model.vertices.size(),
-		    sizeof(Vertex),
-		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_INDEX_TYPE_UINT32, VK_GEOMETRY_OPAQUE_BIT_KHR,
-		    get_buffer_device_address(model.vertex_buffer->get_handle()),
-		    get_buffer_device_address(model.index_buffer->get_handle()));
+		model.bottom_level_acceleration_structure =
+		    std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
+		model.bottom_level_acceleration_structure->add_triangle_geometry(*model.vertex_buffer,
+		                                                                 *model.index_buffer,
+		                                                                 *transform_matrix_buffer,
+		                                                                 model.indices.size(),
+		                                                                 model.vertices.size(),
+		                                                                 sizeof(Vertex),
+		                                                                 0,
+		                                                                 VK_FORMAT_R32G32B32_SFLOAT,
+		                                                                 VK_INDEX_TYPE_UINT32,
+		                                                                 VK_GEOMETRY_OPAQUE_BIT_KHR,
+		                                                                 get_buffer_device_address(model.vertex_buffer->get_handle()),
+		                                                                 get_buffer_device_address(model.index_buffer->get_handle()));
 	}
 	model.bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
-	model.bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
+	model.bottom_level_acceleration_structure->build(
+	    queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
 void MobileNerfRayQuery::create_pipeline_layout()
@@ -902,15 +884,16 @@ void MobileNerfRayQuery::create_pipeline_layout()
 	// Add an array of weights sets into shader
 	if (combo_mode)
 	{
-		set_layout_bindings_common.push_back(vkb::initializers::descriptor_set_layout_binding(
-		    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, num_models));
+		set_layout_bindings_common.push_back(
+		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, num_models));
 	}
 	else
 	{
-		set_layout_bindings_common.push_back(vkb::initializers::descriptor_set_layout_binding(
-		    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2));
+		set_layout_bindings_common.push_back(
+		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2));
 	}
-	VkDescriptorSetLayoutCreateInfo descriptor_layout_bounded = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings_common.data(), static_cast<uint32_t>(set_layout_bindings_common.size()));
+	VkDescriptorSetLayoutCreateInfo descriptor_layout_bounded =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings_common.data(), static_cast<uint32_t>(set_layout_bindings_common.size()));
 	if (combo_mode)
 	{
 		VkDescriptorBindingFlagsEXT                    flags[3] = {0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
@@ -937,29 +920,30 @@ void MobileNerfRayQuery::create_pipeline_layout()
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &layout_handle));
 	};
 
-	VkDescriptorSetLayoutBinding set_layout_binding_vertices = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
+	VkDescriptorSetLayoutBinding set_layout_binding_vertices =
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
 	create_unbounded_descriptor_set_layout(descriptor_set_layout_vertices, set_layout_binding_vertices);
 
-	VkDescriptorSetLayoutBinding set_layout_binding_indices = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
+	VkDescriptorSetLayoutBinding set_layout_binding_indices =
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
 	create_unbounded_descriptor_set_layout(descriptor_set_layout_indices, set_layout_binding_indices);
 
-	VkDescriptorSetLayoutBinding set_layout_binding_feature1 = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
+	VkDescriptorSetLayoutBinding set_layout_binding_feature1 =
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
 	create_unbounded_descriptor_set_layout(descriptor_set_layout_feature1, set_layout_binding_feature1);
 
-	VkDescriptorSetLayoutBinding set_layout_binding_feature2 = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
+	VkDescriptorSetLayoutBinding set_layout_binding_feature2 =
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, models.size());
 	create_unbounded_descriptor_set_layout(descriptor_set_layout_feature2, set_layout_binding_feature2);
 
-	std::vector<VkDescriptorSetLayout> descriptor_set_layouts = {
-	    descriptor_set_layout_common,
-	    descriptor_set_layout_vertices,
-	    descriptor_set_layout_indices,
-	    descriptor_set_layout_feature1,
-	    descriptor_set_layout_feature2};
+	std::vector<VkDescriptorSetLayout> descriptor_set_layouts = {descriptor_set_layout_common,
+	                                                             descriptor_set_layout_vertices,
+	                                                             descriptor_set_layout_indices,
+	                                                             descriptor_set_layout_feature1,
+	                                                             descriptor_set_layout_feature2};
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        descriptor_set_layouts.data(),
-	        static_cast<uint32_t>(descriptor_set_layouts.size()));
+	    vkb::initializers::pipeline_layout_create_info(descriptor_set_layouts.data(), static_cast<uint32_t>(descriptor_set_layouts.size()));
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
@@ -972,7 +956,8 @@ void MobileNerfRayQuery::create_descriptor_pool()
 	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * static_cast<uint32_t>(framebuffers.size()) * static_cast<uint32_t>(num_models)},
 	    {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2 * static_cast<uint32_t>(models.size()) * static_cast<uint32_t>(framebuffers.size())},
 	    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * static_cast<uint32_t>(models.size()) * static_cast<uint32_t>(framebuffers.size())}};
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 5 * static_cast<uint32_t>(framebuffers.size()));
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	    vkb::initializers::descriptor_pool_create_info(pool_sizes, 5 * static_cast<uint32_t>(framebuffers.size()));
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -994,9 +979,8 @@ void MobileNerfRayQuery::create_descriptor_sets()
 		set_counts.descriptorSetCount                                 = 1;
 		set_counts.pDescriptorCounts                                  = counts;
 
-		VkDescriptorSetAllocateInfo descriptor_set_allocate_info =
-		    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
-		descriptor_set_allocate_info.pNext = &set_counts;
+		VkDescriptorSetAllocateInfo descriptor_set_allocate_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+		descriptor_set_allocate_info.pNext                       = &set_counts;
 		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_allocate_info, &descriptor_set));
 	};
 
@@ -1049,16 +1033,28 @@ void MobileNerfRayQuery::create_descriptor_sets()
 			texture_input_2_descriptors.emplace_back(texture_input_2_descriptor);
 		}
 
-		VkWriteDescriptorSet uniform_buffer_write  = vkb::initializers::write_descriptor_set(descriptor_set_common[i],
-		                                                                                     VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniform_buffer_descriptor);
+		VkWriteDescriptorSet uniform_buffer_write =
+		    vkb::initializers::write_descriptor_set(descriptor_set_common[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniform_buffer_descriptor);
 		VkWriteDescriptorSet vertex_buffer_write   = vkb::initializers::write_descriptor_set(descriptor_set_vertices[i],
-		                                                                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, vertex_buffer_descriptors.data(), static_cast<uint32_t>(vertex_buffer_descriptors.size()));
+		                                                                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+		                                                                                     0,
+		                                                                                     vertex_buffer_descriptors.data(),
+		                                                                                     static_cast<uint32_t>(vertex_buffer_descriptors.size()));
 		VkWriteDescriptorSet index_buffer_write    = vkb::initializers::write_descriptor_set(descriptor_set_indices[i],
-		                                                                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, index_buffer_descriptors.data(), static_cast<uint32_t>(index_buffer_descriptors.size()));
+		                                                                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+		                                                                                     0,
+		                                                                                     index_buffer_descriptors.data(),
+		                                                                                     static_cast<uint32_t>(index_buffer_descriptors.size()));
 		VkWriteDescriptorSet texture_input_write_0 = vkb::initializers::write_descriptor_set(descriptor_set_feature1[i],
-		                                                                                     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, texture_input_1_descriptors.data(), static_cast<uint32_t>(texture_input_1_descriptors.size()));
+		                                                                                     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		                                                                                     0,
+		                                                                                     texture_input_1_descriptors.data(),
+		                                                                                     static_cast<uint32_t>(texture_input_1_descriptors.size()));
 		VkWriteDescriptorSet texture_input_write_1 = vkb::initializers::write_descriptor_set(descriptor_set_feature2[i],
-		                                                                                     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, texture_input_2_descriptors.data(), static_cast<uint32_t>(texture_input_2_descriptors.size()));
+		                                                                                     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		                                                                                     0,
+		                                                                                     texture_input_2_descriptors.data(),
+		                                                                                     static_cast<uint32_t>(texture_input_2_descriptors.size()));
 
 		// Set up the descriptor for binding our top level acceleration structure to the ray tracing shaders
 		VkWriteDescriptorSetAccelerationStructureKHR descriptor_acceleration_structure_info{};
@@ -1090,22 +1086,24 @@ void MobileNerfRayQuery::create_descriptor_sets()
 				weights_buffer_descriptors.emplace_back(create_descriptor(*weight_buffer));
 			}
 			weights_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set_common[i],
-			                                                               VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, weights_buffer_descriptors.data(), static_cast<uint32_t>(weights_buffer_descriptors.size()));
+			                                                               VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			                                                               2,
+			                                                               weights_buffer_descriptors.data(),
+			                                                               static_cast<uint32_t>(weights_buffer_descriptors.size()));
 		}
 		else
 		{
 			weights_buffer_descriptor = create_descriptor(*weights_buffers[0]);
-			weights_buffer_write      = vkb::initializers::write_descriptor_set(descriptor_set_common[i],
-			                                                                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &weights_buffer_descriptor);
+			weights_buffer_write =
+			    vkb::initializers::write_descriptor_set(descriptor_set_common[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &weights_buffer_descriptor);
 		}
-		write_descriptor_sets = std::vector<VkWriteDescriptorSet>{
-		    uniform_buffer_write,
-		    acceleration_structure_write,
-		    weights_buffer_write,
-		    vertex_buffer_write,
-		    index_buffer_write,
-		    texture_input_write_0,
-		    texture_input_write_1};
+		write_descriptor_sets = std::vector<VkWriteDescriptorSet>{uniform_buffer_write,
+		                                                          acceleration_structure_write,
+		                                                          weights_buffer_write,
+		                                                          vertex_buffer_write,
+		                                                          index_buffer_write,
+		                                                          texture_input_write_0,
+		                                                          texture_input_write_1};
 
 		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 	}
@@ -1113,30 +1111,29 @@ void MobileNerfRayQuery::create_descriptor_sets()
 
 void MobileNerfRayQuery::prepare_pipelines()
 {
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, /*VK_CULL_MODE_BACK_BIT*/ VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE /*VK_FRONT_FACE_CLOCKWISE*/, 0);
+	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(
+	    VK_POLYGON_MODE_FILL, /*VK_CULL_MODE_BACK_BIT*/ VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE /*VK_FRONT_FACE_CLOCKWISE*/, 0);
 
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states;
 	blend_attachment_states.push_back(vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE));
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(static_cast<uint32_t>(blend_attachment_states.size()), blend_attachment_states.data());
+	VkPipelineColorBlendStateCreateInfo color_blend_state =
+	    vkb::initializers::pipeline_color_blend_state_create_info(static_cast<uint32_t>(blend_attachment_states.size()), blend_attachment_states.data());
 
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
-	depth_stencil_state.depthBoundsTestEnable                 = VK_FALSE;
-	depth_stencil_state.minDepthBounds                        = 0.f;
-	depth_stencil_state.maxDepthBounds                        = 1.f;
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
+	depth_stencil_state.depthBoundsTestEnable = VK_FALSE;
+	depth_stencil_state.minDepthBounds        = 0.f;
+	depth_stencil_state.maxDepthBounds        = 1.f;
 
 	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
@@ -1208,8 +1205,14 @@ void MobileNerfRayQuery::build_command_buffers()
 		    descriptor_set_feature1[i],
 		    descriptor_set_feature2[i],
 		};
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout,
-		                        0, static_cast<int32_t>(descriptor_sets_first_pass.size()), descriptor_sets_first_pass.data(), 0, nullptr);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i],
+		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                        pipeline_layout,
+		                        0,
+		                        static_cast<int32_t>(descriptor_sets_first_pass.size()),
+		                        descriptor_sets_first_pass.data(),
+		                        0,
+		                        nullptr);
 		VkDeviceSize offsets[1] = {0};
 		vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,8 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-Camera::Camera(const std::string &name) :
-    Component{name}
+Camera::Camera(const std::string &name) : Component{name}
 {}
 
 std::type_index Camera::get_type()

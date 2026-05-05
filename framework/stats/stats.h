@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2020-2025, Broadcom Inc.
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2020-2026, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,8 +69,7 @@ class Stats
 	 * @param requested_stats Set of stats to be collected if available
 	 * @param sampling_config Sampling mode configuration (polling or continuous)
 	 */
-	void request_stats(const std::set<StatIndex> &requested_stats,
-	                   CounterSamplingConfig      sampling_config = {CounterSamplingMode::Polling});
+	void request_stats(const std::set<StatIndex> &requested_stats, CounterSamplingConfig sampling_config = {CounterSamplingMode::Polling});
 
 	/**
 	 * @brief Resizes the stats buffers according to the width of the screen

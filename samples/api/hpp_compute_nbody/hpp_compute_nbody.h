@@ -46,14 +46,14 @@ class HPPComputeNBody : public HPPApiVulkanSample
 
 	struct Compute
 	{
-		vk::CommandBuffer                     command_buffer;               // Command buffer storing the dispatch commands and barriers
-		vk::CommandPool                       command_pool;                 // Use a separate command pool (queue family may differ from the one used for graphics)
-		vk::DescriptorSet                     descriptor_set;               // Compute shader bindings
+		vk::CommandBuffer                     command_buffer;        // Command buffer storing the dispatch commands and barriers
+		vk::CommandPool                       command_pool;          // Use a separate command pool (queue family may differ from the one used for graphics)
+		vk::DescriptorSet                     descriptor_set;        // Compute shader bindings
 		vk::DescriptorSetLayout               descriptor_set_layout;        // Compute shader binding layout
 		vk::Pipeline                          pipeline_calculate;           // Compute pipeline for N-Body velocity calculation (1st pass)
 		vk::Pipeline                          pipeline_integrate;           // Compute pipeline for euler integration (2nd pass)
 		vk::PipelineLayout                    pipeline_layout;              // Layout of the compute pipeline
-		vk::Queue                             queue;                        // Separate queue for compute commands (queue family may differ from the one used for graphics)
+		vk::Queue                             queue;        // Separate queue for compute commands (queue family may differ from the one used for graphics)
 		uint32_t                              queue_family_index = ~0;
 		vk::Fence                             fence;            // Fence to wait for compute dispatch completion before UBO update
 		vk::Semaphore                         semaphore;        // Execution dependency between compute & graphic submission

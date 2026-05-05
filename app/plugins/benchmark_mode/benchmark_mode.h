@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -29,7 +29,8 @@ using BenchmarkModeTags = vkb::PluginBase<BenchmarkMode, vkb::tags::Passive>;
 /**
  * @brief Benchmark Mode
  *
- * When enabled frame time statistics of a samples run will be printed to the console when an application closes. The simulation frame time (delta time) is also locked to 60FPS so that statistics can be compared more accurately across different devices.
+ * When enabled frame time statistics of a samples run will be printed to the console when an application closes. The simulation frame time (delta time) is also
+ * locked to 60FPS so that statistics can be compared more accurately across different devices.
  *
  * Usage: vulkan_samples sample afbc --benchmark
  *

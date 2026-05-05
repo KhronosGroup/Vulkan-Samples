@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -22,10 +22,8 @@
 
 namespace plugins
 {
-StartTest::StartTest() :
-    StartTestTags("Tests", "A collection of flags to run tests.", {}, {{"test", "Run a specific test"}})
-{
-}
+StartTest::StartTest() : StartTestTags("Tests", "A collection of flags to run tests.", {}, {{"test", "Run a specific test"}})
+{}
 
 bool StartTest::handle_command(std::deque<std::string> &arguments) const
 {

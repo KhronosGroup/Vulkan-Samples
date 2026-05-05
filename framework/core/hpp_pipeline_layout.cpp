@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,8 +25,7 @@ namespace vkb
 namespace core
 {
 HPPPipelineLayout::HPPPipelineLayout(vkb::core::DeviceCpp &device, const std::vector<vkb::core::HPPShaderModule *> &shader_modules) :
-    device{device},
-    shader_modules{shader_modules}
+    device{device}, shader_modules{shader_modules}
 {
 	// Collect and combine all the shader resources from each of the shader modules
 	// Collate them all into a map that is indexed by the name of the resource

@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
- * Copyright (c) 2023-2025, Mobica Limited
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
+ * Copyright (c) 2023-2026, Mobica Limited
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -62,7 +62,8 @@ struct Passive
 }        // namespace tags
 
 /**
- * @brief Associate how plugins can interact with each other. This interoperability is decided by comparing tags of different plugins. The plugins inclusion and exclusion lists are populated by this function
+ * @brief Associate how plugins can interact with each other. This interoperability is decided by comparing tags of different plugins. The plugins inclusion and
+ * exclusion lists are populated by this function
  *
  * @param plugins A list of plugins which are used together
  * @return std::vector<Plugin *> A list of plugins which are used together

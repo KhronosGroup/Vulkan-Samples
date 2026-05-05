@@ -38,18 +38,13 @@ struct HPPImageBuilder : public vkb::allocated::BuilderBaseCpp<HPPImageBuilder, 
   public:
 	HPPImageBuilder(vk::Extent3D const &extent) :        // Better reasonable defaults than vk::ImageCreateInfo default ctor
 	    Parent(vk::ImageCreateInfo{.imageType = vk::ImageType::e2D, .format = vk::Format::eR8G8B8A8Unorm, .extent = extent, .mipLevels = 1, .arrayLayers = 1})
-	{
-	}
+	{}
 
-	HPPImageBuilder(vk::Extent2D const &extent) :
-	    HPPImageBuilder(vk::Extent3D{extent.width, extent.height, 1})
-	{
-	}
+	HPPImageBuilder(vk::Extent2D const &extent) : HPPImageBuilder(vk::Extent3D{extent.width, extent.height, 1})
+	{}
 
-	HPPImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) :
-	    HPPImageBuilder(vk::Extent3D{width, height, depth})
-	{
-	}
+	HPPImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) : HPPImageBuilder(vk::Extent3D{width, height, depth})
+	{}
 
 	HPPImageBuilder &with_format(vk::Format format)
 	{
@@ -127,8 +122,7 @@ class HPPImage : public vkb::allocated::AllocatedCpp<vk::Image>
 	         uint32_t                num_queue_families = 0,
 	         const uint32_t         *queue_families     = nullptr);
 
-	HPPImage(vkb::core::DeviceCpp  &device,
-	         HPPImageBuilder const &builder);
+	HPPImage(vkb::core::DeviceCpp &device, HPPImageBuilder const &builder);
 
 	HPPImage(const HPPImage &) = delete;
 

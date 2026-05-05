@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,8 +22,7 @@ namespace vkb
 {
 namespace sg
 {
-Light::Light(const std::string &name) :
-    Component{name}
+Light::Light(const std::string &name) : Component{name}
 {}
 
 std::type_index Light::get_type()

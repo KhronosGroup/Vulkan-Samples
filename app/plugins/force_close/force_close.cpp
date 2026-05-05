@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -28,8 +28,7 @@ ForceClose::ForceClose() :
                    {},
                    {},
                    {{"force-close", "Force the close of the application if halted before exiting"}})
-{
-}
+{}
 
 bool ForceClose::handle_option(std::deque<std::string> &arguments)
 {
