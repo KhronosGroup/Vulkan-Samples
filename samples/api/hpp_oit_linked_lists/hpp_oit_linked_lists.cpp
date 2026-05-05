@@ -104,13 +104,10 @@ void HPPOITLinkedLists::build_command_buffers()
 {
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
-	vk::RenderPassBeginInfo gather_render_pass_begin_info{.renderPass  = gather_render_pass,
-	                                                      .framebuffer = gather_framebuffer,
-	                                                      .renderArea  = {{0, 0}, extent}};
+	vk::RenderPassBeginInfo gather_render_pass_begin_info{.renderPass = gather_render_pass, .framebuffer = gather_framebuffer, .renderArea = {{0, 0}, extent}};
 
-	std::array<vk::ClearValue, 2> combine_clear_values =
-	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-	      vk::ClearDepthStencilValue{0.0f, 0}}};
+	std::array<vk::ClearValue, 2> combine_clear_values = {
+	    {vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})), vk::ClearDepthStencilValue{0.0f, 0}}};
 	vk::RenderPassBeginInfo combine_render_pass_begin_info{.renderPass      = render_pass,
 	                                                       .renderArea      = {{0, 0}, extent},
 	                                                       .clearValueCount = static_cast<uint32_t>(combine_clear_values.size()),
@@ -136,7 +133,8 @@ void HPPOITLinkedLists::build_command_buffers()
 			}
 			command_buffer.endRenderPass();
 
-			// Insert a pipeline barrier to ensure that all writes to the fragment buffer performed in the gather pass are made available before reading from it in the combine pass
+			// Insert a pipeline barrier to ensure that all writes to the fragment buffer performed in the gather pass are made available before reading from it
+			// in the combine pass
 			vk::BufferMemoryBarrier2 buffer_barrier{.srcStageMask        = vk::PipelineStageFlagBits2::eFragmentShader,
 			                                        .srcAccessMask       = vk::AccessFlagBits2::eShaderStorageWrite,
 			                                        .dstStageMask        = vk::PipelineStageFlagBits2::eFragmentShader,
@@ -146,7 +144,8 @@ void HPPOITLinkedLists::build_command_buffers()
 			                                        .buffer              = fragment_buffer->get_handle(),
 			                                        .offset              = 0,
 			                                        .size                = vk::WholeSize};
-			vk::DependencyInfo       dependency_info{.dependencyFlags = vk::DependencyFlagBits::eByRegion, .bufferMemoryBarrierCount = 1, .pBufferMemoryBarriers = &buffer_barrier};
+			vk::DependencyInfo       dependency_info{
+			          .dependencyFlags = vk::DependencyFlagBits::eByRegion, .bufferMemoryBarrierCount = 1, .pBufferMemoryBarriers = &buffer_barrier};
 			command_buffer.pipelineBarrier2KHR(dependency_info);
 
 			// Combine pass
@@ -247,9 +246,8 @@ vk::DescriptorPool HPPOITLinkedLists::create_descriptor_pool()
 	                                                     {vk::DescriptorType::eStorageBuffer, 2},
 	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
 
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{.maxSets       = 1,
-	                                                         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
-	                                                         .pPoolSizes    = pool_sizes.data()};
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info{
+	    .maxSets = 1, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()};
 	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
@@ -345,9 +343,10 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                        pipeline_layout,
 	                                                        gather_render_pass);
 
-	std::vector<vk::PipelineShaderStageCreateInfo> background_shader_stages = {load_shader("oit_linked_lists/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
-	                                                                           load_shader("oit_linked_lists/background.frag.spv", vk::ShaderStageFlagBits::eFragment)};
-	vk::PipelineVertexInputStateCreateInfo         vertex_input_state;
+	std::vector<vk::PipelineShaderStageCreateInfo> background_shader_stages = {
+	    load_shader("oit_linked_lists/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("oit_linked_lists/background.frag.spv", vk::ShaderStageFlagBits::eFragment)};
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state;
 
 	background_pipeline = vkb::common::create_graphics_pipeline(get_device().get_handle(),
 	                                                            pipeline_cache,
@@ -363,8 +362,9 @@ void HPPOITLinkedLists::create_pipelines()
 	                                                            pipeline_layout,
 	                                                            render_pass);
 
-	std::vector<vk::PipelineShaderStageCreateInfo> combine_shader_stages = {load_shader("oit_linked_lists/combine.vert.spv", vk::ShaderStageFlagBits::eVertex),
-	                                                                        load_shader("oit_linked_lists/combine.frag.spv", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> combine_shader_stages = {
+	    load_shader("oit_linked_lists/combine.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("oit_linked_lists/combine.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::PipelineColorBlendAttachmentState combine_blend_attachment_state{true,
 	                                                                     vk::BlendFactor::eSrcAlpha,
@@ -459,10 +459,10 @@ void HPPOITLinkedLists::update_descriptors()
 	vk::DescriptorImageInfo  linked_list_head_image_view_descriptor{nullptr, linked_list_head_image_view->get_handle(), vk::ImageLayout::eGeneral};
 	vk::DescriptorBufferInfo fragment_buffer_descriptor{fragment_buffer->get_handle(), 0, vk::WholeSize};
 	vk::DescriptorBufferInfo fragment_counter_descriptor{fragment_counter->get_handle(), 0, vk::WholeSize};
-	vk::DescriptorImageInfo  background_texture_descriptor{background_texture.sampler,
-                                                          background_texture.image->get_vk_image_view().get_handle(),
-                                                          descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                       background_texture.image->get_vk_image_view().get_format())};
+	vk::DescriptorImageInfo  background_texture_descriptor{
+        background_texture.sampler,
+        background_texture.image->get_vk_image_view().get_handle(),
+        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, background_texture.image->get_vk_image_view().get_format())};
 
 	std::array<vk::WriteDescriptorSet, 6> write_descriptor_sets = {{{.dstSet          = descriptor_set,
 	                                                                 .dstBinding      = 0,
