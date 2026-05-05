@@ -73,10 +73,10 @@ void SwapchainPresentTiming::query_surface_capabilities()
 	}
 
 	// Do triple-buffering when possible.  This is clamped to the min and max image count limits.
-	desired_swapchain_images = std::max(surface_capabilities.surfaceCapabilities.minImageCount, 3u);
+	desired_swapchain_image_count = std::max(surface_capabilities.surfaceCapabilities.minImageCount, 3u);
 	if (surface_capabilities.surfaceCapabilities.maxImageCount > 0)
 	{
-		desired_swapchain_images = std::min(desired_swapchain_images, surface_capabilities.surfaceCapabilities.maxImageCount);
+		desired_swapchain_image_count = std::min(desired_swapchain_image_count, surface_capabilities.surfaceCapabilities.maxImageCount);
 	}
 
 	// Find a supported composite type.
@@ -120,16 +120,9 @@ void SwapchainPresentTiming::query_surface_capabilities()
 
 	// We'll calculate the animation time based on the display_present_stage's time measurements, so
 	// don't try to use present timing if we don't have one.
-	if (display_present_stage &&
-	    (present_timing_capabilities.presentAtRelativeTimeSupported ||
-	     present_timing_capabilities.presentAtAbsoluteTimeSupported))
-	{
-		can_use_present_timing = true;
-	}
-	else
-	{
-		can_use_present_timing = false;
-	}
+	can_use_present_timing = display_present_stage &&
+	                         (present_timing_capabilities.presentAtRelativeTimeSupported ||
+	                          present_timing_capabilities.presentAtAbsoluteTimeSupported);
 }
 
 /**
@@ -434,7 +427,7 @@ void SwapchainPresentTiming::init_swapchain()
 	VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
 	info.flags            = VK_SWAPCHAIN_CREATE_PRESENT_TIMING_BIT_EXT | VK_SWAPCHAIN_CREATE_PRESENT_ID_2_BIT_KHR;
 	info.surface          = get_surface();
-	info.minImageCount    = desired_swapchain_images;
+	info.minImageCount    = desired_swapchain_image_count;
 	info.imageFormat      = surface_format.format;
 	info.imageColorSpace  = surface_format.colorSpace;
 	info.imageExtent      = swapchain_extents;

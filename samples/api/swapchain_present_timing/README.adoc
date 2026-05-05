@@ -32,6 +32,7 @@ Press 'P' on the keyboard to toggle the use of present timing feature. When pres
 == Extension Features
 
 VK_EXT_present_timing exposes 3 features at the physical device level:
+
 * `presentTiming` is required for the extension to be exposed, and allows the application to query past presentation timings.
 * `presentAtAbsoluteTime` and `presentAtRelativeTime` allow applications to precisely control the time or duration of a presentation request.
 
@@ -46,6 +47,7 @@ After creating a swapchain with a capable `VkSurfaceKHR` and the `VK_SWAPCHAIN_C
 === Timing Properties
 
 `VkSwapchainTimingPropertiesEXT` exposes a `refreshDuration` and a `refreshInterval` value. These two fields put together describe the behavior of the presentation engine:
+
 * If both values are equal, the presentation engine is operating in a fixed refresh rate mode (FRR), and the value indicates the length of a refresh cycle in nanoseconds.
 * If `refreshInterval` is `UINT64_MAX`, it means variable refresh rate (VRR) is active, and `refreshDuration` is the minimum duration of a refresh cycle achievable (i.e. the maximum framerate).
 * If both values are different (but non-zero), then the presentation engine is operating in FRR mode, but with the ability to adjust its refresh duration by a factor of `refreshInterval` nanoseconds, sometimes referred to as Adaptive Refresh Rate (ARR).
@@ -55,7 +57,7 @@ In this example which has trivial rendering, we simply use the `refreshDuration`
 
 === Time Domains
 
-The time values are all expressed in a time domain chosen by the application among a list of candidates exposed by the swapchain. `VK_EXT_present_timing` introduces new opaque times domains that are local to a given swapchain: `VK_TIME_DOMAIN_PRESENT_STAGE_LOCAL_EXT`, which all implementations must support, and `VK_TIME_DOMAIN_SWAPCHAIN_LOCAL_EXT`.
+The time values are all expressed in a time domain chosen by the application among a list of candidates exposed by the swapchain. `VK_EXT_present_timing` introduces new opaque time domains that are local to a given swapchain: `VK_TIME_DOMAIN_PRESENT_STAGE_LOCAL_EXT`, which all implementations must support, and `VK_TIME_DOMAIN_SWAPCHAIN_LOCAL_EXT`.
 
 Because these are opaque time domains, it is possible for an implementation to expose more than one of the same kind, for example when a window is moved from one display to another. For this reason, time domains are also assigned a unique id by the implementation.
 

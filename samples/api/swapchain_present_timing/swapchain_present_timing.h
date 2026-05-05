@@ -106,13 +106,13 @@ class SwapchainPresentTiming : public vkb::VulkanSampleC
 	VkPipeline        pipeline        = VK_NULL_HANDLE;
 
 	/// Surface data.
-	VkSurfaceFormatKHR          surface_format               = {};
-	VkExtent2D                  swapchain_extents            = {};
-	VkCompositeAlphaFlagBitsKHR composite                    = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	uint32_t                    desired_swapchain_images     = 0;
-	bool                        can_use_present_timing       = false;
-	bool                        can_present_at_absolute_time = false;
-	VkPresentStageFlagsEXT      display_present_stage        = 0;
+	VkSurfaceFormatKHR          surface_format                = {};
+	VkExtent2D                  swapchain_extents             = {};
+	VkCompositeAlphaFlagBitsKHR composite                     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	uint32_t                    desired_swapchain_image_count = 0;
+	bool                        can_use_present_timing        = false;
+	bool                        can_present_at_absolute_time  = false;
+	VkPresentStageFlagsEXT      display_present_stage         = 0;
 
 	/// The swapchain.
 	VkSwapchainKHR                 swapchain    = VK_NULL_HANDLE;
