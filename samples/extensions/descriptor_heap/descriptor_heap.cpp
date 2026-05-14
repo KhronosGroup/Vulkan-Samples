@@ -216,7 +216,7 @@ void DescriptorHeap::create_descriptor_heaps()
 	for (auto i = 0; i < static_cast<uint32_t>(sampler_create_infos.size()); i++)
 	{
 		host_address_ranges_samplers[i] = {
-		    .address = const_cast<uint8_t *>(descriptor_heap_samplers->get_data()) + sampler_heap_offset + sampler_descriptor_size * i,
+		    .address = descriptor_heap_samplers->get_mapped_data() + sampler_heap_offset + sampler_descriptor_size * i,
 		    .size    = sampler_descriptor_size};
 	}
 
@@ -239,7 +239,7 @@ void DescriptorHeap::create_descriptor_heaps()
 		    .data  = {
 		         .pAddressRange = &device_address_ranges_uniform_buffer[i]}};
 		host_address_ranges_resources[resource_heap_index] = {
-		    .address = const_cast<uint8_t *>(descriptor_heap_resources->get_data()) + buffer_descriptor_size * i,
+		    .address = descriptor_heap_resources->get_mapped_data() + buffer_descriptor_size * i,
 		    .size    = buffer_descriptor_size};
 
 		resource_heap_index++;
@@ -272,7 +272,7 @@ void DescriptorHeap::create_descriptor_heaps()
 		         .pImage = &image_descriptor_infos[i]}};
 
 		host_address_ranges_resources[resource_heap_index] = {
-		    .address = const_cast<uint8_t *>(descriptor_heap_resources->get_data()) + image_heap_offset + image_descriptor_size * i,
+		    .address = descriptor_heap_resources->get_mapped_data() + image_heap_offset + image_descriptor_size * i,
 		    .size    = image_descriptor_size};
 
 		resource_heap_index++;
