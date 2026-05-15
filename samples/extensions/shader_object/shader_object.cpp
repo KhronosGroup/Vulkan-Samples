@@ -145,7 +145,7 @@ bool ShaderObject::resize(const uint32_t _width, const uint32_t _height)
 	update_uniform_buffers();
 
 	// Update swapchain to allow transfer dst to blit to it
-	update_swapchain_image_usage_flags({VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT});
+	update_swapchain_image_usage_flags({VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 
 	return true;
 }
@@ -176,7 +176,7 @@ bool ShaderObject::prepare(const vkb::ApplicationOptions &options)
 	initialize_descriptor_sets();
 
 	// Update swapchain to allow transfer dst to blit to it
-	update_swapchain_image_usage_flags({VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT});
+	update_swapchain_image_usage_flags({VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 	generate_terrain();
 	build_command_buffers();
 
