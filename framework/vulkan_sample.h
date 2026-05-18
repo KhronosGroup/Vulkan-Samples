@@ -29,7 +29,7 @@
 #include "scene_graph/components/camera.h"
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/animation.h"
-#include "stats/hpp_stats.h"
+#include "stats/stats.h"
 
 #if defined(PLATFORM__MACOS)
 #	include <TargetConditionals.h>
@@ -119,11 +119,6 @@ template <vkb::BindingType bindingType>
 class RenderContext;
 }        // namespace rendering
 
-namespace stats
-{
-class HPPStats;
-}
-
 template <vkb::BindingType bindingType>
 class VulkanSample : public vkb::Application
 {
@@ -136,7 +131,6 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using StatsType = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 	template <typename AnchorStructType>
 	using StructureChainBuilderType = typename std::conditional<bindingType == BindingType::Cpp, vkb::StructureChainBuilder<BindingType::Cpp, AnchorStructType>, vkb::StructureChainBuilder<BindingType::C, AnchorStructType>>::type;
 
@@ -252,7 +246,7 @@ class VulkanSample : public vkb::Application
 	 */
 	void add_device_extension(const char *extension, bool optional = false);
 
-	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
+	void create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief A helper to create a render context
@@ -268,7 +262,7 @@ class VulkanSample : public vkb::Application
 	vkb::rendering::RenderPipeline<bindingType>       &get_render_pipeline();
 	vkb::rendering::RenderPipeline<bindingType> const &get_render_pipeline() const;
 	vkb::scene_graph::Scene<bindingType>              &get_scene();
-	StatsType                                         &get_stats();
+	vkb::stats::Stats<bindingType>                    &get_stats();
 	SurfaceType                                        get_surface() const;
 	std::vector<SurfaceFormatType>                    &get_surface_priority_list();
 	std::vector<SurfaceFormatType> const              &get_surface_priority_list() const;
@@ -392,7 +386,7 @@ class VulkanSample : public vkb::Application
 
 	std::unique_ptr<vkb::GuiCpp> gui;
 
-	std::unique_ptr<vkb::stats::HPPStats> stats;
+	std::unique_ptr<vkb::stats::StatsCpp> stats;
 
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 
@@ -1094,7 +1088,7 @@ inline vkb::scene_graph::Scene<bindingType> &VulkanSample<bindingType>::get_scen
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::StatsType &VulkanSample<bindingType>::get_stats()
+inline vkb::stats::Stats<bindingType> &VulkanSample<bindingType>::get_stats()
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1102,7 +1096,7 @@ inline typename VulkanSample<bindingType>::StatsType &VulkanSample<bindingType>:
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Stats &>(*stats);
+		return reinterpret_cast<vkb::stats::StatsC &>(*stats);
 	}
 }
 
@@ -1372,7 +1366,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	create_render_context();
 	prepare_render_context();
 
-	stats = std::make_unique<vkb::stats::HPPStats>(*render_context);
+	stats = std::make_unique<vkb::stats::StatsCpp>(*render_context);
 
 	// Start the sample in the first GUI configuration
 	configuration.reset();
@@ -1381,7 +1375,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsType const *stats, const float font_size, bool explicit_update)
+inline void VulkanSample<bindingType>::create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats, const float font_size, bool explicit_update)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1391,7 +1385,7 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 	{
 		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::RenderContextCpp &>(get_render_context()),
 		                                    window,
-		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats),
+		                                    reinterpret_cast<vkb::stats::StatsCpp const *>(stats),
 		                                    font_size,
 		                                    explicit_update);
 	}
