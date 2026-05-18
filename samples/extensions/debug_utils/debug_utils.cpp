@@ -470,7 +470,11 @@ void DebugUtils::build_command_buffers()
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
 			cmd_end_label(draw_cmd_buffers[i]);
-			cmd_end_label(draw_cmd_buffers[i]);
+
+			if (bloom)
+			{
+				cmd_end_label(draw_cmd_buffers[i]);
+			}
 		}
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
@@ -595,19 +599,27 @@ void DebugUtils::prepare_offscreen_buffer()
 		// Use subpass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies{};
 
+		// vkCmdBeginRenderPass clears the color aspect of attachment 0 (offscreen.color[0]) and 1 (offscreen.color[1]) in subpass 0 of VkRenderPass offscreen.render_pass
+		// (loadOp VK_ATTACHMENT_LOAD_OP_CLEAR), which was previously written during an image layout transition initiated by the same command.
+		// For correct synchronization, the dependency from external to subpass 0 must allow VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT access at VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.
 		dependencies[0].srcSubpass    = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass    = 0;
 		dependencies[0].srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dependencies[0].dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dependencies[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-		dependencies[1].srcSubpass    = 0;
-		dependencies[1].dstSubpass    = VK_SUBPASS_EXTERNAL;
+		// vkCmdBeginRenderPass clears the depth aspect of attachment 2 (offscreen.depth) in subpass 0 of VkRenderPass offscreen.render_pass (loadOp VK_ATTACHMENT_LOAD_OP_CLEAR),
+		// which was previously written during an image layout transition initiated by the same command.
+		// For correct synchronization, the dependency from external to subpass 0 must also allow VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT access at VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.
+		dependencies[1].srcSubpass    = VK_SUBPASS_EXTERNAL;
+		dependencies[1].dstSubpass    = 0;
 		dependencies[1].srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].dstStageMask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[1].dstStageMask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		dependencies[1].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		// No need for a dependency from subpass 0 to external
 
 		VkRenderPassCreateInfo render_pass_create_info = {};
 		render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -615,7 +627,7 @@ void DebugUtils::prepare_offscreen_buffer()
 		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
 		render_pass_create_info.subpassCount           = 1;
 		render_pass_create_info.pSubpasses             = &subpass;
-		render_pass_create_info.dependencyCount        = 2;
+		render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies          = dependencies.data();
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &offscreen.render_pass));
