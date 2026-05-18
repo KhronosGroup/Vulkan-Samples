@@ -847,7 +847,7 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		for (auto j = 0; j < 4; j++)
 		{
 			color_attachment_info[j]             = vkb::initializers::rendering_attachment_info();
-			color_attachment_info[j].imageLayout = VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR;
+			color_attachment_info[j].imageLayout = (j == 0) ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR;
 			color_attachment_info[j].resolveMode = VK_RESOLVE_MODE_NONE;
 			color_attachment_info[j].loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR;
 			color_attachment_info[j].storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
