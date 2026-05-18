@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,6 +23,8 @@
 
 TextureLoading::TextureLoading()
 {
+	use_new_sync = true;
+
 	zoom     = -2.5f;
 	rotation = {0.0f, 15.0f, 0.0f};
 	title    = "Texture loading";
@@ -45,7 +47,6 @@ TextureLoading::~TextureLoading()
 
 	vertex_buffer.reset();
 	index_buffer.reset();
-	uniform_buffer_vs.reset();
 }
 
 // Enable physical device features required for this example
@@ -414,8 +415,11 @@ void TextureLoading::destroy_texture(Texture texture)
 	vkFreeMemory(get_device().get_handle(), texture.device_memory, nullptr);
 }
 
-void TextureLoading::build_command_buffers()
+void TextureLoading::build_command_buffer()
 {
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
@@ -430,51 +434,32 @@ void TextureLoading::build_command_buffers()
 	render_pass_begin_info.renderArea.extent.height = height;
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		// Set target frame buffer
-		render_pass_begin_info.framebuffer = framebuffers[i];
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_buffer_begin_info));
 
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+	vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+	VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[current_buffer], 0, NULL);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.solid);
 
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.solid);
+	VkDeviceSize offsets[1] = {0};
+	vkCmdBindVertexBuffers(draw_cmd_buffer, 0, 1, vertex_buffer->get(), offsets);
+	vkCmdBindIndexBuffer(draw_cmd_buffer, index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
-		VkDeviceSize offsets[1] = {0};
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(draw_cmd_buffer, index_count, 1, 0, 0, 0);
 
-		vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
+	draw_ui(draw_cmd_buffer);
 
-		draw_ui(draw_cmd_buffers[i]);
+	vkCmdEndRenderPass(draw_cmd_buffer);
 
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
-	}
-}
-
-void TextureLoading::draw()
-{
-	ApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-
-	// Submit to queue
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-
-	ApiVulkanSample::submit_frame();
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 void TextureLoading::generate_quad()
@@ -516,14 +501,14 @@ void TextureLoading::setup_descriptor_pool()
 	// Example uses one ubo and one image sampler
 	std::vector<VkDescriptorPoolSize> pool_sizes =
 	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_concurrent_frames),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, max_concurrent_frames)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
-	        2);
+	        max_concurrent_frames);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -560,40 +545,43 @@ void TextureLoading::setup_descriptor_set_layout()
 
 void TextureLoading::setup_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
+	for (auto i = 0; i < uniform_buffers.size(); i++)
+	{
+		VkDescriptorSetAllocateInfo alloc_info =
+		    vkb::initializers::descriptor_set_allocate_info(
+		        descriptor_pool,
+		        &descriptor_set_layout,
+		        1);
 
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets[i]));
 
-	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
+		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffers[i]);
 
-	// Setup a descriptor image info for the current texture to be used as a combined image sampler
-	VkDescriptorImageInfo image_descriptor;
-	image_descriptor.imageView   = texture.view;                // The image's view (images are never directly accessed by the shader, but rather through views defining subresources)
-	image_descriptor.sampler     = texture.sampler;             // The sampler (Telling the pipeline how to sample the texture, including repeat, border, etc.)
-	image_descriptor.imageLayout = texture.image_layout;        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
+		// Setup a descriptor image info for the current texture to be used as a combined image sampler
+		VkDescriptorImageInfo image_descriptor;
+		image_descriptor.imageView   = texture.view;                // The image's view (images are never directly accessed by the shader, but rather through views defining subresources)
+		image_descriptor.sampler     = texture.sampler;             // The sampler (Telling the pipeline how to sample the texture, including repeat, border, etc.)
+		image_descriptor.imageLayout = texture.image_layout;        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            0,
-	            &buffer_descriptor),
-	        // Binding 1 : Fragment shader texture sampler
-	        //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
-	            1,                                                // Shader binding point 1
-	            &image_descriptor)                                // Pointer to the descriptor image for our texture
-	    };
+		std::vector<VkWriteDescriptorSet> write_descriptor_sets =
+		    {
+		        // Binding 0 : Vertex shader uniform buffer
+		        vkb::initializers::write_descriptor_set(
+		            descriptor_sets[i],
+		            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		            0,
+		            &buffer_descriptor),
+		        // Binding 1 : Fragment shader texture sampler
+		        //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
+		        vkb::initializers::write_descriptor_set(
+		            descriptor_sets[i],
+		            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
+		            1,                                                // Shader binding point 1
+		            &image_descriptor)                                // Pointer to the descriptor image for our texture
+		    };
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	}
 }
 
 void TextureLoading::prepare_pipelines()
@@ -690,13 +678,11 @@ void TextureLoading::prepare_pipelines()
 // Prepare and initialize uniform buffer containing shader uniforms
 void TextureLoading::prepare_uniform_buffers()
 {
-	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                         sizeof(ubo_vs),
-	                                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		// Vertex shader uniform buffer block
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void TextureLoading::update_uniform_buffers()
@@ -712,7 +698,7 @@ void TextureLoading::update_uniform_buffers()
 
 	ubo_vs.view_pos = glm::vec4(0.0f, 0.0f, -zoom, 0.0f);
 
-	uniform_buffer_vs->convert_and_update(ubo_vs);
+	uniform_buffers[current_buffer]->convert_and_update(ubo_vs);
 }
 
 bool TextureLoading::prepare(const vkb::ApplicationOptions &options)
@@ -728,7 +714,6 @@ bool TextureLoading::prepare(const vkb::ApplicationOptions &options)
 	prepare_pipelines();
 	setup_descriptor_pool();
 	setup_descriptor_set();
-	build_command_buffers();
 	prepared = true;
 	return true;
 }
@@ -739,22 +724,17 @@ void TextureLoading::render(float delta_time)
 	{
 		return;
 	}
-	draw();
-}
-
-void TextureLoading::view_changed()
-{
+	ApiVulkanSample::prepare_frame();
 	update_uniform_buffers();
+	build_command_buffer();
+	ApiVulkanSample::submit_frame();
 }
 
 void TextureLoading::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
-		if (drawer.slider_float("LOD bias", &ubo_vs.lod_bias, 0.0f, static_cast<float>(texture.mip_levels)))
-		{
-			update_uniform_buffers();
-		}
+		drawer.slider_float("LOD bias", &ubo_vs.lod_bias, 0.0f, static_cast<float>(texture.mip_levels));
 	}
 }
 

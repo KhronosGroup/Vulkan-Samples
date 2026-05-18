@@ -34,6 +34,9 @@
 
 #define DEFAULT_FENCE_TIMEOUT 100000000000        // Default fence timeout in nanoseconds
 
+// Max. number of frames in floight
+constexpr uint32_t max_concurrent_frames = 2;
+
 template <class T>
 using ShaderStageMap = std::map<VkShaderStageFlagBits, T>;
 

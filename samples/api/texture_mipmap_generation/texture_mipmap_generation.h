@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,12 +61,13 @@ class TextureMipMapGeneration : public ApiVulkanSample
 		float     lod_bias      = 0.0f;
 		int32_t   sampler_index = 2;
 	} ubo;
-	std::unique_ptr<vkb::core::BufferC> uniform_buffer;
 
 	VkPipeline            pipeline              = VK_NULL_HANDLE;
 	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
-	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers;
+	std::array<VkDescriptorSet, max_concurrent_frames>                     descriptor_sets{};
 
 	TextureMipMapGeneration();
 	~TextureMipMapGeneration();
@@ -74,8 +75,7 @@ class TextureMipMapGeneration : public ApiVulkanSample
 	void         load_texture_generate_mipmaps(std::string file_name);
 	void         destroy_texture(Texture texture);
 	void         load_assets();
-	void         build_command_buffers() override;
-	void         draw();
+	void         build_command_buffer();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
 	void         setup_descriptor_set();
@@ -84,7 +84,6 @@ class TextureMipMapGeneration : public ApiVulkanSample
 	void         update_uniform_buffers(float delta_time = 0.0f);
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 

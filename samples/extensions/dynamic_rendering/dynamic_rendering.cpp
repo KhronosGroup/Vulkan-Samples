@@ -22,6 +22,8 @@
 DynamicRendering::DynamicRendering() :
     enable_dynamic(true)
 {
+	use_new_sync = true;
+
 	title = "Dynamic Rendering";
 
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
@@ -35,7 +37,6 @@ DynamicRendering::~DynamicRendering()
 		textures = {};
 		skybox.reset();
 		object.reset();
-		ubo.reset();
 
 		vkDestroyPipeline(get_device().get_handle(), model_pipeline, VK_NULL_HANDLE);
 		vkDestroyPipeline(get_device().get_handle(), skybox_pipeline, VK_NULL_HANDLE);
@@ -114,9 +115,10 @@ void DynamicRendering::load_assets()
 
 void DynamicRendering::prepare_uniform_buffers()
 {
-	ubo = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void DynamicRendering::update_uniform_buffers()
@@ -125,7 +127,7 @@ void DynamicRendering::update_uniform_buffers()
 	ubo_vs.modelview         = camera.matrices.view * glm::mat4(1.f);
 	ubo_vs.inverse_modelview = glm::inverse(camera.matrices.view);
 	ubo_vs.skybox_modelview  = camera.matrices.view;
-	ubo->convert_and_update(ubo_vs);
+	uniform_buffers[current_buffer]->convert_and_update(ubo_vs);
 }
 
 void DynamicRendering::setup_descriptor_set_layout()
@@ -156,15 +158,19 @@ void DynamicRendering::create_descriptor_sets()
 	        &descriptor_set_layout,
 	        1);
 
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+	VkDescriptorImageInfo environment_image_descriptor = create_descriptor(textures.envmap);
 
-	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*ubo);
-	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.envmap);
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-    };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	for (auto i = 0; i < uniform_buffers.size(); i++)
+	{
+		VkDescriptorBufferInfo matrix_buffer_descriptor = create_descriptor(*uniform_buffers[current_buffer]);
+
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets[i]));
+		std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+		    vkb::initializers::write_descriptor_set(descriptor_sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+		    vkb::initializers::write_descriptor_set(descriptor_sets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+		};
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	}
 }
 
 void DynamicRendering::create_descriptor_pool()
@@ -327,132 +333,121 @@ void DynamicRendering::setup_framebuffer()
 	}
 }
 
-void DynamicRendering::draw()
+void DynamicRendering::build_command_buffer()
 {
-	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-	ApiVulkanSample::submit_frame();
-}
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
 
-void DynamicRendering::build_command_buffers()
-{
 	std::array<VkClearValue, 2> clear_values{};
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
-	int i = -1;
-	for (auto &draw_cmd_buffer : draw_cmd_buffers)
+	auto command_begin = vkb::initializers::command_buffer_begin_info();
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
+
+	auto draw_scene = [&] {
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+		vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
+
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
+		vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
+
+		// One descriptor set is used, and the draw type is toggled by a specialization constant
+		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[current_buffer], 0, nullptr);
+
+		// skybox
+		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
+		draw_model(skybox, draw_cmd_buffer);
+
+		// object
+		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
+		draw_model(object, draw_cmd_buffer);
+	};
+
+	VkImageSubresourceRange range{};
+	range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	range.baseMipLevel   = 0;
+	range.levelCount     = VK_REMAINING_MIP_LEVELS;
+	range.baseArrayLayer = 0;
+	range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+
+	VkImageSubresourceRange depth_range{range};
+	depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+	if (enable_dynamic)
 	{
-		i++;
-		auto command_begin = vkb::initializers::command_buffer_begin_info();
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
+		vkb::image_layout_transition(draw_cmd_buffer,
+		                             swapchain_buffers[current_image_index].image,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                             0,
+		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             range);
 
-		auto draw_scene = [&] {
-			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
+		vkb::image_layout_transition(draw_cmd_buffer,
+		                             depth_stencil.image,
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+		                             depth_range);
 
-			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
-			vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
+		VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
+		color_attachment_info.imageView                    = swapchain_buffers[current_image_index].view;
+		color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+		color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment_info.clearValue                   = clear_values[0];
 
-			// One descriptor set is used, and the draw type is toggled by a specialization constant
-			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+		VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
+		depth_attachment_info.imageView                    = depth_stencil.view;
+		depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+		depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depth_attachment_info.clearValue                   = clear_values[1];
 
-			// skybox
-			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
-			draw_model(skybox, draw_cmd_buffer);
-
-			// object
-			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
-			draw_model(object, draw_cmd_buffer);
-		};
-
-		VkImageSubresourceRange range{};
-		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.baseMipLevel   = 0;
-		range.levelCount     = VK_REMAINING_MIP_LEVELS;
-		range.baseArrayLayer = 0;
-		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-
-		VkImageSubresourceRange depth_range{range};
-		depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-		if (enable_dynamic)
+		auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
+		auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
+		render_info.layerCount       = 1;
+		render_info.pDepthAttachment = &depth_attachment_info;
+		if (!vkb::is_depth_only_format(depth_format))
 		{
-			vkb::image_layout_transition(draw_cmd_buffer,
-			                             swapchain_buffers[i].image,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             0,
-			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                             VK_IMAGE_LAYOUT_UNDEFINED,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			                             range);
-
-			vkb::image_layout_transition(draw_cmd_buffer,
-			                             depth_stencil.image,
-			                             VK_IMAGE_LAYOUT_UNDEFINED,
-			                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-			                             depth_range);
-
-			VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
-			color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
-			color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-			color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
-			color_attachment_info.clearValue                   = clear_values[0];
-
-			VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
-			depth_attachment_info.imageView                    = depth_stencil.view;
-			depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-			depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-			depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			depth_attachment_info.clearValue                   = clear_values[1];
-
-			auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
-			auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
-			render_info.layerCount       = 1;
-			render_info.pDepthAttachment = &depth_attachment_info;
-			if (!vkb::is_depth_only_format(depth_format))
-			{
-				render_info.pStencilAttachment = &depth_attachment_info;
-			}
-
-			vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
-			draw_scene();
-			vkCmdEndRenderingKHR(draw_cmd_buffer);
-
-			draw_ui(draw_cmd_buffer, i);
-
-			vkb::image_layout_transition(draw_cmd_buffer,
-			                             swapchain_buffers[i].image,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			                             range);
-		}
-		else
-		{
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.renderPass               = render_pass;
-			render_pass_begin_info.framebuffer              = framebuffers[i];
-			render_pass_begin_info.renderArea.extent.width  = width;
-			render_pass_begin_info.renderArea.extent.height = height;
-			render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
-			render_pass_begin_info.pClearValues             = clear_values.data();
-
-			vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			draw_scene();
-			draw_ui(draw_cmd_buffer);
-
-			vkCmdEndRenderPass(draw_cmd_buffer);
+			render_info.pStencilAttachment = &depth_attachment_info;
 		}
 
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
+		vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
+		draw_scene();
+		vkCmdEndRenderingKHR(draw_cmd_buffer);
+
+		draw_ui(draw_cmd_buffer, current_image_index);
+
+		vkb::image_layout_transition(draw_cmd_buffer,
+		                             swapchain_buffers[current_image_index].image,
+		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		                             range);
 	}
+	else
+	{
+		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.renderPass               = render_pass;
+		render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
+		render_pass_begin_info.renderArea.extent.width  = width;
+		render_pass_begin_info.renderArea.extent.height = height;
+		render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
+		render_pass_begin_info.pClearValues             = clear_values.data();
+
+		vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+		draw_scene();
+		draw_ui(draw_cmd_buffer);
+
+		vkCmdEndRenderPass(draw_cmd_buffer);
+	}
+
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 void DynamicRendering::render(float delta_time)
@@ -461,11 +456,10 @@ void DynamicRendering::render(float delta_time)
 	{
 		return;
 	}
-	draw();
-	if (camera.updated)
-	{
-		update_uniform_buffers();
-	}
+	ApiVulkanSample::prepare_frame();
+	update_uniform_buffers();
+	build_command_buffer();
+	ApiVulkanSample::submit_frame();
 }
 
 void DynamicRendering::view_changed()

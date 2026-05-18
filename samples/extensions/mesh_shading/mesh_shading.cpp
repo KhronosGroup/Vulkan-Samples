@@ -25,6 +25,8 @@
 MeshShading::MeshShading() :
     pipeline(VK_NULL_HANDLE), pipeline_layout(VK_NULL_HANDLE), descriptor_set(VK_NULL_HANDLE), descriptor_set_layout(VK_NULL_HANDLE)
 {
+	use_new_sync = true;
+
 	title = "Mesh shading";
 
 	// vk_mesh_ext requires device properties 2.  SPIR-V must also be set to at least 1.4.
@@ -53,8 +55,11 @@ void MeshShading::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 /*
     Command buffer generation
 */
-void MeshShading::build_command_buffers()
+void MeshShading::build_command_buffer()
 {
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
@@ -69,34 +74,31 @@ void MeshShading::build_command_buffers()
 	render_pass_begin_info.renderArea.extent.height = height;
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		render_pass_begin_info.framebuffer = framebuffers[i];
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_buffer_begin_info));
+	vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+	VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-		// Mesh shaders need the vkCmdDrawMeshTasksExt
-		uint32_t num_workgroups_x = 1;
-		uint32_t num_workgroups_y = 1;
-		uint32_t num_workgroups_z = 1;
-		vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], num_workgroups_x, num_workgroups_y, num_workgroups_z);
+	// Mesh shaders need the vkCmdDrawMeshTasksExt
+	uint32_t num_workgroups_x = 1;
+	uint32_t num_workgroups_y = 1;
+	uint32_t num_workgroups_z = 1;
+	vkCmdDrawMeshTasksEXT(draw_cmd_buffer, num_workgroups_x, num_workgroups_y, num_workgroups_z);
 
-		draw_ui(draw_cmd_buffers[i]);
+	draw_ui(draw_cmd_buffer);
 
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
+	vkCmdEndRenderPass(draw_cmd_buffer);
 
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
-	}
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 bool MeshShading::prepare(const vkb::ApplicationOptions &options)
@@ -107,22 +109,9 @@ bool MeshShading::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	prepare_pipelines();
-	build_command_buffers();
 
 	prepared = true;
 	return true;
-}
-
-void MeshShading::draw()
-{
-	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-
-	// Submit to queue
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-
-	ApiVulkanSample::submit_frame();
 }
 
 void MeshShading::prepare_pipelines()
@@ -232,7 +221,9 @@ void MeshShading::render(float delta_time)
 	{
 		return;
 	}
-	draw();
+	ApiVulkanSample::prepare_frame();
+	build_command_buffer();
+	ApiVulkanSample::submit_frame();
 }
 
 std::unique_ptr<vkb::VulkanSampleC> create_mesh_shading()

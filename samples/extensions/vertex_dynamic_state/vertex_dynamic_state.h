@@ -56,26 +56,26 @@ class VertexDynamicState : public ApiVulkanSample
 	std::vector<VkVertexInputBindingDescription2EXT>   vertex_bindings_description_ext{1};
 	std::vector<VkVertexInputAttributeDescription2EXT> vertex_attribute_description_ext{2};
 
-	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
 
-	std::unique_ptr<vkb::sg::SubMesh>   skybox;
-	std::unique_ptr<vkb::sg::SubMesh>   object;
-	std::unique_ptr<vkb::core::BufferC> ubo;
+	std::unique_ptr<vkb::sg::SubMesh> skybox;
+	std::unique_ptr<vkb::sg::SubMesh> object;
+
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers{};
+	std::array<VkDescriptorSet, max_concurrent_frames>                     descriptor_sets{};
 
 	VertexDynamicState();
 	~VertexDynamicState();
 
 	virtual void render(float delta_time) override;
-	virtual void build_command_buffers() override;
+	virtual void build_command_buffer();
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
 	void create_pipeline();
-	void draw();
 
 	void load_assets();
 	void create_descriptor_pool();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,6 +25,8 @@
 
 HPPTerrainTessellation::HPPTerrainTessellation()
 {
+	use_new_sync = true;
+
 	title = "HPP Dynamic terrain tessellation";
 }
 
@@ -58,8 +60,6 @@ bool HPPTerrainTessellation::prepare(const vkb::ApplicationOptions &options)
 		prepare_terrain();
 		prepare_wireframe();
 		prepare_statistics();
-		build_command_buffers();
-
 		prepared = true;
 	}
 
@@ -92,88 +92,78 @@ void HPPTerrainTessellation::request_gpu_features(vkb::core::PhysicalDeviceCpp &
 	terrain.sampler_anisotropy_supported = available_features.samplerAnisotropy;
 }
 
-void HPPTerrainTessellation::build_command_buffers()
+void HPPTerrainTessellation::build_command_buffer()
 {
+	auto command_buffer = draw_cmd_buffers[current_buffer];
+	command_buffer.reset();
+
 	vk::CommandBufferBeginInfo    command_buffer_begin_info;
 	std::array<vk::ClearValue, 2> clear_values = {{default_clear_color, vk::ClearDepthStencilValue{0.0f, 0}}};
 
 	vk::RenderPassBeginInfo render_pass_begin_info{.renderPass      = render_pass,
+	                                               .framebuffer     = framebuffers[current_image_index],
 	                                               .renderArea      = {{0, 0}, extent},
 	                                               .clearValueCount = static_cast<uint32_t>(clear_values.size()),
 	                                               .pClearValues    = clear_values.data()};
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	command_buffer.begin(command_buffer_begin_info);
+
+	if (statistics.query_supported)
 	{
-		auto command_buffer = draw_cmd_buffers[i];
-		command_buffer.begin(command_buffer_begin_info);
-
-		if (statistics.query_supported)
-		{
-			command_buffer.resetQueryPool(statistics.query_pool, 0, 2);
-		}
-
-		render_pass_begin_info.framebuffer = framebuffers[i];
-		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-
-		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
-		command_buffer.setViewport(0, viewport);
-
-		vk::Rect2D scissor{{0, 0}, extent};
-		command_buffer.setScissor(0, scissor);
-
-		vk::DeviceSize offset = 0;
-
-		// Skysphere
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, sky_sphere.pipeline);
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, sky_sphere.pipeline_layout, 0, sky_sphere.descriptor_set, {});
-		draw_model(sky_sphere.geometry, command_buffer);
-
-		// Terrain
-		if (statistics.query_supported)
-		{
-			// Begin pipeline statistics query
-			command_buffer.beginQuery(statistics.query_pool, 0, {});
-		}
-
-		// Render
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, wireframe.enabled ? wireframe.pipeline : terrain.pipeline);
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, terrain.pipeline_layout, 0, terrain.descriptor_set, {});
-		command_buffer.bindVertexBuffers(0, terrain.vertices->get_handle(), offset);
-		command_buffer.bindIndexBuffer(terrain.indices->get_handle(), 0, vk::IndexType::eUint32);
-		command_buffer.drawIndexed(terrain.index_count, 1, 0, 0, 0);
-
-		if (statistics.query_supported)
-		{
-			// End pipeline statistics query
-			command_buffer.endQuery(statistics.query_pool, 0);
-		}
-
-		draw_ui(command_buffer);
-
-		command_buffer.endRenderPass();
-
-		command_buffer.end();
+		command_buffer.resetQueryPool(statistics.query_pool, 0, 2);
 	}
+
+	command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
+	vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
+	command_buffer.setViewport(0, viewport);
+
+	vk::Rect2D scissor{{0, 0}, extent};
+	command_buffer.setScissor(0, scissor);
+
+	vk::DeviceSize offset = 0;
+
+	// Skysphere
+	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, sky_sphere.pipeline);
+	command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, sky_sphere.pipeline_layout, 0, sky_sphere.descriptor_sets[current_buffer], {});
+	draw_model(sky_sphere.geometry, command_buffer);
+
+	// Terrain
+	if (statistics.query_supported)
+	{
+		// Begin pipeline statistics query
+		command_buffer.beginQuery(statistics.query_pool, 0, {});
+	}
+
+	// Render
+	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, wireframe.enabled ? wireframe.pipeline : terrain.pipeline);
+	command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, terrain.pipeline_layout, 0, terrain.descriptor_sets[current_buffer], {});
+	command_buffer.bindVertexBuffers(0, terrain.vertices->get_handle(), offset);
+	command_buffer.bindIndexBuffer(terrain.indices->get_handle(), 0, vk::IndexType::eUint32);
+	command_buffer.drawIndexed(terrain.index_count, 1, 0, 0, 0);
+
+	if (statistics.query_supported)
+	{
+		// End pipeline statistics query
+		command_buffer.endQuery(statistics.query_pool, 0);
+	}
+
+	draw_ui(command_buffer);
+
+	command_buffer.endRenderPass();
+
+	command_buffer.end();
 }
 
 void HPPTerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
-		if (drawer.checkbox("Tessellation", &terrain.tessellation_enabled))
-		{
-			update_uniform_buffers();
-		}
-		if (drawer.input_float("Factor", &terrain.tessellation.tessellation_factor, 0.05f, "%.2f"))
-		{
-			update_uniform_buffers();
-		}
+		drawer.checkbox("Tessellation", &terrain.tessellation_enabled);
+		drawer.input_float("Factor", &terrain.tessellation.tessellation_factor, 0.05f, "%.2f");
 		if (wireframe.supported)
 		{
-			if (drawer.checkbox("Wireframe", &wireframe.enabled))
-			{
-				rebuild_command_buffers();
-			}
+			drawer.checkbox("Wireframe", &wireframe.enabled);
 		}
 	}
 	if (statistics.query_supported)
@@ -190,7 +180,21 @@ void HPPTerrainTessellation::render(float delta_time)
 {
 	if (prepared)
 	{
-		draw();
+		HPPApiVulkanSample::prepare_frame();
+		update_uniform_buffers();
+		build_command_buffer();
+		HPPApiVulkanSample::submit_frame();
+		if (statistics.query_supported)
+		{
+			// Read query results for displaying in next frame
+			auto result = get_device()
+			                  .get_handle()
+			                  .getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64);
+			if (result.result == vk::Result::eSuccess)
+			{
+				statistics.results = result.value;
+			}
+		}
 	}
 }
 
@@ -201,10 +205,10 @@ void HPPTerrainTessellation::view_changed()
 
 vk::DescriptorPool HPPTerrainTessellation::create_descriptor_pool()
 {
-	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 3}, {vk::DescriptorType::eCombinedImageSampler, 3}}};
+	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, max_concurrent_frames * 2}, {vk::DescriptorType::eCombinedImageSampler, max_concurrent_frames * 3}}};
 
 	return get_device().get_handle().createDescriptorPool(
-	    {.maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
+	    {.maxSets = max_concurrent_frames * 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()});
 }
 
 vk::DescriptorSetLayout HPPTerrainTessellation::create_sky_sphere_descriptor_set_layout()
@@ -321,31 +325,6 @@ vk::Pipeline HPPTerrainTessellation::create_terrain_pipeline(vk::PolygonMode pol
 	                                             depth_stencil_state,
 	                                             terrain.pipeline_layout,
 	                                             render_pass);
-}
-
-void HPPTerrainTessellation::draw()
-{
-	HPPApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
-
-	// Submit to queue
-	queue.submit(submit_info);
-
-	if (statistics.query_supported)
-	{
-		// Read query results for displaying in next frame
-		auto result = get_device()
-		                  .get_handle()
-		                  .getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64);
-		if (result.result == vk::Result::eSuccess)
-		{
-			statistics.results = result.value;
-		}
-	}
-
-	HPPApiVulkanSample::submit_frame();
 }
 
 // Generate a terrain quad patch for feeding to the tessellation control shader
@@ -469,7 +448,10 @@ void HPPTerrainTessellation::prepare_sky_sphere()
 	sky_sphere.descriptor_set_layout = create_sky_sphere_descriptor_set_layout();
 	sky_sphere.pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &sky_sphere.descriptor_set_layout});
 	sky_sphere.pipeline              = create_sky_sphere_pipeline();
-	sky_sphere.descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {sky_sphere.descriptor_set_layout});
+	for (auto i = 0; i < sky_sphere.descriptor_sets.size(); i++)
+	{
+		sky_sphere.descriptor_sets[i] = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {sky_sphere.descriptor_set_layout});
+	}
 	update_sky_sphere_descriptor_set();
 }
 
@@ -496,22 +478,24 @@ void HPPTerrainTessellation::prepare_terrain()
 	terrain.descriptor_set_layout = create_terrain_descriptor_set_layout();
 	terrain.pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &terrain.descriptor_set_layout});
 	terrain.pipeline              = create_terrain_pipeline(vk::PolygonMode::eFill);
-	terrain.descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {terrain.descriptor_set_layout});
+	for (auto i = 0; i < sky_sphere.descriptor_sets.size(); i++)
+	{
+		terrain.descriptor_sets[i] = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {terrain.descriptor_set_layout});
+	}
 	update_terrain_descriptor_set();
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
 void HPPTerrainTessellation::prepare_uniform_buffers()
 {
-	// Shared tessellation shader stages uniform buffer
-	terrain.tessellation_buffer =
-	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	for (auto i = 0; i < max_concurrent_frames; i++)
+	{
+		// Shared tessellation shader stages uniform buffer
+		terrain.tessellation_buffers[i] = std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	// Skysphere vertex shader uniform buffer
-	sky_sphere.transform_buffer =
-	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
+		// Skysphere vertex shader uniform buffer
+		sky_sphere.transform_buffers[i] = std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void HPPTerrainTessellation::prepare_wireframe()
@@ -541,7 +525,7 @@ void HPPTerrainTessellation::update_uniform_buffers()
 		terrain.tessellation.tessellation_factor = 0.0f;
 	}
 
-	terrain.tessellation_buffer->convert_and_update(terrain.tessellation);
+	terrain.tessellation_buffers[current_buffer]->convert_and_update(terrain.tessellation);
 
 	if (!terrain.tessellation_enabled)
 	{
@@ -550,63 +534,69 @@ void HPPTerrainTessellation::update_uniform_buffers()
 
 	// Skysphere vertex shader
 	sky_sphere.transform = camera.matrices.perspective * glm::mat4(glm::mat3(camera.matrices.view));
-	sky_sphere.transform_buffer->convert_and_update(sky_sphere.transform);
+	sky_sphere.transform_buffers[current_buffer]->convert_and_update(sky_sphere.transform);
 }
 
 void HPPTerrainTessellation::update_sky_sphere_descriptor_set()
 {
-	vk::DescriptorBufferInfo skysphere_buffer_descriptor{sky_sphere.transform_buffer->get_handle(), 0, vk::WholeSize};
+	for (auto i = 0; i < sky_sphere.transform_buffers.size(); i++)
+	{
+		vk::DescriptorBufferInfo skysphere_buffer_descriptor{sky_sphere.transform_buffers[i]->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo skysphere_image_descriptor{sky_sphere.texture.sampler,
-	                                                   sky_sphere.texture.image->get_vk_image_view().get_handle(),
-	                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                   sky_sphere.texture.image->get_vk_image_view().get_format())};
+		vk::DescriptorImageInfo skysphere_image_descriptor{sky_sphere.texture.sampler,
+		                                                   sky_sphere.texture.image->get_vk_image_view().get_handle(),
+		                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+		                                                                                   sky_sphere.texture.image->get_vk_image_view().get_format())};
 
-	std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {{{.dstSet          = sky_sphere.descriptor_set,
-	                                                                           .dstBinding      = 0,
-	                                                                           .descriptorCount = 1,
-	                                                                           .descriptorType  = vk::DescriptorType::eUniformBuffer,
-	                                                                           .pBufferInfo     = &skysphere_buffer_descriptor},
-	                                                                          {.dstSet          = sky_sphere.descriptor_set,
-	                                                                           .dstBinding      = 1,
-	                                                                           .descriptorCount = 1,
-	                                                                           .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
-	                                                                           .pImageInfo      = &skysphere_image_descriptor}}};
+		std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {{{.dstSet          = sky_sphere.descriptor_sets[i],
+		                                                                           .dstBinding      = 0,
+		                                                                           .descriptorCount = 1,
+		                                                                           .descriptorType  = vk::DescriptorType::eUniformBuffer,
+		                                                                           .pBufferInfo     = &skysphere_buffer_descriptor},
+		                                                                          {.dstSet          = sky_sphere.descriptor_sets[i],
+		                                                                           .dstBinding      = 1,
+		                                                                           .descriptorCount = 1,
+		                                                                           .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+		                                                                           .pImageInfo      = &skysphere_image_descriptor}}};
 
-	get_device().get_handle().updateDescriptorSets(skysphere_write_descriptor_sets, {});
+		get_device().get_handle().updateDescriptorSets(skysphere_write_descriptor_sets, {});
+	}
 }
 
 void HPPTerrainTessellation::update_terrain_descriptor_set()
 {
-	vk::DescriptorBufferInfo terrain_buffer_descriptor{terrain.tessellation_buffer->get_handle(), 0, vk::WholeSize};
+	for (auto i = 0; i < terrain.tessellation_buffers.size(); i++)
+	{
+		vk::DescriptorBufferInfo terrain_buffer_descriptor{terrain.tessellation_buffers[i]->get_handle(), 0, vk::WholeSize};
 
-	vk::DescriptorImageInfo heightmap_image_descriptor{terrain.height_map.sampler,
-	                                                   terrain.height_map.image->get_vk_image_view().get_handle(),
-	                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                   terrain.height_map.image->get_vk_image_view().get_format())};
+		vk::DescriptorImageInfo heightmap_image_descriptor{terrain.height_map.sampler,
+		                                                   terrain.height_map.image->get_vk_image_view().get_handle(),
+		                                                   descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+		                                                                                   terrain.height_map.image->get_vk_image_view().get_format())};
 
-	vk::DescriptorImageInfo terrainmap_image_descriptor{terrain.terrain_array.sampler,
-	                                                    terrain.terrain_array.image->get_vk_image_view().get_handle(),
-	                                                    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
-	                                                                                    terrain.terrain_array.image->get_vk_image_view().get_format())};
+		vk::DescriptorImageInfo terrainmap_image_descriptor{terrain.terrain_array.sampler,
+		                                                    terrain.terrain_array.image->get_vk_image_view().get_handle(),
+		                                                    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+		                                                                                    terrain.terrain_array.image->get_vk_image_view().get_format())};
 
-	std::array<vk::WriteDescriptorSet, 3> terrain_write_descriptor_sets = {{{.dstSet          = terrain.descriptor_set,
-	                                                                         .dstBinding      = 0,
-	                                                                         .descriptorCount = 1,
-	                                                                         .descriptorType  = vk::DescriptorType::eUniformBuffer,
-	                                                                         .pBufferInfo     = &terrain_buffer_descriptor},
-	                                                                        {.dstSet          = terrain.descriptor_set,
-	                                                                         .dstBinding      = 1,
-	                                                                         .descriptorCount = 1,
-	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
-	                                                                         .pImageInfo      = &heightmap_image_descriptor},
-	                                                                        {.dstSet          = terrain.descriptor_set,
-	                                                                         .dstBinding      = 2,
-	                                                                         .descriptorCount = 1,
-	                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
-	                                                                         .pImageInfo      = &terrainmap_image_descriptor}}};
+		std::array<vk::WriteDescriptorSet, 3> terrain_write_descriptor_sets = {{{.dstSet          = terrain.descriptor_sets[i],
+		                                                                         .dstBinding      = 0,
+		                                                                         .descriptorCount = 1,
+		                                                                         .descriptorType  = vk::DescriptorType::eUniformBuffer,
+		                                                                         .pBufferInfo     = &terrain_buffer_descriptor},
+		                                                                        {.dstSet          = terrain.descriptor_sets[i],
+		                                                                         .dstBinding      = 1,
+		                                                                         .descriptorCount = 1,
+		                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+		                                                                         .pImageInfo      = &heightmap_image_descriptor},
+		                                                                        {.dstSet          = terrain.descriptor_sets[i],
+		                                                                         .dstBinding      = 2,
+		                                                                         .descriptorCount = 1,
+		                                                                         .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+		                                                                         .pImageInfo      = &terrainmap_image_descriptor}}};
 
-	get_device().get_handle().updateDescriptorSets(terrain_write_descriptor_sets, {});
+		get_device().get_handle().updateDescriptorSets(terrain_write_descriptor_sets, {});
+	}
 }
 
 std::unique_ptr<vkb::Application> create_hpp_terrain_tessellation()

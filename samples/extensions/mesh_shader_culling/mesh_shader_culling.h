@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Holochip Corporation
+/* Copyright (c) 2023-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,22 +25,17 @@
 class MeshShaderCulling : public ApiVulkanSample
 {
   private:
-	int32_t                             density_level = 2;
-	std::unique_ptr<vkb::core::BufferC> uniform_buffer{};
+	int32_t density_level = 2;
 
 	VkPipeline            pipeline              = VK_NULL_HANDLE;
 	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
-	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 
-	// Pipeline statistics
-	struct
-	{
-		VkBuffer       buffer;
-		VkDeviceMemory memory;
-	} query_result{};
-	VkQueryPool query_pool        = VK_NULL_HANDLE;
-	uint64_t    pipeline_stats[3] = {0};
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers;
+	std::array<VkDescriptorSet, max_concurrent_frames>                     descriptor_sets{};
+
+	uint64_t                                       pipeline_stats[max_concurrent_frames][3] = {0};
+	std::array<VkQueryPool, max_concurrent_frames> query_pools{};
 
   public:
 	struct UBO
@@ -53,20 +48,17 @@ class MeshShaderCulling : public ApiVulkanSample
 	MeshShaderCulling();
 	~MeshShaderCulling() override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
-	void build_command_buffers() override;
+	void build_command_buffer();
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_sets();
 	void prepare_pipelines();
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
-	void draw();
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	bool resize(uint32_t width, uint32_t height) override;
-	void setup_query_result_buffer();
-	void get_query_results();
+	void setup_query_pools();
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_mesh_shader_culling();

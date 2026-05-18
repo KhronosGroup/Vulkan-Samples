@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,17 +34,17 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
   private:
 	struct SkySphere
 	{
-		vk::DescriptorSet       descriptor_set;
-		vk::DescriptorSetLayout descriptor_set_layout;
-		vk::PipelineLayout      pipeline_layout;
-		vk::Pipeline            pipeline;
+		std::array<vk::DescriptorSet, max_concurrent_frames> descriptor_sets;
+		vk::DescriptorSetLayout                              descriptor_set_layout;
+		vk::PipelineLayout                                   pipeline_layout;
+		vk::Pipeline                                         pipeline;
 
 		std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> geometry;
 
 		HPPTexture texture;
 
-		glm::mat4                             transform;
-		std::unique_ptr<vkb::core::BufferCpp> transform_buffer;
+		glm::mat4                                                                transform;
+		std::array<std::unique_ptr<vkb::core::BufferCpp>, max_concurrent_frames> transform_buffers;
 
 		void destroy(vk::Device device)
 		{
@@ -89,10 +89,10 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 
 	struct Terrain
 	{
-		vk::DescriptorSet       descriptor_set;
-		vk::DescriptorSetLayout descriptor_set_layout;
-		vk::PipelineLayout      pipeline_layout;
-		vk::Pipeline            pipeline;
+		std::array<vk::DescriptorSet, max_concurrent_frames> descriptor_sets;
+		vk::DescriptorSetLayout                              descriptor_set_layout;
+		vk::PipelineLayout                                   pipeline_layout;
+		vk::Pipeline                                         pipeline;
 
 		std::unique_ptr<vkb::core::BufferCpp> vertices;
 		std::unique_ptr<vkb::core::BufferCpp> indices;
@@ -105,9 +105,9 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 
 		std::vector<vk::PipelineShaderStageCreateInfo> shader_stages;
 
-		Tessellation                          tessellation;
-		std::unique_ptr<vkb::core::BufferCpp> tessellation_buffer;
-		bool                                  tessellation_enabled = true;
+		Tessellation                                                             tessellation;
+		std::array<std::unique_ptr<vkb::core::BufferCpp>, max_concurrent_frames> tessellation_buffers;
+		bool                                                                     tessellation_enabled = true;
 
 		void destroy(vk::Device device)
 		{
@@ -148,7 +148,6 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
 	void view_changed() override;
@@ -158,7 +157,7 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 	vk::Pipeline            create_sky_sphere_pipeline();
 	vk::DescriptorSetLayout create_terrain_descriptor_set_layout();
 	vk::Pipeline            create_terrain_pipeline(vk::PolygonMode polygon_mode);
-	void                    draw();
+	void                    build_command_buffer();
 	void                    generate_terrain();
 	void                    load_assets();
 	void                    prepare_camera();

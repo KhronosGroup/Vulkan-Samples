@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,6 +23,8 @@
 
 TextureMipMapGeneration::TextureMipMapGeneration()
 {
+	use_new_sync = true;
+
 	zoom     = -2.5f;
 	rotation = {0.0f, 15.0f, 0.0f};
 	title    = "Texture MipMap generation";
@@ -41,7 +43,6 @@ TextureMipMapGeneration::~TextureMipMapGeneration()
 		}
 	}
 	destroy_texture(texture);
-	uniform_buffer.reset();
 }
 
 // Enable physical device features required for this example
@@ -296,8 +297,11 @@ void TextureMipMapGeneration::load_assets()
 	scene = load_model("scenes/tunnel_cylinder.gltf");
 }
 
-void TextureMipMapGeneration::build_command_buffers()
+void TextureMipMapGeneration::build_command_buffer()
 {
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
@@ -312,46 +316,28 @@ void TextureMipMapGeneration::build_command_buffers()
 	render_pass_begin_info.renderArea.extent.height = height;
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		render_pass_begin_info.framebuffer = framebuffers[i];
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_buffer_begin_info));
 
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+	vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+	VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[current_buffer], 0, NULL);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	draw_model(scene, draw_cmd_buffer);
 
-		draw_model(scene, draw_cmd_buffers[i]);
+	draw_ui(draw_cmd_buffer);
 
-		draw_ui(draw_cmd_buffers[i]);
+	vkCmdEndRenderPass(draw_cmd_buffer);
 
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
-	}
-}
-
-void TextureMipMapGeneration::draw()
-{
-	ApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-
-	// Submit to queue
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-
-	ApiVulkanSample::submit_frame();
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 void TextureMipMapGeneration::setup_descriptor_pool()
@@ -359,16 +345,16 @@ void TextureMipMapGeneration::setup_descriptor_pool()
 	// Example uses one ubo and one image sampler
 	std::vector<VkDescriptorPoolSize> pool_sizes =
 	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLER, 3),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_concurrent_frames),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, max_concurrent_frames),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLER, max_concurrent_frames * 3),
 	    };
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
-	        2);
+	        max_concurrent_frames);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
@@ -412,52 +398,55 @@ void TextureMipMapGeneration::setup_descriptor_set_layout()
 
 void TextureMipMapGeneration::setup_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
-
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
-
-	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer);
-
-	VkDescriptorImageInfo image_descriptor;
-	image_descriptor.imageView   = texture.view;
-	image_descriptor.sampler     = VK_NULL_HANDLE;
-	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            0,
-	            &buffer_descriptor),
-	        // Binding 1 : Fragment shader texture sampler
-	        vkb::initializers::write_descriptor_set(
-	            descriptor_set,
-	            VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-	            1,
-	            &image_descriptor)};
-
-	// Binding 2: Sampler array
-	std::vector<VkDescriptorImageInfo> sampler_descriptors;
-	for (auto i = 0; i < samplers.size(); i++)
+	for (auto i = 0; i < uniform_buffers.size(); i++)
 	{
-		sampler_descriptors.push_back({samplers[i], VK_NULL_HANDLE, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL});
+		VkDescriptorSetAllocateInfo alloc_info =
+		    vkb::initializers::descriptor_set_allocate_info(
+		        descriptor_pool,
+		        &descriptor_set_layout,
+		        1);
+
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets[i]));
+
+		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffers[i]);
+
+		VkDescriptorImageInfo image_descriptor;
+		image_descriptor.imageView   = texture.view;
+		image_descriptor.sampler     = VK_NULL_HANDLE;
+		image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		std::vector<VkWriteDescriptorSet> write_descriptor_sets =
+		    {
+		        // Binding 0 : Vertex shader uniform buffer
+		        vkb::initializers::write_descriptor_set(
+		            descriptor_sets[i],
+		            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		            0,
+		            &buffer_descriptor),
+		        // Binding 1 : Fragment shader texture sampler
+		        vkb::initializers::write_descriptor_set(
+		            descriptor_sets[i],
+		            VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+		            1,
+		            &image_descriptor)};
+
+		// Binding 2: Sampler array
+		std::vector<VkDescriptorImageInfo> sampler_descriptors;
+		for (auto i = 0; i < samplers.size(); i++)
+		{
+			sampler_descriptors.push_back({samplers[i], VK_NULL_HANDLE, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL});
+		}
+		VkWriteDescriptorSet write_descriptor_set{};
+		write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write_descriptor_set.dstSet          = descriptor_sets[i];
+		write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
+		write_descriptor_set.descriptorCount = static_cast<uint32_t>(sampler_descriptors.size());
+		write_descriptor_set.pImageInfo      = sampler_descriptors.data();
+		write_descriptor_set.dstBinding      = 2;
+		write_descriptor_set.dstArrayElement = 0;
+		write_descriptor_sets.push_back(write_descriptor_set);
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 	}
-	VkWriteDescriptorSet write_descriptor_set{};
-	write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	write_descriptor_set.dstSet          = descriptor_set;
-	write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
-	write_descriptor_set.descriptorCount = static_cast<uint32_t>(sampler_descriptors.size());
-	write_descriptor_set.pImageInfo      = sampler_descriptors.data();
-	write_descriptor_set.dstBinding      = 2;
-	write_descriptor_set.dstArrayElement = 0;
-	write_descriptor_sets.push_back(write_descriptor_set);
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void TextureMipMapGeneration::prepare_pipelines()
@@ -546,13 +535,11 @@ void TextureMipMapGeneration::prepare_pipelines()
 
 void TextureMipMapGeneration::prepare_uniform_buffers()
 {
-	// Shared parameter uniform buffer block
-	uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                      sizeof(ubo),
-	                                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		// Shared parameter uniform buffer block
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(ubo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void TextureMipMapGeneration::update_uniform_buffers(float delta_time)
@@ -561,12 +548,15 @@ void TextureMipMapGeneration::update_uniform_buffers(float delta_time)
 	ubo.model      = camera.matrices.view;
 	ubo.model      = glm::rotate(ubo.model, glm::radians(90.0f + timer * 360.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model      = glm::scale(ubo.model, glm::vec3(0.5f));
-	timer += delta_time * 0.005f;
-	if (timer > 1.0f)
+	if (rotate_scene)
 	{
-		timer -= 1.0f;
+		timer += delta_time * 0.005f;
+		if (timer > 1.0f)
+		{
+			timer -= 1.0f;
+		}
 	}
-	uniform_buffer->convert_and_update(ubo);
+	uniform_buffers[current_buffer]->convert_and_update(ubo);
 }
 
 bool TextureMipMapGeneration::prepare(const vkb::ApplicationOptions &options)
@@ -586,7 +576,6 @@ bool TextureMipMapGeneration::prepare(const vkb::ApplicationOptions &options)
 	prepare_pipelines();
 	setup_descriptor_pool();
 	setup_descriptor_set();
-	build_command_buffers();
 
 	prepared = true;
 	return true;
@@ -598,31 +587,20 @@ void TextureMipMapGeneration::render(float delta_time)
 	{
 		return;
 	}
-	draw();
-	if (rotate_scene)
-	{
-		update_uniform_buffers(delta_time);
-	}
+	ApiVulkanSample::prepare_frame();
+	update_uniform_buffers(delta_time);
+	build_command_buffer();
+	ApiVulkanSample::submit_frame();
 }
 
-void TextureMipMapGeneration::view_changed()
-{
-	update_uniform_buffers();
-}
 
 void TextureMipMapGeneration::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
 		drawer.checkbox("Rotate", &rotate_scene);
-		if (drawer.slider_float("LOD bias", &ubo.lod_bias, 0.0f, static_cast<float>(texture.mip_levels)))
-		{
-			update_uniform_buffers();
-		}
-		if (drawer.combo_box("Sampler type", &ubo.sampler_index, sampler_names))
-		{
-			update_uniform_buffers();
-		}
+		drawer.slider_float("LOD bias", &ubo.lod_bias, 0.0f, static_cast<float>(texture.mip_levels));
+		drawer.combo_box("Sampler type", &ubo.sampler_index, sampler_names);
 	}
 }
 

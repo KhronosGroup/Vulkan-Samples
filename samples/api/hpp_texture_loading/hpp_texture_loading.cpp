@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,6 +25,8 @@
 
 HPPTextureLoading::HPPTextureLoading()
 {
+	use_new_sync = true;
+
 	title = "HPP Texture loading";
 
 	zoom     = -2.5f;
@@ -47,7 +49,6 @@ HPPTextureLoading::~HPPTextureLoading()
 
 	vertex_buffer.reset();
 	index_buffer.reset();
-	vertex_shader_data_buffer.reset();
 }
 
 bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
@@ -63,9 +64,7 @@ bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
 		pipeline_layout       = get_device().get_handle().createPipelineLayout({.setLayoutCount = 1, .pSetLayouts = &descriptor_set_layout});
 		pipeline              = create_pipeline();
 		descriptor_pool       = create_descriptor_pool();
-		descriptor_set        = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, {descriptor_set_layout});
 		update_descriptor_set();
-		build_command_buffers();
 
 		prepared = true;
 	}
@@ -83,8 +82,11 @@ void HPPTextureLoading::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 	}
 }
 
-void HPPTextureLoading::build_command_buffers()
+void HPPTextureLoading::build_command_buffer()
 {
+	auto command_buffer = draw_cmd_buffers[current_buffer];
+	command_buffer.reset();
+
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
 	vk::ClearValue clear_values[2];
@@ -98,49 +100,39 @@ void HPPTextureLoading::build_command_buffers()
 	render_pass_begin_info.renderArea.extent   = extent;
 	render_pass_begin_info.clearValueCount     = 2;
 	render_pass_begin_info.pClearValues        = clear_values;
+	render_pass_begin_info.framebuffer         = framebuffers[current_image_index];
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		auto command_buffer = draw_cmd_buffers[i];
+	command_buffer.begin(command_buffer_begin_info);
 
-		// Set target frame buffer
-		render_pass_begin_info.framebuffer = framebuffers[i];
+	command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		command_buffer.begin(command_buffer_begin_info);
+	vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
+	command_buffer.setViewport(0, viewport);
 
-		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+	vk::Rect2D scissor{{0, 0}, extent};
+	command_buffer.setScissor(0, scissor);
 
-		vk::Viewport viewport{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
-		command_buffer.setViewport(0, viewport);
+	command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_sets[current_buffer], {});
+	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
-		vk::Rect2D scissor{{0, 0}, extent};
-		command_buffer.setScissor(0, scissor);
+	vk::DeviceSize offset = 0;
+	command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
+	command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
 
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_set, {});
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+	command_buffer.drawIndexed(index_count, 1, 0, 0, 0);
 
-		vk::DeviceSize offset = 0;
-		command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
-		command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
+	draw_ui(command_buffer);
 
-		command_buffer.drawIndexed(index_count, 1, 0, 0, 0);
+	command_buffer.endRenderPass();
 
-		draw_ui(command_buffer);
-
-		command_buffer.endRenderPass();
-
-		command_buffer.end();
-	}
+	command_buffer.end();
 }
 
 void HPPTextureLoading::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
-		if (drawer.slider_float("LOD bias", &vertex_shader_data.lod_bias, 0.0f, static_cast<float>(texture.mip_levels)))
-		{
-			update_uniform_buffers();
-		}
+		drawer.slider_float("LOD bias", &vertex_shader_data.lod_bias, 0.0f, static_cast<float>(texture.mip_levels));
 	}
 }
 
@@ -148,13 +140,11 @@ void HPPTextureLoading::render(float delta_time)
 {
 	if (prepared)
 	{
-		draw();
+		HPPApiVulkanSample::prepare_frame();
+		update_uniform_buffers();
+		build_command_buffer();
+		HPPApiVulkanSample::submit_frame();
 	}
-}
-
-void HPPTextureLoading::view_changed()
-{
-	update_uniform_buffers();
 }
 
 vk::DescriptorPool HPPTextureLoading::create_descriptor_pool()
@@ -216,19 +206,6 @@ vk::Pipeline HPPTextureLoading::create_pipeline()
 	                                             depth_stencil_state,
 	                                             pipeline_layout,
 	                                             render_pass);
-}
-
-void HPPTextureLoading::draw()
-{
-	HPPApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
-
-	// Submit to queue
-	queue.submit(submit_info);
-
-	HPPApiVulkanSample::submit_frame();
 }
 
 void HPPTextureLoading::generate_quad()
@@ -534,39 +511,44 @@ void HPPTextureLoading::load_texture()
 // Prepare and initialize uniform buffer containing shader uniforms
 void HPPTextureLoading::prepare_uniform_buffers()
 {
-	// Vertex shader uniform buffer block
-	vertex_shader_data_buffer =
-	    std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(vertex_shader_data), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
+	for (auto i = 0; i < uniform_buffers.size(); i++)
+	{
+		// Vertex shader uniform buffer block
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferCpp>(get_device(), sizeof(vertex_shader_data), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 }
 
 void HPPTextureLoading::update_descriptor_set()
 {
-	vk::DescriptorBufferInfo buffer_descriptor{vertex_shader_data_buffer->get_handle(), 0, vk::WholeSize};
+	for (auto i = 0; i < uniform_buffers.size(); i++)
+	{
+		descriptor_sets[i] = vkb::common::allocate_descriptor_set(get_device().get_handle(), descriptor_pool, descriptor_set_layout);
 
-	// Setup a descriptor image info for the current texture to be used as a combined image sampler
-	vk::DescriptorImageInfo image_descriptor{
-	    texture.sampler,            // The sampler (the sampler describes how to sample the image, including repeat, border, etc.)
-	    texture.image_view,         // The image view (the image view describes the image and the subresources that can be accessed)
-	    texture.image_layout        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
-	};
+		vk::DescriptorBufferInfo buffer_descriptor{uniform_buffers[i]->get_handle(), 0, vk::WholeSize};
 
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{// Binding 0 : Vertex shader uniform buffer
-	                                                                {.dstSet          = descriptor_set,
-	                                                                 .dstBinding      = 0,
-	                                                                 .descriptorCount = 1,
-	                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
-	                                                                 .pBufferInfo     = &buffer_descriptor},
-	                                                                // Binding 1 : Fragment shader texture sampler
-	                                                                //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
-	                                                                {.dstSet          = descriptor_set,
-	                                                                 .dstBinding      = 1,
-	                                                                 .descriptorCount = 1,
-	                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
-	                                                                 .pImageInfo      = &image_descriptor}}};
+		// Setup a descriptor image info for the current texture to be used as a combined image sampler
+		vk::DescriptorImageInfo image_descriptor{
+		    texture.sampler,            // The sampler (the sampler describes how to sample the image, including repeat, border, etc.)
+		    texture.image_view,         // The image view (the image view describes the image and the subresources that can be accessed)
+		    texture.image_layout        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
+		};
 
-	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+		std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{// Binding 0 : Vertex shader uniform buffer
+		                                                                {.dstSet          = descriptor_sets[i],
+		                                                                 .dstBinding      = 0,
+		                                                                 .descriptorCount = 1,
+		                                                                 .descriptorType  = vk::DescriptorType::eUniformBuffer,
+		                                                                 .pBufferInfo     = &buffer_descriptor},
+		                                                                // Binding 1 : Fragment shader texture sampler
+		                                                                //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
+		                                                                {.dstSet          = descriptor_sets[i],
+		                                                                 .dstBinding      = 1,
+		                                                                 .descriptorCount = 1,
+		                                                                 .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+		                                                                 .pImageInfo      = &image_descriptor}}};
+
+		get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	}
 }
 
 void HPPTextureLoading::update_uniform_buffers()
@@ -582,7 +564,7 @@ void HPPTextureLoading::update_uniform_buffers()
 
 	vertex_shader_data.view_pos = glm::vec4(0.0f, 0.0f, -zoom, 0.0f);
 
-	vertex_shader_data_buffer->convert_and_update(vertex_shader_data);
+	uniform_buffers[current_buffer]->convert_and_update(vertex_shader_data);
 }
 
 std::unique_ptr<vkb::Application> create_hpp_texture_loading()

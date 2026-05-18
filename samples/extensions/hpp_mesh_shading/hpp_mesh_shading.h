@@ -38,11 +38,10 @@ class HPPMeshShading : public HPPApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
 	void render(float delta_time) override;
 
 	vk::Pipeline create_pipeline();
-	void         draw();
+	void         build_command_buffer();
 
   private:
 	vk::Pipeline            pipeline              = nullptr;

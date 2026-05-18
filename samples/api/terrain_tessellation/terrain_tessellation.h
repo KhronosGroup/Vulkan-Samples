@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -54,11 +54,12 @@ class TerrainTessellation : public ApiVulkanSample
 		uint32_t                            index_count;
 	} terrain;
 
-	struct
+	struct UniformBuffers
 	{
 		std::unique_ptr<vkb::core::BufferC> terrain_tessellation;
 		std::unique_ptr<vkb::core::BufferC> skysphere_vertex;
-	} uniform_buffers;
+	};
+	std::array<UniformBuffers, max_concurrent_frames> uniform_buffers;
 
 	// Shared values for tessellation control and evaluation stages
 	struct
@@ -99,11 +100,12 @@ class TerrainTessellation : public ApiVulkanSample
 		VkPipelineLayout skysphere;
 	} pipeline_layouts;
 
-	struct
+	struct DescriptorSets
 	{
 		VkDescriptorSet terrain;
 		VkDescriptorSet skysphere;
-	} descriptor_sets;
+	};
+	std::array<DescriptorSets, max_concurrent_frames> descriptor_sets;
 
 	// Pipeline statistics
 	VkQueryPool query_pool        = VK_NULL_HANDLE;
@@ -118,7 +120,7 @@ class TerrainTessellation : public ApiVulkanSample
 	void         setup_query_result_buffer();
 	void         get_query_results();
 	void         load_assets();
-	void         build_command_buffers() override;
+	void         build_command_buffer();
 	void         generate_terrain();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layouts();
@@ -126,10 +128,8 @@ class TerrainTessellation : public ApiVulkanSample
 	void         prepare_pipelines();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
-	void         draw();
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 

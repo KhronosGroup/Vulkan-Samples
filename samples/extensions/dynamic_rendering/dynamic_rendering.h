@@ -30,7 +30,7 @@ class DynamicRendering : public ApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void render(float delta_time) override;
-	void build_command_buffers() override;
+	void build_command_buffer();
 	void view_changed() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
@@ -49,7 +49,6 @@ class DynamicRendering : public ApiVulkanSample
 	void create_descriptor_sets();
 	void create_descriptor_pool();
 	void create_pipeline();
-	void draw();
 
 	struct
 	{
@@ -65,14 +64,15 @@ class DynamicRendering : public ApiVulkanSample
 		float     modelscale = 0.05f;
 	} ubo_vs;
 
-	std::unique_ptr<vkb::sg::SubMesh>   skybox;
-	std::unique_ptr<vkb::sg::SubMesh>   object;
-	std::unique_ptr<vkb::core::BufferC> ubo;
+	std::unique_ptr<vkb::sg::SubMesh> skybox;
+	std::unique_ptr<vkb::sg::SubMesh> object;
+
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers{};
+	std::array<VkDescriptorSet, max_concurrent_frames>                     descriptor_sets{};
 
 	VkPipeline            model_pipeline{VK_NULL_HANDLE};
 	VkPipeline            skybox_pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
-	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
 

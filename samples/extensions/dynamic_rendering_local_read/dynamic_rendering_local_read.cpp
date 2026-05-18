@@ -23,6 +23,8 @@
 
 DynamicRenderingLocalRead::DynamicRenderingLocalRead()
 {
+	use_new_sync = true;
+
 	title = "Dynamic Rendering local read";
 
 	camera.type = vkb::CameraType::FirstPerson;
@@ -122,9 +124,12 @@ void DynamicRenderingLocalRead::setup_framebuffer()
 
 		for (size_t i = 0; i < descriptor_image_infos.size(); i++)
 		{
-			write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, i, &descriptor_image_infos[i]));
+			write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(composition_pass.descriptor_sets[0], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, i, &descriptor_image_infos[i]));
 		}
-		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &descriptor_image_infos[0]));
+		for (uint32_t i = 0; i < max_concurrent_frames; i++)
+		{
+			write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_sets[i], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &descriptor_image_infos[0]));
+		}
 		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 	}
 
@@ -434,10 +439,13 @@ void DynamicRenderingLocalRead::create_attachments()
 
 void DynamicRenderingLocalRead::prepare_buffers()
 {
-	buffers.ubo_vs      = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(shader_data_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	buffers.ssbo_lights = std::make_unique<vkb::core::BufferC>(get_device(), lights.size() * sizeof(Light), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	for (uint32_t i = 0; i < max_concurrent_frames; i++)
+	{
+		uniform_buffers[i] = std::make_unique<vkb::core::BufferC>(get_device(), sizeof(shader_data_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 
-	update_uniform_buffer();
+	lights_buffer = std::make_unique<vkb::core::BufferC>(get_device(), lights.size() * sizeof(Light), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
 	update_lights_buffer();
 }
 
@@ -456,7 +464,7 @@ void DynamicRenderingLocalRead::update_lights_buffer()
 		light.color    = glm::vec3(rnd_col(rnd_gen), rnd_col(rnd_gen), rnd_col(rnd_gen)) * 2.0f;
 	}
 
-	buffers.ssbo_lights->convert_and_update(lights);
+	lights_buffer->convert_and_update(lights);
 }
 
 void DynamicRenderingLocalRead::update_uniform_buffer()
@@ -464,7 +472,7 @@ void DynamicRenderingLocalRead::update_uniform_buffer()
 	shader_data_vs.projection = camera.matrices.perspective;
 	shader_data_vs.view       = camera.matrices.view;
 	shader_data_vs.model      = glm::mat4(1.f);
-	buffers.ubo_vs->convert_and_update(shader_data_vs);
+	uniform_buffers[current_buffer]->convert_and_update(shader_data_vs);
 }
 
 void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
@@ -505,12 +513,12 @@ void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
 	// Pool
 
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max_concurrent_frames * 2),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 4),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, max_concurrent_frames * 1),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, max_concurrent_frames + 3),
 	};
-	uint32_t                   num_descriptor_sets = 4;
+	uint32_t                   num_descriptor_sets = 2 * max_concurrent_frames + 1;
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
@@ -531,37 +539,45 @@ void DynamicRenderingLocalRead::prepare_layouts_and_descriptors()
 	VkDescriptorImageInfo tex_descriptor_normal   = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, attachments.normal.view, image_layout);
 	VkDescriptorImageInfo tex_descriptor_albedo   = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, attachments.albedo.view, image_layout);
 
-	VkDescriptorBufferInfo ubo_vs_descriptor      = create_descriptor(*buffers.ubo_vs);
-	VkDescriptorBufferInfo ssbo_lights_descriptor = create_descriptor(*buffers.ssbo_lights);
+	VkDescriptorBufferInfo ssbo_lights_descriptor = create_descriptor(*lights_buffer);
 
 	VkDescriptorImageInfo glass_image_descriptor = create_descriptor(textures.transparent_glass);
 
-	// Opaque scene parts
-	allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &scene_opaque_pass.descriptor_set_layout, 1);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &scene_opaque_pass.descriptor_set));
-	write_descriptor_sets = {
-	    // Binding 0: Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(scene_opaque_pass.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &ubo_vs_descriptor)};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	// Sets that use uniform buffers need to be per frame-in-flight
+	scene_opaque_pass.descriptor_sets.resize(max_concurrent_frames);
+	scene_transparent_pass.descriptor_sets.resize(max_concurrent_frames);
+	for (auto i = 0; i < uniform_buffers.size(); i++)
+	{
+		VkDescriptorBufferInfo ubo_vs_descriptor = create_descriptor(*uniform_buffers[i]);
 
-	// Transparent scene parts
-	allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &scene_transparent_pass.descriptor_set_layout, 1);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &scene_transparent_pass.descriptor_set));
-	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &tex_descriptor_position),
-	    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &ubo_vs_descriptor),
-	    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &glass_image_descriptor),
-	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+		// Opaque scene parts
+		allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &scene_opaque_pass.descriptor_set_layout, 1);
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &scene_opaque_pass.descriptor_sets[i]));
+		write_descriptor_sets = {
+		    // Binding 0: Vertex shader uniform buffer
+		    vkb::initializers::write_descriptor_set(scene_opaque_pass.descriptor_sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &ubo_vs_descriptor)};
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+
+		// Transparent scene parts
+		allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &scene_transparent_pass.descriptor_set_layout, 1);
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &scene_transparent_pass.descriptor_sets[i]));
+		write_descriptor_sets = {
+		    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_sets[i], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &tex_descriptor_position),
+		    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &ubo_vs_descriptor),
+		    vkb::initializers::write_descriptor_set(scene_transparent_pass.descriptor_sets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &glass_image_descriptor),
+		};
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	}
 
 	// Composition pass
+	composition_pass.descriptor_sets.resize(1);
 	allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &composition_pass.descriptor_set_layout, 1);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &composition_pass.descriptor_set));
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &composition_pass.descriptor_sets[0]));
 	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &tex_descriptor_position),
-	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, &tex_descriptor_normal),
-	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 2, &tex_descriptor_albedo),
-	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &ssbo_lights_descriptor),
+	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_sets[0], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &tex_descriptor_position),
+	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_sets[0], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, &tex_descriptor_normal),
+	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_sets[0], VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 2, &tex_descriptor_albedo),
+	    vkb::initializers::write_descriptor_set(composition_pass.descriptor_sets[0], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &ssbo_lights_descriptor),
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
@@ -808,8 +824,11 @@ void DynamicRenderingLocalRead::draw_scene(std::unique_ptr<vkb::scene_graph::Sce
 	}
 }
 
-void DynamicRenderingLocalRead::build_command_buffers()
+void DynamicRenderingLocalRead::build_command_buffer()
 {
+	VkCommandBuffer draw_cmd_buffer = draw_cmd_buffers[current_buffer];
+	vkResetCommandBuffer(draw_cmd_buffer, 0);
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[5]{};
@@ -819,184 +838,179 @@ void DynamicRenderingLocalRead::build_command_buffers()
 	clear_values[3].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[4].depthStencil = {0.0f, 0};
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		auto cmd = draw_cmd_buffers[i];
-
-		vkBeginCommandBuffer(cmd, &command_buffer_begin_info);
+	vkBeginCommandBuffer(draw_cmd_buffer, &command_buffer_begin_info);
 
 #if defined(USE_DYNAMIC_RENDERING)
-		// With dynamic rendering and local read there are no render passes
+	// With dynamic rendering and local read there are no render passes
 
-		const std::vector<FrameBufferAttachment> attachment_list = {attachments.positionDepth, attachments.normal, attachments.albedo};
+	const std::vector<FrameBufferAttachment> attachment_list = {attachments.positionDepth, attachments.normal, attachments.albedo};
 
-		VkImageSubresourceRange subresource_range_color{};
-		subresource_range_color.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subresource_range_color.levelCount = VK_REMAINING_MIP_LEVELS;
-		subresource_range_color.layerCount = VK_REMAINING_ARRAY_LAYERS;
+	VkImageSubresourceRange subresource_range_color{};
+	subresource_range_color.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	subresource_range_color.levelCount = VK_REMAINING_MIP_LEVELS;
+	subresource_range_color.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
-		VkImageSubresourceRange subresource_range_depth{};
-		subresource_range_depth.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		subresource_range_depth.levelCount = VK_REMAINING_MIP_LEVELS;
-		subresource_range_depth.layerCount = VK_REMAINING_ARRAY_LAYERS;
+	VkImageSubresourceRange subresource_range_depth{};
+	subresource_range_depth.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	subresource_range_depth.levelCount = VK_REMAINING_MIP_LEVELS;
+	subresource_range_depth.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, subresource_range_color);
-		vkb::image_layout_transition(cmd, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, subresource_range_depth);
+	vkb::image_layout_transition(draw_cmd_buffer, swapchain_buffers[current_image_index].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, subresource_range_color);
+	vkb::image_layout_transition(draw_cmd_buffer, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, subresource_range_depth);
 
-		VkRenderingAttachmentInfoKHR color_attachment_info[4]{};
-		for (auto j = 0; j < 4; j++)
-		{
-			color_attachment_info[j]             = vkb::initializers::rendering_attachment_info();
-			color_attachment_info[j].imageLayout = VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR;
-			color_attachment_info[j].resolveMode = VK_RESOLVE_MODE_NONE;
-			color_attachment_info[j].loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			color_attachment_info[j].storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
-			color_attachment_info[j].clearValue  = clear_values[j];
-		}
+	VkRenderingAttachmentInfoKHR color_attachment_info[4]{};
+	for (auto j = 0; j < 4; j++)
+	{
+		color_attachment_info[j]             = vkb::initializers::rendering_attachment_info();
+		color_attachment_info[j].imageLayout = VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR;
+		color_attachment_info[j].resolveMode = VK_RESOLVE_MODE_NONE;
+		color_attachment_info[j].loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		color_attachment_info[j].storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment_info[j].clearValue  = clear_values[j];
+	}
 
-		color_attachment_info[0].imageView = swapchain_buffers[i].view;
-		for (auto i = 0; i < 3; i++)
-		{
-			color_attachment_info[i + 1].imageView = attachment_list[i].view;
-		}
+	color_attachment_info[0].imageView = swapchain_buffers[current_image_index].view;
+	for (auto i = 0; i < 3; i++)
+	{
+		color_attachment_info[i + 1].imageView = attachment_list[i].view;
+	}
 
-		VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
-		depth_attachment_info.imageView                    = depth_stencil.view;
-		depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-		depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-		depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depth_attachment_info.clearValue                   = clear_values[1];
+	VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
+	depth_attachment_info.imageView                    = depth_stencil.view;
+	depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+	depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+	depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depth_attachment_info.clearValue                   = clear_values[1];
 
-		VkRenderingInfoKHR render_info   = vkb::initializers::rendering_info();
-		render_info.renderArea           = {0, 0, static_cast<uint32_t>(attachment_width), static_cast<uint32_t>(attachment_height)};
-		render_info.layerCount           = 1;
-		render_info.colorAttachmentCount = 4;
-		render_info.pColorAttachments    = &color_attachment_info[0];
+	VkRenderingInfoKHR render_info   = vkb::initializers::rendering_info();
+	render_info.renderArea           = {0, 0, static_cast<uint32_t>(attachment_width), static_cast<uint32_t>(attachment_height)};
+	render_info.layerCount           = 1;
+	render_info.colorAttachmentCount = 4;
+	render_info.pColorAttachments    = &color_attachment_info[0];
 
-		render_info.pDepthAttachment = &depth_attachment_info;
-		if (!vkb::is_depth_only_format(depth_format))
-		{
-			render_info.pStencilAttachment = &depth_attachment_info;
-		}
+	render_info.pDepthAttachment = &depth_attachment_info;
+	if (!vkb::is_depth_only_format(depth_format))
+	{
+		render_info.pStencilAttachment = &depth_attachment_info;
+	}
 
-		/*
-		    Dynamic rendering start
-		*/
-		vkCmdBeginRenderingKHR(cmd, &render_info);
+	/*
+	    Dynamic rendering start
+	*/
+	vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
+	VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		// Set input attachment indices for the composition and transparent passes
-		vkCmdSetRenderingInputAttachmentIndicesKHR(cmd, &rendering_attachment_index_info);
+	// Set input attachment indices for the composition and transparent passes
+	vkCmdSetRenderingInputAttachmentIndicesKHR(draw_cmd_buffer, &rendering_attachment_index_info);
 
-		/*
-		    First draw
-		    Fills the G-Buffer attachments containing image data for the deferred composition (color+depth, normals, albedo)
-		*/
+	/*
+	    First draw
+	    Fills the G-Buffer attachments containing image data for the deferred composition (color+depth, normals, albedo)
+	*/
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline_layout, 0, 1, &scene_opaque_pass.descriptor_set, 0, nullptr);
-		draw_scene(scenes.opaque, cmd, scene_opaque_pass.pipeline_layout);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline_layout, 0, 1, &scene_opaque_pass.descriptor_sets[current_buffer], 0, nullptr);
+	draw_scene(scenes.opaque, draw_cmd_buffer, scene_opaque_pass.pipeline_layout);
 
-		// We want to read the input attachments in the next pass, with dynamic rendering local read this requires use of a barrier with the "by region" flag set
+	// We want to read the input attachments in the next pass, with dynamic rendering local read this requires use of a barrier with the "by region" flag set
 
-		// A new feature of the dynamic rendering local read extension is the ability to use pipeline barriers in the dynamic render pass
-		// to allow framebuffer-local dependencies (i.e. read-after-write) between draw calls using the "by region" flag
-		// So with this barrier we can use the output attachments from the draw call above as input attachments in the next call
-		VkMemoryBarrier2KHR memoryBarrier{};
-		memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
-		memoryBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memoryBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-		memoryBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-		memoryBarrier.dstAccessMask = VK_ACCESS_2_INPUT_ATTACHMENT_READ_BIT;
+	// A new feature of the dynamic rendering local read extension is the ability to use pipeline barriers in the dynamic render pass
+	// to allow framebuffer-local dependencies (i.e. read-after-write) between draw calls using the "by region" flag
+	// So with this barrier we can use the output attachments from the draw call above as input attachments in the next call
+	VkMemoryBarrier2KHR memoryBarrier{};
+	memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
+	memoryBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+	memoryBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+	memoryBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+	memoryBarrier.dstAccessMask = VK_ACCESS_2_INPUT_ATTACHMENT_READ_BIT;
 
-		VkDependencyInfoKHR dependencyInfo{};
-		dependencyInfo.sType              = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
-		dependencyInfo.dependencyFlags    = VK_DEPENDENCY_BY_REGION_BIT;
-		dependencyInfo.memoryBarrierCount = 1;
-		dependencyInfo.pMemoryBarriers    = &memoryBarrier;
+	VkDependencyInfoKHR dependencyInfo{};
+	dependencyInfo.sType              = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
+	dependencyInfo.dependencyFlags    = VK_DEPENDENCY_BY_REGION_BIT;
+	dependencyInfo.memoryBarrierCount = 1;
+	dependencyInfo.pMemoryBarriers    = &memoryBarrier;
 
-		vkCmdPipelineBarrier2KHR(cmd, &dependencyInfo);
+	vkCmdPipelineBarrier2KHR(draw_cmd_buffer, &dependencyInfo);
 
-		/*
-		    Second draw
-		    This will use the G-Buffer attachments that have been filled in the first draw as input attachment for the deferred scene composition
-		*/
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline_layout, 0, 1, &composition_pass.descriptor_set, 0, nullptr);
-		vkCmdDraw(cmd, 3, 1, 0, 0);
+	/*
+	    Second draw
+	    This will use the G-Buffer attachments that have been filled in the first draw as input attachment for the deferred scene composition
+	*/
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline_layout, 0, 1, &composition_pass.descriptor_sets[0], 0, nullptr);
+	vkCmdDraw(draw_cmd_buffer, 3, 1, 0, 0);
 
-		// Third draw
-		// Render transparent geometry using a forward pass that compares against depth generated during the first draw
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
-		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
+	// Third draw
+	// Render transparent geometry using a forward pass that compares against depth generated during the first draw
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_sets[current_buffer], 0, nullptr);
+	draw_scene(scenes.transparent, draw_cmd_buffer, scene_transparent_pass.pipeline_layout);
 
-		// End main rendering
-		vkCmdEndRenderingKHR(cmd);
+	// End main rendering
+	vkCmdEndRenderingKHR(draw_cmd_buffer);
 
-		// Draw UI
-		draw_ui(draw_cmd_buffers[i], i);
+	// Draw UI
+	draw_ui(draw_cmd_buffers[current_buffer], current_image_index);
 
-		/*
-		    Dynamic rendering end
-		*/
+	/*
+	    Dynamic rendering end
+	*/
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
+	vkb::image_layout_transition(draw_cmd_buffer, swapchain_buffers[current_image_index].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
 #else
-		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-		render_pass_begin_info.renderPass = render_pass;
-		render_pass_begin_info.renderArea.offset.x = 0;
-		render_pass_begin_info.renderArea.offset.y = 0;
-		render_pass_begin_info.renderArea.extent.width = width;
-		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.clearValueCount = 5;
-		render_pass_begin_info.pClearValues = clear_values;
-		render_pass_begin_info.framebuffer = framebuffers[i];
+	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+	render_pass_begin_info.renderPass               = render_pass;
+	render_pass_begin_info.renderArea.offset.x      = 0;
+	render_pass_begin_info.renderArea.offset.y      = 0;
+	render_pass_begin_info.renderArea.extent.width  = width;
+	render_pass_begin_info.renderArea.extent.height = height;
+	render_pass_begin_info.clearValueCount          = 5;
+	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.framebuffer              = framebuffers[current_image_index];
 
-		// Start our render pass, which contains multiple sub passes
-		vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	// Start our render pass, which contains multiple sub passes
+	vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
+	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+	vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
+	VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+	vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-		// First sub pass
-		// Renders the components of the scene to the G-Buffer attachments
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline_layout, 0, 1, &scene_opaque_pass.descriptor_set, 0, nullptr);
-		draw_scene(scenes.opaque, cmd, scene_opaque_pass.pipeline_layout);
+	// First sub pass
+	// Renders the components of the scene to the G-Buffer attachments
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_opaque_pass.pipeline_layout, 0, 1, &scene_opaque_pass.descriptor_sets[current_buffer], 0, nullptr);
+	draw_scene(scenes.opaque, draw_cmd_buffer, scene_opaque_pass.pipeline_layout);
 
-		// Second sub pass
-		// This subpass will use the G-Buffer components that have been filled in the first subpass as input attachment for the final compositing
-		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+	// Second sub pass
+	// This subpass will use the G-Buffer components that have been filled in the first subpass as input attachment for the final compositing
+	vkCmdNextSubpass(draw_cmd_buffer, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline_layout, 0, 1, &composition_pass.descriptor_set, 0, nullptr);
-		vkCmdDraw(cmd, 3, 1, 0, 0);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, composition_pass.pipeline_layout, 0, 1, &composition_pass.descriptor_sets[0], 0, nullptr);
+	vkCmdDraw(draw_cmd_buffer, 3, 1, 0, 0);
 
-		// Third subpass
-		// Render transparent geometry using a forward pass that compares against depth generated during G-Buffer fill
-		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+	// Third subpass
+	// Render transparent geometry using a forward pass that compares against depth generated during G-Buffer fill
+	vkCmdNextSubpass(draw_cmd_buffer, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_set, 0, nullptr);
-		draw_scene(scenes.transparent, cmd, scene_transparent_pass.pipeline_layout);
+	vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline);
+	vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, scene_transparent_pass.pipeline_layout, 0, 1, &scene_transparent_pass.descriptor_sets[current_buffer], 0, nullptr);
+	draw_scene(scenes.transparent, draw_cmd_buffer, scene_transparent_pass.pipeline_layout);
 
-		draw_ui(draw_cmd_buffers[i]);
+	draw_ui(draw_cmd_buffers[current_buffer]);
 
-		vkCmdEndRenderPass(cmd);
+	vkCmdEndRenderPass(draw_cmd_buffer);
 #endif
 
-		VK_CHECK(vkEndCommandBuffer(cmd));
-	}
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }
 
 bool DynamicRenderingLocalRead::prepare(const vkb::ApplicationOptions &options)
@@ -1022,14 +1036,9 @@ void DynamicRenderingLocalRead::render(float delta_time)
 		return;
 	}
 	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	update_uniform_buffer();
+	build_command_buffer();
 	ApiVulkanSample::submit_frame();
-	if (camera.updated)
-	{
-		update_uniform_buffer();
-	}
 }
 
 void DynamicRenderingLocalRead::on_update_ui_overlay(vkb::Drawer &drawer)

@@ -30,7 +30,7 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	DynamicRenderingLocalRead();
 	virtual ~DynamicRenderingLocalRead();
 	void prepare_pipelines();
-	void build_command_buffers() override;
+	void build_command_buffer();
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
@@ -71,11 +71,8 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 
 	std::array<Light, 64> lights;
 
-	struct
-	{
-		std::unique_ptr<vkb::core::BufferC> ubo_vs;
-		std::unique_ptr<vkb::core::BufferC> ssbo_lights;
-	} buffers;
+	std::unique_ptr<vkb::core::BufferC>                                    lights_buffer;
+	std::array<std::unique_ptr<vkb::core::BufferC>, max_concurrent_frames> uniform_buffers{};
 
 	struct PushConstantSceneNode
 	{
@@ -85,10 +82,10 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 
 	struct Pass
 	{
-		VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
-		VkPipeline            pipeline{VK_NULL_HANDLE};
-		VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
-		VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+		VkPipelineLayout             pipeline_layout{VK_NULL_HANDLE};
+		VkPipeline                   pipeline{VK_NULL_HANDLE};
+		VkDescriptorSetLayout        descriptor_set_layout{VK_NULL_HANDLE};
+		std::vector<VkDescriptorSet> descriptor_sets;
 	} scene_opaque_pass, scene_transparent_pass, composition_pass;
 
 	struct FrameBufferAttachment

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -56,16 +56,14 @@ class HPPTextureMipMapGeneration : public HPPApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
-	void view_changed() override;
 
 	void                    check_format_features(vk::Format) const;
 	vk::DescriptorPool      create_descriptor_pool();
 	vk::DescriptorSetLayout create_descriptor_set_layout();
 	vk::Pipeline            create_pipeline();
-	void                    draw();
+	void                    build_command_buffer();
 	void                    load_assets();
 	void                    prepare_camera();
 	void                    prepare_uniform_buffers();
@@ -73,18 +71,18 @@ class HPPTextureMipMapGeneration : public HPPApiVulkanSample
 	void                    update_uniform_buffers(float delta_time = 0.0f);
 
   private:
-	vk::DescriptorSet       descriptor_set;
 	vk::DescriptorSetLayout descriptor_set_layout;
 	vk::Pipeline            pipeline;
 	vk::PipelineLayout      pipeline_layout;
 	bool                    rotate_scene = false;
 	// To demonstrate mip mapping and filtering this example uses separate samplers
-	std::vector<std::string>                                  sampler_names{"No mip maps", "Mip maps (bilinear)", "Mip maps (anisotropic)"};
-	std::array<vk::Sampler, 3>                                samplers;
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> scene;
-	Texture                                                   texture;
-	UBO                                                       ubo;
-	std::unique_ptr<vkb::core::BufferCpp>                     uniform_buffer;
+	std::vector<std::string>                                                 sampler_names{"No mip maps", "Mip maps (bilinear)", "Mip maps (anisotropic)"};
+	std::array<vk::Sampler, 3>                                               samplers;
+	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>                scene;
+	Texture                                                                  texture;
+	UBO                                                                      ubo;
+	std::array<std::unique_ptr<vkb::core::BufferCpp>, max_concurrent_frames> uniform_buffers;
+	std::array<vk::DescriptorSet, max_concurrent_frames>                     descriptor_sets;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_texture_mipmap_generation();

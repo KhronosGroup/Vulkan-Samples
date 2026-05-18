@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,15 +75,13 @@ class HPPTextureLoading : public HPPApiVulkanSample
 	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
-	void build_command_buffers() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
-	void view_changed() override;
 
 	vk::DescriptorPool      create_descriptor_pool();
 	vk::DescriptorSetLayout create_descriptor_set_layout();
 	vk::Pipeline            create_pipeline();
-	void                    draw();
+	void                    build_command_buffer();
 	void                    generate_quad();
 	void                    load_texture();
 	void                    prepare_uniform_buffers();
@@ -91,16 +89,16 @@ class HPPTextureLoading : public HPPApiVulkanSample
 	void                    update_uniform_buffers();
 
   private:
-	vk::DescriptorSet                     descriptor_set;
-	vk::DescriptorSetLayout               descriptor_set_layout;
-	std::unique_ptr<vkb::core::BufferCpp> index_buffer;
-	uint32_t                              index_count;
-	vk::Pipeline                          pipeline;
-	vk::PipelineLayout                    pipeline_layout;
-	Texture                               texture;
-	std::unique_ptr<vkb::core::BufferCpp> vertex_buffer;
-	VertexShaderData                      vertex_shader_data;
-	std::unique_ptr<vkb::core::BufferCpp> vertex_shader_data_buffer;
+	vk::DescriptorSetLayout                                                  descriptor_set_layout;
+	std::unique_ptr<vkb::core::BufferCpp>                                    index_buffer;
+	uint32_t                                                                 index_count;
+	vk::Pipeline                                                             pipeline;
+	vk::PipelineLayout                                                       pipeline_layout;
+	Texture                                                                  texture;
+	std::unique_ptr<vkb::core::BufferCpp>                                    vertex_buffer;
+	VertexShaderData                                                         vertex_shader_data;
+	std::array<std::unique_ptr<vkb::core::BufferCpp>, max_concurrent_frames> uniform_buffers;
+	std::array<vk::DescriptorSet, max_concurrent_frames>                     descriptor_sets;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_texture_loading();
