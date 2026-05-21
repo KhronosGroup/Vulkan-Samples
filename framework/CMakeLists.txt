@@ -508,3 +508,5 @@ else()
     ## Disable profiling
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_PROFILING=0)
 endif()
+
+set_target_properties(framework PROPERTIES FOLDER "components")

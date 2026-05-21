@@ -1,4 +1,5 @@
 # Copyright (c) 2019-2026, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 # Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -397,5 +398,9 @@ if(NOT IOS)
     target_compile_options(vgf PRIVATE -UDEBUG)
 
     set_target_properties(vgf PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(flatbuffers PROPERTIES FOLDER "ThirdParty")
+    set_target_properties(vgf_samples PROPERTIES FOLDER "ThirdParty")
+    set_target_properties(vgf_schema PROPERTIES FOLDER "ThirdParty")
+    set_target_properties(vgf-utils PROPERTIES FOLDER "ThirdParty")
 endif()
 
