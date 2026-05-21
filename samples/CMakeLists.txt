@@ -59,6 +59,7 @@ set(ORDER_LIST
     "terrain_tessellation"
     "oit_linked_lists"
     "oit_depth_peeling"
+    "swapchain_present_timing"
 
     #Extension Samples
     "dynamic_rendering"
@@ -136,16 +137,16 @@ set(ORDER_LIST
     "hpp_terrain_tessellation"
     "hpp_texture_loading"
     "hpp_texture_mipmap_generation"
-    
+
     #HPP Extension Samples
     "hpp_mesh_shading"
     "hpp_push_descriptors"
-    
+
     #HPP Performance Samples
     "hpp_pipeline_cache"
     "hpp_swapchain_images"
     "hpp_texture_compression_comparison"
-    
+
     #General Samples
     "mobile_nerf")
 
