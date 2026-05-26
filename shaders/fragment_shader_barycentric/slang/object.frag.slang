@@ -24,7 +24,7 @@ struct VSOutput
 [[vk::binding(1, 0)]] Sampler2D samplerColorMap;
 
 [shader("fragment")]
-float4 main(VSOutput input, float3 baryCoords: SV_Barycentrics, noperspective float3 baryCoordsAffine: SV_Barycentrics, uint vertexIndex: SV_VertexID, uniform int type)
+float4 main(VSOutput input, float3 baryCoords: SV_Barycentrics, noperspective float3 baryCoordsAffine: SV_Barycentrics, uniform int type)
 {
     float3 vColor0 = GetAttributeAtVertex(input.Color, 0);
     float3 vColor1 = GetAttributeAtVertex(input.Color, 1);
