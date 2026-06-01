@@ -24,6 +24,8 @@ endif::[]
 
 This sample demonstrates how to use VK_EXT_layer_settings to configure Vulkan layers (in particular `VK_LAYER_KHRONOS_validation`) directly from your application. Instead of relying on environment variables or JSON files, you can enable features like Best Practices and `debugPrintfEXT`, tune message filtering, or change output settings via code.
 
+Note: This sample works properly in debug mode and should be viewed in that build configuration.
+
 == Why use layer settings?
 
 - Portability and reproducibility: ship settings with the app, not the environment.
