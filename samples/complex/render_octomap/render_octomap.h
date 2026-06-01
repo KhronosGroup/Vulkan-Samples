@@ -33,9 +33,15 @@ class OcTree;
 
 namespace vkb
 {
+namespace scene_graph
+{
+template <BindingType bindingType>
+class Scene;
+using SceneC = Scene<BindingType::C>;
+}        // namespace scene_graph
+
 namespace sg
 {
-class Scene;
 class SubMesh;
 }        // namespace sg
 
@@ -107,9 +113,9 @@ class render_octomap : public ApiVulkanSample
 	std::vector<InstanceData>                          instances;
 
 	// View state management
-	MapView::ViewState              currentViewState = MapView::ViewState::Octomap;
-	std::unique_ptr<vkb::sg::Scene> gltfScene;
-	std::unique_ptr<vkb::sg::Scene> splatsScene;
+	MapView::ViewState                        currentViewState = MapView::ViewState::Octomap;
+	std::unique_ptr<vkb::scene_graph::SceneC> gltfScene;
+	std::unique_ptr<vkb::scene_graph::SceneC> splatsScene;
 
 	struct GltfNodeDraw
 	{
