@@ -32,9 +32,9 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
-protected:
+  protected:
 	uint32_t get_api_version() const override;
-	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+	void     request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:
 	void create_storage_image();
