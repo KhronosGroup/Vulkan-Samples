@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025 Holochip Corporation
+/* Copyright (c) 2021-2026 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -90,9 +90,6 @@ RaytracingExtended::RaytracingExtended() :
 {
 	title = "Ray tracing with extended features";
 
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
-
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
@@ -148,6 +145,17 @@ void RaytracingExtended::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	if (gpu.get_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
+	}
+
+	// Using this removes the need to explicitly force an image format inside the shader
+	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	{
+		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
+		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("Requested required feature shaderStorageImageReadWithoutFormat or shaderStorageImageWriteWithoutFormat is not supported");
 	}
 }
 

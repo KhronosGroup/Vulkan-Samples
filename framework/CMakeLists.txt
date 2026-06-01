@@ -1,5 +1,5 @@
 # Copyright (c) 2019-2026, Arm Limited and Contributors
-# Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -49,6 +49,7 @@ set(FRAMEWORK_FILES
     hpp_resource_record.h
     hpp_resource_replay.h
     hpp_semaphore_pool.h
+    structure_chain_builder.h
     # Source Files
     drawer.cpp
     spirv_reflection.cpp
@@ -110,28 +111,20 @@ set(RENDERING_FILES
     rendering/render_target.h
     rendering/subpass.h
     rendering/hpp_pipeline_state.h
-    rendering/hpp_render_pipeline.h
-    rendering/hpp_render_target.h
     # Source files
     rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
     rendering/postprocessing_pass.cpp
     rendering/postprocessing_renderpass.cpp
-    rendering/postprocessing_computepass.cpp
-    rendering/render_pipeline.cpp
-    rendering/render_target.cpp
-    rendering/hpp_render_target.cpp)
+    rendering/postprocessing_computepass.cpp)
 
 set(RENDERING_SUBPASSES_FILES
     # Header files
     rendering/subpasses/forward_subpass.h
     rendering/subpasses/lighting_subpass.h
     rendering/subpasses/geometry_subpass.h
-    rendering/subpasses/hpp_forward_subpass.h
     # Source files
-    rendering/subpasses/forward_subpass.cpp
-    rendering/subpasses/lighting_subpass.cpp
-    rendering/subpasses/geometry_subpass.cpp)
+    rendering/subpasses/lighting_subpass.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files
@@ -139,10 +132,8 @@ set(SCENE_GRAPH_FILES
     scene_graph/node.h
     scene_graph/scene.h
     scene_graph/script.h
-    scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
-    scene_graph/scene.cpp
     scene_graph/script.cpp)
 
 set(SCENE_GRAPH_COMPONENT_FILES
@@ -205,10 +196,8 @@ set(STATS_FILES
     stats/stats_provider.h
     stats/frame_time_stats_provider.h
     stats/vulkan_stats_provider.h
-    stats/hpp_stats.h
 
     # Source Files
-    stats/stats.cpp
     stats/stats_provider.cpp
     stats/frame_time_stats_provider.cpp
     stats/vulkan_stats_provider.cpp)
@@ -414,7 +403,7 @@ else()
 endif()
 
 # mask out the min/max macros from minwindef.h
-if(MSVC)
+if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 

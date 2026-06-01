@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,7 +43,7 @@ void MultithreadingRenderPasses::request_gpu_features(vkb::core::PhysicalDeviceC
 {
 #ifdef VKB_ENABLE_PORTABILITY
 	// Since shadowmap_sampler_create_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
+	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 #endif
 }
 
@@ -93,7 +93,7 @@ void MultithreadingRenderPasses::prepare_render_context()
 	get_render_context().prepare(2);
 }
 
-std::unique_ptr<vkb::RenderTarget> MultithreadingRenderPasses::create_shadow_render_target(uint32_t size)
+std::unique_ptr<vkb::rendering::RenderTargetC> MultithreadingRenderPasses::create_shadow_render_target(uint32_t size)
 {
 	VkExtent3D extent{size, size, 1};
 
@@ -107,10 +107,10 @@ std::unique_ptr<vkb::RenderTarget> MultithreadingRenderPasses::create_shadow_ren
 
 	images.push_back(std::move(depth_image));
 
-	return std::make_unique<vkb::RenderTarget>(std::move(images));
+	return std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
-std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_shadow_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_shadow_renderpass()
 {
 	// Shadowmap subpass
 	auto shadowmap_vs  = vkb::ShaderSource{"shadows/shadowmap.vert.spv"};
@@ -120,13 +120,13 @@ std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_shadow_r
 	shadow_subpass = scene_subpass.get();
 
 	// Shadowmap pipeline
-	auto shadowmap_render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto shadowmap_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	shadowmap_render_pipeline->add_subpass(std::move(scene_subpass));
 
 	return shadowmap_render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_main_renderpass()
+std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_main_renderpass()
 {
 	// Main subpass
 	auto main_vs       = vkb::ShaderSource{"shadows/main.vert.spv"};
@@ -135,7 +135,7 @@ std::unique_ptr<vkb::RenderPipeline> MultithreadingRenderPasses::create_main_ren
 	    get_render_context(), std::move(main_vs), std::move(main_fs), get_scene(), *camera, *shadowmap_camera, shadow_render_targets);
 
 	// Main pipeline
-	auto main_render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto main_render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	main_render_pipeline->add_subpass(std::move(scene_subpass));
 
 	return main_render_pipeline;
@@ -441,16 +441,16 @@ void MultithreadingRenderPasses::draw_main_pass(vkb::core::CommandBufferC &comma
 	}
 }
 
-MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderContextC                  &render_context,
-                                                     vkb::ShaderSource                              &&vertex_source,
-                                                     vkb::ShaderSource                              &&fragment_source,
-                                                     vkb::sg::Scene                                  &scene,
-                                                     vkb::sg::Camera                                 &camera,
-                                                     vkb::sg::Camera                                 &shadowmap_camera,
-                                                     std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets) :
+MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderContextC                              &render_context,
+                                                     vkb::ShaderSource                                          &&vertex_source,
+                                                     vkb::ShaderSource                                          &&fragment_source,
+                                                     vkb::scene_graph::SceneC                                    &scene,
+                                                     vkb::sg::Camera                                             &camera,
+                                                     vkb::sg::Camera                                             &shadowmap_camera,
+                                                     std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets) :
     shadowmap_camera{shadowmap_camera},
     shadow_render_targets{shadow_render_targets},
-    vkb::ForwardSubpass{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
+    vkb::rendering::subpasses::ForwardSubpassC{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
 {
 }
 
@@ -501,9 +501,9 @@ void MultithreadingRenderPasses::MainSubpass::draw(vkb::core::CommandBufferC &co
 MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::rendering::RenderContextC &render_context,
                                                          vkb::ShaderSource             &&vertex_source,
                                                          vkb::ShaderSource             &&fragment_source,
-                                                         vkb::sg::Scene                 &scene,
+                                                         vkb::scene_graph::SceneC       &scene,
                                                          vkb::sg::Camera                &camera) :
-    vkb::GeometrySubpass{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
+    vkb::rendering::subpasses::GeometrySubpassC{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
 {
 }
 

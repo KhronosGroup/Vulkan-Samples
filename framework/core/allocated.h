@@ -1,6 +1,6 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024-2025, Bradley Austin Davis. All rights reserved.
- * Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026, Bradley Austin Davis. All rights reserved.
+ * Copyright (c) 2025-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ VmaAllocator &get_memory_allocator();
 
 /**
  * @brief The non-templatized VMA initializer function, referenced by the template version to smooth
- * over the differences between the `vkb::Device` and `vkb::core::HPPDevice` classes.
+ * over the differences between the `vkb::core::Device<bindingType` classes.
  * Idempotent, but should be paired with `shutdown`.
  * @param create_info The VMA allocator create info.
  */
@@ -44,7 +44,7 @@ void init(const VmaAllocatorCreateInfo &create_info);
 
 /**
  * @brief Initializes the VMA allocator with the specified device, expressed
- * as the `vkb` wrapper class, which might be `vkb::Device` or `vkb::core::HPPDevice`.
+ * as the `vkb` wrapper class, which might be `vkb::core::DeviceC` or `vkb::core::DeviceCpp`.
  * @tparam DeviceType The type of the device.
  * @param device The Vulkan device.
  */

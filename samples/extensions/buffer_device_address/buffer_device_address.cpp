@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,13 +22,10 @@ BufferDeviceAddress::BufferDeviceAddress()
 	title = "Buffer device address";
 
 	// Need to enable buffer device address extension.
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 
 	// Provides support for VkAllocateMemoryFlagsInfo. Otherwise, core in Vulkan 1.1.
 	add_device_extension(VK_KHR_DEVICE_GROUP_EXTENSION_NAME);
-	// Required by VK_KHR_device_group.
-	add_instance_extension(VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME);
 }
 
 BufferDeviceAddress::~BufferDeviceAddress()
@@ -430,6 +427,12 @@ void BufferDeviceAddress::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Need to enable the bufferDeviceAddress feature.
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
+}
+
+void BufferDeviceAddress::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME] = vkb::RequestMode::Required;        // Required by VK_KHR_device_group.
 }
 
 std::unique_ptr<vkb::VulkanSampleC> create_buffer_device_address()

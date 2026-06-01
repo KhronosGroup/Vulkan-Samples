@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -75,6 +75,7 @@ set(ORDER_LIST
     "ray_tracing_basic"
     "ray_tracing_extended"
     "ray_tracing_reflection"
+    "ray_tracing_invocation_reorder"
     "timeline_semaphore"
     "shader_object"
     "shader_debugprintf"
@@ -93,6 +94,10 @@ set(ORDER_LIST
     "sparse_image"
     "dynamic_primitive_clipping"
     "simple_tensor_and_data_graph"
+    "graph_constants"
+    "compute_shaders_with_tensors"
+    "tensor_image_aliasing"
+    "postprocessing_with_vgf"
 
     #Performance Samples
     "swapchain_images"

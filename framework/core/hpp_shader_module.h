@@ -84,6 +84,7 @@ struct HPPShaderResource
 class HPPShaderSource : private vkb::ShaderSource
 {
   public:
+	HPPShaderSource() = default;
 	HPPShaderSource(const std::string &filename) :
 	    vkb::ShaderSource(filename)
 	{}
@@ -96,6 +97,7 @@ class HPPShaderModule : private vkb::ShaderModule
 {
   public:
 	using vkb::ShaderModule::get_id;
+	using vkb::ShaderModule::set_resource_mode;
 
   public:
 	HPPShaderModule(vkb::core::DeviceCpp              &device,

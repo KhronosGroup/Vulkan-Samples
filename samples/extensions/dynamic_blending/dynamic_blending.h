@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Mobica
+/* Copyright (c) 2023-2026, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -118,7 +118,7 @@ class DynamicBlending : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set;
 	VkPipeline            pipeline;
 
-	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT eds_feature_support;
+	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT eds_feature_support{};
 
 	std::array<float, 4> clear_color = {0.5f, 0.5f, 0.5f, 1.0f};
 	int32_t              current_blend_color_operator_index;

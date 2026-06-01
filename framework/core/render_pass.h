@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,12 @@ class Device;
 using DeviceC = Device<vkb::BindingType::C>;
 }        // namespace core
 
+namespace rendering
+{
+template <vkb::BindingType bindingType>
 struct Attachment;
+using AttachmentC = Attachment<vkb::BindingType::C>;
+}        // namespace rendering
 
 struct SubpassInfo
 {
@@ -50,10 +55,10 @@ struct SubpassInfo
 class RenderPass : public vkb::core::VulkanResourceC<VkRenderPass>
 {
   public:
-	RenderPass(vkb::core::DeviceC               &device,
-	           const std::vector<Attachment>    &attachments,
-	           const std::vector<LoadStoreInfo> &load_store_infos,
-	           const std::vector<SubpassInfo>   &subpasses);
+	RenderPass(vkb::core::DeviceC                             &device,
+	           const std::vector<vkb::rendering::AttachmentC> &attachments,
+	           const std::vector<LoadStoreInfo>               &load_store_infos,
+	           const std::vector<SubpassInfo>                 &subpasses);
 
 	RenderPass(const RenderPass &) = delete;
 
@@ -73,7 +78,7 @@ class RenderPass : public vkb::core::VulkanResourceC<VkRenderPass>
 	size_t subpass_count;
 
 	template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
-	void create_renderpass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses);
+	void create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses);
 
 	std::vector<uint32_t> color_output_count;
 };

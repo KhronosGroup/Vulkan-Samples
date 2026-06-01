@@ -29,6 +29,7 @@
 
 #include "scene_graph/components/sampler.h"
 #include "scene_graph/node.h"
+#include "scene_graph/scene.h"
 #include "timer.h"
 
 #include "vulkan/vulkan.h"
@@ -55,7 +56,6 @@ class Mesh;
 class Node;
 class PBRMaterial;
 class Sampler;
-class Scene;
 class SubMesh;
 class Texture;
 }        // namespace sg
@@ -85,7 +85,7 @@ class GLTFLoader
 
 	virtual ~GLTFLoader() = default;
 
-	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name, int scene_index = -1, VkBufferUsageFlags additional_buffer_usage_flags = 0);
+	std::unique_ptr<vkb::scene_graph::SceneC> read_scene_from_file(const std::string &file_name, int scene_index = -1, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
 	/**
 	 * @brief Loads the first model from a GLTF file for use in simpler samples
@@ -144,7 +144,7 @@ class GLTFLoader
 	static std::unordered_map<std::string, bool> supported_extensions;
 
   private:
-	sg::Scene load_scene(int scene_index = -1, VkBufferUsageFlags additional_buffer_usage_flags = 0);
+	vkb::scene_graph::SceneC load_scene(int scene_index = -1, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
 	std::unique_ptr<sg::SubMesh> load_model(uint32_t index, bool storage_buffer = false, VkBufferUsageFlags additional_buffer_usage_flags = 0);
 };

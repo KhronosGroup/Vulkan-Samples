@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,10 +46,10 @@ class PostProcessingPipeline
 
 	/**
 	 * @brief Runs all renderpasses in this pipeline, recording commands into the given command buffer.
-	 * @remarks vkb::PostProcessingRenderpass that do not explicitly have a vkb::RenderTarget set will render
+	 * @remarks vkb::PostProcessingRenderpass that do not explicitly have a RenderTarget set will render
 	 *          to default_render_target.
 	 */
-	void draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target);
+	void draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &default_render_target);
 
 	/**
 	 * @brief Gets all of the passes in the pipeline.

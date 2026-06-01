@@ -76,7 +76,10 @@ HPPHelloTriangle::HPPHelloTriangle()
 HPPHelloTriangle::~HPPHelloTriangle()
 {
 	// Don't release anything until the GPU is completely idle.
-	device.waitIdle();
+	if (device)
+	{
+		device.waitIdle();
+	}
 
 	teardown_framebuffers();
 
@@ -142,7 +145,10 @@ HPPHelloTriangle::~HPPHelloTriangle()
 		instance.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
 	}
 
-	instance.destroy();
+	if (instance)
+	{
+		instance.destroy();
+	}
 }
 
 bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
@@ -325,7 +331,7 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 	std::vector<const char *> active_device_extensions(required_device_extensions);
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
 	if (std::ranges::any_of(device_extensions,
 	                        [](vk::ExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
 	{
@@ -915,7 +921,10 @@ void HPPHelloTriangle::select_physical_device_and_surface()
 void HPPHelloTriangle::teardown_framebuffers()
 {
 	// Wait until device is idle before teardown.
-	queue.waitIdle();
+	if (queue)
+	{
+		queue.waitIdle();
+	}
 
 	for (auto &framebuffer : swapchain_data.framebuffers)
 	{

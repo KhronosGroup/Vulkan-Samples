@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,9 +34,19 @@ namespace components
 class HPPMaterial : private vkb::sg::Material
 {
   public:
+	vkb::sg::AlphaMode get_alpha_mode() const
+	{
+		return vkb::sg::Material::alpha_mode;
+	}
+
 	std::unordered_map<std::string, vkb::scene_graph::components::HPPTexture *> const &get_textures() const
 	{
 		return reinterpret_cast<std::unordered_map<std::string, vkb::scene_graph::components::HPPTexture *> const &>(vkb::sg::Material::textures);
+	}
+
+	bool is_double_sided() const
+	{
+		return vkb::sg::Material::double_sided;
 	}
 };
 }        // namespace components

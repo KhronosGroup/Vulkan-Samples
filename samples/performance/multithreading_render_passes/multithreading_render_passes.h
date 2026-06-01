@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Arm Limited and Contributors
+/* Copyright (c) 2023-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -58,18 +58,17 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	/**
 	 * @brief This subpass is responsible for rendering a shadowmap
 	 */
-	class ShadowSubpass : public vkb::GeometrySubpass
+	class ShadowSubpass : public vkb::rendering::subpasses::GeometrySubpassC
 	{
 	  public:
 		ShadowSubpass(vkb::rendering::RenderContextC &render_context,
 		              vkb::ShaderSource             &&vertex_source,
 		              vkb::ShaderSource             &&fragment_source,
-		              vkb::sg::Scene                 &scene,
+		              vkb::scene_graph::SceneC       &scene,
 		              vkb::sg::Camera                &camera);
 
 	  protected:
-		virtual void prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer, VkFrontFace front_face, bool double_sided_material)
-		    override;
+		virtual void prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer, VkFrontFace front_face, bool double_sided_material) override;
 
 		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
 		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
@@ -81,16 +80,16 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	 * @brief This subpass is responsible for rendering a Scene
 	 *		  It implements a custom draw function which passes shadowmap and light matrix
 	 */
-	class MainSubpass : public vkb::ForwardSubpass
+	class MainSubpass : public vkb::rendering::subpasses::ForwardSubpassC
 	{
 	  public:
-		MainSubpass(vkb::rendering::RenderContextC                  &render_context,
-		            vkb::ShaderSource                              &&vertex_source,
-		            vkb::ShaderSource                              &&fragment_source,
-		            vkb::sg::Scene                                  &scene,
-		            vkb::sg::Camera                                 &camera,
-		            vkb::sg::Camera                                 &shadowmap_camera,
-		            std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets);
+		MainSubpass(vkb::rendering::RenderContextC                              &render_context,
+		            vkb::ShaderSource                                          &&vertex_source,
+		            vkb::ShaderSource                                          &&fragment_source,
+		            vkb::scene_graph::SceneC                                    &scene,
+		            vkb::sg::Camera                                             &camera,
+		            vkb::sg::Camera                                             &shadowmap_camera,
+		            std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets);
 
 		virtual void prepare() override;
 
@@ -101,37 +100,37 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 
 		vkb::sg::Camera &shadowmap_camera;
 
-		std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets;
+		std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets;
 	};
 
   private:
 	virtual void prepare_render_context() override;
 
-	std::unique_ptr<vkb::RenderTarget> create_shadow_render_target(uint32_t size);
+	std::unique_ptr<vkb::rendering::RenderTargetC> create_shadow_render_target(uint32_t size);
 
 	/**
 	 * @return Shadow render pass which should run first
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_shadow_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_shadow_renderpass();
 
 	/**
 	 * @return Main render pass which should run second
 	 */
-	std::unique_ptr<vkb::RenderPipeline> create_main_renderpass();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> create_main_renderpass();
 
 	const uint32_t SHADOWMAP_RESOLUTION{1024};
 
-	std::vector<std::unique_ptr<vkb::RenderTarget>> shadow_render_targets;
+	std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> shadow_render_targets;
 
 	/**
 	 * @brief Pipeline for shadowmap rendering
 	 */
-	std::unique_ptr<vkb::RenderPipeline> shadow_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> shadow_render_pipeline{};
 
 	/**
 	 * @brief Pipeline which uses shadowmap
 	 */
-	std::unique_ptr<vkb::RenderPipeline> main_render_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> main_render_pipeline{};
 
 	/**
 	 * @brief Subpass for shadowmap rendering

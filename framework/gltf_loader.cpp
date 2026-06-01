@@ -408,7 +408,7 @@ GLTFLoader::GLTFLoader(vkb::core::DeviceC &device) :
 {
 }
 
-std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
+std::unique_ptr<vkb::scene_graph::SceneC> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	PROFILE_SCOPE("Load GLTF Scene");
 
@@ -448,7 +448,7 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 		model_path.clear();
 	}
 
-	return std::make_unique<sg::Scene>(load_scene(scene_index, additional_buffer_usage_flags));
+	return std::make_unique<vkb::scene_graph::SceneC>(load_scene(scene_index, additional_buffer_usage_flags));
 }
 
 std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer, VkBufferUsageFlags additional_buffer_usage_flags)
@@ -495,11 +495,11 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 	return std::move(load_model(index, storage_buffer, additional_buffer_usage_flags));
 }
 
-sg::Scene GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
+vkb::scene_graph::SceneC GLTFLoader::load_scene(int scene_index, VkBufferUsageFlags additional_buffer_usage_flags)
 {
 	PROFILE_SCOPE("Process Scene");
 
-	auto scene = sg::Scene();
+	auto scene = vkb::scene_graph::SceneC();
 
 	scene.set_name("gltf_scene");
 

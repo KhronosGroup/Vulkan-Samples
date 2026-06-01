@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,29 +23,34 @@
 
 namespace vkb
 {
+namespace rendering
+{
+template <vkb::BindingType bindingType>
 class RenderTarget;
+using RenderTargetC = RenderTarget<vkb::BindingType::C>;
+}        // namespace rendering
 
 namespace core
 {
 /**
-* @brief A reference to a vkb::core::ImageView, plus an optional sampler for it
-*        - either coming from a vkb::RenderTarget or from a user-created Image.
-*/
+ * @brief A reference to a vkb::core::ImageView, plus an optional sampler for it
+ *        - either coming from a RenderTarget or from a user-created Image.
+ */
 class SampledImage
 {
   public:
 	/**
-	* @brief Constructs a SampledImage referencing the given image and with the given sampler.
-	* @remarks If the sampler is null, a default sampler will be used.
-	*/
+	 * @brief Constructs a SampledImage referencing the given image and with the given sampler.
+	 * @remarks If the sampler is null, a default sampler will be used.
+	 */
 	SampledImage(const ImageView &image_view, Sampler *sampler = nullptr);
 
 	/**
-	* @brief Constructs a SampledImage referencing a certain attachment of a render target.
-	* @remarks If the render target is null, the default is assumed.
-	*          If the sampler is null, a default sampler is used.
-	*/
-	SampledImage(uint32_t target_attachment, RenderTarget *render_target = nullptr, Sampler *sampler = nullptr, bool isDepthResolve = false);
+	 * @brief Constructs a SampledImage referencing a certain attachment of a render target.
+	 * @remarks If the render target is null, the default is assumed.
+	 *          If the sampler is null, a default sampler is used.
+	 */
+	SampledImage(uint32_t target_attachment, vkb::rendering::RenderTargetC *render_target = nullptr, Sampler *sampler = nullptr, bool isDepthResolve = false);
 
 	SampledImage(const SampledImage &to_copy);
 	SampledImage &operator=(const SampledImage &to_copy);
@@ -83,7 +88,7 @@ class SampledImage
 	 * @brief Returns either the ImageView, if set, or the image view for the set target attachment.
 	 *        If the view has no render target associated with it, default_target is used.
 	 */
-	const ImageView &get_image_view(const vkb::RenderTarget &default_target) const;
+	const ImageView &get_image_view(const vkb::rendering::RenderTargetC &default_target) const;
 
 	/**
 	 * @brief Returns the currently-set sampler, if any.
@@ -104,7 +109,7 @@ class SampledImage
 	/**
 	 * @brief Returns the RenderTarget, if set.
 	 */
-	inline RenderTarget *get_render_target() const
+	inline vkb::rendering::RenderTargetC *get_render_target() const
 	{
 		return render_target;
 	}
@@ -112,7 +117,7 @@ class SampledImage
 	/**
 	 * @brief Returns either the RenderTarget, if set, or - if not - the given fallback render target.
 	 */
-	inline RenderTarget &get_render_target(RenderTarget &fallback) const
+	inline vkb::rendering::RenderTargetC &get_render_target(vkb::rendering::RenderTargetC &fallback) const
 	{
 		return render_target ? *render_target : fallback;
 	}
@@ -121,7 +126,7 @@ class SampledImage
 	 * @brief Sets the sampler for this SampledImage.
 	 *        Setting it to null will make it use the default instead.
 	 */
-	inline void set_render_target(RenderTarget *new_render_target)
+	inline void set_render_target(vkb::rendering::RenderTargetC *new_render_target)
 	{
 		render_target = std::move(new_render_target);
 	}
@@ -132,11 +137,11 @@ class SampledImage
 	}
 
   private:
-	const ImageView *image_view;
-	uint32_t         target_attachment;
-	RenderTarget *   render_target;
-	Sampler *        sampler;
-	bool             isDepthResolve;
+	const ImageView               *image_view;
+	uint32_t                       target_attachment;
+	vkb::rendering::RenderTargetC *render_target;
+	Sampler                       *sampler;
+	bool                           isDepthResolve;
 };
 
 }        // namespace core

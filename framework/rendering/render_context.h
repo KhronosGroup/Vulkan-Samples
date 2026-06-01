@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,14 +21,12 @@
 #include "core/device.h"
 #include "core/hpp_swapchain.h"
 #include "platform/window.h"
-#include "rendering/hpp_render_target.h"
 #include "rendering/render_frame.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 class Queue;
-class RenderTarget;
 class Swapchain;
 
 namespace core
@@ -68,9 +66,8 @@ class RenderContext
 	static inline vk::Format DEFAULT_VK_FORMAT = vk::Format::eR8G8B8A8Srgb;
 
   public:
-	using QueueType        = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
-	using RenderTargetType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
-	using SwapchainType    = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPSwapchain, vkb::Swapchain>::type;
+	using QueueType     = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
+	using SwapchainType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPSwapchain, vkb::Swapchain>::type;
 
 	using Extent2DType                       = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
 	using FormatType                         = typename std::conditional<bindingType == BindingType::Cpp, vk::Format, VkFormat>::type;
@@ -187,7 +184,7 @@ class RenderContext
 	 * @param thread_count The number of threads in the application, necessary to allocate this many resource pools for each RenderFrame
 	 * @param create_render_target_func A function delegate, used to create a RenderTarget
 	 */
-	void prepare(size_t thread_count = 1, typename RenderTargetType::CreateFunc create_render_target_func = RenderTargetType::DEFAULT_CREATE_FUNC);
+	void prepare(size_t thread_count = 1, typename vkb::rendering::RenderTarget<bindingType>::CreateFunc create_render_target_func = vkb::rendering::RenderTarget<bindingType>::DEFAULT_CREATE_FUNC);
 
 	/**
 	 * @brief Recreates the RenderFrames, called after every update
@@ -275,7 +272,7 @@ class RenderContext
   private:
 	vk::Semaphore                                                acquired_semaphore;
 	uint32_t                                                     active_frame_index        = 0;        // Current active frame index
-	HPPRenderTarget::CreateFunc                                  create_render_target_func = HPPRenderTarget::DEFAULT_CREATE_FUNC;
+	RenderTargetCpp::CreateFunc                                  create_render_target_func = RenderTargetCpp::DEFAULT_CREATE_FUNC;
 	vkb::core::DeviceCpp                                        &device;
 	bool                                                         frame_active = false;        // Whether a frame is active or not
 	std::vector<std::unique_ptr<vkb::rendering::RenderFrameCpp>> frames;
@@ -638,7 +635,7 @@ inline bool RenderContext<bindingType>::has_swapchain()
 }
 
 template <vkb::BindingType bindingType>
-inline void RenderContext<bindingType>::prepare(size_t thread_count, typename RenderTargetType::CreateFunc create_render_target_func_)
+inline void RenderContext<bindingType>::prepare(size_t thread_count, typename vkb::rendering::RenderTarget<bindingType>::CreateFunc create_render_target_func_)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -646,7 +643,7 @@ inline void RenderContext<bindingType>::prepare(size_t thread_count, typename Re
 	}
 	else
 	{
-		create_render_target_func = *reinterpret_cast<HPPRenderTarget::CreateFunc *>(&create_render_target_func_);
+		create_render_target_func = *reinterpret_cast<RenderTargetCpp::CreateFunc *>(&create_render_target_func_);
 	}
 
 	device.get_handle().waitIdle();
@@ -675,7 +672,7 @@ inline void RenderContext<bindingType>::prepare(size_t thread_count, typename Re
 		                                       vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
 		                                       VMA_MEMORY_USAGE_GPU_ONLY};
 
-		std::unique_ptr<HPPRenderTarget> render_target = create_render_target_func(std::move(color_image));
+		std::unique_ptr<RenderTargetCpp> render_target = create_render_target_func(std::move(color_image));
 		frames.emplace_back(std::make_unique<vkb::rendering::RenderFrameCpp>(device, std::move(render_target), thread_count));
 	}
 

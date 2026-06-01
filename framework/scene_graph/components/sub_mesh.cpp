@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,6 +27,31 @@ namespace sg
 SubMesh::SubMesh(const std::string &name) :
     Component{name}
 {}
+
+vkb::core::BufferC const &SubMesh::get_index_buffer() const
+{
+	return *index_buffer;
+}
+
+uint32_t SubMesh::get_index_offset() const
+{
+	return index_offset;
+}
+
+VkIndexType SubMesh::get_index_type() const
+{
+	return index_type;
+}
+
+uint32_t SubMesh::get_vertex_indices() const
+{
+	return vertex_indices;
+}
+
+uint32_t SubMesh::get_vertices_count() const
+{
+	return vertices_count;
+}
 
 std::type_index SubMesh::get_type()
 {

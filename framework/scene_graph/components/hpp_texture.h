@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,6 +37,11 @@ class HPPTexture : private vkb::sg::Texture
 	vkb::scene_graph::components::HPPImage *get_image()
 	{
 		return reinterpret_cast<vkb::scene_graph::components::HPPImage *>(vkb::sg::Texture::get_image());
+	}
+
+	vkb::scene_graph::components::SamplerCpp *get_sampler()
+	{
+		return reinterpret_cast<vkb::scene_graph::components::SamplerCpp *>(vkb::sg::Texture::get_sampler());
 	}
 
 	void set_image(vkb::scene_graph::components::HPPImage &image)
