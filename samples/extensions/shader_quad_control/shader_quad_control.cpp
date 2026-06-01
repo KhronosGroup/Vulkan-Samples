@@ -20,9 +20,7 @@
 ShaderQuadControl::ShaderQuadControl()
 {
 	title = "Shader quad control";
-	set_api_version(VK_API_VERSION_1_2);
 
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	// VK_KHR_shader_quad_control requires VK_KHR_shader_maximal_reconvergence per spec
 	add_device_extension(VK_KHR_SHADER_MAXIMAL_RECONVERGENCE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_QUAD_CONTROL_EXTENSION_NAME);
@@ -41,6 +39,17 @@ ShaderQuadControl::~ShaderQuadControl()
 			vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		}
 	}
+}
+
+void ShaderQuadControl::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+}
+
+uint32_t ShaderQuadControl::get_api_version() const
+{
+	return VK_API_VERSION_1_2;
 }
 
 bool ShaderQuadControl::prepare(const vkb::ApplicationOptions &options)
