@@ -373,7 +373,7 @@ void PipelineBinary::recreate_pipeline_from_binary()
 	VkComputePipelineCreateInfo ci = compute_ci_cache;
 	ci.pNext                       = &binary_info;
 
-	res = vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &ci, nullptr, &compute_pipeline);
+	res = vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &ci, nullptr, &compute_pipeline);
 
 	vkDestroyPipelineBinaryKHR(get_device().get_handle(), temp_binary, nullptr);
 
