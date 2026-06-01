@@ -103,18 +103,15 @@ And here's a bonus: GLTF already has extensions for compression (`KHR_mesh_quant
     "primitives": [{
       "attributes": {
         "POSITION": 0,
-        "COLOR_0": 4
+        "KHR_gaussian_splatting:ROTATION": 1,
+        "KHR_gaussian_splatting:SCALE": 2,
+        "KHR_gaussian_splatting:OPACITY": 3,
+        "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0": 4
       },
       "extensions": {
         "KHR_gaussian_splatting": {
-          "OPACITY": 3,
-          "ROTATION": 1,
-          "SCALE": 2,
-          "SH_DEGREE_0_COEF_0": 5,
-          "antialiased": false,
-          "colorSpace": "BT.709-sRGB",
           "kernel": "ellipse",
-          "shDegree": 3
+          "colorSpace": "sRGB"
         }
       },
       "mode": 0
@@ -360,14 +357,15 @@ When you use the `KHR_gaussian_splatting_compression_spz` extension, the GLTF st
       "mode": 0,  // POINTS
       "attributes": {
         "POSITION": 0,
-        "COLOR_0": 1
+        "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0": 1,
+        "KHR_gaussian_splatting:ROTATION": 2,
+        "KHR_gaussian_splatting:SCALE": 3,
+        "KHR_gaussian_splatting:OPACITY": 4
       },
       "extensions": {
         "KHR_gaussian_splatting": {
-          "ROTATION": 2,
-          "SCALE": 3,
-          "OPACITY": 4,
-          "shDegree": 3
+          "kernel": "ellipse",
+          "colorSpace": "sRGB"
         },
         "KHR_gaussian_splatting_compression_spz": {
           "buffer": 5,  // Points to SPZ blob
@@ -404,14 +402,13 @@ A new scene graph component (`scene_graph/components/gaussian_splat.h`) stores s
 class GaussianSplat : public Component
 {
 public:
-    enum class KernelType { Ellipse, Sphere };
-    enum class ColorSpace { SRGB, Linear };
-
     uint32_t splat_count = 0;
     uint32_t sh_degree = 0;
     bool antialiased = false;
-    KernelType kernel = KernelType::Ellipse;
-    ColorSpace color_space = ColorSpace::SRGB;
+    std::string kernel = "base_ellipsoid";
+    std::string color_space = "sRGB";
+    std::string projection = "perspective";
+    std::string sorting_method = "cameraDistance";
 
     // GPU buffers
     std::unique_ptr<vkb::core::BufferC> position_buffer;
@@ -495,40 +492,40 @@ struct GaussianSplatExtension
     std::string kernel = "ellipse";
 };
 
-GaussianSplatExtension parse_extension(const tinygltf::Value& ext_value)
+GaussianSplatExtension parse_extension(const tinygltf::Model& model, const tinygltf::Primitive& primitive)
 {
     GaussianSplatExtension ext;
 
-    // Get accessor indices
-    if (ext_value.Has("ROTATION"))
-        ext.rotation_accessor = ext_value.Get("ROTATION").Get<int>();
-    if (ext_value.Has("SCALE"))
-        ext.scale_accessor = ext_value.Get("SCALE").Get<int>();
-    if (ext_value.Has("OPACITY"))
-        ext.opacity_accessor = ext_value.Get("OPACITY").Get<int>();
+    // Helper to get attribute accessor index
+    auto get_attrib = [&](const std::string& name) {
+        auto it = primitive.attributes.find(name);
+        return (it != primitive.attributes.end()) ? it->second : -1;
+    };
 
-    // Get SH accessors
-    if (ext_value.Has("shDegree"))
-        ext.sh_degree = ext_value.Get("shDegree").Get<int>();
+    // Get accessor indices from attributes (KHR spec)
+    ext.position_accessor = get_attrib("POSITION");
+    ext.rotation_accessor = get_attrib("KHR_gaussian_splatting:ROTATION");
+    ext.scale_accessor    = get_attrib("KHR_gaussian_splatting:SCALE");
+    ext.opacity_accessor  = get_attrib("KHR_gaussian_splatting:OPACITY");
+    ext.color_accessor    = get_attrib("KHR_gaussian_splatting:SH_DEGREE_0_COEF_0");
 
-    for (int degree = 0; degree <= ext.sh_degree; degree++)
+    // Fallback to old draft names or COLOR_0 if needed
+    if (ext.color_accessor < 0) ext.color_accessor = get_attrib("COLOR_0");
+
+    // Get properties from the extension object
+    auto it = primitive.extensions.find("KHR_gaussian_splatting");
+    if (it != primitive.extensions.end() && it->second.IsObject())
     {
-        for (int m = -degree; m <= degree; m++)
-        {
-            std::string key = "SH_DEGREE_" + std::to_string(degree) +
-                             "_COEF_" + std::to_string(m);
-            if (ext_value.Has(key))
-                ext.sh_accessors.push_back(ext_value.Get(key).Get<int>());
-        }
+        const auto& ext_value = it->second;
+        if (ext_value.Has("kernel"))
+            ext.kernel = ext_value.Get("kernel").Get<std::string>();
+        if (ext_value.Has("colorSpace"))
+            ext.color_space = ext_value.Get("colorSpace").Get<std::string>();
+        if (ext_value.Has("shDegree"))
+            ext.sh_degree = ext_value.Get("shDegree").Get<int>();
+        if (ext_value.Has("antialiased"))
+            ext.antialiased = ext_value.Get("antialiased").Get<bool>();
     }
-
-    // Get properties
-    if (ext_value.Has("antialiased"))
-        ext.antialiased = ext_value.Get("antialiased").Get<bool>();
-    if (ext_value.Has("colorSpace"))
-        ext.color_space = ext_value.Get("colorSpace").Get<std::string>();
-    if (ext_value.Has("kernel"))
-        ext.kernel = ext_value.Get("kernel").Get<std::string>();
 
     return ext;
 }

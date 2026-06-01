@@ -991,30 +991,39 @@ void render_octomap::loadGaussianSplatsData(const std::string &filename)
 	};
 
 	const int pos_accessor = prim.attributes.contains("POSITION") ? prim.attributes.at("POSITION") : -1;
-	const int col_accessor = prim.attributes.contains("COLOR_0") ? prim.attributes.at("COLOR_0") : -1;
+	int       col_accessor = prim.attributes.contains("COLOR_0") ? prim.attributes.at("COLOR_0") : -1;
+
+	// KHR_gaussian_splatting uses KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 for the base color (DC component)
+	if (col_accessor < 0 && prim.attributes.contains("KHR_gaussian_splatting:SH_DEGREE_0_COEF_0"))
+	{
+		col_accessor = prim.attributes.at("KHR_gaussian_splatting:SH_DEGREE_0_COEF_0");
+	}
+
 	if (pos_accessor < 0)
 	{
 		LOGE("Splats gltf missing POSITION accessor: {}", filename);
 		return;
 	}
 
-	int rot_accessor     = -1;
-	int scale_accessor   = -1;
-	int opacity_accessor = -1;
+	int rot_accessor     = prim.attributes.contains("KHR_gaussian_splatting:ROTATION") ? prim.attributes.at("KHR_gaussian_splatting:ROTATION") : -1;
+	int scale_accessor   = prim.attributes.contains("KHR_gaussian_splatting:SCALE") ? prim.attributes.at("KHR_gaussian_splatting:SCALE") : -1;
+	int opacity_accessor = prim.attributes.contains("KHR_gaussian_splatting:OPACITY") ? prim.attributes.at("KHR_gaussian_splatting:OPACITY") : -1;
+
 	if (prim.extensions.contains(KHR_GAUSSIAN_SPLATTING_EXTENSION))
 	{
 		const tinygltf::Value &ext = prim.extensions.at(KHR_GAUSSIAN_SPLATTING_EXTENSION);
 		if (ext.IsObject())
 		{
-			if (ext.Has("ROTATION"))
+			// Fallback to old draft extension property names
+			if (rot_accessor < 0 && ext.Has("ROTATION"))
 			{
 				rot_accessor = ext.Get("ROTATION").Get<int>();
 			}
-			if (ext.Has("SCALE"))
+			if (scale_accessor < 0 && ext.Has("SCALE"))
 			{
 				scale_accessor = ext.Get("SCALE").Get<int>();
 			}
-			if (ext.Has("OPACITY"))
+			if (opacity_accessor < 0 && ext.Has("OPACITY"))
 			{
 				opacity_accessor = ext.Get("OPACITY").Get<int>();
 			}

@@ -48,23 +48,6 @@ namespace sg
 class GaussianSplat : public Component
 {
   public:
-	/**
-	 * @brief Kernel type for splat rendering
-	 */
-	enum class KernelType
-	{
-		Ellipse,        // Default elliptical kernel
-		Sphere          // Spherical kernel (isotropic)
-	};
-
-	/**
-	 * @brief Color space for splat colors
-	 */
-	enum class ColorSpace
-	{
-		SRGB,         // BT.709-sRGB
-		Linear        // Linear RGB
-	};
 
 	GaussianSplat(const std::string &name = {});
 
@@ -82,10 +65,16 @@ class GaussianSplat : public Component
 	bool antialiased = false;
 
 	// Kernel type for rendering
-	KernelType kernel = KernelType::Ellipse;
+	std::string kernel = "base_ellipsoid";
 
 	// Color space
-	ColorSpace color_space = ColorSpace::SRGB;
+	std::string color_space = "sRGB";
+
+	// Projection method
+	std::string projection = "perspective";
+
+	// Sorting method
+	std::string sorting_method = "cameraDistance";
 
 	// GPU buffers for splat data
 	std::unique_ptr<vkb::core::BufferC> position_buffer;        // VEC3 positions
