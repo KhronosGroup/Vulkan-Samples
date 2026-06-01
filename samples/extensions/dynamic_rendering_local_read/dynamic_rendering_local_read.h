@@ -1,4 +1,5 @@
-/* Copyright (c) 2024-2025, Sascha Willems
+/* Copyright (c) 2024-2026, Sascha Willems
+ * Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,10 +37,17 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
+	// from vkb::VulkanSample
+	uint32_t get_api_version() const override;
+
+	// from ApiVulkanSample
+	uint32_t get_gui_subpass() const override;
+
+  private:
 	struct Scenes
 	{
-		std::unique_ptr<vkb::sg::Scene> opaque;
-		std::unique_ptr<vkb::sg::Scene> transparent;
+		std::unique_ptr<vkb::scene_graph::SceneC> opaque;
+		std::unique_ptr<vkb::scene_graph::SceneC> transparent;
 	} scenes;
 
 	struct
@@ -106,7 +114,6 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 
 	void setup_framebuffer() override;
 	void setup_render_pass() override;
-	void prepare_gui() override;
 
 	void load_assets();
 	void create_attachment(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment &attachment);
@@ -117,7 +124,7 @@ class DynamicRenderingLocalRead : public ApiVulkanSample
 	void update_uniform_buffer();
 	void prepare_layouts_and_descriptors();
 
-	void draw_scene(std::unique_ptr<vkb::sg::Scene> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout);
+	void draw_scene(std::unique_ptr<vkb::scene_graph::SceneC> &scene, VkCommandBuffer cmd, VkPipelineLayout pipeline_layout);
 };
 
 std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_rendering_local_read();

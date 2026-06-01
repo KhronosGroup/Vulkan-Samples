@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSampleC
 
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
-	virtual void draw_renderpass(vkb::core::CommandBufferC &cmd, vkb::RenderTarget &render_target) override;
+	virtual void draw_renderpass(vkb::core::CommandBufferC &cmd, vkb::rendering::RenderTargetC &render_target) override;
 
   private:
 	virtual void draw_gui() override;

@@ -1,4 +1,5 @@
-/* Copyright (c) 2023-2025, Mobica Limited
+/* Copyright (c) 2023-2026, Mobica Limited
+ * Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +20,6 @@
 
 ColorWriteEnable::ColorWriteEnable()
 {
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
 }
@@ -63,13 +63,9 @@ bool ColorWriteEnable::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void ColorWriteEnable::prepare_gui()
+uint32_t ColorWriteEnable::get_gui_subpass() const
 {
-	create_gui(*window, nullptr, 15.0f, true);
-	get_gui().set_subpass(1);
-	get_gui().prepare(pipeline_cache, render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	return 1;
 }
 
 void ColorWriteEnable::prepare_pipelines()
@@ -329,7 +325,11 @@ void ColorWriteEnable::setup_render_pass()
 		attachments[i].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[i].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[i].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		// Per-attachment final layouts:
+		// - attachment 0 is the swapchain image; first use is subpass 1 (color), so the finalLayout must be PRESENT.
+		// - attachments 1..3 are written in subpass 0 (color) and read in subpass 1
+		//   as input attachments, so they should end as SHADER_READ_ONLY_OPTIMAL.
+		attachments[i].finalLayout = (i == 0) ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
 	std::array<VkAttachmentReference, 4> color_references = {
@@ -361,9 +361,9 @@ void ColorWriteEnable::setup_render_pass()
 	subpass_descriptions[1].pInputAttachments       = input_references.data();
 
 	// Subpass dependencies for layout transitions.
-	std::array<VkSubpassDependency, 3> dependencies = {};
+	std::array<VkSubpassDependency, 4> dependencies = {};
 
-	// External to color pass.
+	// External to color pass (for attachments whose first use is subpass 0).
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -372,23 +372,35 @@ void ColorWriteEnable::setup_render_pass()
 	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	// Color pass to composition pass.
-	dependencies[1].srcSubpass      = 0;
+	// External to composition pass (for attachments whose first use is subpass 1).
+	// This is REQUIRED for the composition image (attachment 0) because its first use is subpass 1.
+	dependencies[1].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[1].dstSubpass      = 1;
-	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[1].dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[1].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	// Composition pass to external.
-	dependencies[2].srcSubpass      = 1;
-	dependencies[2].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	// Color pass -> composition pass (make color attachment writes visible to input-attachment reads)
+	// Also include COLOR_ATTACHMENT_OUTPUT/COLOR_ATTACHMENT_WRITE on the dst side so the layout
+	// transition performed at vkCmdNextSubpass is ordered with prior color writes and the final store.
+	dependencies[2].srcSubpass      = 0;
+	dependencies[2].dstSubpass      = 1;
 	dependencies[2].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[2].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[2].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[2].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[2].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[2].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[2].dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// Composition pass to external.
+	dependencies[3].srcSubpass      = 1;
+	dependencies[3].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[3].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[3].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[3].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[3].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Create render pass.
 	VkRenderPassCreateInfo render_pass_create_info = {};

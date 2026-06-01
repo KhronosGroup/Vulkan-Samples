@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,8 +21,6 @@
 
 SimpleTensorAndDataGraph::SimpleTensorAndDataGraph()
 {
-	set_api_version(VK_API_VERSION_1_3);        // Required by the emulation layers
-
 	// Declare that we need the data graph and tensor extensions
 	add_device_extension("VK_ARM_tensors");
 	add_device_extension("VK_ARM_data_graph");
@@ -46,6 +44,11 @@ SimpleTensorAndDataGraph::~SimpleTensorAndDataGraph()
 	set_render_pipeline(nullptr);
 }
 
+uint32_t SimpleTensorAndDataGraph::get_api_version() const
+{
+	return VK_API_VERSION_1_3;        // Required by the emulation layers
+}
+
 /**
  * @brief Overridden to declare that we require some physical device features to be enabled.
  */
@@ -54,14 +57,11 @@ void SimpleTensorAndDataGraph::request_gpu_features(vkb::core::PhysicalDeviceC &
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, shaderInt8);
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan13Features, synchronization2);
 
-	// TODO: Re-enable this feature once the emulation layer advertises it
-	// REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, tensors);
-
 	// Enable the features for tensors and data graphs which we intend to use.
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, tensors);
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, shaderTensorAccess);
-
-	// TODO: Re-enable this feature once the emulation layer advertises it
-	// REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraphShaderModule);
 
 	// Update-after-bind is required for the emulation layer
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, descriptorBindingUniformBufferUpdateAfterBind);
@@ -87,6 +87,9 @@ bool SimpleTensorAndDataGraph::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	// Workaround for emulation layer issue, remove once fixed.
+	volkLoadDevice(get_device().get_handle());
+
 	// We use the GUI framework for labels on the visualization
 	create_gui(*window, &get_stats());
 
@@ -101,7 +104,7 @@ bool SimpleTensorAndDataGraph::prepare(const vkb::ApplicationOptions &options)
 	prepare_visualization_pipeline_descriptor_set();
 
 	// Create a RenderPipeline to blit `output_image` to the swapchain
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	std::unique_ptr<vkb::rendering::RenderPipelineC> render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::make_unique<BlitSubpass>(get_render_context()));
 	set_render_pipeline(std::move(render_pipeline));
 
@@ -141,7 +144,7 @@ void SimpleTensorAndDataGraph::prepare_input_tensor()
 	input_tensor = std::make_unique<Tensor>(get_device(),
 	                                        TensorBuilder(dimensions)
 	                                            .with_tiling(VK_TENSOR_TILING_LINEAR_ARM)
-	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM)
+	                                            .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_SHADER_BIT_ARM)
 	                                            .with_format(VK_FORMAT_R32_SFLOAT)
 	                                            .with_vma_required_flags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
 	// Upload fixed initial data - smoothly varying colors over the square
@@ -320,7 +323,7 @@ bool SimpleTensorAndDataGraph::resize(uint32_t width, uint32_t height)
 /**
  * @brief Overridden to do the main rendering on each frame - dispatch our neural network inference and visualize the results.
  */
-void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target)
+void SimpleTensorAndDataGraph::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	// Bind and run data graph pipeline.
 	vkCmdBindPipeline(command_buffer.get_handle(), VK_PIPELINE_BIND_POINT_DATA_GRAPH_ARM, data_graph_pipeline->get_handle());

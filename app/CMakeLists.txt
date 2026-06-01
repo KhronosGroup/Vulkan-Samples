@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -49,6 +49,8 @@ elseif(IOS)
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/main.mm
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.h
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/AppDelegate.m
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/SceneDelegate.h
+			${CMAKE_CURRENT_SOURCE_DIR}/ios/SceneDelegate.m
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.h
 			${CMAKE_CURRENT_SOURCE_DIR}/ios/ViewController.mm
 	)
@@ -135,8 +137,9 @@ if(IOS)
                 XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY		"YES"
         )
     endif ()
-    # No need to search for Vulkan package or MoltenVK library, Vulkan cache variables already defined on Apple platforms by global_options.cmake
+    # Vulkan cache variables already defined by main project CMakeLists and updated on Apple platforms by global_options.cmake
     if(Vulkan_LIBRARY AND ${Vulkan_VERSION} VERSION_GREATER_EQUAL 1.3.278)
+        get_filename_component(Vulkan_Target_SDK "$ENV{VULKAN_SDK}/.." REALPATH)
         target_sources(${PROJECT_NAME} PRIVATE
                 ${Vulkan_Target_SDK}/iOS/share/vulkan
         )
@@ -163,17 +166,24 @@ if(IOS)
     set(FRAMEWORKS_TO_EMBED)
 	if(Vulkan_MoltenVK_LIBRARY)
 		list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_MoltenVK_LIBRARY};")
+		message(STATUS "Embedding Vulkan driver: ${Vulkan_MoltenVK_LIBRARY}")
+	# add support for potentially other iOS Vulkan drivers here...
+	#elseif(OTHER_IOS_VULKAN_DRIVER)
+		#list(APPEND FRAMEWORKS_TO_EMBED "${OTHER_IOS_VULKAN_DRIVER};")
+		#message(STATUS "Embedding Vulkan driver: ${OTHER_IOS_VULKAN_DRIVER}")
 	else()
-		message(FATAL_ERROR "Can't find MoltenVK library. Please install the Vulkan SDK or MoltenVK project and set VULKAN_SDK.")
+		message(FATAL_ERROR "Can't find Vulkan driver for iOS. Please install the Vulkan SDK and run: 'source <MY_SDK_PATH>/iOS/setup-env.sh'")
 	endif()
 	if(Vulkan_LIBRARY)
 		list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_LIBRARY};")
+		message(STATUS "Embedding Vulkan loader: ${Vulkan_LIBRARY}")
 	endif()
 	if(Vulkan_Layer_VALIDATION)
 		# trouble is can't turn this on/off if XCode decides to build debug and we're configured for release.  Need to revist
 		# note the Vulkan validation layer must be present and enabled even in release mode for the shader_debugprintf sample
 		#if(("${VKB_DEBUG}" STREQUAL "ON") OR ("${VKB_VALIDATION_LAYERS}" STREQUAL "ON"))
 			list(APPEND FRAMEWORKS_TO_EMBED "${Vulkan_Layer_VALIDATION}")
+			message(STATUS "Embedding Vulkan Validation Layer: ${Vulkan_Layer_VALIDATION}")
 		#endif()
     endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES

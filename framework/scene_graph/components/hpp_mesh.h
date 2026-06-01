@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,6 +34,13 @@ namespace components
 class HPPMesh : private vkb::sg::Mesh
 {
   public:
+	using vkb::sg::Mesh::get_bounds;
+
+	const std::vector<vkb::scene_graph::NodeCpp *> &get_nodes() const
+	{
+		return reinterpret_cast<const std::vector<vkb::scene_graph::NodeCpp *> &>(vkb::sg::Mesh::get_nodes());
+	}
+
 	std::vector<vkb::scene_graph::components::HPPSubMesh *> const &get_submeshes() const
 	{
 		return reinterpret_cast<std::vector<vkb::scene_graph::components::HPPSubMesh *> const &>(vkb::sg::Mesh::get_submeshes());

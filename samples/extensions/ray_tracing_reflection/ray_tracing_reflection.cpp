@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2026, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,6 @@ RaytracingReflection::RaytracingReflection()
 {
 	title = "Hardware accelerated ray tracing";
 
-	set_api_version(VK_API_VERSION_1_2);
-
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
@@ -124,6 +122,11 @@ RaytracingReflection::~RaytracingReflection()
 	}
 }
 
+uint32_t RaytracingReflection::get_api_version() const
+{
+	return VK_API_VERSION_1_2;
+}
+
 /*
     Enable extension features required by this sample
     These are passed to device creation via a pNext structure chain
@@ -142,6 +145,17 @@ void RaytracingReflection::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	else
 	{
 		throw std::runtime_error("Requested required feature <VkPhysicalDeviceFeatures::shaderInt64> is not supported");
+	}
+
+	// Using this removes the need to explicitly force an image format inside the shader
+	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	{
+		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
+		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("Requested required feature shaderStorageImageReadWithoutFormat or shaderStorageImageWriteWithoutFormat is not supported");
 	}
 }
 

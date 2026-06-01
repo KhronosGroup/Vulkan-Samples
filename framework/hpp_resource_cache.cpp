@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,11 +16,12 @@
  */
 
 #include "hpp_resource_cache.h"
+#include "common/hpp_resource_caching.h"
 #include "core/device.h"
-#include <common/hpp_resource_caching.h>
-#include <core/hpp_descriptor_set.h>
-#include <core/hpp_image_view.h>
-#include <core/hpp_pipeline_layout.h>
+#include "core/hpp_descriptor_set.h"
+#include "core/hpp_image_view.h"
+#include "core/hpp_pipeline.h"
+#include "core/hpp_pipeline_layout.h"
 
 namespace vkb
 {
@@ -89,7 +90,7 @@ vkb::core::HPPDescriptorSetLayout &HPPResourceCache::request_descriptor_set_layo
 	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
 }
 
-vkb::core::HPPFramebuffer &HPPResourceCache::request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target,
+vkb::core::HPPFramebuffer &HPPResourceCache::request_framebuffer(const vkb::rendering::RenderTargetCpp &render_target,
                                                                  const vkb::core::HPPRenderPass        &render_pass)
 {
 	return request_resource(device, recorder, framebuffer_mutex, state.framebuffers, render_target, render_pass);
@@ -105,7 +106,7 @@ vkb::core::HPPPipelineLayout &HPPResourceCache::request_pipeline_layout(const st
 	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, shader_modules);
 }
 
-vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments,
+vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
                                                                 const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
                                                                 const std::vector<vkb::core::HPPSubpassInfo>     &subpasses)
 {

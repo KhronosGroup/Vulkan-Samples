@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2025, Sascha Willems
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2025-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -301,7 +301,7 @@ void HelloTriangle::init_device()
 	}
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
 	if (std::ranges::any_of(device_extensions,
 	                        [](VkExtensionProperties const &extension) { return strcmp(extension.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0; }))
 	{
@@ -1005,7 +1005,10 @@ HelloTriangle::~HelloTriangle()
 {
 	// When destroying the application, we need to make sure the GPU is no longer accessing any resources
 	// This is done by doing a device wait idle, which blocks until the GPU signals
-	vkDeviceWaitIdle(context.device);
+	if (context.device != VK_NULL_HANDLE)
+	{
+		vkDeviceWaitIdle(context.device);
+	}
 
 	for (auto &framebuffer : context.swapchain_framebuffers)
 	{
@@ -1073,8 +1076,6 @@ HelloTriangle::~HelloTriangle()
 	{
 		vkDestroyDebugUtilsMessengerEXT(context.instance, context.debug_callback, nullptr);
 	}
-
-	vk_instance.reset();
 }
 
 bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
@@ -1085,9 +1086,7 @@ bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance();
 
-	vk_instance = std::make_unique<vkb::core::InstanceC>(context.instance);
-
-	context.surface                     = options.window->create_surface(*vk_instance);
+	context.surface                     = options.window->create_surface(context.instance, nullptr);
 	auto &extent                        = options.window->get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;

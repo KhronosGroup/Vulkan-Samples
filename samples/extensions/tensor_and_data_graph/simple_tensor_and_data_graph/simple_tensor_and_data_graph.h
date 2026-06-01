@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -56,9 +56,13 @@ class SimpleTensorAndDataGraph : public vkb::VulkanSampleC
 
 	bool resize(uint32_t width, uint32_t height) override;
 
-	void draw_renderpass(vkb::core::CommandBufferC &command_buffer, RenderTargetType &render_target) override;
+	void draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	void draw_gui() override;
+
+  private:
+	// from vkb::VulkanSample
+	uint32_t get_api_version() const override;
 
   private:
 	void prepare_descriptor_pool();

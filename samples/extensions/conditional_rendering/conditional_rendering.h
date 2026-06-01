@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Sascha Willems
+/* Copyright (c) 2023-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,7 @@ class ConditionalRendering : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC> vertex_buffer = nullptr;
 	std::unique_ptr<vkb::core::BufferC> index_buffer  = nullptr;
 
-	std::unique_ptr<vkb::sg::Scene> scene;
+	std::unique_ptr<vkb::scene_graph::SceneC> scene;
 	struct SceneNode
 	{
 		std::string              name;

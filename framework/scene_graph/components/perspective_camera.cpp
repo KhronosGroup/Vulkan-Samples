@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2025, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -67,7 +67,7 @@ float PerspectiveCamera::get_aspect_ratio()
 	return aspect_ratio;
 }
 
-glm::mat4 PerspectiveCamera::get_projection()
+glm::mat4 PerspectiveCamera::get_projection() const
 {
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	return glm::perspective(fov, aspect_ratio, far_plane, near_plane);

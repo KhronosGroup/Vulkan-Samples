@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,6 @@ KHR16BitArithmeticSample::KHR16BitArithmeticSample()
 	// For this sample, this is not optional.
 	// This sample also serves as a tutorial on how to use 16-bit storage
 	// for SSBOs and push constants.
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, false);
 	add_device_extension(VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME, false);
 	add_device_extension(VK_KHR_16BIT_STORAGE_EXTENSION_NAME, false);
 
@@ -236,7 +235,7 @@ void KHR16BitArithmeticSample::request_gpu_features(vkb::core::PhysicalDeviceC &
 	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, storagePushConstant16);
 }
 
-void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target)
+void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
 	if (khr_16bit_arith_enabled)
 	{
