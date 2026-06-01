@@ -27,11 +27,6 @@ ComputeShaderDerivatives::ComputeShaderDerivatives()
 {
 	title = "Compute shader derivatives (VK_KHR_compute_shader_derivatives)";
 
-	// Use Vulkan 1.2 instance so SPIR-V 1.4 modules produced by Slang are valid under validation
-	set_api_version(VK_API_VERSION_1_2);
-
-	// Needed for feature chaining
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	// Device extension providing the feature (KHR is required)
 	add_device_extension(VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME);
 	// Note for developers/tooling:
@@ -102,6 +97,11 @@ ComputeShaderDerivatives::~ComputeShaderDerivatives()
 			vkFreeMemory(device, storage_image_memory, nullptr);
 		}
 	}
+}
+
+uint32_t ComputeShaderDerivatives::get_api_version() const
+{
+	return VK_API_VERSION_1_2;
 }
 
 void ComputeShaderDerivatives::create_storage_image()

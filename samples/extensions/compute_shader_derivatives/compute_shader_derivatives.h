@@ -30,8 +30,11 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 	void build_command_buffers() override;        // unused, per-frame recording
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
-	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+
+protected:
+	uint32_t get_api_version() const override;
+	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:
 	void create_storage_image();
