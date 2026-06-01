@@ -358,7 +358,7 @@ std::unique_ptr<vkb::core::InstanceC> LayerSettingsSample::create_instance()
 
 	// Create our debug messenger as early as possible so we catch messages emitted
 	// during device creation and initial resource setup.
-	if (inst && inst->is_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	if (inst && inst->is_extension_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
 		VkDebugUtilsMessengerCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
 		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
