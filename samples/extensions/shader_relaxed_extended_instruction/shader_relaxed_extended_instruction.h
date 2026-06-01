@@ -29,12 +29,20 @@ class ShaderRelaxedExtendedInstruction : public ApiVulkanSample
 
 	void build_command_buffers() override;        // Not used; per-frame recording in render()
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+
+	uint32_t get_api_version() const override;
+	void     request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+	void     request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;
+	void     request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
+	void     request_validation_feature_enables(std::vector<VkValidationFeatureEnableEXT> &requested_validation_feature_enables) const override;
+
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void append_message(const char *msg);
 
-	// Override instance creation to enable debugPrintf via layer settings or validation features fallback
+	// Override instance creation to explicitly demonstrate how to enable debugPrintfEXT
+	// via both modern layer settings and the validation features fallback.
 	std::unique_ptr<vkb::core::InstanceC> create_instance() override;
 
   private:
