@@ -30,9 +30,6 @@ PipelineBinary::PipelineBinary()
 {
 	title = "Pipeline binary (VK_KHR_pipeline_binary)";
 
-	// We need the properties2 instance extension to request chained extension features
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
 	// Enable the device extension required by this sample
 	add_device_extension(VK_KHR_PIPELINE_BINARY_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
@@ -153,6 +150,13 @@ void PipelineBinary::render(float /*delta_time*/)
 	}
 
 	submit_frame();
+}
+
+void PipelineBinary::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	// We need the properties2 instance extension to request chained extension features
+	requested_extensions[VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
 }
 
 void PipelineBinary::create_compute_pipeline()
