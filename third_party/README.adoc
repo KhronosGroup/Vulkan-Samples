@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2019-2025, Arm Limited and Contributors
+- Copyright (c) 2019-2026, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -41,3 +41,5 @@ This project has multiple third-party dependencies, each of which may have indep
 * https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator[vma]: Vulkan Memory Allocator
 * https://github.com/zeux/volk[volk]: Meta loader for Vulkan API
 * https://github.com/KhronosGroup/Vulkan-Docs[Vulkan]: Sources for the formal documentation of the Vulkan API
+* https://github.com/google/flatbuffers[flatbuffers]: An efficient cross platform serialization library
+* https://github.com/arm/ai-ml-sdk-vgf-library[ai-ml-sdk-vgf-library]: Library for encoding and decoding VGF files

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Holochip Corporation
+/* Copyright (c) 2023-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -790,8 +790,6 @@ void FullScreenExclusive::teardown()
 		vkDestroyDebugUtilsMessengerEXT(context.instance, context.debug_callback, nullptr);
 		context.debug_callback = VK_NULL_HANDLE;
 	}
-
-	vk_instance.reset();
 }
 
 FullScreenExclusive::~FullScreenExclusive()
@@ -824,9 +822,7 @@ bool FullScreenExclusive::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	vk_instance = std::make_unique<vkb::core::InstanceC>(context.instance);
-
-	context.surface = window->create_surface(*vk_instance);
+	context.surface = window->create_surface(context.instance, nullptr);
 	if (!context.surface)
 		throw std::runtime_error("Failed to create window surface.");
 	auto &extent                        = window->get_extent();

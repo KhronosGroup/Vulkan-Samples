@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -113,12 +113,12 @@ class ResourceCache
 	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
 	                                      const BindingMap<VkDescriptorImageInfo>  &image_infos);
 
-	RenderPass &request_render_pass(const std::vector<Attachment>    &attachments,
-	                                const std::vector<LoadStoreInfo> &load_store_infos,
-	                                const std::vector<SubpassInfo>   &subpasses);
+	RenderPass &request_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments,
+	                                const std::vector<LoadStoreInfo>               &load_store_infos,
+	                                const std::vector<SubpassInfo>                 &subpasses);
 
-	Framebuffer &request_framebuffer(const RenderTarget &render_target,
-	                                 const RenderPass   &render_pass);
+	Framebuffer &request_framebuffer(const vkb::rendering::RenderTargetC &render_target,
+	                                 const RenderPass                    &render_pass);
 
 	void clear_pipelines();
 

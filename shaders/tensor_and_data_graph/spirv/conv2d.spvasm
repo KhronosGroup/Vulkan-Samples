@@ -1,4 +1,4 @@
-; Copyright (c) 2025, Arm Limited and Contributors
+; Copyright (c) 2025-2026, Arm Limited and Contributors
 ;
 ; SPDX-License-Identifier: Apache-2.0
 ;
@@ -84,6 +84,6 @@
                                  OpGraphEntryPointARM %graph "main" %input_tensor_ptr %output_tensor_ptr
                         %graph = OpGraphARM %graph_type
                            %in = OpGraphInputARM %float_tensor_r4_s_1_h_w_3 %uint_0
-                          %out = OpExtInst %float_tensor_r4_s_1_h_w_3 %tosa CONV2D %conv_pad %conv_stride %conv_dilation %uint_2 %false %in %conv_weights %conv_biases %conv_input_zero_point %conv_weight_zero_point
+                          %out = OpExtInst %float_tensor_r4_s_1_h_w_3 %tosa CONV2D %conv_pad %conv_stride %conv_dilation %uint_3 %false %in %conv_weights %conv_biases %conv_input_zero_point %conv_weight_zero_point
                                  OpGraphSetOutputARM %out %uint_0
                                  OpGraphEndARM

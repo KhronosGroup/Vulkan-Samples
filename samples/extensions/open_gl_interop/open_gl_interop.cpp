@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2025, Bradley Austin Davis
- * Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Bradley Austin Davis
+ * Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -117,9 +117,6 @@ OpenGLInterop::OpenGLInterop()
 {
 	zoom  = -2.5f;
 	title = "Interoperability with OpenGL";
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
@@ -175,7 +172,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr,
 		                           &sharedSemaphores.gl_ready));
 
-#if WIN32
+#ifdef WIN32
 		VkSemaphoreGetWin32HandleInfoKHR semaphoreGetHandleInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR, nullptr,
 		    VK_NULL_HANDLE, compatable_semaphore_type};
@@ -196,7 +193,7 @@ void OpenGLInterop::prepare_shared_resources()
 
 	{
 		VkExternalMemoryImageCreateInfo external_memory_image_create_info{VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
-#if WIN32
+#ifdef WIN32
 		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 #else
 		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
@@ -227,7 +224,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VkExportMemoryAllocateInfo export_memory_allocate_Info;
 		export_memory_allocate_Info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
 		export_memory_allocate_Info.pNext = &dedicated_allocate_info;
-#if WIN32
+#ifdef WIN32
 		export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 #else
 		export_memory_allocate_Info.handleTypes       = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
@@ -240,7 +237,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
-#if WIN32
+#ifdef WIN32
 		VkMemoryGetWin32HandleInfoKHR memoryFdInfo{VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR, nullptr,
 		                                           sharedTexture.memory,
 		                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT};
@@ -318,6 +315,13 @@ void OpenGLInterop::generate_quad()
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
+}
+
+void OpenGLInterop::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME]    = vkb::RequestMode::Required;
 }
 
 void OpenGLInterop::setup_descriptor_pool()

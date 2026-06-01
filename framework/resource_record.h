@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,6 @@
 
 #include "core/render_pass.h"
 #include "rendering/pipeline_state.h"
-#include "rendering/render_target.h"
 #include <vector>
 
 namespace vkb
@@ -28,6 +27,13 @@ class GraphicsPipeline;
 class PipelineLayout;
 class RenderPass;
 class ShaderModule;
+
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+struct Attachment;
+using AttachmentC = Attachment<vkb::BindingType::C>;
+}        // namespace rendering
 
 enum class ResourceType
 {
@@ -56,9 +62,9 @@ class ResourceRecord
 
 	size_t register_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
 
-	size_t register_render_pass(const std::vector<Attachment>    &attachments,
-	                            const std::vector<LoadStoreInfo> &load_store_infos,
-	                            const std::vector<SubpassInfo>   &subpasses);
+	size_t register_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments,
+	                            const std::vector<LoadStoreInfo>               &load_store_infos,
+	                            const std::vector<SubpassInfo>                 &subpasses);
 
 	size_t register_graphics_pipeline(VkPipelineCache pipeline_cache,
 	                                  PipelineState  &pipeline_state);

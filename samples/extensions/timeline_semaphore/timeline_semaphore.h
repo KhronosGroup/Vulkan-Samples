@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -104,7 +104,7 @@ class TimelineSemaphore : public ApiVulkanSample
 	void     signal_timeline(const Timeline::Stages stage);
 	void     wait_on_timeline(const Timeline::Stages stage);
 	void     signal_next_frame();
-	void     wait_for_next_frame();
+	void     wait_for_next_frame(const uint64_t nextFrame);
 	uint64_t get_timeline_stage_value(const Timeline::Stages stage);
 
 	// Compute Work

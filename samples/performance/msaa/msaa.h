@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Arm Limited and Contributors
+/* Copyright (c) 2023-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -71,7 +71,7 @@ class MSAASample : public vkb::VulkanSampleC
 
 	virtual void update(float delta_time) override;
 
-	virtual void draw(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target) override;
+	virtual void draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target) override;
 
 	void draw_gui() override;
 
@@ -80,13 +80,13 @@ class MSAASample : public vkb::VulkanSampleC
 
 	virtual void prepare_render_context() override;
 
-	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
+	std::unique_ptr<vkb::rendering::RenderTargetC> create_render_target(vkb::core::Image &&swapchain_image);
 
 	/**
 	 * @brief Scene pipeline
 	 *        Render and light the scene (optionally using MSAA)
 	 */
-	std::unique_ptr<vkb::RenderPipeline> scene_pipeline{};
+	std::unique_ptr<vkb::rendering::RenderPipelineC> scene_pipeline{};
 
 	/**
 	 * @brief Postprocessing pipeline
@@ -133,7 +133,7 @@ class MSAASample : public vkb::VulkanSampleC
 	 *        and depth attachments and uses them to apply a screen-based effect
 	 *        It also draws the GUI
 	 */
-	void postprocessing(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &render_target, VkImageLayout &swapchain_layout, bool msaa_enabled);
+	void postprocessing(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target, VkImageLayout &swapchain_layout, bool msaa_enabled);
 
 	/**
 	 * @brief Enables MSAA if set to more than 1 sample per pixel

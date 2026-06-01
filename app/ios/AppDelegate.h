@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Holochip Inc.
+/* Copyright (c) 2024-2026, Holochip Inc.
 *
 * SPDX-License-Identifier: Apache-2.0
 *
@@ -25,7 +25,6 @@
 #if TARGET_OS_IOS
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
-@property (strong, nonatomic) UIWindow *window;
 #else
 @interface AppDelegate : NSResponder <NSApplicationDelegate>
 

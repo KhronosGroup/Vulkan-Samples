@@ -65,8 +65,7 @@ RaytracingInvocationReorder::RaytracingInvocationReorder() :
 {
 	title = "Ray tracing with extended features";
 
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
+	// SPIRV 1.4 requires Vulkan 1.1, which is the standard of our framework
 
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
@@ -420,6 +419,7 @@ void RaytracingInvocationReorder::create_bottom_level_acceleration_structure(boo
 			    model_buffer.vertex_offset + (model_buffer.is_static ? static_vertex_handle : dynamic_vertex_handle),
 			    model_buffer.index_offset + (model_buffer.is_static ? static_index_handle : dynamic_index_handle));
 		}
+		model_buffer.bottom_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 		model_buffer.bottom_level_acceleration_structure->build(queue,
 		                                                        model_buffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR,
 		                                                        is_update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR : VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
@@ -549,6 +549,7 @@ void RaytracingInvocationReorder::create_top_level_acceleration_structure(bool p
 	{
 		top_level_acceleration_structure->update_instance_geometry(instance_uid, instances_buffer, static_cast<uint32_t>(instances.size()));
 	}
+	top_level_acceleration_structure->set_scrach_buffer_alignment(acceleration_structure_properties.minAccelerationStructureScratchOffsetAlignment);
 	top_level_acceleration_structure->build(queue);
 }
 
@@ -1184,6 +1185,8 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 	VkPhysicalDeviceProperties2 device_properties{};
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &ray_tracing_pipeline_properties;
+	ray_tracing_pipeline_properties.pNext = &acceleration_structure_properties;
+
 	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
 
 	// Get the acceleration structure features, which we'll need later on in the sample

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2025, Sascha Willems
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2025-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1076,8 +1076,6 @@ HelloTriangle::~HelloTriangle()
 	{
 		vkDestroyDebugUtilsMessengerEXT(context.instance, context.debug_callback, nullptr);
 	}
-
-	vk_instance.reset();
 }
 
 bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
@@ -1088,9 +1086,7 @@ bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 
 	init_instance();
 
-	vk_instance = std::make_unique<vkb::core::InstanceC>(context.instance);
-
-	context.surface                     = options.window->create_surface(*vk_instance);
+	context.surface                     = options.window->create_surface(context.instance, nullptr);
 	auto &extent                        = options.window->get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
