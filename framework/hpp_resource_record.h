@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #pragma once
 
 #include "resource_record.h"
-#include <core/hpp_pipeline.h>
 
 namespace vkb
 {
@@ -27,13 +26,9 @@ namespace common
 struct HPPLoadStoreInfo;
 }
 
-namespace rendering
-{
-struct HPPAttachment;
-}
-
 namespace core
 {
+class HPPGraphicsPipeline;
 class HPPPipelineLayout;
 class HPPRenderPass;
 class HPPShaderModule;
@@ -41,6 +36,11 @@ class HPPShaderSource;
 class HPPShaderVariant;
 struct HPPSubpassInfo;
 }        // namespace core
+
+namespace rendering
+{
+class HPPPipelineState;
+}
 
 /**
  * @brief facade class around vkb::ResourceRecord, providing a vulkan.hpp-based interface
@@ -64,11 +64,11 @@ class HPPResourceRecord : private vkb::ResourceRecord
 		return vkb::ResourceRecord::register_pipeline_layout(reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules));
 	}
 
-	size_t register_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments,
+	size_t register_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
 	                            const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
 	                            const std::vector<vkb::core::HPPSubpassInfo>     &subpasses)
 	{
-		return vkb::ResourceRecord::register_render_pass(reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
+		return vkb::ResourceRecord::register_render_pass(reinterpret_cast<std::vector<vkb::rendering::AttachmentC> const &>(attachments),
 		                                                 reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
 		                                                 reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses));
 	}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -109,7 +109,7 @@ inline VkResult create_vk_renderpass(VkDevice device, VkRenderPassCreateInfo2KHR
 }        // namespace
 
 template <typename T>
-std::vector<T> get_attachment_descriptions(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos)
+std::vector<T> get_attachment_descriptions(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos)
 {
 	std::vector<T> attachment_descriptions;
 
@@ -324,7 +324,7 @@ T get_attachment_reference(const uint32_t attachment, const VkImageLayout layout
 }
 
 template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
-void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
+void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
 	if (attachments.size() != load_store_infos.size())
 	{
@@ -383,7 +383,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 		if (!subpass.disable_depth_stencil_attachment)
 		{
 			// Assumption: depth stencil attachment appears in the list before any depth stencil resolve attachment
-			auto it = find_if(attachments.begin(), attachments.end(), [](const Attachment attachment) { return is_depth_format(attachment.format); });
+			auto it = find_if(attachments.begin(), attachments.end(), [](const vkb::rendering::AttachmentC attachment) { return is_depth_format(attachment.format); });
 			if (it != attachments.end())
 			{
 				auto i_depth_stencil = vkb::to_u32(std::distance(attachments.begin(), it));
@@ -510,10 +510,10 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 	}
 }
 
-RenderPass::RenderPass(vkb::core::DeviceC               &device,
-                       const std::vector<Attachment>    &attachments,
-                       const std::vector<LoadStoreInfo> &load_store_infos,
-                       const std::vector<SubpassInfo>   &subpasses) :
+RenderPass::RenderPass(vkb::core::DeviceC                             &device,
+                       const std::vector<vkb::rendering::AttachmentC> &attachments,
+                       const std::vector<LoadStoreInfo>               &load_store_infos,
+                       const std::vector<SubpassInfo>                 &subpasses) :
     VulkanResource{VK_NULL_HANDLE, &device}, subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
     color_output_count{}
 {

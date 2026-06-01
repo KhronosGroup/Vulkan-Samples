@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,6 +41,16 @@
 
 namespace vkb
 {
+inline bool contains(uint32_t range_count, char const *const *range, char const *value)
+{
+	return std::any_of(range, range + range_count, [value](char const *range_value) { return strcmp(range_value, value) == 0; });
+}
+
+inline bool contains(std::vector<std::string> const &range, char const *value)
+{
+	return std::ranges::any_of(range, [value](std::string const &range_value) { return range_value == value; });
+}
+
 template <typename T>
 inline void read(std::istringstream &is, T &value)
 {

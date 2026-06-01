@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,6 @@
 namespace vkb
 {
 class RenderPass;
-class RenderTarget;
 
 namespace core
 {
@@ -32,10 +31,17 @@ class Device;
 using DeviceC = Device<vkb::BindingType::C>;
 }        // namespace core
 
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+class RenderTarget;
+using RenderTargetC = RenderTarget<vkb::BindingType::C>;
+}        // namespace rendering
+
 class Framebuffer
 {
   public:
-	Framebuffer(vkb::core::DeviceC &device, const RenderTarget &render_target, const RenderPass &render_pass);
+	Framebuffer(vkb::core::DeviceC &device, const vkb::rendering::RenderTargetC &render_target, const RenderPass &render_pass);
 
 	Framebuffer(const Framebuffer &) = delete;
 

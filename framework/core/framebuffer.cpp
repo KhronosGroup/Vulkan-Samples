@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,8 +16,9 @@
  */
 
 #include "framebuffer.h"
-
+#include "core/image_view.h"
 #include "device.h"
+#include "rendering/render_target.h"
 
 namespace vkb
 {
@@ -31,7 +32,7 @@ const VkExtent2D &Framebuffer::get_extent() const
 	return extent;
 }
 
-Framebuffer::Framebuffer(vkb::core::DeviceC &device, const RenderTarget &render_target, const RenderPass &render_pass) :
+Framebuffer::Framebuffer(vkb::core::DeviceC &device, const vkb::rendering::RenderTargetC &render_target, const RenderPass &render_pass) :
     device{device},
     extent{render_target.get_extent()}
 {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,6 +50,9 @@ class ImageCompressionControlSample : public vkb::VulkanSampleC
 
 	void draw_gui() override;
 
+  protected:
+	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+
   private:
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 
@@ -57,7 +60,7 @@ class ImageCompressionControlSample : public vkb::VulkanSampleC
 
 	virtual void create_render_context() override;
 
-	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
+	std::unique_ptr<vkb::rendering::RenderTargetC> create_render_target(vkb::core::Image &&swapchain_image);
 
 	enum class Attachments : int
 	{

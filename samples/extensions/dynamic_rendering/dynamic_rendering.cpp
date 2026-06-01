@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2021-2025, Holochip Corporation
+ * Copyright (c) 2021-2026, Holochip Corporation
+ * Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,9 +24,6 @@ DynamicRendering::DynamicRendering() :
 {
 	title = "Dynamic Rendering";
 
-	// Dynamic Rendering is a Vulkan 1.2 extension
-	set_api_version(VK_API_VERSION_1_2);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
 
@@ -45,6 +43,12 @@ DynamicRendering::~DynamicRendering()
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
 		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
 	}
+}
+
+uint32_t DynamicRendering::get_api_version() const
+{
+	// Dynamic Rendering is a Vulkan 1.2 extension
+	return VK_API_VERSION_1_2;
 }
 
 bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)
@@ -78,10 +82,6 @@ bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
 	create_descriptor_sets();
-	if (!enable_dynamic)
-	{
-		create_render_pass_non_dynamic();
-	}
 	create_pipeline();
 	build_command_buffers();
 	prepared = true;
@@ -311,8 +311,20 @@ void DynamicRendering::create_pipeline()
 	vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &graphics_create, VK_NULL_HANDLE, &model_pipeline);
 }
 
-void DynamicRendering::create_render_pass_non_dynamic()
+void DynamicRendering::setup_render_pass()
 {
+	if (!enable_dynamic)
+	{
+		ApiVulkanSample::setup_render_pass();
+	}
+}
+
+void DynamicRendering::setup_framebuffer()
+{
+	if (!enable_dynamic)
+	{
+		ApiVulkanSample::setup_framebuffer();
+	}
 }
 
 void DynamicRendering::draw()
@@ -354,8 +366,6 @@ void DynamicRendering::build_command_buffers()
 			// object
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 			draw_model(object, draw_cmd_buffer);
-
-			// Note: This sample does not render a UI, as the framework's UI overlay doesn't handle dynamic rendering
 		};
 
 		VkImageSubresourceRange range{};
@@ -415,6 +425,8 @@ void DynamicRendering::build_command_buffers()
 			draw_scene();
 			vkCmdEndRenderingKHR(draw_cmd_buffer);
 
+			draw_ui(draw_cmd_buffer, i);
+
 			vkb::image_layout_transition(draw_cmd_buffer,
 			                             swapchain_buffers[i].image,
 			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -428,12 +440,13 @@ void DynamicRendering::build_command_buffers()
 			render_pass_begin_info.framebuffer              = framebuffers[i];
 			render_pass_begin_info.renderArea.extent.width  = width;
 			render_pass_begin_info.renderArea.extent.height = height;
-			render_pass_begin_info.clearValueCount          = 3;
+			render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
 			render_pass_begin_info.pClearValues             = clear_values.data();
 
 			vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 			draw_scene();
+			draw_ui(draw_cmd_buffer);
 
 			vkCmdEndRenderPass(draw_cmd_buffer);
 		}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Holochip Corporation
+/* Copyright (c) 2021-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -150,6 +150,10 @@ class MultiDrawIndirect : public ApiVulkanSample
 	bool m_supports_mdi            = false;
 	bool m_supports_first_instance = false;
 	bool m_supports_buffer_device  = false;
+
+  private:
+	// from vkb::VulkanSample
+	uint32_t get_api_version() const override;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_multi_draw_indirect();

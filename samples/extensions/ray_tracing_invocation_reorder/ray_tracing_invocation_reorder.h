@@ -32,6 +32,8 @@ class RaytracingInvocationReorder : public ApiVulkanSample
   public:
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	// Acceleration structure properties.
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR acceleration_structure_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
 #ifdef VK_EXT_ray_tracing_invocation_reorder
 	VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT invocation_reorder_properties_ext{};
 #endif
@@ -191,10 +193,10 @@ class RaytracingInvocationReorder : public ApiVulkanSample
 		RaytracingScene()  = default;
 		~RaytracingScene() = default;
 		RaytracingScene(vkb::core::DeviceC &device, const std::vector<SceneLoadInfo> &scenesToLoad);
-		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
-		std::vector<VkDescriptorImageInfo>           imageInfos;
-		std::vector<Model>                           models;
-		std::vector<ModelBuffer>                     model_buffers;
+		std::vector<std::unique_ptr<vkb::scene_graph::SceneC>> scenes;
+		std::vector<VkDescriptorImageInfo>                     imageInfos;
+		std::vector<Model>                                     models;
+		std::vector<ModelBuffer>                               model_buffers;
 	};
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;
