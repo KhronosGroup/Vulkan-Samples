@@ -163,7 +163,7 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
 
 #if (defined(VKB_ENABLE_PORTABILITY))
 	// Framework portability check
-	uint32_t                           instance_extension_count;
+	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
 	std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data()));
