@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Sascha Willems
- * Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Sascha Willems
+ * Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -81,9 +81,21 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 void ApiVulkanSample::prepare_gui()
 {
 	create_gui(*window, nullptr, 15.0f, true);
-	get_gui().prepare(pipeline_cache, render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
+	    load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
+
+	if (uses_dynamic_rendering())
+	{
+		VkFormat color_format = get_render_context().get_swapchain().get_format();
+		VkFormat depth_fmt    = depth_format;
+		get_gui().prepare(pipeline_cache, color_format, depth_fmt, shader_stages);
+	}
+	else
+	{
+		get_gui().prepare(pipeline_cache, render_pass, shader_stages, get_gui_subpass());
+	}
 }
 
 void ApiVulkanSample::update(float delta_time)
@@ -496,6 +508,19 @@ void ApiVulkanSample::draw_ui(const VkCommandBuffer command_buffer)
 	}
 }
 
+void ApiVulkanSample::draw_ui(const VkCommandBuffer command_buffer, uint32_t swapchain_image_index)
+{
+	if (has_gui())
+	{
+		const VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+		const VkRect2D   scissor  = vkb::initializers::rect2D(width, height, 0, 0);
+		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+		get_gui().draw(command_buffer, swapchain_buffers[swapchain_image_index].view, width, height);
+	}
+}
+
 void ApiVulkanSample::prepare_frame()
 {
 	if (get_render_context().has_swapchain())
@@ -582,7 +607,7 @@ ApiVulkanSample::~ApiVulkanSample()
 			vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
 		}
 		destroy_command_buffers();
-		if (render_pass != VK_NULL_HANDLE)
+		if (!uses_dynamic_rendering())
 		{
 			vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
 		}

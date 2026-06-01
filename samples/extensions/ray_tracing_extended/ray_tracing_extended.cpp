@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025 Holochip Corporation
+/* Copyright (c) 2021-2026 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -89,9 +89,6 @@ RaytracingExtended::RaytracingExtended() :
     index_count(0), pipeline(VK_NULL_HANDLE), pipeline_layout(VK_NULL_HANDLE), descriptor_set(VK_NULL_HANDLE), descriptor_set_layout(VK_NULL_HANDLE)
 {
 	title = "Ray tracing with extended features";
-
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
 
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);

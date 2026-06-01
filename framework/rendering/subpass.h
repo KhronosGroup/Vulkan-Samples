@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,6 @@
 
 #include "buffer_pool.h"
 #include "rendering/hpp_pipeline_state.h"
-#include "rendering/hpp_render_target.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "rendering/render_frame.h"
@@ -29,8 +28,6 @@
 
 namespace vkb
 {
-class RenderTarget;
-
 namespace core
 {
 template <vkb::BindingType bindingType>
@@ -83,7 +80,6 @@ class Subpass
 	using SampleCountflagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SampleCountFlagBits, VkSampleCountFlagBits>::type;
 
 	using DepthStencilStateType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
-	using RenderTargetType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRenderTarget, vkb::RenderTarget>::type;
 	using ShaderSourceType      = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
 
   public:
@@ -145,7 +141,7 @@ class Subpass
 	 *        This function is called by the RenderPipeline before beginning the render
 	 *        pass and before proceeding with a new subpass.
 	 */
-	void update_render_target_attachments(RenderTargetType &render_target);
+	void update_render_target_attachments(vkb::rendering::RenderTarget<bindingType> &render_target);
 
   protected:
 	vkb::rendering::HPPDepthStencilState get_depth_stencil_state_impl() const;
@@ -499,7 +495,7 @@ inline void Subpass<bindingType>::set_sample_count(SampleCountflagBitsType sampl
 }
 
 template <vkb::BindingType bindingType>
-inline void Subpass<bindingType>::update_render_target_attachments(RenderTargetType &render_target)
+inline void Subpass<bindingType>::update_render_target_attachments(vkb::rendering::RenderTarget<bindingType> &render_target)
 {
 	render_target.set_input_attachments(input_attachments);
 	render_target.set_output_attachments(output_attachments);

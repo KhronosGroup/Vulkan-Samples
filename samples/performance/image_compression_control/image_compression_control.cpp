@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,9 +31,6 @@ ImageCompressionControlSample::ImageCompressionControlSample()
 	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME, true);
 	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME, true);
 
-	// Extension dependency requirements (given that instance API version is 1.0.0)
-	add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	// Batch mode will test the toggle between different compression modes
@@ -55,6 +52,12 @@ void ImageCompressionControlSample::request_gpu_features(vkb::core::PhysicalDevi
 	}
 }
 
+void ImageCompressionControlSample::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
+	requested_extensions[VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+
 bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))
@@ -69,11 +72,11 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 
 	vkb::ShaderSource scene_vs("base.vert.spv");
 	vkb::ShaderSource scene_fs("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
+	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
 	scene_subpass->set_output_attachments({static_cast<int>(Attachments::Color)});
 
 	// Forward rendering pass
-	auto render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));
 	render_pipeline->set_load_store(scene_load_store);
 	set_render_pipeline(std::move(render_pipeline));
@@ -193,7 +196,7 @@ void ImageCompressionControlSample::prepare_render_context()
 	get_render_context().prepare(1, std::bind(&ImageCompressionControlSample::create_render_target, this, std::placeholders::_1));
 }
 
-std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	/**
 	 * The render passes will use 3 attachments: Color, Depth and Swapchain.
@@ -345,7 +348,7 @@ std::unique_ptr<vkb::RenderTarget> ImageCompressionControlSample::create_render_
 	images.push_back(std::move(color_image));
 	scene_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE});
 
-	return std::make_unique<vkb::RenderTarget>(std::move(images));
+	return std::make_unique<vkb::rendering::RenderTargetC>(std::move(images));
 }
 
 void ImageCompressionControlSample::update(float delta_time)

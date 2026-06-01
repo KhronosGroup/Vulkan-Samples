@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -139,12 +139,19 @@ void HPPComputeNBody::render(float delta_time)
 {
 	if (prepared)
 	{
-		draw();
+		vk::Device device = get_device().get_handle();
+
+		// Wait for the previous compute dispatch to finish before updating the UBO
+		auto result = device.waitForFences(compute.fence, VK_TRUE, UINT64_MAX);
+		assert(result == vk::Result::eSuccess);
+		device.resetFences(compute.fence);
+
 		update_compute_uniform_buffers(delta_time);
 		if (camera.updated)
 		{
 			update_graphics_uniform_buffers();
 		}
+		draw();
 	}
 }
 
@@ -360,7 +367,7 @@ void HPPComputeNBody::draw()
 	                                           .pCommandBuffers      = &compute.command_buffer,
 	                                           .signalSemaphoreCount = 1,
 	                                           .pSignalSemaphores    = &compute.semaphore};
-	compute.queue.submit(compute_submit_info);
+	compute.queue.submit(compute_submit_info, compute.fence);
 }
 
 void HPPComputeNBody::initializeCamera()
@@ -462,6 +469,10 @@ void HPPComputeNBody::prepare_compute()
 
 	// Semaphore for compute & graphics sync
 	compute.semaphore = device.createSemaphore({});
+
+	// Fence to ensure compute dispatch has finished reading the UBO before we update it.
+	// Created signaled so the first frame's wait doesn't block forever.
+	compute.fence = device.createFence({.flags = vk::FenceCreateFlagBits::eSignaled});
 
 	// Signal the semaphore
 	vkb::common::submit_and_wait(device, queue, {}, {compute.semaphore});

@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,6 @@
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/hpp_scene.h"
 #include "scene_graph/scene.h"
 
 namespace vkb
@@ -91,7 +90,6 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	using MeshType               = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPMesh, vkb::sg::Mesh>::type;
 	using PipelineLayoutType     = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
 	using RasterizationStateType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRasterizationState, vkb::RasterizationState>::type;
-	using SceneType              = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using ShaderModuleType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderModule, vkb::ShaderModule>::type;
 	using ShaderSourceType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
 	using SubMeshType            = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPSubMesh, vkb::sg::SubMesh>::type;
@@ -108,7 +106,7 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
 	                ShaderSourceType                          &&vertex_shader,
 	                ShaderSourceType                          &&fragment_shader,
-	                SceneType                                  &scene,
+	                vkb::scene_graph::Scene<bindingType>       &scene,
 	                sg::Camera                                 &camera);
 
 	virtual ~GeometrySubpass() = default;
@@ -127,12 +125,12 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	void set_thread_index(uint32_t index);
 
   protected:
-	void                           draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
-	virtual void                   draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
-	vkb::sg::Camera const         &get_camera() const;
-	std::vector<MeshType *> const &get_meshes() const;
-	RasterizationStateType const  &get_rasterization_state() const;
-	SceneType const               &get_scene() const;
+	void                                        draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
+	virtual void                                draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
+	vkb::sg::Camera const                      &get_camera() const;
+	std::vector<MeshType *> const              &get_meshes() const;
+	RasterizationStateType const               &get_rasterization_state() const;
+	vkb::scene_graph::Scene<bindingType> const &get_scene() const;
 
 	/**
 	 * @brief Sorts objects based on distance from camera and classifies them
@@ -147,6 +145,9 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	virtual void                prepare_pipeline_state(vkb::core::CommandBuffer<bindingType> &command_buffer, FrontFaceType front_face, bool double_sided_material);
 	virtual void                prepare_push_constants(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
 	virtual void                update_uniform(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::scene_graph::Node<bindingType> &node, size_t thread_index);
+
+  protected:
+	std::vector<vkb::scene_graph::components::HPPMesh *> const &get_meshes_impl() const;
 
   private:
 	void                          draw_impl(vkb::core::CommandBufferCpp &command_buffer);
@@ -165,7 +166,7 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	vkb::rendering::HPPRasterizationState                base_rasterization_state;
 	vkb::sg::Camera                                     &camera;
 	std::vector<vkb::scene_graph::components::HPPMesh *> meshes;
-	vkb::scene_graph::HPPScene                          *scene;
+	vkb::scene_graph::SceneCpp                          *scene;
 	uint32_t                                             thread_index = 0;
 };
 
@@ -178,7 +179,7 @@ template <vkb::BindingType bindingType>
 inline GeometrySubpass<bindingType>::GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
                                                      ShaderSourceType                          &&vertex_source,
                                                      ShaderSourceType                          &&fragment_source,
-                                                     SceneType                                  &scene_,
+                                                     vkb::scene_graph::Scene<bindingType>       &scene_,
                                                      sg::Camera                                 &camera) :
     Subpass<bindingType>{render_context, std::move(vertex_source), std::move(fragment_source)}, camera{camera}
 {
@@ -188,7 +189,7 @@ inline GeometrySubpass<bindingType>::GeometrySubpass(vkb::rendering::RenderConte
 	}
 	else
 	{
-		scene = reinterpret_cast<vkb::scene_graph::HPPScene *>(&scene_);
+		scene = reinterpret_cast<vkb::scene_graph::SceneCpp *>(&scene_);
 	}
 	meshes = scene->get_components<vkb::scene_graph::components::HPPMesh>();
 }
@@ -318,18 +319,18 @@ template <vkb::BindingType bindingType>
 inline void GeometrySubpass<bindingType>::draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh)
 {
 	// Draw submesh indexed if indices exists
-	if (sub_mesh.vertex_indices != 0)
+	if (sub_mesh.get_vertex_indices() != 0)
 	{
 		// Bind index buffer of submesh
-		command_buffer.bind_index_buffer(*sub_mesh.index_buffer, sub_mesh.index_offset, sub_mesh.index_type);
+		command_buffer.bind_index_buffer(sub_mesh.get_index_buffer(), sub_mesh.get_index_offset(), sub_mesh.get_index_type());
 
 		// Draw submesh using indexed data
-		command_buffer.draw_indexed(sub_mesh.vertex_indices, 1, 0, 0, 0);
+		command_buffer.draw_indexed(sub_mesh.get_vertex_indices(), 1, 0, 0, 0);
 	}
 	else
 	{
 		// Draw submesh using vertices only
-		command_buffer.draw(sub_mesh.vertices_count, 1, 0, 0);
+		command_buffer.draw(sub_mesh.get_vertices_count(), 1, 0, 0);
 	}
 }
 
@@ -344,11 +345,11 @@ inline std::vector<typename GeometrySubpass<bindingType>::MeshType *> const &Geo
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return meshes;
+		return get_meshes_impl();
 	}
 	else
 	{
-		return reinterpret_cast<std::vector<vkb::sg::Mesh *> const &>(meshes);
+		return reinterpret_cast<std::vector<vkb::sg::Mesh *> const &>(get_meshes_impl());
 	}
 }
 
@@ -366,7 +367,7 @@ inline typename GeometrySubpass<bindingType>::RasterizationStateType const &Geom
 }
 
 template <vkb::BindingType bindingType>
-inline typename GeometrySubpass<bindingType>::SceneType const &GeometrySubpass<bindingType>::get_scene() const
+inline vkb::scene_graph::Scene<bindingType> const &GeometrySubpass<bindingType>::get_scene() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -374,7 +375,7 @@ inline typename GeometrySubpass<bindingType>::SceneType const &GeometrySubpass<b
 	}
 	else
 	{
-		return *reinterpret_cast<vkb::sg::Scene const *>(scene);
+		return *reinterpret_cast<vkb::scene_graph::SceneC const *>(scene);
 	}
 }
 
@@ -481,6 +482,12 @@ inline vkb::core::HPPPipelineLayout &
 	}
 
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout(shader_modules);
+}
+
+template <vkb::BindingType bindingType>
+inline std::vector<vkb::scene_graph::components::HPPMesh *> const &GeometrySubpass<bindingType>::get_meshes_impl() const
+{
+	return meshes;
 }
 
 template <vkb::BindingType bindingType>

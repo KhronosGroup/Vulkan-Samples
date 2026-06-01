@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,6 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice;
 class HPPImageView;
 class HPPImage;
 using HPPImagePtr = std::unique_ptr<HPPImage>;
