@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,6 +22,7 @@
 #include "core/descriptor_set_layout.h"
 #include "core/framebuffer.h"
 #include "core/image.h"
+#include "core/image_view.h"
 #include "core/pipeline.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
@@ -123,9 +124,9 @@ struct hash<vkb::RenderPass>
 };
 
 template <>
-struct hash<vkb::Attachment>
+struct hash<vkb::rendering::AttachmentC>
 {
-	std::size_t operator()(const vkb::Attachment &attachment) const
+	std::size_t operator()(const vkb::rendering::AttachmentC &attachment) const
 	{
 		std::size_t result = 0;
 
@@ -437,13 +438,13 @@ struct hash<vkb::ColorBlendAttachmentState>
 };
 
 template <>
-struct hash<vkb::RenderTarget>
+struct hash<vkb::rendering::RenderTargetC>
 {
-	std::size_t operator()(const vkb::RenderTarget &render_target) const
+	std::size_t operator()(const vkb::rendering::RenderTargetC &render_target) const
 	{
 		std::size_t result = 0;
 
-		for (auto &view : render_target.get_views())
+		for (auto const &view : render_target.get_views())
 		{
 			vkb::hash_combine(result, view.get_handle());
 			vkb::hash_combine(result, view.get_image().get_handle());
@@ -559,9 +560,9 @@ inline void hash_param<std::vector<uint8_t>>(
 }
 
 template <>
-inline void hash_param<std::vector<Attachment>>(
-    size_t                        &seed,
-    const std::vector<Attachment> &value)
+inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(
+    size_t                                         &seed,
+    const std::vector<vkb::rendering::AttachmentC> &value)
 {
 	for (auto &attachment : value)
 	{

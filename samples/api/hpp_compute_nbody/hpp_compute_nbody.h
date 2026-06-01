@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,6 +55,7 @@ class HPPComputeNBody : public HPPApiVulkanSample
 		vk::PipelineLayout                    pipeline_layout;              // Layout of the compute pipeline
 		vk::Queue                             queue;                        // Separate queue for compute commands (queue family may differ from the one used for graphics)
 		uint32_t                              queue_family_index = ~0;
+		vk::Fence                             fence;            // Fence to wait for compute dispatch completion before UBO update
 		vk::Semaphore                         semaphore;        // Execution dependency between compute & graphic submission
 		uint32_t                              shared_data_size = 1024;
 		std::unique_ptr<vkb::core::BufferCpp> storage_buffer;        // (Shader) storage buffer object containing the particles
@@ -71,6 +72,7 @@ class HPPComputeNBody : public HPPApiVulkanSample
 			device.destroyPipelineLayout(pipeline_layout);
 			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 			device.destroyDescriptorSetLayout(descriptor_set_layout);
+			device.destroyFence(fence);
 			device.destroySemaphore(semaphore);
 			device.freeCommandBuffers(command_pool, command_buffer);
 			device.destroyCommandPool(command_pool);

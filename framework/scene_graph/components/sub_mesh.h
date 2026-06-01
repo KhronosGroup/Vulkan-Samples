@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,6 +51,13 @@ class SubMesh : public Component
 	virtual ~SubMesh() = default;
 
 	virtual std::type_index get_type() override;
+
+  public:
+	vkb::core::BufferC const &get_index_buffer() const;
+	uint32_t                  get_index_offset() const;
+	VkIndexType               get_index_type() const;
+	uint32_t                  get_vertex_indices() const;
+	uint32_t                  get_vertices_count() const;
 
 	VkIndexType index_type{};
 

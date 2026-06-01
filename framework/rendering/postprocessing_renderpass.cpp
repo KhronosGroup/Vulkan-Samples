@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -197,7 +197,7 @@ void PostProcessingSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 	draw_func(command_buffer, render_target);
 }
 
-void PostProcessingSubpass::default_draw_func(vkb::core::CommandBufferC &command_buffer, vkb::RenderTarget &)
+void PostProcessingSubpass::default_draw_func(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &)
 {
 	command_buffer.draw(3, 1, 0, 0);
 }
@@ -235,10 +235,10 @@ PostProcessingRenderPass::PostProcessingRenderPass(PostProcessingPipeline *paren
 }
 
 void PostProcessingRenderPass::update_load_stores(
-    const AttachmentSet        &input_attachments,
-    const SampledAttachmentSet &sampled_attachments,
-    const AttachmentSet        &output_attachments,
-    const RenderTarget         &fallback_render_target)
+    const AttachmentSet                 &input_attachments,
+    const SampledAttachmentSet          &sampled_attachments,
+    const AttachmentSet                 &output_attachments,
+    const vkb::rendering::RenderTargetC &fallback_render_target)
 {
 	if (!load_stores_dirty)
 	{
@@ -333,11 +333,11 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 	}
 }
 
-void PostProcessingRenderPass::transition_attachments(const AttachmentSet        &input_attachments,
-                                                      const SampledAttachmentSet &sampled_attachments,
-                                                      const AttachmentSet        &output_attachments,
-                                                      vkb::core::CommandBufferC  &command_buffer,
-                                                      RenderTarget               &fallback_render_target)
+void PostProcessingRenderPass::transition_attachments(const AttachmentSet           &input_attachments,
+                                                      const SampledAttachmentSet    &sampled_attachments,
+                                                      const AttachmentSet           &output_attachments,
+                                                      vkb::core::CommandBufferC     &command_buffer,
+                                                      vkb::rendering::RenderTargetC &fallback_render_target)
 {
 	auto       &render_target = this->render_target ? *this->render_target : fallback_render_target;
 	const auto &views         = render_target.get_views();
@@ -459,7 +459,7 @@ void PostProcessingRenderPass::transition_attachments(const AttachmentSet       
 	//       so we don't want to transition them to UNDEFINED layout here
 }
 
-void PostProcessingRenderPass::prepare_draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &fallback_render_target)
+void PostProcessingRenderPass::prepare_draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &fallback_render_target)
 {
 	// Collect all input, output, and sampled-from attachments from all subpasses (steps)
 	AttachmentSet        input_attachments, output_attachments;
@@ -503,7 +503,7 @@ void PostProcessingRenderPass::prepare_draw(vkb::core::CommandBufferC &command_b
 	                   fallback_render_target);
 }
 
-void PostProcessingRenderPass::draw(vkb::core::CommandBufferC &command_buffer, RenderTarget &default_render_target)
+void PostProcessingRenderPass::draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &default_render_target)
 {
 	prepare_draw(command_buffer, default_render_target);
 

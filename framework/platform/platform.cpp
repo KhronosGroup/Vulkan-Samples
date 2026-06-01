@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -477,7 +477,7 @@ bool Platform::start_app()
 	auto sample_info = static_cast<const apps::SampleInfo *>(requested_app_info);
 	active_app->set_name(sample_info->name);
 
-	if (!active_app->prepare({false, window.get()}))
+	if (!active_app->prepare({fixed_simulation_fps, window.get()}))
 	{
 		LOGE("Failed to prepare vulkan app.");
 		return false;

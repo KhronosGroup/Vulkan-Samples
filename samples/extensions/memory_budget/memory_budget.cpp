@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Sascha Willems
- * Copyright (c) 2023-2025, Holochip Corporation
+/* Copyright (c) 2019-2026, Sascha Willems
+ * Copyright (c) 2023-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,6 @@ MemoryBudget::MemoryBudget()
 	title = "Memory Budget";
 
 	// Enable instance and device extensions required to use VK_EXT_memory_budget
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 
 	// Initialize physical device memory properties variables

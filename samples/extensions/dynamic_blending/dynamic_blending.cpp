@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Mobica
+/* Copyright (c) 2023-2026, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,6 @@
 
 DynamicBlending::DynamicBlending()
 {
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 	add_device_extension(VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME);
 
@@ -154,11 +153,15 @@ void DynamicBlending::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
 	                         extendedDynamicState3ColorBlendEnable);
 
-	// Only request the features that we support
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorWriteMask);
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendAdvanced);
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEquation);
+	// Only request the features that we support, and record which ones are available
+	eds_feature_support.extendedDynamicState3ColorWriteMask =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorWriteMask);
+	eds_feature_support.extendedDynamicState3ColorBlendEnable =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
+	eds_feature_support.extendedDynamicState3ColorBlendAdvanced =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendAdvanced);
+	eds_feature_support.extendedDynamicState3ColorBlendEquation =
+	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEquation);
 
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT, advancedBlendCoherentOperations);
 }

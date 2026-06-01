@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +16,10 @@
  */
 
 #include "resource_replay.h"
-
 #include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "rendering/pipeline_state.h"
+#include "rendering/render_target.h"
 #include "resource_cache.h"
 
 namespace vkb
@@ -81,9 +81,9 @@ void ResourceReplay::play(ResourceCache &resource_cache, ResourceRecord &recorde
 
 void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::istringstream &stream)
 {
-	VkShaderStageFlagBits    stage{};
-	std::string              glsl_source;
-	std::string              entry_point;
+	VkShaderStageFlagBits stage{};
+	std::string           glsl_source;
+	std::string           entry_point;
 
 	read(stream,
 	     stage,
@@ -122,9 +122,9 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 
 void ResourceReplay::create_render_pass(ResourceCache &resource_cache, std::istringstream &stream)
 {
-	std::vector<Attachment>    attachments;
-	std::vector<LoadStoreInfo> load_store_infos;
-	std::vector<SubpassInfo>   subpasses;
+	std::vector<vkb::rendering::AttachmentC> attachments;
+	std::vector<LoadStoreInfo>               load_store_infos;
+	std::vector<SubpassInfo>                 subpasses;
 
 	read(stream,
 	     attachments,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Mobica Limited
+/* Copyright (c) 2024-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,9 +29,9 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC> vertex_buffer = nullptr;
 	std::unique_ptr<vkb::core::BufferC> index_buffer  = nullptr;
 
-	std::unique_ptr<vkb::sg::Scene>    scene;
-	std::vector<VkDescriptorImageInfo> image_infos;
-	std::map<std::string, int32_t>     name_to_texture_id;
+	std::unique_ptr<vkb::scene_graph::SceneC> scene;
+	std::vector<VkDescriptorImageInfo>        image_infos;
+	std::map<std::string, int32_t>            name_to_texture_id;
 
 	struct SceneNode
 	{
@@ -125,6 +125,10 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	void         draw_node(VkCommandBuffer &, SceneNode &);
 	void         destroy_image_data(ImageData &image_data);
 	void         attachments_setup(std::vector<VkRenderingAttachmentInfoKHR> &attachments, std::vector<VkClearValue> &clear_values);
+
+  private:
+	// from vkb::VulkanSample
+	uint32_t get_api_version() const override;
 };
 
 std::unique_ptr<vkb::VulkanSample<vkb::BindingType::C>> create_dynamic_multisample_rasterization();

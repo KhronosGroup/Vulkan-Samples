@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Holochip
+# Copyright (c) 2021-2026, Holochip
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,8 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Holochip"
     NAME "Dynamic fragment shading rate"
-    DESCRIPTION "Using dynamically-generated fragment shading rate patterns generated each frame")
+    DESCRIPTION "Using dynamically-generated fragment shading rate patterns generated each frame"
+    SHADER_FILES_GLSL
+        "fragment_shading_rate_dynamic/generate_shading_rate.comp"
+        "fragment_shading_rate_dynamic/scene.vert"
+        "fragment_shading_rate_dynamic/scene.frag")

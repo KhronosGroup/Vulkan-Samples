@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2025-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -140,7 +140,7 @@ class FragmentDensityMap : public ApiVulkanSample
 
 	vkb::DebugUtilsExtDebugUtils debug_utils;
 
-	std::unique_ptr<vkb::sg::Scene> sg_scene;
+	std::unique_ptr<vkb::scene_graph::SceneC> sg_scene;
 
 	std::vector<SubmeshData> scene_data;
 
