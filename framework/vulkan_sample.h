@@ -246,6 +246,10 @@ class VulkanSample : public vkb::Application
 	 */
 	void add_device_extension(const char *extension, bool optional = false);
 
+	void add_instance_extension(const char *extension, bool optional = false);
+
+	void add_layer_setting(const LayerSettingType &layer_setting);
+
 	void create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
@@ -410,6 +414,12 @@ class VulkanSample : public vkb::Application
 	/** @brief Set of device extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> device_extensions;
 
+	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
+	std::unordered_map<const char *, bool> instance_extensions;
+
+	/** @brief Set of layer settings to be enabled for this example (must be set in the derived constructor) */
+	std::vector<LayerSettingType> layer_settings;
+
 	/** @brief Whether or not we want a high priority graphics queue. */
 	bool high_priority_graphics_queue{false};
 
@@ -461,6 +471,18 @@ template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::add_device_extension(const char *extension, bool optional)
 {
 	device_extensions[extension] = optional;
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_instance_extension(const char *extension, bool optional)
+{
+	instance_extensions[extension] = optional;
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::add_layer_setting(const LayerSettingType &layer_setting)
+{
+	layer_settings.push_back(layer_setting);
 }
 
 template <vkb::BindingType bindingType>
@@ -533,8 +555,8 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
-	vk::PresentModeKHR               present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR>  present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
+	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
@@ -1459,6 +1481,11 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 #endif
+
+	for (auto const &it : instance_extensions)
+	{
+		requested_extensions[it.first] = it.second ? vkb::RequestMode::Optional : vkb::RequestMode::Required;
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -1472,6 +1499,11 @@ inline void VulkanSample<bindingType>::request_layers(std::unordered_map<std::st
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::request_layer_settings(std::vector<LayerSettingType> &requested_layer_settings, StructureChainBuilderType<InstanceCreateInfoType> &scb) const
 {
+	for (auto const &layer_setting : layer_settings)
+	{
+		requested_layer_settings.push_back(layer_setting);
+	}
+
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
 		request_layer_settings_impl(requested_layer_settings, scb);
