@@ -48,7 +48,6 @@ namespace sg
 class GaussianSplat : public Component
 {
   public:
-
 	GaussianSplat(const std::string &name = {});
 
 	virtual ~GaussianSplat() = default;
