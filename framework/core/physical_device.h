@@ -189,14 +189,14 @@ using PhysicalDeviceCpp = PhysicalDevice<vkb::BindingType::Cpp>;
 #define REQUEST_REQUIRED_FEATURE(gpu, Feature, flag) gpu.request_required_feature<Feature>(&Feature::flag, #Feature, #flag)
 
 template <>
-inline PhysicalDeviceC::PhysicalDevice(vkb::core::InstanceC &instance, VkPhysicalDevice physical_device) :
+inline PhysicalDevice<vkb::BindingType::C>::PhysicalDevice(vkb::core::InstanceC &instance, VkPhysicalDevice physical_device) :
     instance{reinterpret_cast<vkb::core::InstanceCpp &>(instance)}, handle{physical_device}
 {
 	init();
 }
 
 template <>
-inline PhysicalDeviceCpp::PhysicalDevice(vkb::core::InstanceCpp &instance, vk::PhysicalDevice physical_device) :
+inline PhysicalDevice<vkb::BindingType::Cpp>::PhysicalDevice(vkb::core::InstanceCpp &instance, vk::PhysicalDevice physical_device) :
     instance{instance}, handle{physical_device}
 {
 	init();
