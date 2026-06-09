@@ -119,18 +119,9 @@ class StatGraphData
 	 * @param has_fixed_max Whether the data should have a fixed max value
 	 * @param max_value The maximum value to use
 	 */
-	StatGraphData(const std::string &name,
-	              const std::string &format,
-	              float              scale_factor  = 1.0f,
-	              bool               has_fixed_max = false,
-	              float              max_value     = 0.0f) :
-	    name(name),
-	    format{format},
-	    scale_factor{scale_factor},
-	    has_fixed_max{has_fixed_max},
-	    max_value{max_value}
-	{
-	}
+	StatGraphData(const std::string &name, const std::string &format, float scale_factor = 1.0f, bool has_fixed_max = false, float max_value = 0.0f) :
+	    name(name), format{format}, scale_factor{scale_factor}, has_fixed_max{has_fixed_max}, max_value{max_value}
+	{}
 
 	StatGraphData() = default;
 

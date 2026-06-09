@@ -283,12 +283,11 @@ class ConstantData : public vkb::VulkanSampleC
 	uint32_t max_push_constant_size{128};
 
 	// The samples constant data methods and their properties
-	std::unordered_map<Method, MethodProperties> methods = {
-	    {Method::PushConstants, {"Push Constants"}},
-	    {Method::DescriptorSets, {"Descriptor Sets"}},
-	    {Method::DynamicDescriptorSets, {"Dynamic Descriptor Sets"}},
-	    {Method::UpdateAfterBindDescriptorSets, {"Update-after-bind Descriptor Sets", false}},
-	    {Method::BufferArray, {"Single Pre-allocated Buffer Array"}}};
+	std::unordered_map<Method, MethodProperties> methods = {{Method::PushConstants, {"Push Constants"}},
+	                                                        {Method::DescriptorSets, {"Descriptor Sets"}},
+	                                                        {Method::DynamicDescriptorSets, {"Dynamic Descriptor Sets"}},
+	                                                        {Method::UpdateAfterBindDescriptorSets, {"Update-after-bind Descriptor Sets", false}},
+	                                                        {Method::BufferArray, {"Single Pre-allocated Buffer Array"}}};
 
 	int gui_method_value{static_cast<int>(Method::PushConstants)};
 

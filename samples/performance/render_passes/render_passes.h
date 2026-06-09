@@ -65,15 +65,9 @@ class RenderPassesSample : public vkb::VulkanSampleC
 	// Whether to use vkCmdClear or not
 	bool cmd_clear = false;
 
-	RadioButtonGroup load{
-	    "Color attachment load operation",
-	    {"Load", "Clear", "Don't care"},
-	    0};
+	RadioButtonGroup load{"Color attachment load operation", {"Load", "Clear", "Don't care"}, 0};
 
-	RadioButtonGroup store{
-	    "Depth attachment store operation",
-	    {"Store", "Don't care"},
-	    1};
+	RadioButtonGroup store{"Depth attachment store operation", {"Store", "Don't care"}, 1};
 
 	std::vector<RadioButtonGroup *> radio_buttons = {&load, &store};
 

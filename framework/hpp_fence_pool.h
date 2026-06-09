@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,8 +40,7 @@ class HPPFencePool : private vkb::FencePool
 	using vkb::FencePool::reset;
 	using vkb::FencePool::wait;
 
-	HPPFencePool(vkb::core::DeviceCpp &device) :
-	    vkb::FencePool(reinterpret_cast<vkb::core::DeviceC &>(device))
+	HPPFencePool(vkb::core::DeviceCpp &device) : vkb::FencePool(reinterpret_cast<vkb::core::DeviceC &>(device))
 	{}
 
 	vk::Fence request_fence()

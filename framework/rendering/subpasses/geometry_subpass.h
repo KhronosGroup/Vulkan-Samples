@@ -87,12 +87,13 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
   public:
 	using FrontFaceType = typename std::conditional<bindingType == BindingType::Cpp, vk::FrontFace, VkFrontFace>::type;
 
-	using MeshType               = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPMesh, vkb::sg::Mesh>::type;
-	using PipelineLayoutType     = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
-	using RasterizationStateType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRasterizationState, vkb::RasterizationState>::type;
-	using ShaderModuleType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderModule, vkb::ShaderModule>::type;
-	using ShaderSourceType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
-	using SubMeshType            = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPSubMesh, vkb::sg::SubMesh>::type;
+	using MeshType           = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPMesh, vkb::sg::Mesh>::type;
+	using PipelineLayoutType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
+	using RasterizationStateType =
+	    typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRasterizationState, vkb::RasterizationState>::type;
+	using ShaderModuleType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderModule, vkb::ShaderModule>::type;
+	using ShaderSourceType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
+	using SubMeshType      = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPSubMesh, vkb::sg::SubMesh>::type;
 
   public:
 	/**
@@ -125,7 +126,9 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	void set_thread_index(uint32_t index);
 
   protected:
-	void                                        draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
+	void                                        draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer,
+	                                                         SubMeshType                           &sub_mesh,
+	                                                         FrontFaceType                          front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
 	virtual void                                draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
 	vkb::sg::Camera const                      &get_camera() const;
 	std::vector<MeshType *> const              &get_meshes() const;
@@ -141,26 +144,27 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 
 	uint32_t                    get_thread_index() const;
 	void                        set_rasterization_state(const RasterizationStateType &rasterization_state);
-	virtual PipelineLayoutType &prepare_pipeline_layout(vkb::core::CommandBuffer<bindingType> &command_buffer, const std::vector<ShaderModuleType *> &shader_modules);
-	virtual void                prepare_pipeline_state(vkb::core::CommandBuffer<bindingType> &command_buffer, FrontFaceType front_face, bool double_sided_material);
-	virtual void                prepare_push_constants(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
-	virtual void                update_uniform(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::scene_graph::Node<bindingType> &node, size_t thread_index);
+	virtual PipelineLayoutType &prepare_pipeline_layout(vkb::core::CommandBuffer<bindingType> &command_buffer,
+	                                                    const std::vector<ShaderModuleType *> &shader_modules);
+	virtual void prepare_pipeline_state(vkb::core::CommandBuffer<bindingType> &command_buffer, FrontFaceType front_face, bool double_sided_material);
+	virtual void prepare_push_constants(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
+	virtual void update_uniform(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::scene_graph::Node<bindingType> &node, size_t thread_index);
 
   protected:
 	std::vector<vkb::scene_graph::components::HPPMesh *> const &get_meshes_impl() const;
 
   private:
-	void                          draw_impl(vkb::core::CommandBufferCpp &command_buffer);
-	void                          draw_submesh_impl(vkb::core::CommandBufferCpp              &command_buffer,
-	                                                vkb::scene_graph::components::HPPSubMesh &sub_mesh,
-	                                                vk::FrontFace                             front_face = vk::FrontFace::eCounterClockwise);
-	void                          get_sorted_nodes_impl(std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &opaque_nodes,
-	                                                    std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &transparent_nodes);
+	void draw_impl(vkb::core::CommandBufferCpp &command_buffer);
+	void draw_submesh_impl(vkb::core::CommandBufferCpp              &command_buffer,
+	                       vkb::scene_graph::components::HPPSubMesh &sub_mesh,
+	                       vk::FrontFace                             front_face = vk::FrontFace::eCounterClockwise);
+	void get_sorted_nodes_impl(std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &opaque_nodes,
+	                           std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &transparent_nodes);
 	vkb::core::HPPPipelineLayout &prepare_pipeline_layout_impl(vkb::core::CommandBufferCpp                     &command_buffer,
 	                                                           const std::vector<vkb::core::HPPShaderModule *> &shader_modules);
-	void                          prepare_pipeline_state_impl(vkb::core::CommandBufferCpp &command_buffer, vk::FrontFace front_face, bool double_sided_material);
-	virtual void                  prepare_push_constants_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::components::HPPSubMesh &sub_mesh);
-	void                          update_uniform_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::NodeCpp &node, size_t thread_index);
+	void         prepare_pipeline_state_impl(vkb::core::CommandBufferCpp &command_buffer, vk::FrontFace front_face, bool double_sided_material);
+	virtual void prepare_push_constants_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::components::HPPSubMesh &sub_mesh);
+	void         update_uniform_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::NodeCpp &node, size_t thread_index);
 
   private:
 	vkb::rendering::HPPRasterizationState                base_rasterization_state;
@@ -300,8 +304,7 @@ inline void GeometrySubpass<bindingType>::set_thread_index(uint32_t index)
 }
 
 template <vkb::BindingType bindingType>
-inline void
-    GeometrySubpass<bindingType>::draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face)
+inline void GeometrySubpass<bindingType>::draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -468,9 +471,8 @@ inline typename GeometrySubpass<bindingType>::PipelineLayoutType &
 }
 
 template <vkb::BindingType bindingType>
-inline vkb::core::HPPPipelineLayout &
-    GeometrySubpass<bindingType>::prepare_pipeline_layout_impl(vkb::core::CommandBufferCpp                     &command_buffer,
-                                                               const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
+inline vkb::core::HPPPipelineLayout &GeometrySubpass<bindingType>::prepare_pipeline_layout_impl(vkb::core::CommandBufferCpp                     &command_buffer,
+                                                                                                const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
 {
 	// Sets any specified resource modes
 	for (auto &shader_module : shader_modules)
@@ -606,9 +608,8 @@ inline void GeometrySubpass<bindingType>::prepare_pipeline_state(vkb::core::Comm
 }
 
 template <vkb::BindingType bindingType>
-inline void GeometrySubpass<bindingType>::prepare_pipeline_state_impl(vkb::core::CommandBufferCpp &command_buffer,
-                                                                      vk::FrontFace                front_face,
-                                                                      bool                         double_sided_material)
+inline void
+    GeometrySubpass<bindingType>::prepare_pipeline_state_impl(vkb::core::CommandBufferCpp &command_buffer, vk::FrontFace front_face, bool double_sided_material)
 {
 	vkb::rendering::HPPRasterizationState rasterization_state = this->base_rasterization_state;
 	rasterization_state.front_face                            = front_face;
@@ -674,8 +675,7 @@ inline void GeometrySubpass<bindingType>::update_uniform(vkb::core::CommandBuffe
 }
 
 template <vkb::BindingType bindingType>
-inline void
-    GeometrySubpass<bindingType>::update_uniform_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::NodeCpp &node, size_t thread_index)
+inline void GeometrySubpass<bindingType>::update_uniform_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::NodeCpp &node, size_t thread_index)
 {
 	GlobalUniform global_uniform;
 

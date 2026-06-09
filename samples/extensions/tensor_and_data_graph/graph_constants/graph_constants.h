@@ -30,10 +30,10 @@
  * @details A `Tensor` resource (`input_tensor`) is created and initial contents are uploaded. This is a new resource type analogous
  *          to Images and Buffers. This is read as an input by a `Data Graph Pipeline` (`data_graph_pipeline`).
  *          The Data Graph Pipeline runs a neural network and produces an output which is written into the `output_tensor` Tensor.
- *          Two constant tensors (`constant_weights_tensor` & `constant_bias_tensor`) are also passed into the Convolution2d operator in the form of weights and bias.
- *          The weights/filter/kernel is used to generate the output. The specified bias is applied to the output for each channel.
- *          In order to visualize the results of this pipeline, there is a Compute Pipeline (`visualization_pipeline`) which copies the
- *          contents of `input_tensor` and `output_tensor` into an Image (`output_image`) which is blitted to the Swapchain.
+ *          Two constant tensors (`constant_weights_tensor` & `constant_bias_tensor`) are also passed into the Convolution2d operator in the form of weights and
+ *bias. The weights/filter/kernel is used to generate the output. The specified bias is applied to the output for each channel. In order to visualize the
+ *results of this pipeline, there is a Compute Pipeline (`visualization_pipeline`) which copies the contents of `input_tensor` and `output_tensor` into an Image
+ *(`output_image`) which is blitted to the Swapchain.
  *
  *			As a diagram, this looks like:
  *

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -118,7 +118,8 @@ std::vector<uint32_t> read_shader_binary_u32(const std::string &filename)
 {
 	auto buffer = vkb::filesystem::get()->read_file_binary(path::get(path::Type::Shaders) + filename);
 	assert(buffer.size() % sizeof(uint32_t) == 0);
-	auto spirv = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	auto spirv =
+	    std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()), reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 	return spirv;
 }
 
@@ -132,7 +133,8 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename)
 	vkb::filesystem::get()->write_file(path::get(path::Type::Temp) + filename, data);
 }
 
-void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
+void write_image(
+    const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
 {
 	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), width, height, components, data, row_stride);
 }

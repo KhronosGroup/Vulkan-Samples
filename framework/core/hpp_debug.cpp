@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,8 @@ void HPPDebugUtilsExtDebugUtils::set_debug_name(vk::Device device, vk::ObjectTyp
 void HPPDebugUtilsExtDebugUtils::set_debug_tag(
     vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const
 {
-	vk::DebugUtilsObjectTagInfoEXT tag_info{.objectType = object_type, .objectHandle = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
+	vk::DebugUtilsObjectTagInfoEXT tag_info{
+	    .objectType = object_type, .objectHandle = object_handle, .tagName = tag_name, .tagSize = tag_data_size, .pTag = tag_data};
 	device.setDebugUtilsObjectTagEXT(tag_info);
 }
 
@@ -84,10 +85,7 @@ void HPPDebugMarkerExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buf
 	command_buffer.debugMarkerInsertEXT(marker_info);
 }
 
-HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
-                                         vk::CommandBuffer    command_buffer,
-                                         std::string const   &name,
-                                         glm::vec4 const      color) :
+HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const color) :
     debug_utils{&debug_utils}, command_buffer{VK_NULL_HANDLE}
 {
 	if (!name.empty())
@@ -99,12 +97,9 @@ HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
 	}
 }
 
-HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer,
-                                         std::string const                 &name,
-                                         glm::vec4 const                    color) :
+HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer, std::string const &name, glm::vec4 const color) :
     HPPScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
-{
-}
+{}
 
 HPPScopedDebugLabel::~HPPScopedDebugLabel()
 {

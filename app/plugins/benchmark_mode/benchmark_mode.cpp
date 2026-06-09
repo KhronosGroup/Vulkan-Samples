@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -28,8 +28,7 @@ BenchmarkMode::BenchmarkMode() :
                       {vkb::Hook::OnUpdate, vkb::Hook::OnAppStart, vkb::Hook::OnAppClose},
                       {},
                       {{"benchmark", "Enable benchmark mode"}})
-{
-}
+{}
 
 bool BenchmarkMode::handle_option(std::deque<std::string> &arguments)
 {

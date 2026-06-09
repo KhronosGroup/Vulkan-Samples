@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, Arm Limited and Contributors
+/* Copyright (c) 2022-2026, Arm Limited and Contributors
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -28,8 +28,7 @@ DataPath::DataPath() :
                  {vkb::Hook::OnAppStart},
                  {},
                  {{"data-path", "Folder containing data files"}})
-{
-}
+{}
 
 bool DataPath::handle_option(std::deque<std::string> &arguments)
 {

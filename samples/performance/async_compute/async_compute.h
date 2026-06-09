@@ -110,8 +110,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 	struct CompositeSubpass : vkb::rendering::SubpassC
 	{
 		CompositeSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);
-		void         set_texture(const vkb::core::ImageView *hdr_view, const vkb::core::ImageView *bloom_view,
-		                         const vkb::core::Sampler *sampler);
+		void         set_texture(const vkb::core::ImageView *hdr_view, const vkb::core::ImageView *bloom_view, const vkb::core::Sampler *sampler);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 		virtual void prepare() override;
 

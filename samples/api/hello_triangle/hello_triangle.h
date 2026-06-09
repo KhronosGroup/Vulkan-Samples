@@ -141,8 +141,7 @@ class HelloTriangle : public vkb::Application
 
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-	bool validate_extensions(const std::vector<const char *>          &required,
-	                         const std::vector<VkExtensionProperties> &available);
+	bool validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
 
 	void init_instance();
 

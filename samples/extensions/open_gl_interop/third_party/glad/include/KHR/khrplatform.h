@@ -101,7 +101,7 @@
  */
 #if defined(KHRONOS_STATIC)
 /* If the preprocessor constant KHRONOS_STATIC is defined, make the
-     * header compatible with static linking. */
+ * header compatible with static linking. */
 #	define KHRONOS_APICALL
 #elif defined(_WIN32)
 #	define KHRONOS_APICALL __declspec(dllimport)

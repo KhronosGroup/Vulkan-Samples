@@ -23,11 +23,10 @@
 #include <cstring>
 
 // Minimal debug utils callback to capture INFO severity messages (e.g., debugPrintfEXT)
-static VKAPI_ATTR VkBool32 VKAPI_CALL s_debug_utils_message_callback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT             messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-    void                                       *pUserData)
+static VKAPI_ATTR VkBool32 VKAPI_CALL s_debug_utils_message_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+                                                                     VkDebugUtilsMessageTypeFlagsEXT             messageType,
+                                                                     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                                                                     void                                       *pUserData)
 {
 	(void) messageSeverity;
 	(void) messageType;
@@ -122,9 +121,8 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&layer_property_count, layer_properties.data()));
 
 	const char *validation_layer_name = "VK_LAYER_KHRONOS_validation";
-	auto        vvl_properties        = std::ranges::find_if(layer_properties, [validation_layer_name](const VkLayerProperties &p) {
-        return strcmp(p.layerName, validation_layer_name) == 0;
-    });
+	auto        vvl_properties =
+	    std::ranges::find_if(layer_properties, [validation_layer_name](const VkLayerProperties &p) { return strcmp(p.layerName, validation_layer_name) == 0; });
 
 	const bool validation_layer_available = (vvl_properties != layer_properties.end());
 	if (validation_layer_available)
@@ -135,9 +133,8 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
 		std::vector<VkExtensionProperties> vvl_instance_extensions(vvl_extension_count);
 		VK_CHECK(vkEnumerateInstanceExtensionProperties(validation_layer_name, &vvl_extension_count, vvl_instance_extensions.data()));
 
-		bool has_layer_settings = std::ranges::any_of(vvl_instance_extensions, [](const VkExtensionProperties &e) {
-			return strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;
-		});
+		bool has_layer_settings = std::ranges::any_of(
+		    vvl_instance_extensions, [](const VkExtensionProperties &e) { return strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0; });
 
 		if (has_layer_settings)
 		{
@@ -203,7 +200,8 @@ std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_i
 	instance_create_info.pNext                   = &validation_features;
 
 #if (defined(VKB_ENABLE_PORTABILITY))
-	if (std::ranges::find_if(enabled_extensions, [](const char *e) { return strcmp(e, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }) != enabled_extensions.end())
+	if (std::ranges::find_if(enabled_extensions, [](const char *e) { return strcmp(e, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }) !=
+	    enabled_extensions.end())
 	{
 		instance_create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	}
@@ -241,11 +239,13 @@ void ShaderRelaxedExtendedInstruction::request_layers(std::unordered_map<std::st
 	requested_layers["VK_LAYER_KHRONOS_validation"] = vkb::RequestMode::Required;
 }
 
-void ShaderRelaxedExtendedInstruction::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+void ShaderRelaxedExtendedInstruction::request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+                                                              vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
 	ApiVulkanSample::request_layer_settings(requested_layer_settings, scb);
 	// Enable debug printf so shaders using debugPrintfEXT will print via VVL
-	requested_layer_settings.push_back({"VK_LAYER_KHRONOS_validation", "printf_enable", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &scb.add_chain_data<VkBool32>(VK_TRUE)});
+	requested_layer_settings.push_back(
+	    {"VK_LAYER_KHRONOS_validation", "printf_enable", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &scb.add_chain_data<VkBool32>(VK_TRUE)});
 }
 
 void ShaderRelaxedExtendedInstruction::request_validation_feature_enables(std::vector<VkValidationFeatureEnableEXT> &requested_validation_feature_enables) const
@@ -369,7 +369,8 @@ void ShaderRelaxedExtendedInstruction::on_update_ui_overlay(vkb::Drawer &drawer)
 		const bool has_ext  = get_device().is_extension_enabled(VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME);
 		const bool has_info = get_device().is_extension_enabled(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 		drawer.text("Device extensions: relaxed_extended_instruction=%s, non_semantic_info=%s", has_ext ? "ON" : "OFF", has_info ? "ON" : "OFF");
-		drawer.text("This feature enables SPIR-V modules that use relaxed forward-refs in extended instruction sets (e.g., DebugPrintf).\nUseful when tools emit richer debug info that would otherwise be rejected.");
+		drawer.text("This feature enables SPIR-V modules that use relaxed forward-refs in extended instruction sets (e.g., DebugPrintf).\nUseful when tools "
+		            "emit richer debug info that would otherwise be rejected.");
 
 		int32_t value_ui = static_cast<int32_t>(ui_value_);
 		if (drawer.slider_int("Value", &value_ui, 0, 1000))

@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
- * Copyright (c) 2023-2025, Mobica Limited
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
+ * Copyright (c) 2023-2026, Mobica Limited
  * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -41,7 +41,11 @@ template <typename... TAGS>
 class PluginBase : public Plugin, public Tag<TAGS...>
 {
   public:
-	PluginBase(const std::string name, const std::string description, const std::vector<Hook> &hooks = {}, std::vector<std::pair<std::string, std::string>> const &commands = {}, std::vector<std::pair<std::string, std::string>> const &options = {});
+	PluginBase(const std::string                                       name,
+	           const std::string                                       description,
+	           const std::vector<Hook>                                &hooks    = {},
+	           std::vector<std::pair<std::string, std::string>> const &commands = {},
+	           std::vector<std::pair<std::string, std::string>> const &options  = {});
 
 	virtual ~PluginBase() = default;
 
@@ -64,10 +68,13 @@ class PluginBase : public Plugin, public Tag<TAGS...>
 };
 
 template <typename... TAGS>
-PluginBase<TAGS...>::PluginBase(const std::string name, const std::string description, const std::vector<Hook> &hooks, std::vector<std::pair<std::string, std::string>> const &commands, std::vector<std::pair<std::string, std::string>> const &options) :
+PluginBase<TAGS...>::PluginBase(const std::string                                       name,
+                                const std::string                                       description,
+                                const std::vector<Hook>                                &hooks,
+                                std::vector<std::pair<std::string, std::string>> const &commands,
+                                std::vector<std::pair<std::string, std::string>> const &options) :
     Plugin(name, description, commands, options), hooks{hooks}
-{
-}
+{}
 
 template <typename... TAGS>
 bool PluginBase<TAGS...>::has_tag(TagID id) const

@@ -210,10 +210,8 @@ struct hash<vkb::ShaderResource>
 	{
 		std::size_t result = 0;
 
-		if (shader_resource.type == vkb::ShaderResourceType::Input ||
-		    shader_resource.type == vkb::ShaderResourceType::Output ||
-		    shader_resource.type == vkb::ShaderResourceType::PushConstant ||
-		    shader_resource.type == vkb::ShaderResourceType::SpecializationConstant)
+		if (shader_resource.type == vkb::ShaderResourceType::Input || shader_resource.type == vkb::ShaderResourceType::Output ||
+		    shader_resource.type == vkb::ShaderResourceType::PushConstant || shader_resource.type == vkb::ShaderResourceType::SpecializationConstant)
 		{
 			return result;
 		}
@@ -548,21 +546,16 @@ inline void hash_param(size_t &seed, const T &value)
 
 template <>
 inline void hash_param(size_t & /*seed*/, const VkPipelineCache & /*value*/)
-{
-}
+{}
 
 template <>
-inline void hash_param<std::vector<uint8_t>>(
-    size_t                     &seed,
-    const std::vector<uint8_t> &value)
+inline void hash_param<std::vector<uint8_t>>(size_t &seed, const std::vector<uint8_t> &value)
 {
 	hash_combine(seed, std::string{value.begin(), value.end()});
 }
 
 template <>
-inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(
-    size_t                                         &seed,
-    const std::vector<vkb::rendering::AttachmentC> &value)
+inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(size_t &seed, const std::vector<vkb::rendering::AttachmentC> &value)
 {
 	for (auto &attachment : value)
 	{
@@ -571,9 +564,7 @@ inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(
 }
 
 template <>
-inline void hash_param<std::vector<LoadStoreInfo>>(
-    size_t                           &seed,
-    const std::vector<LoadStoreInfo> &value)
+inline void hash_param<std::vector<LoadStoreInfo>>(size_t &seed, const std::vector<LoadStoreInfo> &value)
 {
 	for (auto &load_store_info : value)
 	{
@@ -582,9 +573,7 @@ inline void hash_param<std::vector<LoadStoreInfo>>(
 }
 
 template <>
-inline void hash_param<std::vector<SubpassInfo>>(
-    size_t                         &seed,
-    const std::vector<SubpassInfo> &value)
+inline void hash_param<std::vector<SubpassInfo>>(size_t &seed, const std::vector<SubpassInfo> &value)
 {
 	for (auto &subpass_info : value)
 	{
@@ -593,9 +582,7 @@ inline void hash_param<std::vector<SubpassInfo>>(
 }
 
 template <>
-inline void hash_param<std::vector<ShaderModule *>>(
-    size_t                            &seed,
-    const std::vector<ShaderModule *> &value)
+inline void hash_param<std::vector<ShaderModule *>>(size_t &seed, const std::vector<ShaderModule *> &value)
 {
 	for (auto &shader_module : value)
 	{
@@ -604,9 +591,7 @@ inline void hash_param<std::vector<ShaderModule *>>(
 }
 
 template <>
-inline void hash_param<std::vector<ShaderResource>>(
-    size_t                            &seed,
-    const std::vector<ShaderResource> &value)
+inline void hash_param<std::vector<ShaderResource>>(size_t &seed, const std::vector<ShaderResource> &value)
 {
 	for (auto &resource : value)
 	{
@@ -615,9 +600,9 @@ inline void hash_param<std::vector<ShaderResource>>(
 }
 
 template <>
-inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>>>(
-    size_t                                                               &seed,
-    const std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>> &value)
+inline void
+    hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>>>(size_t                                                               &seed,
+                                                                               const std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>> &value)
 {
 	for (auto &binding_set : value)
 	{
@@ -632,9 +617,9 @@ inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferI
 }
 
 template <>
-inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>>>(
-    size_t                                                              &seed,
-    const std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>> &value)
+inline void
+    hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>>>(size_t                                                              &seed,
+                                                                              const std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>> &value)
 {
 	for (auto &binding_set : value)
 	{
@@ -665,8 +650,7 @@ struct RecordHelper
 	}
 
 	void index(ResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
-	{
-	}
+	{}
 };
 
 template <class... A>

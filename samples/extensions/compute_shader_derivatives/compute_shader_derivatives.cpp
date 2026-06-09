@@ -248,10 +248,9 @@ void ComputeShaderDerivatives::create_compute_pipeline()
 	vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
 	// Load compute shader based on selected derivative group mode
-	const char                     *comp_path = use_quads_ ?
-	                                                "compute_shader_derivatives/slang/derivatives_quad.comp.spv" :
-	                                                "compute_shader_derivatives/slang/derivatives_linear.comp.spv";
-	VkPipelineShaderStageCreateInfo stage     = load_shader(comp_path, VK_SHADER_STAGE_COMPUTE_BIT);
+	const char *comp_path =
+	    use_quads_ ? "compute_shader_derivatives/slang/derivatives_quad.comp.spv" : "compute_shader_derivatives/slang/derivatives_linear.comp.spv";
+	VkPipelineShaderStageCreateInfo stage = load_shader(comp_path, VK_SHADER_STAGE_COMPUTE_BIT);
 
 	VkComputePipelineCreateInfo compute_ci{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
 	compute_ci.stage  = stage;
@@ -444,8 +443,7 @@ void ComputeShaderDerivatives::render(float delta_time)
 	image_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	image_barrier.subresourceRange.levelCount = 1;
 	image_barrier.subresourceRange.layerCount = 1;
-	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-	                     0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
 
 	// Dispatch compute shader: 512x512 image with 8x8 local size = 64x64 workgroups
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline);
@@ -464,8 +462,8 @@ void ComputeShaderDerivatives::render(float delta_time)
 	compute_to_frag_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	compute_to_frag_barrier.subresourceRange.levelCount = 1;
 	compute_to_frag_barrier.subresourceRange.layerCount = 1;
-	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-	                     0, 0, nullptr, 0, nullptr, 1, &compute_to_frag_barrier);
+	vkCmdPipelineBarrier(
+	    cmd, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &compute_to_frag_barrier);
 
 	// Begin render pass to display the computed image and GUI
 	VkClearValue clear_values[2];

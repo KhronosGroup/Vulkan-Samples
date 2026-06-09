@@ -113,8 +113,7 @@ class Stats
 	 * @param requested_stats Set of stats to be collected if available
 	 * @param sampling_config Sampling mode configuration (polling or continuous)
 	 */
-	void request_stats(const std::set<StatIndex> &requested_stats,
-	                   CounterSamplingConfig      sampling_config = {CounterSamplingMode::Polling});
+	void request_stats(const std::set<StatIndex> &requested_stats, CounterSamplingConfig sampling_config = {CounterSamplingMode::Polling});
 
 	/**
 	 * @brief Resizes the stats buffers according to the width of the screen
@@ -140,23 +139,23 @@ class Stats
 	void push_sample(const vkb::StatsProvider::Counters &sample);
 
   private:
-	float                                            alpha_smoothing = 0.2f;                          // Alpha smoothing for running average
-	size_t                                           buffer_size;                                     // Size of the circular buffers
-	std::vector<vkb::StatsProvider::Counters>        continuous_samples;                              // The samples read during continuous sampling
-	std::mutex                                       continuous_sampling_mutex;                       // A mutex for accessing measurements during continuous sampling
-	std::map<StatIndex, std::vector<float>>          counters;                                        // Circular buffers for counter data
-	float                                            fractional_pending_samples = 0.0f;               // A value which helps keep a steady pace of continuous samples output.
-	vkb::StatsProvider                              *frame_time_provider;                             // Provider that tracks frame times
-	vkb::Timer                                       main_timer;                                      // vkb::Timer used in the main thread to compute delta time
-	std::vector<vkb::StatsProvider::Counters>        pending_samples;                                 // The samples waiting to be displayed
-	std::vector<std::unique_ptr<vkb::StatsProvider>> providers;                                       // A list of stats providers to use in priority order
-	vkb::rendering::RenderContextCpp                &render_context;                                  // The render context
-	std::set<StatIndex>                              requested_stats;                                 // Stats that were requested - they may not all be available
-	CounterSamplingConfig                            sampling_config;                                 // Counter sampling configuration
-	bool                                             should_add_to_continuous_samples = false;        // A flag specifying if the worker thread should add entries to continuous_samples
-	std::unique_ptr<std::promise<void>>              stop_worker;                                     // Promise to stop the worker thread
-	std::thread                                      worker_thread;                                   // Worker thread for continuous sampling
-	vkb::Timer                                       worker_timer;                                    // vkb::Timer used by the worker thread to throttle counter sampling
+	float                                     alpha_smoothing = 0.2f;                   // Alpha smoothing for running average
+	size_t                                    buffer_size;                              // Size of the circular buffers
+	std::vector<vkb::StatsProvider::Counters> continuous_samples;                       // The samples read during continuous sampling
+	std::mutex                                continuous_sampling_mutex;                // A mutex for accessing measurements during continuous sampling
+	std::map<StatIndex, std::vector<float>>   counters;                                 // Circular buffers for counter data
+	float                                     fractional_pending_samples = 0.0f;        // A value which helps keep a steady pace of continuous samples output.
+	vkb::StatsProvider                       *frame_time_provider;                      // Provider that tracks frame times
+	vkb::Timer                                main_timer;                               // vkb::Timer used in the main thread to compute delta time
+	std::vector<vkb::StatsProvider::Counters> pending_samples;                          // The samples waiting to be displayed
+	std::vector<std::unique_ptr<vkb::StatsProvider>> providers;                         // A list of stats providers to use in priority order
+	vkb::rendering::RenderContextCpp                &render_context;                    // The render context
+	std::set<StatIndex>                              requested_stats;                   // Stats that were requested - they may not all be available
+	CounterSamplingConfig                            sampling_config;                   // Counter sampling configuration
+	bool should_add_to_continuous_samples = false;            // A flag specifying if the worker thread should add entries to continuous_samples
+	std::unique_ptr<std::promise<void>> stop_worker;          // Promise to stop the worker thread
+	std::thread                         worker_thread;        // Worker thread for continuous sampling
+	vkb::Timer                          worker_timer;         // vkb::Timer used by the worker thread to throttle counter sampling
 };
 
 using StatsC   = Stats<vkb::BindingType::C>;
@@ -253,16 +252,14 @@ static inline char const *to_string(StatIndex index)
 
 template <>
 inline Stats<vkb::BindingType::Cpp>::Stats(vkb::rendering::RenderContextCpp &render_context, size_t buffer_size) :
-    render_context(render_context),
-    buffer_size(buffer_size)
+    render_context(render_context), buffer_size(buffer_size)
 {
 	assert(buffer_size >= 2 && "Buffers size should be greater than 2");
 }
 
 template <>
 inline Stats<vkb::BindingType::C>::Stats(vkb::rendering::RenderContextC &render_context, size_t buffer_size) :
-    render_context(reinterpret_cast<vkb::rendering::RenderContextCpp &>(render_context)),
-    buffer_size(buffer_size)
+    render_context(reinterpret_cast<vkb::rendering::RenderContextCpp &>(render_context)), buffer_size(buffer_size)
 {
 	assert(buffer_size >= 2 && "Buffers size should be greater than 2");
 }
@@ -502,7 +499,8 @@ inline void Stats<bindingType>::request_stats(const std::set<StatIndex> &wanted_
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
 	providers.emplace_back(std::make_unique<HWCPipeStatsProvider>(stats));
 #endif
-	providers.emplace_back(std::make_unique<vkb::VulkanStatsProvider>(stats, sampling_config, reinterpret_cast<vkb::rendering::RenderContextC &>(render_context)));
+	providers.emplace_back(
+	    std::make_unique<vkb::VulkanStatsProvider>(stats, sampling_config, reinterpret_cast<vkb::rendering::RenderContextC &>(render_context)));
 
 	// In continuous sampling mode we still need to update the frame times as if we are polling
 	// Store the frame time provider here so we can easily access it later.
@@ -518,9 +516,7 @@ inline void Stats<bindingType>::request_stats(const std::set<StatIndex> &wanted_
 		// Start a thread for continuous sample capture
 		stop_worker = std::make_unique<std::promise<void>>();
 
-		worker_thread = std::thread([this] {
-			continuous_sampling_worker(stop_worker->get_future());
-		});
+		worker_thread = std::thread([this] { continuous_sampling_worker(stop_worker->get_future()); });
 
 		// Reduce smoothing for continuous sampling
 		alpha_smoothing = 0.6f;
