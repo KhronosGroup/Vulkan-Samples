@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2023, Arm Limited and Contributors
+ Copyright (c) 2019-2026, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -100,3 +100,4 @@ target_include_directories(plugins PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_
 target_compile_options(plugins PRIVATE $<TARGET_PROPERTY:apps,INTERFACE_COMPILE_OPTIONS> $<TARGET_PROPERTY:framework,INTERFACE_COMPILE_OPTIONS>)
 target_compile_features(plugins PRIVATE $<TARGET_PROPERTY:apps,INTERFACE_COMPILE_FEATURES> $<TARGET_PROPERTY:framework,INTERFACE_COMPILE_FEATURES>)
 target_compile_definitions(plugins PRIVATE $<TARGET_PROPERTY:apps,INTERFACE_COMPILE_DEFINITIONS> $<TARGET_PROPERTY:framework,INTERFACE_COMPILE_DEFINITIONS>)
+set_target_properties(plugins PROPERTIES FOLDER "components")
