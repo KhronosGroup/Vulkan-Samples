@@ -605,21 +605,34 @@ bool ImGUIUtil::newFrame(bool updateFrameGraph)
 		MapsView.mapPos  = {sidebar_width, padding};
 		MapsView.mapSize = {io.DisplaySize.x - sidebar_width - padding, io.DisplaySize.y - padding * 2.0f};
 
-		// Draw a non-interactive semi-transparent map panel background.
+		// Draw a non-interactive map panel background.
+		// In splats mode suppress the panel entirely — the Vulkan clear (black) is the background
+		// and the panel would overdraw the splats regardless of draw order.
+		bool isSplats = (MapsView.currentState == MapView::ViewState::GLTFSplats);
 		ImGui::SetNextWindowPos(ImVec2(MapsView.mapPos.x, MapsView.mapPos.y), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(MapsView.mapSize.x, MapsView.mapSize.y), ImGuiCond_Always);
-		ImGui::SetNextWindowBgAlpha(0.35f);
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, sidebarColor);
-		ImGui::Begin("MapPanel##render_octomap", nullptr,
-		             ImGuiWindowFlags_NoTitleBar |
-		                 ImGuiWindowFlags_NoResize |
-		                 ImGuiWindowFlags_NoMove |
-		                 ImGuiWindowFlags_NoScrollbar |
-		                 ImGuiWindowFlags_NoScrollWithMouse |
-		                 ImGuiWindowFlags_NoSavedSettings |
-		                 ImGuiWindowFlags_NoInputs);
+		if (!isSplats)
+		{
+			ImGui::SetNextWindowBgAlpha(0.35f);
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, sidebarColor);
+		}
+		ImGuiWindowFlags panelFlags = ImGuiWindowFlags_NoTitleBar |
+		                              ImGuiWindowFlags_NoResize |
+		                              ImGuiWindowFlags_NoMove |
+		                              ImGuiWindowFlags_NoScrollbar |
+		                              ImGuiWindowFlags_NoScrollWithMouse |
+		                              ImGuiWindowFlags_NoSavedSettings |
+		                              ImGuiWindowFlags_NoInputs;
+		if (isSplats)
+		{
+			panelFlags |= ImGuiWindowFlags_NoBackground;
+		}
+		ImGui::Begin("MapPanel##render_octomap", nullptr, panelFlags);
 		ImGui::End();
-		ImGui::PopStyleColor();
+		if (!isSplats)
+		{
+			ImGui::PopStyleColor();
+		}
 	}
 
 	ImGui::EndFrame();

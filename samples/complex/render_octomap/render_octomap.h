@@ -137,6 +137,7 @@ class render_octomap : public ApiVulkanSample
 		float color[3];
 		float _pad;
 	};
+	std::vector<SplatInstance>          splat_instances_cpu;
 	std::unique_ptr<vkb::core::BufferC> splat_instance_buffer;
 	uint32_t                            splat_count{0};
 

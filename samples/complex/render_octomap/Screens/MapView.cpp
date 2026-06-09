@@ -17,6 +17,8 @@
 
 #include "MapView.h"
 
+const ImVec4 blackColor = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 MapView::MapView() :
     mapSize({153.0f, 221.0f})
 {
@@ -48,8 +50,6 @@ void MapView::DrawSidebar()
 	    0x94 / 255.0f,
 	    0x81 / 255.0f,
 	    1.0f);
-
-	const ImVec4 blackColor = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	float oscWindowMainPadding = 20.0f;
 	float sidebarExpandedWidth = 240.0f;
@@ -147,12 +147,6 @@ bool MapView::DrawUI()
 	ImGuiStyle &style   = ImGui::GetStyle();
 	style.ChildRounding = 0.0f;
 
-	const ImVec4 oscSidebarColor = ImVec4(
-	    0x41 / 255.0f,
-	    0x40 / 255.0f,
-	    0x42 / 255.0f,
-	    1.0f);
-
 	float oscWindowMainPadding = 20.0f;
 
 	style.WindowRounding = 12.0f;
@@ -173,11 +167,10 @@ bool MapView::DrawUI()
 	// Draw the main display area
 	ImGui::SetCursorPosY(displaySpaceY);
 	ImGui::SetCursorPosX(displaySpaceX);
-	// Semi-transparent panel background so the UI is visible without fully hiding the 3D map.
-	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0x41 / 255.0f, 0x40 / 255.0f, 0x42 / 255.0f, 0.35f));
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, blackColor);
 	ImGui::BeginChild("mapDisplay", ImVec2(displaySpaceWidth, displaySpaceHeight), false);
-	ImGui::PopStyleColor();
 	ImGui::EndChild();
+	ImGui::PopStyleColor();
 
 	mapSize = {displaySpaceWidth, displaySpaceHeight};
 	mapPos  = {displaySpaceX, displaySpaceY};

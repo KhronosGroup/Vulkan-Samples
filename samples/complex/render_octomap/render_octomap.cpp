@@ -26,6 +26,8 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/scene.h"
 
+#include <algorithm>
+#include <filesystem>
 #include <tiny_gltf.h>
 
 // KHR_gaussian_splatting extension name
@@ -194,7 +196,7 @@ void render_octomap::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
+	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
 	clear_values[1].depthStencil = {1.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -660,7 +662,7 @@ void render_octomap::render(float delta_time)
 	VK_CHECK(vkBeginCommandBuffer(cmd, &begin_info));
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
+	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
 	clear_values[1].depthStencil = {1.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -744,8 +746,10 @@ void render_octomap::render(float delta_time)
 				const auto *mat = dynamic_cast<const vkb::sg::PBRMaterial *>(d.sub_mesh->get_material());
 				glm::vec4   col = mat ? mat->base_color_factor : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-				// If material color is default/white and we have vertex colors, the shader will use vertex colors
-				pc.model = d.node->get_transform().get_world_matrix();
+				// Flip Y to match the octomap coordinate convention (which applies coords.y *= -1).
+				// GLTF is Y-up; our world space expects Y-down.
+				static const glm::mat4 kFlipY = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
+				pc.model = kFlipY * d.node->get_transform().get_world_matrix();
 				pc.color = col;
 				vkCmdPushConstants(cmd, gltf_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(GltfPushConstants), &pc);
 
@@ -784,6 +788,26 @@ void render_octomap::render(float delta_time)
 			splat_ubo.focalX     = camera.matrices.perspective[0][0] * splat_ubo.viewport.x * 0.5f;
 			splat_ubo.focalY     = camera.matrices.perspective[1][1] * splat_ubo.viewport.y * 0.5f;
 			splat_uniform_buffer->convert_and_update(splat_ubo);
+
+			// Sort splats back-to-front for correct alpha compositing.
+			// Camera position = -R^T * t, extracted from the view matrix.
+			{
+				glm::mat3 R      = glm::mat3(camera.matrices.view);
+				glm::vec3 t      = glm::vec3(camera.matrices.view[3]);
+				glm::vec3 camPos = -glm::transpose(R) * t;
+
+				std::sort(splat_instances_cpu.begin(), splat_instances_cpu.end(),
+				          [&camPos](const SplatInstance &a, const SplatInstance &b) {
+					          float dax = a.pos[0] - camPos.x, day = a.pos[1] - camPos.y, daz = a.pos[2] - camPos.z;
+					          float dbx = b.pos[0] - camPos.x, dby = b.pos[1] - camPos.y, dbz = b.pos[2] - camPos.z;
+					          return (dax * dax + day * day + daz * daz) > (dbx * dbx + dby * dby + dbz * dbz);
+				          });
+
+				auto *buf = splat_instance_buffer->map();
+				memcpy(buf, splat_instances_cpu.data(), splat_instances_cpu.size() * sizeof(SplatInstance));
+				splat_instance_buffer->flush();
+				splat_instance_buffer->unmap();
+			}
 
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, splat_pipeline_layout, 0, 1, &splat_descriptor_set, 0, nullptr);
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, splat_pipeline);
@@ -863,15 +887,15 @@ void render_octomap::onViewStateChanged(MapView::ViewState newState)
 			LOGI("Switching to GLTF Regular view");
 			if (!gltfScene)
 			{
-				loadGLTFScene("scenes/octmap_and_splats/savedMap_v1.1.0.gltf");
+				loadGLTFScene("scenes/octmap_and_splats/savedMap_v1.2.0.gltf");
 			}
 			break;
 
 		case MapView::ViewState::GLTFSplats:
 			LOGI("Switching to Gaussian Splats view");
-			if (!splatsScene)
+			if (!splat_instance_buffer)
 			{
-				loadGaussianSplatsScene("scenes/octmap_and_splats/savedMap_v1.1.0_splats_c0_-1_-1.gltf");
+				loadGaussianSplatsScene("scenes/octmap_and_splats");
 			}
 			break;
 	}
@@ -913,10 +937,70 @@ void render_octomap::loadGLTFScene(const std::string &filename)
 	}
 }
 
-void render_octomap::loadGaussianSplatsScene(const std::string &filename)
+void render_octomap::loadGaussianSplatsScene(const std::string &scene_dir)
 {
-	LOGI("Loading Gaussian Splats scene: {}", filename);
-	loadGaussianSplatsData(filename);
+	LOGI("Loading Gaussian Splats from directory: {}", scene_dir);
+
+	splat_instances_cpu.clear();
+	splat_instance_buffer.reset();
+
+	std::string full_dir = vkb::fs::path::get(vkb::fs::path::Type::Assets) + scene_dir;
+
+	// Collect all *_cell_*.gltf files in the directory, then sort for deterministic order
+	std::vector<std::string> cell_files;
+	for (auto &entry : std::filesystem::directory_iterator(full_dir))
+	{
+		if (!entry.is_regular_file())
+			continue;
+		std::string name = entry.path().filename().string();
+		if (name.find("_cell_") != std::string::npos && name.size() >= 5 &&
+		    name.substr(name.size() - 5) == ".gltf")
+		{
+			cell_files.push_back(scene_dir + "/" + name);
+		}
+	}
+	std::sort(cell_files.begin(), cell_files.end());
+
+	if (cell_files.empty())
+	{
+		LOGE("No cell GLTF files found in {}", full_dir);
+		return;
+	}
+
+	for (auto &f : cell_files)
+	{
+		LOGI("  Loading cell: {}", f);
+		loadGaussianSplatsData(f);
+	}
+
+	if (splat_instances_cpu.empty())
+	{
+		LOGE("No splat data loaded from {}", scene_dir);
+		return;
+	}
+
+	splat_count           = static_cast<uint32_t>(splat_instances_cpu.size());
+	splat_instance_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+	                                                             splat_instances_cpu.size() * sizeof(SplatInstance),
+	                                                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
+	auto *buf             = splat_instance_buffer->map();
+	memcpy(buf, splat_instances_cpu.data(), splat_instances_cpu.size() * sizeof(SplatInstance));
+	splat_instance_buffer->flush();
+	splat_instance_buffer->unmap();
+	splat_instance_buffer->set_debug_name("render_octomap splat instance buffer");
+
+	if (!splat_uniform_buffer)
+	{
+		splat_uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                            sizeof(splat_ubo),
+		                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
+		splat_uniform_buffer->set_debug_name("render_octomap splat ubo");
+	}
+
+	LOGI("Loaded {} gaussian splats from {} cells", splat_count, cell_files.size());
+
 	create_splat_pipeline(render_pass);
 }
 
@@ -1081,27 +1165,9 @@ void render_octomap::loadGaussianSplatsData(const std::string &filename)
 		instances[i]._pad     = 0.0f;
 	}
 
-	splat_count           = static_cast<uint32_t>(count);
-	splat_instance_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                             instances.size() * sizeof(SplatInstance),
-	                                                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
-	auto buf              = splat_instance_buffer->map();
-	memcpy(buf, instances.data(), instances.size() * sizeof(SplatInstance));
-	splat_instance_buffer->flush();
-	splat_instance_buffer->unmap();
-	splat_instance_buffer->set_debug_name("render_octomap splat instance buffer");
-
-	if (!splat_uniform_buffer)
-	{
-		splat_uniform_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-		                                                            sizeof(splat_ubo),
-		                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
-		splat_uniform_buffer->set_debug_name("render_octomap splat ubo");
-	}
-
-	LOGI("Loaded {} gaussian splats", splat_count);
+	// Append to the accumulated list (buffer creation is done in loadGaussianSplatsScene)
+	splat_instances_cpu.insert(splat_instances_cpu.end(), instances.begin(), instances.end());
+	LOGI("  Appended {} splats (total so far: {})", count, splat_instances_cpu.size());
 }
 
 std::unique_ptr<vkb::Application> create_render_octomap()
